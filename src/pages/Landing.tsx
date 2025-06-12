@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -93,11 +94,11 @@ const Landing = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/10 via-electric-yellow/5 to-neon-green/10"></div>
       
       {/* Navigation */}
-      <nav className="relative z-50 flex items-center justify-between p-6 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
+      <nav className="relative z-50 flex items-center justify-between p-4 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
         <div className="flex items-center space-x-3">
-          <div className="w-16 h-16 bg-gradient-to-br from-electric-blue via-electric-yellow to-neon-green rounded-lg flex items-center justify-center relative overflow-hidden">
+          <div className="w-12 h-12 bg-gradient-to-br from-electric-blue via-electric-yellow to-neon-green rounded-lg flex items-center justify-center relative overflow-hidden">
             <div className="absolute inset-1 bg-slate-950 rounded-md flex items-center justify-center">
-              <svg width="32" height="32" viewBox="0 0 24 24" className="text-electric-blue">
+              <svg width="24" height="24" viewBox="0 0 24 24" className="text-electric-blue">
                 <path
                   fill="currentColor"
                   d="M13 0L6 12h5l-2 12 7-12h-5l2-12z"
@@ -106,8 +107,8 @@ const Landing = () => {
             </div>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center">
-              Watt<Bitcoin className="inline w-7 h-7 mx-0" />yte
+            <h1 className="text-2xl font-bold text-white flex items-center">
+              Watt<Bitcoin className="inline w-6 h-6 mx-0" />yte
             </h1>
             <p className="text-xs text-slate-300">Infrastructure Fund</p>
           </div>
@@ -129,32 +130,32 @@ const Landing = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-20 pb-24 px-6">
+      <section className="relative z-10 pt-12 pb-16 px-6">
         <div className="max-w-6xl mx-auto text-center relative z-10">
-          <Badge variant="outline" className="mb-6 border-electric-blue/50 text-electric-blue bg-electric-blue/10">
+          <Badge variant="outline" className="mb-4 border-electric-blue/50 text-electric-blue bg-electric-blue/10">
             Fund I • $25M Target • 2.0-2.5x MOIC
           </Badge>
           
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white leading-tight">
             Turning Power<br />into Profit
           </h1>
           
-          <p className="text-xl text-slate-200 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg text-slate-200 mb-6 max-w-3xl mx-auto leading-relaxed">
             Next-generation infrastructure fund acquiring power-rich land across North America 
             for AI, HPC, and crypto data centers. Backed by 675MW+ of deal experience.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/voltscout">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg"
+                className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-6 py-3 text-lg"
               >
                 Request Platform Access
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-slate-500 text-black hover:bg-slate-800 hover:text-white px-8 py-4 text-lg bg-white">
+            <Button size="lg" variant="outline" className="border-slate-500 text-black hover:bg-slate-800 hover:text-white px-6 py-3 text-lg bg-white">
               View Pipeline
             </Button>
           </div>
@@ -162,10 +163,10 @@ const Landing = () => {
       </section>
 
       {/* Market Opportunity with Enhanced Charts */}
-      <section className="relative z-10 py-16 px-6 bg-slate-900/50">
+      <section className="relative z-10 py-12 px-6 bg-slate-900/50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-white">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-3 text-white">
               Explosive Market Opportunity
             </h2>
             <p className="text-slate-200 text-lg max-w-2xl mx-auto">
@@ -174,20 +175,20 @@ const Landing = () => {
           </div>
           
           {/* Primary Charts Row */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+          <div className="grid lg:grid-cols-2 gap-6 mb-8">
             {/* AI & Bitcoin Power Demand Growth */}
             <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-white flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <TrendingUp className="w-5 h-5 text-electric-blue" />
                   Digital Infrastructure Power Demand
                 </CardTitle>
-                <CardDescription className="text-slate-300">
+                <CardDescription className="text-slate-300 text-sm">
                   Exponential growth in AI and Bitcoin mining power requirements
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer config={chartConfig} className="h-[280px]">
+                <ChartContainer config={chartConfig} className="h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={aiGrowthData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -215,7 +216,7 @@ const Landing = () => {
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
-                <div className="mt-3 text-center">
+                <div className="mt-2 text-center">
                   <p className="text-electric-blue font-semibold text-sm">125+ GW total demand by 2026</p>
                 </div>
               </CardContent>
@@ -223,17 +224,17 @@ const Landing = () => {
 
             {/* Power Cost Arbitrage */}
             <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-white flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Zap className="w-5 h-5 text-electric-yellow" />
                   Power Cost Arbitrage Opportunity
                 </CardTitle>
-                <CardDescription className="text-slate-300">
+                <CardDescription className="text-slate-300 text-sm">
                   Massive cost differentials across North American markets
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer config={chartConfig} className="h-[280px]">
+                <ChartContainer config={chartConfig} className="h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={powerCostComparison} layout="horizontal" margin={{ left: 80 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -255,7 +256,7 @@ const Landing = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
-                <div className="mt-3 text-center">
+                <div className="mt-2 text-center">
                   <p className="text-neon-green font-semibold text-sm">85% cost savings in target markets</p>
                 </div>
               </CardContent>
@@ -263,20 +264,20 @@ const Landing = () => {
           </div>
 
           {/* Secondary Charts Row */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+          <div className="grid lg:grid-cols-2 gap-6 mb-8">
             {/* Bitcoin Mining Economics */}
             <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-white flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Bitcoin className="w-5 h-5 text-electric-yellow" />
                   Bitcoin Mining Revenue Potential
                 </CardTitle>
-                <CardDescription className="text-slate-300">
+                <CardDescription className="text-slate-300 text-sm">
                   Monthly net profit by mining operation scale (at current BTC price)
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer config={chartConfig} className="h-[280px]">
+                <ChartContainer config={chartConfig} className="h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={bitcoinMiningReturns}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -295,7 +296,7 @@ const Landing = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
-                <div className="mt-3 text-center">
+                <div className="mt-2 text-center">
                   <p className="text-electric-yellow font-semibold text-sm">$3.4M+ monthly profit potential at 25 EH/s</p>
                 </div>
               </CardContent>
@@ -303,17 +304,17 @@ const Landing = () => {
 
             {/* AI/HPC Compute Demand */}
             <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-white flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Cpu className="w-5 h-5 text-electric-blue" />
                   AI & HPC Workload Growth
                 </CardTitle>
-                <CardDescription className="text-slate-300">
+                <CardDescription className="text-slate-300 text-sm">
                   Quarterly compute demand by workload type (PetaFLOPs)
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer config={chartConfig} className="h-[280px]">
+                <ChartContainer config={chartConfig} className="h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={aiHpcDemandGrowth}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -347,7 +348,7 @@ const Landing = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
-                <div className="mt-3 text-center">
+                <div className="mt-2 text-center">
                   <p className="text-electric-blue font-semibold text-sm">340% growth in AI training demand YoY</p>
                 </div>
               </CardContent>
@@ -355,21 +356,21 @@ const Landing = () => {
           </div>
 
           {/* Market Stats Grid */}
-          <div className="grid md:grid-cols-4 gap-6">
-            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
-              <div className="text-3xl font-bold text-electric-blue mb-2">$127B</div>
+          <div className="grid md:grid-cols-4 gap-4">
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 text-center">
+              <div className="text-2xl font-bold text-electric-blue mb-1">$127B</div>
               <div className="text-slate-300 text-sm">Total Addressable Market</div>
             </div>
-            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
-              <div className="text-3xl font-bold text-electric-yellow mb-2">6.5x</div>
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 text-center">
+              <div className="text-2xl font-bold text-electric-yellow mb-1">6.5x</div>
               <div className="text-slate-300 text-sm">Demand vs Supply Gap</div>
             </div>
-            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
-              <div className="text-3xl font-bold text-neon-green mb-2">45%</div>
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 text-center">
+              <div className="text-2xl font-bold text-neon-green mb-1">45%</div>
               <div className="text-slate-300 text-sm">Market Share - AI/ML</div>
             </div>
-            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
-              <div className="text-3xl font-bold text-warm-orange mb-2">25%</div>
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 text-center">
+              <div className="text-2xl font-bold text-warm-orange mb-1">25%</div>
               <div className="text-slate-300 text-sm">Market Share - Crypto</div>
             </div>
           </div>
@@ -377,10 +378,10 @@ const Landing = () => {
       </section>
 
       {/* Fund Overview */}
-      <section className="relative z-10 py-20 px-6 bg-slate-900/50">
+      <section className="relative z-10 py-12 px-6 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-white">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-3 text-white">
               Fund I Overview
             </h2>
             <p className="text-slate-200 text-lg max-w-2xl mx-auto">
@@ -388,54 +389,54 @@ const Landing = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <TrendingUp className="w-6 h-6 text-white" />
+              <CardHeader className="pb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
-                <CardTitle className="text-white">Target Returns</CardTitle>
+                <CardTitle className="text-white text-lg">Target Returns</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="text-3xl font-bold text-electric-blue">2.0-2.5x</div>
-                  <div className="text-slate-300">MOIC</div>
-                  <div className="text-2xl font-bold text-electric-yellow">30-40%</div>
-                  <div className="text-slate-300">Net IRR</div>
+                <div className="space-y-1">
+                  <div className="text-2xl font-bold text-electric-blue">2.0-2.5x</div>
+                  <div className="text-slate-300 text-sm">MOIC</div>
+                  <div className="text-xl font-bold text-electric-yellow">30-40%</div>
+                  <div className="text-slate-300 text-sm">Net IRR</div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-neon-green to-electric-blue rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <MapPin className="w-6 h-6 text-white" />
+              <CardHeader className="pb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-neon-green to-electric-blue rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <MapPin className="w-5 h-5 text-white" />
                 </div>
-                <CardTitle className="text-white">Current Pipeline</CardTitle>
+                <CardTitle className="text-white text-lg">Current Pipeline</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="text-3xl font-bold text-neon-green">700MW+</div>
-                  <div className="text-slate-300">Power Capacity</div>
-                  <div className="text-2xl font-bold text-electric-blue">1,000+</div>
-                  <div className="text-slate-300">Acres</div>
+                <div className="space-y-1">
+                  <div className="text-2xl font-bold text-neon-green">700MW+</div>
+                  <div className="text-slate-300 text-sm">Power Capacity</div>
+                  <div className="text-xl font-bold text-electric-blue">1,000+</div>
+                  <div className="text-slate-300 text-sm">Acres</div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className="bg-slate-800/50 border-slate-700 hover:border-warm-orange/50 transition-all group">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-electric-yellow to-warm-orange rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Shield className="w-6 h-6 text-white" />
+              <CardHeader className="pb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-electric-yellow to-warm-orange rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <Shield className="w-5 h-5 text-white" />
                 </div>
-                <CardTitle className="text-white">Exit Strategy</CardTitle>
+                <CardTitle className="text-white text-lg">Exit Strategy</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="text-3xl font-bold text-electric-yellow">~2 Year</div>
-                  <div className="text-slate-300">Hold Period</div>
+                <div className="space-y-1">
+                  <div className="text-2xl font-bold text-electric-yellow">~2 Year</div>
+                  <div className="text-slate-300 text-sm">Hold Period</div>
                   <div className="text-lg font-semibold text-warm-orange">Data Center Premium</div>
-                  <div className="text-slate-300">Exit Value</div>
+                  <div className="text-slate-300 text-sm">Exit Value</div>
                 </div>
               </CardContent>
             </Card>
@@ -444,69 +445,69 @@ const Landing = () => {
       </section>
 
       {/* Investment Thesis */}
-      <section className="relative z-10 py-20 px-6">
+      <section className="relative z-10 py-12 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-white">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-3 text-white">
               Our Thesis
             </h2>
-            <p className="text-2xl text-slate-200 font-semibold">
+            <p className="text-xl text-slate-200 font-semibold">
               Power Arbitrage → Data Center Gold
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 bg-electric-blue/20 rounded-lg flex items-center justify-center mt-1">
                   <Cpu className="w-4 h-4 text-electric-blue" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 text-white">AI/HPC Explosion</h3>
-                  <p className="text-slate-200">Exponential demand for compute power driving unprecedented data center expansion</p>
+                  <h3 className="text-lg font-semibold mb-1 text-white">AI/HPC Explosion</h3>
+                  <p className="text-slate-200 text-sm">Exponential demand for compute power driving unprecedented data center expansion</p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-4">
+              <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 bg-electric-yellow/20 rounded-lg flex items-center justify-center mt-1">
                   <Zap className="w-4 h-4 text-electric-yellow" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 text-white">Power Scarcity</h3>
-                  <p className="text-slate-200">Limited high-capacity power sites creating massive value arbitrage opportunities</p>
+                  <h3 className="text-lg font-semibold mb-1 text-white">Power Scarcity</h3>
+                  <p className="text-slate-200 text-sm">Limited high-capacity power sites creating massive value arbitrage opportunities</p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-4">
+              <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 bg-neon-green/20 rounded-lg flex items-center justify-center mt-1">
                   <Building className="w-4 h-4 text-neon-green" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 text-white">Industrial Transformation</h3>
-                  <p className="text-slate-200">Converting undervalued industrial sites into premium digital infrastructure real estate</p>
+                  <h3 className="text-lg font-semibold mb-1 text-white">Industrial Transformation</h3>
+                  <p className="text-slate-200 text-sm">Converting undervalued industrial sites into premium digital infrastructure real estate</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700">
-              <h3 className="text-2xl font-bold mb-6 text-center text-white">Value Creation Model</h3>
-              <div className="space-y-4">
+            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-6 border border-slate-700">
+              <h3 className="text-xl font-bold mb-4 text-center text-white">Value Creation Model</h3>
+              <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
-                  <span className="text-slate-200">Industrial Land</span>
+                  <span className="text-slate-200 text-sm">Industrial Land</span>
                   <span className="text-neon-green font-bold">$50k/acre</span>
                 </div>
                 <div className="flex justify-center">
-                  <ArrowRight className="w-6 h-6 text-electric-blue" />
+                  <ArrowRight className="w-5 h-5 text-electric-blue" />
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
-                  <span className="text-slate-200">Power Infrastructure</span>
+                  <span className="text-slate-200 text-sm">Power Infrastructure</span>
                   <span className="text-electric-blue font-bold">+$200k/MW</span>
                 </div>
                 <div className="flex justify-center">
-                  <ArrowRight className="w-6 h-6 text-electric-yellow" />
+                  <ArrowRight className="w-5 h-5 text-electric-yellow" />
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gradient-to-r from-electric-blue/20 to-electric-yellow/20 rounded-lg border border-electric-blue/30">
-                  <span className="text-white font-semibold">Data Center Ready</span>
+                  <span className="text-white font-semibold text-sm">Data Center Ready</span>
                   <span className="text-electric-yellow font-bold">$500k+/acre</span>
                 </div>
               </div>
@@ -516,160 +517,160 @@ const Landing = () => {
       </section>
 
       {/* VoltScout Platform */}
-      <section className="relative z-10 py-20 px-6 bg-slate-900/50">
+      <section className="relative z-10 py-12 px-6 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-electric-blue to-neon-green rounded-xl flex items-center justify-center mr-6">
-                <Brain className="w-12 h-12 text-white" />
+          <div className="text-center mb-10">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-xl flex items-center justify-center mr-4">
+                <Brain className="w-10 h-10 text-white" />
               </div>
               <div className="text-left">
-                <h2 className="text-5xl font-bold text-white mb-2">
+                <h2 className="text-4xl font-bold text-white mb-1">
                   VoltScout
                 </h2>
                 <p className="text-lg text-slate-300 text-left">AI-Powered Energy Discovery Platform</p>
               </div>
             </div>
-            <p className="text-xl text-slate-200 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg text-slate-200 max-w-4xl mx-auto leading-relaxed">
               Our proprietary AI-powered energy scouting platform that autonomously discovers, analyzes, and ranks power-rich opportunities across North America in real-time
             </p>
           </div>
 
           {/* Core Features Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-2xl hover:shadow-electric-blue/20">
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-3">
-                  <Globe className="w-8 h-8 text-electric-blue group-hover:scale-110 transition-transform" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-xl hover:shadow-electric-blue/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Globe className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform" />
                   <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
                 </div>
-                <CardTitle className="text-white">Live Infrastructure Mapping</CardTitle>
+                <CardTitle className="text-white text-base">Live Infrastructure Mapping</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-200 mb-3">Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring</p>
-                <div className="text-sm text-electric-blue font-semibold">• 50,000+ substations tracked</div>
-                <div className="text-sm text-electric-yellow font-semibold">• Live capacity updates</div>
+                <p className="text-slate-200 mb-2 text-sm">Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring</p>
+                <div className="text-xs text-electric-blue font-semibold">• 50,000+ substations tracked</div>
+                <div className="text-xs text-electric-yellow font-semibold">• Live capacity updates</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-yellow/50 transition-all group hover:shadow-2xl hover:shadow-electric-yellow/20">
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-3">
-                  <BarChart3 className="w-8 h-8 text-electric-yellow group-hover:scale-110 transition-transform" />
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-yellow/50 transition-all group hover:shadow-xl hover:shadow-electric-yellow/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <BarChart3 className="w-6 h-6 text-electric-yellow group-hover:scale-110 transition-transform" />
                   <Badge className="bg-electric-yellow/20 text-electric-yellow text-xs">AI-Powered</Badge>
                 </div>
-                <CardTitle className="text-white">VoltScore™ AI Engine</CardTitle>
+                <CardTitle className="text-white text-base">VoltScore™ AI Engine</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-200 mb-3">Proprietary machine learning algorithm scoring sites 0-100 based on development potential</p>
-                <div className="text-sm text-neon-green font-semibold">• 97% accuracy rate</div>
-                <div className="text-sm text-electric-yellow font-semibold">• 15+ scoring factors</div>
+                <p className="text-slate-200 mb-2 text-sm">Proprietary machine learning algorithm scoring sites 0-100 based on development potential</p>
+                <div className="text-xs text-neon-green font-semibold">• 97% accuracy rate</div>
+                <div className="text-xs text-electric-yellow font-semibold">• 15+ scoring factors</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-2xl hover:shadow-neon-green/20">
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-3">
-                  <Satellite className="w-8 h-8 text-neon-green group-hover:scale-110 transition-transform" />
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-xl hover:shadow-neon-green/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Satellite className="w-6 h-6 text-neon-green group-hover:scale-110 transition-transform" />
                   <Badge className="bg-neon-green/20 text-neon-green text-xs">Computer Vision</Badge>
                 </div>
-                <CardTitle className="text-white">Satellite Intelligence</CardTitle>
+                <CardTitle className="text-white text-base">Satellite Intelligence</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-200 mb-3">AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns</p>
-                <div className="text-sm text-electric-blue font-semibold">• 1m resolution imagery</div>
-                <div className="text-sm text-electric-yellow font-semibold">• Monthly updates</div>
+                <p className="text-slate-200 mb-2 text-sm">AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns</p>
+                <div className="text-xs text-electric-blue font-semibold">• 1m resolution imagery</div>
+                <div className="text-xs text-electric-yellow font-semibold">• Monthly updates</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-warm-orange/50 transition-all group hover:shadow-2xl hover:shadow-warm-orange/20">
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-3">
-                  <Activity className="w-8 h-8 text-warm-orange group-hover:scale-110 transition-transform" />
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-warm-orange/50 transition-all group hover:shadow-xl hover:shadow-warm-orange/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Activity className="w-6 h-6 text-warm-orange group-hover:scale-110 transition-transform" />
                   <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
                 </div>
-                <CardTitle className="text-white">Power Rate Forecasting</CardTitle>
+                <CardTitle className="text-white text-base">Power Rate Forecasting</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-200 mb-3">Predictive analytics for electricity pricing based on grid congestion and weather patterns</p>
-                <div className="text-sm text-warm-orange font-semibold">• 3-year forecasts</div>
-                <div className="text-sm text-electric-yellow font-semibold">• Climate modeling</div>
+                <p className="text-slate-200 mb-2 text-sm">Predictive analytics for electricity pricing based on grid congestion and weather patterns</p>
+                <div className="text-xs text-warm-orange font-semibold">• 3-year forecasts</div>
+                <div className="text-xs text-electric-yellow font-semibold">• Climate modeling</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-2xl hover:shadow-electric-blue/20">
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-3">
-                  <AlertTriangle className="w-8 h-8 text-electric-blue group-hover:scale-110 transition-transform" />
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-xl hover:shadow-electric-blue/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <AlertTriangle className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform" />
                   <Badge className="bg-electric-blue/20 text-electric-blue text-xs">Auto-Alert</Badge>
                 </div>
-                <CardTitle className="text-white">Broker Auto-Alerting</CardTitle>
+                <CardTitle className="text-white text-base">Broker Auto-Alerting</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-200 mb-3">Automated broker outreach and utility interconnect queue monitoring with instant notifications</p>
-                <div className="text-sm text-bright-cyan font-semibold">• 2,000+ broker network</div>
-                <div className="text-sm text-electric-yellow font-semibold">• Queue position tracking</div>
+                <p className="text-slate-200 mb-2 text-sm">Automated broker outreach and utility interconnect queue monitoring with instant notifications</p>
+                <div className="text-xs text-bright-cyan font-semibold">• 2,000+ broker network</div>
+                <div className="text-xs text-electric-yellow font-semibold">• Queue position tracking</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-2xl hover:shadow-neon-green/20">
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-3">
-                  <Target className="w-8 h-8 text-neon-green group-hover:scale-110 transition-transform" />
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-xl hover:shadow-neon-green/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Target className="w-6 h-6 text-neon-green group-hover:scale-110 transition-transform" />
                   <Badge className="bg-neon-green/20 text-neon-green text-xs">Hyperscaler Ready</Badge>
                 </div>
-                <CardTitle className="text-white">Data Center Suitability</CardTitle>
+                <CardTitle className="text-white text-base">Data Center Suitability</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-200 mb-3">Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications</p>
-                <div className="text-sm text-electric-blue font-semibold">• Tier compliance check</div>
-                <div className="text-sm text-electric-yellow font-semibold">• Latency modeling</div>
+                <p className="text-slate-200 mb-2 text-sm">Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications</p>
+                <div className="text-xs text-electric-blue font-semibold">• Tier compliance check</div>
+                <div className="text-xs text-electric-yellow font-semibold">• Latency modeling</div>
               </CardContent>
             </Card>
           </div>
 
           {/* Advanced Analytics Section */}
-          <div className="bg-gradient-to-br from-slate-800/30 to-slate-900/30 rounded-3xl p-8 border border-slate-700/50 mb-12">
-            <div className="text-center mb-8">
-              <h3 className="text-3xl font-bold text-white mb-4">Advanced Analytics Dashboard</h3>
+          <div className="bg-gradient-to-br from-slate-800/30 to-slate-900/30 rounded-3xl p-6 border border-slate-700/50 mb-8">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-white mb-2">Advanced Analytics Dashboard</h3>
               <p className="text-slate-200">Real-time market intelligence powered by machine learning</p>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Eye className="w-8 h-8 text-bright-cyan mb-3" />
-                <div className="text-2xl font-bold text-white mb-1">24/7</div>
-                <div className="text-slate-300 text-sm">Market Surveillance</div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600/50">
+                <Eye className="w-6 h-6 text-bright-cyan mb-2" />
+                <div className="text-xl font-bold text-white mb-1">24/7</div>
+                <div className="text-slate-300 text-xs">Market Surveillance</div>
               </div>
               
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Database className="w-8 h-8 text-neon-green mb-3" />
-                <div className="text-2xl font-bold text-white mb-1">50TB+</div>
-                <div className="text-slate-300 text-sm">Data Processed Daily</div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600/50">
+                <Database className="w-6 h-6 text-neon-green mb-2" />
+                <div className="text-xl font-bold text-white mb-1">50TB+</div>
+                <div className="text-slate-300 text-xs">Data Processed Daily</div>
               </div>
               
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Bot className="w-8 h-8 text-electric-yellow mb-3" />
-                <div className="text-2xl font-bold text-white mb-1">AI Scout</div>
-                <div className="text-slate-300 text-sm">Autonomous Discovery</div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600/50">
+                <Bot className="w-6 h-6 text-electric-yellow mb-2" />
+                <div className="text-xl font-bold text-white mb-1">AI Scout</div>
+                <div className="text-slate-300 text-xs">Autonomous Discovery</div>
               </div>
               
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Zap className="w-8 h-8 text-electric-blue mb-3" />
-                <div className="text-2xl font-bold text-white mb-1">&lt; 1s</div>
-                <div className="text-slate-300 text-sm">Alert Response Time</div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600/50">
+                <Zap className="w-6 h-6 text-electric-blue mb-2" />
+                <div className="text-xl font-bold text-white mb-1">&lt; 1s</div>
+                <div className="text-slate-300 text-xs">Alert Response Time</div>
               </div>
             </div>
           </div>
           
           <div className="text-center">
             <Link to="/voltscout">
-              <Button size="lg" className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-12 py-6 text-xl">
+              <Button size="lg" className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg">
                 Access VoltScout Platform
-                <ArrowRight className="ml-3 w-6 h-6" />
+                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <p className="text-slate-300 mt-4 text-sm">
+            <p className="text-slate-300 mt-3 text-sm">
               Exclusive access for accredited investors and fund LPs
             </p>
           </div>
@@ -677,46 +678,46 @@ const Landing = () => {
       </section>
 
       {/* LP Portal Access */}
-      <section className="relative z-10 py-20 px-6 bg-slate-900/50">
+      <section className="relative z-10 py-12 px-6 bg-slate-900/50">
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <Lock className="w-8 h-8 text-electric-blue" />
-            <h2 className="text-4xl font-bold text-white">Secure LP Portal</h2>
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <Lock className="w-6 h-6 text-electric-blue" />
+            <h2 className="text-3xl font-bold text-white">Secure LP Portal</h2>
           </div>
           
-          <p className="text-xl text-slate-200 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-200 mb-6 max-w-2xl mx-auto">
             Exclusive access to VoltScout's internal reports, site leads, and fund investment dashboards
           </p>
           
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700 max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold mb-6 text-white">Portal Features</h3>
-            <div className="grid grid-cols-2 gap-4 text-left">
+          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-6 border border-slate-700 max-w-2xl mx-auto">
+            <h3 className="text-xl font-bold mb-4 text-white">Portal Features</h3>
+            <div className="grid grid-cols-2 gap-3 text-left">
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-electric-blue rounded-full"></div>
-                  <span className="text-slate-200">Real-time fund performance</span>
+                  <span className="text-slate-200 text-sm">Real-time fund performance</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-electric-yellow rounded-full"></div>
-                  <span className="text-slate-200">Property acquisition reports</span>
+                  <span className="text-slate-200 text-sm">Property acquisition reports</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-neon-green rounded-full"></div>
-                  <span className="text-slate-200">VoltScout analytics dashboard</span>
+                  <span className="text-slate-200 text-sm">VoltScout analytics dashboard</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-warm-orange rounded-full"></div>
-                  <span className="text-slate-200">Monthly investor updates</span>
+                  <span className="text-slate-200 text-sm">Monthly investor updates</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-bright-cyan rounded-full"></div>
-                  <span className="text-slate-200">Exit opportunity pipeline</span>
+                  <span className="text-slate-200 text-sm">Exit opportunity pipeline</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-electric-blue rounded-full"></div>
-                  <span className="text-slate-200">Direct team communication</span>
+                  <span className="text-slate-200 text-sm">Direct team communication</span>
                 </div>
               </div>
             </div>
@@ -726,10 +727,10 @@ const Landing = () => {
 
       {/* Enhanced Sign-Up Section */}
       {showSignUpForm && (
-        <section className="relative z-10 py-20 px-6 bg-slate-900/80">
+        <section className="relative z-10 py-12 px-6 bg-slate-900/80">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 text-white">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-3 text-white">
                 Get Access
               </h2>
               <p className="text-slate-200 text-lg">
@@ -739,7 +740,7 @@ const Landing = () => {
             
             <EnhancedSignUpForm />
             
-            <div className="text-center mt-6">
+            <div className="text-center mt-4">
               <Button 
                 variant="ghost" 
                 onClick={() => setShowSignUpForm(false)}
@@ -753,17 +754,17 @@ const Landing = () => {
       )}
 
       {/* Footer */}
-      <footer className="relative z-10 py-12 px-6 bg-slate-950 border-t border-slate-800">
+      <footer className="relative z-10 py-8 px-6 bg-slate-950 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <span className="text-3xl font-bold text-white flex items-center">
-              Watt<Bitcoin className="inline w-8 h-8 mx-0" />yte
+          <div className="flex items-center justify-center space-x-3 mb-3">
+            <span className="text-2xl font-bold text-white flex items-center">
+              Watt<Bitcoin className="inline w-6 h-6 mx-0" />yte
             </span>
           </div>
-          <p className="text-slate-300 mb-4">
+          <p className="text-slate-300 mb-3 text-sm">
             Turning power into profit through intelligent infrastructure investment
           </p>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-400 text-xs">
             © 2024 WattByte Infrastructure Fund. All rights reserved.
           </p>
         </div>
