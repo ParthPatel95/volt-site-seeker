@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ImageGenerator } from '@/components/ImageGenerator';
 import { 
   Zap, 
   TrendingUp, 
@@ -33,7 +34,6 @@ const Landing = () => {
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle contact form submission
     console.log('Contact form submitted:', { email, message });
   };
 
@@ -42,8 +42,8 @@ const Landing = () => {
       {/* Tech grid background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20"></div>
       
-      {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-purple-600/5 to-indigo-600/10"></div>
+      {/* Enhanced gradient overlays with logo colors */}
+      <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/10 via-electric-yellow/5 to-neon-green/10"></div>
       
       {/* Navigation */}
       <nav className="relative z-50 flex items-center justify-between p-6 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
@@ -52,7 +52,7 @@ const Landing = () => {
             <img src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" alt="Wattbyte Logo" className="w-10 h-10" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
               Wattbyte
             </h1>
             <p className="text-xs text-slate-400">Infrastructure Fund</p>
@@ -60,23 +60,32 @@ const Landing = () => {
         </div>
         
         <div className="flex items-center space-x-6">
-          <Link to="/voltscout" className="text-slate-300 hover:text-blue-400 transition-colors">
+          <Link to="/voltscout" className="text-slate-300 hover:text-electric-blue transition-colors">
             VoltScout
           </Link>
-          <Button variant="outline" className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10">
+          <Button variant="outline" className="border-electric-blue/50 text-electric-blue hover:bg-electric-blue/10">
             Request Access
           </Button>
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section with background image */}
       <section className="relative z-10 pt-20 pb-32 px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <Badge variant="outline" className="mb-6 border-blue-500/50 text-blue-400 bg-blue-500/10">
+        {/* Hero background image */}
+        <div className="absolute inset-0 z-0">
+          <ImageGenerator 
+            prompt="Futuristic data center with glowing blue circuits and electrical infrastructure, high-tech power grid visualization, cyberpunk aesthetic, dark background"
+            className="w-full h-full object-cover opacity-20"
+            alt="Data center infrastructure background"
+          />
+        </div>
+        
+        <div className="max-w-6xl mx-auto text-center relative z-10">
+          <Badge variant="outline" className="mb-6 border-electric-blue/50 text-electric-blue bg-electric-blue/10">
             Fund I • $25M Target • 2.0-2.5x MOIC
           </Badge>
           
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-electric-blue to-electric-yellow bg-clip-text text-transparent leading-tight">
             Turning Power<br />into Profit
           </h1>
           
@@ -86,7 +95,7 @@ const Landing = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg">
+            <Button size="lg" className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg">
               Join Investor Room
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
@@ -101,7 +110,7 @@ const Landing = () => {
       <section className="relative z-10 py-20 px-6 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
               Fund I Overview
             </h2>
             <p className="text-slate-300 text-lg max-w-2xl mx-auto">
@@ -110,52 +119,52 @@ const Landing = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all group">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group">
               <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <CardTitle className="text-white">Target Returns</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="text-3xl font-bold text-blue-400">2.0-2.5x</div>
+                  <div className="text-3xl font-bold text-electric-blue">2.0-2.5x</div>
                   <div className="text-slate-400">MOIC</div>
-                  <div className="text-2xl font-bold text-purple-400">30-40%</div>
+                  <div className="text-2xl font-bold text-electric-yellow">30-40%</div>
                   <div className="text-slate-400">Net IRR</div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all group">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group">
               <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 bg-gradient-to-br from-neon-green to-electric-blue rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <CardTitle className="text-white">Current Pipeline</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="text-3xl font-bold text-green-400">700MW+</div>
+                  <div className="text-3xl font-bold text-neon-green">700MW+</div>
                   <div className="text-slate-400">Power Capacity</div>
-                  <div className="text-2xl font-bold text-blue-400">1,000+</div>
+                  <div className="text-2xl font-bold text-electric-blue">1,000+</div>
                   <div className="text-slate-400">Acres</div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all group">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-warm-orange/50 transition-all group">
               <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 bg-gradient-to-br from-electric-yellow to-warm-orange rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <CardTitle className="text-white">Exit Strategy</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="text-3xl font-bold text-purple-400">~2 Year</div>
+                  <div className="text-3xl font-bold text-electric-yellow">~2 Year</div>
                   <div className="text-slate-400">Hold Period</div>
-                  <div className="text-lg font-semibold text-pink-400">Data Center Premium</div>
+                  <div className="text-lg font-semibold text-warm-orange">Data Center Premium</div>
                   <div className="text-slate-400">Exit Value</div>
                 </div>
               </CardContent>
@@ -164,11 +173,11 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Investment Thesis */}
+      {/* Investment Thesis with images */}
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
               Our Thesis
             </h2>
             <p className="text-2xl text-slate-300 font-semibold">
@@ -179,8 +188,8 @@ const Landing = () => {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mt-1">
-                  <Cpu className="w-4 h-4 text-blue-400" />
+                <div className="w-8 h-8 bg-electric-blue/20 rounded-lg flex items-center justify-center mt-1">
+                  <Cpu className="w-4 h-4 text-electric-blue" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-white">AI/HPC Explosion</h3>
@@ -189,8 +198,8 @@ const Landing = () => {
               </div>
               
               <div className="flex items-start space-x-4">
-                <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center mt-1">
-                  <Zap className="w-4 h-4 text-purple-400" />
+                <div className="w-8 h-8 bg-electric-yellow/20 rounded-lg flex items-center justify-center mt-1">
+                  <Zap className="w-4 h-4 text-electric-yellow" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-white">Power Scarcity</h3>
@@ -199,13 +208,22 @@ const Landing = () => {
               </div>
               
               <div className="flex items-start space-x-4">
-                <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center mt-1">
-                  <Building className="w-4 h-4 text-green-400" />
+                <div className="w-8 h-8 bg-neon-green/20 rounded-lg flex items-center justify-center mt-1">
+                  <Building className="w-4 h-4 text-neon-green" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-white">Industrial Transformation</h3>
                   <p className="text-slate-300">Converting undervalued industrial sites into premium digital infrastructure real estate</p>
                 </div>
+              </div>
+              
+              {/* New image showcase */}
+              <div className="mt-8">
+                <ImageGenerator 
+                  prompt="Industrial power substation with electrical transformers and power lines, modern infrastructure, blue and yellow lighting"
+                  className="w-full h-48 object-cover rounded-lg"
+                  alt="Power infrastructure transformation"
+                />
               </div>
             </div>
             
@@ -214,21 +232,21 @@ const Landing = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
                   <span className="text-slate-300">Industrial Land</span>
-                  <span className="text-green-400 font-bold">$50k/acre</span>
+                  <span className="text-neon-green font-bold">$50k/acre</span>
                 </div>
                 <div className="flex justify-center">
-                  <ArrowRight className="w-6 h-6 text-blue-400" />
+                  <ArrowRight className="w-6 h-6 text-electric-blue" />
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
                   <span className="text-slate-300">Power Infrastructure</span>
-                  <span className="text-blue-400 font-bold">+$200k/MW</span>
+                  <span className="text-electric-blue font-bold">+$200k/MW</span>
                 </div>
                 <div className="flex justify-center">
-                  <ArrowRight className="w-6 h-6 text-purple-400" />
+                  <ArrowRight className="w-6 h-6 text-electric-yellow" />
                 </div>
-                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
+                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-electric-blue/20 to-electric-yellow/20 rounded-lg border border-electric-blue/30">
                   <span className="text-white font-semibold">Data Center Ready</span>
-                  <span className="text-yellow-400 font-bold">$500k+/acre</span>
+                  <span className="text-electric-yellow font-bold">$500k+/acre</span>
                 </div>
               </div>
             </div>
@@ -241,11 +259,11 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-lg flex items-center justify-center">
                 <Brain className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                <h2 className="text-5xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
                   VoltScout
                 </h2>
                 <p className="text-sm text-slate-400">Powered by Advanced AI</p>
@@ -256,95 +274,104 @@ const Landing = () => {
             </p>
           </div>
 
+          {/* AI Platform showcase image */}
+          <div className="mb-16">
+            <ImageGenerator 
+              prompt="Advanced AI dashboard showing electrical grid analysis, satellite imagery of power infrastructure, glowing data visualization with blue and green colors"
+              className="w-full h-64 object-cover rounded-xl"
+              alt="VoltScout AI platform visualization"
+            />
+          </div>
+
           {/* Core Features Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all group hover:shadow-2xl hover:shadow-blue-500/20">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-2xl hover:shadow-electric-blue/20">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-3">
-                  <Globe className="w-8 h-8 text-blue-400 group-hover:scale-110 transition-transform" />
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <Globe className="w-8 h-8 text-electric-blue group-hover:scale-110 transition-transform" />
+                  <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
                 </div>
                 <CardTitle className="text-white">Live Infrastructure Mapping</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-300 mb-3">Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring</p>
-                <div className="text-sm text-blue-400 font-semibold">• 50,000+ substations tracked</div>
-                <div className="text-sm text-purple-400 font-semibold">• Live capacity updates</div>
+                <div className="text-sm text-electric-blue font-semibold">• 50,000+ substations tracked</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Live capacity updates</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-purple-500/50 transition-all group hover:shadow-2xl hover:shadow-purple-500/20">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-yellow/50 transition-all group hover:shadow-2xl hover:shadow-electric-yellow/20">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-3">
-                  <BarChart3 className="w-8 h-8 text-purple-400 group-hover:scale-110 transition-transform" />
-                  <Badge className="bg-purple-500/20 text-purple-300 text-xs">AI-Powered</Badge>
+                  <BarChart3 className="w-8 h-8 text-electric-yellow group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-electric-yellow/20 text-electric-yellow text-xs">AI-Powered</Badge>
                 </div>
                 <CardTitle className="text-white">VoltScore™ AI Engine</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-300 mb-3">Proprietary machine learning algorithm scoring sites 0-100 based on development potential</p>
-                <div className="text-sm text-green-400 font-semibold">• 97% accuracy rate</div>
-                <div className="text-sm text-yellow-400 font-semibold">• 15+ scoring factors</div>
+                <div className="text-sm text-neon-green font-semibold">• 97% accuracy rate</div>
+                <div className="text-sm text-electric-yellow font-semibold">• 15+ scoring factors</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-green-500/50 transition-all group hover:shadow-2xl hover:shadow-green-500/20">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-2xl hover:shadow-neon-green/20">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-3">
-                  <Satellite className="w-8 h-8 text-green-400 group-hover:scale-110 transition-transform" />
-                  <Badge className="bg-green-500/20 text-green-300 text-xs">Computer Vision</Badge>
+                  <Satellite className="w-8 h-8 text-neon-green group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-neon-green/20 text-neon-green text-xs">Computer Vision</Badge>
                 </div>
                 <CardTitle className="text-white">Satellite Intelligence</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-300 mb-3">AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns</p>
-                <div className="text-sm text-blue-400 font-semibold">• 1m resolution imagery</div>
-                <div className="text-sm text-purple-400 font-semibold">• Monthly updates</div>
+                <div className="text-sm text-electric-blue font-semibold">• 1m resolution imagery</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Monthly updates</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-yellow-500/50 transition-all group hover:shadow-2xl hover:shadow-yellow-500/20">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-warm-orange/50 transition-all group hover:shadow-2xl hover:shadow-warm-orange/20">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-3">
-                  <Activity className="w-8 h-8 text-yellow-400 group-hover:scale-110 transition-transform" />
+                  <Activity className="w-8 h-8 text-warm-orange group-hover:scale-110 transition-transform" />
                   <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
                 </div>
                 <CardTitle className="text-white">Power Rate Forecasting</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-300 mb-3">Predictive analytics for electricity pricing based on grid congestion and weather patterns</p>
-                <div className="text-sm text-orange-400 font-semibold">• 3-year forecasts</div>
-                <div className="text-sm text-pink-400 font-semibold">• Climate modeling</div>
+                <div className="text-sm text-warm-orange font-semibold">• 3-year forecasts</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Climate modeling</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-orange-500/50 transition-all group hover:shadow-2xl hover:shadow-orange-500/20">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-2xl hover:shadow-electric-blue/20">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-3">
-                  <AlertTriangle className="w-8 h-8 text-orange-400 group-hover:scale-110 transition-transform" />
-                  <Badge className="bg-orange-500/20 text-orange-300 text-xs">Auto-Alert</Badge>
+                  <AlertTriangle className="w-8 h-8 text-electric-blue group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-electric-blue/20 text-electric-blue text-xs">Auto-Alert</Badge>
                 </div>
                 <CardTitle className="text-white">Broker Auto-Alerting</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-300 mb-3">Automated broker outreach and utility interconnect queue monitoring with instant notifications</p>
-                <div className="text-sm text-cyan-400 font-semibold">• 2,000+ broker network</div>
-                <div className="text-sm text-indigo-400 font-semibold">• Queue position tracking</div>
+                <div className="text-sm text-bright-cyan font-semibold">• 2,000+ broker network</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Queue position tracking</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-indigo-500/50 transition-all group hover:shadow-2xl hover:shadow-indigo-500/20">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-2xl hover:shadow-neon-green/20">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-3">
-                  <Target className="w-8 h-8 text-indigo-400 group-hover:scale-110 transition-transform" />
-                  <Badge className="bg-indigo-500/20 text-indigo-300 text-xs">Hyperscaler Ready</Badge>
+                  <Target className="w-8 h-8 text-neon-green group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-neon-green/20 text-neon-green text-xs">Hyperscaler Ready</Badge>
                 </div>
                 <CardTitle className="text-white">Data Center Suitability</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-300 mb-3">Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications</p>
-                <div className="text-sm text-emerald-400 font-semibold">• Tier compliance check</div>
-                <div className="text-sm text-violet-400 font-semibold">• Latency modeling</div>
+                <div className="text-sm text-electric-blue font-semibold">• Tier compliance check</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Latency modeling</div>
               </CardContent>
             </Card>
           </div>
@@ -358,25 +385,25 @@ const Landing = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Eye className="w-8 h-8 text-cyan-400 mb-3" />
+                <Eye className="w-8 h-8 text-bright-cyan mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">24/7</div>
                 <div className="text-slate-400 text-sm">Market Surveillance</div>
               </div>
               
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Database className="w-8 h-8 text-emerald-400 mb-3" />
+                <Database className="w-8 h-8 text-neon-green mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">50TB+</div>
                 <div className="text-slate-400 text-sm">Data Processed Daily</div>
               </div>
               
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Bot className="w-8 h-8 text-violet-400 mb-3" />
+                <Bot className="w-8 h-8 text-electric-yellow mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">AI Scout</div>
                 <div className="text-slate-400 text-sm">Autonomous Discovery</div>
               </div>
               
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
-                <Zap className="w-8 h-8 text-yellow-400 mb-3" />
+                <Zap className="w-8 h-8 text-electric-blue mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">&lt; 1s</div>
                 <div className="text-slate-400 text-sm">Alert Response Time</div>
               </div>
@@ -385,7 +412,7 @@ const Landing = () => {
           
           <div className="text-center">
             <Link to="/voltscout">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-12 py-6 text-xl">
+              <Button size="lg" className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-12 py-6 text-xl">
                 Access VoltScout Platform
                 <ArrowRight className="ml-3 w-6 h-6" />
               </Button>
@@ -397,11 +424,19 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* LP Portal Access */}
+      {/* LP Portal Access with background image */}
       <section className="relative z-10 py-20 px-6 bg-slate-900/50">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="absolute inset-0 z-0">
+          <ImageGenerator 
+            prompt="Secure digital vault with glowing blue locks and encrypted data streams, financial technology background"
+            className="w-full h-full object-cover opacity-10"
+            alt="Secure portal background"
+          />
+        </div>
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <Lock className="w-8 h-8 text-blue-400" />
+            <Lock className="w-8 h-8 text-electric-blue" />
             <h2 className="text-4xl font-bold text-white">Secure LP Portal</h2>
           </div>
           
@@ -414,29 +449,29 @@ const Landing = () => {
             <div className="grid grid-cols-2 gap-4 text-left">
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-electric-blue rounded-full"></div>
                   <span className="text-slate-300">Real-time fund performance</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full"></div>
                   <span className="text-slate-300">Property acquisition reports</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-neon-green rounded-full"></div>
                   <span className="text-slate-300">VoltScout analytics dashboard</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-warm-orange rounded-full"></div>
                   <span className="text-slate-300">Monthly investor updates</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-bright-cyan rounded-full"></div>
                   <span className="text-slate-300">Exit opportunity pipeline</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-electric-blue rounded-full"></div>
                   <span className="text-slate-300">Direct team communication</span>
                 </div>
               </div>
@@ -449,7 +484,7 @@ const Landing = () => {
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
               Get Access
             </h2>
             <p className="text-slate-300 text-lg">
@@ -499,7 +534,7 @@ const Landing = () => {
                   />
                 </div>
                 
-                <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                <Button type="submit" className="w-full bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white">
                   Submit Request
                 </Button>
               </form>
@@ -515,7 +550,7 @@ const Landing = () => {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center">
               <img src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" alt="Wattbyte Logo" className="w-8 h-8" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="text-xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
               Wattbyte
             </span>
           </div>
