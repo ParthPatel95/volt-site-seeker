@@ -15,7 +15,9 @@ export const MarketOpportunitySection = () => {
   ];
 
   const powerCostComparison = [
+    { region: 'Newfoundland', cost: 1.2, capacity: '150MW+' },
     { region: 'Rural TX', cost: 2.8, capacity: '500MW+' },
+    { region: 'Alberta', cost: 2.6, capacity: '400MW+' },
     { region: 'Ohio', cost: 3.4, capacity: '300MW+' },
     { region: 'Wyoming', cost: 3.9, capacity: '200MW+' },
     { region: 'WA State', cost: 4.2, capacity: '400MW+' },
@@ -173,7 +175,7 @@ export const MarketOpportunitySection = () => {
                 </ResponsiveContainer>
               </ChartContainer>
               <div className="mt-1 sm:mt-2 text-center">
-                <p className="text-neon-green font-semibold text-xs sm:text-sm">85% cost savings in target markets</p>
+                <p className="text-neon-green font-semibold text-xs sm:text-sm">93% cost savings in Newfoundland vs CA Bay</p>
               </div>
             </CardContent>
           </Card>
