@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { Building, Zap, TrendingUp } from 'lucide-react';
+import { Building, Zap, TrendingUp, Calendar, Target, DollarSign } from 'lucide-react';
 
 export const FundGrowthPlanSection = () => {
   const fundData = [
@@ -36,6 +36,27 @@ export const FundGrowthPlanSection = () => {
     size: { label: "Fund Size ($M USD)", color: "#0EA5E9" }
   };
 
+  const keyMetrics = [
+    {
+      icon: <DollarSign className="w-5 h-5 text-electric-blue" />,
+      label: "Total Capital Target",
+      value: "$400M USD",
+      description: "Across all three funds"
+    },
+    {
+      icon: <Target className="w-5 h-5 text-electric-yellow" />,
+      label: "Total Investments",
+      value: "42-55",
+      description: "Strategic energy projects"
+    },
+    {
+      icon: <Calendar className="w-5 h-5 text-neon-green" />,
+      label: "Timeline",
+      value: "5-7 Years",
+      description: "Fund deployment period"
+    }
+  ];
+
   return (
     <section className="relative z-10 py-8 px-6 bg-slate-900/50">
       <div className="max-w-7xl mx-auto">
@@ -48,31 +69,60 @@ export const FundGrowthPlanSection = () => {
           </p>
         </div>
 
-        {/* Fund Growth Chart */}
+        {/* Fund Growth Chart with Side Panel */}
         <div className="mb-6">
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader className="pb-3">
               <CardTitle className="text-white text-center">Fund Size Progression</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <ChartContainer config={chartConfig} className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={fundData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="fund" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" />
-                    <ChartTooltip 
-                      content={<ChartTooltipContent />}
-                      formatter={(value) => [`$${value}M USD`, 'Fund Size']}
-                    />
-                    <Bar 
-                      dataKey="size" 
-                      fill="#0EA5E9"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Chart Section */}
+                <div className="lg:col-span-2">
+                  <ChartContainer config={chartConfig} className="h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={fundData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="fund" stroke="#9CA3AF" />
+                        <YAxis stroke="#9CA3AF" />
+                        <ChartTooltip 
+                          content={<ChartTooltipContent />}
+                          formatter={(value) => [`$${value}M USD`, 'Fund Size']}
+                        />
+                        <Bar 
+                          dataKey="size" 
+                          fill="#0EA5E9"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+
+                {/* Key Metrics Panel */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-white mb-3">Key Metrics</h3>
+                  {keyMetrics.map((metric, index) => (
+                    <div key={index} className="bg-slate-700/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        {metric.icon}
+                        <span className="text-sm text-slate-400">{metric.label}</span>
+                      </div>
+                      <div className="text-xl font-bold text-white">{metric.value}</div>
+                      <div className="text-xs text-slate-400">{metric.description}</div>
+                    </div>
+                  ))}
+                  
+                  {/* Growth Strategy Summary */}
+                  <div className="bg-gradient-to-br from-electric-blue/10 to-neon-green/10 rounded-lg p-3 border border-slate-600/30">
+                    <h4 className="text-sm font-semibold text-electric-blue mb-2">Growth Strategy</h4>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Progressive scaling from land acquisition to full infrastructure deployment, 
+                      with each fund building on proven track records and expanding market reach.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
