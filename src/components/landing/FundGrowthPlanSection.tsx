@@ -71,13 +71,10 @@ export const FundGrowthPlanSection = () => {
         {/* Fund Growth Chart with Side Panel */}
         <div className="mb-6">
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white text-center">Fund Size Progression</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-6">
               <div className="grid lg:grid-cols-5 gap-6">
                 {/* Chart Section - Takes up more space */}
-                <div className="lg:col-span-3 flex items-center justify-center">
+                <div className="lg:col-span-3 flex flex-col items-center justify-center">
                   <ChartContainer config={chartConfig} className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={fundData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -106,6 +103,7 @@ export const FundGrowthPlanSection = () => {
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
+                  <h3 className="text-lg font-semibold text-white mt-4">Fund Size Progression</h3>
                 </div>
 
                 {/* Key Metrics Panel - Takes up less space */}
