@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { 
   Zap, 
   TrendingUp, 
@@ -26,6 +27,7 @@ import {
   Eye,
   Bot
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 const Landing = () => {
   const [email, setEmail] = useState('');
@@ -34,6 +36,42 @@ const Landing = () => {
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Contact form submitted:', { email, message });
+  };
+
+  // Chart data for investor presentation
+  const dataCenterGrowthData = [
+    { year: '2020', demand: 100, supply: 95 },
+    { year: '2021', demand: 145, supply: 98 },
+    { year: '2022', demand: 210, supply: 102 },
+    { year: '2023', demand: 320, supply: 108 },
+    { year: '2024', demand: 480, supply: 115 },
+    { year: '2025', demand: 720, supply: 125 }
+  ];
+
+  const powerCostData = [
+    { region: 'Texas', cost: 3.2 },
+    { region: 'Ohio', cost: 4.1 },
+    { region: 'Virginia', cost: 5.8 },
+    { region: 'California', cost: 12.4 },
+    { region: 'New York', cost: 15.2 }
+  ];
+
+  const marketOpportunityData = [
+    { name: 'AI/ML', value: 45, color: '#0EA5E9' },
+    { name: 'Crypto Mining', value: 25, color: '#EAB308' },
+    { name: 'HPC', value: 20, color: '#22C55E' },
+    { name: 'Traditional DC', value: 10, color: '#F97316' }
+  ];
+
+  const chartConfig = {
+    demand: {
+      label: "Demand (GW)",
+      color: "hsl(var(--electric-blue))",
+    },
+    supply: {
+      label: "Supply (GW)",
+      color: "hsl(var(--electric-yellow))",
+    },
   };
 
   return (
@@ -47,8 +85,12 @@ const Landing = () => {
       {/* Navigation */}
       <nav className="relative z-50 flex items-center justify-between p-6 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-lg flex items-center justify-center">
-            <Zap className="w-7 h-7 text-white" />
+          <div className="w-12 h-12 bg-gradient-to-br from-electric-blue via-electric-yellow to-neon-green rounded-lg flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-1 bg-slate-950 rounded-md flex items-center justify-center">
+              <div className="w-6 h-6 bg-gradient-to-br from-electric-blue to-electric-yellow transform rotate-12">
+                <div className="w-full h-full bg-slate-950 clip-path-lightning"></div>
+              </div>
+            </div>
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">
@@ -62,7 +104,7 @@ const Landing = () => {
           <Link to="/voltscout" className="text-slate-200 hover:text-electric-blue transition-colors">
             VoltScout
           </Link>
-          <Button variant="outline" className="border-electric-blue/50 text-electric-blue hover:bg-electric-blue/10">
+          <Button variant="outline" className="border-electric-blue/50 text-black hover:bg-electric-blue/10 hover:text-electric-blue bg-white">
             Request Access
           </Button>
         </div>
@@ -89,9 +131,160 @@ const Landing = () => {
               Join Investor Room
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="border-slate-500 text-slate-200 hover:bg-slate-800 hover:text-white px-8 py-4 text-lg">
+            <Button size="lg" variant="outline" className="border-slate-500 text-black hover:bg-slate-800 hover:text-white px-8 py-4 text-lg bg-white">
               View Pipeline
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Market Opportunity with Charts */}
+      <section className="relative z-10 py-20 px-6 bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4 text-white">
+              Explosive Market Opportunity
+            </h2>
+            <p className="text-slate-200 text-lg max-w-2xl mx-auto">
+              AI revolution creating unprecedented demand for power infrastructure
+            </p>
+          </div>
+          
+          <div className="grid lg:grid-cols-2 gap-12 mb-16">
+            {/* Data Center Demand vs Supply Chart */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-electric-blue" />
+                  Data Center Power Demand Crisis
+                </CardTitle>
+                <CardDescription className="text-slate-300">
+                  Exponential demand growth vs limited supply capacity
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={dataCenterGrowthData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="year" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="demand" 
+                        stroke="hsl(var(--electric-blue))" 
+                        strokeWidth={3}
+                        name="Demand (GW)"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="supply" 
+                        stroke="hsl(var(--electric-yellow))" 
+                        strokeWidth={3}
+                        name="Supply (GW)"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+                <div className="mt-4 text-center">
+                  <p className="text-electric-blue font-semibold">6x demand gap by 2025</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Power Cost Comparison */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-electric-yellow" />
+                  Power Cost Arbitrage Opportunity
+                </CardTitle>
+                <CardDescription className="text-slate-300">
+                  Electricity costs per kWh across key markets
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={powerCostData} layout="horizontal">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis type="number" stroke="#9CA3AF" />
+                      <YAxis dataKey="region" type="category" stroke="#9CA3AF" width={80} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar 
+                        dataKey="cost" 
+                        fill="hsl(var(--neon-green))"
+                        name="Cost (¢/kWh)"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+                <div className="mt-4 text-center">
+                  <p className="text-neon-green font-semibold">70% cost savings in target markets</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Market Breakdown Pie Chart */}
+          <div className="max-w-4xl mx-auto">
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader className="text-center">
+                <CardTitle className="text-white flex items-center justify-center gap-2">
+                  <Target className="w-5 h-5 text-electric-blue" />
+                  $127B Total Addressable Market
+                </CardTitle>
+                <CardDescription className="text-slate-300">
+                  Digital infrastructure segments driving demand
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col lg:flex-row items-center gap-8">
+                  <div className="flex-1">
+                    <ChartContainer config={chartConfig} className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={marketOpportunityData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            dataKey="value"
+                            label={({ name, value }) => `${name}: ${value}%`}
+                          >
+                            {marketOpportunityData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-700/50 p-4 rounded-lg">
+                        <div className="text-2xl font-bold text-electric-blue">$57B</div>
+                        <div className="text-slate-300 text-sm">AI/ML Infrastructure</div>
+                      </div>
+                      <div className="bg-slate-700/50 p-4 rounded-lg">
+                        <div className="text-2xl font-bold text-electric-yellow">$32B</div>
+                        <div className="text-slate-300 text-sm">Crypto Mining</div>
+                      </div>
+                      <div className="bg-slate-700/50 p-4 rounded-lg">
+                        <div className="text-2xl font-bold text-neon-green">$25B</div>
+                        <div className="text-slate-300 text-sm">High Performance Computing</div>
+                      </div>
+                      <div className="bg-slate-700/50 p-4 rounded-lg">
+                        <div className="text-2xl font-bold text-warm-orange">$13B</div>
+                        <div className="text-slate-300 text-sm">Traditional Data Centers</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -444,7 +637,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Contact Form */}
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
@@ -507,7 +699,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="relative z-10 py-12 px-6 bg-slate-950 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
