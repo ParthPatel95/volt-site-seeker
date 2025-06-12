@@ -1,12 +1,10 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { 
   Zap, 
   TrendingUp, 
@@ -28,9 +26,10 @@ import {
   Bot,
   Bitcoin
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 const Landing = () => {
+  const [showSignUpForm, setShowSignUpForm] = useState(false);
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
 
@@ -39,40 +38,50 @@ const Landing = () => {
     console.log('Contact form submitted:', { email, message });
   };
 
-  // Chart data for investor presentation
-  const dataCenterGrowthData = [
-    { year: '2020', demand: 100, supply: 95 },
-    { year: '2021', demand: 145, supply: 98 },
-    { year: '2022', demand: 210, supply: 102 },
-    { year: '2023', demand: 320, supply: 108 },
-    { year: '2024', demand: 480, supply: 115 },
-    { year: '2025', demand: 720, supply: 125 }
+  // Enhanced chart data with more compelling numbers
+  const aiGrowthData = [
+    { year: '2020', aiDataCenters: 2.1, bitcoinMining: 8.5, totalDemand: 15.2 },
+    { year: '2021', aiDataCenters: 3.8, bitcoinMining: 12.3, totalDemand: 22.4 },
+    { year: '2022', aiDataCenters: 7.2, bitcoinMining: 15.1, totalDemand: 31.8 },
+    { year: '2023', aiDataCenters: 15.4, bitcoinMining: 18.7, totalDemand: 48.9 },
+    { year: '2024', aiDataCenters: 28.6, bitcoinMining: 22.1, totalDemand: 67.3 },
+    { year: '2025', aiDataCenters: 45.2, bitcoinMining: 25.8, totalDemand: 89.7 },
+    { year: '2026', aiDataCenters: 68.9, bitcoinMining: 29.4, totalDemand: 125.1 }
   ];
 
-  const powerCostData = [
-    { region: 'Texas', cost: 3.2 },
-    { region: 'Ohio', cost: 4.1 },
-    { region: 'Virginia', cost: 5.8 },
-    { region: 'California', cost: 12.4 },
-    { region: 'New York', cost: 15.2 }
+  const powerCostComparison = [
+    { region: 'Rural Texas', cost: 2.8, capacity: '500MW+' },
+    { region: 'Ohio Valley', cost: 3.4, capacity: '300MW+' },
+    { region: 'Wyoming', cost: 3.9, capacity: '200MW+' },
+    { region: 'Washington State', cost: 4.2, capacity: '400MW+' },
+    { region: 'Virginia (Tier 1)', cost: 6.8, capacity: '100MW+' },
+    { region: 'California Bay Area', cost: 18.4, capacity: '50MW+' }
   ];
 
-  const marketOpportunityData = [
-    { name: 'AI/ML', value: 45, color: '#0EA5E9' },
-    { name: 'Crypto Mining', value: 25, color: '#EAB308' },
-    { name: 'HPC', value: 20, color: '#22C55E' },
-    { name: 'Traditional DC', value: 10, color: '#F97316' }
+  const bitcoinMiningReturns = [
+    { hashrate: '1 EH/s', monthlyRevenue: 245000, powerCost: 108000, netProfit: 137000 },
+    { hashrate: '5 EH/s', monthlyRevenue: 1225000, powerCost: 540000, netProfit: 685000 },
+    { hashrate: '10 EH/s', monthlyRevenue: 2450000, powerCost: 1080000, netProfit: 1370000 },
+    { hashrate: '25 EH/s', monthlyRevenue: 6125000, powerCost: 2700000, netProfit: 3425000 }
+  ];
+
+  const aiHpcDemandGrowth = [
+    { quarter: 'Q1 2023', training: 45, inference: 28, hpc: 15 },
+    { quarter: 'Q2 2023', training: 52, inference: 34, hpc: 18 },
+    { quarter: 'Q3 2023', training: 68, inference: 41, hpc: 22 },
+    { quarter: 'Q4 2023', training: 89, inference: 53, hpc: 27 },
+    { quarter: 'Q1 2024', training: 124, inference: 68, hpc: 34 },
+    { quarter: 'Q2 2024', training: 156, inference: 87, hpc: 41 }
   ];
 
   const chartConfig = {
-    demand: {
-      label: "Demand (GW)",
-      color: "hsl(var(--electric-blue))",
-    },
-    supply: {
-      label: "Supply (GW)",
-      color: "hsl(var(--electric-yellow))",
-    },
+    aiDataCenters: { label: "AI Data Centers (GW)", color: "#0EA5E9" },
+    bitcoinMining: { label: "Bitcoin Mining (GW)", color: "#F59E0B" },
+    totalDemand: { label: "Total Demand (GW)", color: "#10B981" },
+    cost: { label: "Cost (¢/kWh)", color: "#8B5CF6" },
+    training: { label: "AI Training", color: "#0EA5E9" },
+    inference: { label: "AI Inference", color: "#F59E0B" },
+    hpc: { label: "HPC Workloads", color: "#10B981" }
   };
 
   return (
@@ -80,7 +89,7 @@ const Landing = () => {
       {/* Tech grid background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20"></div>
       
-      {/* Enhanced gradient overlays with logo colors */}
+      {/* Enhanced gradient overlays */}
       <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/10 via-electric-yellow/5 to-neon-green/10"></div>
       
       {/* Navigation */}
@@ -108,14 +117,18 @@ const Landing = () => {
           <Link to="/voltscout" className="text-slate-200 hover:text-electric-blue transition-colors">
             VoltScout
           </Link>
-          <Button variant="outline" className="border-electric-blue/50 text-black hover:bg-electric-blue/10 hover:text-electric-blue bg-white">
+          <Button 
+            onClick={() => setShowSignUpForm(true)}
+            variant="outline" 
+            className="border-electric-blue/50 text-black hover:bg-electric-blue/10 hover:text-electric-blue bg-white"
+          >
             Request Access
           </Button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-20 pb-32 px-6">
+      <section className="relative z-10 pt-20 pb-24 px-6">
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <Badge variant="outline" className="mb-6 border-electric-blue/50 text-electric-blue bg-electric-blue/10">
             Fund I • $25M Target • 2.0-2.5x MOIC
@@ -131,7 +144,11 @@ const Landing = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg">
+            <Button 
+              onClick={() => setShowSignUpForm(true)}
+              size="lg" 
+              className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg"
+            >
               Join Investor Room
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
@@ -142,153 +159,217 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Market Opportunity with Charts */}
-      <section className="relative z-10 py-20 px-6 bg-slate-900/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+      {/* Market Opportunity with Enhanced Charts */}
+      <section className="relative z-10 py-16 px-6 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-white">
               Explosive Market Opportunity
             </h2>
             <p className="text-slate-200 text-lg max-w-2xl mx-auto">
-              AI revolution creating unprecedented demand for power infrastructure
+              AI revolution and Bitcoin adoption creating unprecedented demand for power infrastructure
             </p>
           </div>
           
-          <div className="grid lg:grid-cols-2 gap-12 mb-16">
-            {/* Data Center Demand vs Supply Chart */}
+          {/* Primary Charts Row */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            {/* AI & Bitcoin Power Demand Growth */}
             <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
+              <CardHeader className="pb-4">
                 <CardTitle className="text-white flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-electric-blue" />
-                  Data Center Power Demand Crisis
+                  Digital Infrastructure Power Demand
                 </CardTitle>
                 <CardDescription className="text-slate-300">
-                  Exponential demand growth vs limited supply capacity
+                  Exponential growth in AI and Bitcoin mining power requirements
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig} className="h-[300px]">
+              <CardContent className="pt-0">
+                <ChartContainer config={chartConfig} className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={dataCenterGrowthData}>
+                    <AreaChart data={aiGrowthData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey="year" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
+                      <XAxis dataKey="year" stroke="#9CA3AF" fontSize={12} />
+                      <YAxis stroke="#9CA3AF" fontSize={12} />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line 
+                      <Area 
                         type="monotone" 
-                        dataKey="demand" 
-                        stroke="hsl(var(--electric-blue))" 
-                        strokeWidth={3}
-                        name="Demand (GW)"
+                        dataKey="aiDataCenters" 
+                        stackId="1"
+                        stroke="#0EA5E9" 
+                        fill="#0EA5E9"
+                        fillOpacity={0.6}
+                        name="AI Data Centers (GW)"
                       />
-                      <Line 
+                      <Area 
                         type="monotone" 
-                        dataKey="supply" 
-                        stroke="hsl(var(--electric-yellow))" 
-                        strokeWidth={3}
-                        name="Supply (GW)"
+                        dataKey="bitcoinMining" 
+                        stackId="1"
+                        stroke="#F59E0B" 
+                        fill="#F59E0B"
+                        fillOpacity={0.6}
+                        name="Bitcoin Mining (GW)"
                       />
-                    </LineChart>
+                    </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
-                <div className="mt-4 text-center">
-                  <p className="text-electric-blue font-semibold">6x demand gap by 2025</p>
+                <div className="mt-3 text-center">
+                  <p className="text-electric-blue font-semibold text-sm">125+ GW total demand by 2026</p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Power Cost Comparison */}
+            {/* Power Cost Arbitrage */}
             <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
+              <CardHeader className="pb-4">
                 <CardTitle className="text-white flex items-center gap-2">
                   <Zap className="w-5 h-5 text-electric-yellow" />
                   Power Cost Arbitrage Opportunity
                 </CardTitle>
                 <CardDescription className="text-slate-300">
-                  Electricity costs per kWh across key markets
+                  Massive cost differentials across North American markets
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig} className="h-[300px]">
+              <CardContent className="pt-0">
+                <ChartContainer config={chartConfig} className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={powerCostData} layout="horizontal">
+                    <BarChart data={powerCostComparison} layout="horizontal" margin={{ left: 80 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis type="number" stroke="#9CA3AF" />
-                      <YAxis dataKey="region" type="category" stroke="#9CA3AF" width={80} />
+                      <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
+                      <YAxis 
+                        dataKey="region" 
+                        type="category" 
+                        stroke="#9CA3AF" 
+                        width={80}
+                        fontSize={11}
+                      />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Bar 
                         dataKey="cost" 
-                        fill="hsl(var(--neon-green))"
+                        fill="#10B981"
                         name="Cost (¢/kWh)"
+                        radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
-                <div className="mt-4 text-center">
-                  <p className="text-neon-green font-semibold">70% cost savings in target markets</p>
+                <div className="mt-3 text-center">
+                  <p className="text-neon-green font-semibold text-sm">85% cost savings in target markets</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Market Breakdown Pie Chart */}
-          <div className="max-w-4xl mx-auto">
+          {/* Secondary Charts Row */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            {/* Bitcoin Mining Economics */}
             <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="text-center">
-                <CardTitle className="text-white flex items-center justify-center gap-2">
-                  <Target className="w-5 h-5 text-electric-blue" />
-                  $127B Total Addressable Market
+              <CardHeader className="pb-4">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Bitcoin className="w-5 h-5 text-electric-yellow" />
+                  Bitcoin Mining Revenue Potential
                 </CardTitle>
                 <CardDescription className="text-slate-300">
-                  Digital infrastructure segments driving demand
+                  Monthly net profit by mining operation scale (at current BTC price)
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-col lg:flex-row items-center gap-8">
-                  <div className="flex-1">
-                    <ChartContainer config={chartConfig} className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={marketOpportunityData}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={100}
-                            dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}%`}
-                          >
-                            {marketOpportunityData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
-                  <div className="flex-1 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-700/50 p-4 rounded-lg">
-                        <div className="text-2xl font-bold text-electric-blue">$57B</div>
-                        <div className="text-slate-300 text-sm">AI/ML Infrastructure</div>
-                      </div>
-                      <div className="bg-slate-700/50 p-4 rounded-lg">
-                        <div className="text-2xl font-bold text-electric-yellow">$32B</div>
-                        <div className="text-slate-300 text-sm">Crypto Mining</div>
-                      </div>
-                      <div className="bg-slate-700/50 p-4 rounded-lg">
-                        <div className="text-2xl font-bold text-neon-green">$25B</div>
-                        <div className="text-slate-300 text-sm">High Performance Computing</div>
-                      </div>
-                      <div className="bg-slate-700/50 p-4 rounded-lg">
-                        <div className="text-2xl font-bold text-warm-orange">$13B</div>
-                        <div className="text-slate-300 text-sm">Traditional Data Centers</div>
-                      </div>
-                    </div>
-                  </div>
+              <CardContent className="pt-0">
+                <ChartContainer config={chartConfig} className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={bitcoinMiningReturns}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="hashrate" stroke="#9CA3AF" fontSize={12} />
+                      <YAxis stroke="#9CA3AF" fontSize={12} />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        formatter={(value) => [`$${(value as number).toLocaleString()}`, '']}
+                      />
+                      <Bar 
+                        dataKey="netProfit" 
+                        fill="#F59E0B"
+                        name="Monthly Net Profit"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+                <div className="mt-3 text-center">
+                  <p className="text-electric-yellow font-semibold text-sm">$3.4M+ monthly profit potential at 25 EH/s</p>
                 </div>
               </CardContent>
             </Card>
+
+            {/* AI/HPC Compute Demand */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Cpu className="w-5 h-5 text-electric-blue" />
+                  AI & HPC Workload Growth
+                </CardTitle>
+                <CardDescription className="text-slate-300">
+                  Quarterly compute demand by workload type (PetaFLOPs)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ChartContainer config={chartConfig} className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={aiHpcDemandGrowth}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="quarter" stroke="#9CA3AF" fontSize={12} />
+                      <YAxis stroke="#9CA3AF" fontSize={12} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="training" 
+                        stroke="#0EA5E9" 
+                        strokeWidth={3}
+                        name="AI Training"
+                        dot={{ r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="inference" 
+                        stroke="#F59E0B" 
+                        strokeWidth={3}
+                        name="AI Inference"
+                        dot={{ r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="hpc" 
+                        stroke="#10B981" 
+                        strokeWidth={3}
+                        name="HPC Workloads"
+                        dot={{ r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+                <div className="mt-3 text-center">
+                  <p className="text-electric-blue font-semibold text-sm">340% growth in AI training demand YoY</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Market Stats Grid */}
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
+              <div className="text-3xl font-bold text-electric-blue mb-2">$127B</div>
+              <div className="text-slate-300 text-sm">Total Addressable Market</div>
+            </div>
+            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
+              <div className="text-3xl font-bold text-electric-yellow mb-2">6.5x</div>
+              <div className="text-slate-300 text-sm">Demand vs Supply Gap</div>
+            </div>
+            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
+              <div className="text-3xl font-bold text-neon-green mb-2">45%</div>
+              <div className="text-slate-300 text-sm">Market Share - AI/ML</div>
+            </div>
+            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center">
+              <div className="text-3xl font-bold text-warm-orange mb-2">25%</div>
+              <div className="text-slate-300 text-sm">Market Share - Crypto</div>
+            </div>
           </div>
         </div>
       </section>
@@ -641,68 +722,35 @@ const Landing = () => {
         </div>
       </section>
 
-      <section className="relative z-10 py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-white">
-              Get Access
-            </h2>
-            <p className="text-slate-200 text-lg">
-              Join accredited investors backing the future of digital infrastructure
-            </p>
+      {/* Enhanced Sign-Up Section */}
+      {showSignUpForm && (
+        <section className="relative z-10 py-20 px-6 bg-slate-900/80">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold mb-4 text-white">
+                Get Access
+              </h2>
+              <p className="text-slate-200 text-lg">
+                Join accredited investors backing the future of digital infrastructure
+              </p>
+            </div>
+            
+            <EnhancedSignUpForm />
+            
+            <div className="text-center mt-6">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowSignUpForm(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                Close Form
+              </Button>
+            </div>
           </div>
-          
-          <Card className="bg-slate-800/50 border-slate-700 max-w-2xl mx-auto">
-            <CardHeader>
-              <CardTitle className="text-white text-center">Request Investor Access</CardTitle>
-              <CardDescription className="text-slate-300 text-center">
-                Connect with our team to explore Fund I opportunities
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleContactSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-200">First Name</label>
-                    <Input className="bg-slate-700/50 border-slate-600 text-white" placeholder="John" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-200">Last Name</label>
-                    <Input className="bg-slate-700/50 border-slate-600 text-white" placeholder="Doe" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200">Email</label>
-                  <Input 
-                    type="email" 
-                    className="bg-slate-700/50 border-slate-600 text-white" 
-                    placeholder="john@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200">Investment Interest</label>
-                  <Textarea 
-                    className="bg-slate-700/50 border-slate-600 text-white" 
-                    placeholder="Tell us about your investment goals and interest in digital infrastructure..."
-                    rows={4}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  />
-                </div>
-                
-                <Button type="submit" className="w-full bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white">
-                  Submit Request
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+        </section>
+      )}
 
+      {/* Footer */}
       <footer className="relative z-10 py-12 px-6 bg-slate-950 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
