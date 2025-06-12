@@ -47,8 +47,8 @@ const Landing = () => {
       {/* Navigation */}
       <nav className="relative z-50 flex items-center justify-between p-6 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-electric-blue rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">W</span>
+          <div className="w-12 h-12 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-lg flex items-center justify-center">
+            <Zap className="w-7 h-7 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">
@@ -89,7 +89,7 @@ const Landing = () => {
               Join Investor Room
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="border-slate-500 text-slate-200 hover:bg-slate-800 px-8 py-4 text-lg">
+            <Button size="lg" variant="outline" className="border-slate-500 text-slate-200 hover:bg-slate-800 hover:text-white px-8 py-4 text-lg">
               View Pipeline
             </Button>
           </div>
