@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types';
+
+type ScrapingSourceRow = Database['public']['Tables']['scraping_sources']['Row'];
+type ScrapingJobRow = Database['public']['Tables']['scraping_jobs']['Row'];
 
 interface ScrapingSource {
   id: string;
@@ -74,7 +77,18 @@ export function MultiSourceScraper() {
       if (sourcesError) {
         console.error('Error loading sources:', sourcesError);
       } else {
-        setSources(sourcesData || []);
+        // Convert database rows to ScrapingSource interface
+        const transformedSources: ScrapingSource[] = (sourcesData || []).map((row: ScrapingSourceRow) => ({
+          id: row.id,
+          name: row.name,
+          url: row.url,
+          type: row.type as 'real_estate' | 'corporate' | 'news' | 'social',
+          status: row.status as 'active' | 'inactive' | 'error',
+          last_run: row.last_run || undefined,
+          properties_found: row.properties_found || undefined,
+          keywords: row.keywords
+        }));
+        setSources(transformedSources);
       }
 
       // Load jobs from database
@@ -87,7 +101,18 @@ export function MultiSourceScraper() {
       if (jobsError) {
         console.error('Error loading jobs:', jobsError);
       } else {
-        setJobs(jobsData || []);
+        // Convert database rows to ScrapingJob interface
+        const transformedJobs: ScrapingJob[] = (jobsData || []).map((row: ScrapingJobRow) => ({
+          id: row.id,
+          source_id: row.source_id,
+          source_name: row.source_name,
+          status: row.status as 'running' | 'completed' | 'failed',
+          started_at: row.started_at,
+          completed_at: row.completed_at || undefined,
+          properties_found: row.properties_found || 0,
+          errors: row.errors || undefined
+        }));
+        setJobs(transformedJobs);
       }
 
       console.log('Loaded sources:', sourcesData?.length, 'jobs:', jobsData?.length);

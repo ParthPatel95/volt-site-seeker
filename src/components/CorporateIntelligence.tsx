@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types';
+
+type CompanyRow = Database['public']['Tables']['companies']['Row'];
+type DistressAlertRow = Database['public']['Tables']['distress_alerts']['Row'];
 
 interface Company {
   id: string;
@@ -29,7 +32,7 @@ interface Company {
   financial_health_score?: number;
   distress_signals?: string[];
   power_usage_estimate?: number;
-  locations?: any[];
+  locations?: any;
   analyzed_at: string;
 }
 
@@ -71,7 +74,21 @@ export function CorporateIntelligence() {
       if (companiesError) {
         console.error('Error loading companies:', companiesError);
       } else {
-        setCompanies(companiesData || []);
+        // Convert database rows to Company interface
+        const transformedCompanies: Company[] = (companiesData || []).map((row: CompanyRow) => ({
+          id: row.id,
+          name: row.name,
+          ticker: row.ticker || undefined,
+          industry: row.industry,
+          sector: row.sector,
+          market_cap: row.market_cap || undefined,
+          financial_health_score: row.financial_health_score || undefined,
+          distress_signals: row.distress_signals || undefined,
+          power_usage_estimate: row.power_usage_estimate ? Number(row.power_usage_estimate) : undefined,
+          locations: row.locations,
+          analyzed_at: row.analyzed_at
+        }));
+        setCompanies(transformedCompanies);
       }
 
       // Load distress alerts from database
@@ -84,7 +101,18 @@ export function CorporateIntelligence() {
       if (alertsError) {
         console.error('Error loading alerts:', alertsError);
       } else {
-        setAlerts(alertsData || []);
+        // Convert database rows to DistressAlert interface
+        const transformedAlerts: DistressAlert[] = (alertsData || []).map((row: DistressAlertRow) => ({
+          id: row.id,
+          company_name: row.company_name,
+          alert_type: row.alert_type,
+          distress_level: row.distress_level,
+          signals: row.signals,
+          power_capacity: Number(row.power_capacity),
+          potential_value: Number(row.potential_value),
+          created_at: row.created_at
+        }));
+        setAlerts(transformedAlerts);
       }
 
       console.log('Loaded companies:', companiesData?.length, 'alerts:', alertsData?.length);
@@ -426,7 +454,7 @@ export function CorporateIntelligence() {
                     <span>{company.industry} • {company.sector}</span>
                     <div className="flex items-center">
                       <Building2 className="w-3 h-3 mr-1" />
-                      {company.locations?.length || 0} locations
+                      {Array.isArray(company.locations) ? company.locations.length : 0} locations
                     </div>
                   </div>
                 </div>
