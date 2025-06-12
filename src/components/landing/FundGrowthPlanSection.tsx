@@ -76,15 +76,24 @@ export const FundGrowthPlanSection = () => {
               <CardTitle className="text-white text-center">Fund Size Progression</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Chart Section */}
-                <div className="lg:col-span-2">
-                  <ChartContainer config={chartConfig} className="h-[250px]">
+              <div className="grid lg:grid-cols-5 gap-6">
+                {/* Chart Section - Takes up more space */}
+                <div className="lg:col-span-3">
+                  <ChartContainer config={chartConfig} className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={fundData}>
+                      <BarChart data={fundData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="fund" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
+                        <XAxis 
+                          dataKey="fund" 
+                          stroke="#9CA3AF"
+                          fontSize={12}
+                          tickMargin={10}
+                        />
+                        <YAxis 
+                          stroke="#9CA3AF"
+                          fontSize={12}
+                          tickMargin={10}
+                        />
                         <ChartTooltip 
                           content={<ChartTooltipContent />}
                           formatter={(value) => [`$${value}M USD`, 'Fund Size']}
@@ -92,15 +101,16 @@ export const FundGrowthPlanSection = () => {
                         <Bar 
                           dataKey="size" 
                           fill="#0EA5E9"
-                          radius={[4, 4, 0, 0]}
+                          radius={[8, 8, 0, 0]}
+                          maxBarSize={80}
                         />
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
                 </div>
 
-                {/* Key Metrics Panel */}
-                <div className="space-y-4">
+                {/* Key Metrics Panel - Takes up less space */}
+                <div className="lg:col-span-2 space-y-4">
                   <h3 className="text-lg font-semibold text-white mb-3">Key Metrics</h3>
                   {keyMetrics.map((metric, index) => (
                     <div key={index} className="bg-slate-700/30 rounded-lg p-3">
