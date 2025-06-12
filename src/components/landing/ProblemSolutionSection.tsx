@@ -9,7 +9,7 @@ export const ProblemSolutionSection = () => {
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-white">
             Problem We <span className="bg-gradient-to-r from-electric-yellow to-warm-orange bg-clip-text text-transparent">Solve</span>
           </h2>
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-300 max-w-5xl mx-auto leading-relaxed px-2">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-200 max-w-5xl mx-auto leading-relaxed px-2">
             The data center industry faces significant challenges in scaling to meet the explosive demand growth from AI and cloud computing. 
             <span className="text-electric-yellow font-semibold"> Power constraints</span> have emerged as the primary bottleneck in North America's digital infrastructure landscape.
           </p>
@@ -18,7 +18,7 @@ export const ProblemSolutionSection = () => {
         <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-start">
           {/* Data Center Developer Challenges */}
           <div className="group hover:scale-105 transition-all duration-500">
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-slate-700/50 shadow-2xl hover:shadow-electric-yellow/20">
+            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-slate-600/50 shadow-2xl hover:shadow-electric-yellow/20">
               <div className="flex items-center mb-6 sm:mb-8">
                 <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-electric-yellow to-warm-orange rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                   <AlertTriangle className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
@@ -39,7 +39,7 @@ export const ProblemSolutionSection = () => {
                 ].map((challenge, index) => (
                   <div key={index} className="flex items-start space-x-3 sm:space-x-4 group/item hover:translate-x-2 transition-transform duration-300">
                     <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 bg-gradient-to-r from-electric-yellow to-warm-orange rounded-full mt-1.5 sm:mt-2 flex-shrink-0 group-hover/item:scale-125 transition-transform duration-300"></div>
-                    <p className="text-slate-200 leading-relaxed text-sm sm:text-base">{challenge}</p>
+                    <p className="text-slate-100 leading-relaxed text-sm sm:text-base">{challenge}</p>
                   </div>
                 ))}
               </div>
@@ -48,7 +48,7 @@ export const ProblemSolutionSection = () => {
 
           {/* WattByte's Solution */}
           <div className="group hover:scale-105 transition-all duration-500">
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-neon-green/30 shadow-2xl hover:shadow-neon-green/20">
+            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-neon-green/30 shadow-2xl hover:shadow-neon-green/20">
               <div className="flex items-center mb-6 sm:mb-8">
                 <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-neon-green to-electric-blue rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                   <CheckCircle className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
@@ -69,7 +69,7 @@ export const ProblemSolutionSection = () => {
                 ].map((solution, index) => (
                   <div key={index} className="flex items-start space-x-3 sm:space-x-4 group/item hover:translate-x-2 transition-transform duration-300">
                     <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 bg-gradient-to-r from-neon-green to-electric-blue rounded-full mt-1.5 sm:mt-2 flex-shrink-0 group-hover/item:scale-125 transition-transform duration-300"></div>
-                    <p className="text-slate-200 leading-relaxed text-sm sm:text-base">{solution}</p>
+                    <p className="text-slate-100 leading-relaxed text-sm sm:text-base">{solution}</p>
                   </div>
                 ))}
               </div>
@@ -85,7 +85,7 @@ export const ProblemSolutionSection = () => {
               <h4 className="text-xl sm:text-2xl font-bold text-white">The Result</h4>
               <ArrowRight className="w-6 sm:w-8 h-6 sm:h-8 text-neon-green ml-2 sm:ml-3" />
             </div>
-            <p className="text-lg sm:text-xl text-slate-200 font-medium leading-relaxed">
+            <p className="text-lg sm:text-xl text-slate-100 font-medium leading-relaxed">
               By solving these critical industry pain points, WattByte creates <span className="text-electric-blue font-bold">significant value</span> for both 
               data center operators and investors seeking exposure to <span className="text-neon-green font-bold">digital infrastructure growth</span> without 
               the operational complexity of data center development.
