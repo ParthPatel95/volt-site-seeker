@@ -37,9 +37,9 @@ export const FundGrowthPlanSection = () => {
   };
 
   return (
-    <section className="relative z-10 py-12 px-6 bg-slate-900/50">
+    <section className="relative z-10 py-8 px-6 bg-slate-900/50">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h2 className="text-3xl font-bold mb-3 text-white">
             WattByte Energy Fund Growth Plan
           </h2>
@@ -49,13 +49,13 @@ export const FundGrowthPlanSection = () => {
         </div>
 
         {/* Fund Growth Chart */}
-        <div className="mb-8">
+        <div className="mb-6">
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-white text-center">Fund Size Progression</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
+            <CardContent className="pt-0">
+              <ChartContainer config={chartConfig} className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={fundData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -78,10 +78,10 @@ export const FundGrowthPlanSection = () => {
         </div>
         
         {/* Fund Details Grid */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid lg:grid-cols-3 gap-4 mb-6">
           {fundData.map((fund, index) => (
             <Card key={index} className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="pb-4">
+              <CardHeader className="pb-3">
                 <div className="flex items-center gap-3 mb-2">
                   {fund.icon}
                   <div>
@@ -91,7 +91,7 @@ export const FundGrowthPlanSection = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div>
                     <span className="text-slate-400 text-sm">Target Investments:</span>
                     <p className="text-white font-semibold">{fund.investments} strategic investments</p>
@@ -112,7 +112,7 @@ export const FundGrowthPlanSection = () => {
 
         {/* Growth Strategy Description */}
         <Card className="bg-slate-800/30 border-slate-700/50">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-slate-200 text-center leading-relaxed">
               Each successive fund builds on our established track record, expanding our capability to finance larger projects with significant 
               environmental and financial returns. Our proven methodology scales from strategic land acquisition to full infrastructure deployment.
