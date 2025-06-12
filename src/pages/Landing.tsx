@@ -517,15 +517,15 @@ const Landing = () => {
       <section className="relative z-10 py-20 px-6 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-lg flex items-center justify-center">
-                <Brain className="w-8 h-8 text-white" />
+            <div className="flex items-center justify-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-electric-blue to-neon-green rounded-xl flex items-center justify-center mr-6">
+                <Brain className="w-12 h-12 text-white" />
               </div>
               <div className="text-left">
-                <h2 className="text-5xl font-bold text-white">
+                <h2 className="text-5xl font-bold text-white mb-2">
                   VoltScout
                 </h2>
-                <p className="text-sm text-slate-300">Powered by Advanced AI</p>
+                <p className="text-lg text-slate-300">AI-Powered Energy Discovery Platform</p>
               </div>
             </div>
             <p className="text-xl text-slate-200 max-w-4xl mx-auto leading-relaxed">
