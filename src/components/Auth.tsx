@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Zap, AlertCircle, Bitcoin } from 'lucide-react';
+import { Zap, AlertCircle, Bitcoin, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 interface AuthProps {
   onAuthStateChange: (user: User | null, session: Session | null) => void;
@@ -104,9 +105,20 @@ export function Auth({ onAuthStateChange }: AuthProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/30 p-4">
+      {/* Navigation back to landing */}
+      <div className="absolute top-4 left-4 z-50">
+        <Link 
+          to="/" 
+          className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to WattByte</span>
+        </Link>
+      </div>
+
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center space-x-3 mb-4">
+          <Link to="/" className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
               <Zap className="w-8 h-8 text-white" />
             </div>
@@ -115,8 +127,8 @@ export function Auth({ onAuthStateChange }: AuthProps) {
                 Watt<Bitcoin className="w-8 h-8 text-orange-500 inline mx-1" />yte
               </h1>
             </div>
-          </div>
-          <CardTitle>Heavy Power Discovery Platform</CardTitle>
+          </Link>
+          <CardTitle>AI-Powered Energy Discovery Platform</CardTitle>
           <CardDescription>
             Sign in to access property discovery and analysis tools
           </CardDescription>

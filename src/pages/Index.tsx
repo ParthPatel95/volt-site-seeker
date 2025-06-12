@@ -11,8 +11,6 @@ import { DataManagement } from '@/components/DataManagement';
 import { Auth } from '@/components/Auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 
 const Index = () => {
   const { user, session, loading } = useAuth();
@@ -34,21 +32,7 @@ const Index = () => {
 
   // Show auth if not authenticated
   if (!user || !session) {
-    return (
-      <div>
-        {/* Back to Wattbyte link */}
-        <div className="absolute top-4 left-4 z-50">
-          <Link 
-            to="/" 
-            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Wattbyte</span>
-          </Link>
-        </div>
-        <Auth onAuthStateChange={() => {}} />
-      </div>
-    );
+    return <Auth onAuthStateChange={() => {}} />;
   }
 
   const renderContent = () => {
