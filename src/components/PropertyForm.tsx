@@ -10,6 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Building, Save } from 'lucide-react';
+import type { Database } from '@/integrations/supabase/types';
+
+type PropertyType = Database['public']['Enums']['property_type'];
 
 interface PropertyFormProps {
   onPropertyAdded?: () => void;
@@ -25,7 +28,7 @@ export function PropertyForm({ onPropertyAdded, onCancel }: PropertyFormProps) {
     city: '',
     state: '',
     zip_code: '',
-    property_type: '',
+    property_type: '' as PropertyType,
     square_footage: '',
     lot_size_acres: '',
     asking_price: '',
@@ -60,7 +63,7 @@ export function PropertyForm({ onPropertyAdded, onCancel }: PropertyFormProps) {
 
       const { error } = await supabase
         .from('properties')
-        .insert([propertyData]);
+        .insert(propertyData);
 
       if (error) throw error;
 
@@ -134,7 +137,7 @@ export function PropertyForm({ onPropertyAdded, onCancel }: PropertyFormProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="property_type">Property Type *</Label>
-              <Select value={formData.property_type} onValueChange={(value) => handleInputChange('property_type', value)}>
+              <Select value={formData.property_type} onValueChange={(value: PropertyType) => handleInputChange('property_type', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select property type" />
                 </SelectTrigger>
