@@ -34,13 +34,13 @@ export const HeroSection = () => {
           </Badge>
         </div>
         
-        {/* Enhanced main heading - responsive text sizes with better contrast */}
+        {/* Fixed main heading - using bright, visible colors only */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 leading-tight">
           <span className="text-white">Turning </span>
-          <span className="bg-gradient-to-r from-electric-blue via-electric-yellow to-neon-green bg-clip-text text-transparent">Power</span>
+          <span className="text-electric-blue">Power</span>
           <br />
           <span className="text-white">into </span>
-          <span className="bg-gradient-to-r from-neon-green via-electric-yellow to-electric-blue bg-clip-text text-transparent">Profit</span>
+          <span className="text-neon-green">Profit</span>
         </h1>
         
         {/* Enhanced description - responsive text and spacing with better visibility */}

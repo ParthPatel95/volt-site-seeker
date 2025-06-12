@@ -7,7 +7,7 @@ export const ProblemSolutionSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 sm:mb-12 md:mb-16">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-white">
-            Problem We <span className="bg-gradient-to-r from-electric-yellow to-warm-orange bg-clip-text text-transparent">Solve</span>
+            Problem We <span className="text-electric-yellow">Solve</span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-200 max-w-5xl mx-auto leading-relaxed px-2">
             The data center industry faces significant challenges in scaling to meet the explosive demand growth from AI and cloud computing. 

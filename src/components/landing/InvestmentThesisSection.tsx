@@ -7,7 +7,7 @@ export const InvestmentThesisSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 sm:mb-12 md:mb-16">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-white">
-            Our <span className="bg-gradient-to-r from-electric-blue to-neon-green bg-clip-text text-transparent">Thesis</span>
+            Our <span className="text-electric-blue">Thesis</span>
           </h2>
           <p className="text-xl sm:text-2xl md:text-3xl text-electric-yellow font-bold">
             Power Arbitrage → Data Center Gold
