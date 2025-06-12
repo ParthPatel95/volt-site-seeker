@@ -51,7 +51,7 @@ export const HeroSection = () => {
         </p>
         
         {/* Enhanced CTA buttons - responsive layout and sizing */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-12 sm:mb-16 md:mb-20">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-10 md:mb-12">
           <Link to="/voltscout" className="w-full sm:w-auto">
             <Button 
               size="lg" 
@@ -70,7 +70,7 @@ export const HeroSection = () => {
           </Button>
         </div>
 
-        {/* Key metrics - responsive grid and spacing with better contrast */}
+        {/* Key metrics - reduced spacing */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50">
             <div className="text-2xl sm:text-3xl font-bold text-electric-blue mb-2">675MW+</div>
