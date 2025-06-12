@@ -47,23 +47,19 @@ const Landing = () => {
       {/* Navigation */}
       <nav className="relative z-50 flex items-center justify-between p-6 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center">
-            <img 
-              src="/lovable-uploads/484d5d17-7012-42fc-b0e0-47e2f315c9db.png" 
-              alt="Wattbyte Logo" 
-              className="w-10 h-10 object-contain" 
-            />
+          <div className="w-12 h-12 bg-electric-blue rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">W</span>
           </div>
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-white">
               Wattbyte
             </h1>
-            <p className="text-xs text-slate-400">Infrastructure Fund</p>
+            <p className="text-xs text-slate-300">Infrastructure Fund</p>
           </div>
         </div>
         
         <div className="flex items-center space-x-6">
-          <Link to="/voltscout" className="text-slate-300 hover:text-electric-blue transition-colors">
+          <Link to="/voltscout" className="text-slate-200 hover:text-electric-blue transition-colors">
             VoltScout
           </Link>
           <Button variant="outline" className="border-electric-blue/50 text-electric-blue hover:bg-electric-blue/10">
@@ -79,11 +75,11 @@ const Landing = () => {
             Fund I • $25M Target • 2.0-2.5x MOIC
           </Badge>
           
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-electric-blue to-electric-yellow bg-clip-text text-transparent leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white leading-tight">
             Turning Power<br />into Profit
           </h1>
           
-          <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-slate-200 mb-8 max-w-3xl mx-auto leading-relaxed">
             Next-generation infrastructure fund acquiring power-rich land across North America 
             for AI, HPC, and crypto data centers. Backed by 675MW+ of deal experience.
           </p>
@@ -93,7 +89,7 @@ const Landing = () => {
               Join Investor Room
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800 px-8 py-4 text-lg">
+            <Button size="lg" variant="outline" className="border-slate-500 text-slate-200 hover:bg-slate-800 px-8 py-4 text-lg">
               View Pipeline
             </Button>
           </div>
@@ -104,10 +100,10 @@ const Landing = () => {
       <section className="relative z-10 py-20 px-6 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 text-white">
               Fund I Overview
             </h2>
-            <p className="text-slate-300 text-lg max-w-2xl mx-auto">
+            <p className="text-slate-200 text-lg max-w-2xl mx-auto">
               Strategic acquisition and development of undervalued power assets for premium digital infrastructure
             </p>
           </div>
@@ -123,9 +119,9 @@ const Landing = () => {
               <CardContent>
                 <div className="space-y-2">
                   <div className="text-3xl font-bold text-electric-blue">2.0-2.5x</div>
-                  <div className="text-slate-400">MOIC</div>
+                  <div className="text-slate-300">MOIC</div>
                   <div className="text-2xl font-bold text-electric-yellow">30-40%</div>
-                  <div className="text-slate-400">Net IRR</div>
+                  <div className="text-slate-300">Net IRR</div>
                 </div>
               </CardContent>
             </Card>
@@ -140,9 +136,9 @@ const Landing = () => {
               <CardContent>
                 <div className="space-y-2">
                   <div className="text-3xl font-bold text-neon-green">700MW+</div>
-                  <div className="text-slate-400">Power Capacity</div>
+                  <div className="text-slate-300">Power Capacity</div>
                   <div className="text-2xl font-bold text-electric-blue">1,000+</div>
-                  <div className="text-slate-400">Acres</div>
+                  <div className="text-slate-300">Acres</div>
                 </div>
               </CardContent>
             </Card>
@@ -157,9 +153,9 @@ const Landing = () => {
               <CardContent>
                 <div className="space-y-2">
                   <div className="text-3xl font-bold text-electric-yellow">~2 Year</div>
-                  <div className="text-slate-400">Hold Period</div>
+                  <div className="text-slate-300">Hold Period</div>
                   <div className="text-lg font-semibold text-warm-orange">Data Center Premium</div>
-                  <div className="text-slate-400">Exit Value</div>
+                  <div className="text-slate-300">Exit Value</div>
                 </div>
               </CardContent>
             </Card>
@@ -171,10 +167,10 @@ const Landing = () => {
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 text-white">
               Our Thesis
             </h2>
-            <p className="text-2xl text-slate-300 font-semibold">
+            <p className="text-2xl text-slate-200 font-semibold">
               Power Arbitrage → Data Center Gold
             </p>
           </div>
@@ -187,7 +183,7 @@ const Landing = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-white">AI/HPC Explosion</h3>
-                  <p className="text-slate-300">Exponential demand for compute power driving unprecedented data center expansion</p>
+                  <p className="text-slate-200">Exponential demand for compute power driving unprecedented data center expansion</p>
                 </div>
               </div>
               
@@ -197,7 +193,7 @@ const Landing = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-white">Power Scarcity</h3>
-                  <p className="text-slate-300">Limited high-capacity power sites creating massive value arbitrage opportunities</p>
+                  <p className="text-slate-200">Limited high-capacity power sites creating massive value arbitrage opportunities</p>
                 </div>
               </div>
               
@@ -207,26 +203,23 @@ const Landing = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-white">Industrial Transformation</h3>
-                  <p className="text-slate-300">Converting undervalued industrial sites into premium digital infrastructure real estate</p>
+                  <p className="text-slate-200">Converting undervalued industrial sites into premium digital infrastructure real estate</p>
                 </div>
               </div>
-              
-              {/* New image showcase */}
-              
             </div>
             
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700">
               <h3 className="text-2xl font-bold mb-6 text-center text-white">Value Creation Model</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
-                  <span className="text-slate-300">Industrial Land</span>
+                  <span className="text-slate-200">Industrial Land</span>
                   <span className="text-neon-green font-bold">$50k/acre</span>
                 </div>
                 <div className="flex justify-center">
                   <ArrowRight className="w-6 h-6 text-electric-blue" />
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
-                  <span className="text-slate-300">Power Infrastructure</span>
+                  <span className="text-slate-200">Power Infrastructure</span>
                   <span className="text-electric-blue font-bold">+$200k/MW</span>
                 </div>
                 <div className="flex justify-center">
@@ -251,13 +244,13 @@ const Landing = () => {
                 <Brain className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-5xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
+                <h2 className="text-5xl font-bold text-white">
                   VoltScout
                 </h2>
-                <p className="text-sm text-slate-400">Powered by Advanced AI</p>
+                <p className="text-sm text-slate-300">Powered by Advanced AI</p>
               </div>
             </div>
-            <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-200 max-w-4xl mx-auto leading-relaxed">
               Our proprietary AI-powered energy scouting platform that autonomously discovers, analyzes, and ranks power-rich opportunities across North America in real-time
             </p>
           </div>
@@ -273,7 +266,7 @@ const Landing = () => {
                 <CardTitle className="text-white">Live Infrastructure Mapping</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300 mb-3">Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring</p>
+                <p className="text-slate-200 mb-3">Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring</p>
                 <div className="text-sm text-electric-blue font-semibold">• 50,000+ substations tracked</div>
                 <div className="text-sm text-electric-yellow font-semibold">• Live capacity updates</div>
               </CardContent>
@@ -288,7 +281,7 @@ const Landing = () => {
                 <CardTitle className="text-white">VoltScore™ AI Engine</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300 mb-3">Proprietary machine learning algorithm scoring sites 0-100 based on development potential</p>
+                <p className="text-slate-200 mb-3">Proprietary machine learning algorithm scoring sites 0-100 based on development potential</p>
                 <div className="text-sm text-neon-green font-semibold">• 97% accuracy rate</div>
                 <div className="text-sm text-electric-yellow font-semibold">• 15+ scoring factors</div>
               </CardContent>
@@ -303,7 +296,7 @@ const Landing = () => {
                 <CardTitle className="text-white">Satellite Intelligence</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300 mb-3">AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns</p>
+                <p className="text-slate-200 mb-3">AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns</p>
                 <div className="text-sm text-electric-blue font-semibold">• 1m resolution imagery</div>
                 <div className="text-sm text-electric-yellow font-semibold">• Monthly updates</div>
               </CardContent>
@@ -318,7 +311,7 @@ const Landing = () => {
                 <CardTitle className="text-white">Power Rate Forecasting</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300 mb-3">Predictive analytics for electricity pricing based on grid congestion and weather patterns</p>
+                <p className="text-slate-200 mb-3">Predictive analytics for electricity pricing based on grid congestion and weather patterns</p>
                 <div className="text-sm text-warm-orange font-semibold">• 3-year forecasts</div>
                 <div className="text-sm text-electric-yellow font-semibold">• Climate modeling</div>
               </CardContent>
@@ -333,7 +326,7 @@ const Landing = () => {
                 <CardTitle className="text-white">Broker Auto-Alerting</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300 mb-3">Automated broker outreach and utility interconnect queue monitoring with instant notifications</p>
+                <p className="text-slate-200 mb-3">Automated broker outreach and utility interconnect queue monitoring with instant notifications</p>
                 <div className="text-sm text-bright-cyan font-semibold">• 2,000+ broker network</div>
                 <div className="text-sm text-electric-yellow font-semibold">• Queue position tracking</div>
               </CardContent>
@@ -348,7 +341,7 @@ const Landing = () => {
                 <CardTitle className="text-white">Data Center Suitability</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300 mb-3">Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications</p>
+                <p className="text-slate-200 mb-3">Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications</p>
                 <div className="text-sm text-electric-blue font-semibold">• Tier compliance check</div>
                 <div className="text-sm text-electric-yellow font-semibold">• Latency modeling</div>
               </CardContent>
@@ -359,32 +352,32 @@ const Landing = () => {
           <div className="bg-gradient-to-br from-slate-800/30 to-slate-900/30 rounded-3xl p-8 border border-slate-700/50 mb-12">
             <div className="text-center mb-8">
               <h3 className="text-3xl font-bold text-white mb-4">Advanced Analytics Dashboard</h3>
-              <p className="text-slate-300">Real-time market intelligence powered by machine learning</p>
+              <p className="text-slate-200">Real-time market intelligence powered by machine learning</p>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
                 <Eye className="w-8 h-8 text-bright-cyan mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">24/7</div>
-                <div className="text-slate-400 text-sm">Market Surveillance</div>
+                <div className="text-slate-300 text-sm">Market Surveillance</div>
               </div>
               
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
                 <Database className="w-8 h-8 text-neon-green mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">50TB+</div>
-                <div className="text-slate-400 text-sm">Data Processed Daily</div>
+                <div className="text-slate-300 text-sm">Data Processed Daily</div>
               </div>
               
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
                 <Bot className="w-8 h-8 text-electric-yellow mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">AI Scout</div>
-                <div className="text-slate-400 text-sm">Autonomous Discovery</div>
+                <div className="text-slate-300 text-sm">Autonomous Discovery</div>
               </div>
               
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
                 <Zap className="w-8 h-8 text-electric-blue mb-3" />
                 <div className="text-2xl font-bold text-white mb-1">&lt; 1s</div>
-                <div className="text-slate-400 text-sm">Alert Response Time</div>
+                <div className="text-slate-300 text-sm">Alert Response Time</div>
               </div>
             </div>
           </div>
@@ -396,7 +389,7 @@ const Landing = () => {
                 <ArrowRight className="ml-3 w-6 h-6" />
               </Button>
             </Link>
-            <p className="text-slate-400 mt-4 text-sm">
+            <p className="text-slate-300 mt-4 text-sm">
               Exclusive access for accredited investors and fund LPs
             </p>
           </div>
@@ -411,7 +404,7 @@ const Landing = () => {
             <h2 className="text-4xl font-bold text-white">Secure LP Portal</h2>
           </div>
           
-          <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-slate-200 mb-8 max-w-2xl mx-auto">
             Exclusive access to VoltScout's internal reports, site leads, and fund investment dashboards
           </p>
           
@@ -421,29 +414,29 @@ const Landing = () => {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-electric-blue rounded-full"></div>
-                  <span className="text-slate-300">Real-time fund performance</span>
+                  <span className="text-slate-200">Real-time fund performance</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-electric-yellow rounded-full"></div>
-                  <span className="text-slate-300">Property acquisition reports</span>
+                  <span className="text-slate-200">Property acquisition reports</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-neon-green rounded-full"></div>
-                  <span className="text-slate-300">VoltScout analytics dashboard</span>
+                  <span className="text-slate-200">VoltScout analytics dashboard</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-warm-orange rounded-full"></div>
-                  <span className="text-slate-300">Monthly investor updates</span>
+                  <span className="text-slate-200">Monthly investor updates</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-bright-cyan rounded-full"></div>
-                  <span className="text-slate-300">Exit opportunity pipeline</span>
+                  <span className="text-slate-200">Exit opportunity pipeline</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-electric-blue rounded-full"></div>
-                  <span className="text-slate-300">Direct team communication</span>
+                  <span className="text-slate-200">Direct team communication</span>
                 </div>
               </div>
             </div>
@@ -455,10 +448,10 @@ const Landing = () => {
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 text-white">
               Get Access
             </h2>
-            <p className="text-slate-300 text-lg">
+            <p className="text-slate-200 text-lg">
               Join accredited investors backing the future of digital infrastructure
             </p>
           </div>
@@ -466,7 +459,7 @@ const Landing = () => {
           <Card className="bg-slate-800/50 border-slate-700 max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="text-white text-center">Request Investor Access</CardTitle>
-              <CardDescription className="text-slate-400 text-center">
+              <CardDescription className="text-slate-300 text-center">
                 Connect with our team to explore Fund I opportunities
               </CardDescription>
             </CardHeader>
@@ -474,17 +467,17 @@ const Landing = () => {
               <form onSubmit={handleContactSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">First Name</label>
+                    <label className="text-sm font-medium text-slate-200">First Name</label>
                     <Input className="bg-slate-700/50 border-slate-600 text-white" placeholder="John" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Last Name</label>
+                    <label className="text-sm font-medium text-slate-200">Last Name</label>
                     <Input className="bg-slate-700/50 border-slate-600 text-white" placeholder="Doe" />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Email</label>
+                  <label className="text-sm font-medium text-slate-200">Email</label>
                   <Input 
                     type="email" 
                     className="bg-slate-700/50 border-slate-600 text-white" 
@@ -495,7 +488,7 @@ const Landing = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Investment Interest</label>
+                  <label className="text-sm font-medium text-slate-200">Investment Interest</label>
                   <Textarea 
                     className="bg-slate-700/50 border-slate-600 text-white" 
                     placeholder="Tell us about your investment goals and interest in digital infrastructure..."
@@ -518,21 +511,17 @@ const Landing = () => {
       <footer className="relative z-10 py-12 px-6 bg-slate-950 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-              <img 
-                src="/lovable-uploads/484d5d17-7012-42fc-b0e0-47e2f315c9db.png" 
-                alt="Wattbyte Logo" 
-                className="w-8 h-8 object-contain" 
-              />
+            <div className="w-8 h-8 bg-electric-blue rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">W</span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
+            <span className="text-xl font-bold text-white">
               Wattbyte
             </span>
           </div>
-          <p className="text-slate-400 mb-4">
+          <p className="text-slate-300 mb-4">
             Turning power into profit through intelligent infrastructure investment
           </p>
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-400 text-sm">
             © 2024 Wattbyte Infrastructure Fund. All rights reserved.
           </p>
         </div>
