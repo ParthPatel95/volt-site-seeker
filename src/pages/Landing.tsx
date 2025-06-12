@@ -25,7 +25,8 @@ import {
   Database,
   Eye,
   Bot,
-  Bitcoin
+  Bitcoin,
+  CheckCircle
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
@@ -129,35 +130,136 @@ const Landing = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative z-10 pt-12 pb-16 px-6">
+      {/* Hero Section - Restored spacing */}
+      <section className="relative z-10 pt-20 pb-24 px-6">
         <div className="max-w-6xl mx-auto text-center relative z-10">
-          <Badge variant="outline" className="mb-4 border-electric-blue/50 text-electric-blue bg-electric-blue/10">
+          <Badge variant="outline" className="mb-6 border-electric-blue/50 text-electric-blue bg-electric-blue/10">
             Fund I • $25M Target • 2.0-2.5x MOIC
           </Badge>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white leading-tight">
             Turning Power<br />into Profit
           </h1>
           
-          <p className="text-lg text-slate-200 mb-6 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-slate-200 mb-8 max-w-4xl mx-auto leading-relaxed">
             Next-generation infrastructure fund acquiring power-rich land across North America 
             for AI, HPC, and crypto data centers. Backed by 675MW+ of deal experience.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/voltscout">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-6 py-3 text-lg"
+                className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg"
               >
                 Request Platform Access
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-slate-500 text-black hover:bg-slate-800 hover:text-white px-6 py-3 text-lg bg-white">
+            <Button size="lg" variant="outline" className="border-slate-500 text-black hover:bg-slate-800 hover:text-white px-8 py-4 text-lg bg-white">
               View Pipeline
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Problem We Solve Section */}
+      <section className="relative z-10 py-16 px-6 bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 text-white">
+              Problem We Solve
+            </h2>
+            <p className="text-xl text-slate-200 max-w-4xl mx-auto leading-relaxed">
+              The data center industry faces significant challenges in scaling to meet the explosive demand growth from AI and cloud computing. Power constraints have emerged as the primary bottleneck in North America's digital infrastructure landscape.
+            </p>
+          </div>
+          
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Data Center Developer Challenges */}
+            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700">
+              <h3 className="text-2xl font-bold mb-6 text-white flex items-center">
+                <AlertTriangle className="w-7 h-7 text-electric-yellow mr-3" />
+                Data Center Developer Challenges
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Sourcing power-rich, low-cost sites in increasingly competitive markets</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Navigating complex land entitlement & permitting processes across jurisdictions</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Securing power purchase agreements (PPAs) with favorable terms</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Building critical local relationships with utilities and municipalities</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Managing rising land acquisition costs in traditional data center markets</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Addressing environmental and sustainability concerns</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-electric-yellow rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Balancing speed-to-market with thorough due diligence</p>
+                </div>
+              </div>
+            </div>
+
+            {/* WattByte's Solution */}
+            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-neon-green/30">
+              <h3 className="text-2xl font-bold mb-6 text-white flex items-center">
+                <CheckCircle className="w-7 h-7 text-neon-green mr-3" />
+                WattByte's Solution
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-neon-green rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Identifying stranded or underutilized energy assets across North America</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-neon-green rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Fast-tracking site control and infrastructure planning through established processes</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-neon-green rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Offering buyers plug-and-play brownfield assets with clear development pathways</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-neon-green rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Leveraging existing relationships with power providers and local governments</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-neon-green rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Creating value through strategic land acquisition in emerging data center markets</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-neon-green rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">Prioritizing sites with renewable energy potential to meet ESG requirements</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-neon-green rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-slate-200">De-risking development through comprehensive technical & environmental assessment</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <div className="bg-gradient-to-r from-electric-blue/20 to-neon-green/20 rounded-2xl p-8 border border-electric-blue/30 max-w-4xl mx-auto">
+              <p className="text-lg text-white font-medium leading-relaxed">
+                By solving these critical industry pain points, WattByte creates significant value for both data center operators and investors 
+                seeking exposure to digital infrastructure growth without the operational complexity of data center development.
+              </p>
+            </div>
           </div>
         </div>
       </section>
