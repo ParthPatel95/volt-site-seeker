@@ -20,7 +20,9 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/home" element={<Landing />} />
           <Route path="/landing" element={<Landing />} />
+          <Route path="/app" element={<Index />} />
           <Route path="/voltscout" element={<Index />} />
+          <Route path="/platform" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
