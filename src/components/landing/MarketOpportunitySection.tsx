@@ -16,12 +16,12 @@ export const MarketOpportunitySection = () => {
   ];
 
   const powerCostComparison = [
-    { region: 'Rural Texas', cost: 2.8, capacity: '500MW+' },
-    { region: 'Ohio Valley', cost: 3.4, capacity: '300MW+' },
+    { region: 'Rural TX', cost: 2.8, capacity: '500MW+' },
+    { region: 'Ohio', cost: 3.4, capacity: '300MW+' },
     { region: 'Wyoming', cost: 3.9, capacity: '200MW+' },
-    { region: 'Washington State', cost: 4.2, capacity: '400MW+' },
-    { region: 'Virginia (Tier 1)', cost: 6.8, capacity: '100MW+' },
-    { region: 'California Bay Area', cost: 18.4, capacity: '50MW+' }
+    { region: 'WA State', cost: 4.2, capacity: '400MW+' },
+    { region: 'VA (T1)', cost: 6.8, capacity: '100MW+' },
+    { region: 'CA Bay', cost: 18.4, capacity: '50MW+' }
   ];
 
   const bitcoinMiningReturns = [
@@ -32,12 +32,12 @@ export const MarketOpportunitySection = () => {
   ];
 
   const aiHpcDemandGrowth = [
-    { quarter: 'Q1 2023', training: 45, inference: 28, hpc: 15 },
-    { quarter: 'Q2 2023', training: 52, inference: 34, hpc: 18 },
-    { quarter: 'Q3 2023', training: 68, inference: 41, hpc: 22 },
-    { quarter: 'Q4 2023', training: 89, inference: 53, hpc: 27 },
-    { quarter: 'Q1 2024', training: 124, inference: 68, hpc: 34 },
-    { quarter: 'Q2 2024', training: 156, inference: 87, hpc: 41 }
+    { quarter: 'Q1 23', training: 45, inference: 28, hpc: 15 },
+    { quarter: 'Q2 23', training: 52, inference: 34, hpc: 18 },
+    { quarter: 'Q3 23', training: 68, inference: 41, hpc: 22 },
+    { quarter: 'Q4 23', training: 89, inference: 53, hpc: 27 },
+    { quarter: 'Q1 24', training: 124, inference: 68, hpc: 34 },
+    { quarter: 'Q2 24', training: 156, inference: 87, hpc: 41 }
   ];
 
   const chartConfig = {
@@ -51,47 +51,50 @@ export const MarketOpportunitySection = () => {
   };
 
   return (
-    <section className="relative z-10 py-8 sm:py-10 md:py-12 px-4 sm:px-6 bg-slate-900/50">
+    <section className="relative z-10 py-6 sm:py-8 md:py-12 px-3 sm:px-4 md:px-6 bg-slate-900/50">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 text-white">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-white">
             Explosive Market Opportunity
           </h2>
-          <p className="text-slate-200 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
+          <p className="text-slate-200 text-xs sm:text-sm md:text-base lg:text-lg max-w-2xl mx-auto px-2">
             AI revolution and Bitcoin adoption creating unprecedented demand for power infrastructure
           </p>
         </div>
         
         {/* Primary Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           {/* AI & Bitcoin Power Demand Growth */}
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base md:text-lg">
-                <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-electric-blue flex-shrink-0" />
+            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
+                <TrendingUp className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-blue flex-shrink-0" />
                 <span className="leading-tight">Digital Infrastructure Power Demand</span>
               </CardTitle>
               <CardDescription className="text-slate-300 text-xs sm:text-sm">
                 Exponential growth in AI and Bitcoin mining power requirements
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
-              <ChartContainer config={chartConfig} className="h-[200px] sm:h-[240px] md:h-[280px]">
+            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
+              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={aiGrowthData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <AreaChart data={aiGrowthData} margin={{ top: 5, right: 2, left: 2, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis 
                       dataKey="year" 
                       stroke="#9CA3AF" 
-                      fontSize={10}
-                      tick={{ fontSize: 10 }}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
                       interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={30}
                     />
                     <YAxis 
                       stroke="#9CA3AF" 
-                      fontSize={10}
-                      tick={{ fontSize: 10 }}
-                      width={30}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
+                      width={25}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Area 
@@ -115,7 +118,7 @@ export const MarketOpportunitySection = () => {
                   </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
-              <div className="mt-2 text-center">
+              <div className="mt-1 sm:mt-2 text-center">
                 <p className="text-electric-blue font-semibold text-xs sm:text-sm">125+ GW total demand by 2026</p>
               </div>
             </CardContent>
@@ -123,33 +126,33 @@ export const MarketOpportunitySection = () => {
 
           {/* Power Cost Arbitrage */}
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base md:text-lg">
-                <Zap className="w-4 sm:w-5 h-4 sm:h-5 text-electric-yellow flex-shrink-0" />
+            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
+                <Zap className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-yellow flex-shrink-0" />
                 <span className="leading-tight">Power Cost Arbitrage Opportunity</span>
               </CardTitle>
               <CardDescription className="text-slate-300 text-xs sm:text-sm">
                 Massive cost differentials across North American markets
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
-              <ChartContainer config={chartConfig} className="h-[200px] sm:h-[240px] md:h-[280px]">
+            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
+              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={powerCostComparison} layout="horizontal" margin={{ left: 60, right: 5, top: 5, bottom: 5 }}>
+                  <BarChart data={powerCostComparison} layout="horizontal" margin={{ left: 35, right: 2, top: 5, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis 
                       type="number" 
                       stroke="#9CA3AF" 
-                      fontSize={10}
-                      tick={{ fontSize: 10 }}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
                     />
                     <YAxis 
                       dataKey="region" 
                       type="category" 
                       stroke="#9CA3AF" 
-                      width={60}
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
+                      width={35}
+                      fontSize={7}
+                      tick={{ fontSize: 7 }}
                       interval={0}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
@@ -157,12 +160,12 @@ export const MarketOpportunitySection = () => {
                       dataKey="cost" 
                       fill="#10B981"
                       name="Cost (¢/kWh)"
-                      radius={[0, 4, 4, 0]}
+                      radius={[0, 2, 2, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
-              <div className="mt-2 text-center">
+              <div className="mt-1 sm:mt-2 text-center">
                 <p className="text-neon-green font-semibold text-xs sm:text-sm">85% cost savings in target markets</p>
               </div>
             </CardContent>
@@ -170,35 +173,38 @@ export const MarketOpportunitySection = () => {
         </div>
 
         {/* Secondary Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           {/* Bitcoin Mining Economics */}
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base md:text-lg">
-                <Bitcoin className="w-4 sm:w-5 h-4 sm:h-5 text-electric-yellow flex-shrink-0" />
+            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
+                <Bitcoin className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-yellow flex-shrink-0" />
                 <span className="leading-tight">Bitcoin Mining Revenue Potential</span>
               </CardTitle>
               <CardDescription className="text-slate-300 text-xs sm:text-sm">
                 Monthly net profit by mining operation scale (at current BTC price)
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
-              <ChartContainer config={chartConfig} className="h-[200px] sm:h-[240px] md:h-[280px]">
+            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
+              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={bitcoinMiningReturns} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <BarChart data={bitcoinMiningReturns} margin={{ top: 5, right: 2, left: 2, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis 
                       dataKey="hashrate" 
                       stroke="#9CA3AF" 
-                      fontSize={10}
-                      tick={{ fontSize: 10 }}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
                       interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={30}
                     />
                     <YAxis 
                       stroke="#9CA3AF" 
-                      fontSize={10}
-                      tick={{ fontSize: 10 }}
-                      width={40}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
+                      width={25}
                     />
                     <ChartTooltip 
                       content={<ChartTooltipContent />}
@@ -208,12 +214,12 @@ export const MarketOpportunitySection = () => {
                       dataKey="netProfit" 
                       fill="#F59E0B"
                       name="Monthly Net Profit"
-                      radius={[4, 4, 0, 0]}
+                      radius={[2, 2, 0, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
-              <div className="mt-2 text-center">
+              <div className="mt-1 sm:mt-2 text-center">
                 <p className="text-electric-yellow font-semibold text-xs sm:text-sm">$3.4M+ monthly profit potential at 25 EH/s</p>
               </div>
             </CardContent>
@@ -221,32 +227,35 @@ export const MarketOpportunitySection = () => {
 
           {/* AI/HPC Compute Demand */}
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base md:text-lg">
-                <Cpu className="w-4 sm:w-5 h-4 sm:h-5 text-electric-blue flex-shrink-0" />
+            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
+                <Cpu className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-blue flex-shrink-0" />
                 <span className="leading-tight">AI & HPC Workload Growth</span>
               </CardTitle>
               <CardDescription className="text-slate-300 text-xs sm:text-sm">
                 Quarterly compute demand by workload type (PetaFLOPs)
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
-              <ChartContainer config={chartConfig} className="h-[200px] sm:h-[240px] md:h-[280px]">
+            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
+              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={aiHpcDemandGrowth} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <LineChart data={aiHpcDemandGrowth} margin={{ top: 5, right: 2, left: 2, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis 
                       dataKey="quarter" 
                       stroke="#9CA3AF" 
-                      fontSize={10}
-                      tick={{ fontSize: 10 }}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
                       interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={30}
                     />
                     <YAxis 
                       stroke="#9CA3AF" 
-                      fontSize={10}
-                      tick={{ fontSize: 10 }}
-                      width={30}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
+                      width={25}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Line 
@@ -255,7 +264,7 @@ export const MarketOpportunitySection = () => {
                       stroke="#0EA5E9" 
                       strokeWidth={2}
                       name="AI Training"
-                      dot={{ r: 3 }}
+                      dot={{ r: 2 }}
                     />
                     <Line 
                       type="monotone" 
@@ -263,7 +272,7 @@ export const MarketOpportunitySection = () => {
                       stroke="#F59E0B" 
                       strokeWidth={2}
                       name="AI Inference"
-                      dot={{ r: 3 }}
+                      dot={{ r: 2 }}
                     />
                     <Line 
                       type="monotone" 
@@ -271,12 +280,12 @@ export const MarketOpportunitySection = () => {
                       stroke="#10B981" 
                       strokeWidth={2}
                       name="HPC Workloads"
-                      dot={{ r: 3 }}
+                      dot={{ r: 2 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </ChartContainer>
-              <div className="mt-2 text-center">
+              <div className="mt-1 sm:mt-2 text-center">
                 <p className="text-electric-blue font-semibold text-xs sm:text-sm">340% growth in AI training demand YoY</p>
               </div>
             </CardContent>
@@ -284,21 +293,21 @@ export const MarketOpportunitySection = () => {
         </div>
 
         {/* Market Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-slate-800/30 rounded-xl p-3 sm:p-4 border border-slate-700/50 text-center">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-electric-blue mb-1">$127B</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-electric-blue mb-1">$127B</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Total Addressable Market</div>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-3 sm:p-4 border border-slate-700/50 text-center">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-electric-yellow mb-1">6.5x</div>
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-electric-yellow mb-1">6.5x</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Demand vs Supply Gap</div>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-3 sm:p-4 border border-slate-700/50 text-center">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-neon-green mb-1">45%</div>
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-neon-green mb-1">45%</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Market Share - AI/ML</div>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-3 sm:p-4 border border-slate-700/50 text-center">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-warm-orange mb-1">25%</div>
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-warm-orange mb-1">25%</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Market Share - Crypto</div>
           </div>
         </div>
