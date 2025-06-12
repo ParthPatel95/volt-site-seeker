@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ImageGenerator } from '@/components/ImageGenerator';
 import { 
   Zap, 
   TrendingUp, 
@@ -73,17 +71,8 @@ const Landing = () => {
         </div>
       </nav>
 
-      {/* Hero Section with background image */}
+      {/* Hero Section */}
       <section className="relative z-10 pt-20 pb-32 px-6">
-        {/* Hero background image */}
-        <div className="absolute inset-0 z-0">
-          <ImageGenerator 
-            prompt="Futuristic data center with glowing blue circuits and electrical infrastructure, high-tech power grid visualization, cyberpunk aesthetic, dark background"
-            className="w-full h-full object-cover opacity-20"
-            alt="Data center infrastructure background"
-          />
-        </div>
-        
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <Badge variant="outline" className="mb-6 border-electric-blue/50 text-electric-blue bg-electric-blue/10">
             Fund I • $25M Target • 2.0-2.5x MOIC
@@ -177,7 +166,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Investment Thesis with images */}
+      {/* Investment Thesis */}
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -222,13 +211,7 @@ const Landing = () => {
               </div>
               
               {/* New image showcase */}
-              <div className="mt-8">
-                <ImageGenerator 
-                  prompt="Industrial power substation with electrical transformers and power lines, modern infrastructure, blue and yellow lighting"
-                  className="w-full h-48 object-cover rounded-lg"
-                  alt="Power infrastructure transformation"
-                />
-              </div>
+              
             </div>
             
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700">
@@ -258,7 +241,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* VoltScout Detailed Platform */}
+      {/* VoltScout Platform */}
       <section className="relative z-10 py-20 px-6 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -276,15 +259,6 @@ const Landing = () => {
             <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
               Our proprietary AI-powered energy scouting platform that autonomously discovers, analyzes, and ranks power-rich opportunities across North America in real-time
             </p>
-          </div>
-
-          {/* AI Platform showcase image */}
-          <div className="mb-16">
-            <ImageGenerator 
-              prompt="Advanced AI dashboard showing electrical grid analysis, satellite imagery of power infrastructure, glowing data visualization with blue and green colors"
-              className="w-full h-64 object-cover rounded-xl"
-              alt="VoltScout AI platform visualization"
-            />
           </div>
 
           {/* Core Features Grid */}
@@ -428,16 +402,8 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* LP Portal Access with background image */}
+      {/* LP Portal Access */}
       <section className="relative z-10 py-20 px-6 bg-slate-900/50">
-        <div className="absolute inset-0 z-0">
-          <ImageGenerator 
-            prompt="Secure digital vault with glowing blue locks and encrypted data streams, financial technology background"
-            className="w-full h-full object-cover opacity-10"
-            alt="Secure portal background"
-          />
-        </div>
-        
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="flex items-center justify-center space-x-3 mb-6">
             <Lock className="w-8 h-8 text-electric-blue" />
