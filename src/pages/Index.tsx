@@ -5,6 +5,8 @@ import { Dashboard } from '@/components/Dashboard';
 import { PropertyMap } from '@/components/PropertyMap';
 import { PropertyList } from '@/components/PropertyList';
 import { AlertsPanel } from '@/components/AlertsPanel';
+import { PowerInfrastructure } from '@/components/PowerInfrastructure';
+import { DataManagement } from '@/components/DataManagement';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 const Index = () => {
@@ -20,6 +22,10 @@ const Index = () => {
         return <PropertyList />;
       case 'alerts':
         return <AlertsPanel />;
+      case 'infrastructure':
+        return <PowerInfrastructure />;
+      case 'data':
+        return <DataManagement />;
       default:
         return <Dashboard />;
     }
