@@ -87,9 +87,12 @@ const Landing = () => {
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-gradient-to-br from-electric-blue via-electric-yellow to-neon-green rounded-lg flex items-center justify-center relative overflow-hidden">
             <div className="absolute inset-1 bg-slate-950 rounded-md flex items-center justify-center">
-              <div className="w-6 h-6 bg-gradient-to-br from-electric-blue to-electric-yellow transform rotate-12">
-                <div className="w-full h-full bg-slate-950 clip-path-lightning"></div>
-              </div>
+              <svg width="24" height="24" viewBox="0 0 24 24" className="text-electric-blue">
+                <path
+                  fill="currentColor"
+                  d="M13 0L6 12h5l-2 12 7-12h-5l2-12z"
+                />
+              </svg>
             </div>
           </div>
           <div>
