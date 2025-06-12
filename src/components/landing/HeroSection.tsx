@@ -43,12 +43,11 @@ export const HeroSection = () => {
           <span className="text-neon-green">Profit</span>
         </h1>
         
-        {/* Enhanced description - responsive text and spacing with better visibility */}
+        {/* Enhanced description - consolidated into one sentence */}
         <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-200 mb-8 sm:mb-10 md:mb-12 max-w-5xl mx-auto leading-relaxed font-medium px-2">
           Next-generation infrastructure fund acquiring power-rich land across North America 
-          for <span className="text-electric-blue font-semibold">AI</span>, <span className="text-electric-yellow font-semibold">HPC</span>, and <span className="text-neon-green font-semibold">crypto data centers</span>. 
-          <br className="hidden sm:block" />
-          Backed by <span className="text-electric-blue font-bold">675MW+</span> of deal experience.
+          for <span className="text-electric-blue font-semibold">AI</span>, <span className="text-electric-yellow font-semibold">HPC</span>, and <span className="text-neon-green font-semibold">crypto data centers</span>, 
+          backed by <span className="text-electric-blue font-bold">675MW+</span> of deal experience.
         </p>
         
         {/* Enhanced CTA buttons - responsive layout and sizing */}
