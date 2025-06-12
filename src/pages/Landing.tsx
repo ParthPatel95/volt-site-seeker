@@ -377,7 +377,7 @@ const Landing = () => {
               
               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
                 <Zap className="w-8 h-8 text-yellow-400 mb-3" />
-                <div className="text-2xl font-bold text-white mb-1">< 1s</div>
+                <div className="text-2xl font-bold text-white mb-1">&lt; 1s</div>
                 <div className="text-slate-400 text-sm">Alert Response Time</div>
               </div>
             </div>
