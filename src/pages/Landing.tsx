@@ -25,7 +25,8 @@ import {
   AlertTriangle,
   Database,
   Eye,
-  Bot
+  Bot,
+  Bitcoin
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
@@ -97,7 +98,7 @@ const Landing = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">
-              Wattbyte
+              Watt<Bitcoin className="inline w-6 h-6 mx-0.5" />yte
             </h1>
             <p className="text-xs text-slate-300">Infrastructure Fund</p>
           </div>
@@ -705,18 +706,25 @@ const Landing = () => {
       <footer className="relative z-10 py-12 px-6 bg-slate-950 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-electric-blue rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">W</span>
+            <div className="w-12 h-12 bg-gradient-to-br from-electric-blue via-electric-yellow to-neon-green rounded-lg flex items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-1 bg-slate-950 rounded-md flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" className="text-electric-blue">
+                  <path
+                    fill="currentColor"
+                    d="M13 0L6 12h5l-2 12 7-12h-5l2-12z"
+                  />
+                </svg>
+              </div>
             </div>
-            <span className="text-xl font-bold text-white">
-              Wattbyte
+            <span className="text-2xl font-bold text-white flex items-center">
+              Watt<Bitcoin className="inline w-7 h-7 mx-0.5" />yte
             </span>
           </div>
           <p className="text-slate-300 mb-4">
             Turning power into profit through intelligent infrastructure investment
           </p>
           <p className="text-slate-400 text-sm">
-            © 2024 Wattbyte Infrastructure Fund. All rights reserved.
+            © 2024 WattByte Infrastructure Fund. All rights reserved.
           </p>
         </div>
       </footer>
