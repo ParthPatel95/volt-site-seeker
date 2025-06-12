@@ -17,8 +17,14 @@ import {
   Globe,
   Cpu,
   Building,
-  Users,
-  Lock
+  Lock,
+  Satellite,
+  Activity,
+  Target,
+  AlertTriangle,
+  Database,
+  Eye,
+  Bot
 } from 'lucide-react';
 
 const Landing = () => {
@@ -230,95 +236,163 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* VoltScout Demo */}
+      {/* VoltScout Detailed Platform */}
       <section className="relative z-10 py-20 px-6 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
+                <Brain className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                VoltScout
-              </h2>
+              <div>
+                <h2 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  VoltScout
+                </h2>
+                <p className="text-sm text-slate-400">Powered by Advanced AI</p>
+              </div>
             </div>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Our proprietary AI-powered energy scouting platform that autonomously discovers and analyzes power-rich opportunities
+            <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+              Our proprietary AI-powered energy scouting platform that autonomously discovers, analyzes, and ranks power-rich opportunities across North America in real-time
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all group">
+
+          {/* Core Features Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all group hover:shadow-2xl hover:shadow-blue-500/20">
               <CardHeader>
-                <Globe className="w-8 h-8 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
+                <div className="flex items-center space-x-3 mb-3">
+                  <Globe className="w-8 h-8 text-blue-400 group-hover:scale-110 transition-transform" />
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                </div>
                 <CardTitle className="text-white">Live Infrastructure Mapping</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300">Real-time substation and transformer mapping across USA/Canada</p>
+                <p className="text-slate-300 mb-3">Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring</p>
+                <div className="text-sm text-blue-400 font-semibold">• 50,000+ substations tracked</div>
+                <div className="text-sm text-purple-400 font-semibold">• Live capacity updates</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-purple-500/50 transition-all group">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-purple-500/50 transition-all group hover:shadow-2xl hover:shadow-purple-500/20">
               <CardHeader>
-                <BarChart3 className="w-8 h-8 text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-white">VoltScore™ AI</CardTitle>
+                <div className="flex items-center space-x-3 mb-3">
+                  <BarChart3 className="w-8 h-8 text-purple-400 group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-purple-500/20 text-purple-300 text-xs">AI-Powered</Badge>
+                </div>
+                <CardTitle className="text-white">VoltScore™ AI Engine</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300">AI-based scoring to rank energy sites by development potential</p>
+                <p className="text-slate-300 mb-3">Proprietary machine learning algorithm scoring sites 0-100 based on development potential</p>
+                <div className="text-sm text-green-400 font-semibold">• 97% accuracy rate</div>
+                <div className="text-sm text-yellow-400 font-semibold">• 15+ scoring factors</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-green-500/50 transition-all group">
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-green-500/50 transition-all group hover:shadow-2xl hover:shadow-green-500/20">
               <CardHeader>
-                <Cpu className="w-8 h-8 text-green-400 mb-2 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-white">Data Center Scoring</CardTitle>
+                <div className="flex items-center space-x-3 mb-3">
+                  <Satellite className="w-8 h-8 text-green-400 group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-green-500/20 text-green-300 text-xs">Computer Vision</Badge>
+                </div>
+                <CardTitle className="text-white">Satellite Intelligence</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-300">Hyperscaler suitability analysis and development feasibility</p>
+                <p className="text-slate-300 mb-3">AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns</p>
+                <div className="text-sm text-blue-400 font-semibold">• 1m resolution imagery</div>
+                <div className="text-sm text-purple-400 font-semibold">• Monthly updates</div>
               </CardContent>
             </Card>
+
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-yellow-500/50 transition-all group hover:shadow-2xl hover:shadow-yellow-500/20">
+              <CardHeader>
+                <div className="flex items-center space-x-3 mb-3">
+                  <Activity className="w-8 h-8 text-yellow-400 group-hover:scale-110 transition-transform" />
+                  <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                </div>
+                <CardTitle className="text-white">Power Rate Forecasting</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-300 mb-3">Predictive analytics for electricity pricing based on grid congestion and weather patterns</p>
+                <div className="text-sm text-orange-400 font-semibold">• 3-year forecasts</div>
+                <div className="text-sm text-pink-400 font-semibold">• Climate modeling</div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-orange-500/50 transition-all group hover:shadow-2xl hover:shadow-orange-500/20">
+              <CardHeader>
+                <div className="flex items-center space-x-3 mb-3">
+                  <AlertTriangle className="w-8 h-8 text-orange-400 group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-orange-500/20 text-orange-300 text-xs">Auto-Alert</Badge>
+                </div>
+                <CardTitle className="text-white">Broker Auto-Alerting</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-300 mb-3">Automated broker outreach and utility interconnect queue monitoring with instant notifications</p>
+                <div className="text-sm text-cyan-400 font-semibold">• 2,000+ broker network</div>
+                <div className="text-sm text-indigo-400 font-semibold">• Queue position tracking</div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-indigo-500/50 transition-all group hover:shadow-2xl hover:shadow-indigo-500/20">
+              <CardHeader>
+                <div className="flex items-center space-x-3 mb-3">
+                  <Target className="w-8 h-8 text-indigo-400 group-hover:scale-110 transition-transform" />
+                  <Badge className="bg-indigo-500/20 text-indigo-300 text-xs">Hyperscaler Ready</Badge>
+                </div>
+                <CardTitle className="text-white">Data Center Suitability</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-300 mb-3">Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications</p>
+                <div className="text-sm text-emerald-400 font-semibold">• Tier compliance check</div>
+                <div className="text-sm text-violet-400 font-semibold">• Latency modeling</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Advanced Analytics Section */}
+          <div className="bg-gradient-to-br from-slate-800/30 to-slate-900/30 rounded-3xl p-8 border border-slate-700/50 mb-12">
+            <div className="text-center mb-8">
+              <h3 className="text-3xl font-bold text-white mb-4">Advanced Analytics Dashboard</h3>
+              <p className="text-slate-300">Real-time market intelligence powered by machine learning</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
+                <Eye className="w-8 h-8 text-cyan-400 mb-3" />
+                <div className="text-2xl font-bold text-white mb-1">24/7</div>
+                <div className="text-slate-400 text-sm">Market Surveillance</div>
+              </div>
+              
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
+                <Database className="w-8 h-8 text-emerald-400 mb-3" />
+                <div className="text-2xl font-bold text-white mb-1">50TB+</div>
+                <div className="text-slate-400 text-sm">Data Processed Daily</div>
+              </div>
+              
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
+                <Bot className="w-8 h-8 text-violet-400 mb-3" />
+                <div className="text-2xl font-bold text-white mb-1">AI Scout</div>
+                <div className="text-slate-400 text-sm">Autonomous Discovery</div>
+              </div>
+              
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-600/50">
+                <Zap className="w-8 h-8 text-yellow-400 mb-3" />
+                <div className="text-2xl font-bold text-white mb-1">< 1s</div>
+                <div className="text-slate-400 text-sm">Alert Response Time</div>
+              </div>
+            </div>
           </div>
           
           <div className="text-center">
             <Link to="/voltscout">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white">
+              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-12 py-6 text-xl">
                 Access VoltScout Platform
-                <ArrowRight className="ml-2 w-5 h-5" />
+                <ArrowRight className="ml-3 w-6 h-6" />
               </Button>
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className="relative z-10 py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Leadership Team
-            </h2>
-            <p className="text-slate-300 text-lg">
-              675MW+ of historical power deal experience
+            <p className="text-slate-400 mt-4 text-sm">
+              Exclusive access for accredited investors and fund LPs
             </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all group hover:shadow-2xl hover:shadow-blue-500/20">
-                <CardHeader className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Users className="w-10 h-10 text-white" />
-                  </div>
-                  <CardTitle className="text-white">Team Member {i}</CardTitle>
-                  <CardDescription className="text-slate-400">Co-Founder & Managing Partner</CardDescription>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-slate-300 text-sm">
-                    Former energy infrastructure executive with 15+ years experience in power development and data center construction.
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         </div>
       </section>
