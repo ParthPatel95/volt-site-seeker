@@ -7,8 +7,10 @@ import {
   Zap, 
   Database,
   BarChart3,
-  Settings
+  Settings,
+  ArrowLeft
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
   Sidebar as SidebarContainer,
   SidebarContent,
@@ -72,6 +74,11 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
   return (
     <SidebarContainer className="border-r border-border">
       <SidebarHeader className="p-6">
+        <Link to="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Back to Wattbyte</span>
+        </Link>
+        
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
             <Zap className="w-5 h-5 text-white" />
