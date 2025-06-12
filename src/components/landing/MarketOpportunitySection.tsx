@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { TrendingUp, Zap, Bitcoin, Cpu } from 'lucide-react';
@@ -138,29 +137,37 @@ export const MarketOpportunitySection = () => {
             <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
               <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={powerCostComparison} layout="horizontal" margin={{ left: 35, right: 2, top: 5, bottom: 5 }}>
+                  <BarChart 
+                    data={powerCostComparison} 
+                    layout="vertical" 
+                    margin={{ top: 5, right: 10, left: 50, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis 
                       type="number" 
                       stroke="#9CA3AF" 
                       fontSize={8}
                       tick={{ fontSize: 8 }}
+                      domain={[0, 'dataMax + 2']}
                     />
                     <YAxis 
                       dataKey="region" 
                       type="category" 
                       stroke="#9CA3AF" 
-                      width={35}
-                      fontSize={7}
-                      tick={{ fontSize: 7 }}
+                      width={45}
+                      fontSize={8}
+                      tick={{ fontSize: 8 }}
                       interval={0}
                     />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      formatter={(value) => [`${value}¢/kWh`, 'Power Cost']}
+                    />
                     <Bar 
                       dataKey="cost" 
                       fill="#10B981"
                       name="Cost (¢/kWh)"
-                      radius={[0, 2, 2, 0]}
+                      radius={[0, 4, 4, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
