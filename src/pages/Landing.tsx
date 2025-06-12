@@ -521,7 +521,7 @@ const Landing = () => {
               <div className="w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-lg flex items-center justify-center">
                 <Brain className="w-8 h-8 text-white" />
               </div>
-              <div>
+              <div className="text-left">
                 <h2 className="text-5xl font-bold text-white">
                   VoltScout
                 </h2>
@@ -754,16 +754,6 @@ const Landing = () => {
       <footer className="relative z-10 py-12 px-6 bg-slate-950 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-electric-blue via-electric-yellow to-neon-green rounded-lg flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-1 bg-slate-950 rounded-md flex items-center justify-center">
-                <svg width="32" height="32" viewBox="0 0 24 24" className="text-electric-blue">
-                  <path
-                    fill="currentColor"
-                    d="M13 0L6 12h5l-2 12 7-12h-5l2-12z"
-                  />
-                </svg>
-              </div>
-            </div>
             <span className="text-3xl font-bold text-white flex items-center">
               Watt<Bitcoin className="inline w-8 h-8 mx-0" /><span className="-ml-1">yte</span>
             </span>
