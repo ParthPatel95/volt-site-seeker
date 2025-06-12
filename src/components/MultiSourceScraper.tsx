@@ -61,67 +61,80 @@ export function MultiSourceScraper() {
   }, []);
 
   const setupDefaultSources = async () => {
-    const defaultSources = [
+    // Initialize with default demo sources
+    const defaultSources: ScrapingSource[] = [
       {
+        id: '1',
         name: 'LoopNet',
         url: 'https://loopnet.com',
         type: 'real_estate',
         status: 'active',
-        keywords: ['data center', 'industrial', 'warehouse', 'manufacturing']
+        keywords: ['data center', 'industrial', 'warehouse', 'manufacturing'],
+        properties_found: 15
       },
       {
+        id: '2',
         name: 'CREXi',
         url: 'https://crexi.com',
         type: 'real_estate', 
         status: 'active',
-        keywords: ['industrial', 'warehouse', 'power', 'heavy use']
+        keywords: ['industrial', 'warehouse', 'power', 'heavy use'],
+        properties_found: 8
       },
       {
+        id: '3',
         name: 'LinkedIn Corporate',
         url: 'https://linkedin.com',
         type: 'corporate',
         status: 'active',
-        keywords: ['facility closure', 'restructuring', 'data center', 'expanding operations']
+        keywords: ['facility closure', 'restructuring', 'data center', 'expanding operations'],
+        properties_found: 3
       },
       {
+        id: '4',
         name: 'SEC EDGAR',
         url: 'https://sec.gov/edgar',
         type: 'corporate',
         status: 'active',
-        keywords: ['asset sale', 'facility', 'real estate', 'restructuring']
+        keywords: ['asset sale', 'facility', 'real estate', 'restructuring'],
+        properties_found: 5
       },
       {
+        id: '5',
         name: 'Business Journals',
         url: 'https://bizjournals.com',
         type: 'news',
         status: 'active',
-        keywords: ['facility closure', 'plant shutdown', 'data center', 'manufacturing']
+        keywords: ['facility closure', 'plant shutdown', 'data center', 'manufacturing'],
+        properties_found: 12
       }
     ];
 
-    // Only add if not already exists
-    for (const source of defaultSources) {
-      const { data: existing } = await supabase
-        .from('scraping_sources' as any)
-        .select('id')
-        .eq('name', source.name)
-        .single();
-
-      if (!existing) {
-        await supabase.from('scraping_sources' as any).insert(source);
-      }
-    }
+    setSources(defaultSources);
   };
 
   const loadData = async () => {
     try {
-      const [sourcesData, jobsData] = await Promise.all([
-        supabase.from('scraping_sources' as any).select('*').order('name'),
-        supabase.from('scraping_jobs' as any).select('*').order('started_at', { ascending: false }).limit(20)
+      // For now, we'll use mock data for jobs since the tables are newly created
+      setJobs([
+        {
+          id: '1',
+          source_id: '1',
+          source_name: 'LoopNet',
+          status: 'completed',
+          started_at: new Date(Date.now() - 3600000).toISOString(),
+          completed_at: new Date(Date.now() - 3300000).toISOString(),
+          properties_found: 5
+        },
+        {
+          id: '2',
+          source_id: '2',
+          source_name: 'CREXi',
+          status: 'running',
+          started_at: new Date(Date.now() - 1800000).toISOString(),
+          properties_found: 0
+        }
       ]);
-
-      if (sourcesData.data) setSources(sourcesData.data as ScrapingSource[]);
-      if (jobsData.data) setJobs(jobsData.data as ScrapingJob[]);
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -131,17 +144,16 @@ export function MultiSourceScraper() {
     if (!newSource.name || !newSource.url) return;
 
     try {
-      const source = {
+      const source: ScrapingSource = {
+        id: Date.now().toString(),
         ...newSource,
         keywords: newSource.keywords.split(',').map(k => k.trim()),
-        status: 'inactive'
+        status: 'inactive',
+        type: newSource.type as any
       };
 
-      const { error } = await supabase.from('scraping_sources' as any).insert(source);
-      if (error) throw error;
-
+      setSources(prev => [...prev, source]);
       setNewSource({ name: '', url: '', type: 'real_estate', keywords: '' });
-      loadData();
       
       toast({
         title: "Source Added",
@@ -215,13 +227,9 @@ export function MultiSourceScraper() {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     
     try {
-      const { error } = await supabase
-        .from('scraping_sources' as any)
-        .update({ status: newStatus })
-        .eq('id', sourceId);
-
-      if (error) throw error;
-      loadData();
+      setSources(prev => prev.map(source => 
+        source.id === sourceId ? { ...source, status: newStatus as any } : source
+      ));
     } catch (error: any) {
       toast({
         title: "Error",
