@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Zap, AlertCircle } from 'lucide-react';
+import { Zap, AlertCircle, Bitcoin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthProps {
@@ -20,6 +21,10 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [company, setCompany] = useState('');
+  const [role, setRole] = useState('');
+  const [platformUse, setPlatformUse] = useState('');
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -52,6 +57,10 @@ export function Auth({ onAuthStateChange }: AuthProps) {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
+            phone: phone,
+            company: company,
+            role: role,
+            platform_use: platformUse,
           }
         }
       });
@@ -95,15 +104,15 @@ export function Auth({ onAuthStateChange }: AuthProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/30 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
+              <Zap className="w-8 h-8 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
-                VoltScout
+            <div className="flex items-center">
+              <h1 className="text-3xl font-bold text-gray-800">
+                Watt<Bitcoin className="w-8 h-8 text-orange-500 inline mx-1" />yte
               </h1>
             </div>
           </div>
@@ -150,30 +159,86 @@ export function Auth({ onAuthStateChange }: AuthProps) {
             
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Full Name *</Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email *</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone">Phone Number *</Label>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="+1 (555) 123-4567"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-company">Company Name *</Label>
+                    <Input
+                      id="signup-company"
+                      type="text"
+                      placeholder="Investment Firm LLC"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-role">Your Role *</Label>
+                    <Input
+                      id="signup-role"
+                      type="text"
+                      placeholder="Managing Partner, CTO, etc."
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-platform">Platform Use Case *</Label>
+                    <Select onValueChange={setPlatformUse}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your use case" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="investor">Investor</SelectItem>
+                        <SelectItem value="energy-broker">Energy Broker</SelectItem>
+                        <SelectItem value="middleman">Middleman</SelectItem>
+                        <SelectItem value="data-center-operator">Data Center Operator</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password">Password *</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -183,6 +248,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
                     minLength={6}
                   />
                 </div>
+
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Creating account...' : 'Create Account'}
                 </Button>
