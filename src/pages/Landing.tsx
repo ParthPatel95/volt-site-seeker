@@ -49,7 +49,11 @@ const Landing = () => {
       <nav className="relative z-50 flex items-center justify-between p-6 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center">
-            <img src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" alt="Wattbyte Logo" className="w-10 h-10" />
+            <img 
+              src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" 
+              alt="Wattbyte Logo" 
+              className="w-10 h-10 object-contain" 
+            />
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
@@ -548,7 +552,11 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-              <img src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" alt="Wattbyte Logo" className="w-8 h-8" />
+              <img 
+                src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" 
+                alt="Wattbyte Logo" 
+                className="w-8 h-8 object-contain" 
+              />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent">
               Wattbyte

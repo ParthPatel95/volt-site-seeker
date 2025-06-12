@@ -19,7 +19,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ prompt, classNam
     
     setIsLoading(true);
     try {
-      const response = await fetch('/api/generate-image', {
+      const response = await fetch('/api/v1/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,6 +30,11 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ prompt, classNam
       if (response.ok) {
         const data = await response.json();
         setImageUrl(data.image);
+        setHasGenerated(true);
+      } else {
+        // Fallback to placeholder on error
+        console.log('Image generation failed, using fallback');
+        setImageUrl(`https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop`);
         setHasGenerated(true);
       }
     } catch (error) {
