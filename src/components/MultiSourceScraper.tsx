@@ -21,10 +21,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Database } from '@/integrations/supabase/types';
+import { Database as DatabaseType } from '@/integrations/supabase/types';
 
-type ScrapingSourceRow = Database['public']['Tables']['scraping_sources']['Row'];
-type ScrapingJobRow = Database['public']['Tables']['scraping_jobs']['Row'];
+type ScrapingSourceRow = DatabaseType['public']['Tables']['scraping_sources']['Row'];
+type ScrapingJobRow = DatabaseType['public']['Tables']['scraping_jobs']['Row'];
 
 interface ScrapingSource {
   id: string;
@@ -86,7 +86,7 @@ export function MultiSourceScraper() {
           status: row.status as 'active' | 'inactive' | 'error',
           last_run: row.last_run || undefined,
           properties_found: row.properties_found || undefined,
-          keywords: row.keywords
+          keywords: row.keywords || []
         }));
         setSources(transformedSources);
       }
