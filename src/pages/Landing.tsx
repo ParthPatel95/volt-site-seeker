@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,7 @@ const Landing = () => {
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center">
             <img 
-              src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" 
+              src="/lovable-uploads/81e0f9b9-41d5-4170-b3ab-919599e1b6f9.png" 
               alt="Wattbyte Logo" 
               className="w-10 h-10 object-contain" 
             />
@@ -519,7 +520,7 @@ const Landing = () => {
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center">
               <img 
-                src="/lovable-uploads/e4b33502-bf65-4c6b-8ce5-e6b0edfdedac.png" 
+                src="/lovable-uploads/81e0f9b9-41d5-4170-b3ab-919599e1b6f9.png" 
                 alt="Wattbyte Logo" 
                 className="w-8 h-8 object-contain" 
               />
