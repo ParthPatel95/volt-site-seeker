@@ -117,13 +117,14 @@ const Landing = () => {
           <Link to="/voltscout" className="text-slate-200 hover:text-electric-blue transition-colors">
             VoltScout
           </Link>
-          <Button 
-            onClick={() => setShowSignUpForm(true)}
-            variant="outline" 
-            className="border-electric-blue/50 text-black hover:bg-electric-blue/10 hover:text-electric-blue bg-white"
-          >
-            Request Access
-          </Button>
+          <Link to="/voltscout">
+            <Button 
+              variant="outline" 
+              className="border-electric-blue/50 text-black hover:bg-electric-blue/10 hover:text-electric-blue bg-white"
+            >
+              Request Access
+            </Button>
+          </Link>
         </div>
       </nav>
 
@@ -144,14 +145,15 @@ const Landing = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={() => setShowSignUpForm(true)}
-              size="lg" 
-              className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg"
-            >
-              Join Investor Room
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <Link to="/voltscout">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg"
+              >
+                Request Platform Access
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Button size="lg" variant="outline" className="border-slate-500 text-black hover:bg-slate-800 hover:text-white px-8 py-4 text-lg bg-white">
               View Pipeline
             </Button>
