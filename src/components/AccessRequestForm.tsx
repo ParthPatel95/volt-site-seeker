@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AccessRequestFormData {
   fullName: string;
@@ -46,18 +47,16 @@ export function AccessRequestForm() {
     setError(null);
 
     try {
-      const response = await fetch('/functions/v1/submit-access-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const { data, error } = await supabase.functions.invoke('submit-access-request', {
+        body: formData,
       });
 
-      const result = await response.json();
+      if (error) {
+        throw new Error(error.message || 'Failed to submit access request');
+      }
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to submit access request');
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to submit access request');
       }
 
       setIsSubmitted(true);
