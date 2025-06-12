@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { 
   Globe, 
@@ -14,7 +13,6 @@ import {
   MapPin,
   Calendar,
   Play,
-  Pause,
   Settings,
   Database,
   TrendingUp,
@@ -104,13 +102,13 @@ export function MultiSourceScraper() {
     // Only add if not already exists
     for (const source of defaultSources) {
       const { data: existing } = await supabase
-        .from('scraping_sources')
+        .from('scraping_sources' as any)
         .select('id')
         .eq('name', source.name)
         .single();
 
       if (!existing) {
-        await supabase.from('scraping_sources').insert(source);
+        await supabase.from('scraping_sources' as any).insert(source);
       }
     }
   };
@@ -118,12 +116,12 @@ export function MultiSourceScraper() {
   const loadData = async () => {
     try {
       const [sourcesData, jobsData] = await Promise.all([
-        supabase.from('scraping_sources').select('*').order('name'),
-        supabase.from('scraping_jobs').select('*').order('started_at', { ascending: false }).limit(20)
+        supabase.from('scraping_sources' as any).select('*').order('name'),
+        supabase.from('scraping_jobs' as any).select('*').order('started_at', { ascending: false }).limit(20)
       ]);
 
-      if (sourcesData.data) setSources(sourcesData.data);
-      if (jobsData.data) setJobs(jobsData.data);
+      if (sourcesData.data) setSources(sourcesData.data as ScrapingSource[]);
+      if (jobsData.data) setJobs(jobsData.data as ScrapingJob[]);
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -139,7 +137,7 @@ export function MultiSourceScraper() {
         status: 'inactive'
       };
 
-      const { error } = await supabase.from('scraping_sources').insert(source);
+      const { error } = await supabase.from('scraping_sources' as any).insert(source);
       if (error) throw error;
 
       setNewSource({ name: '', url: '', type: 'real_estate', keywords: '' });
@@ -218,7 +216,7 @@ export function MultiSourceScraper() {
     
     try {
       const { error } = await supabase
-        .from('scraping_sources')
+        .from('scraping_sources' as any)
         .update({ status: newStatus })
         .eq('id', sourceId);
 

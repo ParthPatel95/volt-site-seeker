@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { Sidebar } from '@/components/Sidebar';
@@ -10,6 +11,9 @@ import { DataManagement } from '@/components/DataManagement';
 import { Auth } from '@/components/Auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { EnhancedPropertyMap } from '@/components/EnhancedPropertyMap';
+import { CorporateIntelligence } from '@/components/CorporateIntelligence';
+import { MultiSourceScraper } from '@/components/MultiSourceScraper';
 
 const Index = () => {
   const { user, session, loading } = useAuth();

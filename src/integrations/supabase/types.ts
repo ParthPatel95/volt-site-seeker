@@ -137,6 +137,228 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          analyzed_at: string
+          created_at: string
+          current_ratio: number | null
+          debt_to_equity: number | null
+          distress_signals: string[] | null
+          financial_health_score: number | null
+          id: string
+          industry: string
+          locations: Json | null
+          market_cap: number | null
+          name: string
+          power_usage_estimate: number | null
+          profit_margin: number | null
+          revenue_growth: number | null
+          sector: string
+          ticker: string | null
+          updated_at: string
+        }
+        Insert: {
+          analyzed_at?: string
+          created_at?: string
+          current_ratio?: number | null
+          debt_to_equity?: number | null
+          distress_signals?: string[] | null
+          financial_health_score?: number | null
+          id?: string
+          industry: string
+          locations?: Json | null
+          market_cap?: number | null
+          name: string
+          power_usage_estimate?: number | null
+          profit_margin?: number | null
+          revenue_growth?: number | null
+          sector: string
+          ticker?: string | null
+          updated_at?: string
+        }
+        Update: {
+          analyzed_at?: string
+          created_at?: string
+          current_ratio?: number | null
+          debt_to_equity?: number | null
+          distress_signals?: string[] | null
+          financial_health_score?: number | null
+          id?: string
+          industry?: string
+          locations?: Json | null
+          market_cap?: number | null
+          name?: string
+          power_usage_estimate?: number | null
+          profit_margin?: number | null
+          revenue_growth?: number | null
+          sector?: string
+          ticker?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      corporate_insights: {
+        Row: {
+          company_name: string
+          content: string
+          discovered_at: string
+          id: string
+          insight_type: string
+          keywords: string[] | null
+          source: string
+        }
+        Insert: {
+          company_name: string
+          content: string
+          discovered_at?: string
+          id?: string
+          insight_type: string
+          keywords?: string[] | null
+          source: string
+        }
+        Update: {
+          company_name?: string
+          content?: string
+          discovered_at?: string
+          id?: string
+          insight_type?: string
+          keywords?: string[] | null
+          source?: string
+        }
+        Relationships: []
+      }
+      distress_alerts: {
+        Row: {
+          alert_type: string
+          company_name: string
+          created_at: string
+          distress_level: number
+          id: string
+          potential_value: number
+          power_capacity: number
+          signals: string[]
+        }
+        Insert: {
+          alert_type: string
+          company_name: string
+          created_at?: string
+          distress_level: number
+          id?: string
+          potential_value: number
+          power_capacity: number
+          signals: string[]
+        }
+        Update: {
+          alert_type?: string
+          company_name?: string
+          created_at?: string
+          distress_level?: number
+          id?: string
+          potential_value?: number
+          power_capacity?: number
+          signals?: string[]
+        }
+        Relationships: []
+      }
+      industry_intelligence: {
+        Row: {
+          company_name: string
+          financial_health: number | null
+          id: string
+          industry: string
+          market_cap: number | null
+          power_intensity: string | null
+          risk_level: string | null
+          scanned_at: string
+          ticker: string | null
+        }
+        Insert: {
+          company_name: string
+          financial_health?: number | null
+          id?: string
+          industry: string
+          market_cap?: number | null
+          power_intensity?: string | null
+          risk_level?: string | null
+          scanned_at?: string
+          ticker?: string | null
+        }
+        Update: {
+          company_name?: string
+          financial_health?: number | null
+          id?: string
+          industry?: string
+          market_cap?: number | null
+          power_intensity?: string | null
+          risk_level?: string | null
+          scanned_at?: string
+          ticker?: string | null
+        }
+        Relationships: []
+      }
+      linkedin_intelligence: {
+        Row: {
+          company: string
+          content: string
+          discovered_at: string
+          id: string
+          keywords: string[] | null
+          post_date: string
+          signals: string[] | null
+        }
+        Insert: {
+          company: string
+          content: string
+          discovered_at?: string
+          id?: string
+          keywords?: string[] | null
+          post_date: string
+          signals?: string[] | null
+        }
+        Update: {
+          company?: string
+          content?: string
+          discovered_at?: string
+          id?: string
+          keywords?: string[] | null
+          post_date?: string
+          signals?: string[] | null
+        }
+        Relationships: []
+      }
+      news_intelligence: {
+        Row: {
+          content: string
+          discovered_at: string
+          id: string
+          keywords: string[] | null
+          published_at: string | null
+          source: string
+          title: string
+          url: string | null
+        }
+        Insert: {
+          content: string
+          discovered_at?: string
+          id?: string
+          keywords?: string[] | null
+          published_at?: string | null
+          source: string
+          title: string
+          url?: string | null
+        }
+        Update: {
+          content?: string
+          discovered_at?: string
+          id?: string
+          keywords?: string[] | null
+          published_at?: string | null
+          source?: string
+          title?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -319,6 +541,86 @@ export type Database = {
           },
         ]
       }
+      scraping_jobs: {
+        Row: {
+          completed_at: string | null
+          errors: string[] | null
+          id: string
+          properties_found: number | null
+          source_id: string
+          source_name: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          errors?: string[] | null
+          id?: string
+          properties_found?: number | null
+          source_id: string
+          source_name: string
+          started_at?: string
+          status: string
+        }
+        Update: {
+          completed_at?: string | null
+          errors?: string[] | null
+          id?: string
+          properties_found?: number | null
+          source_id?: string
+          source_name?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraping_jobs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "scraping_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scraping_sources: {
+        Row: {
+          created_at: string
+          id: string
+          keywords: string[]
+          last_run: string | null
+          name: string
+          properties_found: number | null
+          status: string
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          keywords?: string[]
+          last_run?: string | null
+          name: string
+          properties_found?: number | null
+          status?: string
+          type: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          keywords?: string[]
+          last_run?: string | null
+          name?: string
+          properties_found?: number | null
+          status?: string
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       search_criteria: {
         Row: {
           created_at: string
@@ -349,6 +651,42 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      social_intelligence: {
+        Row: {
+          author: string | null
+          content: string
+          discovered_at: string
+          id: string
+          keywords: string[] | null
+          platform: string
+          posted_at: string | null
+          source: string
+          url: string | null
+        }
+        Insert: {
+          author?: string | null
+          content: string
+          discovered_at?: string
+          id?: string
+          keywords?: string[] | null
+          platform: string
+          posted_at?: string | null
+          source: string
+          url?: string | null
+        }
+        Update: {
+          author?: string | null
+          content?: string
+          discovered_at?: string
+          id?: string
+          keywords?: string[] | null
+          platform?: string
+          posted_at?: string | null
+          source?: string
+          url?: string | null
         }
         Relationships: []
       }

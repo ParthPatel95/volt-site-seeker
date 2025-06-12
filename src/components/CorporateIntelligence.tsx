@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Building2, 
   TrendingDown, 
@@ -15,7 +14,6 @@ import {
   DollarSign,
   Zap,
   Eye,
-  Filter,
   RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,12 +61,12 @@ export function CorporateIntelligence() {
   const loadData = async () => {
     try {
       const [companiesData, alertsData] = await Promise.all([
-        supabase.from('companies').select('*').order('analyzed_at', { ascending: false }),
-        supabase.from('distress_alerts').select('*').order('created_at', { ascending: false }).limit(20)
+        supabase.from('companies' as any).select('*').order('analyzed_at', { ascending: false }),
+        supabase.from('distress_alerts' as any).select('*').order('created_at', { ascending: false }).limit(20)
       ]);
 
-      if (companiesData.data) setCompanies(companiesData.data);
-      if (alertsData.data) setAlerts(alertsData.data);
+      if (companiesData.data) setCompanies(companiesData.data as Company[]);
+      if (alertsData.data) setAlerts(alertsData.data as DistressAlert[]);
     } catch (error) {
       console.error('Error loading data:', error);
     }
