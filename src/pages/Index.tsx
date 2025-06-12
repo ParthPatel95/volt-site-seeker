@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { Sidebar } from '@/components/Sidebar';
@@ -40,9 +39,13 @@ const Index = () => {
       case 'dashboard':
         return <Dashboard />;
       case 'map':
-        return <PropertyMap />;
+        return <EnhancedPropertyMap />;
       case 'properties':
         return <PropertyList />;
+      case 'corporate-intelligence':
+        return <CorporateIntelligence />;
+      case 'multi-scraper':
+        return <MultiSourceScraper />;
       case 'alerts':
         return <AlertsPanel />;
       case 'infrastructure':

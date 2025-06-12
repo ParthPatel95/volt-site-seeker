@@ -1,149 +1,83 @@
 
-import { 
-  Home, 
-  Map, 
-  Building, 
-  Bell, 
-  Zap, 
-  Database,
-  BarChart3,
-  Settings,
-  ArrowLeft
-} from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import {
-  Sidebar as SidebarContainer,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-} from "@/components/ui/sidebar";
+  LayoutDashboard,
+  Map,
+  Building,
+  Bell,
+  Zap,
+  Database,
+  TrendingUp,
+  Search,
+  Globe,
+  Users,
+  Settings
+} from 'lucide-react';
 
 interface SidebarProps {
   activeView: string;
   setActiveView: (view: string) => void;
 }
 
-const menuItems = [
-  {
-    title: "Dashboard",
-    icon: Home,
-    id: "dashboard"
-  },
-  {
-    title: "Discovery Map",
-    icon: Map,
-    id: "map"
-  },
-  {
-    title: "Properties",
-    icon: Building,
-    id: "properties"
-  },
-  {
-    title: "Alerts",
-    icon: Bell,
-    id: "alerts"
-  },
-];
-
-const analyticsItems = [
-  {
-    title: "VoltScore Analytics",
-    icon: BarChart3,
-    id: "analytics"
-  },
-  {
-    title: "Power Infrastructure",
-    icon: Zap,
-    id: "infrastructure"
-  },
-  {
-    title: "Data Management",
-    icon: Database,
-    id: "data"
-  },
-];
-
 export function Sidebar({ activeView, setActiveView }: SidebarProps) {
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'map', label: 'Property Map', icon: Map },
+    { id: 'properties', label: 'Properties', icon: Building },
+    { id: 'corporate-intelligence', label: 'Corporate Intel', icon: TrendingUp },
+    { id: 'multi-scraper', label: 'Multi-Source Scraper', icon: Globe },
+    { id: 'alerts', label: 'Alerts', icon: Bell },
+    { id: 'infrastructure', label: 'Power Infrastructure', icon: Zap },
+    { id: 'data', label: 'Data Management', icon: Database },
+  ];
+
   return (
-    <SidebarContainer className="border-r border-border">
-      <SidebarHeader className="p-6">
-        <Link to="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors mb-4">
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Back to Wattbyte</span>
-        </Link>
-        
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+    <div className="w-64 bg-background border-r border-border h-screen flex flex-col">
+      <div className="p-6 border-b border-border">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-700 rounded-lg flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" className="text-white">
+              <path
+                fill="currentColor"
+                d="M13 0L6 12h5l-2 12 7-12h-5l2-12z"
+              />
+            </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
-              VoltScout
-            </h1>
-            <p className="text-xs text-muted-foreground">Heavy Power Discovery</p>
+            <h1 className="text-xl font-bold">VoltScout</h1>
+            <p className="text-xs text-muted-foreground">Intelligence Platform</p>
           </div>
         </div>
-      </SidebarHeader>
+      </div>
       
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Core Discovery</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton 
-                    onClick={() => setActiveView(item.id)}
-                    isActive={activeView === item.id}
-                    className="w-full justify-start"
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Analytics & AI</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {analyticsItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton 
-                    onClick={() => setActiveView(item.id)}
-                    isActive={activeView === item.id}
-                    className="w-full justify-start"
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </SidebarContainer>
+      <nav className="flex-1 p-4">
+        <ul className="space-y-2">
+          {menuItems.map((item) => (
+            <li key={item.id}>
+              <button
+                onClick={() => setActiveView(item.id)}
+                className={cn(
+                  "w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  activeView === item.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )}
+              >
+                <item.icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      
+      <div className="p-4 border-t border-border">
+        <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent">
+          <Settings className="w-4 h-4" />
+          <span>Settings</span>
+        </button>
+      </div>
+    </div>
   );
 }
