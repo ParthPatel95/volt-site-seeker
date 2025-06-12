@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
@@ -78,8 +77,8 @@ export const FundGrowthPlanSection = () => {
             <CardContent className="pt-0">
               <div className="grid lg:grid-cols-5 gap-6">
                 {/* Chart Section - Takes up more space */}
-                <div className="lg:col-span-3">
-                  <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <div className="lg:col-span-3 flex items-center justify-center">
+                  <ChartContainer config={chartConfig} className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={fundData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -110,7 +109,7 @@ export const FundGrowthPlanSection = () => {
                 </div>
 
                 {/* Key Metrics Panel - Takes up less space */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="lg:col-span-2 space-y-4 flex flex-col justify-center">
                   <h3 className="text-lg font-semibold text-white mb-3">Key Metrics</h3>
                   {keyMetrics.map((metric, index) => (
                     <div key={index} className="bg-slate-700/30 rounded-lg p-3">
