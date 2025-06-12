@@ -123,8 +123,8 @@ export function Auth({ onAuthStateChange }: AuthProps) {
               <Zap className="w-8 h-8 text-white" />
             </div>
             <div className="flex items-center">
-              <h1 className="text-3xl font-bold text-gray-800">
-                Watt<Bitcoin className="w-8 h-8 text-orange-500 inline mx-1" />yte
+              <h1 className="text-3xl font-bold text-gray-800 flex items-center">
+                Watt<Bitcoin className="w-8 h-8 text-orange-500 inline mx-0" />yte
               </h1>
             </div>
           </Link>

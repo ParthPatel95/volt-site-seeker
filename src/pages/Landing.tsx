@@ -107,7 +107,7 @@ const Landing = () => {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center">
-              Watt<Bitcoin className="inline w-7 h-7 mx-0" /><span className="-ml-1">yte</span>
+              Watt<Bitcoin className="inline w-7 h-7 mx-0" />yte
             </h1>
             <p className="text-xs text-slate-300">Infrastructure Fund</p>
           </div>
@@ -525,7 +525,7 @@ const Landing = () => {
                 <h2 className="text-5xl font-bold text-white mb-2">
                   VoltScout
                 </h2>
-                <p className="text-lg text-slate-300">AI-Powered Energy Discovery Platform</p>
+                <p className="text-lg text-slate-300 text-left">AI-Powered Energy Discovery Platform</p>
               </div>
             </div>
             <p className="text-xl text-slate-200 max-w-4xl mx-auto leading-relaxed">
@@ -755,7 +755,7 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <span className="text-3xl font-bold text-white flex items-center">
-              Watt<Bitcoin className="inline w-8 h-8 mx-0" /><span className="-ml-1">yte</span>
+              Watt<Bitcoin className="inline w-8 h-8 mx-0" />yte
             </span>
           </div>
           <p className="text-slate-300 mb-4">
