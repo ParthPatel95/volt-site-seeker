@@ -60,58 +60,54 @@ export function CorporateIntelligence() {
 
   const loadData = async () => {
     try {
-      // For now, we'll use mock data since the tables are newly created
-      // In production, these would be actual database queries
-      setCompanies([
-        {
-          id: '1',
-          name: 'TechCorp Industries',
-          ticker: 'TECH',
-          industry: 'Technology',
-          sector: 'Software',
-          market_cap: 5000000000,
-          financial_health_score: 65,
-          distress_signals: ['Declining revenue', 'High debt ratio'],
-          power_usage_estimate: 25,
-          locations: [],
-          analyzed_at: new Date().toISOString()
-        },
-        {
-          id: '2', 
-          name: 'Manufacturing Corp',
-          industry: 'Manufacturing',
-          sector: 'Industrial',
-          market_cap: 2000000000,
-          financial_health_score: 45,
-          distress_signals: ['Plant closures', 'Cost cutting'],
-          power_usage_estimate: 50,
-          locations: [],
-          analyzed_at: new Date().toISOString()
-        }
-      ]);
+      console.log('Loading corporate intelligence data...');
+      
+      // Load companies from database
+      const { data: companiesData, error: companiesError } = await supabase
+        .from('companies')
+        .select('*')
+        .order('analyzed_at', { ascending: false });
 
-      setAlerts([
-        {
-          id: '1',
-          company_name: 'Manufacturing Corp',
-          alert_type: 'facility_closure',
-          distress_level: 85,
-          signals: ['Plant closures', 'Layoffs announced'],
-          power_capacity: 50,
-          potential_value: 15000000,
-          created_at: new Date().toISOString()
-        }
-      ]);
+      if (companiesError) {
+        console.error('Error loading companies:', companiesError);
+      } else {
+        setCompanies(companiesData || []);
+      }
+
+      // Load distress alerts from database
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('distress_alerts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (alertsError) {
+        console.error('Error loading alerts:', alertsError);
+      } else {
+        setAlerts(alertsData || []);
+      }
+
+      console.log('Loaded companies:', companiesData?.length, 'alerts:', alertsData?.length);
     } catch (error) {
       console.error('Error loading data:', error);
     }
   };
 
   const analyzeCompany = async () => {
-    if (!newCompany.trim()) return;
+    if (!newCompany.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a company name",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setLoading(true);
     try {
+      console.log('Analyzing company:', newCompany);
+      
+      // Call the corporate intelligence edge function
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
         body: {
           action: 'analyze_company',
@@ -120,10 +116,15 @@ export function CorporateIntelligence() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Analysis error:', error);
+        throw error;
+      }
+
+      console.log('Analysis result:', data);
 
       toast({
-        title: "Company Analysis Complete",
+        title: "Analysis Complete",
         description: `Successfully analyzed ${newCompany}`,
       });
 
@@ -131,9 +132,10 @@ export function CorporateIntelligence() {
       setNewTicker('');
       loadData();
     } catch (error: any) {
+      console.error('Analysis failed:', error);
       toast({
         title: "Analysis Failed",
-        description: error.message,
+        description: error.message || 'Failed to analyze company',
         variant: "destructive"
       });
     } finally {
@@ -144,22 +146,30 @@ export function CorporateIntelligence() {
   const runIndustryScans = async () => {
     setLoading(true);
     try {
+      console.log('Running industry scans...');
+      
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
         body: { action: 'scan_industries' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Industry scan error:', error);
+        throw error;
+      }
+
+      console.log('Industry scan result:', data);
 
       toast({
         title: "Industry Scan Complete",
-        description: `Analyzed ${data.companies_analyzed} companies`,
+        description: `Analyzed ${data?.companies_analyzed || 0} companies`,
       });
 
       loadData();
     } catch (error: any) {
+      console.error('Industry scan failed:', error);
       toast({
         title: "Scan Failed",
-        description: error.message,
+        description: error.message || 'Failed to scan industries',
         variant: "destructive"
       });
     } finally {
@@ -170,22 +180,30 @@ export function CorporateIntelligence() {
   const detectDistress = async () => {
     setLoading(true);
     try {
+      console.log('Detecting distress signals...');
+      
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
         body: { action: 'detect_distress' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Distress detection error:', error);
+        throw error;
+      }
+
+      console.log('Distress detection result:', data);
 
       toast({
         title: "Distress Detection Complete",
-        description: `Generated ${data.alerts_generated} new alerts`,
+        description: `Generated ${data?.alerts_generated || 0} new alerts`,
       });
 
       loadData();
     } catch (error: any) {
+      console.error('Distress detection failed:', error);
       toast({
         title: "Detection Failed",
-        description: error.message,
+        description: error.message || 'Failed to detect distress',
         variant: "destructive"
       });
     } finally {
@@ -196,25 +214,51 @@ export function CorporateIntelligence() {
   const monitorLinkedIn = async () => {
     setLoading(true);
     try {
+      console.log('Monitoring LinkedIn...');
+      
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
         body: { action: 'monitor_linkedin' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('LinkedIn monitoring error:', error);
+        throw error;
+      }
+
+      console.log('LinkedIn monitoring result:', data);
 
       toast({
         title: "LinkedIn Monitoring Complete",
-        description: `Analyzed ${data.posts_analyzed} posts`,
+        description: `Analyzed ${data?.posts_analyzed || 0} posts`,
       });
+
+      loadData();
     } catch (error: any) {
+      console.error('LinkedIn monitoring failed:', error);
       toast({
         title: "Monitoring Failed",
-        description: error.message,
+        description: error.message || 'Failed to monitor LinkedIn',
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const viewCompanyDetails = async (company: Company) => {
+    console.log('Viewing company details:', company);
+    toast({
+      title: "Company Details",
+      description: `Viewing details for ${company.name}`,
+    });
+  };
+
+  const investigateAlert = async (alert: DistressAlert) => {
+    console.log('Investigating alert:', alert);
+    toast({
+      title: "Investigation Started",
+      description: `Investigating ${alert.company_name}`,
+    });
   };
 
   const filteredCompanies = companies.filter(company => {
@@ -246,7 +290,7 @@ export function CorporateIntelligence() {
         </div>
         <div className="flex space-x-2">
           <Button onClick={runIndustryScans} disabled={loading}>
-            <Search className="w-4 h-4 mr-2" />
+            {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
             Scan Industries
           </Button>
           <Button onClick={detectDistress} disabled={loading}>
@@ -260,7 +304,7 @@ export function CorporateIntelligence() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Add Company Analysis */}
       <Card>
         <CardHeader>
           <CardTitle>Add Company Analysis</CardTitle>
@@ -325,7 +369,7 @@ export function CorporateIntelligence() {
                       ))}
                     </div>
                   </div>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={() => investigateAlert(alert)}>
                     Investigate
                   </Button>
                 </div>
@@ -386,7 +430,7 @@ export function CorporateIntelligence() {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => viewCompanyDetails(company)}>
                   View Details
                 </Button>
               </div>

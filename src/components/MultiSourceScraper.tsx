@@ -16,7 +16,9 @@ import {
   Settings,
   Database,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -57,120 +59,103 @@ export function MultiSourceScraper() {
 
   useEffect(() => {
     loadData();
-    setupDefaultSources();
   }, []);
-
-  const setupDefaultSources = async () => {
-    // Initialize with default demo sources
-    const defaultSources: ScrapingSource[] = [
-      {
-        id: '1',
-        name: 'LoopNet',
-        url: 'https://loopnet.com',
-        type: 'real_estate',
-        status: 'active',
-        keywords: ['data center', 'industrial', 'warehouse', 'manufacturing'],
-        properties_found: 15
-      },
-      {
-        id: '2',
-        name: 'CREXi',
-        url: 'https://crexi.com',
-        type: 'real_estate', 
-        status: 'active',
-        keywords: ['industrial', 'warehouse', 'power', 'heavy use'],
-        properties_found: 8
-      },
-      {
-        id: '3',
-        name: 'LinkedIn Corporate',
-        url: 'https://linkedin.com',
-        type: 'corporate',
-        status: 'active',
-        keywords: ['facility closure', 'restructuring', 'data center', 'expanding operations'],
-        properties_found: 3
-      },
-      {
-        id: '4',
-        name: 'SEC EDGAR',
-        url: 'https://sec.gov/edgar',
-        type: 'corporate',
-        status: 'active',
-        keywords: ['asset sale', 'facility', 'real estate', 'restructuring'],
-        properties_found: 5
-      },
-      {
-        id: '5',
-        name: 'Business Journals',
-        url: 'https://bizjournals.com',
-        type: 'news',
-        status: 'active',
-        keywords: ['facility closure', 'plant shutdown', 'data center', 'manufacturing'],
-        properties_found: 12
-      }
-    ];
-
-    setSources(defaultSources);
-  };
 
   const loadData = async () => {
     try {
-      // For now, we'll use mock data for jobs since the tables are newly created
-      setJobs([
-        {
-          id: '1',
-          source_id: '1',
-          source_name: 'LoopNet',
-          status: 'completed',
-          started_at: new Date(Date.now() - 3600000).toISOString(),
-          completed_at: new Date(Date.now() - 3300000).toISOString(),
-          properties_found: 5
-        },
-        {
-          id: '2',
-          source_id: '2',
-          source_name: 'CREXi',
-          status: 'running',
-          started_at: new Date(Date.now() - 1800000).toISOString(),
-          properties_found: 0
-        }
-      ]);
+      console.log('Loading scraping data...');
+
+      // Load sources from database
+      const { data: sourcesData, error: sourcesError } = await supabase
+        .from('scraping_sources')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (sourcesError) {
+        console.error('Error loading sources:', sourcesError);
+      } else {
+        setSources(sourcesData || []);
+      }
+
+      // Load jobs from database
+      const { data: jobsData, error: jobsError } = await supabase
+        .from('scraping_jobs')
+        .select('*')
+        .order('started_at', { ascending: false })
+        .limit(20);
+
+      if (jobsError) {
+        console.error('Error loading jobs:', jobsError);
+      } else {
+        setJobs(jobsData || []);
+      }
+
+      console.log('Loaded sources:', sourcesData?.length, 'jobs:', jobsData?.length);
     } catch (error) {
       console.error('Error loading data:', error);
     }
   };
 
   const addSource = async () => {
-    if (!newSource.name || !newSource.url) return;
+    if (!newSource.name || !newSource.url) {
+      toast({
+        title: "Error",
+        description: "Please enter both name and URL",
+        variant: "destructive"
+      });
+      return;
+    }
 
+    setLoading(true);
     try {
-      const source: ScrapingSource = {
-        id: Date.now().toString(),
-        ...newSource,
-        keywords: newSource.keywords.split(',').map(k => k.trim()),
-        status: 'inactive',
-        type: newSource.type as any
+      console.log('Adding new source:', newSource);
+
+      const sourceData = {
+        name: newSource.name,
+        url: newSource.url,
+        type: newSource.type,
+        keywords: newSource.keywords.split(',').map(k => k.trim()).filter(k => k),
+        status: 'inactive'
       };
 
-      setSources(prev => [...prev, source]);
+      const { data, error } = await supabase
+        .from('scraping_sources')
+        .insert(sourceData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding source:', error);
+        throw error;
+      }
+
+      console.log('Added source:', data);
+      
       setNewSource({ name: '', url: '', type: 'real_estate', keywords: '' });
       
       toast({
         title: "Source Added",
-        description: `${source.name} has been added successfully`,
+        description: `${sourceData.name} has been added successfully`,
       });
+
+      loadData();
     } catch (error: any) {
+      console.error('Failed to add source:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || 'Failed to add source',
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const runScraper = async (sourceId: string, sourceName: string) => {
     setLoading(true);
     try {
+      console.log('Running scraper for:', sourceName, sourceId);
+      
       const { data, error } = await supabase.functions.invoke('multi-source-scraper', {
         body: {
           action: 'scrape_source',
@@ -178,7 +163,12 @@ export function MultiSourceScraper() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Scraping error:', error);
+        throw error;
+      }
+
+      console.log('Scraping result:', data);
 
       toast({
         title: "Scraping Started",
@@ -187,9 +177,10 @@ export function MultiSourceScraper() {
 
       loadData();
     } catch (error: any) {
+      console.error('Scraping failed:', error);
       toast({
         title: "Scraping Failed",
-        description: error.message,
+        description: error.message || 'Failed to start scraping',
         variant: "destructive"
       });
     } finally {
@@ -200,22 +191,41 @@ export function MultiSourceScraper() {
   const runAllScrapers = async () => {
     setLoading(true);
     try {
+      console.log('Running all scrapers...');
+      
       const activeSources = sources.filter(s => s.status === 'active');
       
-      for (const source of activeSources) {
-        await runScraper(source.id, source.name);
-        // Add delay between scrapers to be respectful
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      if (activeSources.length === 0) {
+        toast({
+          title: "No Active Sources",
+          description: "Please activate at least one source first",
+          variant: "destructive"
+        });
+        return;
       }
 
+      const { data, error } = await supabase.functions.invoke('multi-source-scraper', {
+        body: { action: 'scrape_all' }
+      });
+
+      if (error) {
+        console.error('Batch scraping error:', error);
+        throw error;
+      }
+
+      console.log('Batch scraping result:', data);
+
       toast({
-        title: "Batch Scraping Complete",
+        title: "Batch Scraping Started",
         description: `Started scraping ${activeSources.length} sources`,
       });
+
+      loadData();
     } catch (error: any) {
+      console.error('Batch scraping failed:', error);
       toast({
         title: "Batch Scraping Failed", 
-        description: error.message,
+        description: error.message || 'Failed to start batch scraping',
         variant: "destructive"
       });
     } finally {
@@ -227,13 +237,61 @@ export function MultiSourceScraper() {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     
     try {
+      console.log('Toggling source status:', sourceId, newStatus);
+
+      const { error } = await supabase
+        .from('scraping_sources')
+        .update({ status: newStatus })
+        .eq('id', sourceId);
+
+      if (error) {
+        console.error('Error updating source status:', error);
+        throw error;
+      }
+
       setSources(prev => prev.map(source => 
         source.id === sourceId ? { ...source, status: newStatus as any } : source
       ));
+
+      toast({
+        title: "Source Updated",
+        description: `Source ${newStatus === 'active' ? 'activated' : 'deactivated'}`,
+      });
     } catch (error: any) {
+      console.error('Failed to toggle source:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || 'Failed to update source',
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteSource = async (sourceId: string, sourceName: string) => {
+    try {
+      console.log('Deleting source:', sourceId, sourceName);
+
+      const { error } = await supabase
+        .from('scraping_sources')
+        .delete()
+        .eq('id', sourceId);
+
+      if (error) {
+        console.error('Error deleting source:', error);
+        throw error;
+      }
+
+      setSources(prev => prev.filter(source => source.id !== sourceId));
+
+      toast({
+        title: "Source Deleted",
+        description: `${sourceName} has been deleted`,
+      });
+    } catch (error: any) {
+      console.error('Failed to delete source:', error);
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to delete source',
         variant: "destructive"
       });
     }
@@ -270,7 +328,7 @@ export function MultiSourceScraper() {
         </div>
         <div className="flex space-x-2">
           <Button onClick={runAllScrapers} disabled={loading}>
-            <Play className="w-4 h-4 mr-2" />
+            {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
             Run All Active
           </Button>
         </div>
@@ -312,7 +370,8 @@ export function MultiSourceScraper() {
               onChange={(e) => setNewSource({...newSource, keywords: e.target.value})}
             />
           </div>
-          <Button onClick={addSource} disabled={!newSource.name || !newSource.url}>
+          <Button onClick={addSource} disabled={loading || !newSource.name || !newSource.url}>
+            {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : null}
             Add Source
           </Button>
         </CardContent>
@@ -396,6 +455,14 @@ export function MultiSourceScraper() {
                   >
                     <Play className="w-3 h-3 mr-1" />
                     Run
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => deleteSource(source.id, source.name)}
+                    disabled={loading}
+                  >
+                    <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
               </div>
