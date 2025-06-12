@@ -39,10 +39,10 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'analyze_company':
-        if (!company_name) {
-          throw new Error('Company name is required')
+        if (!company_name?.trim()) {
+          throw new Error('Company name is required and cannot be empty')
         }
-        return await analyzeCompany(supabase, company_name, ticker)
+        return await analyzeCompany(supabase, company_name.trim(), ticker?.trim())
       case 'monitor_linkedin':
         return await monitorLinkedIn(supabase)
       case 'scan_industries':
@@ -50,12 +50,15 @@ Deno.serve(async (req) => {
       case 'detect_distress':
         return await detectDistressSignals(supabase)
       default:
-        throw new Error('Invalid action')
+        throw new Error(`Invalid action: ${action}`)
     }
   } catch (error) {
     console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -68,7 +71,6 @@ async function analyzeCompany(supabase: any, companyName: string, ticker?: strin
   console.log(`Analyzing company: ${companyName}`)
   
   try {
-    // Simulate financial data analysis (reduced complexity)
     const financialData = await getFinancialData(ticker || companyName)
     const locationData = await getCompanyLocations(companyName)
     const powerUsage = estimatePowerUsage(financialData.industry, financialData.sector)
@@ -78,8 +80,14 @@ async function analyzeCompany(supabase: any, companyName: string, ticker?: strin
     
     const companyAnalysis = {
       name: companyName,
-      ticker,
-      ...financialData,
+      ticker: ticker || null,
+      industry: financialData.industry,
+      sector: financialData.sector,
+      market_cap: financialData.market_cap || null,
+      debt_to_equity: financialData.debt_to_equity || null,
+      current_ratio: financialData.current_ratio || null,
+      revenue_growth: financialData.revenue_growth || null,
+      profit_margin: financialData.profit_margin || null,
       power_usage_estimate: powerUsage,
       locations: locationData,
       financial_health_score: healthScore,
@@ -87,10 +95,13 @@ async function analyzeCompany(supabase: any, companyName: string, ticker?: strin
       analyzed_at: new Date().toISOString()
     }
 
-    // Store in database with conflict resolution
+    // Use upsert with proper conflict handling
     const { data, error } = await supabase
       .from('companies')
-      .upsert(companyAnalysis, { onConflict: 'name' })
+      .upsert(companyAnalysis, { 
+        onConflict: 'name',
+        ignoreDuplicates: false 
+      })
       .select()
       .single()
 
@@ -113,7 +124,6 @@ async function scanIndustries(supabase: any) {
   console.log('Scanning power-intensive industries...')
   
   try {
-    // Reduced list to prevent database overload
     const powerIntensiveIndustries = [
       'Data Centers & Cloud Computing',
       'Cryptocurrency Mining', 
@@ -122,50 +132,71 @@ async function scanIndustries(supabase: any) {
 
     const industryData = []
     
-    // Limit to 5 companies per industry to prevent overload
     for (const industry of powerIntensiveIndustries) {
       console.log(`Scanning industry: ${industry}`)
       const companies = await getIndustryCompanies(industry)
       
-      // Limit to first 5 companies to prevent database overload
-      const limitedCompanies = companies.slice(0, 5)
+      const limitedCompanies = companies.slice(0, 3) // Further reduced to prevent overload
       
       for (const company of limitedCompanies) {
-        const analysis = await analyzeCompanyBriefly(company)
-        industryData.push({
-          industry,
-          company_name: company.name,
-          ticker: company.ticker,
-          market_cap: company.market_cap,
-          power_intensity: company.power_intensity,
-          financial_health: analysis.health_score,
-          risk_level: analysis.risk_level,
-          scanned_at: new Date().toISOString()
-        })
+        try {
+          const analysis = await analyzeCompanyBriefly(company)
+          industryData.push({
+            industry,
+            company_name: company.name,
+            ticker: company.ticker || null,
+            market_cap: company.market_cap || null,
+            power_intensity: company.power_intensity || null,
+            financial_health: analysis.health_score,
+            risk_level: analysis.risk_level,
+            scanned_at: new Date().toISOString()
+          })
+        } catch (companyError) {
+          console.error(`Error analyzing company ${company.name}:`, companyError)
+          // Continue with other companies instead of failing entirely
+        }
       }
     }
 
     console.log(`Inserting ${industryData.length} industry records`)
 
-    // Insert in smaller batches to prevent database overload
-    const batchSize = 10
-    for (let i = 0; i < industryData.length; i += batchSize) {
-      const batch = industryData.slice(i, i + batchSize)
+    if (industryData.length > 0) {
+      // Insert in smaller batches with better error handling
+      const batchSize = 5
+      let successCount = 0
       
-      const { error } = await supabase
-        .from('industry_intelligence')
-        .upsert(batch, { onConflict: 'company_name' })
+      for (let i = 0; i < industryData.length; i += batchSize) {
+        const batch = industryData.slice(i, i + batchSize)
+        
+        try {
+          const { error } = await supabase
+            .from('industry_intelligence')
+            .upsert(batch, { onConflict: 'company_name,industry' })
 
-      if (error) {
-        console.error('Database batch error:', error)
-        // Continue with other batches even if one fails
+          if (error) {
+            console.error('Database batch error:', error)
+          } else {
+            successCount += batch.length
+          }
+        } catch (batchError) {
+          console.error('Batch processing error:', batchError)
+        }
       }
-    }
 
-    return new Response(
-      JSON.stringify({ success: true, companies_analyzed: industryData.length }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          companies_analyzed: successCount,
+          total_attempted: industryData.length 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } else {
+      return new Response(
+        JSON.stringify({ success: true, companies_analyzed: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
   } catch (error) {
     console.error('Error scanning industries:', error)
     throw error
@@ -176,32 +207,40 @@ async function monitorLinkedIn(supabase: any) {
   console.log('Monitoring LinkedIn for corporate intelligence...')
   
   try {
-    // Simplified monitoring to reduce load
     const posts = await simulateLinkedInScraping()
+    const limitedPosts = posts.slice(0, 5) // Reduced from 10 to 5
     
-    // Limit posts to prevent database overload
-    const limitedPosts = posts.slice(0, 10)
+    let successCount = 0
     
     for (const post of limitedPosts) {
-      const { error } = await supabase
-        .from('linkedin_intelligence')
-        .insert({
-          company: post.company,
-          content: post.content,
-          post_date: post.date,
-          keywords: post.keywords,
-          signals: post.signals,
-          discovered_at: new Date().toISOString()
-        })
-      
-      if (error) {
-        console.error('Error storing LinkedIn data:', error)
-        // Continue with other posts
+      try {
+        const { error } = await supabase
+          .from('linkedin_intelligence')
+          .insert({
+            company: post.company,
+            content: post.content,
+            post_date: post.date,
+            keywords: post.keywords || [],
+            signals: post.signals || [],
+            discovered_at: new Date().toISOString()
+          })
+        
+        if (error) {
+          console.error('Error storing LinkedIn data:', error)
+        } else {
+          successCount++
+        }
+      } catch (postError) {
+        console.error('Error processing LinkedIn post:', postError)
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, posts_analyzed: limitedPosts.length }),
+      JSON.stringify({ 
+        success: true, 
+        posts_analyzed: successCount,
+        total_attempted: limitedPosts.length 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
@@ -214,12 +253,11 @@ async function detectDistressSignals(supabase: any) {
   console.log('Detecting corporate distress signals...')
   
   try {
-    // Limit query to prevent database overload
     const { data: companies, error } = await supabase
       .from('companies')
       .select('*')
       .lt('financial_health_score', 60)
-      .limit(50) // Limit to 50 companies
+      .limit(25) // Reduced from 50 to 25
 
     if (error) {
       console.error('Database error:', error)
@@ -229,34 +267,50 @@ async function detectDistressSignals(supabase: any) {
     const alerts = []
     
     for (const company of companies || []) {
-      const distressLevel = assessDistressLevel(company)
-      
-      if (distressLevel >= 70) {
-        alerts.push({
-          company_name: company.name,
-          alert_type: 'high_distress',
-          distress_level: distressLevel,
-          signals: company.distress_signals || [],
-          power_capacity: Number(company.power_usage_estimate) || 0,
-          potential_value: estimateAssetValue(company),
-          created_at: new Date().toISOString()
-        })
+      try {
+        const distressLevel = assessDistressLevel(company)
+        
+        if (distressLevel >= 70) {
+          alerts.push({
+            company_name: company.name,
+            alert_type: 'high_distress',
+            distress_level: Math.min(100, Math.max(0, distressLevel)), // Ensure within valid range
+            signals: Array.isArray(company.distress_signals) ? company.distress_signals : [],
+            power_capacity: Number(company.power_usage_estimate) || 0,
+            potential_value: estimateAssetValue(company),
+            created_at: new Date().toISOString()
+          })
+        }
+      } catch (companyError) {
+        console.error(`Error assessing distress for ${company.name}:`, companyError)
       }
     }
 
+    let successCount = 0
+    
     if (alerts.length > 0) {
-      const { error: alertError } = await supabase
-        .from('distress_alerts')
-        .insert(alerts)
-      
-      if (alertError) {
-        console.error('Error storing alerts:', alertError)
-        throw alertError
+      try {
+        const { error: alertError } = await supabase
+          .from('distress_alerts')
+          .insert(alerts)
+        
+        if (alertError) {
+          console.error('Error storing alerts:', alertError)
+        } else {
+          successCount = alerts.length
+        }
+      } catch (alertsError) {
+        console.error('Error processing alerts:', alertsError)
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, alerts_generated: alerts.length, alerts }),
+      JSON.stringify({ 
+        success: true, 
+        alerts_generated: successCount,
+        total_companies_analyzed: companies?.length || 0,
+        alerts: alerts.slice(0, 5) // Return only first 5 for response size management
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
@@ -265,25 +319,38 @@ async function detectDistressSignals(supabase: any) {
   }
 }
 
-// Helper functions (simplified to reduce complexity)
+// Helper functions with improved error handling
 async function getFinancialData(identifier: string) {
-  // Simulate API call with reduced complexity
+  // Validate input
+  if (!identifier?.trim()) {
+    throw new Error('Company identifier is required')
+  }
+  
+  // Simulate API call with more realistic data ranges
   return {
     industry: 'Technology',
     sector: 'Data Centers',
-    market_cap: Math.floor(Math.random() * 10000000000),
+    market_cap: Math.floor(Math.random() * 10000000000) + 1000000000, // 1B-10B range
     debt_to_equity: Math.random() * 2,
-    current_ratio: Math.random() * 3,
-    revenue_growth: (Math.random() - 0.5) * 0.4,
-    profit_margin: (Math.random() - 0.3) * 0.3,
+    current_ratio: Math.random() * 3 + 0.5, // 0.5-3.5 range
+    revenue_growth: (Math.random() - 0.5) * 0.4, // -20% to +20%
+    profit_margin: (Math.random() - 0.3) * 0.3, // More realistic range
     cash_flow: (Math.random() - 0.5) * 100000000
   }
 }
 
 async function getCompanyLocations(companyName: string) {
-  // Simplified location data
+  if (!companyName?.trim()) {
+    return []
+  }
+  
   return [
-    { address: '123 Industrial Blvd', city: 'Austin', state: 'TX', facility_type: 'Manufacturing' }
+    { 
+      address: '123 Industrial Blvd', 
+      city: 'Austin', 
+      state: 'TX', 
+      facility_type: 'Manufacturing' 
+    }
   ]
 }
 
@@ -292,7 +359,8 @@ function estimatePowerUsage(industry: string, sector: string): number {
     'Data Centers': 25,
     'Cryptocurrency': 50,
     'Steel Production': 75,
-    'Manufacturing': 15
+    'Manufacturing': 15,
+    'Technology': 20
   }
   
   return powerMap[sector] || powerMap[industry] || 10
@@ -301,17 +369,30 @@ function estimatePowerUsage(industry: string, sector: string): number {
 function calculateFinancialHealth(data: any): number {
   let score = 50
   
-  if (data.debt_to_equity < 0.3) score += 20
-  else if (data.debt_to_equity > 0.8) score -= 20
+  // Validate input data
+  if (!data || typeof data !== 'object') {
+    return 50 // Default score for invalid data
+  }
   
-  if (data.current_ratio > 1.5) score += 15
-  else if (data.current_ratio < 1.0) score -= 15
+  if (typeof data.debt_to_equity === 'number') {
+    if (data.debt_to_equity < 0.3) score += 20
+    else if (data.debt_to_equity > 0.8) score -= 20
+  }
   
-  if (data.revenue_growth > 0.1) score += 15
-  else if (data.revenue_growth < -0.1) score -= 20
+  if (typeof data.current_ratio === 'number') {
+    if (data.current_ratio > 1.5) score += 15
+    else if (data.current_ratio < 1.0) score -= 15
+  }
   
-  if (data.profit_margin > 0.1) score += 15
-  else if (data.profit_margin < 0) score -= 15
+  if (typeof data.revenue_growth === 'number') {
+    if (data.revenue_growth > 0.1) score += 15
+    else if (data.revenue_growth < -0.1) score -= 20
+  }
+  
+  if (typeof data.profit_margin === 'number') {
+    if (data.profit_margin > 0.1) score += 15
+    else if (data.profit_margin < 0) score -= 15
+  }
   
   return Math.max(0, Math.min(100, score))
 }
@@ -319,17 +400,30 @@ function calculateFinancialHealth(data: any): number {
 function detectCompanyDistress(data: any): string[] {
   const signals = []
   
-  if (data.debt_to_equity > 0.8) signals.push('High debt burden')
-  if (data.current_ratio < 1.0) signals.push('Liquidity issues')
-  if (data.revenue_growth < -0.2) signals.push('Declining revenue')
-  if (data.profit_margin < -0.1) signals.push('Significant losses')
-  if (data.cash_flow < 0) signals.push('Negative cash flow')
+  if (!data || typeof data !== 'object') {
+    return signals
+  }
+  
+  if (typeof data.debt_to_equity === 'number' && data.debt_to_equity > 0.8) {
+    signals.push('High debt burden')
+  }
+  if (typeof data.current_ratio === 'number' && data.current_ratio < 1.0) {
+    signals.push('Liquidity issues')
+  }
+  if (typeof data.revenue_growth === 'number' && data.revenue_growth < -0.2) {
+    signals.push('Declining revenue')
+  }
+  if (typeof data.profit_margin === 'number' && data.profit_margin < -0.1) {
+    signals.push('Significant losses')
+  }
+  if (typeof data.cash_flow === 'number' && data.cash_flow < 0) {
+    signals.push('Negative cash flow')
+  }
   
   return signals
 }
 
 async function simulateLinkedInScraping() {
-  // Simplified simulation
   return [
     {
       company: 'TechCorp Industries',
@@ -337,41 +431,78 @@ async function simulateLinkedInScraping() {
       date: new Date().toISOString(),
       keywords: ['closing facility', 'data center'],
       signals: ['facility_closure', 'potential_asset_sale']
+    },
+    {
+      company: 'DataFlow Systems',
+      content: 'Announcing strategic restructuring of our power infrastructure division...',
+      date: new Date().toISOString(),
+      keywords: ['restructuring', 'power infrastructure'],
+      signals: ['organizational_change', 'asset_evaluation']
     }
   ]
 }
 
 async function getIndustryCompanies(industry: string) {
-  // Simplified company lookup with reduced data
-  const companies = [
-    { name: 'Example Steel Co', ticker: 'ESTL', market_cap: 2000000000, power_intensity: 'high' },
-    { name: 'Data Center Corp', ticker: 'DCCO', market_cap: 5000000000, power_intensity: 'very_high' },
-    { name: 'Mining Solutions Inc', ticker: 'MSI', market_cap: 1000000000, power_intensity: 'extreme' }
-  ]
+  const companiesMap: { [key: string]: any[] } = {
+    'Data Centers & Cloud Computing': [
+      { name: 'CloudTech Corp', ticker: 'CTC', market_cap: 5000000000, power_intensity: 'very_high' },
+      { name: 'DataFlow Systems', ticker: 'DFS', market_cap: 3000000000, power_intensity: 'high' }
+    ],
+    'Cryptocurrency Mining': [
+      { name: 'CryptoMine Inc', ticker: 'CMI', market_cap: 1000000000, power_intensity: 'extreme' },
+      { name: 'HashPower Corp', ticker: 'HPC', market_cap: 800000000, power_intensity: 'extreme' }
+    ],
+    'Steel Production': [
+      { name: 'SteelWorks Industries', ticker: 'SWI', market_cap: 2000000000, power_intensity: 'high' },
+      { name: 'MetalForge Corp', ticker: 'MFC', market_cap: 1500000000, power_intensity: 'high' }
+    ]
+  }
   
-  return companies
+  return companiesMap[industry] || []
 }
 
 async function analyzeCompanyBriefly(company: any) {
+  if (!company || !company.name) {
+    return { health_score: 50, risk_level: 'medium' }
+  }
+  
   return {
     health_score: Math.floor(Math.random() * 100),
-    risk_level: Math.random() > 0.7 ? 'high' : 'medium'
+    risk_level: Math.random() > 0.7 ? 'high' : Math.random() > 0.4 ? 'medium' : 'low'
   }
 }
 
 function assessDistressLevel(company: any): number {
   let distress = 0
   
-  if (company.financial_health_score < 40) distress += 30
-  if (company.distress_signals?.length > 2) distress += 25
-  if (company.debt_to_equity > 1.0) distress += 20
-  if (company.current_ratio < 0.8) distress += 15
-  if (company.revenue_growth < -0.3) distress += 10
+  if (!company || typeof company !== 'object') {
+    return 0
+  }
   
-  return Math.min(100, distress)
+  if (typeof company.financial_health_score === 'number' && company.financial_health_score < 40) {
+    distress += 30
+  }
+  if (Array.isArray(company.distress_signals) && company.distress_signals.length > 2) {
+    distress += 25
+  }
+  if (typeof company.debt_to_equity === 'number' && company.debt_to_equity > 1.0) {
+    distress += 20
+  }
+  if (typeof company.current_ratio === 'number' && company.current_ratio < 0.8) {
+    distress += 15
+  }
+  if (typeof company.revenue_growth === 'number' && company.revenue_growth < -0.3) {
+    distress += 10
+  }
+  
+  return Math.min(100, Math.max(0, distress))
 }
 
 function estimateAssetValue(company: any): number {
+  if (!company || typeof company !== 'object') {
+    return 0
+  }
+  
   const powerUsage = Number(company.power_usage_estimate) || 0
   return powerUsage * 1000000 // $1M per MW estimate
 }

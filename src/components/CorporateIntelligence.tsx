@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,10 +48,22 @@ interface DistressAlert {
   created_at: string;
 }
 
+interface LoadingStates {
+  analyzing: boolean;
+  scanning: boolean;
+  detecting: boolean;
+  monitoring: boolean;
+}
+
 export function CorporateIntelligence() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [alerts, setAlerts] = useState<DistressAlert[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<LoadingStates>({
+    analyzing: false,
+    scanning: false,
+    detecting: false,
+    monitoring: false
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [industryFilter, setIndustryFilter] = useState('all');
   const [newCompany, setNewCompany] = useState('');
@@ -61,11 +74,14 @@ export function CorporateIntelligence() {
     loadData();
   }, []);
 
+  const setLoadingState = (key: keyof LoadingStates, value: boolean) => {
+    setLoading(prev => ({ ...prev, [key]: value }));
+  };
+
   const loadData = async () => {
     try {
       console.log('Loading corporate intelligence data...');
       
-      // Load companies from database
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
@@ -73,8 +89,12 @@ export function CorporateIntelligence() {
 
       if (companiesError) {
         console.error('Error loading companies:', companiesError);
+        toast({
+          title: "Error Loading Companies",
+          description: companiesError.message,
+          variant: "destructive"
+        });
       } else {
-        // Convert database rows to Company interface
         const transformedCompanies: Company[] = (companiesData || []).map((row: CompanyRow) => ({
           id: row.id,
           name: row.name,
@@ -91,7 +111,6 @@ export function CorporateIntelligence() {
         setCompanies(transformedCompanies);
       }
 
-      // Load distress alerts from database
       const { data: alertsData, error: alertsError } = await supabase
         .from('distress_alerts')
         .select('*')
@@ -100,8 +119,12 @@ export function CorporateIntelligence() {
 
       if (alertsError) {
         console.error('Error loading alerts:', alertsError);
+        toast({
+          title: "Error Loading Alerts",
+          description: alertsError.message,
+          variant: "destructive"
+        });
       } else {
-        // Convert database rows to DistressAlert interface
         const transformedAlerts: DistressAlert[] = (alertsData || []).map((row: DistressAlertRow) => ({
           id: row.id,
           company_name: row.company_name,
@@ -118,35 +141,39 @@ export function CorporateIntelligence() {
       console.log('Loaded companies:', companiesData?.length, 'alerts:', alertsData?.length);
     } catch (error) {
       console.error('Error loading data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive"
+      });
     }
   };
 
   const analyzeCompany = async () => {
     if (!newCompany.trim()) {
       toast({
-        title: "Error",
+        title: "Validation Error",
         description: "Please enter a company name",
         variant: "destructive"
       });
       return;
     }
     
-    setLoading(true);
+    setLoadingState('analyzing', true);
     try {
       console.log('Analyzing company:', newCompany);
       
-      // Call the corporate intelligence edge function
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
         body: {
           action: 'analyze_company',
-          company_name: newCompany,
-          ticker: newTicker || undefined
+          company_name: newCompany.trim(),
+          ticker: newTicker.trim() || undefined
         }
       });
 
       if (error) {
         console.error('Analysis error:', error);
-        throw error;
+        throw new Error(error.message || 'Analysis failed');
       }
 
       console.log('Analysis result:', data);
@@ -158,21 +185,21 @@ export function CorporateIntelligence() {
 
       setNewCompany('');
       setNewTicker('');
-      loadData();
+      await loadData();
     } catch (error: any) {
       console.error('Analysis failed:', error);
       toast({
         title: "Analysis Failed",
-        description: error.message || 'Failed to analyze company',
+        description: error.message || 'Failed to analyze company. Please try again.',
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setLoadingState('analyzing', false);
     }
   };
 
   const runIndustryScans = async () => {
-    setLoading(true);
+    setLoadingState('scanning', true);
     try {
       console.log('Running industry scans...');
       
@@ -182,31 +209,31 @@ export function CorporateIntelligence() {
 
       if (error) {
         console.error('Industry scan error:', error);
-        throw error;
+        throw new Error(error.message || 'Industry scan failed');
       }
 
       console.log('Industry scan result:', data);
 
       toast({
         title: "Industry Scan Complete",
-        description: `Analyzed ${data?.companies_analyzed || 0} companies`,
+        description: `Successfully analyzed ${data?.companies_analyzed || 0} companies`,
       });
 
-      loadData();
+      await loadData();
     } catch (error: any) {
       console.error('Industry scan failed:', error);
       toast({
         title: "Scan Failed",
-        description: error.message || 'Failed to scan industries',
+        description: error.message || 'Failed to scan industries. Please try again.',
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setLoadingState('scanning', false);
     }
   };
 
   const detectDistress = async () => {
-    setLoading(true);
+    setLoadingState('detecting', true);
     try {
       console.log('Detecting distress signals...');
       
@@ -216,7 +243,7 @@ export function CorporateIntelligence() {
 
       if (error) {
         console.error('Distress detection error:', error);
-        throw error;
+        throw new Error(error.message || 'Distress detection failed');
       }
 
       console.log('Distress detection result:', data);
@@ -226,21 +253,21 @@ export function CorporateIntelligence() {
         description: `Generated ${data?.alerts_generated || 0} new alerts`,
       });
 
-      loadData();
+      await loadData();
     } catch (error: any) {
       console.error('Distress detection failed:', error);
       toast({
         title: "Detection Failed",
-        description: error.message || 'Failed to detect distress',
+        description: error.message || 'Failed to detect distress signals. Please try again.',
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setLoadingState('detecting', false);
     }
   };
 
   const monitorLinkedIn = async () => {
-    setLoading(true);
+    setLoadingState('monitoring', true);
     try {
       console.log('Monitoring LinkedIn...');
       
@@ -250,7 +277,7 @@ export function CorporateIntelligence() {
 
       if (error) {
         console.error('LinkedIn monitoring error:', error);
-        throw error;
+        throw new Error(error.message || 'LinkedIn monitoring failed');
       }
 
       console.log('LinkedIn monitoring result:', data);
@@ -260,16 +287,16 @@ export function CorporateIntelligence() {
         description: `Analyzed ${data?.posts_analyzed || 0} posts`,
       });
 
-      loadData();
+      await loadData();
     } catch (error: any) {
       console.error('LinkedIn monitoring failed:', error);
       toast({
         title: "Monitoring Failed",
-        description: error.message || 'Failed to monitor LinkedIn',
+        description: error.message || 'Failed to monitor LinkedIn. Please try again.',
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setLoadingState('monitoring', false);
     }
   };
 
@@ -309,6 +336,8 @@ export function CorporateIntelligence() {
     return 'bg-yellow-500';
   };
 
+  const isAnyLoading = Object.values(loading).some(Boolean);
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -317,16 +346,16 @@ export function CorporateIntelligence() {
           <p className="text-muted-foreground">Monitor companies and detect investment opportunities</p>
         </div>
         <div className="flex space-x-2">
-          <Button onClick={runIndustryScans} disabled={loading}>
-            {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+          <Button onClick={runIndustryScans} disabled={loading.scanning}>
+            {loading.scanning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
             Scan Industries
           </Button>
-          <Button onClick={detectDistress} disabled={loading}>
-            <AlertTriangle className="w-4 h-4 mr-2" />
+          <Button onClick={detectDistress} disabled={loading.detecting}>
+            {loading.detecting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <AlertTriangle className="w-4 h-4 mr-2" />}
             Detect Distress
           </Button>
-          <Button onClick={monitorLinkedIn} disabled={loading}>
-            <Eye className="w-4 h-4 mr-2" />
+          <Button onClick={monitorLinkedIn} disabled={loading.monitoring}>
+            {loading.monitoring ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
             Monitor LinkedIn
           </Button>
         </div>
@@ -344,15 +373,17 @@ export function CorporateIntelligence() {
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}
               className="flex-1"
+              disabled={loading.analyzing}
             />
             <Input
               placeholder="Ticker (optional)"
               value={newTicker}
               onChange={(e) => setNewTicker(e.target.value)}
               className="w-32"
+              disabled={loading.analyzing}
             />
-            <Button onClick={analyzeCompany} disabled={loading || !newCompany.trim()}>
-              {loading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Activity className="w-4 h-4 mr-2" />}
+            <Button onClick={analyzeCompany} disabled={loading.analyzing || !newCompany.trim()}>
+              {loading.analyzing ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Activity className="w-4 h-4 mr-2" />}
               Analyze
             </Button>
           </div>
@@ -416,9 +447,10 @@ export function CorporateIntelligence() {
                 placeholder="Search companies..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={isAnyLoading}
               />
             </div>
-            <Select value={industryFilter} onValueChange={setIndustryFilter}>
+            <Select value={industryFilter} onValueChange={setIndustryFilter} disabled={isAnyLoading}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by industry" />
               </SelectTrigger>
@@ -505,13 +537,25 @@ export function CorporateIntelligence() {
         ))}
       </div>
 
-      {filteredCompanies.length === 0 && (
+      {filteredCompanies.length === 0 && !isAnyLoading && (
         <Card>
           <CardContent className="p-12 text-center">
             <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-medium text-muted-foreground mb-2">No companies found</h3>
             <p className="text-muted-foreground mb-4">
               Start by analyzing companies or running industry scans
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {isAnyLoading && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <RefreshCw className="w-16 h-16 text-muted-foreground mx-auto mb-4 animate-spin" />
+            <h3 className="text-xl font-medium text-muted-foreground mb-2">Processing...</h3>
+            <p className="text-muted-foreground">
+              Please wait while we process your request
             </p>
           </CardContent>
         </Card>
