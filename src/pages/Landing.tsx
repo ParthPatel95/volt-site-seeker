@@ -7,6 +7,8 @@ import { HeroSection } from '@/components/landing/HeroSection';
 import { ProblemSolutionSection } from '@/components/landing/ProblemSolutionSection';
 import { MarketOpportunitySection } from '@/components/landing/MarketOpportunitySection';
 import { FundOverviewSection } from '@/components/landing/FundOverviewSection';
+import { LeadershipTeamSection } from '@/components/landing/LeadershipTeamSection';
+import { FundGrowthPlanSection } from '@/components/landing/FundGrowthPlanSection';
 import { InvestmentThesisSection } from '@/components/landing/InvestmentThesisSection';
 import { VoltScoutSection } from '@/components/landing/VoltScoutSection';
 import { LPPortalSection } from '@/components/landing/LPPortalSection';
@@ -45,6 +47,8 @@ const Landing = () => {
       <ProblemSolutionSection />
       <MarketOpportunitySection />
       <FundOverviewSection />
+      <LeadershipTeamSection />
+      <FundGrowthPlanSection />
       <InvestmentThesisSection />
       <VoltScoutSection />
       <LPPortalSection />
