@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,11 +45,14 @@ export function PropertySearchForm({ onSearch, isSearching }: PropertySearchForm
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Texas, Ontario Canada, New York"
+              placeholder="e.g., Houston, Toronto, Los Angeles, Vancouver"
               className="pl-10"
               disabled={isSearching}
             />
           </div>
+          <p className="text-xs text-gray-500">
+            Supports major cities in USA and Canada
+          </p>
         </div>
 
         <div className="space-y-2">
