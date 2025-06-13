@@ -71,18 +71,31 @@ export function ScrapedPropertyCard({ property, onMoveToProperties }: ScrapedPro
     }
   };
 
+  // Map scraped property type to enum values
+  const mapPropertyType = (type: string) => {
+    const typeMap: { [key: string]: string } = {
+      'industrial': 'industrial',
+      'warehouse': 'warehouse', 
+      'manufacturing': 'manufacturing',
+      'data_center': 'data_center',
+      'logistics': 'logistics',
+      'mixed_use': 'flex_space'
+    };
+    return typeMap[type.toLowerCase()] || 'other';
+  };
+
   const moveToProperties = async () => {
     setMoving(true);
     try {
-      // Insert into main properties table
+      // Insert into main properties table with proper type mapping
       const { error: insertError } = await supabase
         .from('properties')
         .insert({
           address: property.address,
           city: property.city,
           state: property.state,
-          zip_code: property.zip_code,
-          property_type: property.property_type,
+          zip_code: property.zip_code || '',
+          property_type: mapPropertyType(property.property_type),
           square_footage: property.square_footage,
           lot_size_acres: property.lot_size_acres,
           asking_price: property.asking_price,
