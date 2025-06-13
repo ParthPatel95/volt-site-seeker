@@ -1,13 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Building2, 
   AlertTriangle, 
   Search,
   Eye,
-  RefreshCw
+  RefreshCw,
+  TrendingUp
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +19,8 @@ import { DistressAlertsPanel } from '@/components/corporateIntelligence/Distress
 import { CompanyFilters } from '@/components/corporateIntelligence/CompanyFilters';
 import { CompanyCard } from '@/components/corporateIntelligence/CompanyCard';
 import { CompanyDetailsModal } from '@/components/corporateIntelligence/CompanyDetailsModal';
+import { IndustryIntelligencePanel } from '@/components/corporateIntelligence/IndustryIntelligencePanel';
+import { LinkedInIntelligencePanel } from '@/components/corporateIntelligence/LinkedInIntelligencePanel';
 
 type CompanyRow = Database['public']['Tables']['companies']['Row'];
 type DistressAlertRow = Database['public']['Tables']['distress_alerts']['Row'];
@@ -314,51 +317,72 @@ export function CorporateIntelligence() {
         </div>
       </div>
 
-      <CompanyAnalysisForm 
-        onAnalyze={analyzeCompany} 
-        loading={loading.analyzing}
-      />
+      <Tabs defaultValue="companies" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="companies">Companies</TabsTrigger>
+          <TabsTrigger value="industry">Industry Intel</TabsTrigger>
+          <TabsTrigger value="linkedin">LinkedIn Intel</TabsTrigger>
+          <TabsTrigger value="alerts">Distress Alerts</TabsTrigger>
+        </TabsList>
 
-      <DistressAlertsPanel 
-        alerts={alerts} 
-        onInvestigate={investigateAlert}
-      />
-
-      <CompanyFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        industryFilter={industryFilter}
-        onIndustryChange={setIndustryFilter}
-        disabled={isAnyLoading}
-      />
-
-      <div className="grid gap-4">
-        {filteredCompanies.map((company) => (
-          <CompanyCard 
-            key={company.id} 
-            company={company} 
-            onViewDetails={viewCompanyDetails}
+        <TabsContent value="companies" className="space-y-6">
+          <CompanyAnalysisForm 
+            onAnalyze={analyzeCompany} 
+            loading={loading.analyzing}
           />
-        ))}
-      </div>
+
+          <CompanyFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            industryFilter={industryFilter}
+            onIndustryChange={setIndustryFilter}
+            disabled={isAnyLoading}
+          />
+
+          <div className="grid gap-4">
+            {filteredCompanies.map((company) => (
+              <CompanyCard 
+                key={company.id} 
+                company={company} 
+                onViewDetails={viewCompanyDetails}
+              />
+            ))}
+          </div>
+
+          {filteredCompanies.length === 0 && !isAnyLoading && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-muted-foreground mb-2">No companies found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Start by analyzing companies or running industry scans
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="industry" className="space-y-6">
+          <IndustryIntelligencePanel />
+        </TabsContent>
+
+        <TabsContent value="linkedin" className="space-y-6">
+          <LinkedInIntelligencePanel />
+        </TabsContent>
+
+        <TabsContent value="alerts" className="space-y-6">
+          <DistressAlertsPanel 
+            alerts={alerts} 
+            onInvestigate={investigateAlert}
+          />
+        </TabsContent>
+      </Tabs>
 
       <CompanyDetailsModal 
         company={selectedCompany}
         open={showDetailsModal}
         onOpenChange={setShowDetailsModal}
       />
-
-      {filteredCompanies.length === 0 && !isAnyLoading && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-muted-foreground mb-2">No companies found</h3>
-            <p className="text-muted-foreground mb-4">
-              Start by analyzing companies or running industry scans
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {isAnyLoading && (
         <Card>

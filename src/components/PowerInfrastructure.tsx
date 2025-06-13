@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,59 +11,133 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Building2
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-const mockSubstations = [
-  {
-    id: 1,
-    name: "Dallas North Substation",
-    voltage: "138kV",
-    capacity: "150 MVA",
-    status: "Active",
-    distance: "2.3 miles",
-    utilization: 78
-  },
-  {
-    id: 2,
-    name: "Richardson Power Hub",
-    voltage: "345kV", 
-    capacity: "500 MVA",
-    status: "Active",
-    distance: "4.1 miles",
-    utilization: 65
-  },
-  {
-    id: 3,
-    name: "Plano Distribution Center",
-    voltage: "69kV",
-    capacity: "75 MVA", 
-    status: "Maintenance",
-    distance: "6.8 miles",
-    utilization: 45
-  }
-];
+interface PowerData {
+  totalProperties: number;
+  totalPowerCapacity: number;
+  averageCapacity: number;
+  highCapacityCount: number;
+}
 
-const mockTransmissionLines = [
-  {
-    id: 1,
-    name: "ERCOT Line 345-A",
-    voltage: "345kV",
-    capacity: "1200 MW",
-    length: "12.5 miles",
-    status: "Operational"
-  },
-  {
-    id: 2,
-    name: "Oncor 138kV Circuit",
-    voltage: "138kV", 
-    capacity: "400 MW",
-    length: "8.2 miles",
-    status: "Operational"
-  }
-];
+interface PropertyData {
+  id: string;
+  address: string;
+  city: string;
+  state: string;
+  power_capacity_mw: number;
+  substation_distance_miles: number;
+  status: string;
+}
 
 export function PowerInfrastructure() {
+  const [powerData, setPowerData] = useState<PowerData>({
+    totalProperties: 0,
+    totalPowerCapacity: 0,
+    averageCapacity: 0,
+    highCapacityCount: 0
+  });
+  const [properties, setProperties] = useState<PropertyData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadPowerData();
+  }, []);
+
+  const loadPowerData = async () => {
+    try {
+      console.log('Loading power infrastructure data...');
+      
+      // Load properties with power capacity data
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from('properties')
+        .select('id, address, city, state, power_capacity_mw, substation_distance_miles, status')
+        .not('power_capacity_mw', 'is', null)
+        .order('power_capacity_mw', { ascending: false });
+
+      if (propertiesError) {
+        console.error('Error loading properties:', propertiesError);
+        toast({
+          title: "Error Loading Data",
+          description: propertiesError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const properties = propertiesData || [];
+      setProperties(properties);
+
+      // Calculate power statistics
+      const totalPowerCapacity = properties.reduce((sum, prop) => 
+        sum + (Number(prop.power_capacity_mw) || 0), 0
+      );
+      
+      const averageCapacity = properties.length > 0 
+        ? totalPowerCapacity / properties.length 
+        : 0;
+      
+      const highCapacityCount = properties.filter(prop => 
+        Number(prop.power_capacity_mw) >= 20
+      ).length;
+
+      setPowerData({
+        totalProperties: properties.length,
+        totalPowerCapacity,
+        averageCapacity,
+        highCapacityCount
+      });
+
+      console.log('Power data loaded:', {
+        totalProperties: properties.length,
+        totalPowerCapacity,
+        averageCapacity,
+        highCapacityCount
+      });
+
+    } catch (error) {
+      console.error('Error loading power data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load power infrastructure data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'active':
+      case 'available':
+        return 'default';
+      case 'under_review':
+      case 'analyzing':
+        return 'secondary';
+      case 'acquired':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="h-screen overflow-hidden bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Activity className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading power infrastructure data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen overflow-hidden bg-background">
       <div className="p-6 border-b">
@@ -78,22 +153,22 @@ export function PowerInfrastructure() {
       </div>
 
       <div className="p-6 h-full overflow-y-auto">
-        <Tabs defaultValue="substations" className="h-full">
+        <Tabs defaultValue="overview" className="h-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="substations">Substations</TabsTrigger>
-            <TabsTrigger value="transmission">Transmission Lines</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="interconnection">Interconnection Queue</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="substations" className="mt-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <TabsContent value="overview" className="mt-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <Building2 className="w-5 h-5 text-blue-500" />
                     <div>
-                      <p className="text-sm font-medium">Active Substations</p>
-                      <p className="text-2xl font-bold">12</p>
+                      <p className="text-sm font-medium">Total Properties</p>
+                      <p className="text-2xl font-bold">{powerData.totalProperties}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -101,10 +176,21 @@ export function PowerInfrastructure() {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
-                    <Activity className="w-5 h-5 text-blue-500" />
+                    <Zap className="w-5 h-5 text-yellow-500" />
                     <div>
-                      <p className="text-sm font-medium">Avg Utilization</p>
-                      <p className="text-2xl font-bold">68%</p>
+                      <p className="text-sm font-medium">Total Capacity</p>
+                      <p className="text-2xl font-bold">{powerData.totalPowerCapacity.toFixed(1)} MW</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Activity className="w-5 h-5 text-green-500" />
+                    <div>
+                      <p className="text-sm font-medium">Avg Capacity</p>
+                      <p className="text-2xl font-bold">{powerData.averageCapacity.toFixed(1)} MW</p>
                     </div>
                   </div>
                 </CardContent>
@@ -114,68 +200,105 @@ export function PowerInfrastructure() {
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="w-5 h-5 text-purple-500" />
                     <div>
-                      <p className="text-sm font-medium">Total Capacity</p>
-                      <p className="text-2xl font-bold">2.1 GVA</p>
+                      <p className="text-sm font-medium">High Capacity (20+ MW)</p>
+                      <p className="text-2xl font-bold">{powerData.highCapacityCount}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Nearby Substations</h3>
-              {mockSubstations.map((substation) => (
-                <Card key={substation.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{substation.name}</h4>
-                          <Badge variant={substation.status === 'Active' ? 'default' : 'secondary'}>
-                            {substation.status}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                          <div>Voltage: {substation.voltage}</div>
-                          <div>Capacity: {substation.capacity}</div>
-                          <div>Distance: {substation.distance}</div>
-                          <div>Utilization: {substation.utilization}%</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-blue-500" />
-                        <Button variant="outline" size="sm">View Details</Button>
-                      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Power Capacity Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {properties.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Zap className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-muted-foreground mb-2">No Power Data Available</h3>
+                      <p className="text-muted-foreground">No properties with power capacity data found in the system.</p>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      {properties.slice(0, 10).map((property) => (
+                        <div key={property.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-1">
+                            <div className="font-medium">{property.address}</div>
+                            <div className="text-sm text-muted-foreground flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {property.city}, {property.state}
+                            </div>
+                            {property.substation_distance_miles && (
+                              <div className="text-sm text-muted-foreground">
+                                {property.substation_distance_miles} mi to substation
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right space-y-1">
+                            <div className="text-lg font-bold text-yellow-600">
+                              {Number(property.power_capacity_mw).toFixed(1)} MW
+                            </div>
+                            <Badge variant={getStatusColor(property.status)}>
+                              {property.status?.replace('_', ' ') || 'Unknown'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                      {properties.length > 10 && (
+                        <div className="text-center py-4 text-muted-foreground">
+                          +{properties.length - 10} more properties
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="transmission" className="mt-6 space-y-6">
+          <TabsContent value="properties" className="mt-6 space-y-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Transmission Lines</h3>
-              {mockTransmissionLines.map((line) => (
-                <Card key={line.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{line.name}</h4>
-                          <Badge variant="default">{line.status}</Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
-                          <div>Voltage: {line.voltage}</div>
-                          <div>Capacity: {line.capacity}</div>
-                          <div>Length: {line.length}</div>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">Analyze</Button>
-                    </div>
+              <h3 className="text-lg font-semibold">All Properties with Power Data</h3>
+              {properties.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-medium text-muted-foreground mb-2">No Properties Found</h3>
+                    <p className="text-muted-foreground">No properties with power capacity data available.</p>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                properties.map((property) => (
+                  <Card key={property.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-medium">{property.address}</h4>
+                            <Badge variant={getStatusColor(property.status)}>
+                              {property.status?.replace('_', ' ') || 'Unknown'}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                            <div>Location: {property.city}, {property.state}</div>
+                            <div>Capacity: {Number(property.power_capacity_mw).toFixed(1)} MW</div>
+                            {property.substation_distance_miles && (
+                              <div>Distance: {property.substation_distance_miles} mi to substation</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="text-2xl font-bold text-yellow-600">
+                            {Number(property.power_capacity_mw).toFixed(1)} MW
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
