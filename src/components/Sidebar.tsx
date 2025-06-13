@@ -1,6 +1,8 @@
 
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   Map,
@@ -12,7 +14,8 @@ import {
   Search,
   Globe,
   Users,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,6 +24,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeView, setActiveView }: SidebarProps) {
+  const { signOut } = useAuth();
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'map', label: 'Property Map', icon: Map },
@@ -31,6 +36,14 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
     { id: 'infrastructure', label: 'Power Infrastructure', icon: Zap },
     { id: 'data', label: 'Data Management', icon: Database },
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <div className="w-64 bg-background border-r border-border h-screen flex flex-col">
@@ -72,11 +85,20 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
         </ul>
       </nav>
       
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-2">
         <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent">
           <Settings className="w-4 h-4" />
           <span>Settings</span>
         </button>
+        
+        <Button
+          onClick={handleSignOut}
+          variant="ghost"
+          className="w-full justify-start px-3 py-2 h-auto text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+        >
+          <LogOut className="w-4 h-4 mr-3" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );
