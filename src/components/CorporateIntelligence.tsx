@@ -1,70 +1,26 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Building2, 
-  TrendingDown, 
   AlertTriangle, 
   Search,
-  Activity,
-  DollarSign,
-  Zap,
   Eye,
-  RefreshCw,
-  MapPin,
-  Calendar,
-  Percent,
-  TrendingUp,
-  BarChart3,
-  Info
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
+import { Company, DistressAlert, LoadingStates } from '@/types/corporateIntelligence';
+import { CompanyAnalysisForm } from '@/components/corporateIntelligence/CompanyAnalysisForm';
+import { DistressAlertsPanel } from '@/components/corporateIntelligence/DistressAlertsPanel';
+import { CompanyFilters } from '@/components/corporateIntelligence/CompanyFilters';
+import { CompanyCard } from '@/components/corporateIntelligence/CompanyCard';
+import { CompanyDetailsModal } from '@/components/corporateIntelligence/CompanyDetailsModal';
 
 type CompanyRow = Database['public']['Tables']['companies']['Row'];
 type DistressAlertRow = Database['public']['Tables']['distress_alerts']['Row'];
-
-interface Company {
-  id: string;
-  name: string;
-  ticker?: string;
-  industry: string;
-  sector: string;
-  market_cap?: number;
-  financial_health_score?: number;
-  distress_signals?: string[];
-  power_usage_estimate?: number;
-  locations?: any;
-  analyzed_at: string;
-  debt_to_equity?: number;
-  current_ratio?: number;
-  revenue_growth?: number;
-  profit_margin?: number;
-}
-
-interface DistressAlert {
-  id: string;
-  company_name: string;
-  alert_type: string;
-  distress_level: number;
-  signals: string[];
-  power_capacity: number;
-  potential_value: number;
-  created_at: string;
-}
-
-interface LoadingStates {
-  analyzing: boolean;
-  scanning: boolean;
-  detecting: boolean;
-  monitoring: boolean;
-}
 
 export function CorporateIntelligence() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -77,8 +33,6 @@ export function CorporateIntelligence() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [industryFilter, setIndustryFilter] = useState('all');
-  const [newCompany, setNewCompany] = useState('');
-  const [newTicker, setNewTicker] = useState('');
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const { toast } = useToast();
@@ -166,8 +120,8 @@ export function CorporateIntelligence() {
     }
   };
 
-  const analyzeCompany = async () => {
-    if (!newCompany.trim()) {
+  const analyzeCompany = async (companyName: string, ticker: string) => {
+    if (!companyName.trim()) {
       toast({
         title: "Validation Error",
         description: "Please enter a company name",
@@ -178,13 +132,13 @@ export function CorporateIntelligence() {
     
     setLoadingState('analyzing', true);
     try {
-      console.log('Analyzing company:', newCompany);
+      console.log('Analyzing company:', companyName);
       
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
         body: {
           action: 'analyze_company',
-          company_name: newCompany.trim(),
-          ticker: newTicker.trim() || undefined
+          company_name: companyName,
+          ticker: ticker || undefined
         }
       });
 
@@ -197,11 +151,9 @@ export function CorporateIntelligence() {
 
       toast({
         title: "Analysis Complete",
-        description: `Successfully analyzed ${newCompany}`,
+        description: `Successfully analyzed ${companyName}`,
       });
 
-      setNewCompany('');
-      setNewTicker('');
       await loadData();
     } catch (error: any) {
       console.error('Analysis failed:', error);
@@ -330,12 +282,6 @@ export function CorporateIntelligence() {
     });
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newCompany.trim()) {
-      analyzeCompany();
-    }
-  };
-
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (company.ticker && company.ticker.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -343,68 +289,7 @@ export function CorporateIntelligence() {
     return matchesSearch && matchesIndustry;
   });
 
-  const getHealthColor = (score?: number) => {
-    if (!score) return 'bg-gray-500';
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
-  const getDistressColor = (level: number) => {
-    if (level >= 80) return 'bg-red-500';
-    if (level >= 60) return 'bg-orange-500';
-    return 'bg-yellow-500';
-  };
-
   const isAnyLoading = Object.values(loading).some(Boolean);
-
-  const formatCurrency = (value?: number) => {
-    if (!value || value === 0) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      notation: 'compact',
-      maximumFractionDigits: 1,
-    }).format(value);
-  };
-
-  const formatPercentage = (value?: number) => {
-    if (value === undefined || value === null) return 'N/A';
-    return `${(value * 100).toFixed(1)}%`;
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      console.error('Error formatting date:', dateString, error);
-      return 'Invalid Date';
-    }
-  };
-
-  const getOpportunityScore = (company: Company) => {
-    if (!company.financial_health_score) return 'N/A';
-    
-    if (company.distress_signals && company.distress_signals.length > 0) {
-      return Math.min(100 - company.financial_health_score, 85);
-    }
-    
-    return company.financial_health_score > 80 ? 'Low' : 'Medium';
-  };
-
-  const getRiskLevel = (company: Company) => {
-    if (!company.financial_health_score) return 'Unknown';
-    
-    if (company.financial_health_score < 40) return 'High';
-    if (company.financial_health_score < 70) return 'Medium';
-    return 'Low';
-  };
 
   return (
     <div className="space-y-6 p-6">
@@ -429,386 +314,39 @@ export function CorporateIntelligence() {
         </div>
       </div>
 
-      {/* Add Company Analysis */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Company Analysis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-2">
-            <Input
-              placeholder="Company name"
-              value={newCompany}
-              onChange={(e) => setNewCompany(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="flex-1"
-              disabled={loading.analyzing}
-            />
-            <Input
-              placeholder="Ticker (optional)"
-              value={newTicker}
-              onChange={(e) => setNewTicker(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="w-32"
-              disabled={loading.analyzing}
-            />
-            <Button onClick={analyzeCompany} disabled={loading.analyzing || !newCompany.trim()}>
-              {loading.analyzing ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Activity className="w-4 h-4 mr-2" />}
-              Analyze
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <CompanyAnalysisForm 
+        onAnalyze={analyzeCompany} 
+        loading={loading.analyzing}
+      />
 
-      {/* Distress Alerts */}
-      {alerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2 text-red-500" />
-              High Priority Distress Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {alerts.slice(0, 5).map((alert) => (
-                <div key={alert.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-medium">{alert.company_name}</h4>
-                      <Badge className={`text-white ${getDistressColor(alert.distress_level)}`}>
-                        {alert.distress_level}% Distress
-                      </Badge>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <div className="flex items-center">
-                        <Zap className="w-3 h-3 mr-1" />
-                        {alert.power_capacity} MW
-                      </div>
-                      <div className="flex items-center">
-                        <DollarSign className="w-3 h-3 mr-1" />
-                        ${(alert.potential_value / 1000000).toFixed(1)}M value
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {alert.signals.map((signal, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          {signal}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => investigateAlert(alert)}>
-                    Investigate
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <DistressAlertsPanel 
+        alerts={alerts} 
+        onInvestigate={investigateAlert}
+      />
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search companies..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={isAnyLoading}
-              />
-            </div>
-            <Select value={industryFilter} onValueChange={setIndustryFilter} disabled={isAnyLoading}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by industry" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Industries</SelectItem>
-                <SelectItem value="Technology">Technology</SelectItem>
-                <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                <SelectItem value="Energy">Energy</SelectItem>
-                <SelectItem value="Materials">Materials</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <CompanyFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        industryFilter={industryFilter}
+        onIndustryChange={setIndustryFilter}
+        disabled={isAnyLoading}
+      />
 
-      {/* Companies List */}
       <div className="grid gap-4">
         {filteredCompanies.map((company) => (
-          <Card key={company.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="text-lg font-semibold">{company.name}</h3>
-                    {company.ticker && (
-                      <Badge variant="outline">{company.ticker}</Badge>
-                    )}
-                    <Badge className={`text-white ${getHealthColor(company.financial_health_score)}`}>
-                      Health: {company.financial_health_score || 'N/A'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                    <span>{company.industry} • {company.sector}</span>
-                    <div className="flex items-center">
-                      <Building2 className="w-3 h-3 mr-1" />
-                      {Array.isArray(company.locations) ? company.locations.length : 0} locations
-                    </div>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => viewCompanyDetails(company)}>
-                  View Details
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-                  <div>
-                    <p className="text-sm font-medium">
-                      {company.market_cap ? `$${(company.market_cap / 1000000000).toFixed(1)}B` : 'N/A'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Market Cap</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <Zap className="w-4 h-4 mr-2 text-yellow-600" />
-                  <div>
-                    <p className="text-sm font-medium">{company.power_usage_estimate || 'N/A'} MW</p>
-                    <p className="text-xs text-muted-foreground">Est. Power Usage</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <TrendingDown className="w-4 h-4 mr-2 text-red-600" />
-                  <div>
-                    <p className="text-sm font-medium">{company.distress_signals?.length || 0}</p>
-                    <p className="text-xs text-muted-foreground">Distress Signals</p>
-                  </div>
-                </div>
-              </div>
-
-              {company.distress_signals && company.distress_signals.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {company.distress_signals.map((signal, idx) => (
-                    <Badge key={idx} variant="destructive" className="text-xs">
-                      {signal}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CompanyCard 
+            key={company.id} 
+            company={company} 
+            onViewDetails={viewCompanyDetails}
+          />
         ))}
       </div>
 
-      {/* Company Details Modal */}
-      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <Building2 className="w-5 h-5" />
-              <span>{selectedCompany?.name}</span>
-              {selectedCompany?.ticker && (
-                <Badge variant="outline">{selectedCompany.ticker}</Badge>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedCompany && (
-            <div className="space-y-6">
-              {/* Company Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Info className="w-4 h-4 mr-2" />
-                      Company Overview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="font-medium text-muted-foreground">Industry:</span>
-                        <p className="font-medium">{selectedCompany.industry}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-muted-foreground">Sector:</span>
-                        <p className="font-medium">{selectedCompany.sector}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-muted-foreground">Market Cap:</span>
-                        <p className="font-medium">{formatCurrency(selectedCompany.market_cap)}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-muted-foreground">Health Score:</span>
-                        <Badge className={`${getHealthColor(selectedCompany.financial_health_score)} text-white`}>
-                          {selectedCompany.financial_health_score || 'N/A'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-muted-foreground">Last Analyzed:</span>
-                      <p className="text-sm">{formatDate(selectedCompany.analyzed_at)}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Zap className="w-4 h-4 mr-2" />
-                      Power Infrastructure
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-yellow-600">
-                        {selectedCompany.power_usage_estimate || 'N/A'} MW
-                      </div>
-                      <p className="text-sm text-muted-foreground">Estimated Power Under Management</p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 text-sm">
-                      <div>
-                        <span className="font-medium text-muted-foreground">Locations:</span>
-                        <p className="font-medium">
-                          {Array.isArray(selectedCompany.locations) ? selectedCompany.locations.length : 0} facilities
-                        </p>
-                      </div>
-                      {selectedCompany.locations && Array.isArray(selectedCompany.locations) && selectedCompany.locations.length > 0 && (
-                        <div className="space-y-1">
-                          <span className="font-medium text-muted-foreground">Facility Locations:</span>
-                          {selectedCompany.locations.slice(0, 3).map((location: any, idx: number) => (
-                            <div key={idx} className="flex items-center text-xs">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              <span>{location.city}, {location.state} - {location.facility_type}</span>
-                            </div>
-                          ))}
-                          {selectedCompany.locations.length > 3 && (
-                            <p className="text-xs text-muted-foreground">
-                              +{selectedCompany.locations.length - 3} more locations
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Financial Metrics */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Financial Metrics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <TrendingUp className="w-4 h-4 mr-1 text-blue-600" />
-                      </div>
-                      <div className="text-xl font-bold">{formatPercentage(selectedCompany.revenue_growth)}</div>
-                      <p className="text-sm text-muted-foreground">Revenue Growth</p>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Percent className="w-4 h-4 mr-1 text-green-600" />
-                      </div>
-                      <div className="text-xl font-bold">{formatPercentage(selectedCompany.profit_margin)}</div>
-                      <p className="text-sm text-muted-foreground">Profit Margin</p>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <BarChart3 className="w-4 h-4 mr-1 text-orange-600" />
-                      </div>
-                      <div className="text-xl font-bold">
-                        {selectedCompany.debt_to_equity ? selectedCompany.debt_to_equity.toFixed(2) : 'N/A'}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Debt-to-Equity</p>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Activity className="w-4 h-4 mr-1 text-purple-600" />
-                      </div>
-                      <div className="text-xl font-bold">
-                        {selectedCompany.current_ratio ? selectedCompany.current_ratio.toFixed(2) : 'N/A'}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Current Ratio</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Distress Signals */}
-              {selectedCompany.distress_signals && selectedCompany.distress_signals.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
-                      Distress Signals ({selectedCompany.distress_signals.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {selectedCompany.distress_signals.map((signal, idx) => (
-                        <div key={idx} className="flex items-center p-3 border rounded-lg bg-red-50">
-                          <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
-                          <span className="text-sm font-medium">{signal}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Investment Opportunity Summary */}
-              <Card className="border-blue-200 bg-blue-50">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center text-blue-700">
-                    <Eye className="w-4 h-4 mr-2" />
-                    Investment Opportunity Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-blue-700">Power Capacity Value:</span>
-                        <p className="text-lg font-bold">
-                          {selectedCompany.power_usage_estimate 
-                            ? formatCurrency(selectedCompany.power_usage_estimate * 1000000)
-                            : 'N/A'
-                          }
-                        </p>
-                        <p className="text-xs text-muted-foreground">Est. @ $1M/MW</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-700">Risk Level:</span>
-                        <p className="text-lg font-bold">{getRiskLevel(selectedCompany)}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-700">Opportunity Score:</span>
-                        <p className="text-lg font-bold">{getOpportunityScore(selectedCompany)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <CompanyDetailsModal 
+        company={selectedCompany}
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+      />
 
       {filteredCompanies.length === 0 && !isAnyLoading && (
         <Card>
