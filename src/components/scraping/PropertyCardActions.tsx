@@ -22,7 +22,7 @@ export function PropertyCardActions({ property }: PropertyCardActionsProps) {
       </div>
       
       <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-        <span>AI Generated Property</span>
+        <span>Source: {property.source || 'Multi-platform'}</span>
       </div>
     </div>
   );

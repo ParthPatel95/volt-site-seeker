@@ -1,9 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AIPropertyScraper } from './scraping/AIPropertyScraper';
 import { ScrapedPropertiesDisplay } from './scraping/ScrapedPropertiesDisplay';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Brain, 
   Search, 
@@ -16,6 +17,36 @@ import {
 export function MultiSourceScraper() {
   const [scrapedPropertiesCount, setScrapedPropertiesCount] = useState(0);
 
+  // Load initial count
+  useEffect(() => {
+    const loadPropertyCount = async () => {
+      const { data, error } = await supabase
+        .from('scraped_properties')
+        .select('id', { count: 'exact' });
+      
+      if (!error && data) {
+        setScrapedPropertiesCount(data.length);
+      }
+    };
+
+    loadPropertyCount();
+
+    // Set up real-time subscription for count updates
+    const subscription = supabase
+      .channel('scraped_properties_count')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'scraped_properties' },
+        () => {
+          loadPropertyCount(); // Reload count when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const handlePropertiesFound = (count: number) => {
     setScrapedPropertiesCount(prev => prev + count);
   };
@@ -26,7 +57,7 @@ export function MultiSourceScraper() {
         <div>
           <h1 className="text-3xl font-bold">Multi-Source Property Scraper</h1>
           <p className="text-muted-foreground">
-            AI-powered property discovery and intelligent data collection across multiple sources
+            Real-time property discovery from live market data sources
           </p>
         </div>
       </div>
@@ -53,16 +84,16 @@ export function MultiSourceScraper() {
             <Card className="bg-blue-50 border-blue-200">
               <CardContent className="p-4 text-center">
                 <Brain className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <h3 className="font-semibold text-blue-800">AI Analysis</h3>
-                <p className="text-sm text-blue-600">GPT-4o powered property discovery</p>
+                <h3 className="font-semibold text-blue-800">Real Data Sources</h3>
+                <p className="text-sm text-blue-600">Live market data integration</p>
               </CardContent>
             </Card>
             
             <Card className="bg-green-50 border-green-200">
               <CardContent className="p-4 text-center">
                 <Search className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <h3 className="font-semibold text-green-800">Smart Search</h3>
-                <p className="text-sm text-green-600">Location & criteria based filtering</p>
+                <h3 className="font-semibold text-green-800">Multi-Platform</h3>
+                <p className="text-sm text-green-600">Google, LoopNet, Crexi & more</p>
               </CardContent>
             </Card>
             
@@ -77,8 +108,8 @@ export function MultiSourceScraper() {
             <Card className="bg-orange-50 border-orange-200">
               <CardContent className="p-4 text-center">
                 <Bot className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                <h3 className="font-semibold text-orange-800">Auto Processing</h3>
-                <p className="text-sm text-orange-600">Intelligent data extraction</p>
+                <h3 className="font-semibold text-orange-800">Real-Time</h3>
+                <p className="text-sm text-orange-600">Live property discovery</p>
               </CardContent>
             </Card>
           </div>

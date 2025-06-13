@@ -20,6 +20,8 @@ export function ScrapedPropertiesDisplay() {
   const loadScrapedProperties = async () => {
     setLoading(true);
     try {
+      console.log('Loading scraped properties...');
+      
       let query = supabase
         .from('scraped_properties')
         .select('*')
@@ -46,8 +48,10 @@ export function ScrapedPropertiesDisplay() {
         throw error;
       }
 
+      console.log('Loaded scraped properties:', data?.length || 0);
       setScrapedProperties(data || []);
     } catch (error: any) {
+      console.error('Failed to load scraped properties:', error);
       toast({
         title: "Error Loading Properties",
         description: error.message,
@@ -58,6 +62,28 @@ export function ScrapedPropertiesDisplay() {
     }
   };
 
+  // Set up real-time subscription to scraped_properties table
+  useEffect(() => {
+    loadScrapedProperties();
+
+    // Subscribe to real-time changes
+    const subscription = supabase
+      .channel('scraped_properties_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'scraped_properties' },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          loadScrapedProperties(); // Reload data when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Reload when filters change
   useEffect(() => {
     loadScrapedProperties();
   }, [searchTerm, typeFilter, statusFilter]);
@@ -105,7 +131,7 @@ export function ScrapedPropertiesDisplay() {
             <h3 className="text-xl font-medium text-muted-foreground mb-2">No Scraped Properties Found</h3>
             <p className="text-muted-foreground mb-4">
               {searchTerm || typeFilter !== 'all' || statusFilter !== 'all'
-                ? 'Try adjusting your filters'
+                ? 'Try adjusting your filters or refresh the page'
                 : 'Start by running the AI Property Scraper to discover properties'
               }
             </p>
