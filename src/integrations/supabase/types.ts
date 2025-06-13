@@ -541,6 +541,84 @@ export type Database = {
           },
         ]
       }
+      scraped_properties: {
+        Row: {
+          address: string
+          ai_analysis: Json | null
+          asking_price: number | null
+          city: string
+          created_at: string
+          description: string | null
+          id: string
+          listing_url: string | null
+          lot_size_acres: number | null
+          moved_to_properties: boolean | null
+          power_capacity_mw: number | null
+          price_per_sqft: number | null
+          property_type: string
+          scraped_at: string
+          source: string
+          square_footage: number | null
+          state: string
+          substation_distance_miles: number | null
+          transmission_access: boolean | null
+          updated_at: string
+          year_built: number | null
+          zip_code: string | null
+          zoning: string | null
+        }
+        Insert: {
+          address: string
+          ai_analysis?: Json | null
+          asking_price?: number | null
+          city: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          listing_url?: string | null
+          lot_size_acres?: number | null
+          moved_to_properties?: boolean | null
+          power_capacity_mw?: number | null
+          price_per_sqft?: number | null
+          property_type: string
+          scraped_at?: string
+          source?: string
+          square_footage?: number | null
+          state: string
+          substation_distance_miles?: number | null
+          transmission_access?: boolean | null
+          updated_at?: string
+          year_built?: number | null
+          zip_code?: string | null
+          zoning?: string | null
+        }
+        Update: {
+          address?: string
+          ai_analysis?: Json | null
+          asking_price?: number | null
+          city?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          listing_url?: string | null
+          lot_size_acres?: number | null
+          moved_to_properties?: boolean | null
+          power_capacity_mw?: number | null
+          price_per_sqft?: number | null
+          property_type?: string
+          scraped_at?: string
+          source?: string
+          square_footage?: number | null
+          state?: string
+          substation_distance_miles?: number | null
+          transmission_access?: boolean | null
+          updated_at?: string
+          year_built?: number | null
+          zip_code?: string | null
+          zoning?: string | null
+        }
+        Relationships: []
+      }
       scraping_jobs: {
         Row: {
           completed_at: string | null
