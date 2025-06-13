@@ -61,14 +61,15 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         throw new Error(error.message || 'Failed to invoke scraping function');
       }
 
-      // Handle both success and failure cases from the function
       if (data?.success && data?.properties_found > 0) {
         console.log('AI Scraping completed successfully:', data);
         onPropertiesFound(data.properties_found);
         
+        const dataSources = data.data_sources_used?.join(', ') || 'multiple sources';
+        
         toast({
-          title: "AI Scraping Complete!",
-          description: `Found ${data.properties_found} properties matching your criteria.`,
+          title: "Real Data Found!",
+          description: `Found ${data.properties_found} properties from ${dataSources}. Check the Scraped Properties tab to view them.`,
         });
 
         // Clear form
@@ -77,10 +78,8 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         setBudgetRange('');
         setPowerRequirements('');
       } else if (data?.success === false) {
-        // Function returned an error
         throw new Error(data.error || 'No properties found matching criteria');
       } else {
-        // Unexpected response format
         throw new Error('Unexpected response from scraping service');
       }
 
@@ -101,7 +100,7 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
       <CardHeader>
         <CardTitle className="flex items-center text-green-700">
           <Brain className="w-5 h-5 mr-2" />
-          AI Property Discovery
+          AI Property Discovery - Real Data Sources
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -190,24 +189,32 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         <div className="bg-white/70 rounded-lg p-4 border border-green-200">
           <h4 className="font-medium text-green-800 mb-2 flex items-center">
             <Target className="w-4 h-4 mr-1" />
-            AI Search Features
+            Real Data Sources
           </h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <span>Market intelligence analysis</span>
+              <span>RentSpree API</span>
             </div>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-              <span>Power infrastructure assessment</span>
+              <span>Government Open Data</span>
             </div>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-              <span>Location optimization</span>
+              <span>RSS Feeds</span>
             </div>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-              <span>Investment opportunity scoring</span>
+              <span>Advanced Scraping</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+              <span>Rentals.com API</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
+              <span>Market Intelligence</span>
             </div>
           </div>
         </div>
