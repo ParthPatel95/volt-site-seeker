@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CompanyAnalysisForm } from './corporateIntelligence/CompanyAnalysisForm';
@@ -9,7 +10,7 @@ import { IndustryIntelligencePanel } from './corporateIntelligence/IndustryIntel
 import { LinkedInIntelligencePanel } from './corporateIntelligence/LinkedInIntelligencePanel';
 import { AICompanyAnalyzer } from './corporateIntelligence/AICompanyAnalyzer';
 import { AIAnalysisDisplay } from './corporateIntelligence/AIAnalysisDisplay';
-import { Company, LoadingStates } from '@/types/corporateIntelligence';
+import { Company, LoadingStates, DistressAlert } from '@/types/corporateIntelligence';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Filters {
@@ -29,13 +30,14 @@ export function CorporateIntelligence() {
     detecting: false,
     monitoring: false,
   });
-  const [filters, setFilters] = useState<Filters>({});
-  const [distressAlerts, setDistressAlerts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('all');
+  const [distressAlerts, setDistressAlerts] = useState<DistressAlert[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
 
   useEffect(() => {
     loadCompanies();
-  }, [filters]);
+  }, [searchTerm, industryFilter]);
 
   const loadCompanies = async () => {
     setLoading(true);
@@ -45,17 +47,12 @@ export function CorporateIntelligence() {
         .select('*')
         .order('name', { ascending: true });
 
-      if (filters.industry) {
-        query = query.eq('industry', filters.industry);
+      if (industryFilter && industryFilter !== 'all') {
+        query = query.eq('industry', industryFilter);
       }
-      if (filters.sector) {
-        query = query.eq('sector', filters.sector);
-      }
-      if (filters.minHealthScore) {
-        query = query.gte('financial_health_score', filters.minHealthScore);
-      }
-      if (filters.distressSignal) {
-        query = query.contains('distress_signals', [filters.distressSignal]);
+      
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
       }
 
       const { data, error } = await query;
@@ -96,6 +93,11 @@ export function CorporateIntelligence() {
     loadCompanies();
   };
 
+  const handleInvestigateAlert = (alert: DistressAlert) => {
+    console.log('Investigating alert:', alert);
+    // Add investigation logic here
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-background p-6 space-y-8">
       <div className="flex items-center justify-between">
@@ -127,9 +129,11 @@ export function CorporateIntelligence() {
 
         <TabsContent value="companies" className="space-y-6">
           <CompanyFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            onClearFilters={() => setFilters({})}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            industryFilter={industryFilter}
+            onIndustryChange={setIndustryFilter}
+            disabled={loading}
           />
 
           {loading ? (
@@ -148,7 +152,7 @@ export function CorporateIntelligence() {
                 <CompanyCard
                   key={company.id}
                   company={company}
-                  onClick={() => setSelectedCompany(company)}
+                  onViewDetails={() => setSelectedCompany(company)}
                 />
               ))}
             </div>
@@ -156,7 +160,10 @@ export function CorporateIntelligence() {
         </TabsContent>
 
         <TabsContent value="distress-alerts">
-          <DistressAlertsPanel alerts={distressAlerts} />
+          <DistressAlertsPanel 
+            alerts={distressAlerts} 
+            onInvestigate={handleInvestigateAlert}
+          />
         </TabsContent>
 
         <TabsContent value="industry-intel">
