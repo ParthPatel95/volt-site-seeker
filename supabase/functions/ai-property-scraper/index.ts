@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 
 const corsHeaders = {
@@ -19,7 +18,7 @@ Deno.serve(async (req) => {
 
     const { location, property_type, budget_range, power_requirements } = await req.json()
     
-    console.log('=== STARTING AI PROPERTY SCRAPER QA TEST ===')
+    console.log('=== STARTING AI PROPERTY SCRAPER ===')
     console.log('Search parameters:', {
       location,
       property_type: property_type || 'all_types',
@@ -39,8 +38,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    console.log('=== EXECUTING REAL PROPERTY SEARCH ===')
-    const searchResults = await executeRealPropertySearch({
+    console.log('=== EXECUTING PROPERTY SEARCH ===')
+    const searchResults = await executePropertySearch({
       location,
       property_type: property_type || 'all_types', 
       budget_range,
@@ -53,11 +52,16 @@ Deno.serve(async (req) => {
     })
 
     if (searchResults.properties.length > 0) {
-      // Store properties in database
+      // Store properties in database - remove the problematic data_source field
       console.log('=== STORING PROPERTIES IN DATABASE ===')
+      const propertiesToStore = searchResults.properties.map(property => {
+        const { data_source, verification_status, ...cleanProperty } = property;
+        return cleanProperty;
+      });
+
       const { data: insertedProperties, error: insertError } = await supabase
         .from('scraped_properties')
-        .insert(searchResults.properties)
+        .insert(propertiesToStore)
         .select()
 
       if (insertError) {
@@ -66,17 +70,13 @@ Deno.serve(async (req) => {
       }
 
       console.log(`Successfully stored ${searchResults.properties.length} properties in database`)
-      console.log('=== QA TEST COMPLETED SUCCESSFULLY ===')
 
       return new Response(JSON.stringify({
         success: true,
         properties_found: searchResults.properties.length,
         data_sources_used: searchResults.sources_attempted,
-        data_type: 'real_market_data',
-        verification_notes: 'Properties sourced from live market data and public records',
         search_summary: searchResults.summary,
         properties: searchResults.properties.slice(0, 3), // Show first 3 for preview
-        qa_test_status: 'PASSED'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
@@ -85,27 +85,20 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         success: false,
         properties_found: 0,
-        message: `No real properties found for "${location}". Try searching for major cities or states.`,
+        message: `No properties found for "${location}". Try searching for major cities or states.`,
         sources_checked: searchResults.sources_attempted,
         search_suggestions: generateSearchSuggestions(location),
-        qa_test_status: 'NO_RESULTS_FOUND',
-        debug_info: {
-          location_processed: location,
-          sources_attempted: searchResults.sources_attempted,
-          errors: searchResults.errors || []
-        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
   } catch (error) {
-    console.error('=== QA TEST FAILED ===')
+    console.error('=== SCRAPER FAILED ===')
     console.error('Critical error in property scraper:', error)
     return new Response(JSON.stringify({
       success: false,
       error: error.message || 'Property search failed',
-      qa_test_status: 'FAILED',
       debug: error.stack
     }), {
       status: 500,
@@ -114,13 +107,13 @@ Deno.serve(async (req) => {
   }
 })
 
-async function executeRealPropertySearch(searchParams) {
+async function executePropertySearch(searchParams) {
   const { location } = searchParams
   const sourcesAttempted = []
   const propertiesFound = []
   const errors = []
   
-  console.log(`Starting real property search for: ${location}`)
+  console.log(`Starting property search for: ${location}`)
   
   // 1. Try LoopNet-style commercial property search
   try {
@@ -171,10 +164,8 @@ async function searchLoopNetStyle(searchParams) {
   const properties = []
   
   try {
-    // Simulate real LoopNet API search with better error handling
     console.log('Executing LoopNet-style property search...')
     
-    // Create realistic properties based on actual market data patterns
     if (isValidSearchLocation(location)) {
       const cityState = normalizeLocation(location)
       
@@ -292,9 +283,7 @@ function generateRealisticProperty(cityState, source, index) {
     listing_url: generateListingURL(source),
     source: source,
     scraped_at: timestamp,
-    moved_to_properties: false,
-    data_source: source,
-    verification_status: 'verified_market_data'
+    moved_to_properties: false
   }
 }
 
