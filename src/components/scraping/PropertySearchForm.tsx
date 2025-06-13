@@ -22,7 +22,7 @@ export function PropertySearchForm({ onSearch, isSearching }: PropertySearchForm
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('all_types');
   const [budgetRange, setBudgetRange] = useState('');
-  const [powerRequirements, setPowerRequirements] = useState('');
+  const [powerRequirements, setPowerRequirements] = useState('any');
 
   const handleSubmit = () => {
     if (!location) return;
@@ -118,7 +118,7 @@ export function PropertySearchForm({ onSearch, isSearching }: PropertySearchForm
                 <SelectValue placeholder="Any power capacity" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any power capacity</SelectItem>
+                <SelectItem value="any">Any power capacity</SelectItem>
                 <SelectItem value="low">5+ MW (Basic Industrial)</SelectItem>
                 <SelectItem value="medium">15+ MW (Heavy Industrial)</SelectItem>
                 <SelectItem value="high">25+ MW (Data Center Ready)</SelectItem>
