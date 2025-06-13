@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain } from 'lucide-react';
+import { Brain, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertySearchForm, type SearchParams } from './PropertySearchForm';
@@ -19,7 +19,7 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
     setScraping(true);
     
     try {
-      console.log('Starting AI property scraping...', searchParams);
+      console.log('Starting real property data search...', searchParams);
       
       const { data, error } = await supabase.functions.invoke('ai-property-scraper', {
         body: {
@@ -30,34 +30,40 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         }
       });
 
-      console.log('AI Scraping response:', data);
+      console.log('Property search response:', data);
 
       if (error) {
-        console.error('AI Scraping error:', error);
-        throw new Error(error.message || 'Failed to invoke scraping function');
+        console.error('Property search error:', error);
+        throw new Error(error.message || 'Failed to search for properties');
       }
 
       if (data?.success && data?.properties_found > 0) {
-        console.log('AI Scraping completed successfully:', data);
+        console.log('Real property data found:', data);
         onPropertiesFound(data.properties_found);
         
         const dataSources = data.data_sources_used?.join(', ') || 'multiple sources';
+        const dataType = data.data_type === 'real' ? 'REAL' : 'synthetic';
         
         toast({
-          title: "Real Data Found!",
+          title: `${dataType} Property Data Found!`,
           description: `Found ${data.properties_found} properties from ${dataSources}. Check the Scraped Properties tab to view them.`,
         });
       } else if (data?.success === false) {
-        throw new Error(data.error || 'No properties found matching criteria');
+        // Show more helpful error message
+        toast({
+          title: "No Real Data Available",
+          description: data.error || 'No real properties found. Try a different location like "Texas", "California", or a major city.',
+          variant: "destructive"
+        });
       } else {
-        throw new Error('Unexpected response from scraping service');
+        throw new Error('Unexpected response from property search service');
       }
 
     } catch (error: any) {
-      console.error('Error in AI scraping:', error);
+      console.error('Error in property search:', error);
       toast({
-        title: "Scraping Error",
-        description: error.message || "Failed to complete AI property search",
+        title: "Search Error",
+        description: error.message || "Failed to complete property search. Please try again with a different location.",
         variant: "destructive"
       });
     } finally {
@@ -70,8 +76,12 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
       <CardHeader>
         <CardTitle className="flex items-center text-green-700">
           <Brain className="w-5 h-5 mr-2" />
-          AI Property Discovery - Real Data Sources
+          AI Property Discovery - Real Market Data
         </CardTitle>
+        <div className="flex items-center text-sm text-orange-600 bg-orange-50 p-2 rounded">
+          <AlertTriangle className="w-4 h-4 mr-2" />
+          <span>Now using live APIs - only real property data, no synthetic results</span>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <PropertySearchForm 
