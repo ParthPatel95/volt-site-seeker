@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { Sidebar } from '@/components/Sidebar';
@@ -33,7 +32,7 @@ const Index = () => {
     );
   }
 
-  // Show auth if not authenticated
+  // Show auth if not authenticated - this is the critical protection
   if (!user || !session) {
     return <Auth onAuthStateChange={() => {}} />;
   }
