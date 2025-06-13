@@ -1,46 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Filter, 
-  RefreshCw, 
-  Building, 
-  Calendar,
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Building, RefreshCw } from 'lucide-react';
 import { ScrapedPropertyCard } from './ScrapedPropertyCard';
+import { PropertyStats } from './PropertyStats';
+import { PropertyFilters } from './PropertyFilters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-interface ScrapedProperty {
-  id: string;
-  address: string;
-  city: string;
-  state: string;
-  zip_code?: string;
-  property_type: string;
-  square_footage?: number;
-  lot_size_acres?: number;
-  asking_price?: number;
-  price_per_sqft?: number;
-  year_built?: number;
-  power_capacity_mw?: number;
-  substation_distance_miles?: number;
-  transmission_access: boolean;
-  zoning?: string;
-  description?: string;
-  listing_url?: string;
-  source: string;
-  scraped_at: string;
-  moved_to_properties: boolean;
-  ai_analysis?: any;
-}
+import type { ScrapedProperty } from '@/types/scrapedProperty';
 
 export function ScrapedPropertiesDisplay() {
   const [scrapedProperties, setScrapedProperties] = useState<ScrapedProperty[]>([]);
@@ -115,93 +82,22 @@ export function ScrapedPropertiesDisplay() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <Building className="w-8 h-8 text-blue-500" />
-              <div>
-                <p className="text-2xl font-bold">{scrapedProperties.length}</p>
-                <p className="text-sm text-muted-foreground">Total Scraped</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <PropertyStats 
+        totalCount={scrapedProperties.length}
+        availableCount={availableCount}
+        movedCount={movedCount}
+      />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="w-8 h-8 text-orange-500" />
-              <div>
-                <p className="text-2xl font-bold">{availableCount}</p>
-                <p className="text-sm text-muted-foreground">Available to Move</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <PropertyFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onRefresh={loadScrapedProperties}
+      />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="w-8 h-8 text-green-500" />
-              <div>
-                <p className="text-2xl font-bold">{movedCount}</p>
-                <p className="text-sm text-muted-foreground">Moved to Properties</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search properties..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Property Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="industrial">Industrial</SelectItem>
-                <SelectItem value="warehouse">Warehouse</SelectItem>
-                <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                <SelectItem value="data_center">Data Center</SelectItem>
-                <SelectItem value="logistics">Logistics</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Properties</SelectItem>
-                <SelectItem value="available">Available to Move</SelectItem>
-                <SelectItem value="moved">Already Moved</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" onClick={loadScrapedProperties}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Properties List */}
       {scrapedProperties.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
