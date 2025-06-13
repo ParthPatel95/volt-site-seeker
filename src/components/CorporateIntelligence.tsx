@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,9 +114,9 @@ export function CorporateIntelligence() {
           ticker: row.ticker || undefined,
           industry: row.industry,
           sector: row.sector,
-          market_cap: row.market_cap || undefined,
+          market_cap: row.market_cap ? Number(row.market_cap) : undefined,
           financial_health_score: row.financial_health_score || undefined,
-          distress_signals: row.distress_signals || undefined,
+          distress_signals: Array.isArray(row.distress_signals) ? row.distress_signals : [],
           power_usage_estimate: row.power_usage_estimate ? Number(row.power_usage_estimate) : undefined,
           locations: row.locations,
           analyzed_at: row.analyzed_at,
@@ -145,10 +146,10 @@ export function CorporateIntelligence() {
           id: row.id,
           company_name: row.company_name,
           alert_type: row.alert_type,
-          distress_level: row.distress_level,
-          signals: row.signals,
-          power_capacity: Number(row.power_capacity),
-          potential_value: Number(row.potential_value),
+          distress_level: Number(row.distress_level) || 0,
+          signals: Array.isArray(row.signals) ? row.signals : [],
+          power_capacity: Number(row.power_capacity) || 0,
+          potential_value: Number(row.potential_value) || 0,
           created_at: row.created_at
         }));
         setAlerts(transformedAlerts);
@@ -316,12 +317,12 @@ export function CorporateIntelligence() {
     }
   };
 
-  const viewCompanyDetails = async (company: Company) => {
+  const viewCompanyDetails = (company: Company) => {
     setSelectedCompany(company);
     setShowDetailsModal(true);
   };
 
-  const investigateAlert = async (alert: DistressAlert) => {
+  const investigateAlert = (alert: DistressAlert) => {
     console.log('Investigating alert:', alert);
     toast({
       title: "Investigation Started",
@@ -329,9 +330,15 @@ export function CorporateIntelligence() {
     });
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && newCompany.trim()) {
+      analyzeCompany();
+    }
+  };
+
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         company.ticker?.toLowerCase().includes(searchTerm.toLowerCase());
+                         (company.ticker && company.ticker.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesIndustry = industryFilter === 'all' || company.industry === industryFilter;
     return matchesSearch && matchesIndustry;
   });
@@ -352,7 +359,7 @@ export function CorporateIntelligence() {
   const isAnyLoading = Object.values(loading).some(Boolean);
 
   const formatCurrency = (value?: number) => {
-    if (!value) return 'N/A';
+    if (!value || value === 0) return 'N/A';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -367,13 +374,36 @@ export function CorporateIntelligence() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error);
+      return 'Invalid Date';
+    }
+  };
+
+  const getOpportunityScore = (company: Company) => {
+    if (!company.financial_health_score) return 'N/A';
+    
+    if (company.distress_signals && company.distress_signals.length > 0) {
+      return Math.min(100 - company.financial_health_score, 85);
+    }
+    
+    return company.financial_health_score > 80 ? 'Low' : 'Medium';
+  };
+
+  const getRiskLevel = (company: Company) => {
+    if (!company.financial_health_score) return 'Unknown';
+    
+    if (company.financial_health_score < 40) return 'High';
+    if (company.financial_health_score < 70) return 'Medium';
+    return 'Low';
   };
 
   return (
@@ -410,6 +440,7 @@ export function CorporateIntelligence() {
               placeholder="Company name"
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}
+              onKeyPress={handleKeyPress}
               className="flex-1"
               disabled={loading.analyzing}
             />
@@ -417,6 +448,7 @@ export function CorporateIntelligence() {
               placeholder="Ticker (optional)"
               value={newTicker}
               onChange={(e) => setNewTicker(e.target.value)}
+              onKeyPress={handleKeyPress}
               className="w-32"
               disabled={loading.analyzing}
             />
@@ -538,7 +570,7 @@ export function CorporateIntelligence() {
                   <DollarSign className="w-4 h-4 mr-2 text-green-600" />
                   <div>
                     <p className="text-sm font-medium">
-                      ${company.market_cap ? (company.market_cap / 1000000000).toFixed(1) : 'N/A'}B
+                      {company.market_cap ? `$${(company.market_cap / 1000000000).toFixed(1)}B` : 'N/A'}
                     </p>
                     <p className="text-xs text-muted-foreground">Market Cap</p>
                   </div>
@@ -763,25 +795,11 @@ export function CorporateIntelligence() {
                       </div>
                       <div>
                         <span className="font-medium text-blue-700">Risk Level:</span>
-                        <p className="text-lg font-bold">
-                          {!selectedCompany.financial_health_score || selectedCompany.financial_health_score < 40
-                            ? 'High' 
-                            : selectedCompany.financial_health_score < 70 
-                              ? 'Medium' 
-                              : 'Low'
-                          }
-                        </p>
+                        <p className="text-lg font-bold">{getRiskLevel(selectedCompany)}</p>
                       </div>
                       <div>
                         <span className="font-medium text-blue-700">Opportunity Score:</span>
-                        <p className="text-lg font-bold">
-                          {selectedCompany.distress_signals && selectedCompany.distress_signals.length > 0
-                            ? Math.min(100 - (selectedCompany.financial_health_score || 50), 85)
-                            : (selectedCompany.financial_health_score || 50) > 80 
-                              ? 'Low' 
-                              : 'Medium'
-                          }
-                        </p>
+                        <p className="text-lg font-bold">{getOpportunityScore(selectedCompany)}</p>
                       </div>
                     </div>
                   </div>
