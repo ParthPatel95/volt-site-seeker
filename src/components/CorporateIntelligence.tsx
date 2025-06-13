@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Building2, 
   TrendingDown, 
@@ -14,7 +14,13 @@ import {
   DollarSign,
   Zap,
   Eye,
-  RefreshCw
+  RefreshCw,
+  MapPin,
+  Calendar,
+  Percent,
+  TrendingUp,
+  BarChart3,
+  Info
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +41,10 @@ interface Company {
   power_usage_estimate?: number;
   locations?: any;
   analyzed_at: string;
+  debt_to_equity?: number;
+  current_ratio?: number;
+  revenue_growth?: number;
+  profit_margin?: number;
 }
 
 interface DistressAlert {
@@ -68,6 +78,8 @@ export function CorporateIntelligence() {
   const [industryFilter, setIndustryFilter] = useState('all');
   const [newCompany, setNewCompany] = useState('');
   const [newTicker, setNewTicker] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -106,7 +118,11 @@ export function CorporateIntelligence() {
           distress_signals: row.distress_signals || undefined,
           power_usage_estimate: row.power_usage_estimate ? Number(row.power_usage_estimate) : undefined,
           locations: row.locations,
-          analyzed_at: row.analyzed_at
+          analyzed_at: row.analyzed_at,
+          debt_to_equity: row.debt_to_equity ? Number(row.debt_to_equity) : undefined,
+          current_ratio: row.current_ratio ? Number(row.current_ratio) : undefined,
+          revenue_growth: row.revenue_growth ? Number(row.revenue_growth) : undefined,
+          profit_margin: row.profit_margin ? Number(row.profit_margin) : undefined,
         }));
         setCompanies(transformedCompanies);
       }
@@ -301,11 +317,8 @@ export function CorporateIntelligence() {
   };
 
   const viewCompanyDetails = async (company: Company) => {
-    console.log('Viewing company details:', company);
-    toast({
-      title: "Company Details",
-      description: `Viewing details for ${company.name}`,
-    });
+    setSelectedCompany(company);
+    setShowDetailsModal(true);
   };
 
   const investigateAlert = async (alert: DistressAlert) => {
@@ -337,6 +350,31 @@ export function CorporateIntelligence() {
   };
 
   const isAnyLoading = Object.values(loading).some(Boolean);
+
+  const formatCurrency = (value?: number) => {
+    if (!value) return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  };
+
+  const formatPercentage = (value?: number) => {
+    if (value === undefined || value === null) return 'N/A';
+    return `${(value * 100).toFixed(1)}%`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -536,6 +574,223 @@ export function CorporateIntelligence() {
           </Card>
         ))}
       </div>
+
+      {/* Company Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Building2 className="w-5 h-5" />
+              <span>{selectedCompany?.name}</span>
+              {selectedCompany?.ticker && (
+                <Badge variant="outline">{selectedCompany.ticker}</Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedCompany && (
+            <div className="space-y-6">
+              {/* Company Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Info className="w-4 h-4 mr-2" />
+                      Company Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="font-medium text-muted-foreground">Industry:</span>
+                        <p className="font-medium">{selectedCompany.industry}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-muted-foreground">Sector:</span>
+                        <p className="font-medium">{selectedCompany.sector}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-muted-foreground">Market Cap:</span>
+                        <p className="font-medium">{formatCurrency(selectedCompany.market_cap)}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-muted-foreground">Health Score:</span>
+                        <Badge className={`${getHealthColor(selectedCompany.financial_health_score)} text-white`}>
+                          {selectedCompany.financial_health_score || 'N/A'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Last Analyzed:</span>
+                      <p className="text-sm">{formatDate(selectedCompany.analyzed_at)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Zap className="w-4 h-4 mr-2" />
+                      Power Infrastructure
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-yellow-600">
+                        {selectedCompany.power_usage_estimate || 'N/A'} MW
+                      </div>
+                      <p className="text-sm text-muted-foreground">Estimated Power Under Management</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 text-sm">
+                      <div>
+                        <span className="font-medium text-muted-foreground">Locations:</span>
+                        <p className="font-medium">
+                          {Array.isArray(selectedCompany.locations) ? selectedCompany.locations.length : 0} facilities
+                        </p>
+                      </div>
+                      {selectedCompany.locations && Array.isArray(selectedCompany.locations) && selectedCompany.locations.length > 0 && (
+                        <div className="space-y-1">
+                          <span className="font-medium text-muted-foreground">Facility Locations:</span>
+                          {selectedCompany.locations.slice(0, 3).map((location: any, idx: number) => (
+                            <div key={idx} className="flex items-center text-xs">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              <span>{location.city}, {location.state} - {location.facility_type}</span>
+                            </div>
+                          ))}
+                          {selectedCompany.locations.length > 3 && (
+                            <p className="text-xs text-muted-foreground">
+                              +{selectedCompany.locations.length - 3} more locations
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Financial Metrics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Financial Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <TrendingUp className="w-4 h-4 mr-1 text-blue-600" />
+                      </div>
+                      <div className="text-xl font-bold">{formatPercentage(selectedCompany.revenue_growth)}</div>
+                      <p className="text-sm text-muted-foreground">Revenue Growth</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <Percent className="w-4 h-4 mr-1 text-green-600" />
+                      </div>
+                      <div className="text-xl font-bold">{formatPercentage(selectedCompany.profit_margin)}</div>
+                      <p className="text-sm text-muted-foreground">Profit Margin</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <BarChart3 className="w-4 h-4 mr-1 text-orange-600" />
+                      </div>
+                      <div className="text-xl font-bold">
+                        {selectedCompany.debt_to_equity ? selectedCompany.debt_to_equity.toFixed(2) : 'N/A'}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Debt-to-Equity</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <Activity className="w-4 h-4 mr-1 text-purple-600" />
+                      </div>
+                      <div className="text-xl font-bold">
+                        {selectedCompany.current_ratio ? selectedCompany.current_ratio.toFixed(2) : 'N/A'}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Current Ratio</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Distress Signals */}
+              {selectedCompany.distress_signals && selectedCompany.distress_signals.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
+                      Distress Signals ({selectedCompany.distress_signals.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedCompany.distress_signals.map((signal, idx) => (
+                        <div key={idx} className="flex items-center p-3 border rounded-lg bg-red-50">
+                          <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
+                          <span className="text-sm font-medium">{signal}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Investment Opportunity Summary */}
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center text-blue-700">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Investment Opportunity Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-blue-700">Power Capacity Value:</span>
+                        <p className="text-lg font-bold">
+                          {selectedCompany.power_usage_estimate 
+                            ? formatCurrency(selectedCompany.power_usage_estimate * 1000000)
+                            : 'N/A'
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">Est. @ $1M/MW</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-700">Risk Level:</span>
+                        <p className="text-lg font-bold">
+                          {!selectedCompany.financial_health_score || selectedCompany.financial_health_score < 40
+                            ? 'High' 
+                            : selectedCompany.financial_health_score < 70 
+                              ? 'Medium' 
+                              : 'Low'
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-700">Opportunity Score:</span>
+                        <p className="text-lg font-bold">
+                          {selectedCompany.distress_signals && selectedCompany.distress_signals.length > 0
+                            ? Math.min(100 - (selectedCompany.financial_health_score || 50), 85)
+                            : (selectedCompany.financial_health_score || 50) > 80 
+                              ? 'Low' 
+                              : 'Medium'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {filteredCompanies.length === 0 && !isAnyLoading && (
         <Card>
