@@ -54,13 +54,16 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         }
       });
 
+      console.log('AI Scraping response:', data);
+
       if (error) {
         console.error('AI Scraping error:', error);
-        throw error;
+        throw new Error(error.message || 'Failed to invoke scraping function');
       }
 
-      if (data?.properties_found) {
-        console.log('AI Scraping completed:', data);
+      // Handle both success and failure cases from the function
+      if (data?.success && data?.properties_found > 0) {
+        console.log('AI Scraping completed successfully:', data);
         onPropertiesFound(data.properties_found);
         
         toast({
@@ -73,8 +76,12 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         setPropertyType('');
         setBudgetRange('');
         setPowerRequirements('');
+      } else if (data?.success === false) {
+        // Function returned an error
+        throw new Error(data.error || 'No properties found matching criteria');
       } else {
-        throw new Error('No properties found or invalid response');
+        // Unexpected response format
+        throw new Error('Unexpected response from scraping service');
       }
 
     } catch (error: any) {
@@ -107,7 +114,7 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g., Houston TX, Dallas Metro, Austin"
+                placeholder="e.g., Texas, Ontario Canada, New York"
                 className="pl-10"
                 disabled={scraping}
               />
@@ -188,7 +195,7 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <span>Market analysis & pricing</span>
+              <span>Market intelligence analysis</span>
             </div>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
