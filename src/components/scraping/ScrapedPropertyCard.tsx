@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type PropertyType = Database['public']['Enums']['property_type'];
 
 interface ScrapedProperty {
   id: string;
@@ -72,8 +75,8 @@ export function ScrapedPropertyCard({ property, onMoveToProperties }: ScrapedPro
   };
 
   // Map scraped property type to enum values
-  const mapPropertyType = (type: string) => {
-    const typeMap: { [key: string]: string } = {
+  const mapPropertyType = (type: string): PropertyType => {
+    const typeMap: { [key: string]: PropertyType } = {
       'industrial': 'industrial',
       'warehouse': 'warehouse', 
       'manufacturing': 'manufacturing',
