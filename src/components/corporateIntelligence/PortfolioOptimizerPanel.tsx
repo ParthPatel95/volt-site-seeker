@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +43,16 @@ export function PortfolioOptimizerPanel() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRecommendations(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        geographic_allocation: (item.geographic_allocation as Record<string, number>) || {},
+        sector_allocation: (item.sector_allocation as Record<string, number>) || {},
+        timing_recommendations: (item.timing_recommendations as Record<string, string | number>) || {}
+      }));
+      
+      setRecommendations(transformedData);
     } catch (error) {
       console.error('Error loading portfolio recommendations:', error);
       toast({
