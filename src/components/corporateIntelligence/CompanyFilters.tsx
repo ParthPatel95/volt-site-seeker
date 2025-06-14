@@ -19,31 +19,30 @@ export function CompanyFilters({
   disabled 
 }: CompanyFiltersProps) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Search companies..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              disabled={disabled}
-            />
-          </div>
-          <Select value={industryFilter} onValueChange={onIndustryChange} disabled={disabled}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by industry" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Industries</SelectItem>
-              <SelectItem value="Technology">Technology</SelectItem>
-              <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-              <SelectItem value="Energy">Energy</SelectItem>
-              <SelectItem value="Materials">Materials</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="space-y-3 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search companies..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            disabled={disabled}
+            className="text-sm"
+          />
         </div>
-      </CardContent>
-    </Card>
+        <Select value={industryFilter} onValueChange={onIndustryChange} disabled={disabled}>
+          <SelectTrigger className="w-full sm:w-48 text-sm">
+            <SelectValue placeholder="Filter by industry" />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-white dark:bg-slate-800">
+            <SelectItem value="all">All Industries</SelectItem>
+            <SelectItem value="Technology">Technology</SelectItem>
+            <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+            <SelectItem value="Energy">Energy</SelectItem>
+            <SelectItem value="Materials">Materials</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
   );
 }
