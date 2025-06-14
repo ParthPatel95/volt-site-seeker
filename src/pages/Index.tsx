@@ -14,11 +14,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { EnhancedPropertyMap } from '@/components/EnhancedPropertyMap';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { MultiSourceScraper } from '@/components/MultiSourceScraper';
-import { useLocation } from 'react-router-dom';
+import { EnergyRateIntelligence } from '@/components/energy/EnergyRateIntelligence';
+import { Routes, Route } from 'react-router-dom';
 
 const Index = () => {
   const { user, session, loading } = useAuth();
-  const location = useLocation();
 
   // Show loading state
   if (loading) {
@@ -39,37 +39,22 @@ const Index = () => {
     return <Auth onAuthStateChange={() => {}} />;
   }
 
-  const renderContent = () => {
-    const path = location.pathname;
-    
-    switch (path) {
-      case '/':
-        return <Dashboard />;
-      case '/map':
-        return <EnhancedPropertyMap />;
-      case '/properties':
-        return <PropertyList />;
-      case '/corporate-intelligence':
-        return <CorporateIntelligence />;
-      case '/scraper':
-        return <MultiSourceScraper />;
-      case '/alerts':
-        return <AlertsPanel />;
-      case '/power-infrastructure':
-        return <PowerInfrastructure />;
-      case '/data-management':
-        return <DataManagement />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar />
         <main className="flex-1 overflow-hidden">
-          {renderContent()}
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/map" element={<EnhancedPropertyMap />} />
+            <Route path="/properties" element={<PropertyList />} />
+            <Route path="/scraper" element={<MultiSourceScraper />} />
+            <Route path="/energy-rates" element={<EnergyRateIntelligence />} />
+            <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
+            <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
+            <Route path="/alerts" element={<AlertsPanel />} />
+            <Route path="/data-management" element={<DataManagement />} />
+          </Routes>
         </main>
       </div>
     </SidebarProvider>
