@@ -1,105 +1,140 @@
-
-import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import {
-  LayoutDashboard,
-  Map,
-  Building,
-  Bell,
-  Zap,
+import React, { useState } from 'react';
+import { 
+  LayoutDashboard, 
+  Building, 
+  Search, 
+  MapPin, 
+  AlertTriangle, 
   Database,
-  TrendingUp,
-  Search,
-  Globe,
-  Users,
-  Settings,
-  LogOut
+  Brain,
+  Zap
 } from 'lucide-react';
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { ModeToggle } from './ModeToggle';
+import { Link } from 'react-router-dom';
 
-interface SidebarProps {
-  activeView: string;
-  setActiveView: (view: string) => void;
-}
-
-export function Sidebar({ activeView, setActiveView }: SidebarProps) {
-  const { signOut } = useAuth();
+const Sidebar = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'map', label: 'Property Map', icon: Map },
-    { id: 'properties', label: 'Properties', icon: Building },
-    { id: 'corporate-intelligence', label: 'Corporate Intel', icon: TrendingUp },
-    { id: 'multi-scraper', label: 'Multi-Source Scraper', icon: Globe },
-    { id: 'alerts', label: 'Alerts', icon: Bell },
-    { id: 'infrastructure', label: 'Power Infrastructure', icon: Zap },
-    { id: 'data', label: 'Data Management', icon: Database },
+    { 
+      icon: LayoutDashboard, 
+      label: 'Dashboard', 
+      path: '/',
+      description: 'Overview and analytics'
+    },
+    { 
+      icon: Building, 
+      label: 'Properties', 
+      path: '/properties',
+      description: 'Property portfolio management'
+    },
+    { 
+      icon: Search, 
+      label: 'Property Scraper', 
+      path: '/scraper',
+      description: 'Multi-source property discovery'
+    },
+    { 
+      icon: Zap, 
+      label: 'Energy Rates', 
+      path: '/energy-rates',
+      description: 'Real-time electricity pricing'
+    },
+    { 
+      icon: Brain, 
+      label: 'Corporate Intelligence', 
+      path: '/corporate-intelligence',
+      description: 'Company analysis and insights'
+    },
+    { 
+      icon: MapPin, 
+      label: 'Power Infrastructure', 
+      path: '/power-infrastructure',
+      description: 'Grid and transmission data'
+    },
+    { 
+      icon: AlertTriangle, 
+      label: 'Alerts', 
+      path: '/alerts',
+      description: 'Monitoring and notifications'
+    },
+    { 
+      icon: Database, 
+      label: 'Data Management', 
+      path: '/data-management',
+      description: 'Import and export tools'
+    }
   ];
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
   return (
-    <div className="w-64 bg-background border-r border-border h-screen flex flex-col">
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-700 rounded-lg flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" className="text-white">
-              <path
-                fill="currentColor"
-                d="M13 0L6 12h5l-2 12 7-12h-5l2-12z"
-              />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">VoltScout</h1>
-            <p className="text-xs text-muted-foreground">Intelligence Platform</p>
-          </div>
-        </div>
+    <aside className={`bg-secondary border-r border-muted w-60 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+      <div className="flex items-center justify-between p-4">
+        <span className="font-bold text-xl">VoltVision</span>
+        <Sheet>
+          <SheetTrigger>
+             {/* Settings Icon or Button */}
+             ⚙️
+          </SheetTrigger>
+          <SheetContent className="sm:max-w-lg">
+            <SheetHeader>
+              <SheetTitle>Settings</SheetTitle>
+              <SheetDescription>
+                Make changes to your profile here. Click save when you're done.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Appearance
+                </Label>
+                <div className="col-span-3">
+                  <ModeToggle />
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="username" className="text-right">
+                  Enable Notifications
+                </Label>
+                <div className="col-span-3">
+                  <Switch id="notifications" />
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
-      
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              <button
-                onClick={() => setActiveView(item.id)}
-                className={cn(
-                  "w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  activeView === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      
-      <div className="p-4 border-t border-border space-y-2">
-        <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent">
-          <Settings className="w-4 h-4" />
-          <span>Settings</span>
-        </button>
-        
-        <Button
-          onClick={handleSignOut}
-          variant="ghost"
-          className="w-full justify-start px-3 py-2 h-auto text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
-        >
-          <LogOut className="w-4 h-4 mr-3" />
-          Sign Out
-        </Button>
-      </div>
-    </div>
+      <Separator />
+      <ScrollArea className="flex-1">
+        <nav className="p-4">
+          <ul>
+            {menuItems.map((item) => (
+              <li key={item.label} className="mb-2 last:mb-0">
+                <Link
+                  to={item.path}
+                  className="group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </ScrollArea>
+    </aside>
   );
-}
+};
+
+export default Sidebar;

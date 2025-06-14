@@ -1,34 +1,36 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Landing from "./pages/Landing";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-
+import { Toaster } from "@/components/ui/toaster";
+import { Routes, Route } from "react-router-dom";
+import { Landing } from "@/pages/Landing";
+import { Index } from "@/pages";
+import { PropertyList } from "@/components/PropertyList";
+import { MultiSourceScraper } from "@/components/MultiSourceScraper";
+import { CorporateIntelligence } from "@/components/CorporateIntelligence";
+import { PowerInfrastructure } from "@/components/PowerInfrastructure";
+import { AlertsSystem } from "@/components/AlertsSystem";
+import { DataManagement } from "@/components/DataManagement";
+import { NotFound } from "@/pages/NotFound";
 const queryClient = new QueryClient();
+import { EnergyRateIntelligence } from '@/components/energy/EnergyRateIntelligence';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/home" element={<Landing />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/app" element={<Index />} />
-          <Route path="/voltscout" element={<Index />} />
-          <Route path="/platform" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      <Routes>
+        <Route path="/landing" element={<Landing />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/properties" element={<PropertyList />} />
+        <Route path="/scraper" element={<MultiSourceScraper />} />
+        <Route path="/energy-rates" element={<EnergyRateIntelligence />} />
+        <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
+        <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
+        <Route path="/alerts" element={<AlertsSystem />} />
+        <Route path="/data-management" element={<DataManagement />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
