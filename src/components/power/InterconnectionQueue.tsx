@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   Clock, 
   MapPin, 
@@ -39,6 +38,100 @@ interface QueueProject {
   created_at: string;
 }
 
+// Mock data until database table is available
+const mockProjects: QueueProject[] = [
+  {
+    id: '1',
+    project_name: 'Solar Farm Alpha',
+    utility_iso: 'CAISO',
+    state: 'California',
+    county: 'Riverside',
+    capacity_mw: 150.0,
+    technology_type: 'Solar',
+    queue_position: 1,
+    interconnection_request_date: '2023-01-15',
+    proposed_online_date: '2025-06-30',
+    estimated_cost: 45000000,
+    status: 'active',
+    delay_probability: 25,
+    estimated_delay_months: 8,
+    withdrawal_risk: 'low',
+    created_at: '2023-01-15T10:00:00Z'
+  },
+  {
+    id: '2',
+    project_name: 'Wind Project Beta',
+    utility_iso: 'ERCOT',
+    state: 'Texas',
+    county: 'Webb',
+    capacity_mw: 200.0,
+    technology_type: 'Wind',
+    queue_position: 2,
+    interconnection_request_date: '2023-02-20',
+    proposed_online_date: '2025-12-15',
+    estimated_cost: 80000000,
+    status: 'in_progress',
+    delay_probability: 40,
+    estimated_delay_months: 12,
+    withdrawal_risk: 'medium',
+    created_at: '2023-02-20T10:00:00Z'
+  },
+  {
+    id: '3',
+    project_name: 'Battery Storage Gamma',
+    utility_iso: 'PJM',
+    state: 'Pennsylvania',
+    county: 'Chester',
+    capacity_mw: 100.0,
+    technology_type: 'Battery Storage',
+    queue_position: 3,
+    interconnection_request_date: '2023-03-10',
+    proposed_online_date: '2025-09-30',
+    estimated_cost: 35000000,
+    status: 'active',
+    delay_probability: 15,
+    estimated_delay_months: 4,
+    withdrawal_risk: 'low',
+    created_at: '2023-03-10T10:00:00Z'
+  },
+  {
+    id: '4',
+    project_name: 'Data Center Delta',
+    utility_iso: 'NYISO',
+    state: 'New York',
+    county: 'Westchester',
+    capacity_mw: 75.0,
+    technology_type: 'Load',
+    queue_position: 4,
+    interconnection_request_date: '2023-04-05',
+    proposed_online_date: '2026-01-15',
+    estimated_cost: 25000000,
+    status: 'delayed',
+    delay_probability: 65,
+    estimated_delay_months: 18,
+    withdrawal_risk: 'high',
+    created_at: '2023-04-05T10:00:00Z'
+  },
+  {
+    id: '5',
+    project_name: 'Manufacturing Epsilon',
+    utility_iso: 'MISO',
+    state: 'Illinois',
+    county: 'Cook',
+    capacity_mw: 50.0,
+    technology_type: 'Load',
+    queue_position: 5,
+    interconnection_request_date: '2023-05-12',
+    proposed_online_date: '2025-11-30',
+    estimated_cost: 18000000,
+    status: 'active',
+    delay_probability: 30,
+    estimated_delay_months: 6,
+    withdrawal_risk: 'medium',
+    created_at: '2023-05-12T10:00:00Z'
+  }
+];
+
 export function InterconnectionQueue() {
   const [projects, setProjects] = useState<QueueProject[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<QueueProject[]>([]);
@@ -53,26 +146,17 @@ export function InterconnectionQueue() {
     try {
       console.log('Loading interconnection queue data...');
       
-      const { data, error } = await supabase
-        .from('interconnection_queue')
-        .select('*')
-        .order('queue_position', { ascending: true });
-
-      if (error) {
-        console.error('Error loading queue data:', error);
-        toast({
-          title: "Error Loading Data",
-          description: error.message,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const projectsData = data || [];
+      // Using mock data until database table is available
+      const projectsData = mockProjects;
       setProjects(projectsData);
       setFilteredProjects(projectsData);
       
       console.log('Queue data loaded:', projectsData.length, 'projects');
+      
+      toast({
+        title: "Data Loaded",
+        description: `Loaded ${projectsData.length} interconnection queue projects`,
+      });
     } catch (error) {
       console.error('Error loading queue data:', error);
       toast({
