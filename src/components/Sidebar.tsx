@@ -33,49 +33,49 @@ const Sidebar = () => {
     { 
       icon: LayoutDashboard, 
       label: 'Dashboard', 
-      path: '/',
+      path: '/app/',
       description: 'Overview and analytics'
     },
     { 
       icon: Building, 
       label: 'Properties', 
-      path: '/properties',
+      path: '/app/properties',
       description: 'Property portfolio management'
     },
     { 
       icon: Search, 
       label: 'Property Scraper', 
-      path: '/scraper',
+      path: '/app/scraper',
       description: 'Multi-source property discovery'
     },
     { 
       icon: Zap, 
       label: 'Energy Rates', 
-      path: '/energy-rates',
+      path: '/app/energy-rates',
       description: 'Real-time electricity pricing'
     },
     { 
       icon: Brain, 
       label: 'Corporate Intelligence', 
-      path: '/corporate-intelligence',
+      path: '/app/corporate-intelligence',
       description: 'Company analysis and insights'
     },
     { 
       icon: MapPin, 
       label: 'Power Infrastructure', 
-      path: '/power-infrastructure',
+      path: '/app/power-infrastructure',
       description: 'Grid and transmission data'
     },
     { 
       icon: AlertTriangle, 
       label: 'Alerts', 
-      path: '/alerts',
+      path: '/app/alerts',
       description: 'Monitoring and notifications'
     },
     { 
       icon: Database, 
       label: 'Data Management', 
-      path: '/data-management',
+      path: '/app/data-management',
       description: 'Import and export tools'
     }
   ];
