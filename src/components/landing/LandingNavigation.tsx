@@ -24,7 +24,8 @@ export const LandingNavigation = () => {
           variant="outline" 
           size="sm"
           onClick={() => navigate('/app')}
-          className="border-electric-blue/50 text-black hover:bg-electric-blue/10 hover:text-electric-blue bg-white text-sm sm:text-base px-3 sm:px-4"
+          className="border-electric-blue/50 hover:bg-electric-blue/10 hover:border-electric-blue bg-white text-sm sm:text-base px-3 sm:px-4"
+          style={{ color: '#f7af14' }}
         >
           Launch VoltScout
         </Button>
