@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
@@ -21,11 +22,29 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    console.log('Corporate Intelligence function called with action:', action);
+
     if (action === 'ai_analyze_company') {
       console.log('Starting AI analysis for company:', company_name);
       
       if (!openaiApiKey) {
-        throw new Error('OpenAI API key not configured');
+        console.error('OpenAI API key not configured');
+        return new Response(JSON.stringify({ 
+          error: 'OpenAI API key not configured. Please add your OpenAI API key in the project settings.',
+          needsApiKey: true 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!company_name?.trim()) {
+        return new Response(JSON.stringify({ 
+          error: 'Company name is required' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       // Generate comprehensive company analysis using AI
@@ -83,130 +102,179 @@ serve(async (req) => {
         - Cryptocurrency exchanges often have significant server infrastructure
       `;
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a financial and energy infrastructure analyst with expertise in corporate power consumption patterns, financial analysis, and investment assessment. Provide detailed, accurate analysis based on publicly available information.'
-            },
-            {
-              role: 'user',
-              content: analysisPrompt
-            }
-          ],
-          temperature: 0.3,
-          max_tokens: 2000
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.statusText}`);
-      }
-
-      const aiResponse = await response.json();
-      const analysisContent = aiResponse.choices[0].message.content;
-      
-      // Parse the JSON response from AI
-      let analysis;
       try {
-        // Extract JSON from the response (in case there's extra text)
-        const jsonMatch = analysisContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          analysis = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('No valid JSON found in AI response');
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openaiApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a financial and energy infrastructure analyst with expertise in corporate power consumption patterns, financial analysis, and investment assessment. Provide detailed, accurate analysis based on publicly available information.'
+              },
+              {
+                role: 'user',
+                content: analysisPrompt
+              }
+            ],
+            temperature: 0.3,
+            max_tokens: 2000
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('OpenAI API error:', response.status, errorText);
+          throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
         }
-      } catch (parseError) {
-        console.error('Error parsing AI response:', parseError);
-        throw new Error('Failed to parse AI analysis response');
-      }
 
-      // Store the analysis in the companies table
-      const { data: existingCompany } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('name', analysis.company_name)
-        .single();
+        const aiResponse = await response.json();
+        const analysisContent = aiResponse.choices[0].message.content;
+        
+        // Parse the JSON response from AI
+        let analysis;
+        try {
+          // Extract JSON from the response (in case there's extra text)
+          const jsonMatch = analysisContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            analysis = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('No valid JSON found in AI response');
+          }
+        } catch (parseError) {
+          console.error('Error parsing AI response:', parseError);
+          console.error('AI Response content:', analysisContent);
+          throw new Error('Failed to parse AI analysis response');
+        }
 
-      if (existingCompany) {
-        // Update existing company
-        await supabase
+        // Validate required fields
+        if (!analysis.company_name || !analysis.industry || !analysis.sector) {
+          throw new Error('AI analysis missing required fields');
+        }
+
+        // Store the analysis in the companies table
+        const { data: existingCompany } = await supabase
           .from('companies')
-          .update({
-            industry: analysis.industry,
-            sector: analysis.sector,
-            market_cap: analysis.market_cap,
-            power_usage_estimate: analysis.power_usage_estimate,
-            financial_health_score: analysis.financial_health_score,
-            distress_signals: analysis.distress_signals,
-            locations: analysis.locations,
-            debt_to_equity: analysis.debt_to_equity,
-            current_ratio: analysis.current_ratio,
-            revenue_growth: analysis.revenue_growth,
-            profit_margin: analysis.profit_margin,
-            analyzed_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingCompany.id);
-      } else {
-        // Insert new company
-        await supabase
-          .from('companies')
-          .insert({
-            name: analysis.company_name,
-            industry: analysis.industry,
-            sector: analysis.sector,
-            market_cap: analysis.market_cap,
-            power_usage_estimate: analysis.power_usage_estimate,
-            financial_health_score: analysis.financial_health_score,
-            distress_signals: analysis.distress_signals,
-            locations: analysis.locations,
-            debt_to_equity: analysis.debt_to_equity,
-            current_ratio: analysis.current_ratio,
-            revenue_growth: analysis.revenue_growth,
-            profit_margin: analysis.profit_margin,
-            analyzed_at: new Date().toISOString()
-          });
+          .select('id')
+          .eq('name', analysis.company_name)
+          .single();
+
+        if (existingCompany) {
+          // Update existing company
+          const { error: updateError } = await supabase
+            .from('companies')
+            .update({
+              industry: analysis.industry,
+              sector: analysis.sector,
+              market_cap: analysis.market_cap,
+              power_usage_estimate: analysis.power_usage_estimate,
+              financial_health_score: analysis.financial_health_score,
+              distress_signals: analysis.distress_signals || [],
+              locations: analysis.locations || [],
+              debt_to_equity: analysis.debt_to_equity,
+              current_ratio: analysis.current_ratio,
+              revenue_growth: analysis.revenue_growth,
+              profit_margin: analysis.profit_margin,
+              analyzed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingCompany.id);
+
+          if (updateError) {
+            console.error('Database update error:', updateError);
+            throw new Error(`Database update failed: ${updateError.message}`);
+          }
+        } else {
+          // Insert new company
+          const { error: insertError } = await supabase
+            .from('companies')
+            .insert({
+              name: analysis.company_name,
+              industry: analysis.industry,
+              sector: analysis.sector,
+              market_cap: analysis.market_cap,
+              power_usage_estimate: analysis.power_usage_estimate,
+              financial_health_score: analysis.financial_health_score,
+              distress_signals: analysis.distress_signals || [],
+              locations: analysis.locations || [],
+              debt_to_equity: analysis.debt_to_equity,
+              current_ratio: analysis.current_ratio,
+              revenue_growth: analysis.revenue_growth,
+              profit_margin: analysis.profit_margin,
+              analyzed_at: new Date().toISOString()
+            });
+
+          if (insertError) {
+            console.error('Database insert error:', insertError);
+            throw new Error(`Database insert failed: ${insertError.message}`);
+          }
+        }
+
+        console.log('AI analysis completed and stored for:', company_name);
+
+        return new Response(JSON.stringify({ 
+          success: true,
+          analysis 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      } catch (aiError) {
+        console.error('AI analysis error:', aiError);
+        return new Response(JSON.stringify({ 
+          error: `AI analysis failed: ${aiError.message}`,
+          details: aiError.message 
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-
-      console.log('AI analysis completed and stored for:', company_name);
-
-      return new Response(JSON.stringify({ analysis }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
+    // Handle other actions with better error handling
     if (action === 'analyze_company') {
       if (!company_name?.trim()) {
-        throw new Error('Company name is required and cannot be empty')
+        return new Response(JSON.stringify({ 
+          error: 'Company name is required and cannot be empty' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
       return await analyzeCompany(supabase, company_name.trim(), analysis_depth);
     }
+
     if (action === 'scan_industries') {
       return await scanIndustries(supabase);
     }
+
     if (action === 'monitor_linkedin') {
       return await monitorLinkedIn(supabase);
     }
+
     if (action === 'detect_distress') {
       return await detectDistressSignals(supabase);
     }
 
-    return new Response(JSON.stringify({ error: 'Invalid action' }), {
+    return new Response(JSON.stringify({ 
+      error: 'Invalid action specified',
+      validActions: ['ai_analyze_company', 'analyze_company', 'scan_industries', 'monitor_linkedin', 'detect_distress']
+    }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in corporate-intelligence function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      message: error.message,
+      stack: error.stack 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

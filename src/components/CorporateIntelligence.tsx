@@ -12,6 +12,7 @@ import { AICompanyAnalyzer } from './corporateIntelligence/AICompanyAnalyzer';
 import { AIAnalysisDisplay } from './corporateIntelligence/AIAnalysisDisplay';
 import { Company, LoadingStates, DistressAlert } from '@/types/corporateIntelligence';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Filters {
   industry?: string;
@@ -34,6 +35,8 @@ export function CorporateIntelligence() {
   const [industryFilter, setIndustryFilter] = useState('all');
   const [distressAlerts, setDistressAlerts] = useState<DistressAlert[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadCompanies();
@@ -41,11 +44,13 @@ export function CorporateIntelligence() {
 
   const loadCompanies = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
       let query = supabase
         .from('companies')
         .select('*')
-        .order('name', { ascending: true });
+        .order('analyzed_at', { ascending: false });
 
       if (industryFilter && industryFilter !== 'all') {
         query = query.eq('industry', industryFilter);
@@ -59,29 +64,71 @@ export function CorporateIntelligence() {
 
       if (error) {
         console.error('Error loading companies:', error);
+        setError('Failed to load companies. Please try again.');
+        toast({
+          title: "Error Loading Companies",
+          description: "Failed to load company data. Please try again.",
+          variant: "destructive"
+        });
         return;
       }
 
       setCompanies(data || []);
+    } catch (err: any) {
+      console.error('Error in loadCompanies:', err);
+      setError('An unexpected error occurred while loading companies.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleAnalyze = async (companyName: string) => {
+    if (!companyName?.trim()) {
+      toast({
+        title: "Company name required",
+        description: "Please enter a company name to analyze",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoadingStates((prev) => ({ ...prev, analyzing: true }));
 
     try {
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
-        body: { action: 'analyze_company', company_name: companyName },
+        body: { action: 'analyze_company', company_name: companyName.trim() },
       });
 
       if (error) {
         console.error('Analysis error:', error);
+        toast({
+          title: "Analysis Error",
+          description: error.message || "Failed to analyze company",
+          variant: "destructive"
+        });
         return;
       }
 
-      loadCompanies();
+      if (data?.success) {
+        toast({
+          title: "Analysis Complete",
+          description: `Successfully analyzed ${companyName}`,
+        });
+        loadCompanies(); // Refresh the companies list
+      } else {
+        toast({
+          title: "Analysis Warning",
+          description: data?.message || "Analysis completed with warnings",
+          variant: "default"
+        });
+      }
+    } catch (err: any) {
+      console.error('Error in handleAnalyze:', err);
+      toast({
+        title: "Analysis Error",
+        description: "An unexpected error occurred during analysis",
+        variant: "destructive"
+      });
     } finally {
       setLoadingStates((prev) => ({ ...prev, analyzing: false }));
     }
@@ -95,7 +142,10 @@ export function CorporateIntelligence() {
 
   const handleInvestigateAlert = (alert: DistressAlert) => {
     console.log('Investigating alert:', alert);
-    // Add investigation logic here
+    toast({
+      title: "Alert Investigation",
+      description: `Investigating alert for ${alert.company_name}`,
+    });
   };
 
   return (
@@ -108,6 +158,16 @@ export function CorporateIntelligence() {
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+            <span className="font-medium text-red-800">Error</span>
+          </div>
+          <p className="text-sm text-red-700 mt-1">{error}</p>
+        </div>
+      )}
 
       <Tabs defaultValue="ai-analysis" className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
@@ -143,8 +203,14 @@ export function CorporateIntelligence() {
             </div>
           ) : companies.length === 0 ? (
             <div className="text-center py-12">
-              <h3 className="text-xl font-medium text-muted-foreground mb-4">No Companies Found</h3>
-              <p className="text-muted-foreground">Try adjusting your filters or analyze some companies first.</p>
+              <h3 className="text-xl font-medium text-muted-foreground mb-4">
+                {searchTerm || industryFilter !== 'all' ? 'No Companies Found' : 'No Companies Analyzed Yet'}
+              </h3>
+              <p className="text-muted-foreground">
+                {searchTerm || industryFilter !== 'all' 
+                  ? 'Try adjusting your filters or search terms.' 
+                  : 'Use the AI Analysis tab to analyze companies and see them here.'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
