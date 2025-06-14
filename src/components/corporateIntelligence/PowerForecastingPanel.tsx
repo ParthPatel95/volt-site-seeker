@@ -103,13 +103,13 @@ export function PowerForecastingPanel() {
   };
 
   const chartData = forecasts
-    .filter(f => f.companies?.name)
+    .filter(f => f.company?.name)
     .slice(0, 12)
     .map(f => ({
       month: new Date(f.forecast_date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
       power: f.predicted_consumption_mw,
       confidence: f.confidence_score,
-      company: f.companies?.name
+      company: f.company?.name
     }));
 
   return (
@@ -214,7 +214,7 @@ export function PowerForecastingPanel() {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">
-                      {forecast.companies?.name || 'Unknown Company'}
+                      {forecast.company?.name || 'Unknown Company'}
                     </CardTitle>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="outline">
