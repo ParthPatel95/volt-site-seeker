@@ -10,10 +10,11 @@ import { CityPowerAnalysis } from './power/CityPowerAnalysis';
 import { PowerOverviewCards } from './power/PowerOverviewCards';
 import { PowerCapacityDistribution } from './power/PowerCapacityDistribution';
 import { PowerPropertiesList } from './power/PowerPropertiesList';
-import { InterconnectionQueuePlaceholder } from './power/InterconnectionQueuePlaceholder';
+import { InterconnectionQueue } from './power/InterconnectionQueue';
 import { SubstationsOverview } from './power/SubstationsOverview';
 import { SubstationDataCollector } from './power/SubstationDataCollector';
 import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
+import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
 import { usePowerData } from './power/usePowerData';
 
 export function PowerInfrastructure() {
@@ -46,11 +47,12 @@ export function PowerInfrastructure() {
 
       <div className="p-6 h-full overflow-y-auto">
         <Tabs defaultValue="overview" className="h-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="substations">Substations</TabsTrigger>
             <TabsTrigger value="data-collection">Data Collection</TabsTrigger>
             <TabsTrigger value="ai-discovery">AI Discovery</TabsTrigger>
+            <TabsTrigger value="industrial-finder">Industrial Sites</TabsTrigger>
             <TabsTrigger value="city-analysis">City Analysis</TabsTrigger>
             <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="interconnection">Interconnection Queue</TabsTrigger>
@@ -73,6 +75,10 @@ export function PowerInfrastructure() {
             <AutomatedSubstationFinder />
           </TabsContent>
 
+          <TabsContent value="industrial-finder" className="mt-6">
+            <StarlightIndustrialFinder />
+          </TabsContent>
+
           <TabsContent value="city-analysis" className="mt-6">
             <CityPowerAnalysis />
           </TabsContent>
@@ -82,7 +88,7 @@ export function PowerInfrastructure() {
           </TabsContent>
 
           <TabsContent value="interconnection" className="mt-6 space-y-6">
-            <InterconnectionQueuePlaceholder />
+            <InterconnectionQueue />
           </TabsContent>
         </Tabs>
       </div>
