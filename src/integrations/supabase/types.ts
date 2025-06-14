@@ -197,6 +197,53 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_analysis: {
+        Row: {
+          analysis_date: string
+          company_id: string
+          competitive_advantages: string[] | null
+          competitive_weaknesses: string[] | null
+          competitor_name: string
+          created_at: string
+          id: string
+          market_positioning: string | null
+          market_share_estimate: number | null
+          power_usage_comparison: number | null
+        }
+        Insert: {
+          analysis_date?: string
+          company_id: string
+          competitive_advantages?: string[] | null
+          competitive_weaknesses?: string[] | null
+          competitor_name: string
+          created_at?: string
+          id?: string
+          market_positioning?: string | null
+          market_share_estimate?: number | null
+          power_usage_comparison?: number | null
+        }
+        Update: {
+          analysis_date?: string
+          company_id?: string
+          competitive_advantages?: string[] | null
+          competitive_weaknesses?: string[] | null
+          competitor_name?: string
+          created_at?: string
+          id?: string
+          market_positioning?: string | null
+          market_share_estimate?: number | null
+          power_usage_comparison?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_analysis_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       corporate_insights: {
         Row: {
           company_name: string
@@ -259,6 +306,62 @@ export type Database = {
           signals?: string[]
         }
         Relationships: []
+      }
+      due_diligence_reports: {
+        Row: {
+          company_id: string
+          created_at: string
+          executive_summary: string | null
+          financial_analysis: Json | null
+          generated_by: string | null
+          id: string
+          power_infrastructure_assessment: Json | null
+          recommendations: string[] | null
+          report_data: Json | null
+          report_type: string
+          risk_assessment: Json | null
+          updated_at: string
+          valuation_analysis: Json | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          executive_summary?: string | null
+          financial_analysis?: Json | null
+          generated_by?: string | null
+          id?: string
+          power_infrastructure_assessment?: Json | null
+          recommendations?: string[] | null
+          report_data?: Json | null
+          report_type: string
+          risk_assessment?: Json | null
+          updated_at?: string
+          valuation_analysis?: Json | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          executive_summary?: string | null
+          financial_analysis?: Json | null
+          generated_by?: string | null
+          id?: string
+          power_infrastructure_assessment?: Json | null
+          recommendations?: string[] | null
+          report_data?: Json | null
+          report_type?: string
+          risk_assessment?: Json | null
+          updated_at?: string
+          valuation_analysis?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "due_diligence_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       energy_cost_calculations: {
         Row: {
@@ -385,6 +488,62 @@ export type Database = {
           },
         ]
       }
+      esg_scores: {
+        Row: {
+          assessment_date: string
+          carbon_footprint_mt: number | null
+          company_id: string
+          created_at: string
+          environmental_score: number
+          governance_score: number
+          green_transition_opportunities: string[] | null
+          id: string
+          overall_esg_score: number
+          regulatory_compliance_score: number | null
+          renewable_energy_percent: number | null
+          social_score: number
+          sustainability_commitments: string[] | null
+        }
+        Insert: {
+          assessment_date?: string
+          carbon_footprint_mt?: number | null
+          company_id: string
+          created_at?: string
+          environmental_score: number
+          governance_score: number
+          green_transition_opportunities?: string[] | null
+          id?: string
+          overall_esg_score: number
+          regulatory_compliance_score?: number | null
+          renewable_energy_percent?: number | null
+          social_score: number
+          sustainability_commitments?: string[] | null
+        }
+        Update: {
+          assessment_date?: string
+          carbon_footprint_mt?: number | null
+          company_id?: string
+          created_at?: string
+          environmental_score?: number
+          governance_score?: number
+          green_transition_opportunities?: string[] | null
+          id?: string
+          overall_esg_score?: number
+          regulatory_compliance_score?: number | null
+          renewable_energy_percent?: number | null
+          social_score?: number
+          sustainability_commitments?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esg_scores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       industry_intelligence: {
         Row: {
           company_name: string
@@ -421,6 +580,62 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_scores: {
+        Row: {
+          calculated_at: string
+          company_id: string
+          confidence_level: number
+          created_at: string
+          expected_roi_range: Json | null
+          id: string
+          key_factors: string[] | null
+          opportunity_score: number
+          overall_score: number
+          recommendation: string
+          risk_factors: string[] | null
+          risk_score: number
+          timing_score: number
+        }
+        Insert: {
+          calculated_at?: string
+          company_id: string
+          confidence_level: number
+          created_at?: string
+          expected_roi_range?: Json | null
+          id?: string
+          key_factors?: string[] | null
+          opportunity_score: number
+          overall_score: number
+          recommendation: string
+          risk_factors?: string[] | null
+          risk_score: number
+          timing_score: number
+        }
+        Update: {
+          calculated_at?: string
+          company_id?: string
+          confidence_level?: number
+          created_at?: string
+          expected_roi_range?: Json | null
+          id?: string
+          key_factors?: string[] | null
+          opportunity_score?: number
+          overall_score?: number
+          recommendation?: string
+          risk_factors?: string[] | null
+          risk_score?: number
+          timing_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investment_scores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linkedin_intelligence: {
         Row: {
           company: string
@@ -450,6 +665,56 @@ export type Database = {
           signals?: string[] | null
         }
         Relationships: []
+      }
+      market_timing_analysis: {
+        Row: {
+          analysis_date: string
+          company_id: string
+          created_at: string
+          fire_sale_probability: number | null
+          id: string
+          institutional_activity_level: string | null
+          key_timing_factors: string[] | null
+          market_conditions_score: number
+          market_cycle_phase: string
+          optimal_acquisition_window: Json | null
+          timing_recommendation: string | null
+        }
+        Insert: {
+          analysis_date?: string
+          company_id: string
+          created_at?: string
+          fire_sale_probability?: number | null
+          id?: string
+          institutional_activity_level?: string | null
+          key_timing_factors?: string[] | null
+          market_conditions_score: number
+          market_cycle_phase: string
+          optimal_acquisition_window?: Json | null
+          timing_recommendation?: string | null
+        }
+        Update: {
+          analysis_date?: string
+          company_id?: string
+          created_at?: string
+          fire_sale_probability?: number | null
+          id?: string
+          institutional_activity_level?: string | null
+          key_timing_factors?: string[] | null
+          market_conditions_score?: number
+          market_cycle_phase?: string
+          optimal_acquisition_window?: Json | null
+          timing_recommendation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_timing_analysis_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news_intelligence: {
         Row: {
@@ -483,6 +748,98 @@ export type Database = {
           url?: string | null
         }
         Relationships: []
+      }
+      portfolio_recommendations: {
+        Row: {
+          created_at: string
+          diversification_score: number
+          expires_at: string | null
+          geographic_allocation: Json | null
+          id: string
+          investment_thesis: string | null
+          recommendation_type: string
+          risk_adjusted_return: number | null
+          sector_allocation: Json | null
+          target_companies: string[] | null
+          timing_recommendations: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          diversification_score: number
+          expires_at?: string | null
+          geographic_allocation?: Json | null
+          id?: string
+          investment_thesis?: string | null
+          recommendation_type: string
+          risk_adjusted_return?: number | null
+          sector_allocation?: Json | null
+          target_companies?: string[] | null
+          timing_recommendations?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          diversification_score?: number
+          expires_at?: string | null
+          geographic_allocation?: Json | null
+          id?: string
+          investment_thesis?: string | null
+          recommendation_type?: string
+          risk_adjusted_return?: number | null
+          sector_allocation?: Json | null
+          target_companies?: string[] | null
+          timing_recommendations?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      power_demand_forecasts: {
+        Row: {
+          company_id: string
+          confidence_score: number
+          created_at: string
+          forecast_date: string
+          forecast_horizon_months: number
+          growth_assumptions: Json | null
+          id: string
+          predicted_consumption_mw: number
+          seasonal_factors: Json | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          confidence_score: number
+          created_at?: string
+          forecast_date: string
+          forecast_horizon_months: number
+          growth_assumptions?: Json | null
+          id?: string
+          predicted_consumption_mw: number
+          seasonal_factors?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          confidence_score?: number
+          created_at?: string
+          forecast_date?: string
+          forecast_horizon_months?: number
+          growth_assumptions?: Json | null
+          id?: string
+          predicted_consumption_mw?: number
+          seasonal_factors?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "power_demand_forecasts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -862,10 +1219,13 @@ export type Database = {
           author: string | null
           content: string
           discovered_at: string
+          early_warning_signals: string[] | null
           id: string
           keywords: string[] | null
           platform: string
           posted_at: string | null
+          sentiment_analysis: Json | null
+          sentiment_score: number | null
           source: string
           url: string | null
         }
@@ -873,10 +1233,13 @@ export type Database = {
           author?: string | null
           content: string
           discovered_at?: string
+          early_warning_signals?: string[] | null
           id?: string
           keywords?: string[] | null
           platform: string
           posted_at?: string | null
+          sentiment_analysis?: Json | null
+          sentiment_score?: number | null
           source: string
           url?: string | null
         }
@@ -884,12 +1247,104 @@ export type Database = {
           author?: string | null
           content?: string
           discovered_at?: string
+          early_warning_signals?: string[] | null
           id?: string
           keywords?: string[] | null
           platform?: string
           posted_at?: string | null
+          sentiment_analysis?: Json | null
+          sentiment_score?: number | null
           source?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      supply_chain_analysis: {
+        Row: {
+          analysis_date: string
+          company_id: string
+          created_at: string
+          critical_components: string[] | null
+          disruption_risks: Json | null
+          geographic_exposure: Json | null
+          id: string
+          impact_on_power_consumption: Json | null
+          mitigation_strategies: string[] | null
+          regulatory_risks: string[] | null
+          supplier_dependencies: string[] | null
+        }
+        Insert: {
+          analysis_date?: string
+          company_id: string
+          created_at?: string
+          critical_components?: string[] | null
+          disruption_risks?: Json | null
+          geographic_exposure?: Json | null
+          id?: string
+          impact_on_power_consumption?: Json | null
+          mitigation_strategies?: string[] | null
+          regulatory_risks?: string[] | null
+          supplier_dependencies?: string[] | null
+        }
+        Update: {
+          analysis_date?: string
+          company_id?: string
+          created_at?: string
+          critical_components?: string[] | null
+          disruption_risks?: Json | null
+          geographic_exposure?: Json | null
+          id?: string
+          impact_on_power_consumption?: Json | null
+          mitigation_strategies?: string[] | null
+          regulatory_risks?: string[] | null
+          supplier_dependencies?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_chain_analysis_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_alert_preferences: {
+        Row: {
+          alert_type: string
+          created_at: string
+          criteria: Json
+          frequency: string
+          id: string
+          is_active: boolean
+          last_triggered: string | null
+          notification_channels: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          criteria: Json
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_triggered?: string | null
+          notification_channels?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          criteria?: Json
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_triggered?: string | null
+          notification_channels?: string[]
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

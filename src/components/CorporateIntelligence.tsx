@@ -10,6 +10,18 @@ import { IndustryIntelligencePanel } from './corporateIntelligence/IndustryIntel
 import { LinkedInIntelligencePanel } from './corporateIntelligence/LinkedInIntelligencePanel';
 import { AICompanyAnalyzer } from './corporateIntelligence/AICompanyAnalyzer';
 import { AIAnalysisDisplay } from './corporateIntelligence/AIAnalysisDisplay';
+import { NewsIntelligencePanel } from './corporateIntelligence/NewsIntelligencePanel';
+import { PowerForecastingPanel } from './corporateIntelligence/PowerForecastingPanel';
+import { CompetitorAnalysisPanel } from './corporateIntelligence/CompetitorAnalysisPanel';
+import { InvestmentScoringPanel } from './corporateIntelligence/InvestmentScoringPanel';
+import { PortfolioOptimizerPanel } from './corporateIntelligence/PortfolioOptimizerPanel';
+import { DueDiligencePanel } from './corporateIntelligence/DueDiligencePanel';
+import { SocialSentimentPanel } from './corporateIntelligence/SocialSentimentPanel';
+import { SupplyChainPanel } from './corporateIntelligence/SupplyChainPanel';
+import { ESGAnalysisPanel } from './corporateIntelligence/ESGAnalysisPanel';
+import { NaturalLanguageQueryPanel } from './corporateIntelligence/NaturalLanguageQueryPanel';
+import { AlertConfigurationPanel } from './corporateIntelligence/AlertConfigurationPanel';
+import { MarketTimingPanel } from './corporateIntelligence/MarketTimingPanel';
 import { Company, LoadingStates, DistressAlert } from '@/types/corporateIntelligence';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -170,13 +182,19 @@ export function CorporateIntelligence() {
       )}
 
       <Tabs defaultValue="ai-analysis" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="ai-analysis">AI Analysis</TabsTrigger>
-          <TabsTrigger value="companies">Companies</TabsTrigger>
-          <TabsTrigger value="distress-alerts">Distress Alerts</TabsTrigger>
-          <TabsTrigger value="industry-intel">Industry Intel</TabsTrigger>
-          <TabsTrigger value="linkedin-intel">LinkedIn Intel</TabsTrigger>
-          <TabsTrigger value="manual-analysis">Manual Analysis</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
+          <TabsTrigger value="ai-analysis" className="text-xs">AI Analysis</TabsTrigger>
+          <TabsTrigger value="companies" className="text-xs">Companies</TabsTrigger>
+          <TabsTrigger value="news-intel" className="text-xs">News Intel</TabsTrigger>
+          <TabsTrigger value="power-forecast" className="text-xs">Power Forecast</TabsTrigger>
+          <TabsTrigger value="competitors" className="text-xs">Competitors</TabsTrigger>
+          <TabsTrigger value="investment-scoring" className="text-xs">Investment</TabsTrigger>
+          <TabsTrigger value="portfolio" className="text-xs">Portfolio</TabsTrigger>
+          <TabsTrigger value="due-diligence" className="text-xs">Due Diligence</TabsTrigger>
+          <TabsTrigger value="social-sentiment" className="text-xs">Social</TabsTrigger>
+          <TabsTrigger value="supply-chain" className="text-xs">Supply Chain</TabsTrigger>
+          <TabsTrigger value="esg" className="text-xs">ESG</TabsTrigger>
+          <TabsTrigger value="nlp-query" className="text-xs">NLP Query</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ai-analysis" className="space-y-6">
@@ -225,12 +243,86 @@ export function CorporateIntelligence() {
           )}
         </TabsContent>
 
+        <TabsContent value="news-intel">
+          <NewsIntelligencePanel />
+        </TabsContent>
+
+        <TabsContent value="power-forecast">
+          <PowerForecastingPanel />
+        </TabsContent>
+
+        <TabsContent value="competitors">
+          <CompetitorAnalysisPanel />
+        </TabsContent>
+
+        <TabsContent value="investment-scoring">
+          <InvestmentScoringPanel />
+        </TabsContent>
+
+        <TabsContent value="portfolio">
+          <PortfolioOptimizerPanel />
+        </TabsContent>
+
+        <TabsContent value="due-diligence">
+          <DueDiligencePanel />
+        </TabsContent>
+
+        <TabsContent value="social-sentiment">
+          <SocialSentimentPanel />
+        </TabsContent>
+
+        <TabsContent value="supply-chain">
+          <SupplyChainPanel />
+        </TabsContent>
+
+        <TabsContent value="esg">
+          <ESGAnalysisPanel />
+        </TabsContent>
+
+        <TabsContent value="nlp-query">
+          <NaturalLanguageQueryPanel />
+        </TabsContent>
+
+        {/* Additional tabs in the second row for larger screens */}
+        <div className="lg:block hidden">
+          <TabsList className="grid w-full grid-cols-4 mt-4">
+            <TabsTrigger value="market-timing" className="text-xs">Market Timing</TabsTrigger>
+            <TabsTrigger value="alert-config" className="text-xs">Alert Config</TabsTrigger>
+            <TabsTrigger value="distress-alerts" className="text-xs">Distress Alerts</TabsTrigger>
+            <TabsTrigger value="manual-analysis" className="text-xs">Manual Analysis</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="market-timing">
+          <MarketTimingPanel />
+        </TabsContent>
+
+        <TabsContent value="alert-config">
+          <AlertConfigurationPanel />
+        </TabsContent>
+
         <TabsContent value="distress-alerts">
           <DistressAlertsPanel 
             alerts={distressAlerts} 
             onInvestigate={handleInvestigateAlert}
           />
         </TabsContent>
+
+        <TabsContent value="manual-analysis" className="space-y-6">
+          <CompanyAnalysisForm
+            onAnalyze={handleAnalyze}
+            loading={loadingStates.analyzing}
+          />
+        </TabsContent>
+
+        {/* Legacy tabs for compatibility */}
+        <div className="lg:hidden">
+          <TabsList className="grid w-full grid-cols-3 mt-4">
+            <TabsTrigger value="industry-intel" className="text-xs">Industry Intel</TabsTrigger>
+            <TabsTrigger value="linkedin-intel" className="text-xs">LinkedIn Intel</TabsTrigger>
+            <TabsTrigger value="legacy-alerts" className="text-xs">Legacy Alerts</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="industry-intel">
           <IndustryIntelligencePanel />
@@ -240,10 +332,10 @@ export function CorporateIntelligence() {
           <LinkedInIntelligencePanel />
         </TabsContent>
 
-        <TabsContent value="manual-analysis" className="space-y-6">
-          <CompanyAnalysisForm
-            onAnalyze={handleAnalyze}
-            loading={loadingStates.analyzing}
+        <TabsContent value="legacy-alerts">
+          <DistressAlertsPanel 
+            alerts={distressAlerts} 
+            onInvestigate={handleInvestigateAlert}
           />
         </TabsContent>
       </Tabs>
