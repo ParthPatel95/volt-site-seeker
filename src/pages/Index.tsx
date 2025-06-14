@@ -14,10 +14,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { EnhancedPropertyMap } from '@/components/EnhancedPropertyMap';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { MultiSourceScraper } from '@/components/MultiSourceScraper';
+import { useLocation } from 'react-router-dom';
 
 const Index = () => {
   const { user, session, loading } = useAuth();
-  const [activeView, setActiveView] = useState('dashboard');
+  const location = useLocation();
 
   // Show loading state
   if (loading) {
@@ -39,22 +40,24 @@ const Index = () => {
   }
 
   const renderContent = () => {
-    switch (activeView) {
-      case 'dashboard':
+    const path = location.pathname;
+    
+    switch (path) {
+      case '/':
         return <Dashboard />;
-      case 'map':
+      case '/map':
         return <EnhancedPropertyMap />;
-      case 'properties':
+      case '/properties':
         return <PropertyList />;
-      case 'corporate-intelligence':
+      case '/corporate-intelligence':
         return <CorporateIntelligence />;
-      case 'multi-scraper':
+      case '/scraper':
         return <MultiSourceScraper />;
-      case 'alerts':
+      case '/alerts':
         return <AlertsPanel />;
-      case 'infrastructure':
+      case '/power-infrastructure':
         return <PowerInfrastructure />;
-      case 'data':
+      case '/data-management':
         return <DataManagement />;
       default:
         return <Dashboard />;

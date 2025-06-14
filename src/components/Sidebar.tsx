@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -22,10 +23,11 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { ModeToggle } from './ModeToggle';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
 
   const menuItems = [
     { 
@@ -123,7 +125,9 @@ const Sidebar = () => {
               <li key={item.label} className="mb-2 last:mb-0">
                 <Link
                   to={item.path}
-                  className="group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                  className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground ${
+                    location.pathname === item.path ? 'bg-accent text-accent-foreground' : ''
+                  }`}
                 >
                   <item.icon className="mr-2 h-4 w-4" />
                   <span>{item.label}</span>

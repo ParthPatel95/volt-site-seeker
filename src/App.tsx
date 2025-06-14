@@ -18,8 +18,8 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
       <BrowserRouter>
+        <Toaster />
         <Routes>
           <Route path="/landing" element={<Landing />} />
           <Route path="/" element={<Index />} />
