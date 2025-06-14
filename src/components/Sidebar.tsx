@@ -7,7 +7,8 @@ import {
   MapPin, 
   Database,
   Brain,
-  Zap
+  Zap,
+  LogOut
 } from 'lucide-react';
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -21,12 +22,33 @@ import {
 } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { ModeToggle } from './ModeToggle';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const { signOut, user } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const menuItems = [
     { 
@@ -130,6 +152,26 @@ const Sidebar = () => {
           </ul>
         </nav>
       </ScrollArea>
+      
+      {user && (
+        <>
+          <Separator />
+          <div className="p-4">
+            <div className="text-sm text-muted-foreground mb-2">
+              {user.email}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-center"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </>
+      )}
     </aside>
   );
 };
