@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { Sidebar } from '@/components/Sidebar';
+import Sidebar from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { PropertyMap } from '@/components/PropertyMap';
 import { PropertyList } from '@/components/PropertyList';
@@ -63,7 +64,7 @@ const Index = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <Sidebar activeView={activeView} setActiveView={setActiveView} />
+        <Sidebar />
         <main className="flex-1 overflow-hidden">
           {renderContent()}
         </main>
