@@ -8,7 +8,9 @@ import {
   Database,
   Brain,
   Zap,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -29,8 +31,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { EnhancedLogo } from './EnhancedLogo';
 
-const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+interface SidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+  isMobile: boolean;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+}
+
+const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -98,8 +107,8 @@ const Sidebar = () => {
     }
   ];
 
-  return (
-    <aside className={`fixed left-0 top-0 h-screen bg-secondary border-r border-muted flex flex-col transition-all duration-300 z-40 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+  const SidebarContent = () => (
+    <>
       {/* Header */}
       <div className="flex items-center justify-between p-4 min-h-[4rem]">
         <div className="flex items-center space-x-3">
@@ -108,7 +117,7 @@ const Sidebar = () => {
             <span className="font-bold text-xl whitespace-nowrap">VoltScout</span>
           )}
         </div>
-        {!isCollapsed && (
+        {!isCollapsed && !isMobile && (
           <Sheet>
             <SheetTrigger className="flex-shrink-0">
               <div className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
@@ -143,6 +152,16 @@ const Sidebar = () => {
             </SheetContent>
           </Sheet>
         )}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsOpen(false)}
+            className="p-2"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        )}
       </div>
       
       <Separator />
@@ -155,11 +174,12 @@ const Sidebar = () => {
               <li key={item.label}>
                 <Link
                   to={item.path}
+                  onClick={() => isMobile && setIsOpen(false)}
                   className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
                     location.pathname === item.path ? 'bg-accent text-accent-foreground' : ''
                   }`}
                 >
-                  <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                  <item.icon className={`flex-shrink-0 h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
                   {!isCollapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               </li>
@@ -191,17 +211,39 @@ const Sidebar = () => {
         </>
       )}
       
-      {/* Collapse Toggle */}
-      <div className="p-2 border-t">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full flex items-center justify-center"
-        >
-          {isCollapsed ? '→' : '←'}
-        </Button>
-      </div>
+      {/* Collapse Toggle - Desktop Only */}
+      {!isMobile && (
+        <div className="p-2 border-t">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="w-full flex items-center justify-center"
+          >
+            {isCollapsed ? '→' : '←'}
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
+  // Mobile Sidebar
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent side="left" className="w-60 p-0 bg-secondary border-r border-muted">
+          <div className="h-full flex flex-col">
+            <SidebarContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop Sidebar
+  return (
+    <aside className={`fixed left-0 top-0 h-screen bg-secondary border-r border-muted flex flex-col transition-all duration-300 z-40 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+      <SidebarContent />
     </aside>
   );
 };
