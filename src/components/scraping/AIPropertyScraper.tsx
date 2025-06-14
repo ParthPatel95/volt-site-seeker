@@ -37,6 +37,11 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         throw new Error(error.message || 'Failed to search for properties');
       }
 
+      // Handle both success and error responses from the edge function
+      if (data?.success === false) {
+        throw new Error(data.error || 'Property search failed');
+      }
+
       if (data?.success && data?.properties_found > 0) {
         onPropertiesFound(data.properties_found);
         
@@ -55,9 +60,18 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
     } catch (error: any) {
       console.error('Real property search failed:', error);
       
+      // More specific error handling
+      let errorMessage = "Property search failed. Please try again.";
+      
+      if (error.message?.includes('non-2xx')) {
+        errorMessage = "Service temporarily unavailable. Please try again in a moment.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Search Failed",
-        description: error.message || "Property search failed. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

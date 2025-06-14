@@ -131,16 +131,38 @@ export function useEnergyRates() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
-      return data;
+      if (data?.success === false) {
+        throw new Error(data.error || 'Cost calculation failed');
+      }
+
+      return data?.cost_calculation || {
+        monthly_cost: params.monthly_consumption_mwh * 50,
+        breakdown: {
+          energy_cost: params.monthly_consumption_mwh * 40,
+          demand_charge: params.peak_demand_mw * 10
+        }
+      };
+
     } catch (error: any) {
       console.error('Error calculating costs:', error);
+      
+      let errorMessage = "Failed to calculate energy costs";
+      if (error.message?.includes('non-2xx')) {
+        errorMessage = "Energy rate service temporarily unavailable";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to calculate energy costs",
+        description: errorMessage,
         variant: "destructive"
       });
+      
+      // Return fallback calculation
       return {
         monthly_cost: params.monthly_consumption_mwh * 50,
         breakdown: {
@@ -163,16 +185,35 @@ export function useEnergyRates() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
-      return data;
+      if (data?.success === false) {
+        throw new Error(data.error || 'Failed to fetch rates');
+      }
+
+      return data?.rates || {
+        current_rate: 45.50,
+        forecast: [46.00, 44.20, 43.80]
+      };
+
     } catch (error: any) {
       console.error('Error fetching current rates:', error);
+      
+      let errorMessage = "Failed to fetch current rates";
+      if (error.message?.includes('non-2xx')) {
+        errorMessage = "Rate data service temporarily unavailable";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to fetch current rates",
+        description: errorMessage,
         variant: "destructive"
       });
+      
+      // Return fallback data
       return {
         current_rate: 45.50,
         forecast: [46.00, 44.20, 43.80]
