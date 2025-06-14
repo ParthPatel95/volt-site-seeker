@@ -1,17 +1,19 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Routes, Route } from "react-router-dom";
-import { Landing } from "@/pages/Landing";
-import { Index } from "@/pages";
+import Landing from "@/pages/Landing";
+import Index from "@/pages/Index";
 import { PropertyList } from "@/components/PropertyList";
 import { MultiSourceScraper } from "@/components/MultiSourceScraper";
 import { CorporateIntelligence } from "@/components/CorporateIntelligence";
 import { PowerInfrastructure } from "@/components/PowerInfrastructure";
 import { AlertsSystem } from "@/components/AlertsSystem";
 import { DataManagement } from "@/components/DataManagement";
-import { NotFound } from "@/pages/NotFound";
-const queryClient = new QueryClient();
+import NotFound from "@/pages/NotFound";
 import { EnergyRateIntelligence } from '@/components/energy/EnergyRateIntelligence';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
