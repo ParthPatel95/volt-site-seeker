@@ -9,6 +9,7 @@ import { PowerOverviewCards } from './power/PowerOverviewCards';
 import { PowerCapacityDistribution } from './power/PowerCapacityDistribution';
 import { PowerPropertiesList } from './power/PowerPropertiesList';
 import { InterconnectionQueuePlaceholder } from './power/InterconnectionQueuePlaceholder';
+import { SubstationsOverview } from './power/SubstationsOverview';
 import { usePowerData } from './power/usePowerData';
 
 export function PowerInfrastructure() {
@@ -41,8 +42,9 @@ export function PowerInfrastructure() {
 
       <div className="p-6 h-full overflow-y-auto">
         <Tabs defaultValue="overview" className="h-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="substations">Substations</TabsTrigger>
             <TabsTrigger value="city-analysis">City Analysis</TabsTrigger>
             <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="interconnection">Interconnection Queue</TabsTrigger>
@@ -51,6 +53,10 @@ export function PowerInfrastructure() {
           <TabsContent value="overview" className="mt-6 space-y-6">
             <PowerOverviewCards powerData={powerData} />
             <PowerCapacityDistribution properties={properties} getStatusColor={getStatusColor} />
+          </TabsContent>
+
+          <TabsContent value="substations" className="mt-6">
+            <SubstationsOverview />
           </TabsContent>
 
           <TabsContent value="city-analysis" className="mt-6">
