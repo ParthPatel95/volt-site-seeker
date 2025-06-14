@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -24,13 +23,14 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from './ModeToggle';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
 
@@ -41,6 +41,8 @@ const Sidebar = () => {
         title: "Signed out",
         description: "You have been successfully signed out.",
       });
+      // Navigate back to landing page after successful sign out
+      navigate('/landing');
     } catch (error) {
       toast({
         title: "Error",
