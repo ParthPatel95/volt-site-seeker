@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -11,6 +10,7 @@ import { Zap, AlertCircle, Bitcoin, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { AccessRequestForm } from '@/components/AccessRequestForm';
+import { EnhancedLogo } from './EnhancedLogo';
 
 interface AuthProps {
   onAuthStateChange: (user: User | null, session: Session | null) => void;
@@ -110,11 +110,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <Link to="/" className="flex items-center justify-center space-x-3 mb-4">
-            <img 
-              src="/lovable-uploads/efd12727-2519-4372-a17f-7cf24282f3bf.png" 
-              alt="VoltScout Logo" 
-              className="w-12 h-12 object-contain"
-            />
+            <EnhancedLogo className="w-12 h-12 object-contain" />
             <div className="flex items-center">
               <h1 className="text-3xl font-bold text-gray-800 flex items-center">
                 Watt<Bitcoin className="w-8 h-8 text-orange-500 inline mx-0" />yte
