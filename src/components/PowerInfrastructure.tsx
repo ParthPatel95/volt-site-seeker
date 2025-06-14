@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +11,12 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Building2
+  Building2,
+  Search
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CityPowerAnalysis } from './power/CityPowerAnalysis';
 
 interface PowerData {
   totalProperties: number;
@@ -154,8 +155,9 @@ export function PowerInfrastructure() {
 
       <div className="p-6 h-full overflow-y-auto">
         <Tabs defaultValue="overview" className="h-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="city-analysis">City Analysis</TabsTrigger>
             <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="interconnection">Interconnection Queue</TabsTrigger>
           </TabsList>
@@ -256,6 +258,10 @@ export function PowerInfrastructure() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="city-analysis" className="mt-6">
+            <CityPowerAnalysis />
           </TabsContent>
 
           <TabsContent value="properties" className="mt-6 space-y-6">

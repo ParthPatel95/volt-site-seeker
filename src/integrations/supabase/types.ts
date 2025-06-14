@@ -137,6 +137,69 @@ export type Database = {
         }
         Relationships: []
       }
+      city_power_analysis: {
+        Row: {
+          analysis_date: string
+          available_capacity_mva: number
+          average_load_factor: number
+          city: string
+          created_at: string
+          energy_rate_estimate_per_mwh: number
+          expansion_opportunities: Json | null
+          generation_sources: Json | null
+          grid_reliability_score: number
+          id: string
+          market_conditions: Json | null
+          peak_demand_estimate_mw: number
+          regulatory_environment: Json | null
+          state: string
+          total_substation_capacity_mva: number
+          transmission_lines: Json | null
+          updated_at: string
+          utility_companies: Json | null
+        }
+        Insert: {
+          analysis_date?: string
+          available_capacity_mva: number
+          average_load_factor: number
+          city: string
+          created_at?: string
+          energy_rate_estimate_per_mwh: number
+          expansion_opportunities?: Json | null
+          generation_sources?: Json | null
+          grid_reliability_score: number
+          id?: string
+          market_conditions?: Json | null
+          peak_demand_estimate_mw: number
+          regulatory_environment?: Json | null
+          state: string
+          total_substation_capacity_mva: number
+          transmission_lines?: Json | null
+          updated_at?: string
+          utility_companies?: Json | null
+        }
+        Update: {
+          analysis_date?: string
+          available_capacity_mva?: number
+          average_load_factor?: number
+          city?: string
+          created_at?: string
+          energy_rate_estimate_per_mwh?: number
+          expansion_opportunities?: Json | null
+          generation_sources?: Json | null
+          grid_reliability_score?: number
+          id?: string
+          market_conditions?: Json | null
+          peak_demand_estimate_mw?: number
+          regulatory_environment?: Json | null
+          state?: string
+          total_substation_capacity_mva?: number
+          transmission_lines?: Json | null
+          updated_at?: string
+          utility_companies?: Json | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           analyzed_at: string
@@ -1256,6 +1319,66 @@ export type Database = {
           sentiment_score?: number | null
           source?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      substations: {
+        Row: {
+          capacity_mva: number
+          city: string
+          commissioning_date: string | null
+          coordinates_source: string | null
+          created_at: string
+          id: string
+          interconnection_type: string | null
+          latitude: number | null
+          load_factor: number | null
+          longitude: number | null
+          name: string
+          state: string
+          status: string
+          updated_at: string
+          upgrade_potential: number | null
+          utility_owner: string
+          voltage_level: string
+        }
+        Insert: {
+          capacity_mva: number
+          city: string
+          commissioning_date?: string | null
+          coordinates_source?: string | null
+          created_at?: string
+          id?: string
+          interconnection_type?: string | null
+          latitude?: number | null
+          load_factor?: number | null
+          longitude?: number | null
+          name: string
+          state: string
+          status?: string
+          updated_at?: string
+          upgrade_potential?: number | null
+          utility_owner: string
+          voltage_level: string
+        }
+        Update: {
+          capacity_mva?: number
+          city?: string
+          commissioning_date?: string | null
+          coordinates_source?: string | null
+          created_at?: string
+          id?: string
+          interconnection_type?: string | null
+          latitude?: number | null
+          load_factor?: number | null
+          longitude?: number | null
+          name?: string
+          state?: string
+          status?: string
+          updated_at?: string
+          upgrade_potential?: number | null
+          utility_owner?: string
+          voltage_level?: string
         }
         Relationships: []
       }
