@@ -450,7 +450,7 @@ export function CityPowerAnalysis() {
                       <div className="p-4 border rounded-lg">
                         <h4 className="font-medium mb-2">Substation Upgrades</h4>
                         <p className="text-2xl font-bold text-orange-600">{cityAnalysis.expansion_opportunities.substation_upgrades}</p>
-                        <p className="text-sm text-muted-foreground">Substations at >80% capacity</p>
+                        <p className="text-sm text-muted-foreground">Substations at &gt;80% capacity</p>
                       </div>
                       <div className="p-4 border rounded-lg">
                         <h4 className="font-medium mb-2">Renewable Capacity</h4>
