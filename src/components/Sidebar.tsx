@@ -101,7 +101,16 @@ const Sidebar = () => {
   return (
     <aside className={`fixed left-0 top-0 h-screen bg-secondary border-r border-muted flex flex-col transition-all duration-300 z-40 ${isCollapsed ? 'w-16' : 'w-60'}`}>
       <div className="flex items-center justify-between p-4">
-        <span className="font-bold text-xl">VoltScout</span>
+        <div className="flex items-center space-x-3">
+          <img 
+            src="/lovable-uploads/efd12727-2519-4372-a17f-7cf24282f3bf.png" 
+            alt="VoltScout Logo" 
+            className="w-10 h-10 object-contain"
+          />
+          {!isCollapsed && (
+            <span className="font-bold text-xl">VoltScout</span>
+          )}
+        </div>
         <Sheet>
           <SheetTrigger>
              {/* Settings Icon or Button */}

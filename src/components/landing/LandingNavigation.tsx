@@ -9,16 +9,11 @@ export const LandingNavigation = () => {
   return (
     <nav className="relative z-50 flex items-center justify-between p-3 sm:p-4 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
       <div className="flex items-center space-x-2 sm:space-x-3">
-        <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-electric-blue via-electric-yellow to-neon-green rounded-lg flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-1 bg-slate-950 rounded-md flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" className="text-electric-blue sm:w-6 sm:h-6">
-              <path
-                fill="currentColor"
-                d="M13 0L6 12h5l-2 12 7-12h-5l2-12z"
-              />
-            </svg>
-          </div>
-        </div>
+        <img 
+          src="/lovable-uploads/efd12727-2519-4372-a17f-7cf24282f3bf.png" 
+          alt="VoltScout Logo" 
+          className="w-10 sm:w-12 h-10 sm:h-12 object-contain"
+        />
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center">
             Watt<Bitcoin className="inline w-5 sm:w-6 h-5 sm:h-6 -mx-0.5" />yte
