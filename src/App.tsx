@@ -16,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/landing" element={<Landing />} />
           <Route path="/" element={<Navigate to="/landing" replace />} />
+          <Route path="/app" element={<Index />} />
           <Route path="/app/*" element={<Index />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -28,13 +28,13 @@ export const LandingNavigation = () => {
       </div>
       
       <div className="flex items-center space-x-3 sm:space-x-6">
-        <Link to="/landing" className="hidden sm:block text-slate-200 hover:text-electric-blue transition-colors">
-          Back to WattByte
+        <Link to="/app" className="hidden sm:block text-slate-200 hover:text-electric-blue transition-colors">
+          VoltScout
         </Link>
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => navigate('/landing')}
+          onClick={() => navigate('/app')}
           className="border-electric-blue/50 text-black hover:bg-electric-blue/10 hover:text-electric-blue bg-white text-sm sm:text-base px-3 sm:px-4"
         >
           Request Access

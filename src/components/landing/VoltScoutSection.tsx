@@ -167,7 +167,7 @@ export const VoltScoutSection = () => {
         </div>
         
         <div className="text-center">
-          <Link to="/voltscout">
+          <Link to="/app">
             <Button size="lg" className="bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-neon-green text-white px-8 py-4 text-lg">
               Access VoltScout Platform
               <ArrowRight className="ml-2 w-5 h-5" />
