@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -98,7 +99,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className={`bg-secondary border-r border-muted w-60 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+    <aside className={`fixed left-0 top-0 h-screen bg-secondary border-r border-muted flex flex-col transition-all duration-300 z-40 ${isCollapsed ? 'w-16' : 'w-60'}`}>
       <div className="flex items-center justify-between p-4">
         <span className="font-bold text-xl">VoltScout</span>
         <Sheet>

@@ -22,6 +22,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [showAccessForm, setShowAccessForm] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +65,35 @@ export function Auth({ onAuthStateChange }: AuthProps) {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const redirectUrl = `${window.location.origin}/app`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Account created!",
+        description: "Please check your email to verify your account.",
+      });
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/30 p-4">
       {/* Navigation back to landing */}
@@ -89,11 +119,13 @@ export function Auth({ onAuthStateChange }: AuthProps) {
               </h1>
             </div>
           </Link>
-          <CardTitle>Access VoltScout Platform</CardTitle>
+          <CardTitle>{isSignUp ? 'Create Account' : 'Access VoltScout Platform'}</CardTitle>
           <CardDescription>
             {showAccessForm 
               ? "Request access to our AI-powered energy discovery platform"
-              : "Sign in to access your account or request platform access"
+              : isSignUp 
+                ? "Sign up for a new account to access the platform"
+                : "Sign in to access your account or create a new one"
             }
           </CardDescription>
         </CardHeader>
@@ -107,13 +139,13 @@ export function Auth({ onAuthStateChange }: AuthProps) {
                   onClick={() => setShowAccessForm(false)}
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  Already have an account? Sign in
+                  Back to sign in
                 </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-6">
-              <form onSubmit={handleSignIn} className="space-y-4">
+              <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -136,7 +168,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? (isSignUp ? 'Creating account...' : 'Signing in...') : (isSignUp ? 'Sign Up' : 'Sign In')}
                 </Button>
               </form>
 
@@ -152,12 +184,20 @@ export function Auth({ onAuthStateChange }: AuthProps) {
               </div>
 
               <div className="text-center space-y-4">
+                <Button 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+                </Button>
+                
                 <p className="text-sm text-muted-foreground">
                   New to WattByte? Request access to our exclusive platform
                 </p>
                 <Button 
                   onClick={() => setShowAccessForm(true)}
-                  variant="outline"
+                  variant="ghost"
                   className="w-full"
                 >
                   Request Platform Access
