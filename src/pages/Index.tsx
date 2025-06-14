@@ -12,9 +12,9 @@ import { DataManagement } from '@/components/DataManagement';
 
 export default function Index() {
   return (
-    <div className="min-h-screen flex w-full">
+    <div className="min-h-screen flex w-full bg-background">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 ml-60 overflow-auto">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/properties" element={<PropertyList />} />
