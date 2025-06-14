@@ -16,9 +16,9 @@ interface PortfolioRecommendation {
   target_companies: string[];
   diversification_score: number;
   risk_adjusted_return: number;
-  geographic_allocation: any;
-  sector_allocation: any;
-  timing_recommendations: any;
+  geographic_allocation: Record<string, number>;
+  sector_allocation: Record<string, number>;
+  timing_recommendations: Record<string, string | number>;
   investment_thesis: string;
   created_at: string;
 }
@@ -207,7 +207,7 @@ export function PortfolioOptimizerPanel() {
                       <ResponsiveContainer width="100%" height={200}>
                         <Chart data={Object.entries(recommendation.sector_allocation).map(([key, value]) => ({
                           name: key,
-                          value: value
+                          value: Number(value)
                         }))}>
                           <Tooltip formatter={(value) => `${value}%`} />
                           {Object.entries(recommendation.sector_allocation).map((_, index) => (
@@ -227,7 +227,7 @@ export function PortfolioOptimizerPanel() {
                       {recommendation.geographic_allocation && Object.entries(recommendation.geographic_allocation).map(([region, percentage]) => (
                         <div key={region} className="flex justify-between items-center">
                           <span className="text-sm capitalize">{region.replace('_', ' ')}</span>
-                          <Badge variant="outline">{percentage}%</Badge>
+                          <Badge variant="outline">{Number(percentage)}%</Badge>
                         </div>
                       ))}
                     </div>
