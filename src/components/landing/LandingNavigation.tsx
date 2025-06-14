@@ -13,7 +13,7 @@ export const LandingNavigation = () => {
         <EnhancedLogo className="w-10 sm:w-12 h-10 sm:h-12 object-contain" />
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center">
-            Watt<Bitcoin className="inline w-5 sm:w-6 h-5 sm:h-6 -mx-0.5" />yte
+            Watt<Bitcoin className="inline w-5 sm:w-6 h-5 sm:h-6 -mx-0.5" style={{ color: '#f7af14' }} />yte
           </h1>
           <p className="text-xs text-slate-300">Infrastructure Fund</p>
         </div>
