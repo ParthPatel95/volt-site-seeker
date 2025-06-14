@@ -2,7 +2,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Zap, 
-  Activity
+  Activity,
+  Search,
+  Database
 } from 'lucide-react';
 import { CityPowerAnalysis } from './power/CityPowerAnalysis';
 import { PowerOverviewCards } from './power/PowerOverviewCards';
@@ -10,6 +12,8 @@ import { PowerCapacityDistribution } from './power/PowerCapacityDistribution';
 import { PowerPropertiesList } from './power/PowerPropertiesList';
 import { InterconnectionQueuePlaceholder } from './power/InterconnectionQueuePlaceholder';
 import { SubstationsOverview } from './power/SubstationsOverview';
+import { SubstationDataCollector } from './power/SubstationDataCollector';
+import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
 import { usePowerData } from './power/usePowerData';
 
 export function PowerInfrastructure() {
@@ -42,9 +46,11 @@ export function PowerInfrastructure() {
 
       <div className="p-6 h-full overflow-y-auto">
         <Tabs defaultValue="overview" className="h-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="substations">Substations</TabsTrigger>
+            <TabsTrigger value="data-collection">Data Collection</TabsTrigger>
+            <TabsTrigger value="ai-discovery">AI Discovery</TabsTrigger>
             <TabsTrigger value="city-analysis">City Analysis</TabsTrigger>
             <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="interconnection">Interconnection Queue</TabsTrigger>
@@ -57,6 +63,14 @@ export function PowerInfrastructure() {
 
           <TabsContent value="substations" className="mt-6">
             <SubstationsOverview />
+          </TabsContent>
+
+          <TabsContent value="data-collection" className="mt-6">
+            <SubstationDataCollector />
+          </TabsContent>
+
+          <TabsContent value="ai-discovery" className="mt-6">
+            <AutomatedSubstationFinder />
           </TabsContent>
 
           <TabsContent value="city-analysis" className="mt-6">
