@@ -5,7 +5,6 @@ import {
   Building, 
   Search, 
   MapPin, 
-  AlertTriangle, 
   Database,
   Brain,
   Zap
@@ -34,7 +33,7 @@ const Sidebar = () => {
       icon: LayoutDashboard, 
       label: 'Dashboard', 
       path: '/app/',
-      description: 'Overview and analytics'
+      description: 'Overview, analytics & alerts'
     },
     { 
       icon: Building, 
@@ -65,12 +64,6 @@ const Sidebar = () => {
       label: 'Power Infrastructure', 
       path: '/app/power-infrastructure',
       description: 'Grid and transmission data'
-    },
-    { 
-      icon: AlertTriangle, 
-      label: 'Alerts', 
-      path: '/app/alerts',
-      description: 'Monitoring and notifications'
     },
     { 
       icon: Database, 
