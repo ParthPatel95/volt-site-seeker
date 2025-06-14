@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
@@ -46,73 +45,76 @@ const Landing = () => {
       
       <LandingNavigation />
       
-      <main>
-        <HeroSection />
-        
-        <section aria-label="Problem and Solution">
-          <ProblemSolutionSection />
-        </section>
-        
-        <section aria-label="Market Opportunity">
-          <MarketOpportunitySection />
-        </section>
-        
-        <section aria-label="Fund Overview">
-          <FundOverviewSection />
-        </section>
-        
-        <section aria-label="Leadership Team">
-          <LeadershipTeamSection />
-        </section>
-        
-        <section aria-label="Fund Growth Plan">
-          <FundGrowthPlanSection />
-        </section>
-        
-        <section aria-label="Investment Thesis">
-          <InvestmentThesisSection />
-        </section>
-        
-        <section aria-label="VoltScout Platform">
-          <VoltScoutSection />
-        </section>
-        
-        <section aria-label="LP Portal">
-          <LPPortalSection />
-        </section>
-      </main>
+      {/* Add top padding to account for fixed navigation */}
+      <div className="pt-16 sm:pt-20">
+        <main>
+          <HeroSection />
+          
+          <section aria-label="Problem and Solution">
+            <ProblemSolutionSection />
+          </section>
+          
+          <section aria-label="Market Opportunity">
+            <MarketOpportunitySection />
+          </section>
+          
+          <section aria-label="Fund Overview">
+            <FundOverviewSection />
+          </section>
+          
+          <section aria-label="Leadership Team">
+            <LeadershipTeamSection />
+          </section>
+          
+          <section aria-label="Fund Growth Plan">
+            <FundGrowthPlanSection />
+          </section>
+          
+          <section aria-label="Investment Thesis">
+            <InvestmentThesisSection />
+          </section>
+          
+          <section aria-label="VoltScout Platform">
+            <VoltScoutSection />
+          </section>
+          
+          <section aria-label="LP Portal">
+            <LPPortalSection />
+          </section>
+        </main>
 
-      {/* Enhanced Sign-Up Section */}
-      {showSignUpForm && (
-        <section className="relative z-10 py-16 px-6" aria-label="Investment Access Form">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-sm rounded-3xl p-10 border border-slate-700/50 shadow-2xl">
-              <div className="text-center mb-10">
-                <h2 className="text-4xl font-bold mb-4 text-white">
-                  Get <span className="bg-gradient-to-r from-electric-blue to-neon-green bg-clip-text text-transparent">Access</span>
-                </h2>
-                <p className="text-slate-200 text-xl">
-                  Join accredited investors backing the future of digital infrastructure
-                </p>
-              </div>
-              
-              <EnhancedSignUpForm />
-              
-              <div className="text-center mt-6">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setShowSignUpForm(false)}
-                  className="text-slate-400 hover:text-white hover:bg-slate-800/50"
-                >
-                  Close Form
-                </Button>
+        {/* Enhanced Sign-Up Section */}
+        {showSignUpForm && (
+          <section className="relative z-10 py-16 px-6" aria-label="Investment Access Form">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-sm rounded-3xl p-10 border border-slate-700/50 shadow-2xl">
+                <div className="text-center mb-10">
+                  <h2 className="text-4xl font-bold mb-4 text-white">
+                    Get <span className="bg-gradient-to-r from-electric-blue to-neon-green bg-clip-text text-transparent">Access</span>
+                  </h2>
+                  <p className="text-slate-200 text-xl">
+                    Join accredited investors backing the future of digital infrastructure
+                  </p>
+                </div>
+                
+                <EnhancedSignUpForm />
+                
+                <div className="text-center mt-6">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowSignUpForm(false)}
+                    className="text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  >
+                    Close Form
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      <LandingFooter />
+        <LandingFooter />
+      </div>
 
       {/* Hidden SEO content for better indexing */}
       <div className="sr-only">
