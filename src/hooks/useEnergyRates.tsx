@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface EnergyRate {
   id: string;
@@ -44,97 +45,44 @@ export function useEnergyRates() {
 
   const fetchMarkets = async () => {
     try {
-      // Use placeholder data since energy_markets table doesn't exist yet
-      const placeholderMarkets: EnergyMarket[] = [
-        {
-          id: '1',
-          market_name: 'Electric Reliability Council of Texas',
-          market_code: 'ERCOT',
-          region: 'Texas',
-          timezone: 'America/Chicago',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          market_name: 'PJM Interconnection',
-          market_code: 'PJM',
-          region: 'Eastern US',
-          timezone: 'America/New_York',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '3',
-          market_name: 'California Independent System Operator',
-          market_code: 'CAISO',
-          region: 'California',
-          timezone: 'America/Los_Angeles',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      setMarkets(placeholderMarkets);
+      const { data, error } = await supabase
+        .from('energy_markets')
+        .select('*')
+        .order('market_name');
+
+      if (error) throw error;
+      setMarkets(data || []);
     } catch (error: any) {
       console.error('Error fetching markets:', error);
       toast({
-        title: "Info",
-        description: "Energy markets feature will be available after database migration",
-        variant: "default"
+        title: "Error",
+        description: "Failed to fetch energy markets",
+        variant: "destructive"
       });
     }
   };
 
   const fetchUtilities = async (state?: string) => {
     try {
-      // Use placeholder data since utility_companies table doesn't exist yet
-      const placeholderUtilities: UtilityCompany[] = [
-        {
-          id: '1',
-          company_name: 'Oncor Electric Delivery',
-          service_territory: 'North Texas',
-          state: 'TX',
-          market_id: '1',
-          website_url: 'https://www.oncor.com',
-          contact_info: {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          company_name: 'Pacific Gas & Electric',
-          service_territory: 'Northern California',
-          state: 'CA',
-          market_id: '3',
-          website_url: 'https://www.pge.com',
-          contact_info: {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '3',
-          company_name: 'PECO Energy',
-          service_territory: 'Southeast Pennsylvania',
-          state: 'PA',
-          market_id: '2',
-          website_url: 'https://www.peco.com',
-          contact_info: {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
+      let query = supabase
+        .from('utility_companies')
+        .select('*')
+        .order('company_name');
+
+      if (state) {
+        query = query.eq('state', state);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
       
-      const filteredUtilities = state 
-        ? placeholderUtilities.filter(u => u.state === state) 
-        : placeholderUtilities;
-      
-      setUtilities(filteredUtilities);
+      setUtilities(data || []);
     } catch (error: any) {
       console.error('Error fetching utilities:', error);
       toast({
-        title: "Info",
-        description: "Utility companies feature will be available after database migration",
-        variant: "default"
+        title: "Error",
+        description: "Failed to fetch utility companies",
+        variant: "destructive"
       });
     }
   };
@@ -142,51 +90,26 @@ export function useEnergyRates() {
   const fetchRates = async (marketId?: string, limit = 100) => {
     setLoading(true);
     try {
-      // Use placeholder data since energy_rates table doesn't exist yet
-      const placeholderRates: EnergyRate[] = [
-        {
-          id: '1',
-          market_id: marketId || '1',
-          rate_type: 'real_time',
-          price_per_mwh: 45.50,
-          timestamp: new Date().toISOString(),
-          node_name: 'Houston Hub',
-          node_id: 'HB_HOUSTON',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          market_id: marketId || '1',
-          rate_type: 'day_ahead',
-          price_per_mwh: 47.20,
-          timestamp: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          node_name: 'Dallas Hub',
-          node_id: 'HB_DALLAS',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '3',
-          market_id: marketId || '2',
-          rate_type: 'real_time',
-          price_per_mwh: 52.80,
-          timestamp: new Date().toISOString(),
-          node_name: 'Western Hub',
-          node_id: 'PJM_WESTERN',
-          created_at: new Date().toISOString()
-        }
-      ];
+      let query = supabase
+        .from('energy_rates')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(limit);
+
+      if (marketId) {
+        query = query.eq('market_id', marketId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
       
-      const filteredRates = marketId 
-        ? placeholderRates.filter(r => r.market_id === marketId)
-        : placeholderRates;
-      
-      setRates(filteredRates);
+      setRates(data || []);
     } catch (error: any) {
       console.error('Error fetching rates:', error);
       toast({
-        title: "Info",
-        description: "Energy rates feature will be available after database migration",
-        variant: "default"
+        title: "Error",
+        description: "Failed to fetch energy rates",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -201,27 +124,22 @@ export function useEnergyRates() {
   }) => {
     setLoading(true);
     try {
-      // Return placeholder calculation since the function doesn't exist yet
-      const energyCost = params.monthly_consumption_mwh * 50; // $50/MWh average
-      const demandCharge = params.peak_demand_mw * 15; // $15/MW demand charge
-      
-      return {
-        monthly_cost: energyCost + demandCharge,
-        breakdown: {
-          energy_cost: energyCost,
-          demand_charge: demandCharge,
-          transmission_cost: params.peak_demand_mw * 5,
-          other_fees: 500
-        },
-        rate_schedule: 'Sample Rate Schedule',
-        utility: 'Sample Utility Company'
-      };
+      const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
+        body: {
+          action: 'calculate_energy_costs',
+          ...params
+        }
+      });
+
+      if (error) throw error;
+
+      return data;
     } catch (error: any) {
       console.error('Error calculating costs:', error);
       toast({
-        title: "Info",
-        description: "Cost calculation will be available after database migration",
-        variant: "default"
+        title: "Error",
+        description: "Failed to calculate energy costs",
+        variant: "destructive"
       });
       return {
         monthly_cost: params.monthly_consumption_mwh * 50,
@@ -238,19 +156,22 @@ export function useEnergyRates() {
   const getCurrentRates = async (marketCode: string) => {
     setLoading(true);
     try {
-      // Return placeholder data since the function doesn't exist yet
-      return {
-        current_rate: 45.50,
-        forecast: [46.00, 44.20, 43.80, 45.10, 47.30],
-        market_code: marketCode,
-        timestamp: new Date().toISOString()
-      };
+      const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
+        body: {
+          action: 'fetch_current_rates',
+          market_code: marketCode
+        }
+      });
+
+      if (error) throw error;
+
+      return data;
     } catch (error: any) {
       console.error('Error fetching current rates:', error);
       toast({
-        title: "Info",
-        description: "Real-time rates will be available after database migration",
-        variant: "default"
+        title: "Error",
+        description: "Failed to fetch current rates",
+        variant: "destructive"
       });
       return {
         current_rate: 45.50,

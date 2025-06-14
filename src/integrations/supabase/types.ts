@@ -260,6 +260,131 @@ export type Database = {
         }
         Relationships: []
       }
+      energy_cost_calculations: {
+        Row: {
+          calculated_monthly_cost: number
+          calculation_date: string
+          calculation_details: Json | null
+          created_at: string
+          id: string
+          monthly_consumption_mwh: number
+          peak_demand_mw: number
+          property_id: string | null
+          tariff_id: string | null
+        }
+        Insert: {
+          calculated_monthly_cost: number
+          calculation_date?: string
+          calculation_details?: Json | null
+          created_at?: string
+          id?: string
+          monthly_consumption_mwh: number
+          peak_demand_mw: number
+          property_id?: string | null
+          tariff_id?: string | null
+        }
+        Update: {
+          calculated_monthly_cost?: number
+          calculation_date?: string
+          calculation_details?: Json | null
+          created_at?: string
+          id?: string
+          monthly_consumption_mwh?: number
+          peak_demand_mw?: number
+          property_id?: string | null
+          tariff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_cost_calculations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_cost_calculations_tariff_id_fkey"
+            columns: ["tariff_id"]
+            isOneToOne: false
+            referencedRelation: "utility_tariffs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_markets: {
+        Row: {
+          api_endpoint: string | null
+          created_at: string
+          id: string
+          market_code: string
+          market_name: string
+          region: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          created_at?: string
+          id?: string
+          market_code: string
+          market_name: string
+          region: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          created_at?: string
+          id?: string
+          market_code?: string
+          market_name?: string
+          region?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      energy_rates: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          node_id: string | null
+          node_name: string | null
+          price_per_mwh: number
+          rate_type: string
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          node_id?: string | null
+          node_name?: string | null
+          price_per_mwh: number
+          rate_type: string
+          timestamp: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          node_id?: string | null
+          node_name?: string | null
+          price_per_mwh?: number
+          rate_type?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_rates_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "energy_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       industry_intelligence: {
         Row: {
           company_name: string
@@ -767,6 +892,109 @@ export type Database = {
           url?: string | null
         }
         Relationships: []
+      }
+      utility_companies: {
+        Row: {
+          company_name: string
+          contact_info: Json | null
+          created_at: string
+          id: string
+          market_id: string | null
+          service_territory: string
+          state: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          company_name: string
+          contact_info?: Json | null
+          created_at?: string
+          id?: string
+          market_id?: string | null
+          service_territory: string
+          state: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          company_name?: string
+          contact_info?: Json | null
+          created_at?: string
+          id?: string
+          market_id?: string | null
+          service_territory?: string
+          state?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_companies_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "energy_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utility_tariffs: {
+        Row: {
+          created_at: string
+          demand_charge_per_kw: number | null
+          effective_date: string
+          expiration_date: string | null
+          id: string
+          maximum_demand_mw: number | null
+          minimum_demand_mw: number | null
+          rate_schedule: Json
+          seasonal_adjustments: Json | null
+          tariff_code: string
+          tariff_name: string
+          time_of_use_rates: Json | null
+          updated_at: string
+          utility_id: string
+        }
+        Insert: {
+          created_at?: string
+          demand_charge_per_kw?: number | null
+          effective_date: string
+          expiration_date?: string | null
+          id?: string
+          maximum_demand_mw?: number | null
+          minimum_demand_mw?: number | null
+          rate_schedule: Json
+          seasonal_adjustments?: Json | null
+          tariff_code: string
+          tariff_name: string
+          time_of_use_rates?: Json | null
+          updated_at?: string
+          utility_id: string
+        }
+        Update: {
+          created_at?: string
+          demand_charge_per_kw?: number | null
+          effective_date?: string
+          expiration_date?: string | null
+          id?: string
+          maximum_demand_mw?: number | null
+          minimum_demand_mw?: number | null
+          rate_schedule?: Json
+          seasonal_adjustments?: Json | null
+          tariff_code?: string
+          tariff_name?: string
+          time_of_use_rates?: Json | null
+          updated_at?: string
+          utility_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_tariffs_utility_id_fkey"
+            columns: ["utility_id"]
+            isOneToOne: false
+            referencedRelation: "utility_companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       volt_scores: {
         Row: {

@@ -83,7 +83,7 @@ const Sidebar = () => {
   return (
     <aside className={`bg-secondary border-r border-muted w-60 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
       <div className="flex items-center justify-between p-4">
-        <span className="font-bold text-xl">VoltVision</span>
+        <span className="font-bold text-xl">VoltScout</span>
         <Sheet>
           <SheetTrigger>
              {/* Settings Icon or Button */}
