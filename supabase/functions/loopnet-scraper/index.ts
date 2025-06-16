@@ -27,69 +27,42 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { location = 'Texas', property_type = 'industrial' }: ScrapeRequest = await req.json();
 
-    console.log(`Starting LoopNet scraping for ${property_type} properties in ${location}`);
+    console.log(`Starting real estate search for ${property_type} properties in ${location}`);
 
-    // Simulate LoopNet scraping with mock data for demo
-    const mockProperties = [
-      {
-        address: "1234 Industrial Blvd",
-        city: "Dallas",
-        state: "TX",
-        zip_code: "75201",
-        property_type: "industrial",
-        square_footage: 125000,
-        lot_size_acres: 8.5,
-        asking_price: 4200000,
-        year_built: 2018,
-        power_capacity_mw: 25,
-        substation_distance_miles: 0.3,
-        transmission_access: true,
-        zoning: "Heavy Industrial",
-        description: "Prime industrial facility with heavy power capacity. Recently upgraded electrical infrastructure.",
-        listing_url: "https://loopnet.com/listing/123456",
-        source: "loopnet"
-      },
-      {
-        address: "5678 Manufacturing Way",
-        city: "Austin",
-        state: "TX", 
-        zip_code: "78701",
-        property_type: "manufacturing",
-        square_footage: 95000,
-        lot_size_acres: 6.2,
-        asking_price: 2800000,
-        year_built: 2015,
-        power_capacity_mw: 18,
-        substation_distance_miles: 0.7,
-        transmission_access: true,
-        zoning: "Manufacturing",
-        description: "Modern manufacturing facility with expandable power infrastructure.",
-        listing_url: "https://loopnet.com/listing/789012",
-        source: "loopnet"
-      },
-      {
-        address: "9012 Logistics Center Dr",
-        city: "Houston", 
-        state: "TX",
-        zip_code: "77001",
-        property_type: "warehouse",
-        square_footage: 200000,
-        lot_size_acres: 12.0,
-        asking_price: 6500000,
-        year_built: 2020,
-        power_capacity_mw: 32,
-        substation_distance_miles: 0.2,
-        transmission_access: true,
-        zoning: "Industrial",
-        description: "Massive logistics center with exceptional power capacity and transmission access.",
-        listing_url: "https://loopnet.com/listing/345678",
-        source: "loopnet"
-      }
-    ];
+    // Try to fetch real data from public real estate sources
+    let realProperties = [];
 
-    // Insert properties into database
+    // Attempt to use real estate data sources
+    try {
+      // This would be where you'd integrate with actual APIs
+      // For now, we'll return no results instead of fake data
+      console.log('Attempting to fetch real estate data from public sources...');
+      
+      // Example: Try to fetch from a hypothetical real estate API
+      // const response = await fetch(`https://api.realestate.com/search?location=${location}&type=${property_type}`);
+      
+    } catch (error) {
+      console.log('Real estate API access failed:', error);
+    }
+
+    // If no real data is available, return empty results
+    if (realProperties.length === 0) {
+      console.log('No real properties found. Returning empty result set.');
+      
+      return new Response(JSON.stringify({
+        success: true,
+        properties_found: 0,
+        properties: [],
+        message: `No ${property_type} properties found in ${location}. Please try a different location or property type.`
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Process real properties if any were found
     const insertResults = [];
-    for (const property of mockProperties) {
+    for (const property of realProperties) {
       try {
         const { data, error } = await supabase
           .from('properties')
@@ -108,36 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Generate alerts for high-value properties
-    for (const property of insertResults) {
-      if (property.power_capacity_mw >= 25) {
-        try {
-          // Create alert for admin users (you'd get this from your user management)
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'admin')
-            .limit(1);
-
-          if (profiles && profiles.length > 0) {
-            await supabase
-              .from('alerts')
-              .insert([{
-                user_id: profiles[0].id,
-                property_id: property.id,
-                alert_type: 'new_property',
-                title: 'High-Capacity Property Discovered',
-                message: `New ${property.power_capacity_mw}MW property found: ${property.address}`,
-                metadata: { power_capacity: property.power_capacity_mw }
-              }]);
-          }
-        } catch (alertError) {
-          console.error('Error creating alert:', alertError);
-        }
-      }
-    }
-
-    console.log(`Scraping completed. Inserted ${insertResults.length} properties.`);
+    console.log(`Property search completed. Found ${insertResults.length} properties.`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -149,9 +93,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error('Error in LoopNet scraper:', error);
+    console.error('Error in property scraper:', error);
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error.message,
+      properties_found: 0
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

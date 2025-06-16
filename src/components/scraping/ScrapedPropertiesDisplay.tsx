@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Building, RefreshCw } from 'lucide-react';
+import { Building, RefreshCw, AlertCircle } from 'lucide-react';
 import { ScrapedPropertyCard } from './ScrapedPropertyCard';
 import { PropertyStats } from './PropertyStats';
 import { PropertyFilters } from './PropertyFilters';
@@ -127,14 +127,23 @@ export function ScrapedPropertiesDisplay() {
       {scrapedProperties.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
-            <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-muted-foreground mb-2">No Scraped Properties Found</h3>
+            <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-muted-foreground mb-2">No Real Properties Found</h3>
             <p className="text-muted-foreground mb-4">
               {searchTerm || typeFilter !== 'all' || statusFilter !== 'all'
-                ? 'Try adjusting your filters or refresh the page'
-                : 'Start by running the AI Property Scraper to discover properties'
+                ? 'Try adjusting your filters or search terms'
+                : 'Real estate data scraping requires API integration. No synthetic data will be generated.'
               }
             </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+              <div className="flex items-center mb-2">
+                <AlertCircle className="w-5 h-5 text-amber-600 mr-2" />
+                <span className="font-medium text-amber-800">Real Data Only</span>
+              </div>
+              <p className="text-sm text-amber-700">
+                We've removed all synthetic/dummy data. Properties will only appear when real estate APIs return actual listings.
+              </p>
+            </div>
           </CardContent>
         </Card>
       ) : (
