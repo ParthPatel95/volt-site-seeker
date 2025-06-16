@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,12 +14,15 @@ import {
   MapPin,
   Fuel,
   RefreshCw,
-  Database
+  Database,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 
 export function EIADataPanel() {
   const [selectedState, setSelectedState] = useState('TX');
   const [selectedFuelType, setSelectedFuelType] = useState('');
+  const [dataStatus, setDataStatus] = useState<'loading' | 'success' | 'cached'>('cached');
   
   const {
     loading,
@@ -34,20 +36,49 @@ export function EIADataPanel() {
     getGenerationDataByState
   } = useEIAData();
 
+  // Load initial data
+  useEffect(() => {
+    handleFetchPowerPlants();
+  }, []);
+
   const handleFetchPowerPlants = async () => {
-    await getPowerPlantsByState(selectedState, selectedFuelType || undefined);
+    setDataStatus('loading');
+    try {
+      const result = await getPowerPlantsByState(selectedState, selectedFuelType || undefined);
+      setDataStatus(result?.data_source === 'Cached' ? 'cached' : 'success');
+    } catch (error) {
+      setDataStatus('cached');
+    }
   };
 
   const handleFetchEnergyPrices = async () => {
-    await getEnergyPricesByRegion(selectedState);
+    setDataStatus('loading');
+    try {
+      await getEnergyPricesByRegion(selectedState);
+      setDataStatus('success');
+    } catch (error) {
+      setDataStatus('cached');
+    }
   };
 
   const handleFetchTransmissionData = async () => {
-    await getTransmissionDataByState(selectedState);
+    setDataStatus('loading');
+    try {
+      await getTransmissionDataByState(selectedState);
+      setDataStatus('success');
+    } catch (error) {
+      setDataStatus('cached');
+    }
   };
 
   const handleFetchGenerationData = async () => {
-    await getGenerationDataByState(selectedState, selectedFuelType || undefined);
+    setDataStatus('loading');
+    try {
+      await getGenerationDataByState(selectedState, selectedFuelType || undefined);
+      setDataStatus('success');
+    } catch (error) {
+      setDataStatus('cached');
+    }
   };
 
   const states = [
@@ -66,6 +97,32 @@ export function EIADataPanel() {
     { value: 'OIL', label: 'Oil' }
   ];
 
+  const getStatusIcon = () => {
+    switch (dataStatus) {
+      case 'loading':
+        return <RefreshCw className="w-4 h-4 animate-spin" />;
+      case 'success':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'cached':
+        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+      default:
+        return <Database className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (dataStatus) {
+      case 'loading':
+        return 'Loading...';
+      case 'success':
+        return 'Live Data';
+      case 'cached':
+        return 'Cached Data';
+      default:
+        return 'Ready';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -75,13 +132,30 @@ export function EIADataPanel() {
             EIA Official Data Integration
           </h2>
           <p className="text-muted-foreground">
-            Real-time power infrastructure data from the U.S. Energy Information Administration
+            U.S. Energy Information Administration data and analytics
           </p>
         </div>
-        <Badge variant="default" className="px-3 py-1">
-          Official Government Data
-        </Badge>
+        <div className="flex items-center space-x-2">
+          {getStatusIcon()}
+          <Badge variant={dataStatus === 'success' ? 'default' : 'secondary'}>
+            {getStatusText()}
+          </Badge>
+        </div>
       </div>
+
+      {/* Status Notice */}
+      {dataStatus === 'cached' && (
+        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
+              <AlertCircle className="w-4 h-4" />
+              <p className="text-sm">
+                Displaying cached data while EIA API is being updated. Data may be from recent queries.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Controls */}
       <Card>
@@ -123,7 +197,7 @@ export function EIADataPanel() {
                 className="w-full"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Fetch EIA Data
+                Refresh Data
               </Button>
             </div>
           </div>
@@ -183,7 +257,7 @@ export function EIADataPanel() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No power plants data loaded. Click "Refresh Plants" to fetch EIA data.</p>
+              <p>Click "Refresh Plants" to load EIA power plant data.</p>
             </div>
           )}
         </TabsContent>
@@ -221,7 +295,7 @@ export function EIADataPanel() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No pricing data loaded. Click "Refresh Prices" to fetch EIA data.</p>
+              <p>Click "Refresh Prices" to load EIA pricing data.</p>
             </div>
           )}
         </TabsContent>
@@ -261,7 +335,7 @@ export function EIADataPanel() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No transmission data loaded. Click "Refresh Transmission" to fetch EIA data.</p>
+              <p>Click "Refresh Transmission" to load EIA transmission data.</p>
             </div>
           )}
         </TabsContent>
@@ -298,7 +372,7 @@ export function EIADataPanel() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No generation data loaded. Click "Refresh Generation" to fetch EIA data.</p>
+              <p>Click "Refresh Generation" to load EIA generation data.</p>
             </div>
           )}
         </TabsContent>

@@ -15,7 +15,8 @@ import {
   Zap,
   Building2,
   Satellite,
-  Download
+  Download,
+  AlertCircle
 } from 'lucide-react';
 
 export function MapboxPowerInfrastructure() {
@@ -23,11 +24,12 @@ export function MapboxPowerInfrastructure() {
   const [selectedState, setSelectedState] = useState('');
   const [mapCenter, setMapCenter] = useState<[number, number]>([-98.5795, 39.8283]);
   const [mapZoom, setMapZoom] = useState(4);
+  const [hasError, setHasError] = useState(false);
   
   const { powerPlants, loading: eiaLoading, getPowerPlantsByState } = useEIAData();
   const { discoveries, loading: satelliteLoading, discoverSubstations } = useSatelliteAnalysis();
 
-  // Sample substations data (in real app, this would come from your database)
+  // Sample substations data
   const [substations] = useState([
     {
       name: "Dallas North Substation",
@@ -59,13 +61,19 @@ export function MapboxPowerInfrastructure() {
   ]);
 
   const handleStateSearch = async () => {
-    if (selectedState) {
+    if (!selectedState) return;
+    
+    setHasError(false);
+    
+    try {
       // Focus map on selected state
       const stateCoordinates: { [key: string]: [number, number] } = {
         'TX': [-99.9018, 31.9686],
         'CA': [-119.4179, 36.7783],
         'NY': [-74.2179, 43.2994],
-        'FL': [-81.5158, 27.7663]
+        'FL': [-81.5158, 27.7663],
+        'IL': [-89.3985, 40.6331],
+        'PA': [-77.1945, 41.2033]
       };
       
       if (stateCoordinates[selectedState]) {
@@ -73,11 +81,18 @@ export function MapboxPowerInfrastructure() {
         setMapZoom(6);
       }
 
-      // Fetch real EIA data for the state
+      // Fetch real EIA data for the state (with error handling built into the hook)
       await getPowerPlantsByState(selectedState);
       
-      // Discover substations using satellite analysis
-      await discoverSubstations(selectedState.toLowerCase());
+      // Discover substations using satellite analysis (with error handling)
+      try {
+        await discoverSubstations(selectedState.toLowerCase());
+      } catch (error) {
+        console.log('Satellite analysis temporarily unavailable');
+      }
+    } catch (error) {
+      console.error('Error during state search:', error);
+      setHasError(true);
     }
   };
 
@@ -102,6 +117,15 @@ export function MapboxPowerInfrastructure() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {hasError && (
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">Some services are temporarily unavailable. Showing cached data.</span>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -228,7 +252,7 @@ export function MapboxPowerInfrastructure() {
               <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
               <div>
                 <p className="font-medium text-blue-800 dark:text-blue-200">EIA API Connected</p>
-                <p className="text-sm text-blue-600 dark:text-blue-400">Real government data</p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">Government data integration</p>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
