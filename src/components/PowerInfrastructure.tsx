@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +11,8 @@ import {
   TrendingUp,
   Cpu,
   Satellite,
-  BarChart3
+  BarChart3,
+  Leaf
 } from 'lucide-react';
 import { CityPowerAnalysis } from './power/CityPowerAnalysis';
 import { PowerOverviewCards } from './power/PowerOverviewCards';
@@ -27,6 +27,9 @@ import { usePowerData } from './power/usePowerData';
 import { EIADataPanel } from './power/EIADataPanel';
 import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
 import { ERCOTDashboard } from './power/ERCOTDashboard';
+import { FERCDashboard } from './power/FERCDashboard';
+import { USGSDashboard } from './power/USGSDashboard';
+import { EnvironmentalDashboard } from './power/EnvironmentalDashboard';
 
 export function PowerInfrastructure() {
   const { powerData, properties, loading, getStatusColor } = usePowerData();
