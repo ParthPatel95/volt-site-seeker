@@ -1,25 +1,35 @@
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
-import { HeroSection } from '@/components/landing/HeroSection';
-import { ProblemSolutionSection } from '@/components/landing/ProblemSolutionSection';
-import { MarketOpportunitySection } from '@/components/landing/MarketOpportunitySection';
-import { FundOverviewSection } from '@/components/landing/FundOverviewSection';
-import { LeadershipTeamSection } from '@/components/landing/LeadershipTeamSection';
-import { FundGrowthPlanSection } from '@/components/landing/FundGrowthPlanSection';
-import { InvestmentThesisSection } from '@/components/landing/InvestmentThesisSection';
-import { VoltScoutSection } from '@/components/landing/VoltScoutSection';
-import { LPPortalSection } from '@/components/landing/LPPortalSection';
+import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
+import { LandingBackground } from '@/components/landing/LandingBackground';
+import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+
+// Lazy load sections for better performance
+const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
+const MarketOpportunitySection = lazy(() => import('@/components/landing/MarketOpportunitySection').then(module => ({ default: module.MarketOpportunitySection })));
+const FundOverviewSection = lazy(() => import('@/components/landing/FundOverviewSection').then(module => ({ default: module.FundOverviewSection })));
+const LeadershipTeamSection = lazy(() => import('@/components/landing/LeadershipTeamSection').then(module => ({ default: module.LeadershipTeamSection })));
+const FundGrowthPlanSection = lazy(() => import('@/components/landing/FundGrowthPlanSection').then(module => ({ default: module.FundGrowthPlanSection })));
+const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(module => ({ default: module.InvestmentThesisSection })));
+const VoltScoutSection = lazy(() => import('@/components/landing/VoltScoutSection').then(module => ({ default: module.VoltScoutSection })));
+const LPPortalSection = lazy(() => import('@/components/landing/LPPortalSection').then(module => ({ default: module.LPPortalSection })));
+
+const SectionLoader = () => (
+  <div className="flex justify-center items-center py-20">
+    <div className="w-8 h-8 border-2 border-electric-blue border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
 
 const Landing = () => {
   const [showSignUpForm, setShowSignUpForm] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-      {/* SEO-friendly structured content with semantic HTML */}
+      {/* SEO content */}
       <header>
         <h1 className="sr-only">WattByte Infrastructure Fund - AI-Powered Energy Discovery Platform</h1>
         <p className="sr-only">
@@ -28,170 +38,104 @@ const Landing = () => {
         </p>
       </header>
 
-      {/* Enhanced dynamic background with animated particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Animated grid pattern */}
-        <div 
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px)
-            `,
-            backgroundSize: '60px 60px',
-            animation: 'float 20s ease-in-out infinite alternate'
-          }}
-        ></div>
-        
-        {/* Multiple animated gradient layers */}
-        <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/20 via-transparent to-neon-green/20 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-tl from-electric-yellow/10 via-transparent to-purple-500/10 animate-pulse delay-1000"></div>
-        
-        {/* Floating orbs with different sizes and animations */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-electric-blue/10 rounded-full blur-3xl animate-float delay-0"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-neon-green/15 rounded-full blur-3xl animate-float delay-1000"></div>
-        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-electric-yellow/10 rounded-full blur-3xl animate-float delay-500"></div>
-        <div className="absolute bottom-1/3 left-1/5 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-float delay-1500"></div>
-        <div className="absolute top-1/5 right-1/5 w-56 h-56 bg-cyan-400/10 rounded-full blur-3xl animate-float delay-2000"></div>
-        
-        {/* Subtle particle effect using CSS */}
-        <div className="absolute inset-0">
-          {Array.from({ length: 50 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${2 + Math.random() * 3}s`
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      {/* Optimized background */}
+      <LandingBackground />
       
       <LandingNavigation />
       
-      {/* Add top padding to account for fixed navigation */}
       <div className="pt-16 sm:pt-20 relative z-10">
         <main>
-          <HeroSection />
+          <OptimizedHeroSection />
           
-          {/* Enhanced section dividers with animated elements */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-electric-blue/30 to-transparent h-px"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent h-px animate-pulse"></div>
-          </div>
+          <SectionDivider color="blue" />
           
           <section aria-label="Problem and Solution" className="relative">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-electric-blue/5 rounded-full blur-2xl animate-pulse"></div>
-            <ProblemSolutionSection />
+            <Suspense fallback={<SectionLoader />}>
+              <ProblemSolutionSection />
+            </Suspense>
           </section>
           
-          <div className="relative my-16">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neon-green/30 to-transparent h-px"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent h-px animate-pulse delay-500"></div>
-          </div>
+          <SectionDivider color="green" />
           
           <section aria-label="Market Opportunity" className="relative">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-neon-green/5 rounded-full blur-2xl animate-pulse delay-1000"></div>
-            <MarketOpportunitySection />
+            <Suspense fallback={<SectionLoader />}>
+              <MarketOpportunitySection />
+            </Suspense>
           </section>
           
-          <div className="relative my-16">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-electric-yellow/30 to-transparent h-px"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent h-px animate-pulse delay-1000"></div>
-          </div>
+          <SectionDivider color="yellow" />
           
           <section aria-label="Fund Overview" className="relative">
-            <div className="absolute top-0 left-1/4 w-36 h-36 bg-electric-yellow/5 rounded-full blur-2xl animate-pulse delay-500"></div>
-            <FundOverviewSection />
+            <Suspense fallback={<SectionLoader />}>
+              <FundOverviewSection />
+            </Suspense>
           </section>
           
-          <div className="relative my-16">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent h-px"></div>
-          </div>
+          <SectionDivider color="purple" />
           
           <section aria-label="Leadership Team" className="relative">
-            <div className="absolute top-0 right-1/3 w-44 h-44 bg-purple-500/5 rounded-full blur-2xl animate-pulse delay-1500"></div>
-            <LeadershipTeamSection />
+            <Suspense fallback={<SectionLoader />}>
+              <LeadershipTeamSection />
+            </Suspense>
           </section>
           
-          <div className="relative my-16">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent h-px"></div>
-          </div>
+          <SectionDivider color="cyan" />
           
           <section aria-label="Fund Growth Plan" className="relative">
-            <FundGrowthPlanSection />
+            <Suspense fallback={<SectionLoader />}>
+              <FundGrowthPlanSection />
+            </Suspense>
           </section>
           
-          <div className="relative my-16">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-electric-blue/30 to-transparent h-px"></div>
-          </div>
+          <SectionDivider color="blue" />
           
           <section aria-label="Investment Thesis" className="relative">
-            <div className="absolute top-0 left-1/2 w-52 h-52 bg-electric-blue/5 rounded-full blur-2xl animate-pulse"></div>
-            <InvestmentThesisSection />
+            <Suspense fallback={<SectionLoader />}>
+              <InvestmentThesisSection />
+            </Suspense>
           </section>
           
-          <div className="relative my-16">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neon-green/30 to-transparent h-px"></div>
-          </div>
+          <SectionDivider color="green" />
           
           <section aria-label="VoltScout Platform" className="relative">
-            <div className="absolute top-0 right-1/4 w-48 h-48 bg-neon-green/5 rounded-full blur-2xl animate-pulse delay-2000"></div>
-            <VoltScoutSection />
+            <Suspense fallback={<SectionLoader />}>
+              <VoltScoutSection />
+            </Suspense>
           </section>
           
-          <div className="relative my-16">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-electric-yellow/30 to-transparent h-px"></div>
-          </div>
+          <SectionDivider color="yellow" />
           
           <section aria-label="LP Portal" className="relative">
-            <LPPortalSection />
+            <Suspense fallback={<SectionLoader />}>
+              <LPPortalSection />
+            </Suspense>
           </section>
         </main>
 
-        {/* Enhanced Sign-Up Section with improved visual appeal */}
+        {/* Sign-Up Section */}
         {showSignUpForm && (
           <section className="relative z-20 py-16 px-6" aria-label="Investment Access Form">
             <div className="max-w-4xl mx-auto">
-              <div className="relative">
-                {/* Enhanced background with multiple layers */}
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-xl rounded-3xl"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/5 to-neon-green/5 rounded-3xl"></div>
-                <div className="absolute inset-0 border border-slate-700/50 rounded-3xl shadow-2xl shadow-electric-blue/10"></div>
-                
-                {/* Animated border */}
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-electric-blue/20 via-neon-green/20 to-electric-yellow/20 p-[1px]">
-                  <div className="h-full w-full rounded-3xl bg-slate-900/95"></div>
+              <div className="relative bg-slate-800/90 backdrop-blur-xl rounded-3xl p-10 border border-slate-700/50 shadow-2xl">
+                <div className="text-center mb-10">
+                  <h2 className="text-4xl font-bold mb-4 text-white">
+                    Get <span className="bg-gradient-to-r from-electric-blue to-neon-green bg-clip-text text-transparent">Access</span>
+                  </h2>
+                  <p className="text-slate-200 text-xl">
+                    Join accredited investors backing the future of digital infrastructure
+                  </p>
                 </div>
                 
-                <div className="relative p-10">
-                  <div className="text-center mb-10">
-                    <h2 className="text-4xl font-bold mb-4 text-white">
-                      Get <span className="bg-gradient-to-r from-electric-blue to-neon-green bg-clip-text text-transparent">Access</span>
-                    </h2>
-                    <p className="text-slate-200 text-xl">
-                      Join accredited investors backing the future of digital infrastructure
-                    </p>
-                    
-                    {/* Animated accent line */}
-                    <div className="mt-6 mx-auto w-24 h-1 bg-gradient-to-r from-electric-blue via-neon-green to-electric-yellow rounded-full animate-pulse"></div>
-                  </div>
-                  
-                  <EnhancedSignUpForm />
-                  
-                  <div className="text-center mt-6">
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => setShowSignUpForm(false)}
-                      className="text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all duration-300"
-                    >
-                      Close Form
-                    </Button>
-                  </div>
+                <EnhancedSignUpForm />
+                
+                <div className="text-center mt-6">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowSignUpForm(false)}
+                    className="text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all duration-200"
+                  >
+                    Close Form
+                  </Button>
                 </div>
               </div>
             </div>
@@ -201,7 +145,7 @@ const Landing = () => {
         <LandingFooter />
       </div>
 
-      {/* Hidden SEO content for better indexing */}
+      {/* SEO content */}
       <div className="sr-only">
         <h2>About WattByte Infrastructure Fund</h2>
         <p>
@@ -226,38 +170,6 @@ const Landing = () => {
           for power infrastructure and data center development.
         </p>
       </div>
-
-      {/* Custom CSS animations */}
-      <style>
-        {`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) translateX(0px); }
-          25% { transform: translateY(-20px) translateX(10px); }
-          50% { transform: translateY(-10px) translateX(-10px); }
-          75% { transform: translateY(-30px) translateX(5px); }
-        }
-        
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        .animate-float.delay-500 {
-          animation-delay: 0.5s;
-        }
-        
-        .animate-float.delay-1000 {
-          animation-delay: 1s;
-        }
-        
-        .animate-float.delay-1500 {
-          animation-delay: 1.5s;
-        }
-        
-        .animate-float.delay-2000 {
-          animation-delay: 2s;
-        }
-        `}
-      </style>
     </div>
   );
 };
