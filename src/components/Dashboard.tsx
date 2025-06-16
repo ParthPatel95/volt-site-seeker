@@ -20,7 +20,6 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnergyRates } from '@/hooks/useEnergyRates';
-import { AlertsSystem } from './AlertsSystem';
 
 interface Property {
   id: string;
@@ -49,10 +48,8 @@ export function Dashboard() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [substations, setSubstations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPrice, setCurrentPrice] = useState(0);
-  const [averagePrice, setAveragePrice] = useState(0);
   const { toast } = useToast();
-  const { getCurrentRates } = useEnergyRates();
+  const { currentRates } = useEnergyRates();
 
   const loadDashboardData = async () => {
     try {
@@ -86,13 +83,6 @@ export function Dashboard() {
       if (substationsError) throw substationsError;
       setSubstations(substationsData || []);
 
-      // Load current energy rates
-      const ratesData = await getCurrentRates('ERCOT');
-      if (ratesData?.current_rates?.length > 0) {
-        setCurrentPrice(ratesData.current_rates[0].price_per_mwh);
-        setAveragePrice(ratesData.average_24h || 0);
-      }
-
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
       toast({
@@ -112,6 +102,17 @@ export function Dashboard() {
   const totalInvestmentValue = properties.reduce((sum, prop) => sum + (prop.asking_price || 0), 0);
   const totalPowerCapacity = properties.reduce((sum, prop) => sum + (prop.power_capacity_mw || 0), 0);
   const unreadAlerts = alerts.filter(alert => !alert.is_read).length;
+
+  const getCurrentPrice = () => {
+    return currentRates?.current_rate || 0;
+  };
+
+  const getAveragePrice = () => {
+    if (currentRates?.forecast && currentRates.forecast.length > 0) {
+      return currentRates.forecast.reduce((sum: number, price: number) => sum + price, 0) / currentRates.forecast.length;
+    }
+    return currentRates?.current_rate || 0;
+  };
 
   if (loading) {
     return (
@@ -171,7 +172,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${(totalInvestmentValue / 1000000).toFixed(1)}M
+              {totalInvestmentValue > 0 ? `$${(totalInvestmentValue / 1000000).toFixed(1)}M` : '$0'}
             </div>
             <p className="text-xs text-purple-200">Portfolio value</p>
           </CardContent>
@@ -199,20 +200,27 @@ export function Dashboard() {
           <CardDescription>Current ERCOT market conditions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Current Price</p>
-              <p className="text-2xl font-bold">${currentPrice.toFixed(2)}/MWh</p>
+          {currentRates ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Current Price</p>
+                <p className="text-2xl font-bold">${getCurrentPrice().toFixed(2)}/MWh</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Average Forecast</p>
+                <p className="text-2xl font-bold">${getAveragePrice().toFixed(2)}/MWh</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Market Status</p>
+                <Badge variant="default">{currentRates.market_conditions || 'Normal Operations'}</Badge>
+              </div>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">24h Average</p>
-              <p className="text-2xl font-bold">${averagePrice.toFixed(2)}/MWh</p>
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>Loading energy market data...</p>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Market Status</p>
-              <Badge variant="default">Normal Operations</Badge>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -307,35 +315,37 @@ export function Dashboard() {
       </div>
 
       {/* Top Substations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Zap className="w-5 h-5 mr-2 text-purple-600" />
-            Major Substations
-          </CardTitle>
-          <CardDescription>
-            Highest capacity transmission infrastructure
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {substations.map((substation) => (
-              <div key={substation.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <span className="font-medium">{substation.name}</span>
-                  <span className="text-sm text-muted-foreground ml-2">
-                    {substation.city}, {substation.state}
-                  </span>
+      {substations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-purple-600" />
+              Major Substations
+            </CardTitle>
+            <CardDescription>
+              Highest capacity transmission infrastructure
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {substations.map((substation) => (
+                <div key={substation.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span className="font-medium">{substation.name}</span>
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {substation.city}, {substation.state}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold">{substation.capacity_mva.toLocaleString()} MVA</div>
+                    <div className="text-sm text-muted-foreground">{substation.voltage_level}</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold">{substation.capacity_mva.toLocaleString()} MVA</div>
-                  <div className="text-sm text-muted-foreground">{substation.voltage_level}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -34,10 +34,7 @@ export function EnergyRateIntelligence() {
   } = useEnergyRates();
 
   const [costCalculations, setCostCalculations] = useState<any[]>([]);
-  const [forecast, setForecast] = useState<any[]>([]);
-  const [utilityOptions, setUtilityOptions] = useState<any[]>([]);
   const [calculatingCosts, setCalculatingCosts] = useState(false);
-  const [searchingRates, setSearchingRates] = useState(false);
   
   const { toast } = useToast();
 
@@ -144,18 +141,6 @@ export function EnergyRateIntelligence() {
     }).format(amount);
   };
 
-  const getCurrentPrice = () => {
-    return currentRates?.current_rate || 0;
-  };
-
-  const getAveragePrice = () => {
-    return currentRates?.current_rate || 0;
-  };
-
-  const getPeakDemandRate = () => {
-    return currentRates?.peak_demand_rate || 0;
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -221,7 +206,9 @@ export function EnergyRateIntelligence() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Current Price</p>
-                    <p className="text-2xl font-bold">${getCurrentPrice().toFixed(2)}</p>
+                    <p className="text-2xl font-bold">
+                      ${currentRates?.current_rate ? currentRates.current_rate.toFixed(2) : '0.00'}
+                    </p>
                     <p className="text-xs text-muted-foreground">per MWh</p>
                   </div>
                   <Activity className="w-8 h-8 text-green-600" />
@@ -234,7 +221,9 @@ export function EnergyRateIntelligence() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Peak Demand Rate</p>
-                    <p className="text-2xl font-bold">${getPeakDemandRate().toFixed(2)}</p>
+                    <p className="text-2xl font-bold">
+                      ${currentRates?.peak_demand_rate ? currentRates.peak_demand_rate.toFixed(2) : '0.00'}
+                    </p>
                     <p className="text-xs text-muted-foreground">per MWh</p>
                   </div>
                   <TrendingUp className="w-8 h-8 text-blue-600" />
@@ -273,20 +262,22 @@ export function EnergyRateIntelligence() {
                       </div>
                       <div>
                         <p className="text-muted-foreground">Market Code</p>
-                        <p className="font-medium">{currentRates.market_code}</p>
+                        <p className="font-medium">{currentRates.market_code || selectedMarket}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Conditions</p>
-                        <Badge variant="default">{currentRates.market_conditions}</Badge>
+                        <Badge variant="default">{currentRates.market_conditions || 'Normal'}</Badge>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Last Updated</p>
-                        <p className="text-xs">{new Date(currentRates.timestamp).toLocaleString()}</p>
+                        <p className="text-xs">
+                          {currentRates.timestamp ? new Date(currentRates.timestamp).toLocaleString() : 'Recently'}
+                        </p>
                       </div>
                     </div>
                   </div>
                   
-                  {currentRates.forecast && (
+                  {currentRates.forecast && currentRates.forecast.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2">Price Forecast (Next 3 Periods)</h4>
                       <div className="grid grid-cols-3 gap-2">
