@@ -19,7 +19,12 @@ export default function Index() {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Auto-collapse sidebar on mobile
+      if (mobile) {
+        setIsCollapsed(true);
+      }
     };
 
     checkMobile();
@@ -47,7 +52,7 @@ export default function Index() {
       }`}>
         {/* Mobile Header */}
         {isMobile && (
-          <header className="flex items-center justify-between p-4 bg-secondary border-b border-muted sticky top-0 z-30">
+          <header className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
             <Button
               variant="ghost"
               size="sm"

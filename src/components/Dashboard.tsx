@@ -14,12 +14,22 @@ import {
   Target,
   Activity,
   Bell,
-  CheckCircle
+  CheckCircle,
+  Satellite,
+  Database,
+  Wind,
+  Sun,
+  Fuel,
+  RefreshCw
 } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnergyRates } from '@/hooks/useEnergyRates';
+import { useERCOTData } from '@/hooks/useERCOTData';
+import { useFERCData } from '@/hooks/useFERCData';
+import { useEnergyData } from '@/hooks/useEnergyData';
+import { useUSGSData } from '@/hooks/useUSGSData';
 
 interface Property {
   id: string;
@@ -50,6 +60,10 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { currentRates } = useEnergyRates();
+  const { pricing, loadData, generationMix, loading: ercotLoading } = useERCOTData();
+  const { interconnectionQueue, loading: fercLoading } = useFERCData();
+  const { epaData, solarData, loading: energyLoading } = useEnergyData();
+  const { elevationData, loading: usgsLoading } = useUSGSData();
 
   const loadDashboardData = async () => {
     try {
@@ -58,7 +72,7 @@ export function Dashboard() {
         .from('properties')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5);
 
       if (propertiesError) throw propertiesError;
       setProperties(propertiesData || []);
@@ -68,7 +82,7 @@ export function Dashboard() {
         .from('alerts')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5);
 
       if (alertsError) throw alertsError;
       setAlerts(alertsData || []);
@@ -78,7 +92,7 @@ export function Dashboard() {
         .from('substations')
         .select('*')
         .order('capacity_mva', { ascending: false })
-        .limit(5);
+        .limit(3);
 
       if (substationsError) throw substationsError;
       setSubstations(substationsData || []);
@@ -86,7 +100,7 @@ export function Dashboard() {
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
       toast({
-        title: "Error Loading Data",
+        title: "Dashboard Error",
         description: error.message,
         variant: "destructive"
       });
@@ -103,249 +117,395 @@ export function Dashboard() {
   const totalPowerCapacity = properties.reduce((sum, prop) => sum + (prop.power_capacity_mw || 0), 0);
   const unreadAlerts = alerts.filter(alert => !alert.is_read).length;
 
-  const getCurrentPrice = () => {
-    return currentRates?.current_rate || 0;
-  };
-
-  const getAveragePrice = () => {
-    if (currentRates?.forecast && currentRates.forecast.length > 0) {
-      return currentRates.forecast.reduce((sum: number, price: number) => sum + price, 0) / currentRates.forecast.length;
-    }
-    return currentRates?.current_rate || 0;
-  };
-
-  if (loading) {
+  if (loading && ercotLoading && fercLoading) {
     return (
-      <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-blue-50/30">
-        <div className="flex items-center justify-center h-64">
-          <Zap className="w-8 h-8 animate-spin" />
-          <span className="ml-2">Loading dashboard...</span>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center p-4">
+        <Card className="p-6 sm:p-8">
+          <CardContent className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-500 animate-pulse" />
+              <div className="absolute inset-0 w-8 h-8 sm:w-12 sm:h-12 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin"></div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">Loading VoltScout Dashboard</h3>
+              <p className="text-muted-foreground text-sm sm:text-base">Fetching real-time power infrastructure data...</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-blue-50/30">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6">
+      {/* Mobile-first Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">VoltScout Dashboard</h1>
-          <p className="text-muted-foreground">Heavy power site discovery and analysis</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">VoltScout Dashboard</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Real-time power infrastructure intelligence</p>
         </div>
         <Button 
           onClick={loadDashboardData}
-          className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
+          className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 w-full sm:w-auto"
+          disabled={loading}
         >
-          <Target className="w-4 h-4 mr-2" />
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh Data
         </Button>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-100">Total Properties</CardTitle>
-            <Building className="h-4 w-4 text-blue-200" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{properties.length}</div>
-            <p className="text-xs text-blue-200">Active portfolio</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-100">Power Capacity</CardTitle>
-            <Zap className="h-4 w-4 text-green-200" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(totalPowerCapacity)} MW</div>
-            <p className="text-xs text-green-200">Total identified</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-100">Investment Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-purple-200" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {totalInvestmentValue > 0 ? `$${(totalInvestmentValue / 1000000).toFixed(1)}M` : '$0'}
-            </div>
-            <p className="text-xs text-purple-200">Portfolio value</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-100">Active Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-200" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{unreadAlerts}</div>
-            <p className="text-xs text-orange-200">Requires attention</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Energy Market Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
+      {/* Real-time Energy Market Overview */}
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center text-lg sm:text-xl">
             <Activity className="w-5 h-5 mr-2 text-yellow-600" />
-            Energy Market Overview
+            Live Energy Market (ERCOT)
           </CardTitle>
-          <CardDescription>Current ERCOT market conditions</CardDescription>
+          <CardDescription className="text-sm">Real-time Texas grid operations and pricing</CardDescription>
         </CardHeader>
         <CardContent>
-          {currentRates ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Current Price</p>
-                <p className="text-2xl font-bold">${getCurrentPrice().toFixed(2)}/MWh</p>
+          {pricing && loadData ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
+                <p className="text-xl sm:text-2xl font-bold">${pricing.current_price.toFixed(2)}/MWh</p>
+                <Badge variant="default" className="text-xs">
+                  {pricing.market_conditions.replace('_', ' ').toUpperCase()}
+                </Badge>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Average Forecast</p>
-                <p className="text-2xl font-bold">${getAveragePrice().toFixed(2)}/MWh</p>
+              <div className="space-y-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">System Load</p>
+                <p className="text-xl sm:text-2xl font-bold">{(loadData.current_demand_mw / 1000).toFixed(1)} GW</p>
+                <p className="text-xs text-muted-foreground">Current demand</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Market Status</p>
-                <Badge variant="default">{currentRates.market_conditions || 'Normal Operations'}</Badge>
+              <div className="space-y-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
+                <p className="text-xl sm:text-2xl font-bold">{loadData.reserve_margin.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground">Grid reliability</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
+                <p className="text-xl sm:text-2xl font-bold">
+                  {generationMix ? generationMix.renewable_percentage.toFixed(1) : '0'}%
+                </p>
+                <p className="text-xs text-muted-foreground">Of total generation</p>
               </div>
             </div>
           ) : (
-            <div className="text-center py-4 text-muted-foreground">
+            <div className="text-center py-6">
               <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>Loading energy market data...</p>
+              <p className="text-muted-foreground text-sm">Loading real-time market data...</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Properties */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-              Recent Properties
-            </CardTitle>
-            <CardDescription>
-              Latest properties added to the platform
-            </CardDescription>
+      {/* Key API Data Integration Status */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-100">ERCOT API</CardTitle>
+            <Zap className="h-4 w-4 text-blue-200" />
           </CardHeader>
-          <CardContent className="space-y-4">
-            {properties.length > 0 ? (
-              properties.slice(0, 5).map((property) => (
-                <div key={property.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                  <div className="space-y-1">
-                    <div className="font-medium">{property.address}</div>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {property.city}, {property.state}
-                    </div>
-                    <div className="text-sm font-medium text-green-600">
-                      {property.power_capacity_mw ? `${property.power_capacity_mw} MW` : 'Power TBD'}
-                    </div>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <Badge variant={property.status === 'active' ? "default" : "secondary"}>
-                      {property.status}
-                    </Badge>
-                    {property.asking_price && (
-                      <div className="text-sm font-medium">
-                        ${(property.asking_price / 1000000).toFixed(1)}M
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No properties found. Start by using the Property Scraper.</p>
-              </div>
-            )}
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {pricing ? 'LIVE' : 'Loading...'}
+            </div>
+            <p className="text-xs text-blue-200">Real-time pricing & load</p>
           </CardContent>
         </Card>
 
-        {/* Alerts System */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-red-600" />
-              Recent Alerts
-            </CardTitle>
-            <CardDescription>
-              System notifications and monitoring alerts
-            </CardDescription>
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-100">FERC API</CardTitle>
+            <Database className="h-4 w-4 text-green-200" />
           </CardHeader>
-          <CardContent className="space-y-4">
-            {alerts.length > 0 ? (
-              alerts.slice(0, 5).map((alert) => (
-                <div key={alert.id} className="flex items-start space-x-3">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    alert.is_read ? 'bg-gray-400' : 'bg-red-500'
-                  }`}></div>
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium">{alert.title}</p>
-                    <p className="text-xs text-muted-foreground">{alert.message}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(alert.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  {!alert.is_read && (
-                    <Badge variant="destructive" className="text-xs">
-                      New
-                    </Badge>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No alerts at this time. All systems operational.</p>
-              </div>
-            )}
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {interconnectionQueue ? interconnectionQueue.summary.total_projects.toLocaleString() : 'Loading...'}
+            </div>
+            <p className="text-xs text-green-200">Interconnection projects</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-purple-100">EPA API</CardTitle>
+            <Wind className="h-4 w-4 text-purple-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {epaData ? epaData.air_quality_index : 'Loading...'}
+            </div>
+            <p className="text-xs text-purple-200">Air Quality Index</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-orange-100">USGS API</CardTitle>
+            <MapPin className="h-4 w-4 text-orange-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {elevationData ? `${elevationData.elevation_feet.toFixed(0)}'` : 'Loading...'}
+            </div>
+            <p className="text-xs text-orange-200">Elevation data</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Top Substations */}
-      {substations.length > 0 && (
+      {/* Main Content Grid - Mobile Responsive */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Generation Mix from ERCOT */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Zap className="w-5 h-5 mr-2 text-purple-600" />
-              Major Substations
+            <CardTitle className="flex items-center text-lg">
+              <Activity className="w-5 h-5 mr-2 text-green-600" />
+              Live Generation Mix
             </CardTitle>
-            <CardDescription>
-              Highest capacity transmission infrastructure
-            </CardDescription>
+            <CardDescription className="text-sm">Current power generation sources in Texas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {substations.map((substation) => (
-                <div key={substation.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <span className="font-medium">{substation.name}</span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      {substation.city}, {substation.state}
-                    </span>
+            {generationMix ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <Fuel className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Natural Gas</p>
+                      <p className="font-semibold">{(generationMix.natural_gas_mw / 1000).toFixed(1)} GW</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold">{substation.capacity_mva.toLocaleString()} MVA</div>
-                    <div className="text-sm text-muted-foreground">{substation.voltage_level}</div>
+                  <div className="flex items-center space-x-2">
+                    <Wind className="w-4 h-4 text-green-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Wind</p>
+                      <p className="font-semibold">{(generationMix.wind_mw / 1000).toFixed(1)} GW</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Sun className="w-4 h-4 text-yellow-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Solar</p>
+                      <p className="font-semibold">{(generationMix.solar_mw / 1000).toFixed(1)} GW</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Zap className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nuclear</p>
+                      <p className="font-semibold">{(generationMix.nuclear_mw / 1000).toFixed(1)} GW</p>
+                    </div>
                   </div>
                 </div>
-              ))}
+                
+                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Total Generation</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground text-sm">Loading generation data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* FERC Interconnection Queue */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Building className="w-5 h-5 mr-2 text-blue-600" />
+              FERC Interconnection Queue
+            </CardTitle>
+            <CardDescription className="text-sm">New power projects awaiting grid connection</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {interconnectionQueue ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Projects</p>
+                    <p className="text-2xl font-bold">{interconnectionQueue.summary.total_projects.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Capacity</p>
+                    <p className="text-2xl font-bold">{(interconnectionQueue.summary.total_capacity_mw / 1000).toFixed(1)} GW</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Solar Projects</span>
+                    <span className="font-medium">{(interconnectionQueue.summary.solar_capacity_mw / 1000).toFixed(1)} GW</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Wind Projects</span>
+                    <span className="font-medium">{(interconnectionQueue.summary.wind_capacity_mw / 1000).toFixed(1)} GW</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Storage Projects</span>
+                    <span className="font-medium">{(interconnectionQueue.summary.storage_capacity_mw / 1000).toFixed(1)} GW</span>
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Avg Queue Time</span>
+                    <Badge variant="outline">
+                      {interconnectionQueue.summary.average_queue_time_months} months
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Database className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground text-sm">Loading FERC data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Environmental Data */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Wind className="w-5 h-5 mr-2 text-green-600" />
+              Environmental Data
+            </CardTitle>
+            <CardDescription className="text-sm">EPA air quality and renewable energy metrics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {epaData && solarData ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Air Quality Index</p>
+                    <p className="text-2xl font-bold">{epaData.air_quality_index}</p>
+                    <Badge variant="secondary" className="text-xs">
+                      {epaData.aqi_category}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Solar Potential</p>
+                    <p className="text-2xl font-bold">{solarData.peak_sun_hours}</p>
+                    <p className="text-xs text-muted-foreground">Peak sun hours</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Renewable Energy</span>
+                    <span className="font-medium">{epaData.renewable_energy_percent}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Carbon Intensity</span>
+                    <span className="font-medium">{epaData.carbon_intensity_lb_per_mwh} lb/MWh</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Wind className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground text-sm">Loading environmental data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Properties & Substations Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Building className="w-5 h-5 mr-2 text-purple-600" />
+              Infrastructure Summary
+            </CardTitle>
+            <CardDescription className="text-sm">Power properties and transmission infrastructure</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Properties</p>
+                  <p className="text-2xl font-bold">{properties.length}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Substations</p>
+                  <p className="text-2xl font-bold">{substations.length}</p>
+                </div>
+              </div>
+              
+              {totalPowerCapacity > 0 && (
+                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Total Power Capacity</span>
+                    <Badge variant="outline">
+                      {Math.round(totalPowerCapacity)} MW
+                    </Badge>
+                  </div>
+                </div>
+              )}
+              
+              {unreadAlerts > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-orange-600">Active Alerts</span>
+                  <Badge variant="destructive">{unreadAlerts}</Badge>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-      )}
+      </div>
+
+      {/* Quick Actions - Mobile Optimized */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center text-lg">
+            <Target className="w-5 h-5 mr-2 text-indigo-600" />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <Button variant="outline" className="justify-start text-sm h-auto py-3">
+              <Satellite className="w-4 h-4 mr-2" />
+              <div className="text-left">
+                <div className="font-medium">Mapbox Explorer</div>
+                <div className="text-xs text-muted-foreground">Satellite infrastructure</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start text-sm h-auto py-3">
+              <Database className="w-4 h-4 mr-2" />
+              <div className="text-left">
+                <div className="font-medium">EIA Data</div>
+                <div className="text-xs text-muted-foreground">Power plant database</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start text-sm h-auto py-3">
+              <Activity className="w-4 h-4 mr-2" />
+              <div className="text-left">
+                <div className="font-medium">ERCOT Live</div>
+                <div className="text-xs text-muted-foreground">Real-time grid data</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start text-sm h-auto py-3">
+              <Building className="w-4 h-4 mr-2" />
+              <div className="text-left">
+                <div className="font-medium">FERC Queue</div>
+                <div className="text-xs text-muted-foreground">Interconnection data</div>
+              </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

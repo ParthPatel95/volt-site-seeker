@@ -1,17 +1,18 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
-  Cloud,
-  Sun,
+  Wind, 
+  Sun, 
   Thermometer,
-  Wind,
-  Droplets,
-  Factory,
+  CloudRain,
   Leaf,
-  RefreshCw
+  RefreshCw,
+  Search
 } from 'lucide-react';
 import { useEnergyData } from '@/hooks/useEnergyData';
 
@@ -26,274 +27,319 @@ export function EnvironmentalDashboard() {
     getNOAAWeatherData
   } = useEnergyData();
 
+  const [region, setRegion] = useState('Texas');
+
   useEffect(() => {
+    // Load default data for Texas
     getEPAEmissions('Texas');
     getNRELSolarData('Texas');
     getNOAAWeatherData('Texas');
   }, []);
 
-  const getAQIColor = (aqi: number) => {
-    if (aqi <= 50) return 'default';
-    if (aqi <= 100) return 'secondary';
-    if (aqi <= 150) return 'outline';
-    return 'destructive';
-  };
-
-  const getSolarRatingColor = (rating: string) => {
-    switch (rating.toLowerCase()) {
-      case 'excellent': return 'default';
-      case 'very good': case 'good': return 'secondary';
-      case 'fair': return 'outline';
-      default: return 'destructive';
+  const handleRegionSearch = async () => {
+    if (!region.trim()) return;
+    
+    try {
+      await Promise.all([
+        getEPAEmissions(region),
+        getNRELSolarData(region),
+        getNOAAWeatherData(region)
+      ]);
+    } catch (error) {
+      console.error('Error fetching environmental data:', error);
     }
-  };
-
-  const refetchAll = () => {
-    getEPAEmissions('Texas');
-    getNRELSolarData('Texas');
-    getNOAAWeatherData('Texas');
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Environmental & Energy Data</h2>
-          <p className="text-muted-foreground">EPA emissions, NREL solar potential, and NOAA weather data</p>
+          <h2 className="text-2xl font-bold text-foreground">Environmental Dashboard</h2>
+          <p className="text-muted-foreground">EPA air quality, NREL solar data, and NOAA weather information</p>
         </div>
-        <Button 
-          onClick={refetchAll}
-          disabled={loading}
-          className="bg-gradient-to-r from-green-600 to-blue-600"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Data
-        </Button>
       </div>
 
-      {/* EPA Air Quality */}
-      {epaData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Cloud className="w-5 h-5 mr-2 text-blue-600" />
-              Air Quality & Emissions (EPA)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
+      {/* Region Search */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Search className="w-5 h-5 mr-2 text-green-600" />
+            Regional Environmental Data
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="region">Region/State</Label>
+              <Input
+                id="region"
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                placeholder="Enter state or region name"
+              />
+            </div>
+            <Button 
+              onClick={handleRegionSearch}
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Search className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Search
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Air Quality Data */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Wind className="w-5 h-5 mr-2 text-blue-600" />
+            Air Quality & Emissions (EPA)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {epaData ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Air Quality Index</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-2xl font-bold">{epaData.air_quality_index}</p>
-                    <Badge variant={getAQIColor(epaData.air_quality_index)}>
-                      {epaData.aqi_category}
-                    </Badge>
-                  </div>
+                  <p className="text-2xl font-bold">{epaData.air_quality_index}</p>
+                  <Badge variant={epaData.aqi_category === 'Good' ? 'default' : 'destructive'}>
+                    {epaData.aqi_category}
+                  </Badge>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Primary Pollutant</p>
-                  <p className="text-lg font-semibold">{epaData.primary_pollutant}</p>
+                  <p className="text-xl font-semibold">{epaData.primary_pollutant}</p>
                 </div>
-                <div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">PM2.5 Concentration</p>
+                  <p className="text-xl font-semibold">{epaData.pm25_concentration} μg/m³</p>
+                </div>
+                <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Renewable Energy</p>
-                  <p className="text-2xl font-bold text-green-600">{epaData.renewable_energy_percent}%</p>
+                  <p className="text-xl font-semibold">{epaData.renewable_energy_percent}%</p>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-muted-foreground">Carbon Intensity</p>
-                  <p className="text-lg font-semibold">{epaData.carbon_intensity_lb_per_mwh} lb/MWh</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Emission Sources</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {epaData.emission_sources.map((source, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-muted rounded">
-                      <span className="text-sm">{source.source}</span>
-                      <Badge variant="outline">{source.percentage}%</Badge>
+                  <p className="text-sm text-muted-foreground mb-3">Annual Emissions (tons/year)</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">CO₂ Emissions</span>
+                      <span className="font-medium">{epaData.co2_emissions_tons_per_year.toLocaleString()}</span>
                     </div>
-                  ))}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">NOx Emissions</span>
+                      <span className="font-medium">{epaData.nox_emissions_tons_per_year.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">SO₂ Emissions</span>
+                      <span className="font-medium">{epaData.so2_emissions_tons_per_year.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground mb-3">Emission Sources</p>
+                  <div className="space-y-2">
+                    {epaData.emission_sources.map((source, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <span className="text-sm">{source.source}</span>
+                        <Badge variant="outline">{source.percentage}%</Badge>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Factory className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <p className="text-muted-foreground">CO₂ Emissions</p>
-                    <p className="font-semibold">{epaData.co2_emissions_tons_per_year.toLocaleString()} tons/year</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Cloud className="w-4 h-4 text-blue-500" />
-                  <div>
-                    <p className="text-muted-foreground">NOₓ Emissions</p>
-                    <p className="font-semibold">{epaData.nox_emissions_tons_per_year.toLocaleString()} tons/year</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Wind className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-muted-foreground">PM2.5 Concentration</p>
-                    <p className="font-semibold">{epaData.pm25_concentration} μg/m³</p>
-                  </div>
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Carbon Intensity</span>
+                  <Badge variant="secondary">
+                    {epaData.carbon_intensity_lb_per_mwh} lb CO₂/MWh
+                  </Badge>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="text-center py-8">
+              <Wind className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-muted-foreground">Loading EPA air quality data...</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* NREL Solar Data */}
-      {solarData && (
+      {/* Solar Data */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Sun className="w-5 h-5 mr-2 text-yellow-600" />
-              Solar Resource Potential (NREL)
+              Solar Resource Data (NREL)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Solar Potential</p>
-                  <Badge variant={getSolarRatingColor(solarData.solar_potential_rating)}>
-                    {solarData.solar_potential_rating}
-                  </Badge>
+            {solarData ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Peak Sun Hours</p>
+                    <p className="text-2xl font-bold">{solarData.peak_sun_hours}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Solar Potential</p>
+                    <Badge variant="default">{solarData.solar_potential_rating}</Badge>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Peak Sun Hours</p>
-                  <p className="text-2xl font-bold">{solarData.peak_sun_hours}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Capacity Factor</p>
-                  <p className="text-2xl font-bold">{solarData.capacity_factor_percent}%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">LCOE Estimate</p>
-                  <p className="text-lg font-semibold">{solarData.estimated_lcoe_cents_per_kwh}¢/kWh</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Annual Irradiance</p>
-                  <p className="font-semibold">{solarData.annual_solar_irradiance_kwh_per_m2} kWh/m²</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Annual Solar Irradiance</span>
+                    <span className="font-medium">{solarData.annual_solar_irradiance_kwh_per_m2} kWh/m²</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Capacity Factor</span>
+                    <span className="font-medium">{solarData.capacity_factor_percent}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Optimal Tilt Angle</span>
+                    <span className="font-medium">{solarData.optimal_tilt_angle_degrees}°</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Est. LCOE</span>
+                    <span className="font-medium">{solarData.estimated_lcoe_cents_per_kwh}¢/kWh</span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Optimal Tilt Angle</p>
-                  <p className="font-semibold">{solarData.optimal_tilt_angle_degrees}°</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Temperature Coefficient</p>
-                  <p className="font-semibold">{solarData.temperature_coefficient}/°C</p>
-                </div>
-              </div>
 
-              <div>
-                <h4 className="font-semibold mb-2">Seasonal Production Factors</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="text-center p-2 bg-muted rounded">
-                    <p className="text-sm text-muted-foreground">Summer</p>
-                    <p className="font-bold">{solarData.seasonal_variation.summer_production_factor}x</p>
-                  </div>
-                  <div className="text-center p-2 bg-muted rounded">
-                    <p className="text-sm text-muted-foreground">Fall</p>
-                    <p className="font-bold">{solarData.seasonal_variation.fall_production_factor}x</p>
-                  </div>
-                  <div className="text-center p-2 bg-muted rounded">
-                    <p className="text-sm text-muted-foreground">Winter</p>
-                    <p className="font-bold">{solarData.seasonal_variation.winter_production_factor}x</p>
-                  </div>
-                  <div className="text-center p-2 bg-muted rounded">
-                    <p className="text-sm text-muted-foreground">Spring</p>
-                    <p className="font-bold">{solarData.seasonal_variation.spring_production_factor}x</p>
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <p className="text-sm font-medium mb-2">Seasonal Production Factors</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span>Summer:</span>
+                      <span>{solarData.seasonal_variation.summer_production_factor.toFixed(2)}x</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Winter:</span>
+                      <span>{solarData.seasonal_variation.winter_production_factor.toFixed(2)}x</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Spring:</span>
+                      <span>{solarData.seasonal_variation.spring_production_factor.toFixed(2)}x</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Fall:</span>
+                      <span>{solarData.seasonal_variation.fall_production_factor.toFixed(2)}x</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-8">
+                <Sun className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading solar resource data...</p>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* NOAA Weather Data */}
-      {weatherData && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Thermometer className="w-5 h-5 mr-2 text-red-600" />
-              Weather & Climate Data (NOAA)
+              <CloudRain className="w-5 h-5 mr-2 text-blue-600" />
+              Weather Data (NOAA)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Current Temperature</p>
-                  <p className="text-2xl font-bold">{weatherData.current_temperature_f}°F</p>
+            {weatherData ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Temperature</p>
+                    <p className="text-2xl font-bold">{weatherData.current_temperature_f}°F</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Conditions</p>
+                    <Badge variant="outline">{weatherData.weather_conditions}</Badge>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Humidity</p>
-                  <p className="text-2xl font-bold">{weatherData.current_humidity_percent}%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Wind Speed</p>
-                  <p className="text-xl font-bold">{weatherData.wind_speed_mph} mph</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Conditions</p>
-                  <p className="font-semibold">{weatherData.weather_conditions}</p>
-                </div>
-              </div>
 
-              <div>
-                <h4 className="font-semibold mb-2">Climate Averages</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <Thermometer className="w-4 h-4 text-red-500" />
-                    <div>
-                      <p className="text-muted-foreground">Annual Avg Temp</p>
-                      <p className="font-semibold">{weatherData.historical_averages.annual_avg_temp_f}°F</p>
-                    </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Humidity</span>
+                    <span className="font-medium">{weatherData.current_humidity_percent}%</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Droplets className="w-4 h-4 text-blue-500" />
-                    <div>
-                      <p className="text-muted-foreground">Annual Precipitation</p>
-                      <p className="font-semibold">{weatherData.historical_averages.annual_precipitation_inches}"</p>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Wind Speed</span>
+                    <span className="font-medium">{weatherData.wind_speed_mph} mph {weatherData.wind_direction}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Leaf className="w-4 h-4 text-green-500" />
-                    <div>
-                      <p className="text-muted-foreground">Cooling Degree Days</p>
-                      <p className="font-semibold">{weatherData.historical_averages.cooling_degree_days}</p>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Barometric Pressure</span>
+                    <span className="font-medium">{weatherData.barometric_pressure_inHg}" Hg</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Visibility</span>
+                    <span className="font-medium">{weatherData.visibility_miles} miles</span>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="font-semibold mb-2">Extreme Weather Risk</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {Object.entries(weatherData.extreme_weather_risk).map(([risk, level]) => (
-                    <div key={risk} className="text-center p-2 bg-muted rounded">
-                      <p className="text-xs text-muted-foreground capitalize">{risk.replace('_', ' ')}</p>
-                      <Badge variant={level === 'Low' ? 'default' : level === 'Moderate' ? 'secondary' : 'destructive'}>
-                        {level as string}
-                      </Badge>
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-sm font-medium mb-2">Historical Averages</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>Annual Avg Temp:</span>
+                      <span>{weatherData.historical_averages.annual_avg_temp_f}°F</span>
                     </div>
-                  ))}
+                    <div className="flex justify-between">
+                      <span>Annual Precipitation:</span>
+                      <span>{weatherData.historical_averages.annual_precipitation_inches}"</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Heating Degree Days:</span>
+                      <span>{weatherData.historical_averages.heating_degree_days}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cooling Degree Days:</span>
+                      <span>{weatherData.historical_averages.cooling_degree_days}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                  <p className="text-sm font-medium mb-2">Weather Risk Assessment</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>Tornado Risk:</span>
+                      <Badge variant="outline" className="text-xs">{weatherData.extreme_weather_risk.tornado_risk}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Hurricane Risk:</span>
+                      <Badge variant="outline" className="text-xs">{weatherData.extreme_weather_risk.hurricane_risk}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Hail Risk:</span>
+                      <Badge variant="outline" className="text-xs">{weatherData.extreme_weather_risk.hail_risk}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Drought Risk:</span>
+                      <Badge variant="outline" className="text-xs">{weatherData.extreme_weather_risk.drought_risk}</Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-8">
+                <CloudRain className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading weather data...</p>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      </div>
     </div>
   );
 }
