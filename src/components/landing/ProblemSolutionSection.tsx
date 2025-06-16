@@ -1,5 +1,5 @@
 
-import { AlertTriangle, CheckCircle, ArrowRight, Zap, Building } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Zap, Building } from 'lucide-react';
 
 export const ProblemSolutionSection = () => {
   return (
@@ -133,25 +133,19 @@ export const ProblemSolutionSection = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-electric-blue/5 via-electric-yellow/10 to-neon-green/5 rounded-3xl blur-xl"></div>
           
           <div className="relative bg-gradient-to-r from-slate-800/80 via-slate-900/90 to-slate-800/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-electric-blue/30 max-w-6xl mx-auto text-center shadow-2xl group-hover:shadow-electric-blue/20 transition-all duration-500">
-            {/* Icon row */}
-            <div className="flex items-center justify-center space-x-4 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-xl flex items-center justify-center">
-                <ArrowRight className="w-5 h-5 text-white" />
-              </div>
+            {/* Header without arrows */}
+            <div className="flex items-center justify-center mb-4">
               <h4 className="text-2xl md:text-3xl font-bold text-white">The Result</h4>
-              <div className="w-10 h-10 bg-gradient-to-br from-electric-yellow to-neon-green rounded-xl flex items-center justify-center">
-                <ArrowRight className="w-5 h-5 text-white" />
-              </div>
             </div>
 
-            {/* Main text */}
+            {/* Main text with white color */}
             <p className="text-lg md:text-xl text-white font-medium leading-relaxed mb-6">
               By solving these critical industry pain points, WattByte creates{' '}
-              <span className="bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent font-bold">
+              <span className="text-white font-bold">
                 significant value
               </span>{' '}
               for both data center operators and investors seeking exposure to{' '}
-              <span className="bg-gradient-to-r from-neon-green to-electric-blue bg-clip-text text-transparent font-bold">
+              <span className="text-white font-bold">
                 digital infrastructure growth
               </span>{' '}
               without the operational complexity of data center development.
