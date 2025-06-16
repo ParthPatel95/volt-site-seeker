@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -60,12 +59,13 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { currentRates } = useEnergyRates();
-  const { pricing, loadData, generationMix, loading: ercotLoading } = useERCOTData();
-  const { interconnectionQueue, loading: fercLoading } = useFERCData();
+  const { pricing, loadData, generationMix, loading: ercotLoading, refetch: refetchERCOT } = useERCOTData();
+  const { interconnectionQueue, loading: fercLoading, refetch: refetchFERC } = useFERCData();
   const { epaData, solarData, loading: energyLoading } = useEnergyData();
   const { elevationData, loading: usgsLoading } = useUSGSData();
 
   const loadDashboardData = async () => {
+    setLoading(true);
     try {
       // Load properties
       const { data: propertiesData, error: propertiesError } = await supabase
@@ -109,6 +109,36 @@ export function Dashboard() {
     }
   };
 
+  const handleRefreshAll = async () => {
+    setLoading(true);
+    toast({
+      title: "Refreshing Data",
+      description: "Fetching latest data from all sources...",
+    });
+
+    try {
+      // Refresh all data sources in parallel
+      await Promise.all([
+        loadDashboardData(),
+        refetchERCOT(),
+        refetchFERC(),
+      ]);
+
+      toast({
+        title: "Data Refreshed",
+        description: "All dashboard data has been updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Error", 
+        description: "Some data sources may be temporarily unavailable",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -145,12 +175,12 @@ export function Dashboard() {
           <p className="text-muted-foreground text-sm sm:text-base">Real-time power infrastructure intelligence</p>
         </div>
         <Button 
-          onClick={loadDashboardData}
+          onClick={handleRefreshAll}
           className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 w-full sm:w-auto"
           disabled={loading}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Data
+          Refresh All Data
         </Button>
       </div>
 
