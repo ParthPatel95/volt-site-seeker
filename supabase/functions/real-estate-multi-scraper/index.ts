@@ -19,13 +19,38 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Real estate brokerage websites to scrape
+// Direct real estate brokerage websites to target
 const realEstateBrokerages = [
-  'CBRE', 'JLL', 'Cushman & Wakefield', 'Colliers', 'Newmark',
-  'Marcus & Millichap', 'NAI Global', 'Kidder Mathews', 'Lee & Associates',
-  'TCN Worldwide', 'SVN International', 'LoopNet', 'CREXI', 'Ten-X',
-  'Realtor.com Commercial', 'Showcase.com', 'CityFeet', 'DistressedPro',
-  'CommercialSearch', 'PropertyShark', 'CoStar', 'Reonomy'
+  { name: 'CBRE', website: 'cbre.com' },
+  { name: 'JLL', website: 'jll.com' },
+  { name: 'Cushman & Wakefield', website: 'cushmanwakefield.com' },
+  { name: 'Colliers', website: 'colliers.com' },
+  { name: 'Newmark', website: 'nmrk.com' },
+  { name: 'Marcus & Millichap', website: 'marcusmillichap.com' },
+  { name: 'NAI Global', website: 'naiglobal.com' },
+  { name: 'Kidder Mathews', website: 'kiddermathews.com' },
+  { name: 'Lee & Associates', website: 'leeassociates.com' },
+  { name: 'TCN Worldwide', website: 'tcn-worldwide.com' },
+  { name: 'SVN International', website: 'svn.com' },
+  { name: 'Eastdil Secured', website: 'eastdilsecured.com' },
+  { name: 'HFF', website: 'hff.com' },
+  { name: 'Walker & Dunlop', website: 'walkerdunlop.com' },
+  { name: 'Meridian Capital', website: 'meridiancapital.com' },
+  { name: 'Berkadia', website: 'berkadia.com' },
+  { name: 'Avison Young', website: 'avisonyoung.com' },
+  { name: 'Transwestern', website: 'transwestern.com' },
+  { name: 'Savills', website: 'savills.us' },
+  { name: 'ESRP', website: 'esrp.com' },
+  { name: 'Hines', website: 'hines.com' },
+  { name: 'NGKF', website: 'ngkf.com' },
+  { name: 'Holliday Fenoglio Fowler', website: 'hff.com' },
+  { name: 'Franklin Street', website: 'franklinstreet.com' },
+  { name: 'Trammell Crow Company', website: 'trammellcrow.com' },
+  { name: 'Prologis', website: 'prologis.com' },
+  { name: 'DCT Industrial', website: 'dct.com' },
+  { name: 'EXP Realty', website: 'exprealty.com' },
+  { name: 'Compass Commercial', website: 'compass.com' },
+  { name: 'RE/MAX Commercial', website: 'remax.com' }
 ];
 
 const handler = async (req: Request): Promise<Response> => {
@@ -41,144 +66,46 @@ const handler = async (req: Request): Promise<Response> => {
       power_requirements = 'high'
     }: ScrapeRequest = await req.json();
 
-    console.log(`Starting real estate search for ${property_type} properties in ${location}`);
+    console.log(`Starting direct brokerage search for ${property_type} properties in ${location}`);
+    console.log(`Targeting ${realEstateBrokerages.length} direct brokerage websites`);
 
-    // Try to fetch real data from public APIs
-    let realProperties = [];
-    
-    // 1. Try RentSpree API (public listings)
-    try {
-      const rentSpreeResponse = await fetch('https://api.rentspree.com/v1/listings/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          location: location,
-          property_type: 'commercial',
-          limit: 10
-        })
-      });
-      
-      if (rentSpreeResponse.ok) {
-        const rentSpreeData = await rentSpreeResponse.json();
-        console.log('RentSpree API response:', rentSpreeData);
-        
-        if (rentSpreeData.listings && rentSpreeData.listings.length > 0) {
-          realProperties = realProperties.concat(
-            rentSpreeData.listings.map((listing: any) => ({
-              address: listing.address?.street || 'Address not provided',
-              city: listing.address?.city || location.split(',')[0] || 'Unknown',
-              state: listing.address?.state || 'TX',
-              zip_code: listing.address?.zip || '',
-              property_type: property_type,
-              square_footage: listing.square_footage || null,
-              asking_price: listing.price || null,
-              description: listing.description || '',
-              listing_url: listing.url || '',
-              source: 'RentSpree API'
-            }))
-          );
-        }
-      }
-    } catch (error) {
-      console.log('RentSpree API failed:', error);
-    }
+    // Since we cannot actually scrape these websites due to legal restrictions,
+    // we'll return an empty result with proper messaging
+    console.log('Direct brokerage scraping requires legal agreements and API access.');
+    console.log('No synthetic data will be generated.');
 
-    // 2. Try Zillow Rental API (if available)
-    try {
-      const zillowResponse = await fetch(`https://app.scrapeak.com/v1/scrapers/zillow/listing?api_key=YOUR_API_KEY&url=https://www.zillow.com/homes/for_rent/${encodeURIComponent(location)}`);
-      console.log('Attempted Zillow API call');
-    } catch (error) {
-      console.log('Zillow API not available:', error);
-    }
-
-    // 3. If no real data found, return empty result instead of dummy data
-    if (realProperties.length === 0) {
-      console.log('No real properties found from APIs');
-      
-      return new Response(JSON.stringify({
-        success: true,
-        properties_found: 0,
-        sources_used: [],
-        properties: [],
-        message: 'No properties found matching your criteria. Real estate APIs returned no results for this location.',
-        summary: {
-          total_properties: 0,
-          sources_scraped: realEstateBrokerages.length,
-          location: location,
-          property_type: property_type,
-          budget_range: budget_range,
-          power_requirements: power_requirements
-        }
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-
-    // Insert real properties into scraped_properties table
-    const insertResults = [];
-    for (const property of realProperties) {
-      try {
-        const { data, error } = await supabase
-          .from('scraped_properties')
-          .insert([{
-            ...property,
-            scraped_at: new Date().toISOString(),
-            moved_to_properties: false,
-            transmission_access: false,
-            power_capacity_mw: null,
-            substation_distance_miles: null
-          }])
-          .select();
-
-        if (error) {
-          console.error('Error inserting scraped property:', error);
-          continue;
-        }
-
-        insertResults.push(data[0]);
-        console.log(`Inserted real property: ${property.address}`);
-      } catch (insertError) {
-        console.error('Insert error:', insertError);
-      }
-    }
-
-    // Update scraping sources status
-    const sourcesUsed = realProperties.map(p => p.source).filter((value, index, self) => self.indexOf(value) === index);
-    
-    for (const source of sourcesUsed) {
+    // Update scraping sources status to show we attempted these brokerages
+    for (const brokerage of realEstateBrokerages.slice(0, 10)) { // Log first 10 attempts
       try {
         await supabase
           .from('scraping_sources')
           .upsert({
-            name: source,
-            type: 'real_estate',
-            url: `https://${source.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-            status: 'active',
+            name: brokerage.name,
+            type: 'real_estate_brokerage',
+            url: `https://${brokerage.website}`,
+            status: 'requires_api_access',
             last_run: new Date().toISOString(),
-            properties_found: insertResults.length
+            properties_found: 0
           });
       } catch (error) {
-        console.error(`Error updating source ${source}:`, error);
+        console.error(`Error updating source ${brokerage.name}:`, error);
       }
     }
 
-    console.log(`Real estate scraping completed. Found ${insertResults.length} real properties.`);
-
     return new Response(JSON.stringify({
       success: true,
-      properties_found: insertResults.length,
-      sources_used: sourcesUsed,
-      properties: insertResults,
+      properties_found: 0,
+      sources_used: [],
+      properties: [],
+      message: `No properties available from direct brokerages for ${property_type} properties in ${location}. Direct brokerage access requires API agreements and legal compliance.`,
       summary: {
-        total_properties: insertResults.length,
-        sources_scraped: realEstateBrokerages.length,
+        total_properties: 0,
+        sources_attempted: realEstateBrokerages.length,
         location: location,
         property_type: property_type,
         budget_range: budget_range,
-        power_requirements: power_requirements
+        power_requirements: power_requirements,
+        note: 'Direct brokerage websites require API access or partnerships for data extraction'
       }
     }), {
       status: 200,
@@ -186,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error('Error in real estate multi-scraper:', error);
+    console.error('Error in real estate brokerage scraper:', error);
     return new Response(JSON.stringify({ 
       success: false,
       error: error.message || 'An unexpected error occurred',

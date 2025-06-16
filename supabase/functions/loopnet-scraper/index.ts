@@ -27,73 +27,24 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { location = 'Texas', property_type = 'industrial' }: ScrapeRequest = await req.json();
 
-    console.log(`Starting real estate search for ${property_type} properties in ${location}`);
+    console.log(`Brokerage search requested for ${property_type} properties in ${location}`);
 
-    // Try to fetch real data from public real estate sources
-    let realProperties = [];
-
-    // Attempt to use real estate data sources
-    try {
-      // This would be where you'd integrate with actual APIs
-      // For now, we'll return no results instead of fake data
-      console.log('Attempting to fetch real estate data from public sources...');
-      
-      // Example: Try to fetch from a hypothetical real estate API
-      // const response = await fetch(`https://api.realestate.com/search?location=${location}&type=${property_type}`);
-      
-    } catch (error) {
-      console.log('Real estate API access failed:', error);
-    }
-
-    // If no real data is available, return empty results
-    if (realProperties.length === 0) {
-      console.log('No real properties found. Returning empty result set.');
-      
-      return new Response(JSON.stringify({
-        success: true,
-        properties_found: 0,
-        properties: [],
-        message: `No ${property_type} properties found in ${location}. Please try a different location or property type.`
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-
-    // Process real properties if any were found
-    const insertResults = [];
-    for (const property of realProperties) {
-      try {
-        const { data, error } = await supabase
-          .from('properties')
-          .insert([property])
-          .select();
-
-        if (error) {
-          console.error('Error inserting property:', error);
-          continue;
-        }
-
-        insertResults.push(data[0]);
-        console.log(`Inserted property: ${property.address}`);
-      } catch (insertError) {
-        console.error('Insert error:', insertError);
-      }
-    }
-
-    console.log(`Property search completed. Found ${insertResults.length} properties.`);
-
+    // Since direct brokerage scraping is not legally allowed without agreements,
+    // we return no results instead of generating fake data
+    console.log('Direct brokerage website access requires legal compliance and API partnerships.');
+    
     return new Response(JSON.stringify({
       success: true,
-      properties_found: insertResults.length,
-      properties: insertResults
+      properties_found: 0,
+      properties: [],
+      message: `No ${property_type} properties found in ${location}. Direct brokerage data requires API access agreements.`
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
 
   } catch (error: any) {
-    console.error('Error in property scraper:', error);
+    console.error('Error in brokerage scraper:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
       properties_found: 0

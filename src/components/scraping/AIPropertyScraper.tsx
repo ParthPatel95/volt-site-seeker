@@ -19,7 +19,7 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
     setScraping(true);
     
     try {
-      console.log('Starting real estate property search with params:', searchParams);
+      console.log('Starting direct brokerage property search with params:', searchParams);
       
       const { data, error } = await supabase.functions.invoke('real-estate-multi-scraper', {
         body: {
@@ -30,14 +30,13 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         }
       });
 
-      console.log('Real estate scraper response:', { data, error });
+      console.log('Direct brokerage scraper response:', { data, error });
 
       if (error) {
         console.error('Edge function error:', error);
         throw new Error(error.message || 'Failed to search for properties');
       }
 
-      // Handle both success and error responses from the edge function
       if (data?.success === false) {
         throw new Error(data.error || 'Property search failed');
       }
@@ -46,21 +45,20 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         onPropertiesFound(data.properties_found);
         
         toast({
-          title: "Real Properties Found!",
-          description: `Found ${data.properties_found} properties from: ${data.sources_used?.join(', ') || 'multiple real estate websites'}`,
+          title: "Properties Found!",
+          description: `Found ${data.properties_found} properties from direct brokerages`,
         });
       } else {
         toast({
           title: "No Properties Available",
-          description: data?.message || 'No properties found matching your criteria. Try adjusting search parameters.',
+          description: data?.message || 'No properties found from direct brokerage websites. API partnerships required for live data access.',
           variant: "default"
         });
       }
 
     } catch (error: any) {
-      console.error('Real estate property search failed:', error);
+      console.error('Direct brokerage property search failed:', error);
       
-      // More specific error handling
       let errorMessage = "Property search failed. Please try again.";
       
       if (error.message?.includes('non-2xx')) {
@@ -80,14 +78,14 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
   };
 
   return (
-    <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+    <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
       <CardHeader>
-        <CardTitle className="flex items-center text-green-700">
+        <CardTitle className="flex items-center text-blue-700">
           <Database className="w-5 h-5 mr-2" />
-          Real Estate Multi-Source Discovery
+          Direct Brokerage Discovery
         </CardTitle>
-        <div className="text-sm text-green-600">
-          Live integration with top 25+ real estate platforms and MLS databases
+        <div className="text-sm text-blue-600">
+          Targeting 30+ top commercial real estate brokerages for direct data access
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -96,16 +94,16 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
           isSearching={scraping}
         />
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
           <div className="flex items-center mb-2">
-            <Brain className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="font-medium text-blue-800">Real Estate Data Sources</span>
+            <AlertTriangle className="w-4 h-4 text-amber-600 mr-2" />
+            <span className="font-medium text-amber-800">Direct Brokerage Access</span>
           </div>
-          <div className="text-xs text-blue-700 space-y-1">
-            <p>• Zillow, Realtor.com, RedFin, Trulia commercial listings</p>
-            <p>• CREXI, Ten-X, DistressedPro industrial properties</p>
-            <p>• Regional MLS databases and broker networks</p>
-            <p>• Commercial property auction platforms</p>
+          <div className="text-xs text-amber-700 space-y-1">
+            <p>• CBRE, JLL, Cushman & Wakefield, Colliers direct websites</p>
+            <p>• Marcus & Millichap, NAI Global, Kidder Mathews listings</p>
+            <p>• Lee & Associates, TCN Worldwide, SVN International data</p>
+            <p>• Requires API partnerships for legal compliance</p>
           </div>
         </div>
 

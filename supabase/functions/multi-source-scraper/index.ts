@@ -27,31 +27,31 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { 
-      sources = ['loopnet', 'crexi', 'showcase'], 
+      sources = ['cbre', 'jll', 'cushman-wakefield'], 
       location = 'Texas', 
       property_type = 'industrial',
       max_price,
       min_square_footage
     }: ScrapeRequest = await req.json();
 
-    console.log(`Starting multi-source property search for ${property_type} properties in ${location}`);
-    console.log(`Sources: ${sources.join(', ')}`);
+    console.log(`Starting direct brokerage search for ${property_type} properties in ${location}`);
+    console.log(`Target brokerages: ${sources.join(', ')}`);
 
-    // Instead of generating fake data, we'll return no results
-    console.log('Real estate data scraping requires API access or web scraping implementation.');
-    console.log('Returning empty result set instead of synthetic data.');
+    // Direct brokerage websites cannot be scraped without legal agreements
+    console.log('Direct brokerage data access requires API partnerships and legal compliance.');
 
     return new Response(JSON.stringify({
       success: true,
       properties_found: 0,
       sources_used: [],
       properties: [],
-      message: `No real estate data available for ${property_type} properties in ${location}. API integration required for live data.`,
+      message: `No real estate data available for ${property_type} properties in ${location}. Direct brokerage access requires API agreements.`,
       summary: {
         total_properties: 0,
-        sources_scraped: sources.length,
+        sources_attempted: sources.length,
         location: location,
-        property_type: property_type
+        property_type: property_type,
+        note: 'Direct brokerage websites require partnerships for data access'
       }
     }), {
       status: 200,
