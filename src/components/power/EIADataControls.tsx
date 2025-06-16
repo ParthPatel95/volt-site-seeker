@@ -28,7 +28,7 @@ export function EIADataControls({
   ];
 
   const fuelTypes = [
-    { value: '', label: 'All Fuel Types' },
+    { value: 'all', label: 'All Fuel Types' },
     { value: 'NG', label: 'Natural Gas' },
     { value: 'COL', label: 'Coal' },
     { value: 'NUC', label: 'Nuclear' },

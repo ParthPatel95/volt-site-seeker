@@ -17,7 +17,7 @@ import { EIAGenerationTab } from './EIAGenerationTab';
 
 export function EIADataPanel() {
   const [selectedState, setSelectedState] = useState('TX');
-  const [selectedFuelType, setSelectedFuelType] = useState('');
+  const [selectedFuelType, setSelectedFuelType] = useState('all');
   const [dataStatus, setDataStatus] = useState<'loading' | 'success' | 'cached'>('cached');
   
   const {
@@ -40,7 +40,8 @@ export function EIADataPanel() {
   const handleFetchPowerPlants = async () => {
     setDataStatus('loading');
     try {
-      const result = await getPowerPlantsByState(selectedState, selectedFuelType || undefined);
+      const fuelType = selectedFuelType === 'all' ? undefined : selectedFuelType;
+      const result = await getPowerPlantsByState(selectedState, fuelType);
       setDataStatus(result?.data_source === 'Cached' ? 'cached' : 'success');
     } catch (error) {
       setDataStatus('cached');
@@ -138,7 +139,10 @@ export function EIADataPanel() {
           <EIAGenerationTab 
             generationData={generationData}
             loading={loading}
-            onRefresh={() => getGenerationDataByState(selectedState, selectedFuelType || undefined)}
+            onRefresh={() => {
+              const fuelType = selectedFuelType === 'all' ? undefined : selectedFuelType;
+              getGenerationDataByState(selectedState, fuelType);
+            }}
           />
         </TabsContent>
       </Tabs>
