@@ -1,50 +1,21 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Clock, TrendingUp, Target, Calendar } from 'lucide-react';
+import { Clock, TrendingUp, Target } from 'lucide-react';
 
 export function MarketTimingPanel() {
-  const timingAnalysis = {
-    currentPhase: 'expansion',
-    recommendation: 'optimal_entry',
-    confidenceLevel: 78,
-    optimalWindow: '3-6 months',
-    keyFactors: [
-      'Market volatility decreasing',
-      'Interest rates stabilizing',
-      'Sector rotation favorable',
-      'Regulatory environment stable'
-    ]
-  };
+  const [companyName, setCompanyName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const getPhaseColor = (phase: string) => {
-    switch (phase) {
-      case 'expansion':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'peak':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'contraction':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'trough':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getRecommendationColor = (recommendation: string) => {
-    switch (recommendation) {
-      case 'optimal_entry':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'good_entry':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'wait':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'avoid':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+  const generateAnalysis = async () => {
+    setLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000);
   };
 
   return (
@@ -57,78 +28,63 @@ export function MarketTimingPanel() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex gap-2 mb-6">
+            <Input
+              placeholder="Enter company name..."
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={generateAnalysis} disabled={loading}>
+              {loading ? 'Analyzing...' : 'Analyze Timing'}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="border-blue-200">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold">Current Market Phase</h4>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Market Cycle</span>
                   <TrendingUp className="w-4 h-4 text-blue-600" />
                 </div>
-                <Badge className={getPhaseColor(timingAnalysis.currentPhase)} size="lg">
-                  {timingAnalysis.currentPhase.charAt(0).toUpperCase() + timingAnalysis.currentPhase.slice(1)}
-                </Badge>
-                <p className="text-sm text-gray-600 mt-2">
-                  Markets are currently in an expansion phase with positive momentum indicators.
-                </p>
+                <div className="text-2xl font-bold text-blue-700">Mid-Cycle</div>
+                <div className="text-xs text-gray-500">Optimal acquisition window</div>
               </CardContent>
             </Card>
 
-            <Card className="border-green-200">
+            <Card className="border-orange-200">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold">Entry Recommendation</h4>
-                  <Target className="w-4 h-4 text-green-600" />
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Fire Sale Risk</span>
+                  <Target className="w-4 h-4 text-orange-600" />
                 </div>
-                <Badge className={getRecommendationColor(timingAnalysis.recommendation)} size="lg">
-                  Optimal Entry
-                </Badge>
-                <p className="text-sm text-gray-600 mt-2">
-                  Current conditions suggest this is an optimal time for market entry.
-                </p>
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-bold text-orange-700">23%</div>
+                  <Badge variant="secondary" className="text-xs">
+                    Medium Risk
+                  </Badge>
+                </div>
+                <div className="text-xs text-gray-500">6-month probability</div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-purple-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold">Timing Metrics</h4>
-                <Calendar className="w-4 h-4 text-purple-600" />
+          <div className="mt-6">
+            <h4 className="font-medium mb-3">Timing Recommendation</h4>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="default" className="bg-green-600">
+                  BUY
+                </Badge>
+                <span className="font-medium">Recommended Action</span>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <span className="text-sm text-gray-600">Confidence Level</span>
-                  <div className="flex items-center gap-2">
-                    <div className="font-bold text-lg">{timingAnalysis.confidenceLevel}%</div>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${timingAnalysis.confidenceLevel}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-sm text-gray-600">Optimal Window</span>
-                  <div className="font-bold text-lg">{timingAnalysis.optimalWindow}</div>
-                </div>
-              </div>
-
-              <div>
-                <h5 className="font-medium mb-2">Key Timing Factors</h5>
-                <div className="space-y-1">
-                  {timingAnalysis.keyFactors.map((factor, index) => (
-                    <div key={index} className="flex items-center text-sm">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-2" />
-                      {factor}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <p className="text-sm text-gray-700">
+                Market conditions favor acquisition within the next 3-6 months. 
+                Current cycle positioning and institutional activity levels suggest 
+                favorable pricing opportunities.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

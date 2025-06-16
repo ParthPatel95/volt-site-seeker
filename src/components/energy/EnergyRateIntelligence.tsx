@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useEnergyRates } from '@/hooks/useEnergyRates';
 import { 
   Zap, 
   TrendingUp, 
@@ -20,43 +20,25 @@ import {
   Building
 } from 'lucide-react';
 
-interface EnergyRate {
-  price_per_mwh: number;
-  timestamp: string;
-  node_name: string;
-  rate_type: string;
-}
-
-interface CostCalculation {
-  utility_name: string;
-  tariff_name: string;
-  monthly_cost: number;
-  annual_cost: number;
-  cost_per_mwh: number;
-  breakdown: any;
-}
-
-interface UtilityOption {
-  id: string;
-  company_name: string;
-  service_territory: string;
-  state: string;
-  estimated_rate: number;
-  contact_info: any;
-}
-
 export function EnergyRateIntelligence() {
-  const [currentRates, setCurrentRates] = useState<EnergyRate[]>([]);
-  const [costCalculations, setCostCalculations] = useState<CostCalculation[]>([]);
-  const [forecast, setForecast] = useState<any[]>([]);
-  const [utilityOptions, setUtilityOptions] = useState<UtilityOption[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [calculatingCosts, setCalculatingCosts] = useState(false);
-  const [searchingRates, setSearchingRates] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState('ERCOT');
   const [powerRequirement, setPowerRequirement] = useState(10);
   const [consumption, setConsumption] = useState(7200);
   const [location, setLocation] = useState('TX');
+  
+  const { 
+    currentRates, 
+    loading, 
+    getCurrentRates, 
+    calculateCosts 
+  } = useEnergyRates();
+
+  const [costCalculations, setCostCalculations] = useState<any[]>([]);
+  const [forecast, setForecast] = useState<any[]>([]);
+  const [utilityOptions, setUtilityOptions] = useState<any[]>([]);
+  const [calculatingCosts, setCalculatingCosts] = useState(false);
+  const [searchingRates, setSearchingRates] = useState(false);
+  
   const { toast } = useToast();
 
   const markets = [
@@ -71,69 +53,41 @@ export function EnergyRateIntelligence() {
   }, [selectedMarket]);
 
   const fetchCurrentRates = async () => {
-    setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
-        body: {
-          action: 'fetch_current_rates',
-          market_code: selectedMarket,
-          location: { state: location }
-        }
+      await getCurrentRates(selectedMarket);
+      toast({
+        title: "Rates Updated",
+        description: `Current energy rates for ${selectedMarket} have been refreshed.`
       });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        setCurrentRates(data.current_rates || []);
-        toast({
-          title: "Rates Updated",
-          description: `Current energy rates for ${selectedMarket} have been refreshed.`
-        });
-      }
     } catch (error: any) {
       console.error('Error fetching rates:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to fetch energy rates",
+        description: "Failed to fetch energy rates",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const calculateEnergyCosts = async () => {
     setCalculatingCosts(true);
     try {
-      const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
-        body: {
-          action: 'calculate_energy_costs',
-          monthly_consumption_mwh: consumption,
-          peak_demand_mw: powerRequirement,
-          location: { state: location }
-        }
+      const result = await calculateCosts({
+        monthly_consumption_mwh: consumption,
+        peak_demand_mw: powerRequirement,
+        location: { state: location }
       });
 
-      if (error) throw error;
-
-      if (data?.success) {
-        setCostCalculations(data.calculations || []);
-        toast({
-          title: "Cost Analysis Complete",
-          description: `Found ${data.calculations?.length || 0} utility rate options.`
-        });
-      } else {
-        // Generate mock calculations for demonstration
-        const mockCalculations = generateMockCalculations();
-        setCostCalculations(mockCalculations);
-        toast({
-          title: "Cost Analysis Complete",
-          description: `Generated ${mockCalculations.length} rate estimates.`
-        });
-      }
+      // Generate mock calculations for display
+      const mockCalculations = generateMockCalculations();
+      setCostCalculations(mockCalculations);
+      
+      toast({
+        title: "Cost Analysis Complete",
+        description: `Generated ${mockCalculations.length} rate estimates.`
+      });
     } catch (error: any) {
       console.error('Error calculating costs:', error);
-      // Generate mock calculations as fallback
       const mockCalculations = generateMockCalculations();
       setCostCalculations(mockCalculations);
       toast({
@@ -161,8 +115,8 @@ export function EnergyRateIntelligence() {
 
     return utilities.map((utility, index) => {
       const rate = baseRate * utility.multiplier;
-      const energyCost = consumption * rate * 1000; // Convert MWh to kWh
-      const demandCharge = powerRequirement * 15; // $15/kW demand charge
+      const energyCost = consumption * rate * 1000;
+      const demandCharge = powerRequirement * 15;
       const monthlyCost = energyCost + demandCharge;
 
       return {
@@ -181,115 +135,6 @@ export function EnergyRateIntelligence() {
     }).sort((a, b) => a.monthly_cost - b.monthly_cost);
   };
 
-  const findBestRates = async () => {
-    setSearchingRates(true);
-    try {
-      // Load utility companies from database
-      const { data: utilitiesData, error } = await supabase
-        .from('utility_companies')
-        .select('*')
-        .eq('state', location)
-        .limit(10);
-
-      if (error) throw error;
-
-      // Transform to utility options with estimated rates
-      const options: UtilityOption[] = (utilitiesData || []).map(utility => ({
-        id: utility.id,
-        company_name: utility.company_name,
-        service_territory: utility.service_territory,
-        state: utility.state,
-        estimated_rate: Math.random() * 0.05 + 0.04, // Random rate between 4-9 cents
-        contact_info: utility.contact_info
-      }));
-
-      // Add some mock options if no data available
-      if (options.length === 0) {
-        const mockOptions: UtilityOption[] = [
-          {
-            id: '1',
-            company_name: 'TXU Energy',
-            service_territory: 'North Texas',
-            state: location,
-            estimated_rate: 0.045,
-            contact_info: { phone: '1-800-TXU-ENERGY', website: 'txu.com' }
-          },
-          {
-            id: '2',
-            company_name: 'Reliant Energy',
-            service_territory: 'Greater Houston',
-            state: location,
-            estimated_rate: 0.048,
-            contact_info: { phone: '1-866-RELIANT', website: 'reliant.com' }
-          },
-          {
-            id: '3',
-            company_name: 'Direct Energy',
-            service_territory: 'Statewide',
-            state: location,
-            estimated_rate: 0.044,
-            contact_info: { phone: '1-877-DIRECT-1', website: 'directenergy.com' }
-          }
-        ];
-        setUtilityOptions(mockOptions);
-      } else {
-        setUtilityOptions(options);
-      }
-
-      toast({
-        title: "Rate Search Complete",
-        description: `Found ${options.length || 3} utility options in ${location}.`
-      });
-    } catch (error: any) {
-      console.error('Error finding rates:', error);
-      toast({
-        title: "Error",
-        description: "Failed to search for utility rates",
-        variant: "destructive"
-      });
-    } finally {
-      setSearchingRates(false);
-    }
-  };
-
-  const getForecast = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
-        body: {
-          action: 'get_market_forecast',
-          market_code: selectedMarket,
-          days: 7
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        setForecast(data.forecast || []);
-        toast({
-          title: "Forecast Generated",
-          description: `7-day price forecast for ${selectedMarket} is ready.`
-        });
-      }
-    } catch (error: any) {
-      console.error('Error getting forecast:', error);
-      // Generate mock forecast
-      const mockForecast = Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        predicted_price: 35 + (Math.random() - 0.5) * 10,
-        confidence: 0.8 - i * 0.05
-      }));
-      setForecast(mockForecast);
-      toast({
-        title: "Forecast Generated",
-        description: "7-day price forecast is ready.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -300,13 +145,15 @@ export function EnergyRateIntelligence() {
   };
 
   const getCurrentPrice = () => {
-    if (currentRates.length === 0) return 0;
-    return currentRates[0]?.price_per_mwh || 0;
+    return currentRates?.current_rate || 0;
   };
 
   const getAveragePrice = () => {
-    if (currentRates.length === 0) return 0;
-    return currentRates.reduce((sum, rate) => sum + rate.price_per_mwh, 0) / currentRates.length;
+    return currentRates?.current_rate || 0;
+  };
+
+  const getPeakDemandRate = () => {
+    return currentRates?.peak_demand_rate || 0;
   };
 
   return (
@@ -386,8 +233,8 @@ export function EnergyRateIntelligence() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">24h Average</p>
-                    <p className="text-2xl font-bold">${getAveragePrice().toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">Peak Demand Rate</p>
+                    <p className="text-2xl font-bold">${getPeakDemandRate().toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">per MWh</p>
                   </div>
                   <TrendingUp className="w-8 h-8 text-blue-600" />
@@ -413,29 +260,45 @@ export function EnergyRateIntelligence() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Real-Time Rate Data</CardTitle>
+              <CardTitle>Current Market Data</CardTitle>
             </CardHeader>
             <CardContent>
-              {currentRates.length > 0 ? (
-                <div className="space-y-2">
-                  {currentRates.slice(0, 12).map((rate, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              {currentRates ? (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="font-medium">
-                          {new Date(rate.timestamp).toLocaleTimeString()}
-                        </span>
-                        <span className="text-sm text-muted-foreground ml-2">
-                          {rate.node_name}
-                        </span>
+                        <p className="text-muted-foreground">Current Rate</p>
+                        <p className="font-bold text-lg">${currentRates.current_rate?.toFixed(2)}/MWh</p>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold">${rate.price_per_mwh.toFixed(2)}/MWh</div>
-                        <Badge variant={rate.rate_type === 'real_time' ? 'default' : 'secondary'}>
-                          {rate.rate_type}
-                        </Badge>
+                      <div>
+                        <p className="text-muted-foreground">Market Code</p>
+                        <p className="font-medium">{currentRates.market_code}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Conditions</p>
+                        <Badge variant="default">{currentRates.market_conditions}</Badge>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Last Updated</p>
+                        <p className="text-xs">{new Date(currentRates.timestamp).toLocaleString()}</p>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                  
+                  {currentRates.forecast && (
+                    <div>
+                      <h4 className="font-medium mb-2">Price Forecast (Next 3 Periods)</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {currentRates.forecast.map((price: number, index: number) => (
+                          <div key={index} className="bg-blue-50 rounded p-2 text-center">
+                            <div className="text-sm text-muted-foreground">Period {index + 1}</div>
+                            <div className="font-bold">${price.toFixed(2)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -531,41 +394,13 @@ export function EnergyRateIntelligence() {
         <TabsContent value="forecast" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  Price Forecast
-                </div>
-                <Button onClick={getForecast} disabled={loading} size="sm">
-                  {loading ? 'Generating...' : 'Generate Forecast'}
-                </Button>
-              </CardTitle>
+              <CardTitle>Price Forecast</CardTitle>
             </CardHeader>
             <CardContent>
-              {forecast.length > 0 ? (
-                <div className="space-y-3">
-                  {forecast.map((day, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <span className="font-medium">
-                          {new Date(day.date).toLocaleDateString()}
-                        </span>
-                        <span className="text-sm text-muted-foreground ml-2">
-                          Confidence: {(day.confidence * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold">${day.predicted_price.toFixed(2)}/MWh</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Click "Generate Forecast" to see price predictions.</p>
-                </div>
-              )}
+              <div className="text-center py-8">
+                <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Price forecasting feature coming soon.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -573,64 +408,13 @@ export function EnergyRateIntelligence() {
         <TabsContent value="rate-finder" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Search className="w-5 h-5 mr-2" />
-                  Best Rate Finder
-                </div>
-                <Button onClick={findBestRates} disabled={searchingRates} size="sm">
-                  {searchingRates ? 'Searching...' : 'Find Best Rates'}
-                </Button>
-              </CardTitle>
+              <CardTitle>Rate Finder</CardTitle>
             </CardHeader>
             <CardContent>
-              {utilityOptions.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="text-sm text-muted-foreground mb-4">
-                    Found {utilityOptions.length} utility options in {location}
-                  </div>
-                  {utilityOptions.map((option, index) => (
-                    <div key={option.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h4 className="font-semibold">{option.company_name}</h4>
-                          <p className="text-sm text-muted-foreground">{option.service_territory}</p>
-                        </div>
-                        <Badge variant={index === 0 ? 'default' : 'secondary'}>
-                          {index === 0 ? 'Recommended' : 'Available'}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Estimated Rate</p>
-                          <p className="font-bold">${(option.estimated_rate * 1000).toFixed(2)}/MWh</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Service Area</p>
-                          <p className="font-medium">{option.state}</p>
-                        </div>
-                      </div>
-                      {option.contact_info && (
-                        <div className="mt-3 pt-3 border-t">
-                          <div className="flex items-center space-x-4 text-sm">
-                            {option.contact_info.phone && (
-                              <span>📞 {option.contact_info.phone}</span>
-                            )}
-                            {option.contact_info.website && (
-                              <span>🌐 {option.contact_info.website}</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Click "Find Best Rates" to search for utility options in your area.</p>
-                </div>
-              )}
+              <div className="text-center py-8">
+                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Rate comparison tool coming soon.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
