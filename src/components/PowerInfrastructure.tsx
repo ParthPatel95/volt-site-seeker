@@ -65,7 +65,7 @@ export function PowerInfrastructure() {
                   Power Infrastructure
                 </h1>
                 <p className="text-lg text-slate-600 dark:text-slate-300 mb-3">
-                  Enhanced with Mapbox satellite imagery and real-time ERCOT data
+                  Enhanced with real-time APIs: ERCOT, FERC, USGS, EPA, NREL & NOAA
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary" className="text-xs">
@@ -82,7 +82,7 @@ export function PowerInfrastructure() {
                   </Badge>
                   <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                     <BarChart3 className="w-3 h-3 mr-1" />
-                    ERCOT live data
+                    Federal APIs
                   </Badge>
                 </div>
               </div>
@@ -132,7 +132,7 @@ export function PowerInfrastructure() {
         <Tabs defaultValue="overview" className="space-y-6">
           {/* Enhanced Tab Navigation */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-2 shadow-sm">
-            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11 gap-1 bg-transparent h-auto">
+            <TabsList className="grid w-full grid-cols-6 lg:grid-cols-14 gap-1 bg-transparent h-auto">
               <TabsTrigger 
                 value="overview" 
                 className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30"
@@ -146,6 +146,27 @@ export function PowerInfrastructure() {
               >
                 <BarChart3 className="w-4 h-4" />
                 <span className="text-xs lg:text-sm font-medium">ERCOT</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ferc-data"
+                className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-green-100 dark:data-[state=active]:bg-green-900/30"
+              >
+                <Building2 className="w-4 h-4" />
+                <span className="text-xs lg:text-sm font-medium">FERC</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="usgs-data"
+                className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-orange-100 dark:data-[state=active]:bg-orange-900/30"
+              >
+                <MapPin className="w-4 h-4" />
+                <span className="text-xs lg:text-sm font-medium">USGS</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="environmental"
+                className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-emerald-100 dark:data-[state=active]:bg-emerald-900/30"
+              >
+                <Leaf className="w-4 h-4" />
+                <span className="text-xs lg:text-sm font-medium">Environment</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="mapbox-explorer"
@@ -221,6 +242,18 @@ export function PowerInfrastructure() {
 
           <TabsContent value="ercot-live">
             <ERCOTDashboard />
+          </TabsContent>
+
+          <TabsContent value="ferc-data">
+            <FERCDashboard />
+          </TabsContent>
+
+          <TabsContent value="usgs-data">
+            <USGSDashboard />
+          </TabsContent>
+
+          <TabsContent value="environmental">
+            <EnvironmentalDashboard />
           </TabsContent>
 
           <TabsContent value="mapbox-explorer">
