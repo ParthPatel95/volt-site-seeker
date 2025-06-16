@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,27 +19,27 @@ export const HeroSection = () => {
       </div>
 
       <div className="max-w-7xl mx-auto text-center relative z-10">
-        {/* Enhanced fund badges with animations */}
+        {/* Enhanced fund badges without flashing animations */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Badge 
             variant="outline" 
-            className="border-electric-blue/50 text-electric-blue bg-electric-blue/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-electric-blue/20 transition-all duration-300 animate-pulse"
+            className="border-electric-blue/50 text-electric-blue bg-electric-blue/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-electric-blue/20 transition-all duration-300"
           >
-            <Zap className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+            <Zap className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2" />
             Fund I • $25M Target
           </Badge>
           <Badge 
             variant="outline" 
-            className="border-neon-green/50 text-neon-green bg-neon-green/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-neon-green/20 transition-all duration-300 animate-pulse delay-500"
+            className="border-neon-green/50 text-neon-green bg-neon-green/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-neon-green/20 transition-all duration-300"
           >
             <TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2" />
             2.0-2.5x MOIC
           </Badge>
           <Badge 
             variant="outline" 
-            className="border-electric-yellow/50 text-electric-yellow bg-electric-yellow/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-electric-yellow/20 transition-all duration-300 animate-pulse delay-1000"
+            className="border-electric-yellow/50 text-electric-yellow bg-electric-yellow/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-electric-yellow/20 transition-all duration-300"
           >
-            <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2 animate-pulse" />
+            <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2" />
             675MW+ Experience
           </Badge>
         </div>
@@ -103,21 +102,21 @@ export const HeroSection = () => {
         {/* Enhanced key metrics with improved visual hierarchy */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto">
           <div className="group bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-electric-blue/50 transition-all duration-300 hover:bg-slate-800/70 hover:scale-105">
-            <div className="text-2xl sm:text-3xl font-bold text-electric-blue mb-2 group-hover:animate-pulse">
+            <div className="text-2xl sm:text-3xl font-bold text-electric-blue mb-2">
               675MW+
             </div>
             <div className="text-slate-200 text-sm sm:text-base">Deal Experience</div>
             <div className="mt-2 h-1 bg-gradient-to-r from-electric-blue/50 to-transparent rounded-full"></div>
           </div>
           <div className="group bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-electric-yellow/50 transition-all duration-300 hover:bg-slate-800/70 hover:scale-105 delay-100">
-            <div className="text-2xl sm:text-3xl font-bold text-electric-yellow mb-2 group-hover:animate-pulse">
+            <div className="text-2xl sm:text-3xl font-bold text-electric-yellow mb-2">
               $25M
             </div>
             <div className="text-slate-200 text-sm sm:text-base">Target Fund Size</div>
             <div className="mt-2 h-1 bg-gradient-to-r from-electric-yellow/50 to-transparent rounded-full"></div>
           </div>
           <div className="group bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-neon-green/50 transition-all duration-300 hover:bg-slate-800/70 hover:scale-105 delay-200">
-            <div className="text-2xl sm:text-3xl font-bold text-neon-green mb-2 group-hover:animate-pulse">
+            <div className="text-2xl sm:text-3xl font-bold text-neon-green mb-2">
               2.5x
             </div>
             <div className="text-slate-200 text-sm sm:text-base">Target MOIC</div>
