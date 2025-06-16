@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { EnhancedMapboxMap } from './EnhancedMapboxMap';
 import { 
   MapPin, 
   Zap, 
@@ -24,24 +25,29 @@ export function PropertyMap() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
 
+  // Convert mock data to format expected by map
+  const mockPowerPlants = mockMapData.map(item => ({
+    name: item.title,
+    coordinates: { lat: item.lat, lng: item.lng },
+    capacity_mw: parseFloat(item.power.replace(' MW', '')),
+    fuel_type: 'Industrial Load',
+    id: item.id
+  }));
+
   return (
     <div className="h-screen flex">
-      {/* Map Container */}
-      <div className="flex-1 relative bg-gradient-to-br from-slate-100 to-blue-100">
-        {/* Map Placeholder */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-blue-200 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <MapPin className="w-16 h-16 text-blue-600 mx-auto" />
-            <div>
-              <h3 className="text-xl font-semibold text-slate-700">Interactive Map View</h3>
-              <p className="text-slate-600">Heavy power site discovery map will be integrated here</p>
-              <p className="text-sm text-slate-500 mt-2">Future: OSM + Substation overlays + Property markers</p>
-            </div>
-          </div>
-        </div>
+      {/* Enhanced Mapbox Map Container */}
+      <div className="flex-1 relative">
+        <EnhancedMapboxMap
+          height="h-full"
+          initialCenter={[-97.7431, 31.0]}
+          initialZoom={6}
+          powerPlants={mockPowerPlants}
+          substations={[]}
+        />
 
-        {/* Map Controls */}
-        <div className="absolute top-4 left-4 right-4 z-10">
+        {/* Map Controls Overlay */}
+        <div className="absolute top-4 left-4 right-80 z-10">
           <div className="flex space-x-4">
             <div className="flex-1 max-w-md">
               <div className="relative">
@@ -58,35 +64,17 @@ export function PropertyMap() {
               <Filter className="w-4 h-4 mr-2" />
               Filters
             </Button>
-            <Button variant="outline" className="bg-white/90 backdrop-blur-sm">
-              <Layers className="w-4 h-4 mr-2" />
-              Layers
-            </Button>
           </div>
         </div>
 
-        {/* Map Legend */}
-        <div className="absolute bottom-4 left-4 z-10">
+        {/* Enhanced Status Badge */}
+        <div className="absolute bottom-4 right-80 z-10">
           <Card className="bg-white/90 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Map Legend</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="p-3">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-xs">High VoltScore (80+)</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="text-xs">Medium VoltScore (60-79)</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                <span className="text-xs">Low VoltScore (&lt;60)</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Zap className="w-3 h-3 text-blue-600" />
-                <span className="text-xs">Substations</span>
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">Mapbox Active</span>
+                <Badge variant="outline" className="text-xs">Real Satellite</Badge>
               </div>
             </CardContent>
           </Card>
@@ -97,7 +85,7 @@ export function PropertyMap() {
       <div className="w-80 bg-background border-l overflow-y-auto">
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">Property Details</h2>
-          <p className="text-sm text-muted-foreground">Click on map markers for details</p>
+          <p className="text-sm text-muted-foreground">Enhanced with Mapbox satellite imagery</p>
         </div>
         
         <div className="p-4 space-y-4">
@@ -119,6 +107,10 @@ export function PropertyMap() {
                     <Building className="w-3 h-3 mr-1" />
                     Industrial/Manufacturing
                   </div>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {property.lat.toFixed(4)}, {property.lng.toFixed(4)}
+                  </div>
                   <Button size="sm" variant="outline" className="w-full mt-2">
                     View Details
                   </Button>
@@ -128,10 +120,14 @@ export function PropertyMap() {
           ))}
         </div>
 
-        <div className="p-4 border-t">
+        <div className="p-4 border-t space-y-2">
           <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-700">
             <Satellite className="w-4 h-4 mr-2" />
             Satellite Analysis
+          </Button>
+          <Button variant="outline" className="w-full">
+            <Layers className="w-4 h-4 mr-2" />
+            Infrastructure Layers
           </Button>
         </div>
       </div>

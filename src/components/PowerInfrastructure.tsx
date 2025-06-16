@@ -9,7 +9,8 @@ import {
   MapPin,
   Building2,
   TrendingUp,
-  Cpu
+  Cpu,
+  Satellite
 } from 'lucide-react';
 import { CityPowerAnalysis } from './power/CityPowerAnalysis';
 import { PowerOverviewCards } from './power/PowerOverviewCards';
@@ -22,6 +23,7 @@ import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
 import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
 import { usePowerData } from './power/usePowerData';
 import { EIADataPanel } from './power/EIADataPanel';
+import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
 
 export function PowerInfrastructure() {
   const { powerData, properties, loading, getStatusColor } = usePowerData();
@@ -60,7 +62,7 @@ export function PowerInfrastructure() {
                   Power Infrastructure
                 </h1>
                 <p className="text-lg text-slate-600 dark:text-slate-300 mb-3">
-                  Grid connectivity and transmission analysis
+                  Enhanced with Mapbox satellite imagery and real-time data
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary" className="text-xs">
@@ -70,6 +72,10 @@ export function PowerInfrastructure() {
                   <Badge variant="secondary" className="text-xs">
                     <Database className="w-3 h-3 mr-1" />
                     Live data feeds
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                    <Satellite className="w-3 h-3 mr-1" />
+                    Mapbox satellite
                   </Badge>
                 </div>
               </div>
@@ -119,13 +125,20 @@ export function PowerInfrastructure() {
         <Tabs defaultValue="overview" className="space-y-6">
           {/* Enhanced Tab Navigation */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-2 shadow-sm">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 gap-1 bg-transparent h-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-10 gap-1 bg-transparent h-auto">
               <TabsTrigger 
                 value="overview" 
                 className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30"
               >
                 <TrendingUp className="w-4 h-4" />
                 <span className="text-xs lg:text-sm font-medium">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="mapbox-explorer"
+                className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-green-100 dark:data-[state=active]:bg-green-900/30"
+              >
+                <Satellite className="w-4 h-4" />
+                <span className="text-xs lg:text-sm font-medium">Mapbox</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="substations"
@@ -190,6 +203,10 @@ export function PowerInfrastructure() {
           <TabsContent value="overview" className="space-y-6">
             <PowerOverviewCards powerData={powerData} />
             <PowerCapacityDistribution properties={properties} getStatusColor={getStatusColor} />
+          </TabsContent>
+
+          <TabsContent value="mapbox-explorer">
+            <MapboxPowerInfrastructure />
           </TabsContent>
 
           <TabsContent value="substations">
