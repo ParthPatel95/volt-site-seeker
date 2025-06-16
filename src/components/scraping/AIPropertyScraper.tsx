@@ -19,9 +19,9 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
     setScraping(true);
     
     try {
-      console.log('Starting real data property search with params:', searchParams);
+      console.log('Starting real estate property search with params:', searchParams);
       
-      const { data, error } = await supabase.functions.invoke('ai-property-scraper', {
+      const { data, error } = await supabase.functions.invoke('real-estate-multi-scraper', {
         body: {
           location: searchParams.location,
           property_type: searchParams.propertyType,
@@ -30,7 +30,7 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         }
       });
 
-      console.log('Real data scraper response:', { data, error });
+      console.log('Real estate scraper response:', { data, error });
 
       if (error) {
         console.error('Edge function error:', error);
@@ -47,18 +47,18 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         
         toast({
           title: "Real Properties Found!",
-          description: `Found ${data.properties_found} properties from official sources: ${data.data_sources_used?.join(', ') || 'various databases'}`,
+          description: `Found ${data.properties_found} properties from: ${data.sources_used?.join(', ') || 'multiple real estate websites'}`,
         });
       } else {
         toast({
           title: "No Properties Available",
-          description: data?.message || 'No properties found in official databases. This reflects actual data availability.',
+          description: data?.message || 'No properties found matching your criteria. Try adjusting search parameters.',
           variant: "default"
         });
       }
 
     } catch (error: any) {
-      console.error('Real property search failed:', error);
+      console.error('Real estate property search failed:', error);
       
       // More specific error handling
       let errorMessage = "Property search failed. Please try again.";
@@ -84,10 +84,10 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
       <CardHeader>
         <CardTitle className="flex items-center text-green-700">
           <Database className="w-5 h-5 mr-2" />
-          Real Data Property Discovery
+          Real Estate Multi-Source Discovery
         </CardTitle>
         <div className="text-sm text-green-600">
-          Live integration with utility interconnection queues and government databases
+          Live integration with top 25+ real estate platforms and MLS databases
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -99,13 +99,13 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-center mb-2">
             <Brain className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="font-medium text-blue-800">Real Data Sources</span>
+            <span className="font-medium text-blue-800">Real Estate Data Sources</span>
           </div>
           <div className="text-xs text-blue-700 space-y-1">
-            <p>• ERCOT, PJM, CAISO utility interconnection queues</p>
-            <p>• County property assessor databases</p>
-            <p>• Government energy infrastructure records</p>
-            <p>• Municipal permit and zoning databases</p>
+            <p>• Zillow, Realtor.com, RedFin, Trulia commercial listings</p>
+            <p>• CREXI, Ten-X, DistressedPro industrial properties</p>
+            <p>• Regional MLS databases and broker networks</p>
+            <p>• Commercial property auction platforms</p>
           </div>
         </div>
 

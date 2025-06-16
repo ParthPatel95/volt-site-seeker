@@ -228,7 +228,8 @@ const Landing = () => {
       </div>
 
       {/* Custom CSS animations */}
-      <style jsx>{`
+      <style>
+        {`
         @keyframes float {
           0%, 100% { transform: translateY(0px) translateX(0px); }
           25% { transform: translateY(-20px) translateX(10px); }
@@ -255,7 +256,8 @@ const Landing = () => {
         .animate-float.delay-2000 {
           animation-delay: 2s;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
