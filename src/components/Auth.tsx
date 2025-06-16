@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -13,7 +14,7 @@ import { AccessRequestForm } from '@/components/AccessRequestForm';
 import { EnhancedLogo } from './EnhancedLogo';
 
 interface AuthProps {
-  onAuthStateChange: (user: User | null, session: Session | null) => void;
+  onAuthStateChange?: (user: User | null, session: Session | null) => void;
 }
 
 export function Auth({ onAuthStateChange }: AuthProps) {
@@ -26,19 +27,21 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+    // Only set up auth state listener if onAuthStateChange is provided
+    if (onAuthStateChange) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          onAuthStateChange(session?.user ?? null, session);
+        }
+      );
+
+      // Check for existing session
+      supabase.auth.getSession().then(({ data: { session } }) => {
         onAuthStateChange(session?.user ?? null, session);
-      }
-    );
+      });
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      onAuthStateChange(session?.user ?? null, session);
-    });
-
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   }, [onAuthStateChange]);
 
   const handleSignIn = async (e: React.FormEvent) => {
