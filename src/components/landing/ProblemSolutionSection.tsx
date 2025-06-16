@@ -1,13 +1,12 @@
 
-
 import { AlertTriangle, CheckCircle, ArrowRight, Zap, Building } from 'lucide-react';
 
 export const ProblemSolutionSection = () => {
   return (
-    <section className="relative z-10 py-16 sm:py-20 md:py-24 px-4 sm:px-6">
+    <section className="relative z-10 py-12 sm:py-16 md:py-20 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Enhanced Header - removed problematic title */}
-        <div className="text-center mb-12 sm:mb-16">
+        {/* Enhanced Header */}
+        <div className="text-center mb-8 sm:mb-12">
           <p className="text-lg sm:text-xl md:text-2xl text-slate-100 max-w-4xl mx-auto leading-relaxed">
             The data center industry faces <span className="text-electric-yellow font-semibold">critical bottlenecks</span> in scaling 
             to meet explosive AI and cloud computing demand. Power constraints have become the 
@@ -16,7 +15,7 @@ export const ProblemSolutionSection = () => {
         </div>
         
         {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 mb-16">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 mb-12">
           {/* Challenge Side */}
           <div className="relative group">
             {/* Decorative elements */}
@@ -179,4 +178,3 @@ export const ProblemSolutionSection = () => {
     </section>
   );
 };
-
