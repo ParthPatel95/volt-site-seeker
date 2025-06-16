@@ -7,7 +7,7 @@ export const ProblemSolutionSection = () => {
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <p className="text-lg sm:text-xl md:text-2xl text-slate-100 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-2xl text-white max-w-4xl mx-auto leading-relaxed">
             The data center industry faces <span className="text-electric-yellow font-semibold">critical bottlenecks</span> in scaling 
             to meet explosive AI and cloud computing demand. Power constraints have become the 
             <span className="text-neon-green font-semibold"> #1 limiting factor</span> across North America.
@@ -53,7 +53,7 @@ export const ProblemSolutionSection = () => {
                     <div className="text-lg flex-shrink-0 mt-0.5">{challenge.icon}</div>
                     <div className="flex-1">
                       <div className="w-2 h-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-full mb-2 group-hover/item:scale-125 transition-transform duration-300"></div>
-                      <p className="text-slate-100 leading-relaxed group-hover/item:text-white transition-colors duration-300 text-sm">
+                      <p className="text-white leading-relaxed group-hover/item:text-white transition-colors duration-300 text-sm">
                         {challenge.text}
                       </p>
                     </div>
@@ -108,7 +108,7 @@ export const ProblemSolutionSection = () => {
                     <div className="text-lg flex-shrink-0 mt-0.5">{solution.icon}</div>
                     <div className="flex-1">
                       <div className="w-2 h-2 bg-gradient-to-r from-neon-green to-electric-blue rounded-full mb-2 group-hover/item:scale-125 transition-transform duration-300"></div>
-                      <p className="text-slate-100 leading-relaxed group-hover/item:text-white transition-colors duration-300 text-sm">
+                      <p className="text-white leading-relaxed group-hover/item:text-white transition-colors duration-300 text-sm">
                         {solution.text}
                       </p>
                     </div>
@@ -145,7 +145,7 @@ export const ProblemSolutionSection = () => {
             </div>
 
             {/* Main text */}
-            <p className="text-lg md:text-xl text-slate-100 font-medium leading-relaxed mb-6">
+            <p className="text-lg md:text-xl text-white font-medium leading-relaxed mb-6">
               By solving these critical industry pain points, WattByte creates{' '}
               <span className="bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent font-bold">
                 significant value
@@ -161,15 +161,15 @@ export const ProblemSolutionSection = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-600/50">
               <div className="text-center">
                 <div className="text-2xl font-bold text-electric-blue mb-1">675MW+</div>
-                <div className="text-slate-100 text-sm">Deal Experience</div>
+                <div className="text-white text-sm">Deal Experience</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-electric-yellow mb-1">2.0-2.5x</div>
-                <div className="text-slate-100 text-sm">Target MOIC</div>
+                <div className="text-white text-sm">Target MOIC</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-neon-green mb-1">$25M</div>
-                <div className="text-slate-100 text-sm">Fund I Target</div>
+                <div className="text-white text-sm">Fund I Target</div>
               </div>
             </div>
           </div>
