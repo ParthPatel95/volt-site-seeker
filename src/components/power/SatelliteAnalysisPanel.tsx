@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { useSatelliteAnalysis } from '@/hooks/useSatelliteAnalysis';
 import { 
   Satellite, 
@@ -15,7 +14,9 @@ import {
   Eye, 
   CheckCircle2,
   AlertTriangle,
-  Crosshair
+  Crosshair,
+  ExternalLink,
+  Image
 } from 'lucide-react';
 
 export function SatelliteAnalysisPanel() {
@@ -65,12 +66,27 @@ export function SatelliteAnalysisPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Real Satellite Analysis Notice */}
+      <Card className="border-green-200 bg-green-50">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <div>
+              <h4 className="font-medium text-green-800">Real Satellite Analysis Enabled</h4>
+              <p className="text-sm text-green-700">
+                Using Google Maps satellite imagery + AI vision analysis for infrastructure detection
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Satellite Discovery Controls */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Satellite className="w-5 h-5" />
-            <span>Satellite Infrastructure Discovery</span>
+            <span>Real Satellite Infrastructure Discovery</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -78,7 +94,7 @@ export function SatelliteAnalysisPanel() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select value={selectedRegion} onValueChange={setSelectedRegion}>
               <SelectTrigger>
-                <SelectValue placeholder="Select region for discovery" />
+                <SelectValue placeholder="Select region for real analysis" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="texas">Texas (Permian Basin)</SelectItem>
@@ -96,25 +112,25 @@ export function SatelliteAnalysisPanel() {
               {loading ? (
                 <>
                   <Satellite className="w-4 h-4 mr-2 animate-spin" />
-                  Scanning...
+                  Analyzing Satellite Imagery...
                 </>
               ) : (
                 <>
                   <Search className="w-4 h-4 mr-2" />
-                  Discover Substations
+                  Discover with AI
                 </>
               )}
             </Button>
 
             <div className="flex items-center text-sm text-muted-foreground">
               <Eye className="w-4 h-4 mr-2" />
-              High-res imagery analysis
+              Google Maps + AI Vision
             </div>
           </div>
 
           {/* Coordinate-based Analysis */}
           <div className="border-t pt-4">
-            <h4 className="font-medium mb-3">Coordinate-Based Analysis</h4>
+            <h4 className="font-medium mb-3">Real Coordinate Analysis</h4>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Input
                 placeholder="Latitude"
@@ -147,18 +163,18 @@ export function SatelliteAnalysisPanel() {
                 disabled={loading || !coordinates.lat || !coordinates.lng}
               >
                 <Crosshair className="w-4 h-4 mr-2" />
-                Analyze
+                Analyze Real Data
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Discovery Results */}
+      {/* Real Discovery Results */}
       {discoveries.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Satellite Discoveries</CardTitle>
+            <CardTitle>Real Satellite Discoveries</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -176,9 +192,44 @@ export function SatelliteAnalysisPanel() {
                       <div className={`text-2xl font-bold ${getConfidenceColor(discovery.confidence_score)}`}>
                         {discovery.confidence_score}%
                       </div>
-                      <div className="text-sm text-muted-foreground">confidence</div>
+                      <div className="text-sm text-muted-foreground">AI confidence</div>
                     </div>
                   </div>
+
+                  {/* Satellite Image Preview */}
+                  {discovery.image_analysis?.image_url && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-sm">Satellite Imagery Analysis</h4>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.open(discovery.image_analysis?.image_url, '_blank')}
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          View Full Image
+                        </Button>
+                      </div>
+                      <div className="relative h-32 bg-gray-100 rounded border overflow-hidden">
+                        <img 
+                          src={discovery.image_analysis.image_url} 
+                          alt="Satellite view"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-2 left-2">
+                          <Badge variant="secondary" className="text-xs">
+                            <Image className="w-3 h-3 mr-1" />
+                            Google Maps
+                          </Badge>
+                        </div>
+                      </div>
+                      {discovery.image_analysis.ai_notes && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          <strong>AI Analysis:</strong> {discovery.image_analysis.ai_notes}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
@@ -193,7 +244,7 @@ export function SatelliteAnalysisPanel() {
                       </div>
                     </div>
                     <div>
-                      <h4 className="font-medium mb-2">Features</h4>
+                      <h4 className="font-medium mb-2">AI-Detected Features</h4>
                       <div className="space-y-1">
                         {discovery.infrastructure_features.map((feature, i) => (
                           <Badge key={i} variant="outline" className="mr-1 mb-1">
@@ -220,7 +271,7 @@ export function SatelliteAnalysisPanel() {
                         onClick={() => handleLocationValidation(discovery)}
                       >
                         <CheckCircle2 className="w-4 h-4 mr-2" />
-                        Validate
+                        Re-validate
                       </Button>
                       <Button size="sm">
                         <Zap className="w-4 h-4 mr-2" />
@@ -235,20 +286,42 @@ export function SatelliteAnalysisPanel() {
         </Card>
       )}
 
-      {/* Analysis Results */}
+      {/* Real Analysis Results */}
       {analysis && (
         <Card>
           <CardHeader>
-            <CardTitle>Infrastructure Analysis</CardTitle>
+            <CardTitle>Real Infrastructure Analysis</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Satellite Image if available */}
+              {analysis.satellite_image_url && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Analyzed Satellite Imagery</h4>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.open(analysis.satellite_image_url, '_blank')}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Full Resolution
+                    </Button>
+                  </div>
+                  <img 
+                    src={analysis.satellite_image_url} 
+                    alt="Analysis imagery"
+                    className="w-full h-64 object-cover rounded border"
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
                     {analysis.power_capacity_estimate} MW
                   </div>
-                  <div className="text-sm text-muted-foreground">Estimated Capacity</div>
+                  <div className="text-sm text-muted-foreground">AI-Estimated Capacity</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
@@ -258,11 +331,20 @@ export function SatelliteAnalysisPanel() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {analysis.grid_connections?.length || 0}
+                    {analysis.ai_analysis_results?.confidence || 'N/A'}%
                   </div>
-                  <div className="text-sm text-muted-foreground">Grid Connections</div>
+                  <div className="text-sm text-muted-foreground">AI Confidence</div>
                 </div>
               </div>
+
+              {analysis.ai_analysis_results?.ai_analysis && (
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">AI Analysis Notes</h4>
+                  <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded">
+                    {analysis.ai_analysis_results.ai_analysis}
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -291,32 +373,32 @@ export function SatelliteAnalysisPanel() {
         </Card>
       )}
 
-      {/* Analysis Capabilities */}
+      {/* Enhanced Analysis Capabilities */}
       <Card>
         <CardHeader>
-          <CardTitle>Satellite Analysis Capabilities</CardTitle>
+          <CardTitle>Real Satellite Analysis Capabilities</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="text-center p-4 border rounded-lg">
-              <Satellite className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <h4 className="font-medium">High-Resolution Imagery</h4>
-              <p className="text-sm text-muted-foreground">0.5m resolution satellite data</p>
+            <div className="text-center p-4 border rounded-lg bg-green-50">
+              <Satellite className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <h4 className="font-medium">Google Maps Satellite</h4>
+              <p className="text-sm text-muted-foreground">High-resolution real imagery</p>
             </div>
-            <div className="text-center p-4 border rounded-lg">
-              <Zap className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
-              <h4 className="font-medium">AI Pattern Recognition</h4>
-              <p className="text-sm text-muted-foreground">ML-powered infrastructure detection</p>
+            <div className="text-center p-4 border rounded-lg bg-blue-50">
+              <Eye className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <h4 className="font-medium">AI Vision Analysis</h4>
+              <p className="text-sm text-muted-foreground">GPT-4 powered detection</p>
             </div>
-            <div className="text-center p-4 border rounded-lg">
-              <Eye className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <h4 className="font-medium">Multi-Spectral Analysis</h4>
-              <p className="text-sm text-muted-foreground">Thermal & optical imaging</p>
+            <div className="text-center p-4 border rounded-lg bg-purple-50">
+              <Zap className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+              <h4 className="font-medium">Infrastructure Recognition</h4>
+              <p className="text-sm text-muted-foreground">Substation & transmission detection</p>
             </div>
-            <div className="text-center p-4 border rounded-lg">
-              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-              <h4 className="font-medium">Change Detection</h4>
-              <p className="text-sm text-muted-foreground">Infrastructure monitoring</p>
+            <div className="text-center p-4 border rounded-lg bg-orange-50">
+              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <h4 className="font-medium">Real-time Validation</h4>
+              <p className="text-sm text-muted-foreground">Live satellite verification</p>
             </div>
           </div>
         </CardContent>

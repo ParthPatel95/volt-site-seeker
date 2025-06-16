@@ -22,6 +22,11 @@ interface SubstationDiscovery {
   satellite_timestamp: string;
   analysis_method: string;
   verification_status: 'pending' | 'confirmed' | 'rejected';
+  image_analysis?: {
+    image_url: string;
+    ai_notes: string;
+    detection_confidence: number;
+  };
 }
 
 export function useSatelliteAnalysis() {
@@ -33,7 +38,7 @@ export function useSatelliteAnalysis() {
   const performAnalysis = async (request: SatelliteAnalysisRequest) => {
     setLoading(true);
     try {
-      console.log('Performing satellite analysis:', request);
+      console.log('Performing real satellite analysis:', request);
       
       const { data, error } = await supabase.functions.invoke('satellite-analysis', {
         body: request
@@ -44,14 +49,14 @@ export function useSatelliteAnalysis() {
       if (request.action === 'discover_substations') {
         setDiscoveries(data.discoveries || []);
         toast({
-          title: "Discovery Complete",
-          description: `Found ${data.discoveries?.length || 0} potential substations`,
+          title: "Real Discovery Complete",
+          description: `Found ${data.discoveries?.length || 0} potential substations using Google Maps + AI`,
         });
       } else {
         setAnalysis(data.analysis || data.validation);
         toast({
-          title: "Analysis Complete",
-          description: `${request.action} completed successfully`,
+          title: "Real Analysis Complete",
+          description: `${request.action} completed using satellite imagery`,
         });
       }
 
