@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +21,7 @@ import { SubstationDataCollector } from './power/SubstationDataCollector';
 import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
 import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
 import { usePowerData } from './power/usePowerData';
+import { EIADataPanel } from './power/EIADataPanel';
 
 export function PowerInfrastructure() {
   const { powerData, properties, loading, getStatusColor } = usePowerData();
@@ -119,7 +119,7 @@ export function PowerInfrastructure() {
         <Tabs defaultValue="overview" className="space-y-6">
           {/* Enhanced Tab Navigation */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-2 shadow-sm">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1 bg-transparent h-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 gap-1 bg-transparent h-auto">
               <TabsTrigger 
                 value="overview" 
                 className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30"
@@ -176,6 +176,13 @@ export function PowerInfrastructure() {
                 <Activity className="w-4 h-4" />
                 <span className="text-xs lg:text-sm font-medium">Queue</span>
               </TabsTrigger>
+              <TabsTrigger 
+                value="eia-data"
+                className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 p-3 data-[state=active]:bg-emerald-100 dark:data-[state=active]:bg-emerald-900/30"
+              >
+                <Database className="w-4 h-4" />
+                <span className="text-xs lg:text-sm font-medium">EIA Data</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -211,6 +218,10 @@ export function PowerInfrastructure() {
 
           <TabsContent value="interconnection">
             <InterconnectionQueue />
+          </TabsContent>
+
+          <TabsContent value="eia-data">
+            <EIADataPanel />
           </TabsContent>
         </Tabs>
       </div>
