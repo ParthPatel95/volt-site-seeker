@@ -1,12 +1,13 @@
 
+
 import { AlertTriangle, CheckCircle, ArrowRight, Zap, Building } from 'lucide-react';
 
 export const ProblemSolutionSection = () => {
   return (
-    <section className="relative z-10 py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6">
+    <section className="relative z-10 py-16 sm:py-20 md:py-24 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header - removed problematic title */}
-        <div className="text-center mb-12 sm:mb-16 md:mb-20">
+        <div className="text-center mb-12 sm:mb-16">
           <p className="text-lg sm:text-xl md:text-2xl text-slate-100 max-w-4xl mx-auto leading-relaxed">
             The data center industry faces <span className="text-electric-yellow font-semibold">critical bottlenecks</span> in scaling 
             to meet explosive AI and cloud computing demand. Power constraints have become the 
@@ -15,7 +16,7 @@ export const ProblemSolutionSection = () => {
         </div>
         
         {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 mb-16">
           {/* Challenge Side */}
           <div className="relative group">
             {/* Decorative elements */}
@@ -128,50 +129,48 @@ export const ProblemSolutionSection = () => {
         </div>
 
         {/* Enhanced Value Proposition */}
-        <div className="mt-16 md:mt-20">
-          <div className="relative group">
-            {/* Background decoration */}
-            <div className="absolute inset-0 bg-gradient-to-r from-electric-blue/5 via-electric-yellow/10 to-neon-green/5 rounded-3xl blur-xl"></div>
-            
-            <div className="relative bg-gradient-to-r from-slate-800/80 via-slate-900/90 to-slate-800/80 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-electric-blue/30 max-w-6xl mx-auto text-center shadow-2xl group-hover:shadow-electric-blue/20 transition-all duration-500">
-              {/* Icon row */}
-              <div className="flex items-center justify-center space-x-4 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-xl flex items-center justify-center">
-                  <ArrowRight className="w-6 h-6 text-white" />
-                </div>
-                <h4 className="text-3xl md:text-4xl font-bold text-white">The Result</h4>
-                <div className="w-12 h-12 bg-gradient-to-br from-electric-yellow to-neon-green rounded-xl flex items-center justify-center">
-                  <ArrowRight className="w-6 h-6 text-white" />
-                </div>
+        <div className="relative group">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-gradient-to-r from-electric-blue/5 via-electric-yellow/10 to-neon-green/5 rounded-3xl blur-xl"></div>
+          
+          <div className="relative bg-gradient-to-r from-slate-800/80 via-slate-900/90 to-slate-800/80 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-electric-blue/30 max-w-6xl mx-auto text-center shadow-2xl group-hover:shadow-electric-blue/20 transition-all duration-500">
+            {/* Icon row */}
+            <div className="flex items-center justify-center space-x-4 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-electric-blue to-electric-yellow rounded-xl flex items-center justify-center">
+                <ArrowRight className="w-6 h-6 text-white" />
               </div>
+              <h4 className="text-3xl md:text-4xl font-bold text-white">The Result</h4>
+              <div className="w-12 h-12 bg-gradient-to-br from-electric-yellow to-neon-green rounded-xl flex items-center justify-center">
+                <ArrowRight className="w-6 h-6 text-white" />
+              </div>
+            </div>
 
-              {/* Main text */}
-              <p className="text-xl md:text-2xl text-slate-100 font-medium leading-relaxed mb-8">
-                By solving these critical industry pain points, WattByte creates{' '}
-                <span className="bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent font-bold">
-                  significant value
-                </span>{' '}
-                for both data center operators and investors seeking exposure to{' '}
-                <span className="bg-gradient-to-r from-neon-green to-electric-blue bg-clip-text text-transparent font-bold">
-                  digital infrastructure growth
-                </span>{' '}
-                without the operational complexity of data center development.
-              </p>
+            {/* Main text */}
+            <p className="text-xl md:text-2xl text-slate-100 font-medium leading-relaxed mb-8">
+              By solving these critical industry pain points, WattByte creates{' '}
+              <span className="bg-gradient-to-r from-electric-blue to-electric-yellow bg-clip-text text-transparent font-bold">
+                significant value
+              </span>{' '}
+              for both data center operators and investors seeking exposure to{' '}
+              <span className="bg-gradient-to-r from-neon-green to-electric-blue bg-clip-text text-transparent font-bold">
+                digital infrastructure growth
+              </span>{' '}
+              without the operational complexity of data center development.
+            </p>
 
-              {/* Stats row */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 border-t border-slate-600/50">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-electric-blue mb-2">675MW+</div>
-                  <div className="text-slate-300 text-sm">Deal Experience</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-electric-yellow mb-2">2.0-2.5x</div>
-                  <div className="text-slate-300 text-sm">Target MOIC</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-neon-green mb-2">$25M</div>
-                  <div className="text-slate-300 text-sm">Fund I Target</div>
-                </div>
+            {/* Stats row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-slate-600/50">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-electric-blue mb-2">675MW+</div>
+                <div className="text-slate-300 text-sm">Deal Experience</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-electric-yellow mb-2">2.0-2.5x</div>
+                <div className="text-slate-300 text-sm">Target MOIC</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-neon-green mb-2">$25M</div>
+                <div className="text-slate-300 text-sm">Fund I Target</div>
               </div>
             </div>
           </div>
@@ -180,3 +179,4 @@ export const ProblemSolutionSection = () => {
     </section>
   );
 };
+
