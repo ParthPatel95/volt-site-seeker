@@ -1,20 +1,13 @@
 
-import { AlertTriangle, CheckCircle, ArrowRight, Target, Zap, Building } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowRight, Zap, Building } from 'lucide-react';
 
 export const ProblemSolutionSection = () => {
   return (
     <section className="relative z-10 py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Enhanced Header */}
+        {/* Enhanced Header - removed problematic title */}
         <div className="text-center mb-12 sm:mb-16 md:mb-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-2xl mb-6 mx-auto">
-            <Target className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-white">
-            Problem We <span className="bg-gradient-to-r from-electric-yellow via-warm-orange to-electric-blue bg-clip-text text-transparent">Solve</span>
-          </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-electric-blue via-electric-yellow to-neon-green rounded-full mx-auto mb-8"></div>
-          <p className="text-lg sm:text-xl md:text-2xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-2xl text-slate-100 max-w-4xl mx-auto leading-relaxed">
             The data center industry faces <span className="text-electric-yellow font-semibold">critical bottlenecks</span> in scaling 
             to meet explosive AI and cloud computing demand. Power constraints have become the 
             <span className="text-neon-green font-semibold"> #1 limiting factor</span> across North America.
@@ -60,7 +53,7 @@ export const ProblemSolutionSection = () => {
                     <div className="text-xl flex-shrink-0 mt-0.5">{challenge.icon}</div>
                     <div className="flex-1">
                       <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-orange-500 rounded-full mb-2 group-hover/item:scale-125 transition-transform duration-300"></div>
-                      <p className="text-slate-200 leading-relaxed group-hover/item:text-white transition-colors duration-300">
+                      <p className="text-slate-100 leading-relaxed group-hover/item:text-white transition-colors duration-300">
                         {challenge.text}
                       </p>
                     </div>
@@ -115,7 +108,7 @@ export const ProblemSolutionSection = () => {
                     <div className="text-xl flex-shrink-0 mt-0.5">{solution.icon}</div>
                     <div className="flex-1">
                       <div className="w-3 h-3 bg-gradient-to-r from-neon-green to-electric-blue rounded-full mb-2 group-hover/item:scale-125 transition-transform duration-300"></div>
-                      <p className="text-slate-200 leading-relaxed group-hover/item:text-white transition-colors duration-300">
+                      <p className="text-slate-100 leading-relaxed group-hover/item:text-white transition-colors duration-300">
                         {solution.text}
                       </p>
                     </div>
@@ -169,15 +162,15 @@ export const ProblemSolutionSection = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 border-t border-slate-600/50">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-electric-blue mb-2">675MW+</div>
-                  <div className="text-slate-400 text-sm">Deal Experience</div>
+                  <div className="text-slate-300 text-sm">Deal Experience</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-electric-yellow mb-2">2.0-2.5x</div>
-                  <div className="text-slate-400 text-sm">Target MOIC</div>
+                  <div className="text-slate-300 text-sm">Target MOIC</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-neon-green mb-2">$25M</div>
-                  <div className="text-slate-400 text-sm">Fund I Target</div>
+                  <div className="text-slate-300 text-sm">Fund I Target</div>
                 </div>
               </div>
             </div>
