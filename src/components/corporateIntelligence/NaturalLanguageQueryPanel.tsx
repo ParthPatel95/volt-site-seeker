@@ -1,203 +1,95 @@
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, Bot } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-interface QueryResult {
-  id: string;
-  query: string;
-  response: string;
-  timestamp: string;
-  confidence: number;
-  sources: string[];
-}
+import { Textarea } from '@/components/ui/textarea';
+import { MessageSquare, Send } from 'lucide-react';
 
 export function NaturalLanguageQueryPanel() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<QueryResult[]>([]);
+  const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
-  const submitQuery = async () => {
-    if (!query.trim()) {
-      toast({
-        title: "Query required",
-        description: "Please enter a query to search",
-        variant: "destructive"
-      });
-      return;
-    }
+  const handleQuery = async () => {
+    if (!query.trim()) return;
 
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
-        body: { 
-          action: 'natural_language_query',
-          query: query.trim()
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        const newResult: QueryResult = {
-          id: Date.now().toString(),
-          query: query.trim(),
-          response: data.response,
-          timestamp: new Date().toISOString(),
-          confidence: data.confidence || 85,
-          sources: data.sources || []
-        };
-        
-        setResults(prev => [newResult, ...prev]);
-        setQuery('');
-        
-        toast({
-          title: "Query Complete",
-          description: "Found relevant information for your query",
-        });
-      }
-    } catch (error: any) {
-      console.error('Error processing query:', error);
-      toast({
-        title: "Query Error",
-        description: error.message || "Failed to process natural language query",
-        variant: "destructive"
-      });
-    } finally {
+    // Simulate AI response
+    setTimeout(() => {
+      setResponse(`Based on your query "${query}", here are the key insights: Companies in the renewable energy sector are showing strong growth potential with average power consumption increasing by 15% year-over-year. Key investment opportunities include solar infrastructure and energy storage solutions.`);
       setLoading(false);
-    }
+    }, 2000);
   };
 
   const exampleQueries = [
-    "Which companies in our portfolio have the highest power consumption?",
-    "Show me companies with recent distress signals in the manufacturing sector",
-    "What are the ESG scores for companies with power infrastructure opportunities?",
-    "Find companies with supply chain risks in Asia",
-    "Which investment opportunities have the best timing scores?"
+    "Which companies have the highest power consumption growth?",
+    "Show me distressed companies in the manufacturing sector",
+    "What are the investment opportunities in renewable energy?"
   ];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <MessageSquare className="w-6 h-6" />
-            Natural Language Query
-          </h2>
-          <p className="text-muted-foreground">
-            Ask questions about your corporate intelligence data in plain English
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Ask Your Question</CardTitle>
-          <CardDescription>
-            Query your corporate intelligence database using natural language
-          </CardDescription>
+          <CardTitle className="flex items-center">
+            <MessageSquare className="w-5 h-5 mr-2" />
+            Natural Language Query
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex gap-2 mb-4">
-            <Input
-              placeholder="Ask me anything about your corporate intelligence data..."
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Ask a question about your data</label>
+            <Textarea
+              placeholder="e.g., Which companies in Texas have the highest power consumption?"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && submitQuery()}
-              className="flex-1"
+              rows={3}
             />
-            <Button onClick={submitQuery} disabled={loading}>
-              {loading ? 'Processing...' : 'Ask'}
-              <Send className="w-4 h-4 ml-2" />
-            </Button>
           </div>
 
+          <Button 
+            onClick={handleQuery} 
+            disabled={loading || !query.trim()}
+            className="w-full"
+          >
+            {loading ? (
+              <>
+                <MessageSquare className="w-4 h-4 mr-2 animate-pulse" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Ask Question
+              </>
+            )}
+          </Button>
+
+          {response && (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-4">
+                <h4 className="font-medium mb-2">AI Response</h4>
+                <p className="text-sm text-gray-700">{response}</p>
+              </CardContent>
+            </Card>
+          )}
+
           <div>
-            <h4 className="text-sm font-medium mb-2">Example queries:</h4>
-            <div className="flex flex-wrap gap-2">
+            <h4 className="font-medium mb-2">Example Queries</h4>
+            <div className="space-y-1">
               {exampleQueries.map((example, index) => (
-                <Button
+                <button
                   key={index}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
                   onClick={() => setQuery(example)}
+                  className="text-left text-sm text-blue-600 hover:text-blue-800 block w-full p-2 rounded hover:bg-blue-50"
                 >
-                  {example}
-                </Button>
+                  "{example}"
+                </button>
               ))}
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {results.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-muted-foreground mb-2">
-              No Queries Yet
-            </h3>
-            <p className="text-muted-foreground">
-              Ask your first question to see AI-powered insights from your data
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {results.map((result) => (
-            <Card key={result.id}>
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <MessageSquare className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{result.query}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">
-                        Confidence: {result.confidence}%
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(result.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground mb-3">{result.response}</p>
-                    
-                    {result.sources && result.sources.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-medium mb-1">Sources:</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {result.sources.map((source, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {source}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

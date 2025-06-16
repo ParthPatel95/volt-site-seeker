@@ -41,6 +41,7 @@ export function useEnergyRates() {
   const [markets, setMarkets] = useState<EnergyMarket[]>([]);
   const [utilities, setUtilities] = useState<UtilityCompany[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentRates, setCurrentRates] = useState<any>(null);
   const { toast } = useToast();
 
   const fetchMarkets = async () => {
@@ -175,9 +176,11 @@ export function useEnergyRates() {
     }
   };
 
-  const getCurrentRates = async (marketCode: string) => {
+  const getCurrentRates = async (marketCode: string = 'ERCOT') => {
     setLoading(true);
     try {
+      console.log('Fetching current rates for market:', marketCode);
+      
       const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
         body: {
           action: 'fetch_current_rates',
@@ -194,10 +197,17 @@ export function useEnergyRates() {
         throw new Error(data.error || 'Failed to fetch rates');
       }
 
-      return data?.rates || {
+      console.log('Received rates data:', data);
+      
+      const ratesData = data?.rates || {
         current_rate: 45.50,
-        forecast: [46.00, 44.20, 43.80]
+        forecast: [46.00, 44.20, 43.80],
+        market_conditions: 'normal',
+        peak_demand_rate: 65.30
       };
+
+      setCurrentRates(ratesData);
+      return ratesData;
 
     } catch (error: any) {
       console.error('Error fetching current rates:', error);
@@ -214,18 +224,32 @@ export function useEnergyRates() {
       });
       
       // Return fallback data
-      return {
+      const fallbackRates = {
         current_rate: 45.50,
-        forecast: [46.00, 44.20, 43.80]
+        forecast: [46.00, 44.20, 43.80],
+        market_conditions: 'normal',
+        peak_demand_rate: 65.30
       };
+      
+      setCurrentRates(fallbackRates);
+      return fallbackRates;
     } finally {
       setLoading(false);
     }
   };
 
+  // Auto-fetch current rates on component mount
   useEffect(() => {
     fetchMarkets();
     fetchUtilities();
+    getCurrentRates('ERCOT');
+    
+    // Set up interval to refresh rates every 5 minutes
+    const interval = setInterval(() => {
+      getCurrentRates('ERCOT');
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return {
@@ -233,6 +257,7 @@ export function useEnergyRates() {
     markets,
     utilities,
     loading,
+    currentRates,
     fetchRates,
     fetchUtilities,
     calculateCosts,
@@ -240,6 +265,7 @@ export function useEnergyRates() {
     refetch: () => {
       fetchMarkets();
       fetchUtilities();
+      getCurrentRates('ERCOT');
     }
   };
 }

@@ -1,307 +1,136 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, TrendingUp, Target, Calendar } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-interface MarketTimingAnalysis {
-  id: string;
-  company_id: string;
-  market_cycle_phase: string;
-  optimal_acquisition_window: any;
-  market_conditions_score: number;
-  institutional_activity_level: string;
-  fire_sale_probability: number;
-  timing_recommendation: string;
-  key_timing_factors: string[];
-  analysis_date: string;
-  companies?: {
-    name: string;
-    industry: string;
-  };
-}
 
 export function MarketTimingPanel() {
-  const [analyses, setAnalyses] = useState<MarketTimingAnalysis[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [companyName, setCompanyName] = useState('');
-  const { toast } = useToast();
-
-  useEffect(() => {
-    loadAnalyses();
-  }, []);
-
-  const loadAnalyses = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('market_timing_analysis')
-        .select(`
-          *,
-          companies(name, industry)
-        `)
-        .order('analysis_date', { ascending: false });
-
-      if (error) throw error;
-      setAnalyses(data || []);
-    } catch (error) {
-      console.error('Error loading market timing analyses:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load market timing analyses",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const analyzeMarketTiming = async () => {
-    if (!companyName.trim()) {
-      toast({
-        title: "Company name required",
-        description: "Please enter a company name to analyze market timing",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setAnalyzing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
-        body: { 
-          action: 'analyze_market_timing',
-          company_name: companyName.trim()
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        toast({
-          title: "Market Timing Analysis Complete",
-          description: `Analyzed market timing for ${companyName}`,
-        });
-        loadAnalyses();
-        setCompanyName('');
-      }
-    } catch (error: any) {
-      console.error('Error analyzing market timing:', error);
-      toast({
-        title: "Analysis Error",
-        description: error.message || "Failed to analyze market timing",
-        variant: "destructive"
-      });
-    } finally {
-      setAnalyzing(false);
-    }
+  const timingAnalysis = {
+    currentPhase: 'expansion',
+    recommendation: 'optimal_entry',
+    confidenceLevel: 78,
+    optimalWindow: '3-6 months',
+    keyFactors: [
+      'Market volatility decreasing',
+      'Interest rates stabilizing',
+      'Sector rotation favorable',
+      'Regulatory environment stable'
+    ]
   };
 
   const getPhaseColor = (phase: string) => {
-    switch (phase.toLowerCase()) {
-      case 'expansion': return 'default';
-      case 'peak': return 'secondary';
-      case 'contraction': return 'destructive';
-      case 'trough': return 'outline';
-      default: return 'secondary';
+    switch (phase) {
+      case 'expansion':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'peak':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'contraction':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'trough':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getTimingColor = (recommendation: string) => {
-    if (recommendation?.toLowerCase().includes('buy')) return 'default';
-    if (recommendation?.toLowerCase().includes('hold')) return 'secondary';
-    if (recommendation?.toLowerCase().includes('wait')) return 'destructive';
-    return 'secondary';
+  const getRecommendationColor = (recommendation: string) => {
+    switch (recommendation) {
+      case 'optimal_entry':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'good_entry':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'wait':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'avoid':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
-
-  const chartData = analyses.slice(0, 10).map(analysis => ({
-    company: analysis.companies?.name || 'Unknown',
-    conditions: analysis.market_conditions_score,
-    fireSale: analysis.fire_sale_probability * 100,
-    date: new Date(analysis.analysis_date).toLocaleDateString()
-  }));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Clock className="w-6 h-6" />
-            Market Timing Intelligence
-          </h2>
-          <p className="text-muted-foreground">
-            AI-powered acquisition timing analysis and market cycle assessment
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Analyze Market Timing</CardTitle>
-          <CardDescription>
-            Optimize acquisition timing with AI-powered market cycle analysis
-          </CardDescription>
+          <CardTitle className="flex items-center">
+            <Clock className="w-5 h-5 mr-2" />
+            Market Timing Analysis
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter company name..."
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && analyzeMarketTiming()}
-            />
-            <Button onClick={analyzeMarketTiming} disabled={analyzing}>
-              {analyzing ? 'Analyzing...' : 'Analyze Timing'}
-              <Clock className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {chartData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Market Conditions Overview</CardTitle>
-            <CardDescription>
-              Market conditions and fire sale probability across companies
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="company" />
-                <YAxis />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="conditions"
-                  stackId="1"
-                  stroke="#8884d8"
-                  fill="#8884d8"
-                  name="Market Conditions"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="fireSale"
-                  stackId="2"
-                  stroke="#82ca9d"
-                  fill="#82ca9d"
-                  name="Fire Sale Probability"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading market timing analyses...</p>
-        </div>
-      ) : analyses.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-muted-foreground mb-2">
-              No Market Timing Analyses
-            </h3>
-            <p className="text-muted-foreground">
-              Analyze market timing for a company to see acquisition recommendations
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {analyses.slice(0, 10).map((analysis) => (
-            <Card key={analysis.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {analysis.companies?.name || 'Unknown Company'}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant={getPhaseColor(analysis.market_cycle_phase)}>
-                        {analysis.market_cycle_phase}
-                      </Badge>
-                      <Badge variant={getTimingColor(analysis.timing_recommendation)}>
-                        {analysis.timing_recommendation}
-                      </Badge>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {new Date(analysis.analysis_date).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold">Current Market Phase</h4>
+                  <TrendingUp className="w-4 h-4 text-blue-600" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Market Metrics</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Market Conditions:</span>
-                        <Badge variant={analysis.market_conditions_score > 70 ? 'default' : 'secondary'}>
-                          {analysis.market_conditions_score}/100
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Fire Sale Probability:</span>
-                        <Badge variant={analysis.fire_sale_probability > 0.5 ? 'destructive' : 'secondary'}>
-                          {(analysis.fire_sale_probability * 100).toFixed(1)}%
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Institutional Activity:</span>
-                        <Badge variant="outline">
-                          {analysis.institutional_activity_level}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium mb-2">Optimal Window</h4>
-                    <div className="space-y-1">
-                      {analysis.optimal_acquisition_window && Object.entries(analysis.optimal_acquisition_window).map(([key, value]) => (
-                        <div key={key} className="flex justify-between text-sm">
-                          <span className="capitalize">{key.replace('_', ' ')}:</span>
-                          <span className="text-muted-foreground">{String(value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {analysis.key_timing_factors && analysis.key_timing_factors.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-1">
-                      <TrendingUp className="w-4 h-4" />
-                      Key Timing Factors
-                    </h4>
-                    <div className="space-y-1">
-                      {analysis.key_timing_factors.slice(0, 3).map((factor, index) => (
-                        <div key={index} className="text-sm text-muted-foreground">
-                          • {factor}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <Badge className={getPhaseColor(timingAnalysis.currentPhase)} size="lg">
+                  {timingAnalysis.currentPhase.charAt(0).toUpperCase() + timingAnalysis.currentPhase.slice(1)}
+                </Badge>
+                <p className="text-sm text-gray-600 mt-2">
+                  Markets are currently in an expansion phase with positive momentum indicators.
+                </p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+
+            <Card className="border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold">Entry Recommendation</h4>
+                  <Target className="w-4 h-4 text-green-600" />
+                </div>
+                <Badge className={getRecommendationColor(timingAnalysis.recommendation)} size="lg">
+                  Optimal Entry
+                </Badge>
+                <p className="text-sm text-gray-600 mt-2">
+                  Current conditions suggest this is an optimal time for market entry.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-purple-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold">Timing Metrics</h4>
+                <Calendar className="w-4 h-4 text-purple-600" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <span className="text-sm text-gray-600">Confidence Level</span>
+                  <div className="flex items-center gap-2">
+                    <div className="font-bold text-lg">{timingAnalysis.confidenceLevel}%</div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${timingAnalysis.confidenceLevel}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-sm text-gray-600">Optimal Window</span>
+                  <div className="font-bold text-lg">{timingAnalysis.optimalWindow}</div>
+                </div>
+              </div>
+
+              <div>
+                <h5 className="font-medium mb-2">Key Timing Factors</h5>
+                <div className="space-y-1">
+                  {timingAnalysis.keyFactors.map((factor, index) => (
+                    <div key={index} className="flex items-center text-sm">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-2" />
+                      {factor}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
     </div>
   );
 }

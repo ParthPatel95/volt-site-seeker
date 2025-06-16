@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
@@ -41,20 +40,29 @@ const handler = async (req: Request): Promise<Response> => {
           peak_demand_rate: 65.30 + Math.random() * 15
         };
 
-        // Insert sample rate data
-        const { error } = await supabase
-          .from('energy_rates')
-          .insert({
-            market_id: 'ercot-demo',
-            rate_type: 'real_time',
-            price_per_mwh: ratesData.current_rate,
-            timestamp: new Date().toISOString(),
-            node_name: `${market_code}_NODE_001`,
-            node_id: 'DEMO_001'
-          });
+        // Get the actual market ID from the database instead of using a string
+        const { data: marketData } = await supabase
+          .from('energy_markets')
+          .select('id')
+          .eq('market_code', market_code)
+          .single();
 
-        if (error) {
-          console.error('Error inserting rate data:', error);
+        if (marketData) {
+          // Insert sample rate data with proper UUID
+          const { error } = await supabase
+            .from('energy_rates')
+            .insert({
+              market_id: marketData.id,
+              rate_type: 'real_time',
+              price_per_mwh: ratesData.current_rate,
+              timestamp: new Date().toISOString(),
+              node_name: `${market_code}_NODE_001`,
+              node_id: 'NODE_001'
+            });
+
+          if (error) {
+            console.error('Error inserting rate data:', error);
+          }
         }
 
         return new Response(JSON.stringify({

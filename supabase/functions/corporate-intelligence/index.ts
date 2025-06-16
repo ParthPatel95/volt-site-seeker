@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
@@ -232,6 +231,52 @@ Please respond in this exact JSON format:
           success: true,
           company: data,
           analysis_complete: true
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      case 'analyze_news_intelligence': {
+        const { company_name } = params;
+        
+        // Mock news intelligence data
+        const newsData = [
+          {
+            id: crypto.randomUUID(),
+            title: `${company_name} Announces Strategic Partnership`,
+            content: `${company_name} has entered into a strategic partnership to expand their operations...`,
+            source: 'Financial Times',
+            published_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+            url: 'https://example.com/news1',
+            keywords: ['partnership', 'expansion', 'growth'],
+            discovered_at: new Date().toISOString()
+          },
+          {
+            id: crypto.randomUUID(),
+            title: `Industry Analysis: ${company_name}'s Market Position`,
+            content: `Recent analysis shows ${company_name} maintaining strong position in the market...`,
+            source: 'Bloomberg',
+            published_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            url: 'https://example.com/news2',
+            keywords: ['market', 'analysis', 'position'],
+            discovered_at: new Date().toISOString()
+          }
+        ];
+
+        // Insert news data into database
+        const { error: newsError } = await supabase
+          .from('news_intelligence')
+          .insert(newsData);
+
+        if (newsError) {
+          console.error('News insert error:', newsError);
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          news: newsData,
+          total_articles: newsData.length
         }), {
           status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },

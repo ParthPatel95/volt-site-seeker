@@ -1,57 +1,29 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Newspaper, Search, Calendar, ExternalLink } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Newspaper, Search, ExternalLink, Clock, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-interface NewsArticle {
+interface NewsItem {
   id: string;
   title: string;
   content: string;
   source: string;
   published_at: string;
-  keywords: string[];
   url?: string;
+  keywords: string[];
   discovered_at: string;
 }
 
 export function NewsIntelligencePanel() {
-  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    loadNewsArticles();
-  }, []);
-
-  const loadNewsArticles = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('news_intelligence')
-        .select('*')
-        .order('published_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-      setNewsArticles(data || []);
-    } catch (error) {
-      console.error('Error loading news articles:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load news articles",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const analyzeNews = async () => {
     if (!companyName.trim()) {
@@ -63,132 +35,136 @@ export function NewsIntelligencePanel() {
       return;
     }
 
-    setAnalyzing(true);
+    setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
-        body: { 
-          action: 'analyze_news_intelligence', 
-          company_name: companyName.trim() 
-        },
+        body: {
+          action: 'analyze_news_intelligence',
+          company_name: companyName.trim()
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       if (data?.success) {
+        setNews(data.news || []);
         toast({
           title: "News Analysis Complete",
-          description: `Analyzed ${data.articles_analyzed} news articles for ${companyName}`,
+          description: `Found ${data.total_articles || 0} recent articles about ${companyName}`,
         });
-        loadNewsArticles();
-        setCompanyName('');
+      } else {
+        throw new Error(data?.error || 'Failed to analyze news');
       }
     } catch (error: any) {
       console.error('Error analyzing news:', error);
       toast({
-        title: "Analysis Error",
-        description: error.message || "Failed to analyze news intelligence",
+        title: "News Analysis Error",
+        description: error.message || "Failed to analyze news. Please try again.",
         variant: "destructive"
       });
     } finally {
-      setAnalyzing(false);
+      setLoading(false);
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Newspaper className="w-6 h-6" />
-            News Intelligence
-          </h2>
-          <p className="text-muted-foreground">
-            AI-powered news analysis for corporate intelligence
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Analyze Company News</CardTitle>
-          <CardDescription>
-            Generate AI-powered news intelligence for any company
-          </CardDescription>
+          <CardTitle className="flex items-center">
+            <Newspaper className="w-5 h-5 mr-2" />
+            News Intelligence Analysis
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-4">
             <Input
               placeholder="Enter company name..."
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && analyzeNews()}
+              onKeyPress={(e) => e.key === 'Enter' && !loading && analyzeNews()}
+              className="flex-1"
             />
-            <Button onClick={analyzeNews} disabled={analyzing}>
-              {analyzing ? 'Analyzing...' : 'Analyze News'}
-              <Search className="w-4 h-4 ml-2" />
+            <Button 
+              onClick={analyzeNews} 
+              disabled={loading || !companyName.trim()}
+            >
+              {loading ? (
+                <>
+                  <Search className="w-4 h-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Analyze News
+                </>
+              )}
             </Button>
           </div>
+
+          {news.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Recent News Articles</h3>
+                <Badge variant="secondary" className="flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {news.length} articles found
+                </Badge>
+              </div>
+
+              <div className="grid gap-4">
+                {news.map((article) => (
+                  <Card key={article.id} className="border-l-4 border-l-blue-500">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-lg line-clamp-2">{article.title}</h4>
+                        {article.url && (
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={article.url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                        {article.content}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        {article.keywords?.slice(0, 3).map((keyword) => (
+                          <Badge key={keyword} variant="outline" className="text-xs">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      <div className="flex justify-between items-center text-xs text-gray-500">
+                        <span className="font-medium">{article.source}</span>
+                        <div className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {formatDate(article.published_at)}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading news articles...</p>
-        </div>
-      ) : newsArticles.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Newspaper className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-muted-foreground mb-2">
-              No News Articles Found
-            </h3>
-            <p className="text-muted-foreground">
-              Analyze a company to generate news intelligence
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {newsArticles.map((article) => (
-            <Card key={article.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{article.title}</CardTitle>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline">{article.source}</Badge>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {new Date(article.published_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                  {article.url && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={article.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {article.content}
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {article.keywords?.map((keyword, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {keyword}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
