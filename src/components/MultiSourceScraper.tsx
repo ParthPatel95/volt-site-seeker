@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AIPropertyScraper } from './scraping/AIPropertyScraper';
+import { ComprehensiveScraper } from './scraping/ComprehensiveScraper';
 import { ScrapedPropertiesDisplay } from './scraping/ScrapedPropertiesDisplay';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -57,13 +58,17 @@ export function MultiSourceScraper() {
         <div>
           <h1 className="text-3xl font-bold">Multi-Source Property Scraper</h1>
           <p className="text-muted-foreground">
-            Real-time property discovery from live market data sources
+            Educational web scraping tools for real estate discovery
           </p>
         </div>
       </div>
 
-      <Tabs defaultValue="ai-scraper" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="comprehensive-scraper" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="comprehensive-scraper" className="flex items-center">
+            <Bot className="w-4 h-4 mr-2" />
+            Comprehensive Scraper
+          </TabsTrigger>
           <TabsTrigger value="ai-scraper" className="flex items-center">
             <Brain className="w-4 h-4 mr-2" />
             AI Property Scraper
@@ -75,6 +80,45 @@ export function MultiSourceScraper() {
             Source Management
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="comprehensive-scraper" className="space-y-6">
+          <ComprehensiveScraper onPropertiesFound={handlePropertiesFound} />
+          
+          {/* Technical Features Overview */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4 text-center">
+                <Globe className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-green-800">Multi-Site Scraping</h3>
+                <p className="text-sm text-green-600">5+ major brokerage sites</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4 text-center">
+                <Search className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-blue-800">Smart Parsing</h3>
+                <p className="text-sm text-blue-600">Dynamic content extraction</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-purple-50 border-purple-200">
+              <CardContent className="p-4 text-center">
+                <Zap className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-purple-800">Anti-Bot Handling</h3>
+                <p className="text-sm text-purple-600">User-agent rotation & delays</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-orange-50 border-orange-200">
+              <CardContent className="p-4 text-center">
+                <Database className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-orange-800">Data Normalization</h3>
+                <p className="text-sm text-orange-600">Structured property data</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="ai-scraper" className="space-y-6">
           <AIPropertyScraper onPropertiesFound={handlePropertiesFound} />
