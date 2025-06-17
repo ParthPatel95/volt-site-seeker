@@ -45,13 +45,13 @@ serve(async (req) => {
         data = await fetchCountyRecords(request);
         break;
       case 'auction_com':
-        data = await fetchAuctionComData(request);
+        data = await scrapeAuctionCom(request);
         break;
       case 'biggerpockets':
-        data = await fetchBiggerPocketsData(request);
+        data = await scrapeBiggerPockets(request);
         break;
       case 'public_auctions':
-        data = await fetchPublicAuctionsData(request);
+        data = await scrapePublicAuctions(request);
         break;
       default:
         throw new Error('Unknown data source');
@@ -88,112 +88,263 @@ serve(async (req) => {
   }
 });
 
-async function fetchAuctionComData(request: FreeDataRequest) {
+async function scrapeAuctionCom(request: FreeDataRequest) {
   try {
-    console.log('Fetching Auction.com data for:', request.location);
+    console.log('Scraping Auction.com for:', request.location);
     
-    // Since Auction.com doesn't have a public API, this would use web scraping
-    // For now, return sample data structure
-    const sampleProperties = [
-      {
-        address: `123 Industrial Ave, ${request.location}`,
-        city: extractLocationCity(request.location),
-        state: extractLocationState(request.location),
-        zip_code: '75001',
-        property_type: 'foreclosure',
-        source: 'auction_com',
-        listing_url: 'https://www.auction.com/sample-listing',
-        description: 'Foreclosure property - Industrial facility',
-        square_footage: 50000,
-        asking_price: 850000,
-        lot_size_acres: 5.2,
-        auction_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        auction_type: 'foreclosure'
+    const searchUrl = `https://www.auction.com/search?location=${encodeURIComponent(request.location)}&asset_type=real_estate&status=upcoming`;
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://www.auction.com/',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
       }
-    ];
+    });
+
+    if (!response.ok) {
+      console.log(`Auction.com returned status: ${response.status}`);
+      return { properties: [], message: 'Auction.com returned an error response' };
+    }
+
+    const html = await response.text();
+    console.log(`Auction.com HTML length: ${html.length}`);
+
+    // Parse HTML to extract property listings
+    const properties = parseAuctionComHTML(html, request.location);
 
     return {
-      properties: request.property_type === 'foreclosure' || request.property_type === 'auction' ? sampleProperties : [],
-      message: `Found ${sampleProperties.length} auction properties (demo data - requires web scraping implementation)`
+      properties,
+      message: `Found ${properties.length} auction properties from Auction.com`
     };
   } catch (error) {
     console.error('Auction.com scraping error:', error);
-    return { properties: [], message: 'Auction.com data currently requires web scraping implementation' };
+    return { properties: [], message: `Auction.com scraping failed: ${error.message}` };
   }
 }
 
-async function fetchBiggerPocketsData(request: FreeDataRequest) {
+async function scrapeBiggerPockets(request: FreeDataRequest) {
   try {
-    console.log('Fetching BiggerPockets data for:', request.location);
+    console.log('Scraping BiggerPockets for:', request.location);
     
-    // BiggerPockets doesn't have a public API, would require web scraping
-    // For now, return sample investment property data
-    const sampleProperties = [
-      {
-        address: `456 Investment Blvd, ${request.location}`,
-        city: extractLocationCity(request.location),
-        state: extractLocationState(request.location),
-        zip_code: '75002',
-        property_type: 'investment',
-        source: 'biggerpockets',
-        listing_url: 'https://www.biggerpockets.com/sample-listing',
-        description: 'Commercial investment opportunity - High ROI potential',
-        square_footage: 75000,
-        asking_price: 1200000,
-        lot_size_acres: 3.8,
-        cap_rate: 8.5,
-        cash_flow: 5500,
-        investment_analysis: {
-          roi: '12.3%',
-          cash_on_cash: '8.7%',
-          debt_coverage_ratio: 1.35
-        }
+    const searchUrl = `https://www.biggerpockets.com/search/properties?location=${encodeURIComponent(request.location)}&property_type=commercial`;
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://www.biggerpockets.com/',
+        'Connection': 'keep-alive'
       }
-    ];
+    });
+
+    if (!response.ok) {
+      console.log(`BiggerPockets returned status: ${response.status}`);
+      return { properties: [], message: 'BiggerPockets returned an error response' };
+    }
+
+    const html = await response.text();
+    console.log(`BiggerPockets HTML length: ${html.length}`);
+
+    // Parse HTML to extract property listings
+    const properties = parseBiggerPocketsHTML(html, request.location);
 
     return {
-      properties: request.property_type === 'commercial' || request.property_type === 'industrial' ? sampleProperties : [],
-      message: `Found ${sampleProperties.length} investment properties (demo data - requires web scraping implementation)`
+      properties,
+      message: `Found ${properties.length} investment properties from BiggerPockets`
     };
   } catch (error) {
     console.error('BiggerPockets scraping error:', error);
-    return { properties: [], message: 'BiggerPockets data currently requires web scraping implementation' };
+    return { properties: [], message: `BiggerPockets scraping failed: ${error.message}` };
   }
 }
 
-async function fetchPublicAuctionsData(request: FreeDataRequest) {
+async function scrapePublicAuctions(request: FreeDataRequest) {
   try {
-    console.log('Fetching public auction data for:', request.location);
+    console.log('Scraping public auction sites for:', request.location);
     
-    // Public auction sites vary by location and would require scraping multiple sources
-    // For now, return sample government surplus and tax sale data
-    const sampleProperties = [
-      {
-        address: `789 Government Way, ${request.location}`,
-        city: extractLocationCity(request.location),
-        state: extractLocationState(request.location),
-        zip_code: '75003',
-        property_type: 'government_surplus',
-        source: 'public_auctions',
-        listing_url: 'https://www.publicsurplus.com/sample-listing',
-        description: 'Government surplus facility - Former warehouse',
-        square_footage: 100000,
-        asking_price: 650000,
-        lot_size_acres: 8.5,
-        auction_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        auction_type: 'tax_sale',
-        min_bid: 500000
-      }
+    // Try multiple public auction sites
+    const sites = [
+      'https://www.publicsurplus.com/sms/browse/cataucs',
+      'https://www.govdeals.com/index.cfm?fa=Main.AdvSearchResultsNew',
+      'https://bid.txauction.com/index.cfm?fa=Main.AdvSearchResultsNew'
     ];
 
+    let allProperties = [];
+    
+    for (const siteUrl of sites) {
+      try {
+        const response = await fetch(`${siteUrl}?location=${encodeURIComponent(request.location)}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Connection': 'keep-alive'
+          }
+        });
+
+        if (response.ok) {
+          const html = await response.text();
+          const properties = parsePublicAuctionHTML(html, request.location, siteUrl);
+          allProperties.push(...properties);
+        }
+      } catch (siteError) {
+        console.log(`Failed to scrape ${siteUrl}:`, siteError.message);
+      }
+    }
+
     return {
-      properties: sampleProperties,
-      message: `Found ${sampleProperties.length} public auction properties (demo data - requires web scraping implementation)`
+      properties: allProperties,
+      message: `Found ${allProperties.length} properties from public auction sites`
     };
   } catch (error) {
-    console.error('Public auctions scraping error:', error);
-    return { properties: [], message: 'Public auction data currently requires web scraping implementation' };
+    console.error('Public auction scraping error:', error);
+    return { properties: [], message: `Public auction scraping failed: ${error.message}` };
   }
+}
+
+function parseAuctionComHTML(html: string, location: string) {
+  const properties = [];
+  
+  try {
+    // Look for common auction.com patterns
+    const listingRegex = /<div[^>]*class="[^"]*auction-item[^"]*"[^>]*>(.*?)<\/div>/gs;
+    const addressRegex = /<span[^>]*class="[^"]*address[^"]*"[^>]*>(.*?)<\/span>/s;
+    const priceRegex = /\$[\d,]+/g;
+    const dateRegex = /\d{1,2}\/\d{1,2}\/\d{4}/g;
+
+    let match;
+    while ((match = listingRegex.exec(html)) !== null && properties.length < 20) {
+      const listingHtml = match[1];
+      
+      const addressMatch = addressRegex.exec(listingHtml);
+      const priceMatches = listingHtml.match(priceRegex);
+      const dateMatches = listingHtml.match(dateRegex);
+      
+      if (addressMatch) {
+        const address = addressMatch[1].replace(/<[^>]*>/g, '').trim();
+        const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : null;
+        const auctionDate = dateMatches ? dateMatches[0] : null;
+        
+        properties.push({
+          address: address,
+          city: extractLocationCity(location),
+          state: extractLocationState(location),
+          zip_code: '',
+          property_type: 'foreclosure',
+          source: 'auction_com',
+          listing_url: 'https://www.auction.com/',
+          description: `Foreclosure auction property - ${address}`,
+          square_footage: null,
+          asking_price: price,
+          lot_size_acres: null,
+          auction_date: auctionDate,
+          auction_type: 'foreclosure'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing Auction.com HTML:', error);
+  }
+  
+  return properties;
+}
+
+function parseBiggerPocketsHTML(html: string, location: string) {
+  const properties = [];
+  
+  try {
+    // Look for BiggerPockets property listing patterns
+    const listingRegex = /<div[^>]*class="[^"]*property-card[^"]*"[^>]*>(.*?)<\/div>/gs;
+    const addressRegex = /<h3[^>]*>(.*?)<\/h3>/s;
+    const priceRegex = /\$[\d,]+/g;
+    const roiRegex = /(\d+\.?\d*)%\s*ROI/i;
+
+    let match;
+    while ((match = listingRegex.exec(html)) !== null && properties.length < 20) {
+      const listingHtml = match[1];
+      
+      const addressMatch = addressRegex.exec(listingHtml);
+      const priceMatches = listingHtml.match(priceRegex);
+      const roiMatch = roiRegex.exec(listingHtml);
+      
+      if (addressMatch) {
+        const address = addressMatch[1].replace(/<[^>]*>/g, '').trim();
+        const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : null;
+        const roi = roiMatch ? parseFloat(roiMatch[1]) : null;
+        
+        properties.push({
+          address: address,
+          city: extractLocationCity(location),
+          state: extractLocationState(location),
+          zip_code: '',
+          property_type: 'investment',
+          source: 'biggerpockets',
+          listing_url: 'https://www.biggerpockets.com/',
+          description: `Investment property - ${address}${roi ? ` (${roi}% ROI)` : ''}`,
+          square_footage: null,
+          asking_price: price,
+          lot_size_acres: null,
+          roi_estimate: roi
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing BiggerPockets HTML:', error);
+  }
+  
+  return properties;
+}
+
+function parsePublicAuctionHTML(html: string, location: string, sourceUrl: string) {
+  const properties = [];
+  
+  try {
+    // Generic patterns for government auction sites
+    const listingRegex = /<tr[^>]*>(.*?)<\/tr>/gs;
+    const addressRegex = /(?:address|location)[^>]*>([^<]+)</i;
+    const priceRegex = /\$[\d,]+/g;
+    const itemRegex = /<td[^>]*>([^<]*(?:property|building|facility|warehouse)[^<]*)<\/td>/i;
+
+    let match;
+    while ((match = listingRegex.exec(html)) !== null && properties.length < 15) {
+      const rowHtml = match[1];
+      
+      const addressMatch = addressRegex.exec(rowHtml);
+      const itemMatch = itemRegex.exec(rowHtml);
+      const priceMatches = rowHtml.match(priceRegex);
+      
+      if (itemMatch || addressMatch) {
+        const description = itemMatch ? itemMatch[1].trim() : 'Government surplus property';
+        const address = addressMatch ? addressMatch[1].trim() : `Government Property, ${location}`;
+        const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : null;
+        
+        properties.push({
+          address: address,
+          city: extractLocationCity(location),
+          state: extractLocationState(location),
+          zip_code: '',
+          property_type: 'government_surplus',
+          source: 'public_auctions',
+          listing_url: sourceUrl,
+          description: description,
+          square_footage: null,
+          asking_price: price,
+          lot_size_acres: null,
+          auction_type: 'government_surplus'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing public auction HTML:', error);
+  }
+  
+  return properties;
 }
 
 async function fetchGooglePlaces(request: FreeDataRequest) {
