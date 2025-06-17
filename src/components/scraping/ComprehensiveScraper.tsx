@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SourceSelector } from './SourceSelector';
 import { SearchParameters } from './SearchParameters';
 import { EducationalNotices } from './EducationalNotices';
+import { TestRunner } from './TestRunner';
 
 interface ComprehensiveScraperProps {
   onPropertiesFound: (count: number) => void;
@@ -137,6 +138,8 @@ export function ComprehensiveScraper({ onPropertiesFound }: ComprehensiveScraper
           <Search className="w-4 h-4 mr-2" />
           {scraping ? 'Scraping Properties...' : `Scrape ${selectedSources.length} Selected Sites`}
         </Button>
+
+        <TestRunner onPropertiesFound={onPropertiesFound} />
 
         <EducationalNotices />
       </CardContent>
