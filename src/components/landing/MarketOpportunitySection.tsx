@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { TrendingUp, Zap, Bitcoin, Cpu } from 'lucide-react';
@@ -66,115 +67,119 @@ export const MarketOpportunitySection = () => {
         {/* Primary Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           {/* AI & Bitcoin Power Demand Growth */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
-              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
-                <TrendingUp className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-blue flex-shrink-0" />
-                <span className="leading-tight">Digital Infrastructure Power Demand</span>
+          <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+            <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
+                <TrendingUp className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-electric-blue flex-shrink-0" />
+                <span className="leading-tight truncate">Digital Infrastructure Power Demand</span>
               </CardTitle>
-              <CardDescription className="text-slate-300 text-xs sm:text-sm">
+              <CardDescription className="text-slate-300 text-xs sm:text-sm truncate">
                 Exponential growth in AI and Bitcoin mining power requirements
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
-              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={aiGrowthData} margin={{ top: 5, right: 2, left: 2, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="year" 
-                      stroke="#9CA3AF" 
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      interval={0}
-                      angle={-45}
-                      textAnchor="end"
-                      height={30}
-                    />
-                    <YAxis 
-                      stroke="#9CA3AF" 
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      width={25}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Area 
-                      type="monotone" 
-                      dataKey="aiDataCenters" 
-                      stackId="1"
-                      stroke="#0EA5E9" 
-                      fill="#0EA5E9"
-                      fillOpacity={0.6}
-                      name="AI Data Centers (GW)"
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="bitcoinMining" 
-                      stackId="1"
-                      stroke="#F59E0B" 
-                      fill="#F59E0B"
-                      fillOpacity={0.6}
-                      name="Bitcoin Mining (GW)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-              <div className="mt-1 sm:mt-2 text-center">
+            <CardContent className="pt-0 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="w-full overflow-hidden">
+                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[220px] md:h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={aiGrowthData} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="year" 
+                        stroke="#9CA3AF" 
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={35}
+                      />
+                      <YAxis 
+                        stroke="#9CA3AF" 
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        width={30}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="aiDataCenters" 
+                        stackId="1"
+                        stroke="#0EA5E9" 
+                        fill="#0EA5E9"
+                        fillOpacity={0.6}
+                        name="AI Data Centers (GW)"
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="bitcoinMining" 
+                        stackId="1"
+                        stroke="#F59E0B" 
+                        fill="#F59E0B"
+                        fillOpacity={0.6}
+                        name="Bitcoin Mining (GW)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+              <div className="mt-2 text-center">
                 <p className="text-electric-blue font-semibold text-xs sm:text-sm">125+ GW total demand by 2026</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Power Cost Arbitrage */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
-              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
-                <Zap className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-yellow flex-shrink-0" />
-                <span className="leading-tight">Power Cost Arbitrage Opportunity</span>
+          <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+            <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
+                <Zap className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-electric-yellow flex-shrink-0" />
+                <span className="leading-tight truncate">Power Cost Arbitrage Opportunity</span>
               </CardTitle>
-              <CardDescription className="text-slate-300 text-xs sm:text-sm">
+              <CardDescription className="text-slate-300 text-xs sm:text-sm truncate">
                 Massive cost differentials across North American markets
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
-              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    data={powerCostComparison} 
-                    layout="vertical" 
-                    margin={{ top: 5, right: 10, left: 50, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      type="number" 
-                      stroke="#9CA3AF" 
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      domain={[0, 'dataMax + 2']}
-                    />
-                    <YAxis 
-                      dataKey="region" 
-                      type="category" 
-                      stroke="#9CA3AF" 
-                      width={45}
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      interval={0}
-                    />
-                    <ChartTooltip 
-                      content={<ChartTooltipContent />}
-                      formatter={(value) => [`${value}¢/kWh`, 'Power Cost']}
-                    />
-                    <Bar 
-                      dataKey="cost" 
-                      fill="#10B981"
-                      name="Cost (¢/kWh)"
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-              <div className="mt-1 sm:mt-2 text-center">
+            <CardContent className="pt-0 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="w-full overflow-hidden">
+                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[220px] md:h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={powerCostComparison} 
+                      layout="vertical" 
+                      margin={{ top: 10, right: 15, left: 60, bottom: 10 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        type="number" 
+                        stroke="#9CA3AF" 
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        domain={[0, 'dataMax + 2']}
+                      />
+                      <YAxis 
+                        dataKey="region" 
+                        type="category" 
+                        stroke="#9CA3AF" 
+                        width={55}
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        interval={0}
+                      />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        formatter={(value) => [`${value}¢/kWh`, 'Power Cost']}
+                      />
+                      <Bar 
+                        dataKey="cost" 
+                        fill="#10B981"
+                        name="Cost (¢/kWh)"
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+              <div className="mt-2 text-center">
                 <p className="text-neon-green font-semibold text-xs sm:text-sm">93% cost savings in Newfoundland vs CA Bay</p>
               </div>
             </CardContent>
@@ -184,117 +189,121 @@ export const MarketOpportunitySection = () => {
         {/* Secondary Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           {/* Bitcoin Mining Economics */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
-              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
-                <Bitcoin className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-yellow flex-shrink-0" />
-                <span className="leading-tight">Bitcoin Mining Revenue Potential</span>
+          <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+            <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
+                <Bitcoin className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-electric-yellow flex-shrink-0" />
+                <span className="leading-tight truncate">Bitcoin Mining Revenue Potential</span>
               </CardTitle>
-              <CardDescription className="text-slate-300 text-xs sm:text-sm">
+              <CardDescription className="text-slate-300 text-xs sm:text-sm truncate">
                 Monthly net profit by mining operation scale (at current BTC price)
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
-              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={bitcoinMiningReturns} margin={{ top: 5, right: 2, left: 2, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="hashrate" 
-                      stroke="#9CA3AF" 
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      interval={0}
-                      angle={-45}
-                      textAnchor="end"
-                      height={30}
-                    />
-                    <YAxis 
-                      stroke="#9CA3AF" 
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      width={25}
-                    />
-                    <ChartTooltip 
-                      content={<ChartTooltipContent />}
-                      formatter={(value) => [`$${(value as number).toLocaleString()}`, '']}
-                    />
-                    <Bar 
-                      dataKey="netProfit" 
-                      fill="#F59E0B"
-                      name="Monthly Net Profit"
-                      radius={[2, 2, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-              <div className="mt-1 sm:mt-2 text-center">
+            <CardContent className="pt-0 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="w-full overflow-hidden">
+                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[220px] md:h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={bitcoinMiningReturns} margin={{ top: 10, right: 10, left: 10, bottom: 35 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="hashrate" 
+                        stroke="#9CA3AF" 
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={40}
+                      />
+                      <YAxis 
+                        stroke="#9CA3AF" 
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        width={35}
+                      />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        formatter={(value) => [`$${(value as number).toLocaleString()}`, '']}
+                      />
+                      <Bar 
+                        dataKey="netProfit" 
+                        fill="#F59E0B"
+                        name="Monthly Net Profit"
+                        radius={[2, 2, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+              <div className="mt-2 text-center">
                 <p className="text-electric-yellow font-semibold text-xs sm:text-sm">$3.4M+ monthly profit potential at 25 EH/s</p>
               </div>
             </CardContent>
           </Card>
 
           {/* AI/HPC Compute Demand */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6">
-              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
-                <Cpu className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-electric-blue flex-shrink-0" />
-                <span className="leading-tight">AI & HPC Workload Growth</span>
+          <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+            <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
+              <CardTitle className="text-white flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
+                <Cpu className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-electric-blue flex-shrink-0" />
+                <span className="leading-tight truncate">AI & HPC Workload Growth</span>
               </CardTitle>
-              <CardDescription className="text-slate-300 text-xs sm:text-sm">
+              <CardDescription className="text-slate-300 text-xs sm:text-sm truncate">
                 Quarterly compute demand by workload type (PetaFLOPs)
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0 px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6">
-              <ChartContainer config={chartConfig} className="h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={aiHpcDemandGrowth} margin={{ top: 5, right: 2, left: 2, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="quarter" 
-                      stroke="#9CA3AF" 
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      interval={0}
-                      angle={-45}
-                      textAnchor="end"
-                      height={30}
-                    />
-                    <YAxis 
-                      stroke="#9CA3AF" 
-                      fontSize={8}
-                      tick={{ fontSize: 8 }}
-                      width={25}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="training" 
-                      stroke="#0EA5E9" 
-                      strokeWidth={2}
-                      name="AI Training"
-                      dot={{ r: 2 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="inference" 
-                      stroke="#F59E0B" 
-                      strokeWidth={2}
-                      name="AI Inference"
-                      dot={{ r: 2 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="hpc" 
-                      stroke="#10B981" 
-                      strokeWidth={2}
-                      name="HPC Workloads"
-                      dot={{ r: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-              <div className="mt-1 sm:mt-2 text-center">
+            <CardContent className="pt-0 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+              <div className="w-full overflow-hidden">
+                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[220px] md:h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={aiHpcDemandGrowth} margin={{ top: 10, right: 10, left: 10, bottom: 35 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="quarter" 
+                        stroke="#9CA3AF" 
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={40}
+                      />
+                      <YAxis 
+                        stroke="#9CA3AF" 
+                        fontSize={10}
+                        tick={{ fontSize: 10 }}
+                        width={30}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="training" 
+                        stroke="#0EA5E9" 
+                        strokeWidth={2}
+                        name="AI Training"
+                        dot={{ r: 3 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="inference" 
+                        stroke="#F59E0B" 
+                        strokeWidth={2}
+                        name="AI Inference"
+                        dot={{ r: 3 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="hpc" 
+                        stroke="#10B981" 
+                        strokeWidth={2}
+                        name="HPC Workloads"
+                        dot={{ r: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+              <div className="mt-2 text-center">
                 <p className="text-electric-blue font-semibold text-xs sm:text-sm">340% growth in AI training demand YoY</p>
               </div>
             </CardContent>
@@ -303,20 +312,20 @@ export const MarketOpportunitySection = () => {
 
         {/* Market Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-electric-blue mb-1">$127B</div>
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center min-w-0">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-electric-blue mb-1 truncate">$127B</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Total Addressable Market</div>
           </div>
-          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-electric-yellow mb-1">6.5x</div>
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center min-w-0">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-electric-yellow mb-1 truncate">6.5x</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Demand vs Supply Gap</div>
           </div>
-          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-neon-green mb-1">45%</div>
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center min-w-0">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-neon-green mb-1 truncate">45%</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Market Share - AI/ML</div>
           </div>
-          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-warm-orange mb-1">25%</div>
+          <div className="bg-slate-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-slate-700/50 text-center min-w-0">
+            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-warm-orange mb-1 truncate">25%</div>
             <div className="text-slate-300 text-xs sm:text-sm leading-tight">Market Share - Crypto</div>
           </div>
         </div>
