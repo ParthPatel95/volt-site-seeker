@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Building, RefreshCw, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Building, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
 import { ScrapedPropertyCard } from './ScrapedPropertyCard';
 import { PropertyStats } from './PropertyStats';
 import { PropertyFilters } from './PropertyFilters';
@@ -15,6 +17,7 @@ export function ScrapedPropertiesDisplay() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [deletingAll, setDeletingAll] = useState(false);
   const { toast } = useToast();
 
   const loadScrapedProperties = async () => {
@@ -62,6 +65,34 @@ export function ScrapedPropertiesDisplay() {
     }
   };
 
+  const deleteAllProperties = async () => {
+    setDeletingAll(true);
+    try {
+      const { error } = await supabase
+        .from('scraped_properties')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+      if (error) throw error;
+
+      toast({
+        title: "All Properties Deleted",
+        description: "All scraped properties have been permanently deleted.",
+      });
+
+      loadScrapedProperties();
+    } catch (error: any) {
+      console.error('Error deleting all properties:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete properties",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   // Set up real-time subscription to scraped_properties table
   useEffect(() => {
     loadScrapedProperties();
@@ -92,6 +123,10 @@ export function ScrapedPropertiesDisplay() {
     loadScrapedProperties();
   };
 
+  const handlePropertyDeleted = () => {
+    loadScrapedProperties();
+  };
+
   const availableCount = scrapedProperties.filter(p => !p.moved_to_properties).length;
   const movedCount = scrapedProperties.filter(p => p.moved_to_properties).length;
 
@@ -108,11 +143,47 @@ export function ScrapedPropertiesDisplay() {
 
   return (
     <div className="space-y-6">
-      <PropertyStats 
-        totalCount={scrapedProperties.length}
-        availableCount={availableCount}
-        movedCount={movedCount}
-      />
+      <div className="flex items-center justify-between">
+        <PropertyStats 
+          totalCount={scrapedProperties.length}
+          availableCount={availableCount}
+          movedCount={movedCount}
+        />
+        
+        {scrapedProperties.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                disabled={deletingAll}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete All
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete All Properties</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete all {scrapedProperties.length} scraped properties? 
+                  This action cannot be undone and will permanently remove all properties from the database.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={deleteAllProperties}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={deletingAll}
+                >
+                  {deletingAll ? 'Deleting...' : 'Delete All Properties'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
 
       <PropertyFilters
         searchTerm={searchTerm}
@@ -153,6 +224,7 @@ export function ScrapedPropertiesDisplay() {
               key={property.id}
               property={property}
               onMoveToProperties={handlePropertyMoved}
+              onDelete={handlePropertyDeleted}
             />
           ))}
         </div>

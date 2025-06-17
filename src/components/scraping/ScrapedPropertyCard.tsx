@@ -1,6 +1,8 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { mapPropertyType } from '@/utils/scrapedPropertyUtils';
@@ -8,15 +10,18 @@ import { PropertyCardHeader } from './PropertyCardHeader';
 import { PropertyStatsGrid } from './PropertyStatsGrid';
 import { PropertyDetailsSection } from './PropertyDetailsSection';
 import { PropertyCardActions } from './PropertyCardActions';
+import { Trash2 } from 'lucide-react';
 import type { ScrapedProperty } from '@/types/scrapedProperty';
 
 interface ScrapedPropertyCardProps {
   property: ScrapedProperty;
   onMoveToProperties: () => void;
+  onDelete: () => void;
 }
 
-export function ScrapedPropertyCard({ property, onMoveToProperties }: ScrapedPropertyCardProps) {
+export function ScrapedPropertyCard({ property, onMoveToProperties, onDelete }: ScrapedPropertyCardProps) {
   const [moving, setMoving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   const moveToProperties = async () => {
@@ -74,14 +79,79 @@ export function ScrapedPropertyCard({ property, onMoveToProperties }: ScrapedPro
     }
   };
 
+  const deleteProperty = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('scraped_properties')
+        .delete()
+        .eq('id', property.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Property Deleted",
+        description: "Property has been permanently deleted.",
+      });
+
+      onDelete();
+    } catch (error: any) {
+      console.error('Error deleting property:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete property",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500">
       <CardHeader className="pb-3">
-        <PropertyCardHeader 
-          property={property} 
-          moving={moving} 
-          onMoveToProperties={moveToProperties}
-        />
+        <div className="flex items-start justify-between">
+          <PropertyCardHeader 
+            property={property} 
+            moving={moving} 
+            onMoveToProperties={moveToProperties}
+          />
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                disabled={deleting}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Property</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this property? This action cannot be undone.
+                  <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                    <strong>{property.address}</strong><br />
+                    {property.city}, {property.state}
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={deleteProperty}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
