@@ -203,16 +203,18 @@ export function ScrapedPropertiesDisplay() {
             <p className="text-muted-foreground mb-4">
               {searchTerm || typeFilter !== 'all' || statusFilter !== 'all'
                 ? 'Try adjusting your filters or search terms'
-                : 'Real estate data scraping requires API integration. No synthetic data will be generated.'
+                : 'No real property data has been scraped yet.'
               }
             </p>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
               <div className="flex items-center mb-2">
-                <AlertCircle className="w-5 h-5 text-amber-600 mr-2" />
-                <span className="font-medium text-amber-800">Real Data Only</span>
+                <AlertCircle className="w-5 h-5 text-blue-600 mr-2" />
+                <span className="font-medium text-blue-800">Real Data Only</span>
               </div>
-              <p className="text-sm text-amber-700">
-                We've removed all synthetic/dummy data. Properties will only appear when real estate APIs return actual listings.
+              <p className="text-sm text-blue-700">
+                This scraper only returns real property data from actual real estate websites. 
+                No synthetic or fake data is generated. If no properties appear, it means no real 
+                listings were found matching your criteria.
               </p>
             </div>
           </CardContent>

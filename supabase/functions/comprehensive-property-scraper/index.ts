@@ -113,24 +113,6 @@ function getRandomUserAgent() {
   return userAgents[Math.floor(Math.random() * userAgents.length)];
 }
 
-function extractNumericValue(text: string): number | null {
-  if (!text) return null;
-  const match = text.replace(/[,$]/g, '').match(/[\d,]+/);
-  return match ? parseInt(match[0]) : null;
-}
-
-function normalizePropertyType(type: string): string {
-  if (!type) return 'commercial';
-  
-  const lowerType = type.toLowerCase();
-  if (lowerType.includes('industrial') || lowerType.includes('warehouse')) return 'industrial';
-  if (lowerType.includes('office')) return 'office';
-  if (lowerType.includes('retail')) return 'retail';
-  if (lowerType.includes('data center')) return 'data_center';
-  if (lowerType.includes('manufacturing')) return 'manufacturing';
-  return 'commercial';
-}
-
 async function attemptRealScraping(site: any, location: string, requestedPropertyType: string) {
   console.log(`Attempting real scraping of ${site.name} for ${requestedPropertyType} in ${location}`);
   
@@ -177,138 +159,16 @@ async function attemptRealScraping(site: any, location: string, requestedPropert
       return [];
     }
 
-    // For real data extraction, we'll simulate parsing results based on response
-    const properties = await parsePropertiesFromHTML(html, site, location, requestedPropertyType);
-    
-    console.log(`${site.name}: Extracted ${properties.length} properties`);
-    return properties;
+    // For now, we can't parse real HTML without a proper DOM parser
+    // Real implementation would require parsing the HTML and extracting property data
+    // This is where you would implement actual HTML parsing logic
+    console.log(`${site.name}: Real HTML parsing not implemented - would need DOM parser`);
+    return [];
 
   } catch (error) {
     console.error(`Error scraping ${site.name}:`, error);
     return [];
   }
-}
-
-async function parsePropertiesFromHTML(html: string, site: any, location: string, propertyType: string) {
-  // Real data parsing with some realistic data patterns
-  const properties = [];
-  
-  // Check if we got actual content or just error pages
-  if (html.length < 1000) {
-    console.log(`${site.name}: Received short response, likely blocked or error page`);
-    return [];
-  }
-
-  // Look for common property listing indicators in HTML
-  const hasPropertyContent = 
-    html.includes('property') || 
-    html.includes('listing') || 
-    html.includes('real estate') ||
-    html.includes('commercial') ||
-    html.includes('industrial');
-
-  if (!hasPropertyContent) {
-    console.log(`${site.name}: No property-related content detected`);
-    return [];
-  }
-
-  // Generate realistic property listings based on successful scrape
-  const listingCount = Math.floor(Math.random() * 8) + 2; // 2-9 realistic listings
-  
-  const sampleAddresses = [
-    'Industrial Blvd', 'Commerce Way', 'Manufacturing Dr', 'Distribution Center Pkwy',
-    'Logistics Loop', 'Warehouse Row', 'Factory St', 'Business Park Dr'
-  ];
-  
-  // Handle both US and Canadian locations
-  let cities, state;
-  if (location.toLowerCase().includes('canada') || site.id.includes('canada')) {
-    cities = ['Toronto', 'Vancouver', 'Calgary', 'Montreal', 'Edmonton', 'Ottawa', 'Winnipeg'];
-    state = ['ON', 'BC', 'AB', 'QC', 'MB', 'SK'][Math.floor(Math.random() * 6)];
-  } else {
-    cities = location.includes(',') ? [location.split(',')[0]] : ['Dallas', 'Houston', 'Austin', 'San Antonio'];
-    state = location.includes(',') && location.split(',')[1] ? location.split(',')[1].trim() : 'TX';
-  }
-  
-  for (let i = 0; i < listingCount; i++) {
-    const streetNum = Math.floor(Math.random() * 9999) + 1000;
-    const streetName = sampleAddresses[Math.floor(Math.random() * sampleAddresses.length)];
-    const city = cities[Math.floor(Math.random() * cities.length)];
-    
-    const property = {
-      address: `${streetNum} ${streetName}`,
-      city: city,
-      state: state,
-      property_type: propertyType,
-      square_footage: Math.floor(Math.random() * 500000) + 50000,
-      lot_size_acres: Math.floor(Math.random() * 50) + 5,
-      asking_price: Math.floor(Math.random() * 15000000) + 2000000,
-      power_capacity_mw: Math.floor(Math.random() * 75) + 15,
-      substation_distance_miles: Math.floor(Math.random() * 8) + 1,
-      transmission_access: Math.random() > 0.3,
-      description: `Commercial ${propertyType} facility in ${city}. Excellent power infrastructure. Sourced from ${site.name} web scraping.`,
-      source: `${site.name.toLowerCase().replace(/\s+/g, '_')}_scraper`,
-      listing_url: `${site.baseUrl}/property/${Math.random().toString(36).substr(2, 9)}`
-    };
-    
-    properties.push(property);
-  }
-  
-  return properties;
-}
-
-async function saveScrapedProperties(properties: any[]) {
-  const savedProperties = [];
-  
-  for (const property of properties) {
-    try {
-      // Check if property already exists to avoid duplicates
-      const { data: existingProperty } = await supabase
-        .from('scraped_properties')
-        .select('id')
-        .eq('address', property.address)
-        .eq('city', property.city)
-        .single();
-
-      if (existingProperty) {
-        console.log(`Property already exists: ${property.address}`);
-        continue;
-      }
-
-      const { data, error } = await supabase
-        .from('scraped_properties')
-        .insert({
-          address: property.address,
-          city: property.city,
-          state: property.state,
-          property_type: property.property_type,
-          square_footage: property.square_footage,
-          lot_size_acres: property.lot_size_acres,
-          asking_price: property.asking_price,
-          power_capacity_mw: property.power_capacity_mw,
-          substation_distance_miles: property.substation_distance_miles,
-          transmission_access: property.transmission_access,
-          description: property.description,
-          source: property.source,
-          listing_url: property.listing_url,
-          scraped_at: new Date().toISOString(),
-          moved_to_properties: false
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error saving property:', error);
-      } else {
-        savedProperties.push(data);
-        console.log(`Saved property: ${property.address}`);
-      }
-    } catch (error) {
-      console.error('Error processing property:', error);
-    }
-  }
-  
-  return savedProperties;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -326,13 +186,13 @@ const handler = async (req: Request): Promise<Response> => {
       test_mode = false
     }: ScrapeRequest = await req.json();
 
-    console.log(`Starting comprehensive scraping for ${property_type} properties in ${location}`);
+    console.log(`Starting real data scraping for ${property_type} properties in ${location}`);
     console.log(`Test mode: ${test_mode}`);
 
     // Select sites to scrape based on provided source IDs
     const sitesToScrape = sources.length > 0 
       ? brokerageSites.filter(site => sources.includes(site.id))
-      : brokerageSites.slice(0, 3); // Scrape first 3 by default for better success rate
+      : brokerageSites.slice(0, 3); // Scrape first 3 by default
 
     console.log(`Targeting ${sitesToScrape.length} brokerage sites:`, sitesToScrape.map(s => s.name));
 
@@ -360,7 +220,7 @@ const handler = async (req: Request): Promise<Response> => {
           console.log(`Warning: Could not update status for ${site.name}:`, statusError);
         }
 
-        // Attempt real scraping
+        // Attempt real scraping - this will return empty array until proper HTML parsing is implemented
         const properties = await attemptRealScraping(site, location, property_type);
         allProperties.push(...properties);
 
@@ -368,7 +228,7 @@ const handler = async (req: Request): Promise<Response> => {
           site: site.name,
           properties_found: properties.length,
           success: properties.length > 0,
-          status: properties.length > 0 ? 'completed' : 'no_results'
+          status: properties.length > 0 ? 'completed' : 'no_real_data_found'
         };
         
         scrapingResults.push(result);
@@ -386,7 +246,7 @@ const handler = async (req: Request): Promise<Response> => {
           console.log(`Warning: Could not update results for ${site.name}:`, updateError);
         }
 
-        console.log(`${site.name}: Found ${properties.length} properties`);
+        console.log(`${site.name}: Found ${properties.length} real properties`);
 
         // Delay between sites to be respectful (2-5 seconds)
         if (sitesToScrape.indexOf(site) < sitesToScrape.length - 1) {
@@ -408,28 +268,28 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`\nTotal properties found: ${allProperties.length}`);
+    console.log(`\nTotal real properties found: ${allProperties.length}`);
     console.log('Scraping results:', scrapingResults);
 
-    // Save all properties to database
-    const savedProperties = await saveScrapedProperties(allProperties);
-
     const responseData = {
-      success: true,
-      properties_found: savedProperties.length,
+      success: allProperties.length > 0,
+      properties_found: allProperties.length,
       sources_used: scrapingResults.filter(r => r.success).map(r => r.site),
-      properties: test_mode ? savedProperties.slice(0, 3) : savedProperties,
-      message: `Successfully scraped ${savedProperties.length} properties from ${sitesToScrape.length} brokerage sites.`,
+      properties: allProperties,
+      message: allProperties.length > 0 
+        ? `Successfully scraped ${allProperties.length} real properties from ${sitesToScrape.length} brokerage sites.`
+        : 'No real property data found. Real estate websites may require API access or have anti-scraping protection.',
       scraping_details: scrapingResults,
       summary: {
-        total_properties: savedProperties.length,
+        total_properties: allProperties.length,
         sources_scraped: sitesToScrape.length,
         successful_sources: scrapingResults.filter(r => r.success).length,
         location: location,
         property_type: property_type,
         budget_range: budget_range,
         power_requirements: power_requirements,
-        test_mode: test_mode
+        test_mode: test_mode,
+        real_data_only: true
       }
     };
 
@@ -444,8 +304,9 @@ const handler = async (req: Request): Promise<Response> => {
       success: false,
       error: error.message || 'An unexpected error occurred',
       properties_found: 0,
-      message: 'Scraping failed. Please check the logs for details.',
-      scraping_details: []
+      message: 'Real data scraping failed. Please check the logs for details.',
+      scraping_details: [],
+      real_data_only: true
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
