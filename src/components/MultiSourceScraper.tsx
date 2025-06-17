@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AIPropertyScraper } from './scraping/AIPropertyScraper';
 import { ComprehensiveScraper } from './scraping/ComprehensiveScraper';
 import { ScrapedPropertiesDisplay } from './scraping/ScrapedPropertiesDisplay';
+import { APIKeySetup } from './scraping/APIKeySetup';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Brain, 
