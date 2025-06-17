@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +13,7 @@ import {
   Bot,
   Zap
 } from 'lucide-react';
+import { FreeDataSources } from './scraping/FreeDataSources';
 
 export function MultiSourceScraper() {
   const [scrapedPropertiesCount, setScrapedPropertiesCount] = useState(0);
@@ -63,8 +63,12 @@ export function MultiSourceScraper() {
         </div>
       </div>
 
-      <Tabs defaultValue="comprehensive-scraper" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="free-data-sources" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="free-data-sources" className="flex items-center">
+            <Database className="w-4 h-4 mr-2" />
+            Free Data Sources
+          </TabsTrigger>
           <TabsTrigger value="comprehensive-scraper" className="flex items-center">
             <Bot className="w-4 h-4 mr-2" />
             Comprehensive Scraper
@@ -80,6 +84,45 @@ export function MultiSourceScraper() {
             Source Management
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="free-data-sources" className="space-y-6">
+          <FreeDataSources onPropertiesFound={handlePropertiesFound} />
+          
+          {/* Free Data Sources Overview */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4 text-center">
+                <Database className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-green-800">Government APIs</h3>
+                <p className="text-sm text-green-600">Census, EIA, USGS data</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4 text-center">
+                <Globe className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-blue-800">Public Records</h3>
+                <p className="text-sm text-blue-600">County assessor data</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-purple-50 border-purple-200">
+              <CardContent className="p-4 text-center">
+                <Search className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-purple-800">Business APIs</h3>
+                <p className="text-sm text-purple-600">Google Places, Yelp</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-orange-50 border-orange-200">
+              <CardContent className="p-4 text-center">
+                <Zap className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-orange-800">Open Source</h3>
+                <p className="text-sm text-orange-600">OpenStreetMap data</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="comprehensive-scraper" className="space-y-6">
           <ComprehensiveScraper onPropertiesFound={handlePropertiesFound} />
@@ -168,17 +211,11 @@ export function MultiSourceScraper() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Globe className="w-5 h-5 mr-2" />
-                Source Management
+                Free API Configuration
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <Database className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-muted-foreground mb-2">Source Management</h3>
-                <p className="text-muted-foreground">
-                  Configure and manage scraping sources. This feature will be enhanced in future updates.
-                </p>
-              </div>
+              <APIKeySetup />
             </CardContent>
           </Card>
         </TabsContent>
