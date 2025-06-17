@@ -58,7 +58,7 @@ export function MultiSourceScraper() {
         <div>
           <h1 className="text-3xl font-bold">Multi-Source Property Scraper</h1>
           <p className="text-muted-foreground">
-            Educational web scraping tools for real estate discovery
+            Web scraping tools for real estate discovery
           </p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function MultiSourceScraper() {
               <CardContent className="p-4 text-center">
                 <Globe className="w-8 h-8 text-green-600 mx-auto mb-2" />
                 <h3 className="font-semibold text-green-800">Multi-Site Scraping</h3>
-                <p className="text-sm text-green-600">5+ major brokerage sites</p>
+                <p className="text-sm text-green-600">30+ major brokerage sites</p>
               </CardContent>
             </Card>
             

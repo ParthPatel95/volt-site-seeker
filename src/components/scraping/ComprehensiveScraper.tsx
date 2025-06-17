@@ -112,7 +112,7 @@ export function ComprehensiveScraper({ onPropertiesFound }: ComprehensiveScraper
           Comprehensive Property Scraper
         </CardTitle>
         <div className="text-sm text-green-600">
-          Educational web scraping tool for commercial real estate discovery
+          Web scraping tool for commercial real estate discovery
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
