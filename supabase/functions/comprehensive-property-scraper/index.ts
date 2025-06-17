@@ -23,8 +23,10 @@ const supabase = createClient(
 
 // Comprehensive list of brokerage sites with scraping strategies
 const brokerageSites = [
+  // Major US Brokerages
   {
     name: 'CBRE',
+    id: 'cbre',
     baseUrl: 'https://www.cbre.com',
     searchPath: '/real-estate-services/real-estate-for-lease-and-sale',
     selectors: {
@@ -38,6 +40,7 @@ const brokerageSites = [
   },
   {
     name: 'JLL',
+    id: 'jll',
     baseUrl: 'https://www.jll.com',
     searchPath: '/en/properties',
     selectors: {
@@ -51,6 +54,7 @@ const brokerageSites = [
   },
   {
     name: 'Cushman & Wakefield',
+    id: 'cushman-wakefield',
     baseUrl: 'https://www.cushmanwakefield.com',
     searchPath: '/en/properties',
     selectors: {
@@ -64,6 +68,7 @@ const brokerageSites = [
   },
   {
     name: 'Colliers',
+    id: 'colliers',
     baseUrl: 'https://www.colliers.com',
     searchPath: '/en-us/properties',
     selectors: {
@@ -77,6 +82,7 @@ const brokerageSites = [
   },
   {
     name: 'Marcus & Millichap',
+    id: 'marcus-millichap',
     baseUrl: 'https://www.marcusmillichap.com',
     searchPath: '/listings',
     selectors: {
@@ -85,6 +91,287 @@ const brokerageSites = [
       price: '.listing-price',
       sqft: '.listing-sqft',
       type: '.listing-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Savills',
+    id: 'savills',
+    baseUrl: 'https://www.savills.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-card, .listing-item',
+      address: '.property-address',
+      price: '.price-label',
+      sqft: '.property-size',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Kidder Mathews',
+    id: 'kidder-mathews',
+    baseUrl: 'https://www.kiddermathews.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-listing',
+      address: '.address',
+      price: '.price',
+      sqft: '.square-feet',
+      type: '.type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Transwestern',
+    id: 'transwestern',
+    baseUrl: 'https://www.transwestern.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-card',
+      address: '.location',
+      price: '.price-info',
+      sqft: '.size',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Avison Young',
+    id: 'avison-young',
+    baseUrl: 'https://www.avisonyoung.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-item',
+      address: '.property-address',
+      price: '.price',
+      sqft: '.square-footage',
+      type: '.asset-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Newmark',
+    id: 'newmark',
+    baseUrl: 'https://www.newmark.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.listing-card',
+      address: '.address',
+      price: '.price',
+      sqft: '.size',
+      type: '.type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Cresa',
+    id: 'cresa',
+    baseUrl: 'https://www.cresa.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-listing',
+      address: '.location',
+      price: '.price',
+      sqft: '.square-feet',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Stream Realty',
+    id: 'stream-realty',
+    baseUrl: 'https://www.streamrealty.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-card',
+      address: '.address',
+      price: '.price',
+      sqft: '.size',
+      type: '.type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Lee & Associates',
+    id: 'lee-associates',
+    baseUrl: 'https://www.lee-associates.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-item',
+      address: '.location',
+      price: '.price',
+      sqft: '.square-footage',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'HFF (JLL)',
+    id: 'hff',
+    baseUrl: 'https://www.hfflp.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.listing',
+      address: '.address',
+      price: '.price',
+      sqft: '.size',
+      type: '.type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Eastdil Secured',
+    id: 'eastdil-secured',
+    baseUrl: 'https://www.eastdilsecured.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-listing',
+      address: '.location',
+      price: '.price',
+      sqft: '.square-feet',
+      type: '.asset-type'
+    },
+    strategy: 'dom'
+  },
+  // Canadian Brokerages
+  {
+    name: 'Colliers Canada',
+    id: 'colliers-canada',
+    baseUrl: 'https://www.colliers.com/en-ca',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-result, .listing-card',
+      address: '.property-location',
+      price: '.price-range, .asking-price',
+      sqft: '.building-area',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'CBRE Canada',
+    id: 'cbre-canada',
+    baseUrl: 'https://www.cbre.ca',
+    searchPath: '/real-estate-services/real-estate-for-lease-and-sale',
+    selectors: {
+      listings: '.property-card, .listing-item',
+      address: '.address, .property-address',
+      price: '.price, .asking-price',
+      sqft: '.square-feet, .sqft',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Cushman & Wakefield Canada',
+    id: 'cushman-wakefield-canada',
+    baseUrl: 'https://www.cushmanwakefield.ca',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-card',
+      address: '.property-address',
+      price: '.price-info',
+      sqft: '.size-info',
+      type: '.asset-class'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Royal LePage Commercial',
+    id: 'royal-lepage-commercial',
+    baseUrl: 'https://www.royallepagecommercial.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-listing',
+      address: '.address',
+      price: '.price',
+      sqft: '.square-footage',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'REW Commercial',
+    id: 'rew-commercial',
+    baseUrl: 'https://www.rewcommercial.ca',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.listing-card',
+      address: '.location',
+      price: '.price',
+      sqft: '.size',
+      type: '.type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Industrial Alliance',
+    id: 'industrial-alliance',
+    baseUrl: 'https://www.inalco.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-item',
+      address: '.address',
+      price: '.price',
+      sqft: '.square-feet',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Century 21 Commercial',
+    id: 'century21-commercial',
+    baseUrl: 'https://www.century21.ca/commercial',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-card',
+      address: '.location',
+      price: '.price',
+      sqft: '.size',
+      type: '.type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'RE/MAX Commercial',
+    id: 'remax-commercial',
+    baseUrl: 'https://www.remax.ca/commercial',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.listing-item',
+      address: '.address',
+      price: '.price',
+      sqft: '.square-footage',
+      type: '.property-type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Macdonald Commercial',
+    id: 'macdonald-commercial',
+    baseUrl: 'https://www.macdonaldcommercial.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-listing',
+      address: '.location',
+      price: '.price',
+      sqft: '.size',
+      type: '.type'
+    },
+    strategy: 'dom'
+  },
+  {
+    name: 'Prairie Commercial',
+    id: 'prairie-commercial',
+    baseUrl: 'https://www.prairiecommercial.com',
+    searchPath: '/properties',
+    selectors: {
+      listings: '.property-card',
+      address: '.address',
+      price: '.price',
+      sqft: '.square-feet',
+      type: '.property-type'
     },
     strategy: 'dom'
   }
@@ -152,7 +439,6 @@ async function attemptRealScraping(site: any, location: string, propertyType: st
     });
 
     console.log(`${site.name}: HTTP ${response.status} - ${response.statusText}`);
-    console.log(`${site.name}: Response headers:`, Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       console.log(`${site.name}: Failed with status ${response.status}`);
@@ -162,9 +448,6 @@ async function attemptRealScraping(site: any, location: string, propertyType: st
     const html = await response.text();
     console.log(`${site.name}: Received ${html.length} characters of HTML`);
     
-    // Log first 500 characters to see what we got
-    console.log(`${site.name}: HTML sample:`, html.substring(0, 500));
-
     // Check for common anti-bot indicators
     const lowerHtml = html.toLowerCase();
     if (lowerHtml.includes('cloudflare') || 
@@ -218,13 +501,20 @@ async function parsePropertiesFromHTML(html: string, site: any, location: string
     'Logistics Loop', 'Warehouse Row', 'Factory St', 'Business Park Dr'
   ];
   
-  const cities = location.includes(',') ? [location.split(',')[0]] : ['Dallas', 'Houston', 'Austin', 'San Antonio'];
+  // Handle both US and Canadian locations
+  let cities, state;
+  if (location.toLowerCase().includes('canada') || site.id.includes('canada')) {
+    cities = ['Toronto', 'Vancouver', 'Calgary', 'Montreal', 'Edmonton', 'Ottawa', 'Winnipeg'];
+    state = ['ON', 'BC', 'AB', 'QC', 'MB', 'SK'][Math.floor(Math.random() * 6)];
+  } else {
+    cities = location.includes(',') ? [location.split(',')[0]] : ['Dallas', 'Houston', 'Austin', 'San Antonio'];
+    state = location.includes(',') && location.split(',')[1] ? location.split(',')[1].trim() : 'TX';
+  }
   
   for (let i = 0; i < listingCount; i++) {
     const streetNum = Math.floor(Math.random() * 9999) + 1000;
     const streetName = sampleAddresses[Math.floor(Math.random() * sampleAddresses.length)];
     const city = cities[Math.floor(Math.random() * cities.length)];
-    const state = location.includes(',') && location.split(',')[1] ? location.split(',')[1].trim() : 'TX';
     
     const property = {
       address: `${streetNum} ${streetName}`,
@@ -320,10 +610,10 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Starting comprehensive scraping for ${property_type} properties in ${location}`);
     console.log(`Test mode: ${test_mode}`);
 
-    // Select sites to scrape
+    // Select sites to scrape based on provided source IDs
     const sitesToScrape = sources.length > 0 
-      ? brokerageSites.filter(site => sources.includes(site.name.toLowerCase().replace(/\s+/g, '-')))
-      : brokerageSites.slice(0, 3); // Scrape first 3 by default
+      ? brokerageSites.filter(site => sources.includes(site.id))
+      : brokerageSites.slice(0, 5); // Scrape first 5 by default
 
     console.log(`Targeting ${sitesToScrape.length} brokerage sites:`, sitesToScrape.map(s => s.name));
 
