@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Search, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { TestRunner } from './TestRunner';
 import { SourceSelector } from './SourceSelector';
 import { SearchParameters } from './SearchParameters';
 import { EducationalNotices } from './EducationalNotices';
@@ -117,8 +116,6 @@ export function ComprehensiveScraper({ onPropertiesFound }: ComprehensiveScraper
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <TestRunner onPropertiesFound={onPropertiesFound} />
-
         <SearchParameters
           location={location}
           propertyType={propertyType}
