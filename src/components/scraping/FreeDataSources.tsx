@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Database, MapPin, Search, Building } from 'lucide-react';
+import { Database, MapPin, Search, Building, Gavel, TrendingUp, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -55,6 +55,27 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
       description: 'Public property records',
       icon: Database,
       status: 'requires_setup'
+    },
+    { 
+      id: 'auction_com', 
+      name: 'Auction.com', 
+      description: 'Foreclosure and auction properties',
+      icon: Gavel,
+      status: 'free_scraping'
+    },
+    { 
+      id: 'biggerpockets', 
+      name: 'BiggerPockets', 
+      description: 'Real estate investment data',
+      icon: TrendingUp,
+      status: 'free_scraping'
+    },
+    { 
+      id: 'public_auctions', 
+      name: 'Public Auction Sites', 
+      description: 'Government surplus and tax sales',
+      icon: FileText,
+      status: 'free_scraping'
     }
   ];
 
@@ -127,6 +148,8 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
         return <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Free</span>;
       case 'free_tier':
         return <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Free Tier</span>;
+      case 'free_scraping':
+        return <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Free Scraping</span>;
       case 'requires_setup':
         return <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Setup Required</span>;
       default:
@@ -142,7 +165,7 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
           Free Data Sources
         </CardTitle>
         <div className="text-sm text-blue-600">
-          Access real property data from free government and public APIs
+          Access real property data from free government, public APIs, and auction sites
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -169,6 +192,8 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
                 <SelectItem value="warehouse">Warehouse</SelectItem>
                 <SelectItem value="manufacturing">Manufacturing</SelectItem>
                 <SelectItem value="retail">Retail</SelectItem>
+                <SelectItem value="foreclosure">Foreclosure</SelectItem>
+                <SelectItem value="auction">Auction</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -222,7 +247,7 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
           {loading ? 'Fetching Data...' : `Fetch from ${selectedSource ? dataSources.find(s => s.id === selectedSource)?.name : 'Selected Source'}`}
         </Button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div className="bg-green-50 p-3 rounded border border-green-200">
             <h5 className="font-medium text-green-800 mb-1">✓ Completely Free</h5>
             <p className="text-green-700">OpenStreetMap, Census Bureau - No API keys required</p>
@@ -231,6 +256,11 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
           <div className="bg-blue-50 p-3 rounded border border-blue-200">
             <h5 className="font-medium text-blue-800 mb-1">🔑 Free Tier Available</h5>
             <p className="text-blue-700">Google Places, Yelp - Requires free API keys</p>
+          </div>
+
+          <div className="bg-purple-50 p-3 rounded border border-purple-200">
+            <h5 className="font-medium text-purple-800 mb-1">🕷️ Free Scraping</h5>
+            <p className="text-purple-700">Auction sites, BiggerPockets - Public data scraping</p>
           </div>
         </div>
       </CardContent>

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -8,7 +7,7 @@ const corsHeaders = {
 };
 
 interface FreeDataRequest {
-  source: 'county_records' | 'google_places' | 'yelp' | 'openstreetmap' | 'census';
+  source: 'county_records' | 'google_places' | 'yelp' | 'openstreetmap' | 'census' | 'auction_com' | 'biggerpockets' | 'public_auctions';
   location: string;
   property_type?: string;
   radius?: number;
@@ -45,6 +44,15 @@ serve(async (req) => {
       case 'county_records':
         data = await fetchCountyRecords(request);
         break;
+      case 'auction_com':
+        data = await fetchAuctionComData(request);
+        break;
+      case 'biggerpockets':
+        data = await fetchBiggerPocketsData(request);
+        break;
+      case 'public_auctions':
+        data = await fetchPublicAuctionsData(request);
+        break;
       default:
         throw new Error('Unknown data source');
     }
@@ -79,6 +87,114 @@ serve(async (req) => {
     });
   }
 });
+
+async function fetchAuctionComData(request: FreeDataRequest) {
+  try {
+    console.log('Fetching Auction.com data for:', request.location);
+    
+    // Since Auction.com doesn't have a public API, this would use web scraping
+    // For now, return sample data structure
+    const sampleProperties = [
+      {
+        address: `123 Industrial Ave, ${request.location}`,
+        city: extractLocationCity(request.location),
+        state: extractLocationState(request.location),
+        zip_code: '75001',
+        property_type: 'foreclosure',
+        source: 'auction_com',
+        listing_url: 'https://www.auction.com/sample-listing',
+        description: 'Foreclosure property - Industrial facility',
+        square_footage: 50000,
+        asking_price: 850000,
+        lot_size_acres: 5.2,
+        auction_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        auction_type: 'foreclosure'
+      }
+    ];
+
+    return {
+      properties: request.property_type === 'foreclosure' || request.property_type === 'auction' ? sampleProperties : [],
+      message: `Found ${sampleProperties.length} auction properties (demo data - requires web scraping implementation)`
+    };
+  } catch (error) {
+    console.error('Auction.com scraping error:', error);
+    return { properties: [], message: 'Auction.com data currently requires web scraping implementation' };
+  }
+}
+
+async function fetchBiggerPocketsData(request: FreeDataRequest) {
+  try {
+    console.log('Fetching BiggerPockets data for:', request.location);
+    
+    // BiggerPockets doesn't have a public API, would require web scraping
+    // For now, return sample investment property data
+    const sampleProperties = [
+      {
+        address: `456 Investment Blvd, ${request.location}`,
+        city: extractLocationCity(request.location),
+        state: extractLocationState(request.location),
+        zip_code: '75002',
+        property_type: 'investment',
+        source: 'biggerpockets',
+        listing_url: 'https://www.biggerpockets.com/sample-listing',
+        description: 'Commercial investment opportunity - High ROI potential',
+        square_footage: 75000,
+        asking_price: 1200000,
+        lot_size_acres: 3.8,
+        cap_rate: 8.5,
+        cash_flow: 5500,
+        investment_analysis: {
+          roi: '12.3%',
+          cash_on_cash: '8.7%',
+          debt_coverage_ratio: 1.35
+        }
+      }
+    ];
+
+    return {
+      properties: request.property_type === 'commercial' || request.property_type === 'industrial' ? sampleProperties : [],
+      message: `Found ${sampleProperties.length} investment properties (demo data - requires web scraping implementation)`
+    };
+  } catch (error) {
+    console.error('BiggerPockets scraping error:', error);
+    return { properties: [], message: 'BiggerPockets data currently requires web scraping implementation' };
+  }
+}
+
+async function fetchPublicAuctionsData(request: FreeDataRequest) {
+  try {
+    console.log('Fetching public auction data for:', request.location);
+    
+    // Public auction sites vary by location and would require scraping multiple sources
+    // For now, return sample government surplus and tax sale data
+    const sampleProperties = [
+      {
+        address: `789 Government Way, ${request.location}`,
+        city: extractLocationCity(request.location),
+        state: extractLocationState(request.location),
+        zip_code: '75003',
+        property_type: 'government_surplus',
+        source: 'public_auctions',
+        listing_url: 'https://www.publicsurplus.com/sample-listing',
+        description: 'Government surplus facility - Former warehouse',
+        square_footage: 100000,
+        asking_price: 650000,
+        lot_size_acres: 8.5,
+        auction_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        auction_type: 'tax_sale',
+        min_bid: 500000
+      }
+    ];
+
+    return {
+      properties: sampleProperties,
+      message: `Found ${sampleProperties.length} public auction properties (demo data - requires web scraping implementation)`
+    };
+  } catch (error) {
+    console.error('Public auctions scraping error:', error);
+    return { properties: [], message: 'Public auction data currently requires web scraping implementation' };
+  }
+}
 
 async function fetchGooglePlaces(request: FreeDataRequest) {
   const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
@@ -346,4 +462,14 @@ function extractZipCode(address: string): string {
 function extractStateFromCensus(row: any[]): string {
   // Census data includes state codes - would need state code to name mapping
   return row[5] || '';
+}
+
+function extractLocationCity(location: string): string {
+  const parts = location.split(',');
+  return parts[0]?.trim() || location;
+}
+
+function extractLocationState(location: string): string {
+  const parts = location.split(',');
+  return parts[1]?.trim() || 'TX';
 }
