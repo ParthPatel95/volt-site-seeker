@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,8 +61,8 @@ export function GoogleMapsSubstationFinder() {
       const { data, error } = await supabase.functions.invoke('google-maps-substation-finder', {
         body: { 
           location: location.trim(),
-          searchRadius: 50000, // 50km radius
-          maxResults: 20
+          searchRadius: 100000, // Increased to 100km radius
+          maxResults: 100 // Increased to find more substations
         }
       });
 
@@ -142,7 +141,7 @@ export function GoogleMapsSubstationFinder() {
           )
         );
 
-        // Store in database
+        // Store in database with proper error handling
         await storeSubstationData(substation, capacityResult);
 
       } catch (error) {
@@ -170,9 +169,10 @@ export function GoogleMapsSubstationFinder() {
 
   const storeSubstationData = async (substation: DiscoveredSubstation, capacityResult: any) => {
     try {
-      const { error } = await supabase
+      // First, try to insert the record
+      const { error: insertError } = await supabase
         .from('substations')
-        .upsert({
+        .insert({
           name: substation.name,
           latitude: substation.latitude,
           longitude: substation.longitude,
@@ -185,12 +185,24 @@ export function GoogleMapsSubstationFinder() {
           load_factor: 0.75, // Default estimate
           status: 'active',
           coordinates_source: 'google_maps_api'
-        }, {
-          onConflict: 'name,latitude,longitude'
         });
 
-      if (error) {
-        console.error('Error storing substation:', error);
+      // If insert fails due to duplicate, try to update instead
+      if (insertError) {
+        const { error: updateError } = await supabase
+          .from('substations')
+          .update({
+            capacity_mva: capacityResult.estimatedCapacity.max * 1.25,
+            interconnection_type: capacityResult.substationType || 'unknown',
+            coordinates_source: 'google_maps_api'
+          })
+          .eq('name', substation.name)
+          .eq('latitude', substation.latitude)
+          .eq('longitude', substation.longitude);
+
+        if (updateError) {
+          console.error('Error updating substation:', updateError);
+        }
       }
     } catch (error) {
       console.error('Storage error:', error);

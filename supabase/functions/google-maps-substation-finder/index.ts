@@ -35,7 +35,7 @@ serve(async (req) => {
       throw new Error('Google Maps API key not configured')
     }
 
-    const { location, searchRadius = 50000, maxResults = 20 }: SubstationSearchRequest = await req.json()
+    const { location, searchRadius = 100000, maxResults = 100 }: SubstationSearchRequest = await req.json()
 
     console.log('Searching for substations in:', location)
 
@@ -52,29 +52,38 @@ serve(async (req) => {
     const { lat, lng } = geocodeData.results[0].geometry.location
     console.log(`Geocoded ${location} to:`, lat, lng)
 
-    // Search for substations using Places API
+    // Search for substations using Places API with expanded search terms
     const substations: DiscoveredSubstation[] = []
     
-    // Multiple search terms to find different types of substations
+    // Comprehensive search terms to find different types of substations and power facilities
     const searchTerms = [
       'electrical substation',
       'power substation',
       'transmission substation',
       'distribution substation',
-      'utility substation'
+      'utility substation',
+      'electric utility',
+      'power station',
+      'generating station',
+      'power plant',
+      'electrical facility',
+      'transmission facility',
+      'power grid',
+      'electrical infrastructure'
     ]
 
     for (const searchTerm of searchTerms) {
       try {
-        const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchTerm)}&location=${lat},${lng}&radius=${searchRadius}&key=${GOOGLE_MAPS_API_KEY}`
+        // Use both text search and nearby search for comprehensive coverage
+        const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchTerm)}&location=${lat},${lng}&radius=${searchRadius}&key=${GOOGLE_MAPS_API_KEY}`
         
-        const placesResponse = await fetch(placesUrl)
-        const placesData = await placesResponse.json()
+        const textResponse = await fetch(textSearchUrl)
+        const textData = await textResponse.json()
 
-        if (placesData.status === 'OK' && placesData.results) {
-          for (const place of placesData.results) {
-            // Avoid duplicates
-            if (!substations.find(s => s.place_id === place.place_id)) {
+        if (textData.status === 'OK' && textData.results) {
+          for (const place of textData.results) {
+            // Check if this is likely a substation or power facility
+            if (isLikelyPowerFacility(place) && !substations.find(s => s.place_id === place.place_id)) {
               substations.push({
                 id: place.place_id,
                 name: place.name,
@@ -89,67 +98,137 @@ serve(async (req) => {
           }
         }
 
+        // Check for more results using pagination token
+        let nextPageToken = textData.next_page_token
+        while (nextPageToken && substations.length < maxResults) {
+          await new Promise(resolve => setTimeout(resolve, 2000)) // Required delay for next_page_token
+          
+          const nextPageUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextPageToken}&key=${GOOGLE_MAPS_API_KEY}`
+          const nextResponse = await fetch(nextPageUrl)
+          const nextData = await nextResponse.json()
+          
+          if (nextData.status === 'OK' && nextData.results) {
+            for (const place of nextData.results) {
+              if (isLikelyPowerFacility(place) && !substations.find(s => s.place_id === place.place_id)) {
+                substations.push({
+                  id: place.place_id,
+                  name: place.name,
+                  latitude: place.geometry.location.lat,
+                  longitude: place.geometry.location.lng,
+                  place_id: place.place_id,
+                  address: place.formatted_address || 'Address not available',
+                  rating: place.rating,
+                  types: place.types || []
+                })
+              }
+            }
+          }
+          
+          nextPageToken = nextData.next_page_token
+        }
+
         // Add delay to respect API rate limits
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise(resolve => setTimeout(resolve, 200))
         
       } catch (error) {
         console.error(`Error searching for "${searchTerm}":`, error)
       }
     }
 
-    // Filter and rank results
-    let filteredSubstations = substations
-      .filter(sub => {
-        // Filter by name patterns that indicate electrical infrastructure
-        const name = sub.name.toLowerCase()
-        return name.includes('substation') || 
-               name.includes('electrical') || 
-               name.includes('power') || 
-               name.includes('transmission') || 
-               name.includes('distribution') ||
-               name.includes('utility') ||
-               sub.types.some(type => 
-                 type.includes('establishment') || 
-                 type.includes('point_of_interest')
-               )
-      })
-      .slice(0, maxResults)
+    // Enhanced filtering function
+    function isLikelyPowerFacility(place: any): boolean {
+      const name = place.name.toLowerCase()
+      const types = place.types || []
+      
+      // Power facility keywords
+      const powerKeywords = [
+        'substation', 'electrical', 'power', 'transmission', 'distribution',
+        'utility', 'generating', 'station', 'plant', 'grid', 'facility',
+        'energy', 'electric', 'voltage', 'transformer', 'switchyard'
+      ]
+      
+      // Check name for power-related terms
+      const hasPowerKeyword = powerKeywords.some(keyword => name.includes(keyword))
+      
+      // Check types for relevant categories
+      const relevantTypes = types.some((type: string) => 
+        type.includes('establishment') || 
+        type.includes('point_of_interest') ||
+        type.includes('gas_station') || // Sometimes power facilities are misclassified
+        type.includes('store') // Sometimes utility facilities are classified as stores
+      )
+      
+      // Exclude obviously non-power facilities
+      const excludeKeywords = [
+        'restaurant', 'food', 'gas station', 'convenience', 'store', 'shop',
+        'hotel', 'motel', 'hospital', 'school', 'church', 'bank', 'pharmacy'
+      ]
+      
+      const isExcluded = excludeKeywords.some(keyword => name.includes(keyword))
+      
+      return hasPowerKeyword && relevantTypes && !isExcluded
+    }
 
-    // Get additional details for each substation
-    for (let i = 0; i < filteredSubstations.length; i++) {
+    // Remove duplicates and sort by relevance
+    const uniqueSubstations = substations
+      .filter((sub, index, self) => 
+        index === self.findIndex(s => s.place_id === sub.place_id)
+      )
+      .sort((a, b) => {
+        // Prioritize substations with "substation" in the name
+        const aHasSubstation = a.name.toLowerCase().includes('substation')
+        const bHasSubstation = b.name.toLowerCase().includes('substation')
+        
+        if (aHasSubstation && !bHasSubstation) return -1
+        if (!aHasSubstation && bHasSubstation) return 1
+        
+        // Then prioritize by rating if available
+        if (a.rating && b.rating) return b.rating - a.rating
+        
+        return 0
+      })
+
+    // Get additional details for the most relevant substations
+    const detailedSubstations = []
+    for (let i = 0; i < Math.min(uniqueSubstations.length, maxResults); i++) {
       try {
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${filteredSubstations[i].place_id}&fields=name,formatted_address,geometry,rating,types,vicinity&key=${GOOGLE_MAPS_API_KEY}`
+        const substation = uniqueSubstations[i]
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${substation.place_id}&fields=name,formatted_address,geometry,rating,types,vicinity&key=${GOOGLE_MAPS_API_KEY}`
         
         const detailsResponse = await fetch(detailsUrl)
         const detailsData = await detailsResponse.json()
 
         if (detailsData.status === 'OK' && detailsData.result) {
-          filteredSubstations[i] = {
-            ...filteredSubstations[i],
-            name: detailsData.result.name || filteredSubstations[i].name,
-            address: detailsData.result.formatted_address || filteredSubstations[i].address,
-            types: detailsData.result.types || filteredSubstations[i].types
-          }
+          detailedSubstations.push({
+            ...substation,
+            name: detailsData.result.name || substation.name,
+            address: detailsData.result.formatted_address || substation.address,
+            types: detailsData.result.types || substation.types
+          })
+        } else {
+          detailedSubstations.push(substation)
         }
 
         // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 50))
+        await new Promise(resolve => setTimeout(resolve, 100))
         
       } catch (error) {
-        console.error(`Error getting details for ${filteredSubstations[i].name}:`, error)
+        console.error(`Error getting details for ${uniqueSubstations[i].name}:`, error)
+        detailedSubstations.push(uniqueSubstations[i])
       }
     }
 
-    console.log(`Found ${filteredSubstations.length} substations in ${location}`)
+    console.log(`Found ${detailedSubstations.length} substations in ${location}`)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        substations: filteredSubstations,
+        substations: detailedSubstations,
         searchLocation: {
           name: location,
           coordinates: { lat, lng }
-        }
+        },
+        totalFound: detailedSubstations.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
