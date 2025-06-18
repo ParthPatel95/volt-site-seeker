@@ -53,7 +53,9 @@ export function CompanyDetailsModal({ company, open, onOpenChange }: CompanyDeta
                 <Badge variant="outline">{company.ticker}</Badge>
               )}
             </div>
-            <DataQualityIndicator company={company} />
+            {company.data_quality && company.data_sources && (
+              <DataQualityIndicator company={company} />
+            )}
           </DialogTitle>
         </DialogHeader>
 

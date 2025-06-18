@@ -302,6 +302,45 @@ export type Database = {
         }
         Relationships: []
       }
+      company_real_estate_assets: {
+        Row: {
+          company_name: string
+          company_ticker: string | null
+          coordinates: unknown | null
+          created_at: string
+          id: string
+          location_description: string
+          property_type: string
+          raw_text: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          company_ticker?: string | null
+          coordinates?: unknown | null
+          created_at?: string
+          id: string
+          location_description: string
+          property_type: string
+          raw_text?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          company_ticker?: string | null
+          coordinates?: unknown | null
+          created_at?: string
+          id?: string
+          location_description?: string
+          property_type?: string
+          raw_text?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       competitor_analysis: {
         Row: {
           analysis_date: string

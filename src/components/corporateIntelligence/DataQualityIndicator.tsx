@@ -2,24 +2,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Company } from '@/types/corporateIntelligence';
 
 interface DataQualityIndicatorProps {
-  dataQuality?: {
-    sources_used: number;
-    has_financial_data: boolean;
-    has_corporate_data: boolean;
-    has_recent_news: boolean;
-  };
-  dataSources?: {
-    sec?: boolean;
-    alpha_vantage?: boolean;
-    yahoo_finance?: boolean;
-    open_corporates?: boolean;
-    news_api?: boolean;
-  };
+  company: Company;
 }
 
-export function DataQualityIndicator({ dataQuality, dataSources }: DataQualityIndicatorProps) {
+export function DataQualityIndicator({ company }: DataQualityIndicatorProps) {
+  const dataQuality = company.data_quality;
+  const dataSources = company.data_sources;
+  
   if (!dataQuality || !dataSources) return null;
 
   const getQualityColor = (score: number) => {

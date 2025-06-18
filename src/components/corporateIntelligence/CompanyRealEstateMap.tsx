@@ -20,11 +20,11 @@ import {
 
 interface RealEstateAsset {
   id: string;
-  company_ticker: string;
+  company_ticker?: string;
   company_name: string;
   property_type: 'Office' | 'Data Center' | 'Industrial' | 'Other Industrial Asset';
   location_description: string;
-  coordinates: [number, number] | null;
+  coordinates?: [number, number] | null;
   source: string;
   raw_text?: string;
   created_at: string;
