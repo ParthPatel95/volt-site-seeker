@@ -20,297 +20,716 @@ interface CountyConfig {
   };
 }
 
-// Expanded county configurations for property data access
+// Comprehensive county configurations for Texas (30+ counties)
+const TEXAS_COUNTIES: CountyConfig[] = [
+  // Major Metropolitan Counties
+  {
+    name: 'Harris County',
+    state: 'TX',
+    apiUrl: 'https://www.hcad.org/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'site_addr_1',
+      owner: 'owner_name',
+      assessed_value: 'appraised_val',
+      market_value: 'market_val',
+      property_type: 'state_class',
+      year_built: 'yr_built',
+      square_footage: 'bldg_sqft',
+      lot_size: 'land_sqft'
+    }
+  },
+  {
+    name: 'Dallas County',
+    state: 'TX',
+    searchUrl: 'https://www.dallascad.org/SearchAddr.aspx',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: {
+      address: 'property_address',
+      owner: 'owner_name',
+      assessed_value: 'total_appraised_value',
+      property_type: 'property_type',
+      year_built: 'year_built'
+    }
+  },
+  {
+    name: 'Travis County',
+    state: 'TX',
+    apiUrl: 'https://prop.traviscad.org/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'prop_addr',
+      owner: 'owner_name',
+      assessed_value: 'total_val',
+      market_value: 'market_val'
+    }
+  },
+  {
+    name: 'Tarrant County',
+    state: 'TX',
+    apiUrl: 'https://www.tad.org/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'property_address',
+      owner: 'owner_name',
+      assessed_value: 'assessed_value',
+      market_value: 'market_value'
+    }
+  },
+  {
+    name: 'Bexar County',
+    state: 'TX',
+    searchUrl: 'https://www.bcad.org/clientdb/PropertySearch.aspx',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: {
+      address: 'situs_address',
+      owner: 'owner_name',
+      assessed_value: 'total_value'
+    }
+  },
+  {
+    name: 'Collin County',
+    state: 'TX',
+    apiUrl: 'https://www.collincad.org/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'property_address',
+      owner: 'owner_name',
+      assessed_value: 'appraised_value'
+    }
+  },
+  {
+    name: 'Denton County',
+    state: 'TX',
+    searchUrl: 'https://www.dentoncad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: {
+      address: 'property_location',
+      owner: 'owner_name',
+      assessed_value: 'total_assessed_value'
+    }
+  },
+  {
+    name: 'Fort Bend County',
+    state: 'TX',
+    apiUrl: 'https://www.fbcad.org/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'situs_address',
+      owner: 'owner_name',
+      assessed_value: 'total_value'
+    }
+  },
+  {
+    name: 'Montgomery County',
+    state: 'TX',
+    searchUrl: 'https://www.mctx.org/departments/departments_a_-_m/appraisal_district',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: {
+      address: 'property_address',
+      owner: 'owner_name',
+      assessed_value: 'assessed_value'
+    }
+  },
+  {
+    name: 'Williamson County',
+    state: 'TX',
+    apiUrl: 'https://www.wcad.org/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'property_address',
+      owner: 'owner_name',
+      assessed_value: 'total_appraised_value'
+    }
+  },
+  // Additional Texas Counties (20+ more)
+  {
+    name: 'Galveston County',
+    state: 'TX',
+    searchUrl: 'https://www.galvestoncad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Brazoria County',
+    state: 'TX',
+    searchUrl: 'https://www.brazoriacad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Jefferson County',
+    state: 'TX',
+    searchUrl: 'https://www.jcad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Nueces County',
+    state: 'TX',
+    searchUrl: 'https://www.nuecescad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'El Paso County',
+    state: 'TX',
+    apiUrl: 'https://www.epcad.org/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Bell County',
+    state: 'TX',
+    searchUrl: 'https://www.bellcad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'McLennan County',
+    state: 'TX',
+    searchUrl: 'https://www.mclennancad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Guadalupe County',
+    state: 'TX',
+    searchUrl: 'https://www.guadalupecad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Hays County',
+    state: 'TX',
+    searchUrl: 'https://www.hayscad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Kaufman County',
+    state: 'TX',
+    searchUrl: 'https://www.kaufmancad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Johnson County',
+    state: 'TX',
+    searchUrl: 'https://www.johnsoncad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Liberty County',
+    state: 'TX',
+    searchUrl: 'https://www.libertycad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Chambers County',
+    state: 'TX',
+    searchUrl: 'https://www.chamberscad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Walker County',
+    state: 'TX',
+    searchUrl: 'https://www.walkercad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Ellis County',
+    state: 'TX',
+    searchUrl: 'https://www.elliscad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Rockwall County',
+    state: 'TX',
+    searchUrl: 'https://www.rockwallcad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Brazos County',
+    state: 'TX',
+    searchUrl: 'https://www.brazoscad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Smith County',
+    state: 'TX',
+    searchUrl: 'https://www.smithcad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Lubbock County',
+    state: 'TX',
+    searchUrl: 'https://www.lubbockcad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Webb County',
+    state: 'TX',
+    searchUrl: 'https://www.webbcad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Parker County',
+    state: 'TX',
+    searchUrl: 'https://www.parkercad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Comal County',
+    state: 'TX',
+    searchUrl: 'https://www.comalcad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Hunt County',
+    state: 'TX',
+    searchUrl: 'https://www.huntcad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Victoria County',
+    state: 'TX',
+    searchUrl: 'https://www.victoriacad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Grayson County',
+    state: 'TX',
+    searchUrl: 'https://www.graysoncad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Hidalgo County',
+    state: 'TX',
+    searchUrl: 'https://www.hidalgocad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Cameron County',
+    state: 'TX',
+    searchUrl: 'https://www.cameroncad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Orange County',
+    state: 'TX',
+    searchUrl: 'https://www.orangecad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Gregg County',
+    state: 'TX',
+    searchUrl: 'https://www.greggcad.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Henderson County',
+    state: 'TX',
+    searchUrl: 'https://www.hendersoncad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Wichita County',
+    state: 'TX',
+    searchUrl: 'https://www.wichitacad.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  }
+];
+
+// Comprehensive Alberta municipalities/regions (30+)
+const ALBERTA_REGIONS: CountyConfig[] = [
+  // Major Cities
+  {
+    name: 'City of Calgary',
+    state: 'AB',
+    apiUrl: 'https://data.calgary.ca/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'address',
+      owner: 'owner',
+      assessed_value: 'assessed_value',
+      market_value: 'market_value',
+      property_type: 'property_type',
+      year_built: 'year_built'
+    }
+  },
+  {
+    name: 'City of Edmonton',
+    state: 'AB',
+    apiUrl: 'https://data.edmonton.ca/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: {
+      address: 'address',
+      owner: 'owner_name',
+      assessed_value: 'assessed_value',
+      property_type: 'property_class'
+    }
+  },
+  // Municipal Districts
+  {
+    name: 'Municipal District of Foothills',
+    state: 'AB',
+    searchUrl: 'https://www.mdfoothills.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'registered_owner', assessed_value: 'total_assessment' }
+  },
+  {
+    name: 'Strathcona County',
+    state: 'AB',
+    apiUrl: 'https://www.strathcona.ca/api/property',
+    dataFormat: 'json',
+    accessMethod: 'public_api',
+    fields: { address: 'civic_address', owner: 'owner_name', assessed_value: 'total_value' }
+  },
+  {
+    name: 'Regional Municipality of Wood Buffalo',
+    state: 'AB',
+    searchUrl: 'https://www.rmwb.ca/property-tax/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner', assessed_value: 'assessed_value' }
+  },
+  // Counties
+  {
+    name: 'Parkland County',
+    state: 'AB',
+    searchUrl: 'https://www.parklandcounty.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Sturgeon County',
+    state: 'AB',
+    searchUrl: 'https://www.sturgeoncounty.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Leduc County',
+    state: 'AB',
+    searchUrl: 'https://www.leduc-county.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Lac Ste. Anne County',
+    state: 'AB',
+    searchUrl: 'https://www.lsac.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Wetaskiwin County',
+    state: 'AB',
+    searchUrl: 'https://www.county.wetaskiwin.ab.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  // Cities and Towns
+  {
+    name: 'City of Red Deer',
+    state: 'AB',
+    searchUrl: 'https://www.reddeer.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Lethbridge',
+    state: 'AB',
+    searchUrl: 'https://www.lethbridge.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Medicine Hat',
+    state: 'AB',
+    searchUrl: 'https://www.medicinehat.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Grande Prairie',
+    state: 'AB',
+    searchUrl: 'https://www.cityofgp.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Airdrie',
+    state: 'AB',
+    searchUrl: 'https://www.airdrie.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Spruce Grove',
+    state: 'AB',
+    searchUrl: 'https://www.sprucegrove.org/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Leduc',
+    state: 'AB',
+    searchUrl: 'https://www.leduc.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of St. Albert',
+    state: 'AB',
+    searchUrl: 'https://www.stalbert.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Sherwood Park',
+    state: 'AB',
+    searchUrl: 'https://www.sherwoodpark.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Fort Saskatchewan',
+    state: 'AB',
+    searchUrl: 'https://www.fortsask.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Lloydminster',
+    state: 'AB',
+    searchUrl: 'https://www.lloydminster.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'City of Camrose',
+    state: 'AB',
+    searchUrl: 'https://www.camrose.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'County of Grande Prairie',
+    state: 'AB',
+    searchUrl: 'https://www.countygp.ab.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Rocky View County',
+    state: 'AB',
+    searchUrl: 'https://www.rockyview.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Brazeau County',
+    state: 'AB',
+    searchUrl: 'https://www.brazeau.ab.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'County of Lethbridge',
+    state: 'AB',
+    searchUrl: 'https://www.lethcounty.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Wheatland County',
+    state: 'AB',
+    searchUrl: 'https://www.wheatlandcounty.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Vulcan County',
+    state: 'AB',
+    searchUrl: 'https://www.vulcancounty.ab.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Newell County',
+    state: 'AB',
+    searchUrl: 'https://www.newellcountyab.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Ponoka County',
+    state: 'AB',
+    searchUrl: 'https://www.ponokacounty.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Lacombe County',
+    state: 'AB',
+    searchUrl: 'https://www.lacombecounty.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Red Deer County',
+    state: 'AB',
+    searchUrl: 'https://www.rdcounty.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Clearwater County',
+    state: 'AB',
+    searchUrl: 'https://www.clearwatercounty.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Mountain View County',
+    state: 'AB',
+    searchUrl: 'https://www.mvmd.ab.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Olds County',
+    state: 'AB',
+    searchUrl: 'https://www.olds.ca/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  },
+  {
+    name: 'Kneehill County',
+    state: 'AB',
+    searchUrl: 'https://www.kneehillcounty.com/property-search',
+    dataFormat: 'api',
+    accessMethod: 'web_scraping',
+    fields: { address: 'property_address', owner: 'owner_name', assessed_value: 'assessed_value' }
+  }
+];
+
+// Combined configurations
 const COUNTY_CONFIGS: Record<string, CountyConfig[]> = {
-  'Texas': [
-    {
-      name: 'Harris County',
-      state: 'TX',
-      apiUrl: 'https://www.hcad.org/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'site_addr_1',
-        owner: 'owner_name',
-        assessed_value: 'appraised_val',
-        market_value: 'market_val',
-        property_type: 'state_class',
-        year_built: 'yr_built',
-        square_footage: 'bldg_sqft',
-        lot_size: 'land_sqft'
-      }
-    },
-    {
-      name: 'Dallas County',
-      state: 'TX',
-      searchUrl: 'https://www.dallascad.org/SearchAddr.aspx',
-      dataFormat: 'api',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'property_address',
-        owner: 'owner_name',
-        assessed_value: 'total_appraised_value',
-        property_type: 'property_type',
-        year_built: 'year_built'
-      }
-    },
-    {
-      name: 'Travis County',
-      state: 'TX',
-      apiUrl: 'https://prop.traviscad.org/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'prop_addr',
-        owner: 'owner_name',
-        assessed_value: 'total_val',
-        market_value: 'market_val'
-      }
-    },
-    {
-      name: 'Tarrant County',
-      state: 'TX',
-      apiUrl: 'https://www.tad.org/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'property_address',
-        owner: 'owner_name',
-        assessed_value: 'assessed_value',
-        market_value: 'market_value'
-      }
-    },
-    {
-      name: 'Bexar County',
-      state: 'TX',
-      searchUrl: 'https://www.bcad.org/clientdb/PropertySearch.aspx',
-      dataFormat: 'api',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'situs_address',
-        owner: 'owner_name',
-        assessed_value: 'total_value'
-      }
-    },
-    {
-      name: 'Collin County',
-      state: 'TX',
-      apiUrl: 'https://www.collincad.org/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'property_address',
-        owner: 'owner_name',
-        assessed_value: 'appraised_value'
-      }
-    },
-    {
-      name: 'Denton County',
-      state: 'TX',
-      searchUrl: 'https://www.dentoncad.com/property-search',
-      dataFormat: 'api',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'property_location',
-        owner: 'owner_name',
-        assessed_value: 'total_assessed_value'
-      }
-    },
-    {
-      name: 'Fort Bend County',
-      state: 'TX',
-      apiUrl: 'https://www.fbcad.org/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'situs_address',
-        owner: 'owner_name',
-        assessed_value: 'total_value'
-      }
-    },
-    {
-      name: 'Montgomery County',
-      state: 'TX',
-      searchUrl: 'https://www.mctx.org/departments/departments_a_-_m/appraisal_district',
-      dataFormat: 'api',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'property_address',
-        owner: 'owner_name',
-        assessed_value: 'assessed_value'
-      }
-    },
-    {
-      name: 'Williamson County',
-      state: 'TX',
-      apiUrl: 'https://www.wcad.org/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'property_address',
-        owner: 'owner_name',
-        assessed_value: 'total_appraised_value'
-      }
-    }
-  ],
-  'Alberta': [
-    {
-      name: 'City of Calgary',
-      state: 'AB',
-      apiUrl: 'https://data.calgary.ca/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'address',
-        owner: 'owner',
-        assessed_value: 'assessed_value',
-        market_value: 'market_value',
-        property_type: 'property_type',
-        year_built: 'year_built'
-      }
-    },
-    {
-      name: 'City of Edmonton',
-      state: 'AB',
-      apiUrl: 'https://data.edmonton.ca/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'address',
-        owner: 'owner_name',
-        assessed_value: 'assessed_value',
-        property_type: 'property_class'
-      }
-    },
-    {
-      name: 'Municipal District of Foothills',
-      state: 'AB',
-      searchUrl: 'https://www.mdfoothills.com/property-search',
-      dataFormat: 'api',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'property_address',
-        owner: 'registered_owner',
-        assessed_value: 'total_assessment'
-      }
-    },
-    {
-      name: 'Strathcona County',
-      state: 'AB',
-      apiUrl: 'https://www.strathcona.ca/api/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'civic_address',
-        owner: 'owner_name',
-        assessed_value: 'total_value'
-      }
-    },
-    {
-      name: 'Regional Municipality of Wood Buffalo',
-      state: 'AB',
-      searchUrl: 'https://www.rmwb.ca/property-tax/property-search',
-      dataFormat: 'api',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'property_address',
-        owner: 'owner',
-        assessed_value: 'assessed_value'
-      }
-    }
-  ],
-  'California': [
-    {
-      name: 'Los Angeles County',
-      state: 'CA',
-      searchUrl: 'https://portal.assessor.lacounty.gov/parceldetail',
-      dataFormat: 'json',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'property_location',
-        owner: 'taxpayer_name',
-        assessed_value: 'total_assessed_value',
-        property_type: 'use_code_description'
-      }
-    },
-    {
-      name: 'Orange County',
-      state: 'CA',
-      apiUrl: 'https://api.ocgov.com/assessor/property',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'situs_address',
-        owner: 'owner_name',
-        assessed_value: 'total_value'
-      }
-    }
-  ],
-  'Florida': [
-    {
-      name: 'Miami-Dade County',
-      state: 'FL',
-      apiUrl: 'https://www.miamidade.gov/Apps/PA/PApublicServiceProxy/PaServicesProxy.ashx',
-      dataFormat: 'json',
-      accessMethod: 'public_api',
-      fields: {
-        address: 'PhysicalAddress',
-        owner: 'OwnerName',
-        assessed_value: 'AssessedValue',
-        market_value: 'JustValue'
-      }
-    }
-  ],
-  'New York': [
-    {
-      name: 'New York County',
-      state: 'NY',
-      searchUrl: 'https://a836-pts-access.nyc.gov/care/search/commonsearch.aspx',
-      dataFormat: 'api',
-      accessMethod: 'web_scraping',
-      fields: {
-        address: 'address',
-        owner: 'owner',
-        assessed_value: 'total_value'
-      }
-    }
-  ]
+  'Texas': TEXAS_COUNTIES,
+  'Alberta': ALBERTA_REGIONS
 };
 
 async function fetchFromCountyAPI(config: CountyConfig, location: string, propertyType: string): Promise<PropertyData[]> {
   if (!config.apiUrl) return [];
 
   try {
-    console.log(`Fetching data from ${config.name} API for property type: ${propertyType}`);
+    console.log(`Attempting to fetch real data from ${config.name} API`);
+    console.log(`API URL: ${config.apiUrl}`);
+    console.log(`Property type requested: ${propertyType}`);
     
-    // Generate multiple demo properties that match the requested property type
-    const demoProperties: PropertyData[] = [];
-    const numProperties = Math.floor(Math.random() * 4) + 2; // 2-5 properties
+    // Note: In a real implementation, this would make actual API calls
+    // For now, we return empty array since no real API integration is implemented
+    console.log(`${config.name} API integration not yet implemented for live data fetching`);
     
-    for (let i = 0; i < numProperties; i++) {
-      const propertyTypes = ['industrial', 'commercial', 'warehouse', 'manufacturing', 'retail'];
-      const selectedType = propertyType === 'commercial' ? 
-        propertyTypes[Math.floor(Math.random() * propertyTypes.length)] : 
-        propertyType;
-      
-      const property: PropertyData = {
-        address: `${100 + i * 100} ${getRandomStreetName()} ${getRandomStreetType()}, ${config.name.split(' ')[0]}, ${config.state}`,
-        city: config.name.split(' ')[0],
-        state: config.state,
-        zip_code: generateZipCode(config.state),
-        property_type: selectedType,
-        source: 'county_records',
-        listing_url: `${config.apiUrl}?property=${i + 1}`,
-        description: `${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} property in ${config.name} - County Assessor Records`,
-        square_footage: generateSquareFootage(selectedType),
-        asking_price: generateAskingPrice(selectedType),
-        lot_size_acres: generateLotSize(selectedType)
-      };
-      
-      demoProperties.push(property);
-    }
-
-    return demoProperties;
+    return [];
   } catch (error) {
     console.error(`Error fetching from ${config.name} API:`, error);
     return [];
@@ -321,101 +740,19 @@ async function scrapeCountyWebsite(config: CountyConfig, location: string, prope
   if (!config.searchUrl) return [];
 
   try {
-    console.log(`Scraping ${config.name} website for property type: ${propertyType}`);
+    console.log(`Attempting to scrape real data from ${config.name} website`);
+    console.log(`Search URL: ${config.searchUrl}`);
+    console.log(`Property type requested: ${propertyType}`);
     
-    // Generate demo properties that match the requested type
-    const scrapedProperties: PropertyData[] = [];
-    const numProperties = Math.floor(Math.random() * 3) + 1; // 1-3 properties
+    // Note: In a real implementation, this would perform actual web scraping
+    // For now, we return empty array since no real scraping is implemented
+    console.log(`${config.name} web scraping not yet implemented for live data fetching`);
     
-    for (let i = 0; i < numProperties; i++) {
-      const property: PropertyData = {
-        address: `${200 + i * 150} ${getRandomStreetName()} ${getRandomStreetType()}, ${config.name.split(' ')[0]}, ${config.state}`,
-        city: config.name.split(' ')[0],
-        state: config.state,
-        zip_code: generateZipCode(config.state),
-        property_type: propertyType,
-        source: 'county_records',
-        listing_url: config.searchUrl,
-        description: `${propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} property from ${config.name} public records`,
-        square_footage: generateSquareFootage(propertyType),
-        asking_price: generateAskingPrice(propertyType),
-        lot_size_acres: generateLotSize(propertyType)
-      };
-      
-      scrapedProperties.push(property);
-    }
-
-    return scrapedProperties;
+    return [];
   } catch (error) {
     console.error(`Error scraping ${config.name} website:`, error);
     return [];
   }
-}
-
-function getRandomStreetName(): string {
-  const streetNames = [
-    'Industrial', 'Commerce', 'Manufacturing', 'Business', 'Enterprise',
-    'Corporate', 'Technology', 'Innovation', 'Progress', 'Development',
-    'Trade', 'Market', 'Center', 'Park', 'Plaza'
-  ];
-  return streetNames[Math.floor(Math.random() * streetNames.length)];
-}
-
-function getRandomStreetType(): string {
-  const streetTypes = ['Blvd', 'Ave', 'St', 'Dr', 'Way', 'Ct', 'Ln', 'Rd'];
-  return streetTypes[Math.floor(Math.random() * streetTypes.length)];
-}
-
-function generateSquareFootage(propertyType: string): number {
-  const ranges: Record<string, [number, number]> = {
-    'industrial': [10000, 100000],
-    'commercial': [5000, 50000],
-    'warehouse': [15000, 200000],
-    'manufacturing': [25000, 150000],
-    'retail': [2000, 25000]
-  };
-  
-  const [min, max] = ranges[propertyType] || [5000, 50000];
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function generateAskingPrice(propertyType: string): number {
-  const ranges: Record<string, [number, number]> = {
-    'industrial': [500000, 5000000],
-    'commercial': [300000, 3000000],
-    'warehouse': [750000, 8000000],
-    'manufacturing': [1000000, 10000000],
-    'retail': [200000, 2000000]
-  };
-  
-  const [min, max] = ranges[propertyType] || [300000, 3000000];
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function generateLotSize(propertyType: string): number {
-  const ranges: Record<string, [number, number]> = {
-    'industrial': [2, 25],
-    'commercial': [1, 10],
-    'warehouse': [3, 30],
-    'manufacturing': [5, 50],
-    'retail': [0.5, 5]
-  };
-  
-  const [min, max] = ranges[propertyType] || [1, 10];
-  return Math.round((Math.random() * (max - min) + min) * 100) / 100;
-}
-
-function generateZipCode(state: string): string {
-  const zipRanges: Record<string, [number, number]> = {
-    'TX': [73000, 79999],
-    'AB': [70000, 89999], // Alberta postal codes converted to numeric
-    'CA': [90000, 96199],
-    'FL': [32000, 34999],
-    'NY': [10000, 14999]
-  };
-  
-  const [min, max] = zipRanges[state] || [10000, 99999];
-  return String(Math.floor(Math.random() * (max - min + 1)) + min);
 }
 
 function normalizeLocation(location: string): { state: string; county?: string; city?: string } {
@@ -441,10 +778,7 @@ function normalizeLocation(location: string): { state: string; county?: string; 
   // Handle single location input
   const stateMapping: Record<string, string> = {
     'Texas': 'Texas',
-    'Alberta': 'Alberta',
-    'California': 'California',
-    'Florida': 'Florida',
-    'New York': 'New York'
+    'Alberta': 'Alberta'
   };
   
   return {
@@ -465,46 +799,52 @@ export async function fetchCountyRecords(request: FreeDataRequest): Promise<Scra
   if (stateConfigs.length === 0) {
     return {
       properties: [],
-      message: `County records not available for ${state}. Currently supported: Texas, Alberta Canada, California, Florida, New York`
+      message: `County records not available for ${state}. Currently supported: Texas (${TEXAS_COUNTIES.length} counties), Alberta Canada (${ALBERTA_REGIONS.length} regions)`
     };
   }
   
+  console.log(`Found ${stateConfigs.length} county/municipal configurations for ${state}`);
+  
   let allProperties: PropertyData[] = [];
-  let successfulSources: string[] = [];
+  let availableSources: string[] = [];
   
-  // Try to fetch from each county in the state (limit to avoid overwhelming)
-  const countiesToProcess = stateConfigs.slice(0, 5); // Process up to 5 counties
-  
-  for (const config of countiesToProcess) {
+  // Process all available counties/regions
+  for (const config of stateConfigs) {
     try {
       let countyProperties: PropertyData[] = [];
       
       if (config.accessMethod === 'public_api' && config.apiUrl) {
         countyProperties = await fetchFromCountyAPI(config, request.location, request.property_type || 'commercial');
+        if (countyProperties.length === 0) {
+          console.log(`${config.name}: Public API available but no live integration implemented`);
+        }
       } else if (config.accessMethod === 'web_scraping' && config.searchUrl) {
         countyProperties = await scrapeCountyWebsite(config, request.location, request.property_type || 'commercial');
+        if (countyProperties.length === 0) {
+          console.log(`${config.name}: Web scraping endpoint available but no live integration implemented`);
+        }
       }
       
-      if (countyProperties.length > 0) {
-        allProperties.push(...countyProperties);
-        successfulSources.push(config.name);
-        console.log(`Found ${countyProperties.length} properties from ${config.name}`);
-      }
+      allProperties.push(...countyProperties);
+      availableSources.push(config.name);
       
       // Add delay between requests to be respectful
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 100));
       
     } catch (error) {
       console.error(`Error processing ${config.name}:`, error);
     }
   }
   
-  console.log(`Total properties found: ${allProperties.length} from sources: ${successfulSources.join(', ')}`);
+  const publicApiSources = stateConfigs.filter(c => c.accessMethod === 'public_api').length;
+  const webScrapingSources = stateConfigs.filter(c => c.accessMethod === 'web_scraping').length;
+  
+  console.log(`Processed ${availableSources.length} sources. Found ${allProperties.length} properties total.`);
   
   return {
     properties: allProperties,
     message: allProperties.length > 0 
-      ? `Found ${allProperties.length} properties from county records in: ${successfulSources.join(', ')}`
-      : `No county property records found for ${request.location}. This may be due to access restrictions or the county not having public APIs available for the requested property type.`
+      ? `Found ${allProperties.length} properties from county records`
+      : `County records data source configured for ${state} with ${stateConfigs.length} sources (${publicApiSources} public APIs, ${webScrapingSources} web scraping endpoints). Live data integration not yet implemented - this requires real API keys and scraping infrastructure to fetch actual property records.`
   };
 }

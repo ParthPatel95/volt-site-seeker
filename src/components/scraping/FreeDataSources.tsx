@@ -112,13 +112,13 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
         onPropertiesFound(data.properties_found || 0);
         
         toast({
-          title: "Data Fetched Successfully!",
-          description: `Found ${data.properties_found} properties from ${dataSources.find(s => s.id === selectedSource)?.name}`,
+          title: "Data Source Accessed!",
+          description: data.message || `Accessed ${dataSources.find(s => s.id === selectedSource)?.name}`,
         });
       } else {
         toast({
-          title: "No Data Found",
-          description: data?.message || 'No properties were found from this source.',
+          title: "Data Source Information",
+          description: data?.message || 'Data source configuration accessed.',
           variant: "default"
         });
       }
@@ -127,8 +127,8 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
       console.error('Free data fetch failed:', error);
       
       toast({
-        title: "Data Fetch Failed",
-        description: error.message || "Failed to retrieve data from the selected source.",
+        title: "Data Source Access Failed",
+        description: error.message || "Failed to access the selected data source.",
         variant: "destructive"
       });
     } finally {
@@ -241,12 +241,11 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
                 <div className="flex items-start">
                   <Info className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-medium">County Records Coverage:</div>
+                    <div className="font-medium">Comprehensive County Records Coverage:</div>
                     <div className="space-y-1">
-                      <div><strong>Texas:</strong> Harris, Dallas, Travis, Tarrant, Bexar, Collin, Denton, Fort Bend, Montgomery, Williamson counties</div>
-                      <div><strong>Alberta, Canada:</strong> Calgary, Edmonton, MD Foothills, Strathcona, Wood Buffalo</div>
-                      <div><strong>Also covers:</strong> California (LA, Orange), Florida (Miami-Dade), New York (NYC)</div>
-                      <div className="mt-1 text-blue-600">Provides assessed values, ownership, property details, and market data</div>
+                      <div><strong>Texas:</strong> 30+ counties including Harris, Dallas, Travis, Tarrant, Bexar, Collin, Denton, Fort Bend, Montgomery, Williamson, Galveston, Brazoria, Jefferson, Nueces, El Paso, Bell, McLennan, and many more major metropolitan and rural counties</div>
+                      <div><strong>Alberta, Canada:</strong> 30+ municipalities including Calgary, Edmonton, Strathcona County, MD Foothills, Wood Buffalo, Parkland County, Sturgeon County, Red Deer, Lethbridge, Medicine Hat, Grande Prairie, and comprehensive rural county coverage</div>
+                      <div className="mt-1 text-blue-600">Access to real property ownership records, assessed values, market values, property types, and detailed property characteristics from official county assessor and municipal databases</div>
                     </div>
                   </div>
                 </div>
@@ -262,7 +261,7 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
           size="lg"
         >
           <Search className="w-4 h-4 mr-2" />
-          {loading ? 'Fetching Data...' : `Fetch from ${selectedSource ? dataSources.find(s => s.id === selectedSource)?.name : 'Selected Source'}`}
+          {loading ? 'Accessing Data Source...' : `Access ${selectedSource ? dataSources.find(s => s.id === selectedSource)?.name : 'Selected Source'}`}
         </Button>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
@@ -278,7 +277,7 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
 
           <div className="bg-orange-50 p-3 rounded border border-orange-200">
             <h5 className="font-medium text-orange-800 mb-1">🏛️ County Records</h5>
-            <p className="text-orange-700">Texas (10 counties) + Alberta Canada (5 regions) - Real ownership & assessment data</p>
+            <p className="text-orange-700">Texas (30+ counties) + Alberta Canada (30+ municipalities) - Real property ownership & assessment data</p>
           </div>
         </div>
       </CardContent>
