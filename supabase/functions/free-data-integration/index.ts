@@ -48,6 +48,7 @@ serve(async (req) => {
         data = await fetchCensusData(request);
         break;
       case 'county_records':
+        console.log('Processing county records request with live data integration');
         data = await fetchCountyRecordsData(request);
         break;
       case 'auction_com':
@@ -65,6 +66,7 @@ serve(async (req) => {
 
     // Store successful results in our database
     if (data.properties && data.properties.length > 0) {
+      console.log(`Storing ${data.properties.length} properties in database`);
       await storeScrapedProperties(supabase, data.properties, request.source);
     }
 

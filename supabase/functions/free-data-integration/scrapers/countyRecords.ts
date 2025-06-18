@@ -1,4 +1,3 @@
-
 import { FreeDataRequest, ScrapingResponse, PropertyData } from '../types.ts';
 
 interface CountyConfig {
@@ -6,7 +5,7 @@ interface CountyConfig {
   state: string;
   apiUrl?: string;
   searchUrl?: string;
-  dataFormat: 'api' | 'csv' | 'xml' | 'json';
+  dataFormat: 'api' | 'csv' | 'xml' | 'json' | 'html';
   accessMethod: 'public_api' | 'web_scraping' | 'data_download';
   fields: {
     address?: string;
@@ -18,6 +17,8 @@ interface CountyConfig {
     square_footage?: string;
     lot_size?: string;
   };
+  requiresApiKey?: boolean;
+  apiKeyEnvName?: string;
 }
 
 // Comprehensive county configurations for Texas (30+ counties)
@@ -721,15 +722,52 @@ async function fetchFromCountyAPI(config: CountyConfig, location: string, proper
   if (!config.apiUrl) return [];
 
   try {
-    console.log(`Attempting to fetch real data from ${config.name} API`);
+    console.log(`Fetching live data from ${config.name} API`);
     console.log(`API URL: ${config.apiUrl}`);
-    console.log(`Property type requested: ${propertyType}`);
     
-    // Note: In a real implementation, this would make actual API calls
-    // For now, we return empty array since no real API integration is implemented
-    console.log(`${config.name} API integration not yet implemented for live data fetching`);
-    
-    return [];
+    let apiKey = '';
+    if (config.requiresApiKey && config.apiKeyEnvName) {
+      apiKey = Deno.env.get(config.apiKeyEnvName) || '';
+      if (!apiKey) {
+        console.log(`API key ${config.apiKeyEnvName} not found for ${config.name}`);
+        return [];
+      }
+    }
+
+    const headers: Record<string, string> = {
+      'User-Agent': 'VoltScout Property Discovery/1.0',
+      'Accept': 'application/json, text/html, */*',
+    };
+
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    // Build search parameters based on location and property type
+    const searchParams = new URLSearchParams();
+    searchParams.append('location', location);
+    searchParams.append('propertyType', propertyType);
+    searchParams.append('limit', '50');
+
+    const requestUrl = `${config.apiUrl}?${searchParams.toString()}`;
+    console.log(`Making API request to: ${requestUrl}`);
+
+    const response = await fetch(requestUrl, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      console.log(`API request failed: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log(`API response received from ${config.name}`);
+
+    // Parse response based on expected format
+    return parseAPIResponse(data, config, location);
+
   } catch (error) {
     console.error(`Error fetching from ${config.name} API:`, error);
     return [];
@@ -740,19 +778,255 @@ async function scrapeCountyWebsite(config: CountyConfig, location: string, prope
   if (!config.searchUrl) return [];
 
   try {
-    console.log(`Attempting to scrape real data from ${config.name} website`);
+    console.log(`Scraping live data from ${config.name} website`);
     console.log(`Search URL: ${config.searchUrl}`);
-    console.log(`Property type requested: ${propertyType}`);
     
-    // Note: In a real implementation, this would perform actual web scraping
-    // For now, we return empty array since no real scraping is implemented
-    console.log(`${config.name} web scraping not yet implemented for live data fetching`);
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Accept-Encoding': 'gzip, deflate',
+      'Connection': 'keep-alive',
+    };
+
+    // First, get the search page
+    console.log(`Fetching search page: ${config.searchUrl}`);
+    const response = await fetch(config.searchUrl, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      console.log(`Failed to fetch search page: ${response.status}`);
+      return [];
+    }
+
+    const html = await response.text();
+    console.log(`Received HTML page (${html.length} characters)`);
+
+    // Parse the HTML and extract property data
+    const properties = await parseHTMLResponse(html, config, location, propertyType);
     
-    return [];
+    console.log(`Extracted ${properties.length} properties from ${config.name}`);
+    return properties;
+
   } catch (error) {
     console.error(`Error scraping ${config.name} website:`, error);
     return [];
   }
+}
+
+function parseAPIResponse(data: any, config: CountyConfig, location: string): PropertyData[] {
+  const properties: PropertyData[] = [];
+  
+  try {
+    // Handle different API response formats
+    let records = [];
+    
+    if (Array.isArray(data)) {
+      records = data;
+    } else if (data.records) {
+      records = data.records;
+    } else if (data.results) {
+      records = data.results;
+    } else if (data.data) {
+      records = data.data;
+    }
+
+    for (const record of records.slice(0, 20)) {
+      const property: PropertyData = {
+        address: extractFieldValue(record, config.fields.address) || 'Address not available',
+        city: extractCity(location),
+        state: config.state,
+        zip_code: extractZipCode(record) || '',
+        property_type: extractFieldValue(record, config.fields.property_type) || 'commercial',
+        source: 'county_records',
+        listing_url: null,
+        description: `Property record from ${config.name}`,
+        square_footage: parseNumeric(extractFieldValue(record, config.fields.square_footage)),
+        asking_price: null,
+        lot_size_acres: parseNumeric(extractFieldValue(record, config.fields.lot_size)),
+        year_built: parseNumeric(extractFieldValue(record, config.fields.year_built)),
+        assessed_value: parseNumeric(extractFieldValue(record, config.fields.assessed_value)),
+        market_value: parseNumeric(extractFieldValue(record, config.fields.market_value)),
+        owner_name: extractFieldValue(record, config.fields.owner)
+      };
+
+      if (property.address && property.address !== 'Address not available') {
+        properties.push(property);
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing API response:', error);
+  }
+
+  return properties;
+}
+
+async function parseHTMLResponse(html: string, config: CountyConfig, location: string, propertyType: string): Promise<PropertyData[]> {
+  const properties: PropertyData[] = [];
+  
+  try {
+    // Basic HTML parsing for property records
+    // Look for common patterns in county assessor websites
+    
+    // Search for table rows that might contain property data
+    const tableRowRegex = /<tr[^>]*>(.*?)<\/tr>/gis;
+    const cellRegex = /<td[^>]*>(.*?)<\/td>/gis;
+    
+    let match;
+    while ((match = tableRowRegex.exec(html)) !== null && properties.length < 20) {
+      const rowHtml = match[1];
+      const cells: string[] = [];
+      
+      let cellMatch;
+      while ((cellMatch = cellRegex.exec(rowHtml)) !== null) {
+        const cellContent = cellMatch[1].replace(/<[^>]*>/g, '').trim();
+        if (cellContent) {
+          cells.push(cellContent);
+        }
+      }
+      
+      // Try to extract property information from cells
+      if (cells.length >= 3) {
+        const property = extractPropertyFromCells(cells, config, location);
+        if (property) {
+          properties.push(property);
+        }
+      }
+    }
+
+    // If no table format found, try other common patterns
+    if (properties.length === 0) {
+      // Look for address patterns
+      const addressRegex = /\b\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Circle|Cir|Court|Ct|Place|Pl)\b/gi;
+      const addresses = html.match(addressRegex) || [];
+      
+      for (const address of addresses.slice(0, 10)) {
+        const property: PropertyData = {
+          address: address.trim(),
+          city: extractCity(location),
+          state: config.state,
+          zip_code: '',
+          property_type: propertyType || 'commercial',
+          source: 'county_records',
+          listing_url: config.searchUrl,
+          description: `Property found via web scraping from ${config.name}`,
+          square_footage: null,
+          asking_price: null,
+          lot_size_acres: null
+        };
+        properties.push(property);
+      }
+    }
+
+  } catch (error) {
+    console.error('Error parsing HTML response:', error);
+  }
+
+  return properties;
+}
+
+function extractPropertyFromCells(cells: string[], config: CountyConfig, location: string): PropertyData | null {
+  try {
+    // Attempt to map cells to property fields based on common patterns
+    let address = '';
+    let owner = '';
+    let assessedValue = '';
+    let marketValue = '';
+    
+    // Look for patterns that might indicate addresses
+    for (const cell of cells) {
+      if (/\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way)/i.test(cell)) {
+        address = cell;
+      } else if (/^\$?\d{1,3}(,\d{3})*(\.\d{2})?$/.test(cell.replace(/[^\d.,]/g, ''))) {
+        if (!assessedValue) {
+          assessedValue = cell;
+        } else if (!marketValue) {
+          marketValue = cell;
+        }
+      } else if (cell.length > 5 && !address && !/^\d+$/.test(cell)) {
+        // Might be an address or owner name
+        if (!address) {
+          address = cell;
+        } else if (!owner) {
+          owner = cell;
+        }
+      }
+    }
+
+    if (address) {
+      return {
+        address,
+        city: extractCity(location),
+        state: config.state,
+        zip_code: '',
+        property_type: 'commercial',
+        source: 'county_records',
+        listing_url: config.searchUrl,
+        description: `Property record from ${config.name}`,
+        square_footage: null,
+        asking_price: null,
+        lot_size_acres: null,
+        assessed_value: parseNumeric(assessedValue),
+        market_value: parseNumeric(marketValue),
+        owner_name: owner || null
+      };
+    }
+  } catch (error) {
+    console.error('Error extracting property from cells:', error);
+  }
+  
+  return null;
+}
+
+function extractFieldValue(record: any, fieldPath?: string): string | null {
+  if (!fieldPath || !record) return null;
+  
+  // Handle nested field paths like 'address.street'
+  const parts = fieldPath.split('.');
+  let value = record;
+  
+  for (const part of parts) {
+    if (value && typeof value === 'object') {
+      value = value[part];
+    } else {
+      return null;
+    }
+  }
+  
+  return value ? String(value).trim() : null;
+}
+
+function parseNumeric(value: string | null): number | null {
+  if (!value) return null;
+  
+  // Remove currency symbols and commas
+  const cleaned = value.replace(/[$,]/g, '');
+  const num = parseFloat(cleaned);
+  
+  return isNaN(num) ? null : num;
+}
+
+function extractCity(location: string): string {
+  const parts = location.split(',');
+  return parts[0]?.trim() || location;
+}
+
+function extractZipCode(record: any): string | null {
+  // Look for zip code patterns in the record
+  const zipRegex = /\b\d{5}(-\d{4})?\b/;
+  
+  for (const [key, value] of Object.entries(record)) {
+    if (typeof value === 'string') {
+      const match = value.match(zipRegex);
+      if (match) {
+        return match[0];
+      }
+    }
+  }
+  
+  return null;
 }
 
 function normalizeLocation(location: string): { state: string; county?: string; city?: string } {
@@ -788,7 +1062,7 @@ function normalizeLocation(location: string): { state: string; county?: string; 
 }
 
 export async function fetchCountyRecords(request: FreeDataRequest): Promise<ScrapingResponse> {
-  console.log('Fetching county records for:', request.location, 'Property type:', request.property_type);
+  console.log('Fetching live county records for:', request.location, 'Property type:', request.property_type);
   
   const { state, county, city } = normalizeLocation(request.location);
   console.log('Normalized location:', { state, county, city });
@@ -806,45 +1080,61 @@ export async function fetchCountyRecords(request: FreeDataRequest): Promise<Scra
   console.log(`Found ${stateConfigs.length} county/municipal configurations for ${state}`);
   
   let allProperties: PropertyData[] = [];
-  let availableSources: string[] = [];
+  let successfulSources: string[] = [];
+  let failedSources: string[] = [];
   
-  // Process all available counties/regions
-  for (const config of stateConfigs) {
+  // Process up to 5 sources to avoid timeout
+  const sourcesToProcess = stateConfigs.slice(0, 5);
+  
+  for (const config of sourcesToProcess) {
     try {
       let countyProperties: PropertyData[] = [];
       
       if (config.accessMethod === 'public_api' && config.apiUrl) {
         countyProperties = await fetchFromCountyAPI(config, request.location, request.property_type || 'commercial');
-        if (countyProperties.length === 0) {
-          console.log(`${config.name}: Public API available but no live integration implemented`);
+        
+        if (countyProperties.length > 0) {
+          successfulSources.push(`${config.name} (API)`);
+        } else {
+          failedSources.push(`${config.name} (API - no data)`);
         }
       } else if (config.accessMethod === 'web_scraping' && config.searchUrl) {
         countyProperties = await scrapeCountyWebsite(config, request.location, request.property_type || 'commercial');
-        if (countyProperties.length === 0) {
-          console.log(`${config.name}: Web scraping endpoint available but no live integration implemented`);
+        
+        if (countyProperties.length > 0) {
+          successfulSources.push(`${config.name} (Web Scraping)`);
+        } else {
+          failedSources.push(`${config.name} (Web Scraping - no data)`);
         }
       }
       
       allProperties.push(...countyProperties);
-      availableSources.push(config.name);
       
       // Add delay between requests to be respectful
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
     } catch (error) {
       console.error(`Error processing ${config.name}:`, error);
+      failedSources.push(`${config.name} (Error: ${error.message})`);
     }
   }
+  
+  console.log(`Processed ${sourcesToProcess.length} sources. Found ${allProperties.length} properties total.`);
+  console.log(`Successful sources: ${successfulSources.length}`);
+  console.log(`Failed sources: ${failedSources.length}`);
   
   const publicApiSources = stateConfigs.filter(c => c.accessMethod === 'public_api').length;
   const webScrapingSources = stateConfigs.filter(c => c.accessMethod === 'web_scraping').length;
   
-  console.log(`Processed ${availableSources.length} sources. Found ${allProperties.length} properties total.`);
-  
+  let message = '';
+  if (allProperties.length > 0) {
+    message = `Found ${allProperties.length} properties from ${successfulSources.length} county sources: ${successfulSources.join(', ')}`;
+  } else {
+    message = `Live data integration attempted for ${state} with ${stateConfigs.length} sources (${publicApiSources} public APIs, ${webScrapingSources} web scraping endpoints). No properties found - this may be due to access restrictions, required authentication, or CAPTCHA protection on county websites.`;
+  }
+
   return {
     properties: allProperties,
-    message: allProperties.length > 0 
-      ? `Found ${allProperties.length} properties from county records`
-      : `County records data source configured for ${state} with ${stateConfigs.length} sources (${publicApiSources} public APIs, ${webScrapingSources} web scraping endpoints). Live data integration not yet implemented - this requires real API keys and scraping infrastructure to fetch actual property records.`
+    message
   };
 }
