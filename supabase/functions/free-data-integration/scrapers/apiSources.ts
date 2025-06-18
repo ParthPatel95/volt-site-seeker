@@ -1,6 +1,6 @@
-
 import { FreeDataRequest, ScrapingResponse } from '../types.ts';
 import { extractCity, extractState, extractZipCode, extractStateFromCensus } from '../utils.ts';
+import { fetchCountyRecords } from './countyRecords.ts';
 
 export async function fetchGooglePlaces(request: FreeDataRequest): Promise<ScrapingResponse> {
   const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
@@ -279,9 +279,6 @@ export async function fetchCensusData(request: FreeDataRequest): Promise<Scrapin
   }
 }
 
-export async function fetchCountyRecords(request: FreeDataRequest): Promise<ScrapingResponse> {
-  return {
-    properties: [],
-    message: 'County records integration requires specific county API configuration. Contact your administrator to set up county-specific data sources.'
-  };
+export async function fetchCountyRecordsData(request: FreeDataRequest): Promise<ScrapingResponse> {
+  return await fetchCountyRecords(request);
 }

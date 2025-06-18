@@ -11,7 +11,7 @@ import {
   fetchYelpData, 
   fetchOpenStreetMapData, 
   fetchCensusData, 
-  fetchCountyRecords 
+  fetchCountyRecordsData 
 } from './scrapers/apiSources.ts';
 
 const corsHeaders = {
@@ -48,7 +48,7 @@ serve(async (req) => {
         data = await fetchCensusData(request);
         break;
       case 'county_records':
-        data = await fetchCountyRecords(request);
+        data = await fetchCountyRecordsData(request);
         break;
       case 'auction_com':
         data = await scrapeAuctionCom(request);

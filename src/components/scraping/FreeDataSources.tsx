@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Database, MapPin, Search, Building, Gavel, TrendingUp, FileText } from 'lucide-react';
+import { Database, MapPin, Search, Building, Gavel, TrendingUp, FileText, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -52,9 +51,9 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
     { 
       id: 'county_records', 
       name: 'County Records', 
-      description: 'Public property records',
+      description: 'Public property records from county assessors',
       icon: Database,
-      status: 'requires_setup'
+      status: 'active'
     },
     { 
       id: 'auction_com', 
@@ -150,6 +149,8 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
         return <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Free Tier</span>;
       case 'free_scraping':
         return <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Free Scraping</span>;
+      case 'active':
+        return <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>;
       case 'requires_setup':
         return <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Setup Required</span>;
       default:
@@ -165,7 +166,7 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
           Free Data Sources
         </CardTitle>
         <div className="text-sm text-blue-600">
-          Access real property data from free government, public APIs, and auction sites
+          Access real property data from free government, public APIs, and county records
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -234,6 +235,18 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
               </div>
               {getStatusBadge(dataSources.find(s => s.id === selectedSource)?.status || '')}
             </div>
+            
+            {selectedSource === 'county_records' && (
+              <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+                <div className="flex items-start">
+                  <Info className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <div className="font-medium">County Records Coverage:</div>
+                    <div>Currently supports Texas (Harris, Dallas, Travis), California (LA, Orange), Florida (Miami-Dade), and New York (NYC) counties with property assessor data including assessed values, ownership, and property details.</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -258,9 +271,9 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
             <p className="text-blue-700">Google Places, Yelp - Requires free API keys</p>
           </div>
 
-          <div className="bg-purple-50 p-3 rounded border border-purple-200">
-            <h5 className="font-medium text-purple-800 mb-1">🕷️ Free Scraping</h5>
-            <p className="text-purple-700">Auction sites, BiggerPockets - Public data scraping</p>
+          <div className="bg-orange-50 p-3 rounded border border-orange-200">
+            <h5 className="font-medium text-orange-800 mb-1">🏛️ County Records</h5>
+            <p className="text-orange-700">Public property data from county assessors - Real ownership & value data</p>
           </div>
         </div>
       </CardContent>
