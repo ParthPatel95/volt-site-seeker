@@ -13,6 +13,7 @@ import { SubstationDataCollector } from './power/SubstationDataCollector';
 import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
 import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
 import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
+import { GoogleMapsSubstationFinder } from './power/GoogleMapsSubstationFinder';
 import { usePowerData } from './power/usePowerData';
 import { EIADataPanel } from './power/EIADataPanel';
 import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
@@ -43,6 +44,10 @@ export function PowerInfrastructure() {
 
           <TabsContent value="capacity-estimator">
             <EnhancedCapacityEstimator />
+          </TabsContent>
+
+          <TabsContent value="google-finder">
+            <GoogleMapsSubstationFinder />
           </TabsContent>
 
           <TabsContent value="ercot-live">
