@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
@@ -14,6 +13,7 @@ import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
 import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
 import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
 import { GoogleMapsSubstationFinder } from './power/GoogleMapsSubstationFinder';
+import { MapBasedSubstationFinder } from './power/MapBasedSubstationFinder';
 import { usePowerData } from './power/usePowerData';
 import { EIADataPanel } from './power/EIADataPanel';
 import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
@@ -48,6 +48,10 @@ export function PowerInfrastructure() {
 
           <TabsContent value="google-finder">
             <GoogleMapsSubstationFinder />
+          </TabsContent>
+
+          <TabsContent value="map-finder">
+            <MapBasedSubstationFinder />
           </TabsContent>
 
           <TabsContent value="ercot-live">
