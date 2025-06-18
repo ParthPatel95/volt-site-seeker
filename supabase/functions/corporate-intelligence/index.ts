@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
@@ -30,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Mock company analysis
         const analysisResult = {
           name: company_name,
-          ticker: ticker || 'N/A',
+          ticker: ticker || null,
           industry: 'Technology',
           sector: 'Information Technology',
           market_cap: Math.floor(Math.random() * 10000000000) + 1000000000,
@@ -48,22 +47,53 @@ const handler = async (req: Request): Promise<Response> => {
           distress_signals: []
         };
 
-        // Save to database
-        const { data, error } = await supabase
+        // Check if company already exists
+        const { data: existingCompany } = await supabase
           .from('companies')
-          .upsert(analysisResult, { onConflict: 'name,ticker' })
-          .select()
-          .single();
+          .select('id')
+          .eq('name', company_name)
+          .maybeSingle();
 
-        if (error) {
-          console.error('Error saving company:', error);
-          return new Response(JSON.stringify({
-            success: false,
-            error: error.message
-          }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          });
+        let data;
+        if (existingCompany) {
+          // Update existing company
+          const { data: updateData, error } = await supabase
+            .from('companies')
+            .update(analysisResult)
+            .eq('id', existingCompany.id)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error updating company:', error);
+            return new Response(JSON.stringify({
+              success: false,
+              error: error.message
+            }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            });
+          }
+          data = updateData;
+        } else {
+          // Insert new company
+          const { data: insertData, error } = await supabase
+            .from('companies')
+            .insert(analysisResult)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error saving company:', error);
+            return new Response(JSON.stringify({
+              success: false,
+              error: error.message
+            }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            });
+          }
+          data = insertData;
         }
 
         return new Response(JSON.stringify({
