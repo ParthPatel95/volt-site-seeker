@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -23,12 +24,14 @@ export function CorporateIntelligence() {
   const [industryFilter, setIndustryFilter] = useState('all');
   const [distressAlerts, setDistressAlerts] = useState<DistressAlert[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [storedAiAnalyses, setStoredAiAnalyses] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [quickSearchTerm, setQuickSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     loadCompanies();
+    loadStoredAiAnalyses();
   }, [searchTerm, industryFilter]);
 
   const loadCompanies = async () => {
@@ -68,6 +71,25 @@ export function CorporateIntelligence() {
       setError('An unexpected error occurred while loading companies.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStoredAiAnalyses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_company_analysis')
+        .select('*')
+        .order('analyzed_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error loading AI analyses:', error);
+        return;
+      }
+
+      setStoredAiAnalyses(data || []);
+    } catch (err: any) {
+      console.error('Error in loadStoredAiAnalyses:', err);
     }
   };
 
@@ -131,6 +153,7 @@ export function CorporateIntelligence() {
 
   const handleAIAnalysisComplete = (analysis: any) => {
     setAiAnalysis(analysis);
+    loadStoredAiAnalyses();
     loadCompanies();
   };
 
@@ -173,6 +196,7 @@ export function CorporateIntelligence() {
           industryFilter={industryFilter}
           distressAlerts={distressAlerts}
           aiAnalysis={aiAnalysis}
+          storedAiAnalyses={storedAiAnalyses}
           onAnalyze={handleAnalyze}
           onAIAnalysisComplete={handleAIAnalysisComplete}
           onSearchChange={setSearchTerm}

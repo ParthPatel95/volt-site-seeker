@@ -1,11 +1,11 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Building2, TrendingUp, Briefcase, MessageSquare, Settings } from 'lucide-react';
+import { Activity, BarChart3, Users, Settings, Lightbulb, TrendingUp } from 'lucide-react';
 import { DashboardTab } from './DashboardTab';
 import { AnalysisTab } from './AnalysisTab';
 import { IntelligenceTab } from './IntelligenceTab';
-import { PortfolioTab } from './PortfolioTab';
 import { InsightsTab } from './InsightsTab';
+import { PortfolioTab } from './PortfolioTab';
 import { SettingsTab } from './SettingsTab';
 import { Company, LoadingStates, DistressAlert } from '@/types/corporateIntelligence';
 
@@ -18,7 +18,8 @@ interface MainContentTabsProps {
   industryFilter: string;
   distressAlerts: DistressAlert[];
   aiAnalysis: any;
-  onAnalyze: (companyName: string, ticker: string) => Promise<void>;
+  storedAiAnalyses?: any[];
+  onAnalyze: (companyName: string, ticker?: string) => Promise<void>;
   onAIAnalysisComplete: (analysis: any) => void;
   onSearchChange: (value: string) => void;
   onIndustryChange: (value: string) => void;
@@ -35,6 +36,7 @@ export function MainContentTabs({
   industryFilter,
   distressAlerts,
   aiAnalysis,
+  storedAiAnalyses,
   onAnalyze,
   onAIAnalysisComplete,
   onSearchChange,
@@ -43,51 +45,47 @@ export function MainContentTabs({
   onInvestigateAlert
 }: MainContentTabsProps) {
   return (
-    <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
-      <div className="overflow-x-auto">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 bg-white dark:bg-slate-800 p-1 rounded-lg shadow-sm min-w-max sm:min-w-0">
-          <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-            <span className="sm:hidden">Dash</span>
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-            <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Analysis</span>
-            <span className="sm:hidden">Analyze</span>
-          </TabsTrigger>
-          <TabsTrigger value="intelligence" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Intelligence</span>
-            <span className="sm:hidden">Intel</span>
-          </TabsTrigger>
-          <TabsTrigger value="portfolio" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-            <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
-            Portfolio
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-            <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
-            Insights
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-            <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
-      </div>
+    <Tabs defaultValue="dashboard" className="w-full">
+      <TabsList className="grid w-full grid-cols-6 mb-4 sm:mb-6">
+        <TabsTrigger value="dashboard" className="flex items-center gap-2 text-xs sm:text-sm">
+          <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Dashboard</span>
+        </TabsTrigger>
+        <TabsTrigger value="analysis" className="flex items-center gap-2 text-xs sm:text-sm">
+          <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Analysis</span>
+        </TabsTrigger>
+        <TabsTrigger value="intelligence" className="flex items-center gap-2 text-xs sm:text-sm">
+          <Lightbulb className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Intelligence</span>
+        </TabsTrigger>
+        <TabsTrigger value="insights" className="flex items-center gap-2 text-xs sm:text-sm">
+          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Insights</span>
+        </TabsTrigger>
+        <TabsTrigger value="portfolio" className="flex items-center gap-2 text-xs sm:text-sm">
+          <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Portfolio</span>
+        </TabsTrigger>
+        <TabsTrigger value="settings" className="flex items-center gap-2 text-xs sm:text-sm">
+          <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Settings</span>
+        </TabsTrigger>
+      </TabsList>
 
-      <TabsContent value="dashboard" className="space-y-4 sm:space-y-6">
+      <TabsContent value="dashboard">
         <DashboardTab
           companies={companies}
-          loading={loading}
-          onSelectCompany={onSelectCompany}
+          distressAlerts={distressAlerts}
+          onInvestigateAlert={onInvestigateAlert}
         />
       </TabsContent>
 
-      <TabsContent value="analysis" className="space-y-4 sm:space-y-6">
+      <TabsContent value="analysis">
         <AnalysisTab
           companies={companies}
           aiAnalysis={aiAnalysis}
+          storedAiAnalyses={storedAiAnalyses}
           loadingStates={loadingStates}
           searchTerm={searchTerm}
           industryFilter={industryFilter}
@@ -100,23 +98,20 @@ export function MainContentTabs({
         />
       </TabsContent>
 
-      <TabsContent value="intelligence" className="space-y-4 sm:space-y-6">
+      <TabsContent value="intelligence">
         <IntelligenceTab />
       </TabsContent>
 
-      <TabsContent value="portfolio" className="space-y-4 sm:space-y-6">
-        <PortfolioTab />
-      </TabsContent>
-
-      <TabsContent value="insights" className="space-y-4 sm:space-y-6">
+      <TabsContent value="insights">
         <InsightsTab />
       </TabsContent>
 
-      <TabsContent value="settings" className="space-y-4 sm:space-y-6">
-        <SettingsTab
-          distressAlerts={distressAlerts}
-          onInvestigateAlert={onInvestigateAlert}
-        />
+      <TabsContent value="portfolio">
+        <PortfolioTab />
+      </TabsContent>
+
+      <TabsContent value="settings">
+        <SettingsTab />
       </TabsContent>
     </Tabs>
   );

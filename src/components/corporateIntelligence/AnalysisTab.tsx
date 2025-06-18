@@ -4,12 +4,14 @@ import { CompanyFilters } from './CompanyFilters';
 import { CompanyCard } from './CompanyCard';
 import { AICompanyAnalyzer } from './AICompanyAnalyzer';
 import { AIAnalysisDisplay } from './AIAnalysisDisplay';
+import { StoredAnalysesDisplay } from './StoredAnalysesDisplay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Company, LoadingStates } from '@/types/corporateIntelligence';
 
 interface AnalysisTabProps {
   companies: Company[];
   aiAnalysis: any;
+  storedAiAnalyses?: any[];
   loadingStates: LoadingStates;
   searchTerm: string;
   industryFilter: string;
@@ -24,6 +26,7 @@ interface AnalysisTabProps {
 export function AnalysisTab({ 
   companies, 
   aiAnalysis, 
+  storedAiAnalyses = [],
   loadingStates, 
   searchTerm, 
   industryFilter, 
@@ -40,6 +43,9 @@ export function AnalysisTab({
         <div className="xl:col-span-3 space-y-4 sm:space-y-6">
           <AICompanyAnalyzer onAnalysisComplete={onAIAnalysisComplete} />
           {aiAnalysis && <AIAnalysisDisplay analysis={aiAnalysis} />}
+          {storedAiAnalyses.length > 0 && (
+            <StoredAnalysesDisplay analyses={storedAiAnalyses} />
+          )}
         </div>
         <div className="space-y-4 sm:space-y-6">
           <CompanyAnalysisForm onAnalyze={onAnalyze} loading={loadingStates.analyzing} />

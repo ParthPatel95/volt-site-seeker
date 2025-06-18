@@ -79,6 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
         const { company_name } = params;
         
         const mockAnalysis = {
+          company_name,
           financial_outlook: 'Positive growth trajectory with strong fundamentals',
           risk_assessment: 'Low to moderate risk profile',
           investment_recommendation: 'BUY',
@@ -89,8 +90,20 @@ const handler = async (req: Request): Promise<Response> => {
             'Energy-intensive operations'
           ],
           distress_probability: Math.random() * 0.3,
-          acquisition_readiness: Math.random() * 0.8 + 0.2
+          acquisition_readiness: Math.random() * 0.8 + 0.2,
+          analyzed_at: new Date().toISOString()
         };
+
+        // Save AI analysis to database
+        const { data: aiData, error: aiError } = await supabase
+          .from('ai_company_analysis')
+          .insert(mockAnalysis)
+          .select()
+          .single();
+
+        if (aiError) {
+          console.error('Error saving AI analysis:', aiError);
+        }
 
         return new Response(JSON.stringify({
           success: true,
