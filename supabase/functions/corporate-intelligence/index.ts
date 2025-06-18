@@ -11,7 +11,7 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// SEC EDGAR API for public company data
+// SEC EDGAR API for public company data and real estate assets
 async function fetchSECData(ticker: string, companyName: string) {
   if (!ticker) return null;
   
@@ -48,6 +48,9 @@ async function fetchSECData(ticker: string, companyName: string) {
       return null;
     }
 
+    // Fetch recent SEC filings for real estate analysis
+    const realEstateAssets = await extractRealEstateFromSECFilings(cik, ticker);
+
     // SEC EDGAR Company Facts API
     const secUrl = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
     
@@ -69,12 +72,14 @@ async function fetchSECData(ticker: string, companyName: string) {
       const liabilities = facts.Liabilities?.units?.USD || [];
       const currentAssets = facts.AssetsCurrent?.units?.USD || [];
       const currentLiabilities = facts.LiabilitiesCurrent?.units?.USD || [];
+      const propertyPlantEquipment = facts.PropertyPlantAndEquipmentNet?.units?.USD || [];
       
       const latestRevenue = revenues.length > 0 ? revenues[revenues.length - 1]?.val : null;
       const latestAssets = assets.length > 0 ? assets[assets.length - 1]?.val : null;
       const latestLiabilities = liabilities.length > 0 ? liabilities[liabilities.length - 1]?.val : null;
       const latestCurrentAssets = currentAssets.length > 0 ? currentAssets[currentAssets.length - 1]?.val : null;
       const latestCurrentLiabilities = currentLiabilities.length > 0 ? currentLiabilities[currentLiabilities.length - 1]?.val : null;
+      const latestPPE = propertyPlantEquipment.length > 0 ? propertyPlantEquipment[propertyPlantEquipment.length - 1]?.val : null;
       
       return {
         ticker: data.cik,
@@ -85,6 +90,8 @@ async function fetchSECData(ticker: string, companyName: string) {
         latest_liabilities: latestLiabilities,
         current_assets: latestCurrentAssets,
         current_liabilities: latestCurrentLiabilities,
+        property_plant_equipment: latestPPE,
+        real_estate_assets: realEstateAssets,
         debt_to_equity: latestLiabilities && latestAssets ? (latestLiabilities / (latestAssets - latestLiabilities)) : null,
         current_ratio: latestCurrentAssets && latestCurrentLiabilities ? (latestCurrentAssets / latestCurrentLiabilities) : null,
         source: 'SEC EDGAR'
@@ -95,6 +102,261 @@ async function fetchSECData(ticker: string, companyName: string) {
   } catch (error) {
     console.error('SEC data fetch error:', error);
   }
+  return null;
+}
+
+// Extract real estate assets from SEC filings
+async function extractRealEstateFromSECFilings(cik: string, ticker: string) {
+  try {
+    console.log(`Extracting real estate data for CIK: ${cik}`);
+    
+    // Get recent filings (10-K, 10-Q)
+    const filingsUrl = `https://data.sec.gov/submissions/CIK${cik}.json`;
+    const filingsResponse = await fetch(filingsUrl, {
+      headers: {
+        'User-Agent': 'VoltScout Corporate Intelligence (contact@voltscout.com)',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!filingsResponse.ok) {
+      console.log('Failed to fetch SEC filings');
+      return [];
+    }
+
+    const filingsData = await filingsResponse.json();
+    const recentFilings = filingsData.filings?.recent;
+    
+    if (!recentFilings) {
+      console.log('No recent filings found');
+      return [];
+    }
+
+    // Look for 10-K and 10-Q filings (most comprehensive)
+    const relevantFilings = [];
+    for (let i = 0; i < Math.min(recentFilings.form.length, 10); i++) {
+      if (['10-K', '10-Q'].includes(recentFilings.form[i])) {
+        relevantFilings.push({
+          accessionNumber: recentFilings.accessionNumber[i],
+          form: recentFilings.form[i],
+          filingDate: recentFilings.filingDate[i]
+        });
+      }
+    }
+
+    // Parse the most recent 10-K for property information
+    const realEstateAssets = [];
+    
+    if (relevantFilings.length > 0) {
+      const filing = relevantFilings[0];
+      const propertyData = await parseFilingForRealEstate(cik, filing.accessionNumber, ticker);
+      realEstateAssets.push(...propertyData);
+    }
+
+    return realEstateAssets;
+  } catch (error) {
+    console.error('Error extracting real estate from SEC filings:', error);
+    return [];
+  }
+}
+
+// Parse individual SEC filing for real estate mentions
+async function parseFilingForRealEstate(cik: string, accessionNumber: string, ticker: string) {
+  try {
+    // Construct filing URL
+    const cleanAccession = accessionNumber.replace(/-/g, '');
+    const filingUrl = `https://www.sec.gov/Archives/edgar/data/${parseInt(cik)}/${cleanAccession}/${accessionNumber}.txt`;
+    
+    console.log(`Parsing filing: ${filingUrl}`);
+    
+    const response = await fetch(filingUrl, {
+      headers: {
+        'User-Agent': 'VoltScout Corporate Intelligence (contact@voltscout.com)'
+      }
+    });
+
+    if (!response.ok) {
+      console.log(`Failed to fetch filing document: ${response.status}`);
+      return [];
+    }
+
+    const filingText = await response.text();
+    
+    // Extract real estate information using pattern matching
+    return extractRealEstateFromText(filingText, ticker);
+    
+  } catch (error) {
+    console.error('Error parsing SEC filing:', error);
+    return [];
+  }
+}
+
+// Extract real estate locations and types from filing text
+function extractRealEstateFromText(text: string, ticker: string) {
+  const realEstateAssets = [];
+  
+  // Patterns to identify property types and locations
+  const patterns = {
+    headquarters: /headquarters?.*?(?:located|situated).*?in\s+([^.\n]+)/gi,
+    offices: /(?:office|facility|facilities).*?(?:located|situated|in)\s+([^.\n]+)/gi,
+    datacenters: /(?:data\s*center|datacenter|server\s*farm).*?(?:located|situated|in)\s+([^.\n]+)/gi,
+    manufacturing: /(?:manufacturing|production|plant|factory).*?(?:located|situated|in)\s+([^.\n]+)/gi,
+    distribution: /(?:distribution|warehouse|fulfillment).*?(?:center|facility).*?(?:located|situated|in)\s+([^.\n]+)/gi,
+    retail: /(?:retail|store|showroom).*?(?:located|situated|in)\s+([^.\n]+)/gi
+  };
+
+  // Property section indicators
+  const propertySectionRegex = /(Item\s+2\.|PROPERTIES|Real\s+Estate|FACILITIES)/i;
+  const propertySection = text.match(propertySectionRegex);
+  
+  let searchText = text;
+  if (propertySection) {
+    const sectionIndex = text.indexOf(propertySection[0]);
+    // Extract next 5000 characters after property section
+    searchText = text.substring(sectionIndex, sectionIndex + 5000);
+  }
+
+  // Extract locations for each property type
+  Object.entries(patterns).forEach(([type, pattern]) => {
+    const matches = [...searchText.matchAll(pattern)];
+    
+    matches.forEach((match) => {
+      const locationText = match[1]?.trim();
+      if (locationText && locationText.length > 3 && locationText.length < 100) {
+        const coordinates = extractCoordinatesFromLocation(locationText);
+        
+        realEstateAssets.push({
+          id: `${ticker}-${type}-${realEstateAssets.length}`,
+          company_ticker: ticker,
+          property_type: mapPropertyType(type),
+          location_description: locationText,
+          coordinates: coordinates,
+          source: 'SEC Filing',
+          raw_text: match[0].substring(0, 200) // First 200 chars for context
+        });
+      }
+    });
+  });
+
+  return realEstateAssets;
+}
+
+// Map internal types to standardized property types
+function mapPropertyType(internalType: string) {
+  const typeMapping = {
+    'headquarters': 'Office',
+    'offices': 'Office', 
+    'datacenters': 'Data Center',
+    'manufacturing': 'Industrial',
+    'distribution': 'Industrial',
+    'retail': 'Office'
+  };
+  
+  return typeMapping[internalType] || 'Other Industrial Asset';
+}
+
+// Extract approximate coordinates from location description
+function extractCoordinatesFromLocation(locationText: string) {
+  // Common US city coordinates (this would be enhanced with a geocoding service)
+  const cityCoordinates: { [key: string]: [number, number] } = {
+    'new york': [-74.0059, 40.7128],
+    'los angeles': [-118.2437, 34.0522],
+    'chicago': [-87.6298, 41.8781],
+    'houston': [-95.3698, 29.7604],
+    'dallas': [-96.7970, 32.7767],
+    'austin': [-97.7431, 30.2672],
+    'san francisco': [-122.4194, 37.7749],
+    'seattle': [-122.3321, 47.6062],
+    'atlanta': [-84.3880, 33.7490],
+    'boston': [-71.0589, 42.3601],
+    'denver': [-104.9903, 39.7392],
+    'miami': [-80.1918, 25.7617],
+    'phoenix': [-112.0740, 33.4484],
+    'philadelphia': [-75.1652, 39.9526],
+    'san diego': [-117.1611, 32.7157],
+    'las vegas': [-115.1398, 36.1699],
+    'portland': [-122.6765, 45.5152],
+    'nashville': [-86.7816, 36.1627],
+    'sacramento': [-121.4684, 38.5816],
+    'kansas city': [-94.5786, 39.0997],
+    'columbus': [-82.9988, 39.9612],
+    'charlotte': [-80.8431, 35.2271],
+    'detroit': [-83.0458, 42.3314],
+    'milwaukee': [-87.9065, 43.0389],
+    'baltimore': [-76.6122, 39.2904],
+    'washington': [-77.0369, 38.9072],
+    'minneapolis': [-93.2650, 44.9778],
+    'san antonio': [-98.4936, 29.4241],
+    'orlando': [-81.3792, 28.5383],
+    'tampa': [-82.4572, 27.9506],
+    'pittsburgh': [-79.9959, 40.4406],
+    'cincinnati': [-84.5120, 39.1031],
+    'cleveland': [-81.6944, 41.4993],
+    'raleigh': [-78.6382, 35.7796],
+    'virginia beach': [-75.9780, 36.8529],
+    'omaha': [-95.9345, 41.2524],
+    'california': [-119.4179, 36.7783],
+    'texas': [-99.9018, 31.9686],
+    'florida': [-81.5158, 27.7663],
+    'new york state': [-74.2179, 43.2994],
+    'illinois': [-89.3985, 40.6331],
+    'pennsylvania': [-77.1945, 41.2033],
+    'ohio': [-82.7649, 40.3888],
+    'georgia': [-83.1137, 32.3617],
+    'north carolina': [-78.6569, 35.7596],
+    'michigan': [-84.5467, 44.3467],
+    'new jersey': [-74.7429, 40.0583],
+    'virginia': [-78.6569, 37.4316],
+    'washington state': [-120.7401, 47.7511],
+    'arizona': [-111.4312, 34.0489],
+    'massachusetts': [-71.3824, 42.2373],
+    'tennessee': [-86.7816, 35.7449],
+    'indiana': [-86.1349, 40.2732],
+    'missouri': [-91.8318, 38.5767],
+    'maryland': [-76.6413, 39.0639],
+    'wisconsin': [-89.6165, 44.2619],
+    'colorado': [-105.3111, 39.0598],
+    'minnesota': [-93.9002, 46.3294],
+    'south carolina': [-80.9007, 33.8361],
+    'alabama': [-86.7916, 32.3668],
+    'louisiana': [-91.8749, 30.9843],
+    'kentucky': [-84.86, 37.8393],
+    'oregon': [-122.0709, 44.9778],
+    'oklahoma': [-96.9289, 35.4676],
+    'connecticut': [-72.7559, 41.5978],
+    'utah': [-111.8910, 40.1500],
+    'iowa': [-93.620, 41.878],
+    'nevada': [-117.055, 38.313],
+    'arkansas': [-92.373, 34.969],
+    'mississippi': [-89.678, 32.741],
+    'kansas': [-96.726, 38.5266],
+    'new mexico': [-106.248, 34.840],
+    'nebraska': [-99.901, 41.125],
+    'west virginia': [-80.954, 38.491],
+    'idaho': [-114.478, 44.240],
+    'hawaii': [-157.826, 21.315],
+    'new hampshire': [-71.549, 43.452],
+    'maine': [-69.765, 44.693],
+    'montana': [-110.454, 47.050],
+    'rhode island': [-71.511, 41.680],
+    'delaware': [-75.507, 39.318],
+    'south dakota': [-99.784, 44.299],
+    'north dakota': [-99.784, 47.528],
+    'alaska': [-152.404, 61.270],
+    'vermont': [-72.710, 44.045],
+    'wyoming': [-107.30, 42.750]
+  };
+
+  const normalizedLocation = locationText.toLowerCase();
+  
+  // Try to find city match first
+  for (const [city, coords] of Object.entries(cityCoordinates)) {
+    if (normalizedLocation.includes(city)) {
+      return coords;
+    }
+  }
+
+  // If no specific match, return null for manual geocoding later
   return null;
 }
 
@@ -402,7 +664,8 @@ const handler = async (req: Request): Promise<Response> => {
           alpha: !!alpha, 
           yahoo: !!yahoo, 
           corporates: !!corporates,
-          news: news.length 
+          news: news.length,
+          realEstateAssets: sec?.real_estate_assets?.length || 0
         });
 
         // Combine data from all sources, prioritizing real data
@@ -422,6 +685,8 @@ const handler = async (req: Request): Promise<Response> => {
           company_status: corporates?.status || null,
           jurisdiction: corporates?.jurisdiction || null,
           registered_address: corporates?.registered_address || null,
+          real_estate_assets: sec?.real_estate_assets || [],
+          property_plant_equipment: sec?.property_plant_equipment || null,
           recent_news: news,
           data_sources: {
             sec: !!sec,
@@ -466,14 +731,39 @@ const handler = async (req: Request): Promise<Response> => {
           financial_health_score: financialHealthScore,
           power_usage_estimate: powerUsageEstimate,
           distress_signals: distressSignals,
-          locations: [], // This could be enhanced with additional APIs
+          locations: sec?.real_estate_assets || [], // Use real estate assets as locations
           data_quality: {
             sources_used: Object.values(combinedData.data_sources).filter(Boolean).length,
             has_financial_data: !!(alpha || sec),
             has_corporate_data: !!corporates,
-            has_recent_news: news.length > 0
+            has_recent_news: news.length > 0,
+            has_real_estate_data: (sec?.real_estate_assets?.length || 0) > 0
           }
         };
+
+        // Store real estate assets separately if they exist
+        if (sec?.real_estate_assets && sec.real_estate_assets.length > 0) {
+          try {
+            // Store in a separate table for mapping
+            const { error: realEstateError } = await supabase
+              .from('company_real_estate_assets')
+              .upsert(
+                sec.real_estate_assets.map((asset: any) => ({
+                  ...asset,
+                  company_name: company_name,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })),
+                { onConflict: 'id' }
+              );
+              
+            if (realEstateError) {
+              console.error('Error storing real estate assets:', realEstateError);
+            }
+          } catch (err) {
+            console.error('Error processing real estate assets:', err);
+          }
+        }
 
         // Check if company already exists by name
         const { data: existingCompany } = await supabase
@@ -528,7 +818,8 @@ const handler = async (req: Request): Promise<Response> => {
           success: true,
           company: data,
           data_quality: analysisResult.data_quality,
-          message: `Successfully analyzed ${company_name} using ${analysisResult.data_quality.sources_used} data sources`
+          real_estate_count: sec?.real_estate_assets?.length || 0,
+          message: `Successfully analyzed ${company_name} using ${analysisResult.data_quality.sources_used} data sources. Found ${sec?.real_estate_assets?.length || 0} real estate assets.`
         }), {
           status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
