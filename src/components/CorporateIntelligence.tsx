@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -72,7 +71,9 @@ export function CorporateIntelligence() {
     }
   };
 
-  const handleAnalyze = async (companyName: string) => {
+  const handleAnalyze = async (companyName: string, ticker?: string) => {
+    console.log('handleAnalyze called with:', { companyName, ticker });
+    
     if (!companyName?.trim()) {
       toast({
         title: "Company name required",
@@ -86,7 +87,11 @@ export function CorporateIntelligence() {
 
     try {
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
-        body: { action: 'analyze_company', company_name: companyName.trim() },
+        body: { 
+          action: 'analyze_company', 
+          company_name: companyName.trim(),
+          ticker: ticker?.trim() || ''
+        },
       });
 
       if (error) {

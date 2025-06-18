@@ -14,7 +14,7 @@ interface AnalysisTabProps {
   searchTerm: string;
   industryFilter: string;
   loading: boolean;
-  onAnalyze: (companyName: string, ticker: string) => Promise<void>;
+  onAnalyze: (companyName: string, ticker?: string) => Promise<void>;
   onAIAnalysisComplete: (analysis: any) => void;
   onSearchChange: (value: string) => void;
   onIndustryChange: (value: string) => void;

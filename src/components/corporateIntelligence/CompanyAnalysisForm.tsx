@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Activity, RefreshCw } from 'lucide-react';
 
 interface CompanyAnalysisFormProps {
-  onAnalyze: (company: string, ticker: string) => Promise<void>;
+  onAnalyze: (company: string, ticker?: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -16,7 +16,7 @@ export function CompanyAnalysisForm({ onAnalyze, loading }: CompanyAnalysisFormP
 
   const handleAnalyze = async () => {
     if (newCompany.trim()) {
-      await onAnalyze(newCompany.trim(), newTicker.trim());
+      await onAnalyze(newCompany.trim(), newTicker.trim() || undefined);
       setNewCompany('');
       setNewTicker('');
     }
