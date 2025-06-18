@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -76,7 +75,8 @@ export function CorporateIntelligence() {
 
   const loadStoredAiAnalyses = async () => {
     try {
-      const { data, error } = await supabase
+      // Using any type to bypass TypeScript error until Supabase types are regenerated
+      const { data, error } = await (supabase as any)
         .from('ai_company_analysis')
         .select('*')
         .order('analyzed_at', { ascending: false })

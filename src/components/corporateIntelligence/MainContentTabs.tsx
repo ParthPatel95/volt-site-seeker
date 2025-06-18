@@ -77,6 +77,8 @@ export function MainContentTabs({
         <DashboardTab
           companies={companies}
           distressAlerts={distressAlerts}
+          loading={loading}
+          onSelectCompany={onSelectCompany}
           onInvestigateAlert={onInvestigateAlert}
         />
       </TabsContent>
@@ -111,7 +113,10 @@ export function MainContentTabs({
       </TabsContent>
 
       <TabsContent value="settings">
-        <SettingsTab />
+        <SettingsTab 
+          distressAlerts={distressAlerts}
+          onInvestigateAlert={onInvestigateAlert}
+        />
       </TabsContent>
     </Tabs>
   );

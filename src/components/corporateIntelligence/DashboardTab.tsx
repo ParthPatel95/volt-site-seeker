@@ -3,15 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, AlertTriangle, FileText, BarChart3, Settings, Plus } from 'lucide-react';
-import { Company } from '@/types/corporateIntelligence';
+import { Company, DistressAlert } from '@/types/corporateIntelligence';
 
 interface DashboardTabProps {
   companies: Company[];
-  loading: boolean;
+  distressAlerts: DistressAlert[];
+  loading?: boolean;
   onSelectCompany: (company: Company) => void;
+  onInvestigateAlert: (alert: DistressAlert) => void;
 }
 
-export function DashboardTab({ companies, loading, onSelectCompany }: DashboardTabProps) {
+export function DashboardTab({ 
+  companies, 
+  distressAlerts,
+  loading, 
+  onSelectCompany,
+  onInvestigateAlert 
+}: DashboardTabProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       <Card className="lg:col-span-2">
