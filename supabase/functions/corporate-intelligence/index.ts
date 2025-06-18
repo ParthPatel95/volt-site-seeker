@@ -387,7 +387,6 @@ async function fetchAlphaVantageData(ticker: string) {
           revenue_growth: data.QuarterlyRevenueGrowthYOY ? parseFloat(data.QuarterlyRevenueGrowthYOY) * 100 : null,
           debt_to_equity: data.DebtToEquityRatio ? parseFloat(data.DebtToEquityRatio) : null,
           current_ratio: data.CurrentRatio ? parseFloat(data.CurrentRatio) : null,
-          beta: data.Beta ? parseFloat(data.Beta) : null,
           dividend_yield: data.DividendYield ? parseFloat(data.DividendYield) * 100 : null,
           industry: data.Industry || null,
           sector: data.Sector || null,
@@ -679,14 +678,11 @@ const handler = async (req: Request): Promise<Response> => {
           profit_margin: alpha?.profit_margin || null,
           debt_to_equity: alpha?.debt_to_equity || sec?.debt_to_equity || null,
           current_ratio: alpha?.current_ratio || sec?.current_ratio || null,
-          pe_ratio: alpha?.pe_ratio || null,
-          beta: alpha?.beta || null,
           incorporation_date: corporates?.incorporation_date || null,
           company_status: corporates?.status || null,
           jurisdiction: corporates?.jurisdiction || null,
           registered_address: corporates?.registered_address || null,
           real_estate_assets: sec?.real_estate_assets || [],
-          property_plant_equipment: sec?.property_plant_equipment || null,
           recent_news: news,
           data_sources: {
             sec: !!sec,
@@ -731,7 +727,7 @@ const handler = async (req: Request): Promise<Response> => {
           financial_health_score: financialHealthScore,
           power_usage_estimate: powerUsageEstimate,
           distress_signals: distressSignals,
-          locations: sec?.real_estate_assets || [], // Use real estate assets as locations
+          locations: sec?.real_estate_assets || [],
           data_quality: {
             sources_used: Object.values(combinedData.data_sources).filter(Boolean).length,
             has_financial_data: !!(alpha || sec),
