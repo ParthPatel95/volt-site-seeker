@@ -5,15 +5,20 @@ import { extractCity, extractState, extractZipCode, extractStateFromCensus } fro
 export async function fetchGooglePlaces(request: FreeDataRequest): Promise<ScrapingResponse> {
   const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
   if (!apiKey) {
-    return { properties: [], message: 'Google Places API key not configured' };
+    return { properties: [], message: 'Google Places API key not configured. Please add GOOGLE_PLACES_API_KEY to your edge function secrets.' };
   }
 
   try {
     const searchQuery = `commercial real estate ${request.property_type || 'industrial'} ${request.location}`;
     const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
     
+    console.log('Google Places API request URL:', url);
+    
     const response = await fetch(url);
     const data = await response.json();
+
+    console.log('Google Places API response status:', response.status);
+    console.log('Google Places API response data:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       throw new Error(`Google Places API error: ${data.error_message || 'Unknown error'}`);
@@ -43,19 +48,21 @@ export async function fetchGooglePlaces(request: FreeDataRequest): Promise<Scrap
     };
   } catch (error) {
     console.error('Google Places API error:', error);
-    return { properties: [], message: 'Google Places API currently unavailable' };
+    return { properties: [], message: `Google Places API error: ${error.message}` };
   }
 }
 
 export async function fetchYelpData(request: FreeDataRequest): Promise<ScrapingResponse> {
   const apiKey = Deno.env.get('YELP_API_KEY');
   if (!apiKey) {
-    return { properties: [], message: 'Yelp API key not configured' };
+    return { properties: [], message: 'Yelp API key not configured. Please add YELP_API_KEY to your edge function secrets.' };
   }
 
   try {
     const categories = 'realestateagents,commercialrealestate,industrialequipment';
     const url = `https://api.yelp.com/v3/businesses/search?location=${encodeURIComponent(request.location)}&categories=${categories}&limit=50`;
+    
+    console.log('Yelp API request URL:', url);
     
     const response = await fetch(url, {
       headers: {
@@ -65,6 +72,9 @@ export async function fetchYelpData(request: FreeDataRequest): Promise<ScrapingR
     });
 
     const data = await response.json();
+
+    console.log('Yelp API response status:', response.status);
+    console.log('Yelp API response data:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       throw new Error(`Yelp API error: ${data.error?.description || 'Unknown error'}`);
@@ -94,115 +104,184 @@ export async function fetchYelpData(request: FreeDataRequest): Promise<ScrapingR
     };
   } catch (error) {
     console.error('Yelp API error:', error);
-    return { properties: [], message: 'Yelp API currently unavailable' };
+    return { properties: [], message: `Yelp API error: ${error.message}` };
   }
 }
 
 export async function fetchOpenStreetMapData(request: FreeDataRequest): Promise<ScrapingResponse> {
   try {
+    console.log('Fetching OpenStreetMap data for:', request.location);
+    
+    // First, try to get the bounding box for the location using Nominatim
+    const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(request.location)}&limit=1`;
+    
+    console.log('Nominatim geocoding URL:', geocodeUrl);
+    
+    const geocodeResponse = await fetch(geocodeUrl, {
+      headers: {
+        'User-Agent': 'VoltScout Property Discovery/1.0'
+      }
+    });
+    
+    const geocodeData = await geocodeResponse.json();
+    console.log('Geocoding response:', JSON.stringify(geocodeData, null, 2));
+    
+    if (!geocodeData || geocodeData.length === 0) {
+      return { properties: [], message: 'Location not found in OpenStreetMap' };
+    }
+    
+    const bbox = geocodeData[0].boundingbox;
+    const [south, north, west, east] = bbox;
+    
+    // Improved Overpass query with better targeting
     const query = `
       [out:json][timeout:25];
       (
-        way["landuse"~"commercial|industrial|retail"]["addr:city"~"${request.location}",i];
-        way["building"~"commercial|industrial|warehouse"]["addr:city"~"${request.location}",i];
-        relation["landuse"~"commercial|industrial"]["addr:city"~"${request.location}",i];
+        way["landuse"~"commercial|industrial|retail"]["building"!~"no|house|residential"](${south},${west},${north},${east});
+        way["building"~"commercial|industrial|warehouse|factory|office"]["landuse"!~"residential"](${south},${west},${north},${east});
+        way["amenity"~"industrial|warehouse"]["building"](${south},${west},${north},${east});
+        relation["landuse"~"commercial|industrial"]["type"="multipolygon"](${south},${west},${north},${east});
       );
-      out geom;
+      out center meta;
     `;
 
-    const url = 'https://overpass-api.de/api/interpreter';
-    const response = await fetch(url, {
+    console.log('Overpass query:', query);
+
+    const overpassUrl = 'https://overpass-api.de/api/interpreter';
+    const response = await fetch(overpassUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 
+        'Content-Type': 'text/plain',
+        'User-Agent': 'VoltScout Property Discovery/1.0'
+      },
       body: query
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      throw new Error('OpenStreetMap Overpass API error');
+      console.log('Overpass API error:', response.status, response.statusText);
+      return { properties: [], message: 'OpenStreetMap Overpass API error' };
     }
 
-    const properties = data.elements?.slice(0, 30).map((element: any) => ({
-      address: `${element.tags?.['addr:housenumber'] || ''} ${element.tags?.['addr:street'] || 'Unknown Street'}`.trim(),
-      city: element.tags?.['addr:city'] || request.location,
-      state: element.tags?.['addr:state'] || '',
-      zip_code: element.tags?.['addr:postcode'] || '',
-      property_type: element.tags?.landuse || element.tags?.building || 'commercial',
-      source: 'openstreetmap',
-      listing_url: `https://www.openstreetmap.org/${element.type}/${element.id}`,
-      description: `${element.tags?.name || 'Commercial Property'} - ${element.tags?.landuse || element.tags?.building}`,
-      square_footage: null,
-      asking_price: null,
-      lot_size_acres: null,
-      coordinates: element.type === 'node' ? {
-        lat: element.lat,
-        lng: element.lon
-      } : element.center ? {
-        lat: element.center.lat,
-        lng: element.center.lon
-      } : null
-    })) || [];
+    const data = await response.json();
+    console.log('OpenStreetMap response:', JSON.stringify(data, null, 2));
+
+    const properties = data.elements?.slice(0, 30).map((element: any) => {
+      const tags = element.tags || {};
+      const center = element.center || (element.type === 'node' ? { lat: element.lat, lon: element.lon } : null);
+      
+      const address = [
+        tags['addr:housenumber'],
+        tags['addr:street']
+      ].filter(Boolean).join(' ') || 'Address not specified';
+      
+      const city = tags['addr:city'] || request.location.split(',')[0].trim();
+      const state = tags['addr:state'] || 'Unknown';
+      
+      return {
+        address: address,
+        city: city,
+        state: state,
+        zip_code: tags['addr:postcode'] || '',
+        property_type: tags.landuse || tags.building || tags.amenity || 'commercial',
+        source: 'openstreetmap',
+        listing_url: `https://www.openstreetmap.org/${element.type}/${element.id}`,
+        description: `${tags.name || 'Commercial Property'} - ${tags.landuse || tags.building || 'Commercial use'}`,
+        square_footage: null,
+        asking_price: null,
+        lot_size_acres: null,
+        coordinates: center ? {
+          lat: center.lat,
+          lng: center.lon
+        } : null
+      };
+    }).filter((p: any) => p.coordinates) || [];
 
     return {
-      properties: properties.filter(p => p.coordinates),
+      properties,
       message: `Found ${properties.length} properties from OpenStreetMap`
     };
   } catch (error) {
     console.error('OpenStreetMap API error:', error);
-    return { properties: [], message: 'OpenStreetMap data currently unavailable' };
+    return { properties: [], message: `OpenStreetMap data error: ${error.message}` };
   }
 }
 
 export async function fetchCensusData(request: FreeDataRequest): Promise<ScrapingResponse> {
   try {
+    console.log('Fetching Census data for:', request.location);
+    
+    // Use the County Business Patterns API for more reliable data
     const year = '2021';
-    const url = `https://api.census.gov/data/${year}/cbp?get=NAME,NAICS2017_LABEL,EMP,ESTAB&for=county:*&in=state:*&NAICS2017=23,31-33,42,44-45,48-49,53,54,56`;
+    const url = `https://api.census.gov/data/${year}/cbp?get=NAME,NAICS2017_LABEL,EMP,ESTAB,PAYANN&for=county:*&in=state:*&NAICS2017=23,31-33,42,44-45,48-49,53,54,56`;
+    
+    console.log('Census API URL:', url);
     
     const response = await fetch(url);
-    const data = await response.json();
-
+    
     if (!response.ok) {
-      throw new Error('Census API error');
+      console.log('Census API error:', response.status, response.statusText);
+      return { properties: [], message: 'Census API error' };
     }
 
-    const locationFilter = request.location.toLowerCase();
-    const relevantData = data?.slice(1).filter((row: any[]) => 
-      row[0]?.toLowerCase().includes(locationFilter)
-    ) || [];
+    const data = await response.json();
+    console.log('Census API response length:', data?.length);
+    
+    if (!data || data.length <= 1) {
+      return { properties: [], message: 'No Census data available' };
+    }
 
-    const properties = relevantData.slice(0, 20).map((row: any[], index: number) => ({
-      address: `Business District ${index + 1}`,
-      city: row[0]?.split(',')[0] || request.location,
-      state: extractStateFromCensus(row),
-      zip_code: '',
-      property_type: 'commercial',
-      source: 'census',
-      listing_url: null,
-      description: `${row[1]} - ${row[3]} establishments, ${row[2]} employees`,
-      square_footage: null,
-      asking_price: null,
-      lot_size_acres: null,
-      census_data: {
-        industry: row[1],
-        employees: parseInt(row[2]) || 0,
-        establishments: parseInt(row[3]) || 0
-      }
-    }));
+    // Filter data by location (case-insensitive partial match)
+    const locationFilter = request.location.toLowerCase();
+    const relevantData = data.slice(1).filter((row: any[]) => {
+      const countyName = row[0]?.toLowerCase() || '';
+      return countyName.includes(locationFilter) || 
+             locationFilter.includes(countyName.split(' ')[0]) ||
+             locationFilter.includes(countyName.split(',')[0]);
+    });
+
+    console.log('Filtered census data rows:', relevantData.length);
+
+    const properties = relevantData.slice(0, 20).map((row: any[], index: number) => {
+      const countyName = row[0] || 'Unknown County';
+      const industry = row[1] || 'Unknown Industry';
+      const employees = parseInt(row[2]) || 0;
+      const establishments = parseInt(row[3]) || 0;
+      const payroll = parseInt(row[4]) || 0;
+      
+      return {
+        address: `Business District ${index + 1}, ${countyName}`,
+        city: countyName.split(',')[0] || request.location,
+        state: countyName.includes(',') ? countyName.split(',')[1]?.trim() : 'Unknown',
+        zip_code: '',
+        property_type: 'commercial_district',
+        source: 'census',
+        listing_url: `https://data.census.gov/cedsci/`,
+        description: `${industry} - ${establishments} establishments, ${employees} employees, $${payroll.toLocaleString()} annual payroll`,
+        square_footage: null,
+        asking_price: null,
+        lot_size_acres: null,
+        census_data: {
+          industry: industry,
+          employees: employees,
+          establishments: establishments,
+          annual_payroll: payroll
+        }
+      };
+    });
 
     return {
       properties,
-      message: `Found ${properties.length} business areas from Census data`
+      message: `Found ${properties.length} business districts from Census data`
     };
   } catch (error) {
     console.error('Census API error:', error);
-    return { properties: [], message: 'Census data currently unavailable' };
+    return { properties: [], message: `Census data error: ${error.message}` };
   }
 }
 
 export async function fetchCountyRecords(request: FreeDataRequest): Promise<ScrapingResponse> {
   return {
     properties: [],
-    message: 'County records integration requires specific county API configuration'
+    message: 'County records integration requires specific county API configuration. Contact your administrator to set up county-specific data sources.'
   };
 }
