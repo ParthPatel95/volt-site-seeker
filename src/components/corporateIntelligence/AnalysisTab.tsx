@@ -72,7 +72,7 @@ export function AnalysisTab({
             <CompanyCard
               key={company.id}
               company={company}
-              onViewDetails={() => onSelectCompany(company)}
+              onSelect={onSelectCompany}
             />
           ))}
         </div>
