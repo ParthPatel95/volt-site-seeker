@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +9,12 @@ interface CapacityEstimationRequest {
     transformers?: number;
     capacity?: number;
     substationType?: 'transmission' | 'distribution';
+    utilityContext?: {
+      company?: string;
+      voltage?: string;
+      name?: string;
+      notes?: string;
+    };
   };
 }
 
