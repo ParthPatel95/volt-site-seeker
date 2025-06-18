@@ -1,21 +1,26 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useCapacityEstimator } from '@/hooks/useCapacityEstimator';
 import { supabase } from '@/integrations/supabase/client';
+import { SubstationFilters } from './googleFinder/components/SubstationFilters';
+import { SubstationTable } from './googleFinder/components/SubstationTable';
+import { useSubstationFilters } from './googleFinder/hooks/useSubstationFilters';
 import { 
   Search, 
   MapPin, 
-  Zap,
   Database,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  BarChart3
 } from 'lucide-react';
 
 interface DiscoveredSubstation {
@@ -31,6 +36,7 @@ interface DiscoveredSubstation {
     confidence: number;
   };
   analysis_status: 'pending' | 'analyzing' | 'completed' | 'failed';
+  stored_at?: string;
 }
 
 export function GoogleMapsSubstationFinder() {
@@ -38,9 +44,52 @@ export function GoogleMapsSubstationFinder() {
   const [searching, setSearching] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [discoveredSubstations, setDiscoveredSubstations] = useState<DiscoveredSubstation[]>([]);
+  const [storedSubstations, setStoredSubstations] = useState<DiscoveredSubstation[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const { estimateCapacity } = useCapacityEstimator();
+
+  // Filter hooks for discovered substations
+  const discoveredFilters = useSubstationFilters(discoveredSubstations);
+  // Filter hooks for stored substations
+  const storedFilters = useSubstationFilters(storedSubstations);
+
+  // Load stored substations from database on component mount
+  useEffect(() => {
+    loadStoredSubstations();
+  }, []);
+
+  const loadStoredSubstations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('substations')
+        .select('*')
+        .eq('coordinates_source', 'google_maps_api')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedSubstations: DiscoveredSubstation[] = data.map(sub => ({
+        id: sub.id,
+        name: sub.name,
+        latitude: sub.latitude || 0,
+        longitude: sub.longitude || 0,
+        place_id: `stored_${sub.id}`,
+        address: `${sub.city}, ${sub.state}`,
+        capacity_estimate: {
+          min: Math.round(sub.capacity_mva * 0.8), // Convert MVA to MW estimate
+          max: Math.round(sub.capacity_mva),
+          confidence: 0.8
+        },
+        analysis_status: 'completed' as const,
+        stored_at: sub.created_at
+      }));
+
+      setStoredSubstations(formattedSubstations);
+    } catch (error) {
+      console.error('Error loading stored substations:', error);
+    }
+  };
 
   const findSubstations = async () => {
     if (!location.trim()) {
@@ -61,8 +110,8 @@ export function GoogleMapsSubstationFinder() {
       const { data, error } = await supabase.functions.invoke('google-maps-substation-finder', {
         body: { 
           location: location.trim(),
-          searchRadius: 100000, // Increased to 100km radius
-          maxResults: 100 // Increased to find more substations
+          searchRadius: 100000,
+          maxResults: 100
         }
       });
 
@@ -125,23 +174,25 @@ export function GoogleMapsSubstationFinder() {
           }
         });
 
+        const capacityEstimate = {
+          min: capacityResult.estimatedCapacity.min,
+          max: capacityResult.estimatedCapacity.max,
+          confidence: capacityResult.detectionResults.confidence
+        };
+
         // Update with capacity results
         setDiscoveredSubstations(prev => 
           prev.map(s => s.id === substation.id 
             ? { 
                 ...s, 
                 analysis_status: 'completed',
-                capacity_estimate: {
-                  min: capacityResult.estimatedCapacity.min,
-                  max: capacityResult.estimatedCapacity.max,
-                  confidence: capacityResult.detectionResults.confidence
-                }
+                capacity_estimate: capacityEstimate
               } 
             : s
           )
         );
 
-        // Store in database with proper error handling
+        // Store in database
         await storeSubstationData(substation, capacityResult);
 
       } catch (error) {
@@ -161,48 +212,41 @@ export function GoogleMapsSubstationFinder() {
 
     setAnalyzing(false);
     
+    // Reload stored substations to include newly added ones
+    await loadStoredSubstations();
+    
     toast({
       title: "Analysis Complete",
-      description: `Completed capacity analysis for ${substations.length} substations`,
+      description: `Completed capacity analysis for ${substations.length} substations and stored them in the database`,
     });
   };
 
   const storeSubstationData = async (substation: DiscoveredSubstation, capacityResult: any) => {
     try {
-      // First, try to insert the record
-      const { error: insertError } = await supabase
+      const { error } = await supabase
         .from('substations')
-        .insert({
+        .upsert({
           name: substation.name,
           latitude: substation.latitude,
           longitude: substation.longitude,
           city: extractCityFromAddress(substation.address),
           state: extractStateFromAddress(substation.address),
-          capacity_mva: capacityResult.estimatedCapacity.max * 1.25, // Convert MW to MVA estimate
+          capacity_mva: capacityResult.estimatedCapacity.max * 1.25,
           voltage_level: 'Estimated',
           utility_owner: 'Unknown',
           interconnection_type: capacityResult.substationType || 'unknown',
-          load_factor: 0.75, // Default estimate
+          load_factor: 0.75,
           status: 'active',
           coordinates_source: 'google_maps_api'
+        }, {
+          onConflict: 'name,latitude,longitude',
+          ignoreDuplicates: false
         });
 
-      // If insert fails due to duplicate, try to update instead
-      if (insertError) {
-        const { error: updateError } = await supabase
-          .from('substations')
-          .update({
-            capacity_mva: capacityResult.estimatedCapacity.max * 1.25,
-            interconnection_type: capacityResult.substationType || 'unknown',
-            coordinates_source: 'google_maps_api'
-          })
-          .eq('name', substation.name)
-          .eq('latitude', substation.latitude)
-          .eq('longitude', substation.longitude);
-
-        if (updateError) {
-          console.error('Error updating substation:', updateError);
-        }
+      if (error) {
+        console.error('Error storing substation:', error);
+      } else {
+        console.log('Successfully stored substation:', substation.name);
       }
     } catch (error) {
       console.error('Storage error:', error);
@@ -220,29 +264,17 @@ export function GoogleMapsSubstationFinder() {
     return statePart?.split(' ')[0] || 'Unknown';
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <AlertCircle className="w-4 h-4 text-gray-500" />;
-      case 'analyzing':
-        return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />;
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'failed':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return null;
-    }
+  const handleViewOnMap = (substation: DiscoveredSubstation) => {
+    window.open(`https://maps.google.com/?q=${substation.latitude},${substation.longitude}`, '_blank');
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-700';
-      case 'analyzing': return 'bg-blue-100 text-blue-700';
-      case 'completed': return 'bg-green-100 text-green-700';
-      case 'failed': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+  const getAnalysisStats = (substations: DiscoveredSubstation[]) => {
+    const completed = substations.filter(s => s.analysis_status === 'completed').length;
+    const analyzing = substations.filter(s => s.analysis_status === 'analyzing').length;
+    const pending = substations.filter(s => s.analysis_status === 'pending').length;
+    const failed = substations.filter(s => s.analysis_status === 'failed').length;
+    
+    return { completed, analyzing, pending, failed };
   };
 
   return (
@@ -298,62 +330,108 @@ export function GoogleMapsSubstationFinder() {
         </CardContent>
       </Card>
 
-      {/* Results */}
-      {discoveredSubstations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Database className="w-5 h-5" />
-                <span>Discovered Substations ({discoveredSubstations.length})</span>
-              </div>
-              <Badge variant="secondary">
-                {discoveredSubstations.filter(s => s.analysis_status === 'completed').length} Analyzed
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {discoveredSubstations.map((substation) => (
-                <div 
-                  key={substation.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-medium">{substation.name}</h4>
-                      {getStatusIcon(substation.analysis_status)}
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {substation.address}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {substation.latitude.toFixed(6)}, {substation.longitude.toFixed(6)}
-                    </p>
+      {/* Results Tabs */}
+      <Tabs defaultValue="current" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="current">
+            Current Search ({discoveredSubstations.length})
+          </TabsTrigger>
+          <TabsTrigger value="stored">
+            All Stored Substations ({storedSubstations.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="current" className="space-y-4">
+          {discoveredSubstations.length > 0 && (
+            <>
+              {/* Analysis Statistics */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center space-x-2">
+                    <BarChart3 className="w-5 h-5" />
+                    <span>Analysis Progress</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {(() => {
+                      const stats = getAnalysisStats(discoveredSubstations);
+                      return (
+                        <>
+                          <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                              {stats.completed}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Completed</div>
+                          </div>
+                          <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              {stats.analyzing}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Analyzing</div>
+                          </div>
+                          <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
+                            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                              {stats.pending}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Pending</div>
+                          </div>
+                          <div className="text-center p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
+                            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                              {stats.failed}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Failed</div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Badge className={getStatusColor(substation.analysis_status)}>
-                      {substation.analysis_status}
-                    </Badge>
-                    
-                    {substation.capacity_estimate && (
-                      <div className="text-right">
-                        <div className="font-medium text-sm">
-                          {substation.capacity_estimate.min}-{substation.capacity_estimate.max} MW
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {substation.capacity_estimate.confidence}% confidence
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                </CardContent>
+              </Card>
+
+              <SubstationFilters
+                searchTerm={discoveredFilters.searchTerm}
+                setSearchTerm={discoveredFilters.setSearchTerm}
+                statusFilter={discoveredFilters.statusFilter}
+                setStatusFilter={discoveredFilters.setStatusFilter}
+                capacityFilter={discoveredFilters.capacityFilter}
+                setCapacityFilter={discoveredFilters.setCapacityFilter}
+                locationFilter={discoveredFilters.locationFilter}
+                setLocationFilter={discoveredFilters.setLocationFilter}
+                onClearFilters={discoveredFilters.clearFilters}
+                totalResults={discoveredSubstations.length}
+                filteredResults={discoveredFilters.filteredSubstations.length}
+              />
+
+              <SubstationTable
+                substations={discoveredFilters.filteredSubstations}
+                onViewOnMap={handleViewOnMap}
+              />
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="stored" className="space-y-4">
+          <SubstationFilters
+            searchTerm={storedFilters.searchTerm}
+            setSearchTerm={storedFilters.setSearchTerm}
+            statusFilter={storedFilters.statusFilter}
+            setStatusFilter={storedFilters.setStatusFilter}
+            capacityFilter={storedFilters.capacityFilter}
+            setCapacityFilter={storedFilters.setCapacityFilter}
+            locationFilter={storedFilters.locationFilter}
+            setLocationFilter={storedFilters.setLocationFilter}
+            onClearFilters={storedFilters.clearFilters}
+            totalResults={storedSubstations.length}
+            filteredResults={storedFilters.filteredSubstations.length}
+          />
+
+          <SubstationTable
+            substations={storedFilters.filteredSubstations}
+            onViewOnMap={handleViewOnMap}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
