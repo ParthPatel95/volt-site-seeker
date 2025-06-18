@@ -13,9 +13,43 @@ const supabase = createClient(
 
 // SEC EDGAR API for public company data
 async function fetchSECData(ticker: string, companyName: string) {
+  if (!ticker) return null;
+  
   try {
+    console.log(`Fetching SEC data for ticker: ${ticker}`);
+    
+    // First try to get CIK from company ticker lookup
+    const searchUrl = `https://www.sec.gov/files/company_tickers.json`;
+    const searchResponse = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'VoltScout Corporate Intelligence (contact@voltscout.com)',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!searchResponse.ok) {
+      console.log('SEC search failed, trying direct CIK approach');
+      return null;
+    }
+
+    const companies = await searchResponse.json();
+    let cik = null;
+    
+    // Find CIK for the ticker
+    for (const key in companies) {
+      if (companies[key].ticker?.toLowerCase() === ticker.toLowerCase()) {
+        cik = companies[key].cik_str.toString().padStart(10, '0');
+        break;
+      }
+    }
+
+    if (!cik) {
+      console.log(`No CIK found for ticker: ${ticker}`);
+      return null;
+    }
+
     // SEC EDGAR Company Facts API
-    const secUrl = `https://data.sec.gov/api/xbrl/companyfacts/CIK${ticker?.padStart(10, '0')}.json`;
+    const secUrl = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
     
     const response = await fetch(secUrl, {
       headers: {
@@ -26,27 +60,37 @@ async function fetchSECData(ticker: string, companyName: string) {
 
     if (response.ok) {
       const data = await response.json();
+      console.log('SEC data fetched successfully');
       
       // Extract key financial metrics
       const facts = data.facts?.['us-gaap'] || {};
       const revenues = facts.Revenues?.units?.USD || [];
       const assets = facts.Assets?.units?.USD || [];
       const liabilities = facts.Liabilities?.units?.USD || [];
+      const currentAssets = facts.AssetsCurrent?.units?.USD || [];
+      const currentLiabilities = facts.LiabilitiesCurrent?.units?.USD || [];
       
-      const latestRevenue = revenues[revenues.length - 1]?.val || null;
-      const latestAssets = assets[assets.length - 1]?.val || null;
-      const latestLiabilities = liabilities[liabilities.length - 1]?.val || null;
+      const latestRevenue = revenues.length > 0 ? revenues[revenues.length - 1]?.val : null;
+      const latestAssets = assets.length > 0 ? assets[assets.length - 1]?.val : null;
+      const latestLiabilities = liabilities.length > 0 ? liabilities[liabilities.length - 1]?.val : null;
+      const latestCurrentAssets = currentAssets.length > 0 ? currentAssets[currentAssets.length - 1]?.val : null;
+      const latestCurrentLiabilities = currentLiabilities.length > 0 ? currentLiabilities[currentLiabilities.length - 1]?.val : null;
       
       return {
         ticker: data.cik,
-        industry: data.sic_description || 'Unknown',
-        sector: data.category || 'Unknown',
+        industry: data.sic_description || null,
+        sector: data.category || null,
         latest_revenue: latestRevenue,
         latest_assets: latestAssets,
         latest_liabilities: latestLiabilities,
+        current_assets: latestCurrentAssets,
+        current_liabilities: latestCurrentLiabilities,
         debt_to_equity: latestLiabilities && latestAssets ? (latestLiabilities / (latestAssets - latestLiabilities)) : null,
+        current_ratio: latestCurrentAssets && latestCurrentLiabilities ? (latestCurrentAssets / latestCurrentLiabilities) : null,
         source: 'SEC EDGAR'
       };
+    } else {
+      console.log(`SEC API returned status: ${response.status}`);
     }
   } catch (error) {
     console.error('SEC data fetch error:', error);
@@ -57,9 +101,14 @@ async function fetchSECData(ticker: string, companyName: string) {
 // Alpha Vantage API for real-time financial data
 async function fetchAlphaVantageData(ticker: string) {
   const apiKey = Deno.env.get('ALPHA_VANTAGE_API_KEY');
-  if (!apiKey) return null;
+  if (!apiKey || !ticker) {
+    console.log('Alpha Vantage API key not available or no ticker provided');
+    return null;
+  }
 
   try {
+    console.log(`Fetching Alpha Vantage data for ticker: ${ticker}`);
+    
     // Company Overview
     const overviewUrl = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${apiKey}`;
     const response = await fetch(overviewUrl);
@@ -67,19 +116,26 @@ async function fetchAlphaVantageData(ticker: string) {
     if (response.ok) {
       const data = await response.json();
       
-      if (data.Symbol) {
+      if (data.Symbol && !data.Note && !data['Error Message']) {
+        console.log('Alpha Vantage data fetched successfully');
         return {
-          market_cap: parseInt(data.MarketCapitalization) || null,
-          pe_ratio: parseFloat(data.PERatio) || null,
-          profit_margin: parseFloat(data.ProfitMargin) * 100 || null,
-          revenue_growth: parseFloat(data.QuarterlyRevenueGrowthYOY) * 100 || null,
-          debt_to_equity: parseFloat(data.DebtToEquityRatio) || null,
-          current_ratio: parseFloat(data.CurrentRatio) || null,
-          beta: parseFloat(data.Beta) || null,
-          dividend_yield: parseFloat(data.DividendYield) * 100 || null,
+          market_cap: data.MarketCapitalization ? parseInt(data.MarketCapitalization) : null,
+          pe_ratio: data.PERatio ? parseFloat(data.PERatio) : null,
+          profit_margin: data.ProfitMargin ? parseFloat(data.ProfitMargin) * 100 : null,
+          revenue_growth: data.QuarterlyRevenueGrowthYOY ? parseFloat(data.QuarterlyRevenueGrowthYOY) * 100 : null,
+          debt_to_equity: data.DebtToEquityRatio ? parseFloat(data.DebtToEquityRatio) : null,
+          current_ratio: data.CurrentRatio ? parseFloat(data.CurrentRatio) : null,
+          beta: data.Beta ? parseFloat(data.Beta) : null,
+          dividend_yield: data.DividendYield ? parseFloat(data.DividendYield) * 100 : null,
+          industry: data.Industry || null,
+          sector: data.Sector || null,
           source: 'Alpha Vantage'
         };
+      } else {
+        console.log('Alpha Vantage returned error or no data:', data.Note || data['Error Message']);
       }
+    } else {
+      console.log(`Alpha Vantage API returned status: ${response.status}`);
     }
   } catch (error) {
     console.error('Alpha Vantage data fetch error:', error);
@@ -89,7 +145,11 @@ async function fetchAlphaVantageData(ticker: string) {
 
 // Yahoo Finance scraping for additional data
 async function scrapeYahooFinance(ticker: string) {
+  if (!ticker) return null;
+  
   try {
+    console.log(`Scraping Yahoo Finance for ticker: ${ticker}`);
+    
     const url = `https://finance.yahoo.com/quote/${ticker}`;
     const response = await fetch(url, {
       headers: {
@@ -99,6 +159,7 @@ async function scrapeYahooFinance(ticker: string) {
 
     if (response.ok) {
       const html = await response.text();
+      console.log('Yahoo Finance data scraped successfully');
       
       // Extract market cap using regex patterns
       const marketCapMatch = html.match(/Market Cap[^>]*>([^<]+)</i);
@@ -111,6 +172,8 @@ async function scrapeYahooFinance(ticker: string) {
         volume_text: volumeMatch?.[1]?.trim() || null,
         source: 'Yahoo Finance'
       };
+    } else {
+      console.log(`Yahoo Finance returned status: ${response.status}`);
     }
   } catch (error) {
     console.error('Yahoo Finance scraping error:', error);
@@ -120,12 +183,16 @@ async function scrapeYahooFinance(ticker: string) {
 
 // OpenCorporates API for company registration data
 async function fetchOpenCorporatesData(companyName: string) {
+  if (!companyName) return null;
+  
   try {
-    const searchUrl = `https://api.opencorporates.com/v0.4/companies/search?q=${encodeURIComponent(companyName)}&format=json`;
+    console.log(`Fetching OpenCorporates data for: ${companyName}`);
+    
+    const searchUrl = `https://api.opencorporates.com/v0.4/companies/search?q=${encodeURIComponent(companyName)}&format=json&per_page=1`;
     
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'VoltScout Corporate Intelligence'
+        'User-Agent': 'VoltScout Corporate Intelligence (contact@voltscout.com)'
       }
     });
 
@@ -135,6 +202,7 @@ async function fetchOpenCorporatesData(companyName: string) {
       
       if (companies.length > 0) {
         const company = companies[0].company;
+        console.log('OpenCorporates data fetched successfully');
         return {
           incorporation_date: company.incorporation_date,
           company_type: company.company_type,
@@ -143,7 +211,11 @@ async function fetchOpenCorporatesData(companyName: string) {
           registered_address: company.registered_address_in_full,
           source: 'OpenCorporates'
         };
+      } else {
+        console.log('No companies found in OpenCorporates');
       }
+    } else {
+      console.log(`OpenCorporates API returned status: ${response.status}`);
     }
   } catch (error) {
     console.error('OpenCorporates data fetch error:', error);
@@ -154,21 +226,33 @@ async function fetchOpenCorporatesData(companyName: string) {
 // News API for recent company mentions
 async function fetchCompanyNews(companyName: string) {
   const apiKey = Deno.env.get('NEWS_API_KEY');
-  if (!apiKey) return [];
+  if (!apiKey || !companyName) {
+    console.log('News API key not available or no company name provided');
+    return [];
+  }
 
   try {
-    const url = `https://newsapi.org/v2/everything?q="${companyName}"&sortBy=publishedAt&pageSize=10&apiKey=${apiKey}`;
+    console.log(`Fetching news for: ${companyName}`);
+    
+    const url = `https://newsapi.org/v2/everything?q="${companyName}"&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
     
     const response = await fetch(url);
     if (response.ok) {
       const data = await response.json();
-      return data.articles?.slice(0, 5).map((article: any) => ({
-        title: article.title,
-        description: article.description,
-        url: article.url,
-        published_at: article.publishedAt,
-        source: article.source.name
-      })) || [];
+      if (data.articles && data.articles.length > 0) {
+        console.log(`Found ${data.articles.length} news articles`);
+        return data.articles.map((article: any) => ({
+          title: article.title,
+          description: article.description,
+          url: article.url,
+          published_at: article.publishedAt,
+          source: article.source.name
+        }));
+      } else {
+        console.log('No news articles found');
+      }
+    } else {
+      console.log(`News API returned status: ${response.status}`);
     }
   } catch (error) {
     console.error('News API error:', error);
@@ -179,34 +263,47 @@ async function fetchCompanyNews(companyName: string) {
 // Calculate financial health score based on real metrics
 function calculateFinancialHealthScore(metrics: any) {
   let score = 50; // Base score
+  let factors = 0;
   
   // Debt to equity ratio (lower is better)
-  if (metrics.debt_to_equity !== null) {
+  if (metrics.debt_to_equity !== null && metrics.debt_to_equity !== undefined) {
+    factors++;
     if (metrics.debt_to_equity < 0.3) score += 20;
     else if (metrics.debt_to_equity < 0.6) score += 10;
     else if (metrics.debt_to_equity > 1.5) score -= 20;
+    else if (metrics.debt_to_equity > 2.0) score -= 30;
   }
   
   // Current ratio (higher is better)
-  if (metrics.current_ratio !== null) {
+  if (metrics.current_ratio !== null && metrics.current_ratio !== undefined) {
+    factors++;
     if (metrics.current_ratio > 2) score += 15;
     else if (metrics.current_ratio > 1.5) score += 10;
     else if (metrics.current_ratio < 1) score -= 15;
+    else if (metrics.current_ratio < 0.5) score -= 25;
   }
   
   // Profit margin (higher is better)
-  if (metrics.profit_margin !== null) {
+  if (metrics.profit_margin !== null && metrics.profit_margin !== undefined) {
+    factors++;
     if (metrics.profit_margin > 20) score += 15;
     else if (metrics.profit_margin > 10) score += 10;
+    else if (metrics.profit_margin > 5) score += 5;
     else if (metrics.profit_margin < 0) score -= 20;
   }
   
   // Revenue growth (positive is better)
-  if (metrics.revenue_growth !== null) {
+  if (metrics.revenue_growth !== null && metrics.revenue_growth !== undefined) {
+    factors++;
     if (metrics.revenue_growth > 15) score += 10;
     else if (metrics.revenue_growth > 5) score += 5;
     else if (metrics.revenue_growth < -10) score -= 15;
+    else if (metrics.revenue_growth < -20) score -= 25;
   }
+  
+  // Adjust score based on number of factors available
+  if (factors === 0) return null; // No data available
+  if (factors < 3) score -= 10; // Penalize for limited data
   
   return Math.max(0, Math.min(100, score));
 }
@@ -215,28 +312,46 @@ function calculateFinancialHealthScore(metrics: any) {
 function estimatePowerUsage(industry: string, marketCap: number | null, sector: string) {
   const industryMultipliers: Record<string, number> = {
     'Technology': 2.5,
+    'Software': 1.8,
+    'Semiconductors': 4.5,
+    'Data Processing & Outsourced Services': 8.0,
+    'Internet & Direct Marketing Retail': 3.0,
     'Manufacturing': 4.0,
     'Mining': 8.0,
     'Steel': 6.0,
     'Aluminum': 7.5,
-    'Data Centers': 10.0,
     'Automotive': 3.5,
     'Chemical': 5.0,
     'Cement': 6.5,
     'Paper': 4.5,
     'Glass': 5.5,
+    'Cryptocurrency': 12.0,
+    'Bitcoin Mining': 15.0,
+    'Data Centers': 10.0,
+    'Cloud Computing': 8.5,
     'default': 2.0
   };
   
-  const multiplier = industryMultipliers[industry] || industryMultipliers[sector] || industryMultipliers.default;
+  // Check for exact industry match first, then sector
+  let multiplier = industryMultipliers[industry] || industryMultipliers[sector] || industryMultipliers.default;
+  
+  // Special case for crypto/mining companies
+  const cryptoKeywords = ['bitcoin', 'crypto', 'mining', 'blockchain', 'digital asset'];
+  const companyIndicators = [industry, sector].join(' ').toLowerCase();
+  for (const keyword of cryptoKeywords) {
+    if (companyIndicators.includes(keyword)) {
+      multiplier = Math.max(multiplier, 10.0);
+      break;
+    }
+  }
   
   if (marketCap) {
     // Base estimation: power usage correlates with company size
-    const baseUsage = Math.log10(marketCap / 1000000) * 10; // MW
-    return Math.round(baseUsage * multiplier);
+    const baseUsage = Math.log10(marketCap / 1000000) * 15; // MW
+    return Math.round(Math.max(baseUsage * multiplier, 1));
   }
   
-  return Math.round(multiplier * 25); // Default estimate
+  return Math.round(Math.max(multiplier * 25, 5)); // Default estimate with minimum
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -246,55 +361,74 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { action, ...params } = await req.json();
-    console.log(`Corporate Intelligence action: ${action}`);
+    console.log(`Corporate Intelligence action: ${action}`, params);
 
     switch (action) {
       case 'analyze_company': {
         const { company_name, ticker } = params;
         
-        console.log(`Analyzing company: ${company_name} (ticker: ${ticker})`);
+        if (!company_name?.trim()) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'Company name is required'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          });
+        }
         
-        // Fetch data from multiple sources
-        const [secData, alphaVantageData, yahooData, corporatesData, newsData] = await Promise.all([
-          ticker ? fetchSECData(ticker, company_name) : null,
-          ticker ? fetchAlphaVantageData(ticker) : null,
-          ticker ? scrapeYahooFinance(ticker) : null,
+        console.log(`Analyzing company: ${company_name} (ticker: ${ticker || 'none'})`);
+        
+        // Fetch data from multiple sources in parallel
+        const dataPromises = [
+          ticker ? fetchSECData(ticker, company_name) : Promise.resolve(null),
+          ticker ? fetchAlphaVantageData(ticker) : Promise.resolve(null),
+          ticker ? scrapeYahooFinance(ticker) : Promise.resolve(null),
           fetchOpenCorporatesData(company_name),
           fetchCompanyNews(company_name)
-        ]);
+        ];
 
-        console.log('Data sources:', { 
-          sec: !!secData, 
-          alphaVantage: !!alphaVantageData, 
-          yahoo: !!yahooData, 
-          corporates: !!corporatesData,
-          news: newsData.length 
+        const [secData, alphaVantageData, yahooData, corporatesData, newsData] = await Promise.allSettled(dataPromises);
+
+        // Extract successful results
+        const sec = secData.status === 'fulfilled' ? secData.value : null;
+        const alpha = alphaVantageData.status === 'fulfilled' ? alphaVantageData.value : null;
+        const yahoo = yahooData.status === 'fulfilled' ? yahooData.value : null;
+        const corporates = corporatesData.status === 'fulfilled' ? corporatesData.value : null;
+        const news = newsData.status === 'fulfilled' ? newsData.value : [];
+
+        console.log('Data sources results:', { 
+          sec: !!sec, 
+          alpha: !!alpha, 
+          yahoo: !!yahoo, 
+          corporates: !!corporates,
+          news: news.length 
         });
 
-        // Combine data from all sources
+        // Combine data from all sources, prioritizing real data
         const combinedData = {
           name: company_name,
-          ticker: ticker || secData?.ticker || null,
-          industry: secData?.industry || alphaVantageData?.Industry || 'Unknown',
-          sector: secData?.sector || alphaVantageData?.Sector || 'Unknown',
-          market_cap: alphaVantageData?.market_cap || null,
-          revenue_growth: alphaVantageData?.revenue_growth || null,
-          profit_margin: alphaVantageData?.profit_margin || null,
-          debt_to_equity: alphaVantageData?.debt_to_equity || secData?.debt_to_equity || null,
-          current_ratio: alphaVantageData?.current_ratio || null,
-          pe_ratio: alphaVantageData?.pe_ratio || null,
-          beta: alphaVantageData?.beta || null,
-          incorporation_date: corporatesData?.incorporation_date || null,
-          company_status: corporatesData?.status || null,
-          jurisdiction: corporatesData?.jurisdiction || null,
-          registered_address: corporatesData?.registered_address || null,
-          recent_news: newsData,
+          ticker: ticker || sec?.ticker || null,
+          industry: alpha?.industry || sec?.industry || 'Unknown',
+          sector: alpha?.sector || sec?.sector || 'Unknown',
+          market_cap: alpha?.market_cap || null,
+          revenue_growth: alpha?.revenue_growth || null,
+          profit_margin: alpha?.profit_margin || null,
+          debt_to_equity: alpha?.debt_to_equity || sec?.debt_to_equity || null,
+          current_ratio: alpha?.current_ratio || sec?.current_ratio || null,
+          pe_ratio: alpha?.pe_ratio || null,
+          beta: alpha?.beta || null,
+          incorporation_date: corporates?.incorporation_date || null,
+          company_status: corporates?.status || null,
+          jurisdiction: corporates?.jurisdiction || null,
+          registered_address: corporates?.registered_address || null,
+          recent_news: news,
           data_sources: {
-            sec: !!secData,
-            alpha_vantage: !!alphaVantageData,
-            yahoo_finance: !!yahooData,
-            open_corporates: !!corporatesData,
-            news_api: newsData.length > 0
+            sec: !!sec,
+            alpha_vantage: !!alpha,
+            yahoo_finance: !!yahoo,
+            open_corporates: !!corporates,
+            news_api: news.length > 0
           },
           analyzed_at: new Date().toISOString()
         };
@@ -309,10 +443,10 @@ const handler = async (req: Request): Promise<Response> => {
           combinedData.sector
         );
 
-        // Detect distress signals
+        // Detect distress signals based on real data
         const distressSignals = [];
         if (combinedData.debt_to_equity && combinedData.debt_to_equity > 2) {
-          distressSignals.push('High debt-to-equity ratio');
+          distressSignals.push('High debt-to-equity ratio (>2.0)');
         }
         if (combinedData.current_ratio && combinedData.current_ratio < 1) {
           distressSignals.push('Low current ratio - liquidity concerns');
@@ -323,6 +457,9 @@ const handler = async (req: Request): Promise<Response> => {
         if (combinedData.profit_margin && combinedData.profit_margin < 0) {
           distressSignals.push('Negative profit margins');
         }
+        if (corporates?.status && corporates.status.toLowerCase().includes('inactive')) {
+          distressSignals.push('Inactive corporate status');
+        }
 
         const analysisResult = {
           ...combinedData,
@@ -330,9 +467,15 @@ const handler = async (req: Request): Promise<Response> => {
           power_usage_estimate: powerUsageEstimate,
           distress_signals: distressSignals,
           locations: [], // This could be enhanced with additional APIs
+          data_quality: {
+            sources_used: Object.values(combinedData.data_sources).filter(Boolean).length,
+            has_financial_data: !!(alpha || sec),
+            has_corporate_data: !!corporates,
+            has_recent_news: news.length > 0
+          }
         };
 
-        // Check if company already exists
+        // Check if company already exists by name
         const { data: existingCompany } = await supabase
           .from('companies')
           .select('id')
@@ -341,6 +484,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         let data;
         if (existingCompany) {
+          console.log('Updating existing company');
           const { data: updateData, error } = await supabase
             .from('companies')
             .update(analysisResult)
@@ -352,7 +496,7 @@ const handler = async (req: Request): Promise<Response> => {
             console.error('Error updating company:', error);
             return new Response(JSON.stringify({
               success: false,
-              error: error.message
+              error: `Failed to update company: ${error.message}`
             }), {
               status: 500,
               headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -360,6 +504,7 @@ const handler = async (req: Request): Promise<Response> => {
           }
           data = updateData;
         } else {
+          console.log('Creating new company record');
           const { data: insertData, error } = await supabase
             .from('companies')
             .insert(analysisResult)
@@ -370,7 +515,7 @@ const handler = async (req: Request): Promise<Response> => {
             console.error('Error saving company:', error);
             return new Response(JSON.stringify({
               success: false,
-              error: error.message
+              error: `Failed to save company: ${error.message}`
             }), {
               status: 500,
               headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -382,12 +527,8 @@ const handler = async (req: Request): Promise<Response> => {
         return new Response(JSON.stringify({
           success: true,
           company: data,
-          data_quality: {
-            sources_used: Object.values(combinedData.data_sources).filter(Boolean).length,
-            has_financial_data: !!(alphaVantageData || secData),
-            has_corporate_data: !!corporatesData,
-            has_recent_news: newsData.length > 0
-          }
+          data_quality: analysisResult.data_quality,
+          message: `Successfully analyzed ${company_name} using ${analysisResult.data_quality.sources_used} data sources`
         }), {
           status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -722,7 +863,8 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('Error in corporate intelligence:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'An unexpected error occurred'
+      error: error.message || 'An unexpected error occurred',
+      details: error.stack
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
