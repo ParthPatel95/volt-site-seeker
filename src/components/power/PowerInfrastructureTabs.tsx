@@ -1,72 +1,74 @@
 
 import React from 'react';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SubstationsOverview } from './SubstationsOverview';
+import { EIADataPanel } from './EIADataPanel';
+import { FERCDashboard } from './FERCDashboard';
+import { MapboxPowerInfrastructure } from './MapboxPowerInfrastructure';
+import { EnvironmentalDashboard } from './EnvironmentalDashboard';
+import { SubstationCapacityEstimator } from './SubstationCapacityEstimator';
 import { 
-  TrendingUp,
-  BarChart3,
-  Building2,
-  MapPin,
-  Leaf,
+  Building2, 
+  Database, 
+  FileText, 
   Satellite,
-  Database
+  Leaf,
+  Zap
 } from 'lucide-react';
 
 export function PowerInfrastructureTabs() {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-2 shadow-sm">
-      <div className="overflow-x-auto">
-        <TabsList className="inline-flex w-max min-w-full gap-1 bg-transparent h-auto">
-          <TabsTrigger 
-            value="overview" 
-            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 whitespace-nowrap"
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs sm:text-sm font-medium">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="ercot-live"
-            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-red-100 dark:data-[state=active]:bg-red-900/30 whitespace-nowrap"
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span className="text-xs sm:text-sm font-medium">ERCOT</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="ferc-data"
-            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-green-100 dark:data-[state=active]:bg-green-900/30 whitespace-nowrap"
-          >
-            <Building2 className="w-4 h-4" />
-            <span className="text-xs sm:text-sm font-medium">FERC</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="usgs-data"
-            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-orange-100 dark:data-[state=active]:bg-orange-900/30 whitespace-nowrap"
-          >
-            <MapPin className="w-4 h-4" />
-            <span className="text-xs sm:text-sm font-medium">USGS</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="environmental"
-            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-emerald-100 dark:data-[state=active]:bg-emerald-900/30 whitespace-nowrap"
-          >
-            <Leaf className="w-4 h-4" />
-            <span className="text-xs sm:text-sm font-medium">Environment</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="mapbox-explorer"
-            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-green-100 dark:data-[state=active]:bg-green-900/30 whitespace-nowrap"
-          >
-            <Satellite className="w-4 h-4" />
-            <span className="text-xs sm:text-sm font-medium">Mapbox</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="eia-data"
-            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 data-[state=active]:bg-emerald-100 dark:data-[state=active]:bg-emerald-900/30 whitespace-nowrap"
-          >
-            <Database className="w-4 h-4" />
-            <span className="text-xs sm:text-sm font-medium">EIA Data</span>
-          </TabsTrigger>
-        </TabsList>
-      </div>
-    </div>
+    <Tabs defaultValue="overview" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-6">
+        <TabsTrigger value="overview" className="flex items-center space-x-2">
+          <Building2 className="w-4 h-4" />
+          <span className="hidden sm:inline">Substations</span>
+        </TabsTrigger>
+        <TabsTrigger value="capacity-estimator" className="flex items-center space-x-2">
+          <Zap className="w-4 h-4" />
+          <span className="hidden sm:inline">Capacity Estimator</span>
+        </TabsTrigger>
+        <TabsTrigger value="eia" className="flex items-center space-x-2">
+          <Database className="w-4 h-4" />
+          <span className="hidden sm:inline">EIA Data</span>
+        </TabsTrigger>
+        <TabsTrigger value="ferc" className="flex items-center space-x-2">
+          <FileText className="w-4 h-4" />
+          <span className="hidden sm:inline">FERC</span>
+        </TabsTrigger>
+        <TabsTrigger value="mapbox" className="flex items-center space-x-2">
+          <Satellite className="w-4 h-4" />
+          <span className="hidden sm:inline">Satellite</span>
+        </TabsTrigger>
+        <TabsTrigger value="environmental" className="flex items-center space-x-2">
+          <Leaf className="w-4 h-4" />
+          <span className="hidden sm:inline">Environmental</span>
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="overview">
+        <SubstationsOverview />
+      </TabsContent>
+
+      <TabsContent value="capacity-estimator">
+        <SubstationCapacityEstimator />
+      </TabsContent>
+
+      <TabsContent value="eia">
+        <EIADataPanel />
+      </TabsContent>
+
+      <TabsContent value="ferc">
+        <FERCDashboard />
+      </TabsContent>
+
+      <TabsContent value="mapbox">
+        <MapboxPowerInfrastructure />
+      </TabsContent>
+
+      <TabsContent value="environmental">
+        <EnvironmentalDashboard />
+      </TabsContent>
+    </Tabs>
   );
 }
