@@ -12,6 +12,7 @@ import { SubstationsOverview } from './power/SubstationsOverview';
 import { SubstationDataCollector } from './power/SubstationDataCollector';
 import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
 import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
+import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
 import { usePowerData } from './power/usePowerData';
 import { EIADataPanel } from './power/EIADataPanel';
 import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
@@ -38,6 +39,10 @@ export function PowerInfrastructure() {
           <TabsContent value="overview" className="space-y-6">
             <PowerOverviewCards powerData={powerData} />
             <PowerCapacityDistribution properties={properties} getStatusColor={getStatusColor} />
+          </TabsContent>
+
+          <TabsContent value="capacity-estimator">
+            <EnhancedCapacityEstimator />
           </TabsContent>
 
           <TabsContent value="ercot-live">
