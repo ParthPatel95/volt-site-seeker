@@ -177,7 +177,7 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Enter city, state, or region"
+              placeholder="Enter city, state, or region (e.g., Texas, Alberta)"
             />
           </div>
           
@@ -242,7 +242,12 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
                   <Info className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
                   <div>
                     <div className="font-medium">County Records Coverage:</div>
-                    <div>Currently supports Texas (Harris, Dallas, Travis), California (LA, Orange), Florida (Miami-Dade), and New York (NYC) counties with property assessor data including assessed values, ownership, and property details.</div>
+                    <div className="space-y-1">
+                      <div><strong>Texas:</strong> Harris, Dallas, Travis, Tarrant, Bexar, Collin, Denton, Fort Bend, Montgomery, Williamson counties</div>
+                      <div><strong>Alberta, Canada:</strong> Calgary, Edmonton, MD Foothills, Strathcona, Wood Buffalo</div>
+                      <div><strong>Also covers:</strong> California (LA, Orange), Florida (Miami-Dade), New York (NYC)</div>
+                      <div className="mt-1 text-blue-600">Provides assessed values, ownership, property details, and market data</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -273,7 +278,7 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
 
           <div className="bg-orange-50 p-3 rounded border border-orange-200">
             <h5 className="font-medium text-orange-800 mb-1">🏛️ County Records</h5>
-            <p className="text-orange-700">Public property data from county assessors - Real ownership & value data</p>
+            <p className="text-orange-700">Texas (10 counties) + Alberta Canada (5 regions) - Real ownership & assessment data</p>
           </div>
         </div>
       </CardContent>
