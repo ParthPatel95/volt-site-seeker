@@ -1,60 +1,70 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Grid3X3 } from 'lucide-react';
-import { SearchStats as SearchStatsType } from '../types';
+import { Badge } from '@/components/ui/badge';
+import { BarChart3 } from 'lucide-react';
 
 interface SearchStatsProps {
-  searchStats: SearchStatsType;
+  searchStats: {
+    totalCells: number;
+    searchedCells: number;
+    totalSubstations: number;
+  };
   totalCells: number;
 }
 
 export function SearchStats({ searchStats, totalCells }: SearchStatsProps) {
-  if (totalCells === 0) return null;
+  const searchProgress = totalCells > 0 ? (searchStats.searchedCells / totalCells) * 100 : 0;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Grid3X3 className="w-5 h-5" />
-          <span>Grid Search Statistics</span>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <BarChart3 className="w-5 h-5" />
+          <span>Search Statistics</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+      <CardContent className="p-3 sm:p-6 pt-0">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="text-center p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
               {searchStats.totalCells}
             </div>
-            <div className="text-xs text-blue-600/80 dark:text-blue-400/80 font-medium">
-              Total Grid Cells
-            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Total Cells</div>
           </div>
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+          
+          <div className="text-center p-3 sm:p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
               {searchStats.searchedCells}
             </div>
-            <div className="text-xs text-green-600/80 dark:text-green-400/80 font-medium">
-              Searched Cells
-            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Searched</div>
           </div>
-          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          
+          <div className="text-center p-3 sm:p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
               {searchStats.totalSubstations}
             </div>
-            <div className="text-xs text-purple-600/80 dark:text-purple-400/80 font-medium">
-              Total Substations
-            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Substations</div>
           </div>
-          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              {Math.round(searchStats.totalSubstations / Math.max(searchStats.searchedCells, 1) * 100) / 100}
+          
+          <div className="text-center p-3 sm:p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {searchProgress.toFixed(1)}%
             </div>
-            <div className="text-xs text-orange-600/80 dark:text-orange-400/80 font-medium">
-              Avg per Cell
-            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Progress</div>
           </div>
         </div>
+        
+        {searchStats.searchedCells > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Badge variant="outline" className="text-xs">
+              Active Search
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              Grid-based Discovery
+            </Badge>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

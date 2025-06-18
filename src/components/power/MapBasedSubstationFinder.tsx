@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapInterface } from './mapFinder/components/MapInterface';
 import { SearchStats } from './mapFinder/components/SearchStats';
@@ -144,7 +143,7 @@ export function MapBasedSubstationFinder() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       <MapInterface
         mapContainer={mapContainer}
         isSelecting={isSelecting}

@@ -23,15 +23,15 @@ export function MapControls({
   onClearSelection
 }: MapControlsProps) {
   return (
-    <div className="absolute top-4 left-4 z-10 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3">
-      <div className="space-y-3">
+    <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 sm:p-3 max-w-[calc(100%-1rem)] sm:max-w-none">
+      <div className="space-y-2 sm:space-y-3">
         <Button 
           onClick={onEnableAreaSelection}
           disabled={isSelecting || searching || analyzing}
           size="sm"
-          className="w-full"
+          className="w-full text-xs sm:text-sm"
         >
-          <Square className="w-4 h-4 mr-2" />
+          <Square className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
           {isSelecting ? 'Draw Selection...' : 'Select Area'}
         </Button>
         
@@ -42,12 +42,12 @@ export function MapControls({
               disabled={searching || analyzing}
               size="sm"
               variant="default"
-              className="w-full"
+              className="w-full text-xs sm:text-sm"
             >
               {searching ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
               ) : (
-                <Search className="w-4 h-4 mr-2" />
+                <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               )}
               Search Area
             </Button>
@@ -57,7 +57,7 @@ export function MapControls({
               disabled={searching || analyzing}
               size="sm"
               variant="outline"
-              className="w-full"
+              className="w-full text-xs sm:text-sm"
             >
               Clear Selection
             </Button>

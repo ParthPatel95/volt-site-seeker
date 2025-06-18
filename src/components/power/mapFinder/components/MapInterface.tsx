@@ -37,16 +37,18 @@ export function MapInterface({
 }: MapInterfaceProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Map className="w-5 h-5" />
-          <span>Map-Based Substation Discovery</span>
-          <Badge variant="outline">Grid Search</Badge>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+          <div className="flex items-center space-x-2">
+            <Map className="w-5 h-5" />
+            <span className="text-lg sm:text-xl">Map-Based Substation Discovery</span>
+          </div>
+          <Badge variant="outline" className="self-start sm:self-auto">Grid Search</Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 sm:p-6">
         <div className="relative">
-          <div ref={mapContainer} className="w-full h-[500px] rounded-lg overflow-hidden" />
+          <div ref={mapContainer} className="w-full h-[300px] sm:h-[400px] lg:h-[500px] rounded-lg overflow-hidden" />
           
           <MapControls
             isSelecting={isSelecting}
