@@ -153,10 +153,7 @@ export function CompanyCard({ company, onSelect }: CompanyCardProps) {
           </div>
         )}
 
-        <DataQualityIndicator 
-          dataQuality={company.data_quality}
-          dataSources={company.data_sources}
-        />
+        <DataQualityIndicator company={company} />
 
         <Button 
           onClick={() => onSelect(company)} 
