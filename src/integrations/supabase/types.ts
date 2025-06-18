@@ -54,6 +54,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_company_analysis: {
+        Row: {
+          acquisition_readiness: number | null
+          analyzed_at: string
+          company_name: string
+          created_at: string
+          distress_probability: number | null
+          financial_outlook: string | null
+          id: string
+          investment_recommendation: string | null
+          key_insights: string[] | null
+          power_consumption_analysis: string | null
+          risk_assessment: string | null
+        }
+        Insert: {
+          acquisition_readiness?: number | null
+          analyzed_at?: string
+          company_name: string
+          created_at?: string
+          distress_probability?: number | null
+          financial_outlook?: string | null
+          id?: string
+          investment_recommendation?: string | null
+          key_insights?: string[] | null
+          power_consumption_analysis?: string | null
+          risk_assessment?: string | null
+        }
+        Update: {
+          acquisition_readiness?: number | null
+          analyzed_at?: string
+          company_name?: string
+          created_at?: string
+          distress_probability?: number | null
+          financial_outlook?: string | null
+          id?: string
+          investment_recommendation?: string | null
+          key_insights?: string[] | null
+          power_consumption_analysis?: string | null
+          risk_assessment?: string | null
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           alert_type: Database["public"]["Enums"]["alert_type"]
