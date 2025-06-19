@@ -1,25 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Database, 
-  MapPin, 
-  ExternalLink, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2,
-  Clock
-} from 'lucide-react';
+import { ExternalLink, Eye, MapPin, Zap, Database } from 'lucide-react';
+import { SubstationDetailsModal } from './SubstationDetailsModal';
 
 interface DiscoveredSubstation {
   id: string;
@@ -34,6 +19,15 @@ interface DiscoveredSubstation {
     confidence: number;
   };
   analysis_status: 'pending' | 'analyzing' | 'completed' | 'failed';
+  stored_at?: string;
+  details?: {
+    utility_owner?: string;
+    voltage_level?: string;
+    interconnection_type?: string;
+    commissioning_date?: string;
+    load_factor?: number;
+    status?: string;
+  };
 }
 
 interface SubstationTableProps {
@@ -42,133 +36,193 @@ interface SubstationTableProps {
 }
 
 export function SubstationTable({ substations, onViewOnMap }: SubstationTableProps) {
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="w-4 h-4 text-gray-500" />;
-      case 'analyzing':
-        return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />;
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'failed':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
+  const [selectedSubstation, setSelectedSubstation] = useState<DiscoveredSubstation | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
-      case 'analyzing': return 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
-      case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
-      case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+      case 'completed':
+        return 'default' as const;
+      case 'analyzing':
+        return 'secondary' as const;
+      case 'pending':
+        return 'outline' as const;
+      case 'failed':
+        return 'destructive' as const;
+      default:
+        return 'default' as const;
     }
+  };
+
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 0.8) return 'text-green-600 dark:text-green-400';
+    if (confidence >= 0.6) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
+  const handleViewDetails = (substation: DiscoveredSubstation) => {
+    setSelectedSubstation(substation);
+    setIsModalOpen(true);
   };
 
   if (substations.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Database className="w-5 h-5" />
-            <span>Discovered Substations</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Database className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No substations match your current filters.</p>
-          </div>
+        <CardContent className="py-8 sm:py-12 text-center">
+          <Database className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground text-sm sm:text-base">No substations found. Try adjusting your search or filters.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center space-x-2">
-          <Database className="w-5 h-5" />
-          <span>Discovered Substations ({substations.length})</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[250px]">Name</TableHead>
-                <TableHead className="w-[200px]">Location</TableHead>
-                <TableHead className="w-[150px]">Coordinates</TableHead>
-                <TableHead className="w-[120px]">Status</TableHead>
-                <TableHead className="w-[150px]">Capacity</TableHead>
-                <TableHead className="w-[120px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {substations.map((substation) => (
-                <TableRow key={substation.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <div className="font-medium text-sm">{substation.name}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm text-muted-foreground max-w-[200px] truncate">
-                      {substation.address}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-xs font-mono">
-                      {substation.latitude.toFixed(4)}, {substation.longitude.toFixed(4)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={`text-xs ${getStatusColor(substation.analysis_status)} flex items-center space-x-1`}>
-                      {getStatusIcon(substation.analysis_status)}
-                      <span className="capitalize">{substation.analysis_status}</span>
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {substation.capacity_estimate ? (
-                      <div className="text-sm">
-                        <div className="font-medium text-blue-600 dark:text-blue-400">
-                          {substation.capacity_estimate.min}-{substation.capacity_estimate.max} MW
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {(substation.capacity_estimate.confidence * 100).toFixed(0)}% confidence
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span className="text-base sm:text-lg">Discovered Substations</span>
+            <Badge variant="outline" className="self-start sm:self-auto text-xs">
+              {substations.length} Results
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Mobile Card Layout */}
+          <div className="block sm:hidden space-y-4">
+            {substations.map((substation) => (
+              <div key={substation.id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-medium text-sm truncate">{substation.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{substation.address}</p>
+                  </div>
+                  <Badge variant={getStatusColor(substation.analysis_status)} className="ml-2 text-xs">
+                    {substation.analysis_status}
+                  </Badge>
+                </div>
+                
+                {substation.capacity_estimate && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Capacity:</span>
+                    <span className="font-medium">
+                      {substation.capacity_estimate.min}-{substation.capacity_estimate.max} MW
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleViewDetails(substation)}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-xs"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    Details
+                  </Button>
+                  <Button
+                    onClick={() => onViewOnMap(substation)}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-xs"
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Map
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table Layout */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Name & Location</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Capacity (MW)</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Owner</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {substations.map((substation) => (
+                  <tr key={substation.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <td className="p-3">
+                      <div className="max-w-xs">
+                        <div className="font-medium text-sm truncate">{substation.name}</div>
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{substation.address}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {substation.latitude.toFixed(4)}, {substation.longitude.toFixed(4)}
                         </div>
                       </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewOnMap(substation)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <MapPin className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(`https://maps.google.com/?q=${substation.latitude},${substation.longitude}`, '_blank')}
-                        className="h-8 w-8 p-0"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                    </td>
+                    <td className="p-3">
+                      {substation.capacity_estimate ? (
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium">
+                            {substation.capacity_estimate.min}-{substation.capacity_estimate.max} MW
+                          </div>
+                          <div className={`text-xs ${getConfidenceColor(substation.capacity_estimate.confidence)}`}>
+                            {(substation.capacity_estimate.confidence * 100).toFixed(0)}% confidence
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Analyzing...</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <div className="text-sm">
+                        {substation.details?.utility_owner || 'Unknown'}
+                      </div>
+                      {substation.details?.voltage_level && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {substation.details.voltage_level}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <Badge variant={getStatusColor(substation.analysis_status)} className="text-xs">
+                        {substation.analysis_status}
+                      </Badge>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleViewDetails(substation)}
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          Details
+                        </Button>
+                        <Button
+                          onClick={() => onViewOnMap(substation)}
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <SubstationDetailsModal
+        substation={selectedSubstation}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onViewOnMap={onViewOnMap}
+      />
+    </>
   );
 }

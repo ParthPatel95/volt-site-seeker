@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
@@ -12,8 +13,7 @@ import { SubstationDataCollector } from './power/SubstationDataCollector';
 import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
 import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
 import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
-import { GoogleMapsSubstationFinder } from './power/GoogleMapsSubstationFinder';
-import { MapBasedSubstationFinder } from './power/MapBasedSubstationFinder';
+import { UnifiedSubstationFinder } from './power/UnifiedSubstationFinder';
 import { usePowerData } from './power/usePowerData';
 import { EIADataPanel } from './power/EIADataPanel';
 import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
@@ -33,11 +33,11 @@ export function PowerInfrastructure() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <PowerInfrastructureHeader powerData={powerData} />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
+        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
           <PowerInfrastructureTabs />
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             <PowerOverviewCards powerData={powerData} />
             <PowerCapacityDistribution properties={properties} getStatusColor={getStatusColor} />
           </TabsContent>
@@ -47,11 +47,11 @@ export function PowerInfrastructure() {
           </TabsContent>
 
           <TabsContent value="google-finder">
-            <GoogleMapsSubstationFinder />
+            <UnifiedSubstationFinder />
           </TabsContent>
 
           <TabsContent value="map-finder">
-            <MapBasedSubstationFinder />
+            <UnifiedSubstationFinder />
           </TabsContent>
 
           <TabsContent value="ercot-live">
