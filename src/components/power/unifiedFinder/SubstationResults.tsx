@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { SubstationTable } from '../googleFinder/components/SubstationTable';
 import { useSubstationFilters } from '../googleFinder/hooks/useSubstationFilters';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Select } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 interface DiscoveredSubstation {
   id: string;
