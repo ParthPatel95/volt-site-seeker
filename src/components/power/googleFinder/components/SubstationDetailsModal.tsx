@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Zap, Building, Calendar, Activity, TrendingUp, ExternalLink } from 'lucide-react';
+import { MapPin, Zap, Building, Calendar, Activity, TrendingUp, ExternalLink, Shield } from 'lucide-react';
 
 interface DiscoveredSubstation {
   id: string;
@@ -26,6 +25,8 @@ interface DiscoveredSubstation {
     commissioning_date?: string;
     load_factor?: number;
     status?: string;
+    ownership_confidence?: number;
+    ownership_source?: string;
   };
 }
 
@@ -65,9 +66,15 @@ export function SubstationDetailsModal({
     return 'text-red-600 dark:text-red-400';
   };
 
+  const getOwnershipConfidenceColor = (confidence: number) => {
+    if (confidence >= 0.8) return 'text-green-600 dark:text-green-400';
+    if (confidence >= 0.6) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex-shrink-0">
@@ -97,6 +104,12 @@ export function SubstationDetailsModal({
                   {substation.details.interconnection_type}
                 </Badge>
               )}
+              {substation.details?.ownership_confidence && (
+                <Badge variant="secondary" className="text-xs">
+                  <Shield className="w-3 h-3 mr-1" />
+                  {(substation.details.ownership_confidence * 100).toFixed(0)}% confidence
+                </Badge>
+              )}
             </div>
             <div className="flex gap-2 sm:ml-auto">
               <Button
@@ -111,8 +124,31 @@ export function SubstationDetailsModal({
             </div>
           </div>
 
-          {/* Location Information */}
+          {/* Embedded Map */}
+          <div className="border rounded-lg overflow-hidden">
+            <div className="bg-muted p-3 border-b">
+              <h3 className="text-sm font-semibold flex items-center">
+                <MapPin className="w-4 h-4 mr-2" />
+                Substation Location
+              </h3>
+            </div>
+            <div className="relative h-64">
+              <iframe
+                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}&q=${substation.latitude},${substation.longitude}&zoom=16&maptype=satellite`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title={`Map showing ${substation.name} location`}
+              />
+            </div>
+          </div>
+
+          {/* Main Information Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Location Information */}
             <div className="space-y-4">
               <div className="space-y-3">
                 <h3 className="text-base sm:text-lg font-semibold flex items-center">
@@ -139,6 +175,7 @@ export function SubstationDetailsModal({
                 </div>
               </div>
 
+              {/* Enhanced Ownership Information */}
               {substation.details && (
                 <div className="space-y-3">
                   <h3 className="text-base sm:text-lg font-semibold flex items-center">
@@ -150,6 +187,20 @@ export function SubstationDetailsModal({
                       <div>
                         <span className="text-xs text-muted-foreground">Utility Owner:</span>
                         <p className="text-sm font-medium">{substation.details.utility_owner}</p>
+                      </div>
+                    )}
+                    {substation.details.ownership_confidence && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Ownership Confidence:</span>
+                        <p className={`text-sm font-semibold ${getOwnershipConfidenceColor(substation.details.ownership_confidence)}`}>
+                          {(substation.details.ownership_confidence * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                    )}
+                    {substation.details.ownership_source && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Data Source:</span>
+                        <p className="text-sm">{substation.details.ownership_source}</p>
                       </div>
                     )}
                     {substation.details.status && (
@@ -169,8 +220,8 @@ export function SubstationDetailsModal({
               )}
             </div>
 
+            {/* Technical Specifications */}
             <div className="space-y-4">
-              {/* Technical Specifications */}
               {substation.capacity_estimate && (
                 <div className="space-y-3">
                   <h3 className="text-base sm:text-lg font-semibold flex items-center">
@@ -206,7 +257,7 @@ export function SubstationDetailsModal({
                 </div>
               )}
 
-              {/* Timeline Information */}
+              {/* Discovery Information */}
               <div className="space-y-3">
                 <h3 className="text-base sm:text-lg font-semibold flex items-center">
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
@@ -235,7 +286,7 @@ export function SubstationDetailsModal({
                 <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Performance Metrics
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="w-4 h-4 text-green-500" />
@@ -252,7 +303,7 @@ export function SubstationDetailsModal({
                   <div className="text-xl sm:text-2xl font-bold mt-2">{substation.capacity_estimate.max}</div>
                   <div className="text-xs text-muted-foreground">MW maximum</div>
                 </div>
-                <div className="bg-muted/50 p-3 sm:p-4 rounded-lg sm:col-span-2 lg:col-span-1">
+                <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Building className="w-4 h-4 text-blue-500" />
                     <span className="text-xs sm:text-sm font-medium">Confidence</span>
@@ -261,6 +312,16 @@ export function SubstationDetailsModal({
                     {(substation.capacity_estimate.confidence * 100).toFixed(0)}%
                   </div>
                   <div className="text-xs text-muted-foreground">Analysis confidence</div>
+                </div>
+                <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Shield className="w-4 h-4 text-purple-500" />
+                    <span className="text-xs sm:text-sm font-medium">Owner Confidence</span>
+                  </div>
+                  <div className={`text-xl sm:text-2xl font-bold mt-2 ${substation.details?.ownership_confidence ? getOwnershipConfidenceColor(substation.details.ownership_confidence) : 'text-gray-400'}`}>
+                    {substation.details?.ownership_confidence ? (substation.details.ownership_confidence * 100).toFixed(0) : 'N/A'}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">Ownership confidence</div>
                 </div>
               </div>
             </div>

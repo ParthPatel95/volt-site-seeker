@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +40,8 @@ interface DiscoveredSubstation {
     commissioning_date?: string;
     load_factor?: number;
     status?: string;
+    ownership_confidence?: number;
+    ownership_source?: string;
   };
 }
 
@@ -282,6 +283,17 @@ export function UnifiedSubstationFinder() {
           )
         );
 
+        // Import the ownership detection utility
+        const { detectSubstationOwnership } = await import('@/utils/substationOwnership');
+        
+        // Detect ownership
+        const ownershipResult = await detectSubstationOwnership(
+          substation.name,
+          substation.latitude,
+          substation.longitude,
+          substation.address
+        );
+
         const capacityResult = await estimateCapacity({
           latitude: substation.latitude,
           longitude: substation.longitude,
@@ -299,18 +311,30 @@ export function UnifiedSubstationFinder() {
           confidence: capacityResult.detectionResults.confidence
         };
 
+        // Update substation with ownership and enhanced details
         setDiscoveredSubstations(prev => 
           prev.map(s => s.id === substation.id 
             ? { 
                 ...s, 
                 analysis_status: 'completed',
-                capacity_estimate: capacityEstimate
+                capacity_estimate: capacityEstimate,
+                details: {
+                  ...s.details,
+                  utility_owner: ownershipResult.owner,
+                  voltage_level: capacityResult.voltageLevel || 'Estimated',
+                  interconnection_type: capacityResult.substationType || 'distribution',
+                  ownership_confidence: ownershipResult.confidence,
+                  ownership_source: ownershipResult.source,
+                  commissioning_date: new Date().toISOString(),
+                  load_factor: 0.75,
+                  status: 'active'
+                }
               } 
             : s
           )
         );
 
-        await storeSubstationData(substation, capacityResult);
+        await storeSubstationData(substation, capacityResult, ownershipResult);
 
       } catch (error) {
         console.error(`Failed to analyze ${substation.name}:`, error);
@@ -331,11 +355,11 @@ export function UnifiedSubstationFinder() {
     
     toast({
       title: "Analysis Complete",
-      description: `Completed capacity analysis for ${substations.length} substations`,
+      description: `Completed capacity and ownership analysis for ${substations.length} substations`,
     });
   };
 
-  const storeSubstationData = async (substation: DiscoveredSubstation, capacityResult: any) => {
+  const storeSubstationData = async (substation: DiscoveredSubstation, capacityResult: any, ownershipResult?: any) => {
     try {
       const { error } = await supabase
         .from('substations')
@@ -347,7 +371,7 @@ export function UnifiedSubstationFinder() {
           state: extractStateFromAddress(substation.address),
           capacity_mva: capacityResult.estimatedCapacity.max * 1.25,
           voltage_level: capacityResult.voltageLevel || 'Estimated',
-          utility_owner: capacityResult.utilityOwner || 'Unknown',
+          utility_owner: ownershipResult?.owner || 'Unknown',
           interconnection_type: capacityResult.substationType || 'distribution',
           load_factor: 0.75,
           status: 'active',
