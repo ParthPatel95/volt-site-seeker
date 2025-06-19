@@ -30,7 +30,7 @@ interface DiscoveredSubstation {
 
 interface SubstationAnalyzerProps {
   substations: DiscoveredSubstation[];
-  setSubstations: (substations: DiscoveredSubstation[]) => void;
+  setSubstations: React.Dispatch<React.SetStateAction<DiscoveredSubstation[]>>;
   activeMethod: 'google' | 'map';
   onProgress: (progress: number) => void;
   onComplete: () => void;
