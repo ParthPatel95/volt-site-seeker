@@ -156,7 +156,7 @@ export function SubstationTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {onAnalyzeSubstation && substation.analysis_status === 'pending' && (
+                    {onAnalyzeSubstation && (substation.analysis_status === 'pending' || substation.analysis_status === 'completed' || substation.analysis_status === 'failed') && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -164,7 +164,7 @@ export function SubstationTable({
                         disabled={analyzing}
                       >
                         <Brain className="w-4 h-4 mr-1" />
-                        Analyze
+                        {substation.analysis_status === 'completed' ? 'Re-analyze' : 'Analyze'}
                       </Button>
                     )}
                     <Button
