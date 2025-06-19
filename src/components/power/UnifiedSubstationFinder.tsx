@@ -13,14 +13,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { SubstationFilters } from './googleFinder/components/SubstationFilters';
 import { SubstationTable } from './googleFinder/components/SubstationTable';
 import { useSubstationFilters } from './googleFinder/hooks/useSubstationFilters';
-import { MapInterface } from './mapFinder/components/MapInterface';
-import { SearchStats } from './mapFinder/components/SearchStats';
-import { useMapboxMap } from './mapFinder/hooks/useMapboxMap';
 import { 
   Search, 
   MapPin, 
-  Database,
-  BarChart3,
   Map,
   Loader2
 } from 'lucide-react';
@@ -64,7 +59,7 @@ interface PredefinedSection {
   };
 }
 
-// Predefined 100km x 100km sections across major US regions
+// Predefined 100km x 100km sections across major US and Canadian regions
 const PREDEFINED_SECTIONS: PredefinedSection[] = [
   {
     id: 'texas-central',
@@ -73,10 +68,16 @@ const PREDEFINED_SECTIONS: PredefinedSection[] = [
     center: { lat: 30.05, lng: -97.65 }
   },
   {
-    id: 'texas-east',
-    name: 'East Texas',
-    bounds: { north: 32.8, south: 31.9, east: -94.0, west: -95.3 },
-    center: { lat: 32.35, lng: -94.65 }
+    id: 'alberta-calgary',
+    name: 'Calgary, Alberta',
+    bounds: { north: 51.5, south: 50.6, east: -113.5, west: -114.8 },
+    center: { lat: 51.05, lng: -114.15 }
+  },
+  {
+    id: 'alberta-edmonton',
+    name: 'Edmonton, Alberta',
+    bounds: { north: 54.0, south: 53.1, east: -113.0, west: -114.3 },
+    center: { lat: 53.55, lng: -113.65 }
   },
   {
     id: 'california-central',
@@ -95,12 +96,6 @@ const PREDEFINED_SECTIONS: PredefinedSection[] = [
     name: 'New York Metro',
     bounds: { north: 41.0, south: 40.1, east: -73.7, west: -75.0 },
     center: { lat: 40.55, lng: -74.35 }
-  },
-  {
-    id: 'illinois-chicago',
-    name: 'Chicago Region',
-    bounds: { north: 42.4, south: 41.5, east: -87.5, west: -88.8 },
-    center: { lat: 41.95, lng: -88.15 }
   }
 ];
 
@@ -113,13 +108,7 @@ export function UnifiedSubstationFinder() {
   const [discoveredSubstations, setDiscoveredSubstations] = useState<DiscoveredSubstation[]>([]);
   const [storedSubstations, setStoredSubstations] = useState<DiscoveredSubstation[]>([]);
   const [progress, setProgress] = useState(0);
-  const [searchStats, setSearchStats] = useState({
-    totalCells: 0,
-    searchedCells: 0,
-    totalSubstations: 0
-  });
 
-  const { mapContainer, map, isMapLoaded } = useMapboxMap();
   const { toast } = useToast();
   const { estimateCapacity } = useCapacityEstimator();
 
@@ -129,12 +118,6 @@ export function UnifiedSubstationFinder() {
   useEffect(() => {
     loadStoredSubstations();
   }, []);
-
-  useEffect(() => {
-    if (map && isMapLoaded) {
-      addPredefinedSections();
-    }
-  }, [map, isMapLoaded]);
 
   const loadStoredSubstations = async () => {
     try {
@@ -173,78 +156,6 @@ export function UnifiedSubstationFinder() {
     } catch (error) {
       console.error('Error loading stored substations:', error);
     }
-  };
-
-  const addPredefinedSections = () => {
-    if (!map) return;
-
-    // Add predefined sections as clickable areas
-    PREDEFINED_SECTIONS.forEach(section => {
-      const coordinates = [
-        [section.bounds.west, section.bounds.south],
-        [section.bounds.east, section.bounds.south],
-        [section.bounds.east, section.bounds.north],
-        [section.bounds.west, section.bounds.north],
-        [section.bounds.west, section.bounds.south]
-      ];
-
-      // Add source for this section
-      map.addSource(`section-${section.id}`, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [coordinates]
-          },
-          properties: {
-            id: section.id,
-            name: section.name
-          }
-        }
-      });
-
-      // Add fill layer
-      map.addLayer({
-        id: `section-fill-${section.id}`,
-        type: 'fill',
-        source: `section-${section.id}`,
-        paint: {
-          'fill-color': '#3b82f6',
-          'fill-opacity': 0.1
-        }
-      });
-
-      // Add border layer
-      map.addLayer({
-        id: `section-border-${section.id}`,
-        type: 'line',
-        source: `section-${section.id}`,
-        paint: {
-          'line-color': '#3b82f6',
-          'line-width': 2,
-          'line-opacity': 0.8
-        }
-      });
-
-      // Add click handler
-      map.on('click', `section-fill-${section.id}`, () => {
-        setSelectedSection(section);
-        toast({
-          title: "Section Selected",
-          description: `Selected ${section.name} for substation search`,
-        });
-      });
-
-      // Add hover effect
-      map.on('mouseenter', `section-fill-${section.id}`, () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-
-      map.on('mouseleave', `section-fill-${section.id}`, () => {
-        map.getCanvas().style.cursor = '';
-      });
-    });
   };
 
   const findSubstationsGoogle = async () => {
@@ -302,7 +213,7 @@ export function UnifiedSubstationFinder() {
     if (!selectedSection) {
       toast({
         title: "Section Required",
-        description: "Please select a section on the map to search for substations",
+        description: "Please select a section below to search for substations",
         variant: "destructive"
       });
       return;
@@ -324,7 +235,6 @@ export function UnifiedSubstationFinder() {
 
       const substations: DiscoveredSubstation[] = data.substations
         .filter((sub: any) => {
-          // Filter substations within the selected section bounds
           return sub.latitude >= selectedSection.bounds.south &&
                  sub.latitude <= selectedSection.bounds.north &&
                  sub.longitude >= selectedSection.bounds.west &&
@@ -337,12 +247,6 @@ export function UnifiedSubstationFinder() {
 
       setDiscoveredSubstations(substations);
       setProgress(25);
-
-      setSearchStats({
-        totalCells: 1,
-        searchedCells: 1,
-        totalSubstations: substations.length
-      });
 
       toast({
         title: "Substations Found",
@@ -478,7 +382,6 @@ export function UnifiedSubstationFinder() {
 
   return (
     <div className="w-full space-y-4 sm:space-y-6 p-2 sm:p-4 lg:p-6">
-      {/* Method Selection */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -514,7 +417,7 @@ export function UnifiedSubstationFinder() {
                   <Label htmlFor="location" className="text-sm">State or Province</Label>
                   <Input
                     id="location"
-                    placeholder="e.g., Texas, California, Ontario"
+                    placeholder="e.g., Texas, California, Alberta"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && findSubstationsGoogle()}
@@ -539,31 +442,39 @@ export function UnifiedSubstationFinder() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="relative">
-                <div ref={mapContainer} className="w-full h-64 sm:h-80 lg:h-96 rounded-lg overflow-hidden border" />
-                <div className="absolute top-2 left-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 max-w-48">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Click on a blue section to select it
-                  </p>
-                  {selectedSection && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">{selectedSection.name}</p>
-                      <Button 
-                        onClick={findSubstationsMap}
-                        disabled={searching || analyzing}
-                        size="sm"
-                        className="w-full text-xs"
-                      >
-                        {searching ? (
-                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                        ) : (
-                          <Search className="w-3 h-3 mr-1" />
-                        )}
-                        Search Area
-                      </Button>
-                    </div>
-                  )}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Select a Region (100km x 100km sections)</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {PREDEFINED_SECTIONS.map((section) => (
+                    <Button
+                      key={section.id}
+                      variant={selectedSection?.id === section.id ? 'default' : 'outline'}
+                      onClick={() => setSelectedSection(section)}
+                      className="text-sm p-3 h-auto"
+                    >
+                      <div className="text-left">
+                        <div className="font-medium">{section.name}</div>
+                        <div className="text-xs opacity-75">
+                          {section.center.lat.toFixed(2)}, {section.center.lng.toFixed(2)}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
                 </div>
+                {selectedSection && (
+                  <Button 
+                    onClick={findSubstationsMap}
+                    disabled={searching || analyzing}
+                    className="w-full sm:w-auto text-sm"
+                  >
+                    {searching ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Search className="w-4 h-4 mr-2" />
+                    )}
+                    Search {selectedSection.name}
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -582,14 +493,6 @@ export function UnifiedSubstationFinder() {
         </CardContent>
       </Card>
 
-      {activeMethod === 'map' && (
-        <SearchStats 
-          searchStats={searchStats} 
-          totalCells={1}
-        />
-      )}
-
-      {/* Results Tabs */}
       <Tabs defaultValue="current" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="current" className="text-xs sm:text-sm">

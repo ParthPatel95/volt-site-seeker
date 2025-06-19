@@ -6,61 +6,123 @@ import {
   Activity,
   TrendingUp
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PowerData {
-  totalProperties: number;
-  totalPowerCapacity: number;
+  totalSubstations: number;
+  totalCapacity: number;
   averageCapacity: number;
   highCapacityCount: number;
 }
 
 interface PowerOverviewCardsProps {
-  powerData: PowerData;
+  powerData?: PowerData;
 }
 
-export function PowerOverviewCards({ powerData }: PowerOverviewCardsProps) {
+export function PowerOverviewCards({ powerData: externalPowerData }: PowerOverviewCardsProps) {
+  const [realPowerData, setRealPowerData] = useState<PowerData>({
+    totalSubstations: 0,
+    totalCapacity: 0,
+    averageCapacity: 0,
+    highCapacityCount: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRealSubstationData();
+  }, []);
+
+  const loadRealSubstationData = async () => {
+    try {
+      const { data: substations, error } = await supabase
+        .from('substations')
+        .select('capacity_mva')
+        .eq('status', 'active');
+
+      if (error) throw error;
+
+      if (substations && substations.length > 0) {
+        const totalSubstations = substations.length;
+        const totalCapacity = substations.reduce((sum, sub) => sum + (sub.capacity_mva || 0), 0);
+        const averageCapacity = totalCapacity / totalSubstations;
+        const highCapacityCount = substations.filter(sub => (sub.capacity_mva || 0) > 100).length;
+
+        setRealPowerData({
+          totalSubstations,
+          totalCapacity: Math.round(totalCapacity),
+          averageCapacity: Math.round(averageCapacity * 10) / 10,
+          highCapacityCount
+        });
+      }
+    } catch (error) {
+      console.error('Error loading substation data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Use real data if available, otherwise show zeros
+  const powerData = externalPowerData || realPowerData;
+
   const cards = [
     {
-      title: "Total Properties",
-      value: powerData.totalProperties.toLocaleString(),
+      title: "Total Substations",
+      value: loading ? "Loading..." : powerData.totalSubstations.toLocaleString(),
       icon: Building2,
       color: "blue",
       bgColor: "bg-blue-500",
       lightBg: "bg-blue-50 dark:bg-blue-900/20",
       textColor: "text-blue-600 dark:text-blue-400",
-      description: "Properties in portfolio"
+      description: "Active substations tracked"
     },
     {
       title: "Total Capacity", 
-      value: `${powerData.totalPowerCapacity.toFixed(1)} MW`,
+      value: loading ? "Loading..." : `${powerData.totalCapacity.toFixed(0)} MVA`,
       icon: Zap,
       color: "yellow",
       bgColor: "bg-yellow-500",
       lightBg: "bg-yellow-50 dark:bg-yellow-900/20",
       textColor: "text-yellow-600 dark:text-yellow-400",
-      description: "Combined power capacity"
+      description: "Combined transformer capacity"
     },
     {
       title: "Average Capacity",
-      value: `${powerData.averageCapacity.toFixed(1)} MW`,
+      value: loading ? "Loading..." : `${powerData.averageCapacity.toFixed(1)} MVA`,
       icon: Activity,
       color: "green", 
       bgColor: "bg-green-500",
       lightBg: "bg-green-50 dark:bg-green-900/20",
       textColor: "text-green-600 dark:text-green-400",
-      description: "Per property average"
+      description: "Per substation average"
     },
     {
       title: "High Capacity Sites",
-      value: powerData.highCapacityCount.toLocaleString(),
+      value: loading ? "Loading..." : powerData.highCapacityCount.toLocaleString(),
       icon: TrendingUp,
       color: "purple",
       bgColor: "bg-purple-500", 
       lightBg: "bg-purple-50 dark:bg-purple-900/20",
       textColor: "text-purple-600 dark:text-purple-400",
-      description: "Properties over 20 MW"
+      description: "Substations over 100 MVA"
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+          {cards.map((card, index) => (
+            <Card key={index} className="animate-pulse">
+              <CardContent className="p-4 sm:p-6">
+                <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -88,7 +150,7 @@ export function PowerOverviewCards({ powerData }: PowerOverviewCardsProps) {
                 <div className={`h-2 ${card.lightBg} rounded-full overflow-hidden`}>
                   <div 
                     className={`h-full ${card.bgColor} rounded-full transition-all duration-1000 ease-out`}
-                    style={{ width: `${Math.min((index + 1) * 25, 100)}%` }}
+                    style={{ width: powerData.totalSubstations > 0 ? `${Math.min((index + 1) * 25, 100)}%` : '0%' }}
                   />
                 </div>
               </div>

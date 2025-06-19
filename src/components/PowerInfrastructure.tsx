@@ -3,27 +3,73 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
 import { PowerInfrastructureLoading } from './power/PowerInfrastructureLoading';
-import { CityPowerAnalysis } from './power/CityPowerAnalysis';
 import { PowerOverviewCards } from './power/PowerOverviewCards';
-import { PowerCapacityDistribution } from './power/PowerCapacityDistribution';
-import { PowerPropertiesList } from './power/PowerPropertiesList';
-import { InterconnectionQueue } from './power/InterconnectionQueue';
-import { SubstationsOverview } from './power/SubstationsOverview';
-import { SubstationDataCollector } from './power/SubstationDataCollector';
-import { AutomatedSubstationFinder } from './power/AutomatedSubstationFinder';
-import { StarlightIndustrialFinder } from './power/StarlightIndustrialFinder';
 import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
 import { UnifiedSubstationFinder } from './power/UnifiedSubstationFinder';
-import { usePowerData } from './power/usePowerData';
 import { EIADataPanel } from './power/EIADataPanel';
 import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
 import { ERCOTDashboard } from './power/ERCOTDashboard';
 import { FERCDashboard } from './power/FERCDashboard';
 import { USGSDashboard } from './power/USGSDashboard';
 import { EnvironmentalDashboard } from './power/EnvironmentalDashboard';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface PowerData {
+  totalSubstations: number;
+  totalCapacity: number;
+  averageCapacity: number;
+  highCapacityCount: number;
+}
 
 export function PowerInfrastructure() {
-  const { powerData, properties, loading, getStatusColor } = usePowerData();
+  const [powerData, setPowerData] = useState<PowerData>({
+    totalSubstations: 0,
+    totalCapacity: 0,
+    averageCapacity: 0,
+    highCapacityCount: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPowerData();
+  }, []);
+
+  const loadPowerData = async () => {
+    try {
+      console.log('Loading real power infrastructure data...');
+      
+      const { data: substations, error } = await supabase
+        .from('substations')
+        .select('capacity_mva')
+        .eq('status', 'active');
+
+      if (error) throw error;
+
+      if (substations && substations.length > 0) {
+        const totalSubstations = substations.length;
+        const totalCapacity = substations.reduce((sum, sub) => sum + (sub.capacity_mva || 0), 0);
+        const averageCapacity = totalCapacity / totalSubstations;
+        const highCapacityCount = substations.filter(sub => (sub.capacity_mva || 0) > 100).length;
+
+        const realPowerData = {
+          totalSubstations,
+          totalCapacity: Math.round(totalCapacity),
+          averageCapacity: Math.round(averageCapacity * 10) / 10,
+          highCapacityCount
+        };
+
+        setPowerData(realPowerData);
+        console.log('Real power data loaded:', realPowerData);
+      } else {
+        console.log('No substations found in database');
+      }
+    } catch (error) {
+      console.error('Error loading power data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return <PowerInfrastructureLoading />;
@@ -39,7 +85,14 @@ export function PowerInfrastructure() {
 
           <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             <PowerOverviewCards powerData={powerData} />
-            <PowerCapacityDistribution properties={properties} getStatusColor={getStatusColor} />
+            
+            {powerData.totalSubstations === 0 && (
+              <div className="text-center py-8">
+                <p className="text-slate-600 dark:text-slate-400 mb-4">
+                  No substation data available. Use the Substation Finder to discover and analyze substations.
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="capacity-estimator">
@@ -47,10 +100,6 @@ export function PowerInfrastructure() {
           </TabsContent>
 
           <TabsContent value="google-finder">
-            <UnifiedSubstationFinder />
-          </TabsContent>
-
-          <TabsContent value="map-finder">
             <UnifiedSubstationFinder />
           </TabsContent>
 

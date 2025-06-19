@@ -11,8 +11,8 @@ import {
 
 interface PowerInfrastructureHeaderProps {
   powerData: {
-    totalProperties: number;
-    totalPowerCapacity: number;
+    totalSubstations: number;
+    totalCapacity: number;
     averageCapacity: number;
     highCapacityCount: number;
   };
@@ -58,18 +58,18 @@ export function PowerInfrastructureHeader({ powerData }: PowerInfrastructureHead
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 w-full">
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 sm:p-3 text-center">
               <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {powerData.totalProperties}
+                {powerData.totalSubstations}
               </div>
               <div className="text-xs text-blue-600/80 dark:text-blue-400/80 font-medium">
-                Properties
+                Substations
               </div>
             </div>
             <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-2 sm:p-3 text-center">
               <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                {powerData.totalPowerCapacity.toFixed(0)}
+                {powerData.totalCapacity.toFixed(0)}
               </div>
               <div className="text-xs text-yellow-600/80 dark:text-yellow-400/80 font-medium">
-                Total MW
+                Total MVA
               </div>
             </div>
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 sm:p-3 text-center">
@@ -77,7 +77,7 @@ export function PowerInfrastructureHeader({ powerData }: PowerInfrastructureHead
                 {powerData.averageCapacity.toFixed(1)}
               </div>
               <div className="text-xs text-green-600/80 dark:text-green-400/80 font-medium">
-                Avg MW
+                Avg MVA
               </div>
             </div>
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 sm:p-3 text-center">
