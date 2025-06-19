@@ -1,4 +1,5 @@
 import { FreeDataRequest, ScrapingResponse, PropertyData } from '../types.ts';
+import { fetchAltaLinkData } from './altaLinkAPI.ts';
 
 interface CountyConfig {
   name: string;
@@ -19,6 +20,7 @@ interface CountyConfig {
   };
   requiresApiKey?: boolean;
   apiKeyEnvName?: string;
+  altalink_integration?: boolean;
 }
 
 // Comprehensive county configurations for Texas (30+ counties)
@@ -404,9 +406,9 @@ const TEXAS_COUNTIES: CountyConfig[] = [
   }
 ];
 
-// Comprehensive Alberta municipalities/regions (30+)
-const ALBERTA_REGIONS: CountyConfig[] = [
-  // Major Cities
+// Enhanced Alberta regions with AltaLink integration flag
+const ALBERTA_REGIONS_ENHANCED: CountyConfig[] = [
+  // Major Cities with AltaLink integration
   {
     name: 'City of Calgary',
     state: 'AB',
@@ -420,7 +422,9 @@ const ALBERTA_REGIONS: CountyConfig[] = [
       market_value: 'market_value',
       property_type: 'property_type',
       year_built: 'year_built'
-    }
+    },
+    requiresApiKey: false,
+    altalink_integration: true
   },
   {
     name: 'City of Edmonton',
@@ -433,7 +437,9 @@ const ALBERTA_REGIONS: CountyConfig[] = [
       owner: 'owner_name',
       assessed_value: 'assessed_value',
       property_type: 'property_class'
-    }
+    },
+    requiresApiKey: false,
+    altalink_integration: true
   },
   // Municipal Districts
   {
@@ -712,10 +718,10 @@ const ALBERTA_REGIONS: CountyConfig[] = [
   }
 ];
 
-// Combined configurations
+// Combined configurations with enhanced Alberta support
 const COUNTY_CONFIGS: Record<string, CountyConfig[]> = {
   'Texas': TEXAS_COUNTIES,
-  'Alberta': ALBERTA_REGIONS
+  'Alberta': ALBERTA_REGIONS_ENHANCED
 };
 
 async function fetchFromCountyAPI(config: CountyConfig, location: string, propertyType: string): Promise<PropertyData[]> {
@@ -1067,24 +1073,41 @@ export async function fetchCountyRecords(request: FreeDataRequest): Promise<Scra
   const { state, county, city } = normalizeLocation(request.location);
   console.log('Normalized location:', { state, county, city });
   
+  let allProperties: PropertyData[] = [];
+  let successfulSources: string[] = [];
+  let failedSources: string[] = [];
+  
+  // Special handling for Alberta - try AltaLink first for transmission data
+  if (state === 'Alberta' || state === 'AB') {
+    try {
+      console.log('Attempting AltaLink API integration for Alberta transmission data');
+      const altaLinkResult = await fetchAltaLinkData(request);
+      
+      if (altaLinkResult.properties.length > 0) {
+        allProperties.push(...altaLinkResult.properties);
+        successfulSources.push('AltaLink Transmission API');
+        console.log(`Successfully retrieved ${altaLinkResult.properties.length} facilities from AltaLink`);
+      }
+    } catch (error) {
+      console.error('AltaLink API integration failed:', error);
+      failedSources.push('AltaLink Transmission API (Error)');
+    }
+  }
+  
   // Get county configurations for the state
   const stateConfigs = COUNTY_CONFIGS[state] || [];
   
-  if (stateConfigs.length === 0) {
+  if (stateConfigs.length === 0 && allProperties.length === 0) {
     return {
       properties: [],
-      message: `County records not available for ${state}. Currently supported: Texas (${TEXAS_COUNTIES.length} counties), Alberta Canada (${ALBERTA_REGIONS.length} regions)`
+      message: `County records not available for ${state}. Currently supported: Texas (${TEXAS_COUNTIES.length} counties), Alberta Canada (${ALBERTA_REGIONS_ENHANCED.length} regions)`
     };
   }
   
   console.log(`Found ${stateConfigs.length} county/municipal configurations for ${state}`);
   
-  let allProperties: PropertyData[] = [];
-  let successfulSources: string[] = [];
-  let failedSources: string[] = [];
-  
-  // Process up to 5 sources to avoid timeout
-  const sourcesToProcess = stateConfigs.slice(0, 5);
+  // Process up to 5 sources to avoid timeout (skip if we already have AltaLink data)
+  const sourcesToProcess = allProperties.length > 0 ? stateConfigs.slice(0, 2) : stateConfigs.slice(0, 5);
   
   for (const config of sourcesToProcess) {
     try {
@@ -1128,9 +1151,16 @@ export async function fetchCountyRecords(request: FreeDataRequest): Promise<Scra
   
   let message = '';
   if (allProperties.length > 0) {
-    message = `Found ${allProperties.length} properties from ${successfulSources.length} county sources: ${successfulSources.join(', ')}`;
+    message = `Found ${allProperties.length} properties from ${successfulSources.length} sources: ${successfulSources.join(', ')}`;
+    if (state === 'Alberta' && successfulSources.includes('AltaLink Transmission API')) {
+      message += '. Includes high-accuracy transmission data from AltaLink (Alberta\'s transmission operator)';
+    }
   } else {
-    message = `Live data integration attempted for ${state} with ${stateConfigs.length} sources (${publicApiSources} public APIs, ${webScrapingSources} web scraping endpoints). No properties found - this may be due to access restrictions, required authentication, or CAPTCHA protection on county websites.`;
+    message = `Live data integration attempted for ${state} with ${stateConfigs.length} sources (${publicApiSources} public APIs, ${webScrapingSources} web scraping endpoints)`;
+    if (state === 'Alberta') {
+      message += ' including AltaLink transmission API';
+    }
+    message += '. No properties found - this may be due to access restrictions, required authentication, or CAPTCHA protection on county websites.';
   }
 
   return {

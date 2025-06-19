@@ -1,97 +1,112 @@
+import { serve } from 'https://deno.land/std@0.131.0/http/server.ts';
+import { corsHeaders } from '../_shared/cors.ts';
+import { fetchCountyRecords } from './scrapers/countyRecords.ts';
+import { FreeDataRequest, PropertyData } from './types.ts';
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { FreeDataRequest } from './types.ts';
-import { storeScrapedProperties } from './utils.ts';
-import { scrapeAuctionCom } from './scrapers/auctionCom.ts';
-import { scrapeBiggerPockets } from './scrapers/biggerPockets.ts';
-import { scrapePublicAuctions } from './scrapers/publicAuctions.ts';
-import { 
-  fetchGooglePlaces, 
-  fetchYelpData, 
-  fetchOpenStreetMapData, 
-  fetchCensusData, 
-  fetchCountyRecordsData 
-} from './scrapers/apiSources.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     const request: FreeDataRequest = await req.json();
     console.log('Free data integration request:', request);
 
-    let data;
-    switch (request.source) {
-      case 'google_places':
-        data = await fetchGooglePlaces(request);
-        break;
-      case 'yelp':
-        data = await fetchYelpData(request);
-        break;
-      case 'openstreetmap':
-        data = await fetchOpenStreetMapData(request);
-        break;
-      case 'census':
-        data = await fetchCensusData(request);
-        break;
-      case 'county_records':
-        console.log('Processing county records request with live data integration');
-        data = await fetchCountyRecordsData(request);
-        break;
-      case 'auction_com':
-        data = await scrapeAuctionCom(request);
-        break;
-      case 'biggerpockets':
-        data = await scrapeBiggerPockets(request);
-        break;
-      case 'public_auctions':
-        data = await scrapePublicAuctions(request);
-        break;
-      default:
-        throw new Error('Unknown data source');
+    let allProperties: PropertyData[] = [];
+    let messages: string[] = [];
+
+    // Enhanced County Records (including AltaLink for Alberta)
+    try {
+      console.log('Fetching enhanced county records...');
+      const countyResult = await fetchCountyRecords(request);
+      if (countyResult.properties.length > 0) {
+        allProperties.push(...countyResult.properties);
+        messages.push(`County Records: ${countyResult.message}`);
+        console.log(`County records found: ${countyResult.properties.length}`);
+      } else {
+        messages.push(`County Records: ${countyResult.message}`);
+      }
+    } catch (error) {
+      console.error('County records error:', error);
+      messages.push(`County Records: Error - ${error.message}`);
     }
 
-    // Store successful results in our database
-    if (data.properties && data.properties.length > 0) {
-      console.log(`Storing ${data.properties.length} properties in database`);
-      await storeScrapedProperties(supabase, data.properties, request.source);
+    // Government APIs (NREL, EIA)
+    // try {
+    //   console.log('Fetching government data...');
+    //   const governmentResult = await fetchGovernmentData(request);
+    //   if (governmentResult.properties.length > 0) {
+    //     allProperties.push(...governmentResult.properties);
+    //     messages.push(`Government Data: ${governmentResult.message}`);
+    //     console.log(`Government data found: ${governmentResult.properties.length}`);
+    //   } else {
+    //     messages.push(`Government Data: ${governmentResult.message}`);
+    //   }
+    // } catch (error) {
+    //   console.error('Government data error:', error);
+    //   messages.push(`Government Data: Error - ${error.message}`);
+    // }
+
+    // Auction Sites (LoopNet, Ten-X)
+    // try {
+    //   console.log('Scraping auction sites...');
+    //   const auctionResult = await scrapeAuctionSites(request);
+    //   if (auctionResult.properties.length > 0) {
+    //     allProperties.push(...auctionResult.properties);
+    //     messages.push(`Auction Sites: ${auctionResult.message}`);
+    //     console.log(`Auction properties found: ${auctionResult.properties.length}`);
+    //   } else {
+    //     messages.push(`Auction Sites: ${auctionResult.message}`);
+    //   }
+    // } catch (error) {
+    //   console.error('Auction sites error:', error);
+    //   messages.push(`Auction Sites: Error - ${error.message}`);
+    // }
+
+    // Compile final response
+    const uniqueProperties = removeDuplicateProperties(allProperties);
+    console.log(`Total unique properties found: ${uniqueProperties.length}`);
+
+    let finalMessage = messages.length > 0 ? messages.join(' | ') : 'No data sources returned results';
+    
+    // Add Alberta-specific messaging
+    if (request.location.toLowerCase().includes('alberta') || request.location.toLowerCase().includes('ab')) {
+      if (uniqueProperties.some(p => p.source === 'altalink_api' || p.source === 'altalink_fallback')) {
+        finalMessage += ' | Enhanced with AltaLink transmission infrastructure data for accurate Alberta coverage';
+      }
     }
 
     return new Response(JSON.stringify({
-      success: true,
-      source: request.source,
-      properties_found: data.properties?.length || 0,
-      properties: data.properties || [],
-      message: data.message || 'Data retrieved successfully',
-      timestamp: new Date().toISOString()
+      properties: uniqueProperties,
+      sources_attempted: messages.length,
+      total_found: uniqueProperties.length,
+      message: finalMessage
     }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Free data integration error:', error);
     return new Response(JSON.stringify({
-      success: false,
-      error: error.message,
-      properties_found: 0,
-      message: 'Failed to retrieve data from free sources'
+      error: 'Failed to fetch data',
+      details: error.message
     }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500
     });
   }
 });
+
+function removeDuplicateProperties(properties: PropertyData[]): PropertyData[] {
+  const uniqueMap = new Map();
+  return properties.filter(property => {
+    const key = `${property.address}-${property.city}-${property.state}`;
+    if (!uniqueMap.has(key)) {
+      uniqueMap.set(key, true);
+      return true;
+    }
+    return false;
+  });
+}
