@@ -50,7 +50,26 @@ export function useSubstationAnalyzer({
     
     for (const substation of substationsToStore) {
       try {
-        // Simple insert without upsert to avoid constraint issues
+        // Check if substation already exists
+        const { data: existingSubstation, error: checkError } = await supabase
+          .from('substations')
+          .select('id')
+          .eq('name', substation.name)
+          .eq('latitude', substation.latitude)
+          .eq('longitude', substation.longitude)
+          .maybeSingle();
+
+        if (checkError) {
+          console.error('Error checking existing substation:', checkError);
+          continue;
+        }
+
+        if (existingSubstation) {
+          console.log('Substation already exists:', substation.name);
+          continue;
+        }
+
+        // Insert new substation
         const { error } = await supabase
           .from('substations')
           .insert({
@@ -69,12 +88,12 @@ export function useSubstationAnalyzer({
           });
 
         if (error) {
-          console.log('Substation may already exist:', substation.name);
-          // Don't throw error, just log and continue
+          console.error('Error storing substation:', error);
+        } else {
+          console.log('Successfully stored substation:', substation.name);
         }
       } catch (error) {
-        console.log('Error storing substation:', error);
-        // Continue with other substations
+        console.error('Error storing substation:', error);
       }
     }
   };
@@ -140,7 +159,11 @@ export function useSubstationAnalyzer({
       );
 
       // Update in database with analysis results
-      await updateSubstationAnalysis(substation, capacityResult, ownershipResult);
+      const updateSuccess = await updateSubstationAnalysis(substation, capacityResult, ownershipResult);
+      
+      if (!updateSuccess) {
+        throw new Error('Failed to save analysis to database');
+      }
 
       return true;
     } catch (error) {
@@ -152,30 +175,55 @@ export function useSubstationAnalyzer({
           : s
         )
       );
-      return false;
+      throw error;
     }
   };
 
-  const updateSubstationAnalysis = async (substation: DiscoveredSubstation, capacityResult: any, ownershipResult?: any) => {
+  const updateSubstationAnalysis = async (substation: DiscoveredSubstation, capacityResult: any, ownershipResult?: any): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      // First, try to find the substation by name and coordinates
+      const { data: existingSubstation, error: findError } = await supabase
+        .from('substations')
+        .select('id')
+        .eq('name', substation.name)
+        .eq('latitude', substation.latitude)
+        .eq('longitude', substation.longitude)
+        .maybeSingle();
+
+      if (findError) {
+        console.error('Error finding substation for update:', findError);
+        return false;
+      }
+
+      if (!existingSubstation) {
+        console.error('Substation not found for update:', substation.name);
+        return false;
+      }
+
+      // Update the existing substation
+      const { error: updateError } = await supabase
         .from('substations')
         .update({
-          capacity_mva: capacityResult.estimatedCapacity.max * 1.25,
+          capacity_mva: Math.round(capacityResult.estimatedCapacity.max * 1.25),
           voltage_level: capacityResult.voltageLevel || 'Estimated',
           utility_owner: ownershipResult?.owner || 'Unknown',
           interconnection_type: capacityResult.substationType || 'distribution',
-          status: 'active'
+          status: 'active',
+          load_factor: 0.75,
+          commissioning_date: new Date().toISOString().split('T')[0] // Format as YYYY-MM-DD
         })
-        .eq('name', substation.name)
-        .eq('latitude', substation.latitude)
-        .eq('longitude', substation.longitude);
+        .eq('id', existingSubstation.id);
 
-      if (error) {
-        console.error('Error updating substation analysis:', error);
+      if (updateError) {
+        console.error('Error updating substation analysis:', updateError);
+        return false;
       }
+
+      console.log('Successfully updated substation analysis:', substation.name);
+      return true;
     } catch (error) {
       console.error('Analysis update error:', error);
+      return false;
     }
   };
 
