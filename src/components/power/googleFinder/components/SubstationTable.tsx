@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Eye, MapPin, Zap, Database } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MapPin, Eye, Zap, Building2 } from 'lucide-react';
 import { SubstationDetailsModal } from './SubstationDetailsModal';
 
 interface DiscoveredSubstation {
@@ -27,201 +28,158 @@ interface DiscoveredSubstation {
     commissioning_date?: string;
     load_factor?: number;
     status?: string;
+    ownership_confidence?: number;
+    ownership_source?: string;
   };
 }
 
 interface SubstationTableProps {
   substations: DiscoveredSubstation[];
   onViewOnMap: (substation: DiscoveredSubstation) => void;
+  showCheckboxes?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (id: string, checked: boolean) => void;
 }
 
-export function SubstationTable({ substations, onViewOnMap }: SubstationTableProps) {
-  const [selectedSubstation, setSelectedSubstation] = useState<DiscoveredSubstation | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'default' as const;
-      case 'analyzing':
-        return 'secondary' as const;
-      case 'pending':
-        return 'outline' as const;
-      case 'failed':
-        return 'destructive' as const;
-      default:
-        return 'default' as const;
-    }
-  };
-
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'text-green-600 dark:text-green-400';
-    if (confidence >= 0.6) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-  };
+export function SubstationTable({ 
+  substations, 
+  onViewOnMap,
+  showCheckboxes = false,
+  selectedIds = [],
+  onSelectionChange
+}: SubstationTableProps) {
+  const [selectedSubstation, setSelectedSubstation] = React.useState<DiscoveredSubstation | null>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   const handleViewDetails = (substation: DiscoveredSubstation) => {
     setSelectedSubstation(substation);
     setIsModalOpen(true);
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'analyzing': return 'bg-blue-100 text-blue-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (substations.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 sm:py-12 text-center">
-          <Database className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground text-sm sm:text-base">No substations found. Try adjusting your search or filters.</p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-8 text-gray-500">
+        No substations found
+      </div>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <span className="text-base sm:text-lg">Discovered Substations</span>
-            <Badge variant="outline" className="self-start sm:self-auto text-xs">
-              {substations.length} Results
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Mobile Card Layout */}
-          <div className="block sm:hidden space-y-4">
+      <div className="rounded-md border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {showCheckboxes && (
+                <TableHead className="w-12"></TableHead>
+              )}
+              <TableHead>Name</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Owner</TableHead>
+              <TableHead>Capacity (MVA)</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {substations.map((substation) => (
-              <div key={substation.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-medium text-sm truncate">{substation.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{substation.address}</p>
+              <TableRow key={substation.id}>
+                {showCheckboxes && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(substation.id)}
+                      onCheckedChange={(checked) => 
+                        onSelectionChange?.(substation.id, checked as boolean)
+                      }
+                    />
+                  </TableCell>
+                )}
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-gray-500" />
+                    <span className="max-w-48 truncate">{substation.name}</span>
                   </div>
-                  <Badge variant={getStatusColor(substation.analysis_status)} className="ml-2 text-xs">
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
+                    <div className="max-w-48 truncate">{substation.address}</div>
+                    <div className="text-gray-500 text-xs">
+                      {substation.latitude.toFixed(4)}, {substation.longitude.toFixed(4)}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
+                    {substation.details?.utility_owner ? (
+                      <div>
+                        <div>{substation.details.utility_owner}</div>
+                        {substation.details.ownership_confidence && (
+                          <div className="text-xs text-gray-500">
+                            {Math.round(substation.details.ownership_confidence * 100)}% confidence
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">Unknown</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {substation.capacity_estimate ? (
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-4 h-4 text-yellow-500" />
+                      <span className="text-sm">
+                        {substation.capacity_estimate.min}-{substation.capacity_estimate.max}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">Estimating...</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(substation.analysis_status)}>
                     {substation.analysis_status}
                   </Badge>
-                </div>
-                
-                {substation.capacity_estimate && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Capacity:</span>
-                    <span className="font-medium">
-                      {substation.capacity_estimate.min}-{substation.capacity_estimate.max} MW
-                    </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDetails(substation)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Details
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewOnMap(substation)}
+                    >
+                      <MapPin className="w-4 h-4 mr-1" />
+                      Map
+                    </Button>
                   </div>
-                )}
-                
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleViewDetails(substation)}
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 text-xs"
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    Details
-                  </Button>
-                  <Button
-                    onClick={() => onViewOnMap(substation)}
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 text-xs"
-                  >
-                    <ExternalLink className="w-3 h-3 mr-1" />
-                    Map
-                  </Button>
-                </div>
-              </div>
+                </TableCell>
+              </TableRow>
             ))}
-          </div>
-
-          {/* Desktop Table Layout */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Name & Location</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Capacity (MW)</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Owner</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {substations.map((substation) => (
-                  <tr key={substation.id} className="border-b hover:bg-muted/50 transition-colors">
-                    <td className="p-3">
-                      <div className="max-w-xs">
-                        <div className="font-medium text-sm truncate">{substation.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{substation.address}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {substation.latitude.toFixed(4)}, {substation.longitude.toFixed(4)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      {substation.capacity_estimate ? (
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium">
-                            {substation.capacity_estimate.min}-{substation.capacity_estimate.max} MW
-                          </div>
-                          <div className={`text-xs ${getConfidenceColor(substation.capacity_estimate.confidence)}`}>
-                            {(substation.capacity_estimate.confidence * 100).toFixed(0)}% confidence
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Analyzing...</span>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      <div className="text-sm">
-                        {substation.details?.utility_owner || 'Unknown'}
-                      </div>
-                      {substation.details?.voltage_level && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {substation.details.voltage_level}
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      <Badge variant={getStatusColor(substation.analysis_status)} className="text-xs">
-                        {substation.analysis_status}
-                      </Badge>
-                    </td>
-                    <td className="p-3">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleViewDetails(substation)}
-                          size="sm"
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Details
-                        </Button>
-                        <Button
-                          onClick={() => onViewOnMap(substation)}
-                          size="sm"
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+          </TableBody>
+        </Table>
+      </div>
 
       <SubstationDetailsModal
         substation={selectedSubstation}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onViewOnMap={onViewOnMap}
       />
     </>
   );

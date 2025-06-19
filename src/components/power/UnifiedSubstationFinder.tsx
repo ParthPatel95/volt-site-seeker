@@ -273,6 +273,7 @@ export function UnifiedSubstationFinder() {
         discoveredSubstations={discoveredSubstations}
         storedSubstations={storedSubstations}
         onViewOnMap={handleViewOnMap}
+        onStoredSubstationsChange={loadStoredSubstations}
       />
     </div>
   );

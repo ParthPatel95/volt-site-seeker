@@ -1,8 +1,18 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Zap, Building, Calendar, Activity, TrendingUp, ExternalLink, Shield } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { 
+  MapPin, 
+  Zap, 
+  Building2, 
+  Calendar,
+  ExternalLink,
+  Info,
+  AlertTriangle
+} from 'lucide-react';
 
 interface DiscoveredSubstation {
   id: string;
@@ -34,298 +44,202 @@ interface SubstationDetailsModalProps {
   substation: DiscoveredSubstation | null;
   isOpen: boolean;
   onClose: () => void;
-  onViewOnMap: (substation: DiscoveredSubstation) => void;
 }
 
-export function SubstationDetailsModal({ 
-  substation, 
-  isOpen, 
-  onClose, 
-  onViewOnMap 
+export function SubstationDetailsModal({
+  substation,
+  isOpen,
+  onClose
 }: SubstationDetailsModalProps) {
   if (!substation) return null;
 
+  const handleViewOnExternalMap = () => {
+    window.open(`https://maps.google.com/?q=${substation.latitude},${substation.longitude}`, '_blank');
+  };
+
   const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-        return 'default' as const;
-      case 'analyzing':
-        return 'secondary' as const;
-      case 'pending':
-        return 'outline' as const;
-      case 'failed':
-        return 'destructive' as const;
-      default:
-        return 'default' as const;
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'analyzing': return 'bg-blue-100 text-blue-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'text-green-600 dark:text-green-400';
-    if (confidence >= 0.6) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-  };
-
-  const getOwnershipConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'text-green-600 dark:text-green-400';
-    if (confidence >= 0.6) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex-shrink-0">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-lg sm:text-xl font-bold truncate">{substation.name}</h2>
-              <p className="text-sm text-muted-foreground">Substation Details & Analysis</p>
-            </div>
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <Building2 className="w-5 h-5" />
+            {substation.name}
+            <Badge className={getStatusColor(substation.analysis_status)}>
+              {substation.analysis_status}
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Status and Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={getStatusColor(substation.analysis_status)}>
-                {substation.analysis_status}
-              </Badge>
-              {substation.details?.voltage_level && (
-                <Badge variant="outline">
-                  {substation.details.voltage_level}
-                </Badge>
-              )}
-              {substation.details?.interconnection_type && (
-                <Badge variant="outline">
-                  {substation.details.interconnection_type}
-                </Badge>
-              )}
-              {substation.details?.ownership_confidence && (
-                <Badge variant="secondary" className="text-xs">
-                  <Shield className="w-3 h-3 mr-1" />
-                  {(substation.details.ownership_confidence * 100).toFixed(0)}% confidence
-                </Badge>
-              )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Location Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <MapPin className="w-5 h-5" />
+              Location Information
             </div>
-            <div className="flex gap-2 sm:ml-auto">
-              <Button
-                onClick={() => onViewOnMap(substation)}
+            
+            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              <div>
+                <p className="text-sm text-gray-600">Address</p>
+                <p className="font-medium">{substation.address}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Latitude</p>
+                  <p className="font-medium">{substation.latitude.toFixed(6)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Longitude</p>
+                  <p className="font-medium">{substation.longitude.toFixed(6)}</p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleViewOnExternalMap}
+                variant="outline" 
                 size="sm"
-                variant="outline"
-                className="text-xs"
+                className="w-full"
               >
-                <ExternalLink className="w-3 h-3 mr-1" />
-                View on Map
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View on Google Maps
               </Button>
             </div>
-          </div>
 
-          {/* Embedded Map */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-muted p-3 border-b">
-              <h3 className="text-sm font-semibold flex items-center">
-                <MapPin className="w-4 h-4 mr-2" />
-                Substation Location
-              </h3>
-            </div>
-            <div className="relative h-64">
-              <iframe
-                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}&q=${substation.latitude},${substation.longitude}&zoom=16&maptype=satellite`}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title={`Map showing ${substation.name} location`}
-              />
+            {/* Map Placeholder */}
+            <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+              <p className="text-sm text-gray-600 mb-2">
+                Map requires Google Maps API key
+              </p>
+              <p className="text-xs text-gray-500">
+                Click "View on Google Maps" above to see location
+              </p>
             </div>
           </div>
 
-          {/* Main Information Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Location Information */}
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Location Information
-                </h3>
-                <div className="space-y-2 pl-6 sm:pl-7">
-                  <div className="grid grid-cols-1 gap-2">
-                    <div>
-                      <span className="text-xs sm:text-sm text-muted-foreground">Address:</span>
-                      <p className="text-sm sm:text-base font-medium break-words">{substation.address}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-xs text-muted-foreground">Latitude:</span>
-                        <p className="text-sm font-mono">{substation.latitude.toFixed(6)}</p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-muted-foreground">Longitude:</span>
-                        <p className="text-sm font-mono">{substation.longitude.toFixed(6)}</p>
-                      </div>
-                    </div>
+          {/* Technical Details */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <Zap className="w-5 h-5" />
+              Technical Details
+            </div>
+
+            {substation.capacity_estimate && (
+              <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                <h4 className="font-semibold text-blue-900">Capacity Estimate</h4>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <p className="text-blue-600">Min</p>
+                    <p className="font-medium">{substation.capacity_estimate.min} MVA</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-600">Max</p>
+                    <p className="font-medium">{substation.capacity_estimate.max} MVA</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-600">Confidence</p>
+                    <p className="font-medium">{Math.round(substation.capacity_estimate.confidence * 100)}%</p>
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* Enhanced Ownership Information */}
-              {substation.details && (
-                <div className="space-y-3">
-                  <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                    <Building className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    Ownership & Operations
-                  </h3>
-                  <div className="space-y-2 pl-6 sm:pl-7">
-                    {substation.details.utility_owner && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Utility Owner:</span>
-                        <p className="text-sm font-medium">{substation.details.utility_owner}</p>
-                      </div>
-                    )}
-                    {substation.details.ownership_confidence && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Ownership Confidence:</span>
-                        <p className={`text-sm font-semibold ${getOwnershipConfidenceColor(substation.details.ownership_confidence)}`}>
-                          {(substation.details.ownership_confidence * 100).toFixed(1)}%
-                        </p>
-                      </div>
-                    )}
+            {substation.details && (
+              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                <h4 className="font-semibold">Operational Details</h4>
+                
+                {substation.details.utility_owner && (
+                  <div>
+                    <p className="text-sm text-gray-600">Utility Owner</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{substation.details.utility_owner}</p>
+                      {substation.details.ownership_confidence && (
+                        <Badge variant="outline" className="text-xs">
+                          {Math.round(substation.details.ownership_confidence * 100)}% confidence
+                        </Badge>
+                      )}
+                    </div>
                     {substation.details.ownership_source && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Data Source:</span>
-                        <p className="text-sm">{substation.details.ownership_source}</p>
-                      </div>
-                    )}
-                    {substation.details.status && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Operational Status:</span>
-                        <p className="text-sm capitalize">{substation.details.status}</p>
-                      </div>
-                    )}
-                    {substation.details.commissioning_date && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Commissioned:</span>
-                        <p className="text-sm">{new Date(substation.details.commissioning_date).toLocaleDateString()}</p>
-                      </div>
+                      <p className="text-xs text-gray-500">Source: {substation.details.ownership_source}</p>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Technical Specifications */}
-            <div className="space-y-4">
-              {substation.capacity_estimate && (
-                <div className="space-y-3">
-                  <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                    <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    Technical Specifications
-                  </h3>
-                  <div className="space-y-2 pl-6 sm:pl-7">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {substation.details.voltage_level && (
                     <div>
-                      <span className="text-xs text-muted-foreground">Estimated Capacity Range:</span>
-                      <p className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-                        {substation.capacity_estimate.min} - {substation.capacity_estimate.max} MW
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Analysis Confidence:</span>
-                      <p className={`text-sm font-semibold ${getConfidenceColor(substation.capacity_estimate.confidence)}`}>
-                        {(substation.capacity_estimate.confidence * 100).toFixed(1)}%
-                      </p>
-                    </div>
-                    {substation.details?.voltage_level && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Voltage Level:</span>
-                        <p className="text-sm font-medium">{substation.details.voltage_level}</p>
-                      </div>
-                    )}
-                    {substation.details?.load_factor && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Load Factor:</span>
-                        <p className="text-sm">{substation.details.load_factor}%</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Discovery Information */}
-              <div className="space-y-3">
-                <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Discovery Information
-                </h3>
-                <div className="space-y-2 pl-6 sm:pl-7">
-                  {substation.stored_at && (
-                    <div>
-                      <span className="text-xs text-muted-foreground">Discovered:</span>
-                      <p className="text-sm">{new Date(substation.stored_at).toLocaleString()}</p>
+                      <p className="text-gray-600">Voltage Level</p>
+                      <p className="font-medium">{substation.details.voltage_level}</p>
                     </div>
                   )}
-                  <div>
-                    <span className="text-xs text-muted-foreground">Place ID:</span>
-                    <p className="text-xs font-mono break-all">{substation.place_id}</p>
-                  </div>
+                  
+                  {substation.details.interconnection_type && (
+                    <div>
+                      <p className="text-gray-600">Type</p>
+                      <p className="font-medium capitalize">{substation.details.interconnection_type}</p>
+                    </div>
+                  )}
+                  
+                  {substation.details.load_factor && (
+                    <div>
+                      <p className="text-gray-600">Load Factor</p>
+                      <p className="font-medium">{Math.round(substation.details.load_factor * 100)}%</p>
+                    </div>
+                  )}
+                  
+                  {substation.details.status && (
+                    <div>
+                      <p className="text-gray-600">Status</p>
+                      <p className="font-medium capitalize">{substation.details.status}</p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Performance Metrics */}
-          {substation.capacity_estimate && (
-            <div className="border-t pt-6">
-              <h3 className="text-base sm:text-lg font-semibold flex items-center mb-4">
-                <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Performance Metrics
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="w-4 h-4 text-green-500" />
-                    <span className="text-xs sm:text-sm font-medium">Min Capacity</span>
+                {substation.details.commissioning_date && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Commissioned:</span>
+                    <span className="font-medium">
+                      {new Date(substation.details.commissioning_date).toLocaleDateString()}
+                    </span>
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold mt-2">{substation.capacity_estimate.min}</div>
-                  <div className="text-xs text-muted-foreground">MW minimum</div>
-                </div>
-                <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Zap className="w-4 h-4 text-yellow-500" />
-                    <span className="text-xs sm:text-sm font-medium">Max Capacity</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-bold mt-2">{substation.capacity_estimate.max}</div>
-                  <div className="text-xs text-muted-foreground">MW maximum</div>
-                </div>
-                <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Building className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs sm:text-sm font-medium">Confidence</span>
-                  </div>
-                  <div className={`text-xl sm:text-2xl font-bold mt-2 ${getConfidenceColor(substation.capacity_estimate.confidence)}`}>
-                    {(substation.capacity_estimate.confidence * 100).toFixed(0)}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">Analysis confidence</div>
-                </div>
-                <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Shield className="w-4 h-4 text-purple-500" />
-                    <span className="text-xs sm:text-sm font-medium">Owner Confidence</span>
-                  </div>
-                  <div className={`text-xl sm:text-2xl font-bold mt-2 ${substation.details?.ownership_confidence ? getOwnershipConfidenceColor(substation.details.ownership_confidence) : 'text-gray-400'}`}>
-                    {substation.details?.ownership_confidence ? (substation.details.ownership_confidence * 100).toFixed(0) : 'N/A'}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">Ownership confidence</div>
+                )}
+              </div>
+            )}
+
+            {substation.stored_at && (
+              <div className="bg-green-50 p-3 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <Info className="w-4 h-4 text-green-600" />
+                  <span className="text-green-700">
+                    Stored: {new Date(substation.stored_at).toLocaleString()}
+                  </span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button onClick={handleViewOnExternalMap}>
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Open in Google Maps
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
