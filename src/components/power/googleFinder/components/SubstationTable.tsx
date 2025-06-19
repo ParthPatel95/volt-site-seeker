@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MapPin, Eye, Zap, Building2 } from 'lucide-react';
+import { MapPin, Eye, Zap, Building2, Brain } from 'lucide-react';
 import { SubstationDetailsModal } from './SubstationDetailsModal';
 
 interface DiscoveredSubstation {
@@ -39,6 +39,8 @@ interface SubstationTableProps {
   showCheckboxes?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (id: string, checked: boolean) => void;
+  onAnalyzeSubstation?: (substation: DiscoveredSubstation) => void;
+  analyzing?: boolean;
 }
 
 export function SubstationTable({ 
@@ -46,7 +48,9 @@ export function SubstationTable({
   onViewOnMap,
   showCheckboxes = false,
   selectedIds = [],
-  onSelectionChange
+  onSelectionChange,
+  onAnalyzeSubstation,
+  analyzing = false
 }: SubstationTableProps) {
   const [selectedSubstation, setSelectedSubstation] = React.useState<DiscoveredSubstation | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -142,7 +146,7 @@ export function SubstationTable({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-gray-400">Estimating...</span>
+                    <span className="text-gray-400">Not analyzed</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -152,6 +156,17 @@ export function SubstationTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
+                    {onAnalyzeSubstation && substation.analysis_status === 'pending' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onAnalyzeSubstation(substation)}
+                        disabled={analyzing}
+                      >
+                        <Brain className="w-4 h-4 mr-1" />
+                        Analyze
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"

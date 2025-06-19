@@ -63,7 +63,7 @@ export function UnifiedSubstationFinder() {
 
   const { toast } = useToast();
 
-  const { analyzeAllSubstations } = useSubstationAnalyzer({
+  const { storeDiscoveredSubstations, analyzeSubstation } = useSubstationAnalyzer({
     substations: discoveredSubstations,
     setSubstations: setDiscoveredSubstations,
     activeMethod,
@@ -73,7 +73,7 @@ export function UnifiedSubstationFinder() {
       loadStoredSubstations();
       toast({
         title: "Analysis Complete",
-        description: `Completed capacity and ownership analysis for ${discoveredSubstations.length} substations`,
+        description: "Substation analysis completed successfully",
       });
     }
   });
@@ -151,16 +151,19 @@ export function UnifiedSubstationFinder() {
       }));
 
       setDiscoveredSubstations(substations);
-      setProgress(25);
+      setProgress(50);
+
+      // Store all discovered substations immediately
+      await storeDiscoveredSubstations(substations);
+      setProgress(100);
 
       toast({
-        title: "Substations Found",
-        description: `Found ${substations.length} substations in ${location}`,
+        title: "Substations Found & Stored",
+        description: `Found and stored ${substations.length} substations in ${location}. You can now analyze them individually.`,
       });
 
       setSearching(false);
-      setAnalyzing(true);
-      await analyzeAllSubstations(substations);
+      loadStoredSubstations(); // Refresh stored substations
 
     } catch (error: any) {
       console.error('Substation search error:', error);
@@ -210,16 +213,19 @@ export function UnifiedSubstationFinder() {
         }));
 
       setDiscoveredSubstations(substations);
-      setProgress(25);
+      setProgress(50);
+
+      // Store all discovered substations immediately
+      await storeDiscoveredSubstations(substations);
+      setProgress(100);
 
       toast({
-        title: "Substations Found",
-        description: `Found ${substations.length} substations in ${selectedSection.name}`,
+        title: "Substations Found & Stored",
+        description: `Found and stored ${substations.length} substations in ${selectedSection.name}. You can now analyze them individually.`,
       });
 
       setSearching(false);
-      setAnalyzing(true);
-      await analyzeAllSubstations(substations);
+      loadStoredSubstations(); // Refresh stored substations
 
     } catch (error: any) {
       console.error('Map search error:', error);
@@ -229,6 +235,26 @@ export function UnifiedSubstationFinder() {
         variant: "destructive"
       });
       setSearching(false);
+    }
+  };
+
+  const handleAnalyzeSubstation = async (substation: DiscoveredSubstation) => {
+    setAnalyzing(true);
+    try {
+      await analyzeSubstation(substation);
+      loadStoredSubstations(); // Refresh stored substations
+      toast({
+        title: "Analysis Complete",
+        description: `Successfully analyzed ${substation.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Analysis Error",
+        description: "Failed to analyze substation",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -274,6 +300,8 @@ export function UnifiedSubstationFinder() {
         storedSubstations={storedSubstations}
         onViewOnMap={handleViewOnMap}
         onStoredSubstationsChange={loadStoredSubstations}
+        onAnalyzeSubstation={handleAnalyzeSubstation}
+        analyzing={analyzing}
       />
     </div>
   );

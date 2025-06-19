@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -41,13 +42,17 @@ interface SubstationResultsProps {
   storedSubstations: DiscoveredSubstation[];
   onViewOnMap: (substation: DiscoveredSubstation) => void;
   onStoredSubstationsChange?: () => void;
+  onAnalyzeSubstation?: (substation: DiscoveredSubstation) => void;
+  analyzing?: boolean;
 }
 
 export function SubstationResults({
   discoveredSubstations,
   storedSubstations,
   onViewOnMap,
-  onStoredSubstationsChange
+  onStoredSubstationsChange,
+  onAnalyzeSubstation,
+  analyzing = false
 }: SubstationResultsProps) {
   const [selectedStoredIds, setSelectedStoredIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
@@ -163,6 +168,8 @@ export function SubstationResults({
             <SubstationTable
               substations={discoveredFilters.filteredSubstations}
               onViewOnMap={onViewOnMap}
+              onAnalyzeSubstation={onAnalyzeSubstation}
+              analyzing={analyzing}
             />
           </>
         )}
@@ -260,6 +267,8 @@ export function SubstationResults({
           showCheckboxes={true}
           selectedIds={selectedStoredIds}
           onSelectionChange={handleSelectSubstation}
+          onAnalyzeSubstation={onAnalyzeSubstation}
+          analyzing={analyzing}
         />
       </TabsContent>
     </Tabs>

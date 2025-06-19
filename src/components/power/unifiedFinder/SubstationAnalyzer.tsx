@@ -45,117 +45,137 @@ export function useSubstationAnalyzer({
 }: SubstationAnalyzerProps) {
   const { estimateCapacity } = useCapacityEstimator();
 
-  const analyzeAllSubstations = async (substationsToAnalyze: DiscoveredSubstation[]) => {
-    const total = substationsToAnalyze.length;
+  const storeDiscoveredSubstations = async (substationsToStore: DiscoveredSubstation[]) => {
+    console.log('Storing discovered substations:', substationsToStore.length);
     
-    for (let i = 0; i < substationsToAnalyze.length; i++) {
-      const substation = substationsToAnalyze[i];
-      
+    for (const substation of substationsToStore) {
       try {
-        setSubstations(prev => 
-          prev.map(s => s.id === substation.id 
-            ? { ...s, analysis_status: 'analyzing' } 
-            : s
-          )
-        );
+        // Simple insert without upsert to avoid constraint issues
+        const { error } = await supabase
+          .from('substations')
+          .insert({
+            name: substation.name,
+            latitude: substation.latitude,
+            longitude: substation.longitude,
+            city: extractCityFromAddress(substation.address),
+            state: extractStateFromAddress(substation.address),
+            capacity_mva: 50, // Default capacity until analyzed
+            voltage_level: 'Unknown',
+            utility_owner: 'Unknown',
+            interconnection_type: 'distribution',
+            load_factor: 0.75,
+            status: 'discovered',
+            coordinates_source: activeMethod === 'google' ? 'google_maps_api' : 'map_search'
+          });
 
-        // Import the ownership detection utility
-        const { detectSubstationOwnership } = await import('@/utils/substationOwnership');
-        
-        // Detect ownership
-        const ownershipResult = await detectSubstationOwnership(
-          substation.name,
-          substation.latitude,
-          substation.longitude,
-          substation.address
-        );
-
-        const capacityResult = await estimateCapacity({
-          latitude: substation.latitude,
-          longitude: substation.longitude,
-          manualOverride: {
-            utilityContext: {
-              name: substation.name,
-              notes: `Auto-discovered via ${activeMethod === 'google' ? 'Google API' : 'Map Search'}`
-            }
-          }
-        });
-
-        const capacityEstimate = {
-          min: capacityResult.estimatedCapacity.min,
-          max: capacityResult.estimatedCapacity.max,
-          confidence: capacityResult.detectionResults.confidence
-        };
-
-        // Update substation with ownership and enhanced details
-        setSubstations(prev => 
-          prev.map(s => s.id === substation.id 
-            ? { 
-                ...s, 
-                analysis_status: 'completed',
-                capacity_estimate: capacityEstimate,
-                details: {
-                  ...s.details,
-                  utility_owner: ownershipResult.owner,
-                  voltage_level: capacityResult.voltageLevel || 'Estimated',
-                  interconnection_type: capacityResult.substationType || 'distribution',
-                  ownership_confidence: ownershipResult.confidence,
-                  ownership_source: ownershipResult.source,
-                  commissioning_date: new Date().toISOString(),
-                  load_factor: 0.75,
-                  status: 'active'
-                }
-              } 
-            : s
-          )
-        );
-
-        await storeSubstationData(substation, capacityResult, ownershipResult);
-
+        if (error) {
+          console.log('Substation may already exist:', substation.name);
+          // Don't throw error, just log and continue
+        }
       } catch (error) {
-        console.error(`Failed to analyze ${substation.name}:`, error);
-        
-        setSubstations(prev => 
-          prev.map(s => s.id === substation.id 
-            ? { ...s, analysis_status: 'failed' } 
-            : s
-          )
-        );
+        console.log('Error storing substation:', error);
+        // Continue with other substations
       }
-
-      onProgress(25 + ((i + 1) / total) * 75);
     }
-
-    onComplete();
   };
 
-  const storeSubstationData = async (substation: DiscoveredSubstation, capacityResult: any, ownershipResult?: any) => {
+  const analyzeSubstation = async (substation: DiscoveredSubstation) => {
+    try {
+      setSubstations(prev => 
+        prev.map(s => s.id === substation.id 
+          ? { ...s, analysis_status: 'analyzing' } 
+          : s
+        )
+      );
+
+      // Import the ownership detection utility
+      const { detectSubstationOwnership } = await import('@/utils/substationOwnership');
+      
+      // Detect ownership
+      const ownershipResult = await detectSubstationOwnership(
+        substation.name,
+        substation.latitude,
+        substation.longitude,
+        substation.address
+      );
+
+      const capacityResult = await estimateCapacity({
+        latitude: substation.latitude,
+        longitude: substation.longitude,
+        manualOverride: {
+          utilityContext: {
+            name: substation.name,
+            notes: `Auto-discovered via ${activeMethod === 'google' ? 'Google API' : 'Map Search'}`
+          }
+        }
+      });
+
+      const capacityEstimate = {
+        min: capacityResult.estimatedCapacity.min,
+        max: capacityResult.estimatedCapacity.max,
+        confidence: capacityResult.detectionResults.confidence
+      };
+
+      // Update substation with analysis results
+      setSubstations(prev => 
+        prev.map(s => s.id === substation.id 
+          ? { 
+              ...s, 
+              analysis_status: 'completed',
+              capacity_estimate: capacityEstimate,
+              details: {
+                ...s.details,
+                utility_owner: ownershipResult.owner,
+                voltage_level: capacityResult.voltageLevel || 'Estimated',
+                interconnection_type: capacityResult.substationType || 'distribution',
+                ownership_confidence: ownershipResult.confidence,
+                ownership_source: ownershipResult.source,
+                commissioning_date: new Date().toISOString(),
+                load_factor: 0.75,
+                status: 'active'
+              }
+            } 
+          : s
+        )
+      );
+
+      // Update in database with analysis results
+      await updateSubstationAnalysis(substation, capacityResult, ownershipResult);
+
+      return true;
+    } catch (error) {
+      console.error(`Failed to analyze ${substation.name}:`, error);
+      
+      setSubstations(prev => 
+        prev.map(s => s.id === substation.id 
+          ? { ...s, analysis_status: 'failed' } 
+          : s
+        )
+      );
+      return false;
+    }
+  };
+
+  const updateSubstationAnalysis = async (substation: DiscoveredSubstation, capacityResult: any, ownershipResult?: any) => {
     try {
       const { error } = await supabase
         .from('substations')
-        .upsert({
-          name: substation.name,
-          latitude: substation.latitude,
-          longitude: substation.longitude,
-          city: extractCityFromAddress(substation.address),
-          state: extractStateFromAddress(substation.address),
+        .update({
           capacity_mva: capacityResult.estimatedCapacity.max * 1.25,
           voltage_level: capacityResult.voltageLevel || 'Estimated',
           utility_owner: ownershipResult?.owner || 'Unknown',
           interconnection_type: capacityResult.substationType || 'distribution',
-          load_factor: 0.75,
-          status: 'active',
-          coordinates_source: activeMethod === 'google' ? 'google_maps_api' : 'map_search'
-        }, {
-          onConflict: 'name,latitude,longitude',
-          ignoreDuplicates: false
-        });
+          status: 'active'
+        })
+        .eq('name', substation.name)
+        .eq('latitude', substation.latitude)
+        .eq('longitude', substation.longitude);
 
       if (error) {
-        console.error('Error storing substation:', error);
+        console.error('Error updating substation analysis:', error);
       }
     } catch (error) {
-      console.error('Storage error:', error);
+      console.error('Analysis update error:', error);
     }
   };
 
@@ -171,6 +191,7 @@ export function useSubstationAnalyzer({
   };
 
   return {
-    analyzeAllSubstations
+    storeDiscoveredSubstations,
+    analyzeSubstation
   };
 }
