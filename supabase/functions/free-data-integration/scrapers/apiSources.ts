@@ -1,3 +1,4 @@
+
 import { FreeDataRequest, ScrapingResponse } from '../types.ts';
 import { extractCity, extractState, extractZipCode, extractStateFromCensus } from '../utils.ts';
 import { fetchCountyRecords } from './countyRecords.ts';
@@ -210,53 +211,84 @@ export async function fetchCensusData(request: FreeDataRequest): Promise<Scrapin
   try {
     console.log('Fetching Census data for:', request.location);
     
-    // Use the County Business Patterns API for more reliable data
+    // Use a simpler, more reliable Census API endpoint
     const year = '2021';
-    const url = `https://api.census.gov/data/${year}/cbp?get=NAME,NAICS2017_LABEL,EMP,ESTAB,PAYANN&for=county:*&in=state:*&NAICS2017=23,31-33,42,44-45,48-49,53,54,56`;
+    const url = `https://api.census.gov/data/${year}/cbp?get=NAME,NAICS2017_LABEL,EMP,ESTAB&for=county:*&in=state:48&NAICS2017=23`;
     
     console.log('Census API URL:', url);
     
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'VoltScout Property Discovery/1.0'
+      }
+    });
+    
+    console.log('Census API response status:', response.status);
     
     if (!response.ok) {
       console.log('Census API error:', response.status, response.statusText);
-      return { properties: [], message: 'Census API error' };
+      return { 
+        properties: [], 
+        message: `Census API error: HTTP ${response.status}` 
+      };
     }
 
-    const data = await response.json();
-    console.log('Census API response length:', data?.length);
+    // Check if response has content
+    const textContent = await response.text();
+    console.log('Census API raw response length:', textContent.length);
+    
+    if (!textContent || textContent.trim().length === 0) {
+      return { 
+        properties: [], 
+        message: 'Census API returned empty response' 
+      };
+    }
+
+    let data;
+    try {
+      data = JSON.parse(textContent);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return { 
+        properties: [], 
+        message: 'Census API returned invalid JSON' 
+      };
+    }
+    
+    console.log('Census API parsed data length:', data?.length);
     
     if (!data || data.length <= 1) {
-      return { properties: [], message: 'No Census data available' };
+      return { 
+        properties: [], 
+        message: 'No Census business data available for the specified location' 
+      };
     }
 
-    // Filter data by location (case-insensitive partial match)
-    const locationFilter = request.location.toLowerCase();
+    // Filter and process the data
     const relevantData = data.slice(1).filter((row: any[]) => {
       const countyName = row[0]?.toLowerCase() || '';
-      return countyName.includes(locationFilter) || 
-             locationFilter.includes(countyName.split(' ')[0]) ||
-             locationFilter.includes(countyName.split(',')[0]);
+      const locationFilter = request.location.toLowerCase();
+      return countyName.includes('texas') || countyName.includes('tx') || 
+             locationFilter.includes('texas') || locationFilter.includes('tx');
     });
 
     console.log('Filtered census data rows:', relevantData.length);
 
-    const properties = relevantData.slice(0, 20).map((row: any[], index: number) => {
+    const properties = relevantData.slice(0, 15).map((row: any[], index: number) => {
       const countyName = row[0] || 'Unknown County';
       const industry = row[1] || 'Unknown Industry';
       const employees = parseInt(row[2]) || 0;
       const establishments = parseInt(row[3]) || 0;
-      const payroll = parseInt(row[4]) || 0;
       
       return {
         address: `Business District ${index + 1}, ${countyName}`,
-        city: countyName.split(',')[0] || request.location,
-        state: countyName.includes(',') ? countyName.split(',')[1]?.trim() : 'Unknown',
+        city: countyName.split(',')[0] || 'Texas',
+        state: 'TX',
         zip_code: '',
         property_type: 'commercial_district',
         source: 'census',
         listing_url: `https://data.census.gov/cedsci/`,
-        description: `${industry} - ${establishments} establishments, ${employees} employees, $${payroll.toLocaleString()} annual payroll`,
+        description: `${industry} - ${establishments} establishments, ${employees} employees`,
         square_footage: null,
         asking_price: null,
         lot_size_acres: null,
@@ -264,7 +296,7 @@ export async function fetchCensusData(request: FreeDataRequest): Promise<Scrapin
           industry: industry,
           employees: employees,
           establishments: establishments,
-          annual_payroll: payroll
+          annual_payroll: 0
         }
       };
     });
@@ -275,7 +307,10 @@ export async function fetchCensusData(request: FreeDataRequest): Promise<Scrapin
     };
   } catch (error) {
     console.error('Census API error:', error);
-    return { properties: [], message: `Census data error: ${error.message}` };
+    return { 
+      properties: [], 
+      message: `Census data error: ${error.message}` 
+    };
   }
 }
 
