@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,7 @@ import {
   Info,
   AlertTriangle
 } from 'lucide-react';
+import { useGoogleMapsConfig } from '@/hooks/useGoogleMapsConfig';
 
 interface DiscoveredSubstation {
   id: string;
@@ -51,6 +51,8 @@ export function SubstationDetailsModal({
   isOpen,
   onClose
 }: SubstationDetailsModalProps) {
+  const { apiKey, loading: configLoading, error: configError } = useGoogleMapsConfig();
+
   if (!substation) return null;
 
   const handleViewOnExternalMap = () => {
@@ -64,6 +66,54 @@ export function SubstationDetailsModal({
       case 'failed': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Generate Google Maps embed URL with API key
+  const getGoogleMapsEmbedUrl = () => {
+    if (!apiKey) return null;
+    const lat = substation.latitude;
+    const lng = substation.longitude;
+    return `https://www.google.com/maps/embed/v1/view?key=${apiKey}&center=${lat},${lng}&zoom=16&maptype=satellite`;
+  };
+
+  const renderMap = () => {
+    if (configLoading) {
+      return (
+        <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <div className="w-8 h-8 mx-auto mb-2 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm text-gray-600">Loading map...</p>
+        </div>
+      );
+    }
+
+    if (configError || !apiKey) {
+      return (
+        <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <p className="text-sm text-gray-600 mb-2">
+            Map requires Google Maps API key
+          </p>
+          <p className="text-xs text-gray-500">
+            Click "View on Google Maps" above to see location
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-gray-100 border rounded-lg overflow-hidden">
+        <iframe
+          width="100%"
+          height="250"
+          style={{ border: 0 }}
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+          src={getGoogleMapsEmbedUrl()!}
+          title={`Map showing ${substation.name}`}
+        />
+      </div>
+    );
   };
 
   return (
@@ -115,16 +165,8 @@ export function SubstationDetailsModal({
               </Button>
             </div>
 
-            {/* Map Placeholder */}
-            <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm text-gray-600 mb-2">
-                Map requires Google Maps API key
-              </p>
-              <p className="text-xs text-gray-500">
-                Click "View on Google Maps" above to see location
-              </p>
-            </div>
+            {/* Embedded Google Map */}
+            {renderMap()}
           </div>
 
           {/* Technical Details */}
