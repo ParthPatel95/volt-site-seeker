@@ -139,7 +139,7 @@ export function UnifiedSubstationFinder() {
         body: { 
           location: location.trim(),
           searchRadius: 100000,
-          maxResults: 100
+          maxResults: 0 // 0 means no limit
         }
       });
 
@@ -194,7 +194,7 @@ export function UnifiedSubstationFinder() {
         body: { 
           location: `${selectedSection.center.lat},${selectedSection.center.lng}`,
           searchRadius: 70000,
-          maxResults: 200
+          maxResults: 0 // 0 means no limit
         }
       });
 

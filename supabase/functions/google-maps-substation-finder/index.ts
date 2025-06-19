@@ -11,7 +11,7 @@ const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
 interface SubstationSearchRequest {
   location: string
   searchRadius?: number
-  maxResults?: number
+  maxResults?: number // 0 means no limit
 }
 
 interface DiscoveredSubstation {
@@ -35,9 +35,9 @@ serve(async (req) => {
       throw new Error('Google Maps API key not configured')
     }
 
-    const { location, searchRadius = 100000, maxResults = 100 }: SubstationSearchRequest = await req.json()
+    const { location, searchRadius = 100000, maxResults = 0 }: SubstationSearchRequest = await req.json()
 
-    console.log('Searching for substations in:', location)
+    console.log('Searching for substations in:', location, 'with max results:', maxResults === 0 ? 'unlimited' : maxResults)
 
     // First, geocode the location to get coordinates
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_MAPS_API_KEY}`
@@ -98,9 +98,9 @@ serve(async (req) => {
           }
         }
 
-        // Check for more results using pagination token
+        // Check for more results using pagination token - continue until no more pages or max reached
         let nextPageToken = textData.next_page_token
-        while (nextPageToken && substations.length < maxResults) {
+        while (nextPageToken && (maxResults === 0 || substations.length < maxResults)) {
           await new Promise(resolve => setTimeout(resolve, 2000)) // Required delay for next_page_token
           
           const nextPageUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextPageToken}&key=${GOOGLE_MAPS_API_KEY}`
@@ -120,15 +120,30 @@ serve(async (req) => {
                   rating: place.rating,
                   types: place.types || []
                 })
+                
+                // Break if we've reached the max results limit (if specified)
+                if (maxResults > 0 && substations.length >= maxResults) {
+                  break
+                }
               }
             }
           }
           
           nextPageToken = nextData.next_page_token
+          
+          // Break if we've reached the max results limit (if specified)
+          if (maxResults > 0 && substations.length >= maxResults) {
+            break
+          }
         }
 
         // Add delay to respect API rate limits
         await new Promise(resolve => setTimeout(resolve, 200))
+        
+        // Break if we've reached the max results limit (if specified)
+        if (maxResults > 0 && substations.length >= maxResults) {
+          break
+        }
         
       } catch (error) {
         console.error(`Error searching for "${searchTerm}":`, error)
@@ -188,11 +203,14 @@ serve(async (req) => {
         return 0
       })
 
-    // Get additional details for the most relevant substations
+    // Apply final limit if specified, otherwise return all
+    const finalResults = maxResults > 0 ? uniqueSubstations.slice(0, maxResults) : uniqueSubstations
+
+    // Get additional details for substations
     const detailedSubstations = []
-    for (let i = 0; i < Math.min(uniqueSubstations.length, maxResults); i++) {
+    for (let i = 0; i < finalResults.length; i++) {
       try {
-        const substation = uniqueSubstations[i]
+        const substation = finalResults[i]
         const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${substation.place_id}&fields=name,formatted_address,geometry,rating,types,vicinity&key=${GOOGLE_MAPS_API_KEY}`
         
         const detailsResponse = await fetch(detailsUrl)
@@ -213,12 +231,12 @@ serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 100))
         
       } catch (error) {
-        console.error(`Error getting details for ${uniqueSubstations[i].name}:`, error)
-        detailedSubstations.push(uniqueSubstations[i])
+        console.error(`Error getting details for ${finalResults[i].name}:`, error)
+        detailedSubstations.push(finalResults[i])
       }
     }
 
-    console.log(`Found ${detailedSubstations.length} substations in ${location}`)
+    console.log(`Found ${detailedSubstations.length} substations in ${location} ${maxResults === 0 ? '(unlimited)' : `(limit: ${maxResults})`}`)
 
     return new Response(
       JSON.stringify({ 
@@ -228,7 +246,8 @@ serve(async (req) => {
           name: location,
           coordinates: { lat, lng }
         },
-        totalFound: detailedSubstations.length
+        totalFound: detailedSubstations.length,
+        limitApplied: maxResults > 0 ? maxResults : null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
