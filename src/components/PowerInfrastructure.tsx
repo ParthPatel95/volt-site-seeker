@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
@@ -7,7 +6,6 @@ import { PowerOverviewCards } from './power/PowerOverviewCards';
 import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
 import { UltimatePowerInfrastructureFinder } from './power/UltimatePowerInfrastructureFinder';
 import { EIADataPanel } from './power/EIADataPanel';
-import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
 import { ERCOTDashboard } from './power/ERCOTDashboard';
 import { FERCDashboard } from './power/FERCDashboard';
 import { USGSDashboard } from './power/USGSDashboard';
@@ -95,12 +93,12 @@ export function PowerInfrastructure() {
             )}
           </TabsContent>
 
-          <TabsContent value="capacity-estimator">
-            <EnhancedCapacityEstimator />
-          </TabsContent>
-
           <TabsContent value="ultimate-finder">
             <UltimatePowerInfrastructureFinder />
+          </TabsContent>
+
+          <TabsContent value="capacity-estimator">
+            <EnhancedCapacityEstimator />
           </TabsContent>
 
           <TabsContent value="ercot-live">
@@ -117,10 +115,6 @@ export function PowerInfrastructure() {
 
           <TabsContent value="environmental">
             <EnvironmentalDashboard />
-          </TabsContent>
-
-          <TabsContent value="mapbox-explorer">
-            <MapboxPowerInfrastructure />
           </TabsContent>
 
           <TabsContent value="eia-data">
