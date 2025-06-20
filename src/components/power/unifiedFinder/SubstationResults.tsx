@@ -55,13 +55,14 @@ export function SubstationResults({
   analyzing = false
 }: SubstationResultsProps) {
   const [selectedStoredIds, setSelectedStoredIds] = useState<string[]>([]);
+  const [selectedDiscoveredIds, setSelectedDiscoveredIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   const discoveredFilters = useSubstationFilters(discoveredSubstations);
   const storedFilters = useSubstationFilters(storedSubstations);
 
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAllStored = (checked: boolean) => {
     if (checked) {
       setSelectedStoredIds(storedFilters.filteredSubstations.map(s => s.id));
     } else {
@@ -69,7 +70,15 @@ export function SubstationResults({
     }
   };
 
-  const handleSelectSubstation = (substationId: string, checked: boolean) => {
+  const handleSelectAllDiscovered = (checked: boolean) => {
+    if (checked) {
+      setSelectedDiscoveredIds(discoveredFilters.filteredSubstations.map(s => s.id));
+    } else {
+      setSelectedDiscoveredIds([]);
+    }
+  };
+
+  const handleSelectStoredSubstation = (substationId: string, checked: boolean) => {
     if (checked) {
       setSelectedStoredIds(prev => [...prev, substationId]);
     } else {
@@ -77,7 +86,15 @@ export function SubstationResults({
     }
   };
 
-  const deleteSelectedSubstations = async () => {
+  const handleSelectDiscoveredSubstation = (substationId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedDiscoveredIds(prev => [...prev, substationId]);
+    } else {
+      setSelectedDiscoveredIds(prev => prev.filter(id => id !== substationId));
+    }
+  };
+
+  const deleteSelectedStoredSubstations = async () => {
     if (selectedStoredIds.length === 0) return;
     
     setDeleting(true);
@@ -137,6 +154,26 @@ export function SubstationResults({
     }
   };
 
+  const clearSelectedDiscovered = () => {
+    // For discovered substations, we just clear them from the current results
+    const remainingDiscovered = discoveredSubstations.filter(s => !selectedDiscoveredIds.includes(s.id));
+    setSelectedDiscoveredIds([]);
+    
+    toast({
+      title: "Results Cleared",
+      description: `Removed ${selectedDiscoveredIds.length} substations from current search results`,
+    });
+  };
+
+  const clearAllDiscovered = () => {
+    setSelectedDiscoveredIds([]);
+    
+    toast({
+      title: "All Results Cleared",
+      description: "Cleared all current search results",
+    });
+  };
+
   return (
     <Tabs defaultValue="current" className="space-y-4">
       <TabsList className="grid w-full grid-cols-2">
@@ -151,25 +188,65 @@ export function SubstationResults({
       <TabsContent value="current" className="space-y-4">
         {discoveredSubstations.length > 0 && (
           <>
-            <SubstationFilters
-              searchTerm={discoveredFilters.searchTerm}
-              setSearchTerm={discoveredFilters.setSearchTerm}
-              statusFilter={discoveredFilters.statusFilter}
-              setStatusFilter={discoveredFilters.setStatusFilter}
-              capacityFilter={discoveredFilters.capacityFilter}
-              setCapacityFilter={discoveredFilters.setCapacityFilter}
-              locationFilter={discoveredFilters.locationFilter}
-              setLocationFilter={discoveredFilters.setLocationFilter}
-              onClearFilters={discoveredFilters.clearFilters}
-              totalResults={discoveredSubstations.length}
-              filteredResults={discoveredFilters.filteredSubstations.length}
-            />
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+              <SubstationFilters
+                searchTerm={discoveredFilters.searchTerm}
+                setSearchTerm={discoveredFilters.setSearchTerm}
+                statusFilter={discoveredFilters.statusFilter}
+                setStatusFilter={discoveredFilters.setStatusFilter}
+                capacityFilter={discoveredFilters.capacityFilter}
+                setCapacityFilter={discoveredFilters.setCapacityFilter}
+                locationFilter={discoveredFilters.locationFilter}
+                setLocationFilter={discoveredFilters.setLocationFilter}
+                onClearFilters={discoveredFilters.clearFilters}
+                totalResults={discoveredSubstations.length}
+                filteredResults={discoveredFilters.filteredSubstations.length}
+              />
+              
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="select-all-discovered"
+                    checked={selectedDiscoveredIds.length === discoveredFilters.filteredSubstations.length && discoveredFilters.filteredSubstations.length > 0}
+                    onCheckedChange={handleSelectAllDiscovered}
+                  />
+                  <label htmlFor="select-all-discovered" className="text-sm font-medium">
+                    Select All ({discoveredFilters.filteredSubstations.length})
+                  </label>
+                </div>
+                
+                {selectedDiscoveredIds.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearSelectedDiscovered}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear Selected ({selectedDiscoveredIds.length})
+                  </Button>
+                )}
+
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearAllDiscovered}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear All Results
+                </Button>
+              </div>
+            </div>
 
             <SubstationTable
               substations={discoveredFilters.filteredSubstations}
               onViewOnMap={onViewOnMap}
               onAnalyzeSubstation={onAnalyzeSubstation}
               analyzing={analyzing}
+              showCheckboxes={true}
+              selectedIds={selectedDiscoveredIds}
+              onSelectionChange={handleSelectDiscoveredSubstation}
             />
           </>
         )}
@@ -197,7 +274,7 @@ export function SubstationResults({
                 <Checkbox
                   id="select-all"
                   checked={selectedStoredIds.length === storedFilters.filteredSubstations.length && storedFilters.filteredSubstations.length > 0}
-                  onCheckedChange={handleSelectAll}
+                  onCheckedChange={handleSelectAllStored}
                 />
                 <label htmlFor="select-all" className="text-sm font-medium">
                   Select All ({storedFilters.filteredSubstations.length})
@@ -222,7 +299,7 @@ export function SubstationResults({
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={deleteSelectedSubstations}
+                        onClick={deleteSelectedStoredSubstations}
                         className="bg-red-600 hover:bg-red-700"
                       >
                         Delete
@@ -266,7 +343,7 @@ export function SubstationResults({
           onViewOnMap={onViewOnMap}
           showCheckboxes={true}
           selectedIds={selectedStoredIds}
-          onSelectionChange={handleSelectSubstation}
+          onSelectionChange={handleSelectStoredSubstation}
           onAnalyzeSubstation={onAnalyzeSubstation}
           analyzing={analyzing}
         />
