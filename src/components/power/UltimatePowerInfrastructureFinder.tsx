@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { SubstationDetailsModal } from './SubstationDetailsModal';
+import { useCapacityEstimator } from '@/hooks/useCapacityEstimator';
 import { 
   Search, 
   Satellite, 
@@ -25,7 +27,10 @@ import {
   Merge,
   RefreshCw,
   DollarSign,
-  Calculator
+  Calculator,
+  Trash2,
+  Loader2,
+  Activity
 } from 'lucide-react';
 
 interface FinderResult {
@@ -71,6 +76,11 @@ interface StoredSubstation {
   status: string;
   coordinates_source: string;
   created_at: string;
+  updated_at: string;
+  commissioning_date?: string;
+  upgrade_potential?: number;
+  interconnection_type: string;
+  load_factor: number;
 }
 
 const TEXAS_CITIES = [
@@ -100,10 +110,14 @@ export function UltimatePowerInfrastructureFinder() {
   const [searching, setSearching] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState('');
-  const [results, setResults] = useState<FinderResult[]>([]);
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null);
   const [storedSubstations, setStoredSubstations] = useState<StoredSubstation[]>([]);
   const [loadingStored, setLoadingStored] = useState(true);
+  const [selectedSubstation, setSelectedSubstation] = useState<StoredSubstation | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [analyzingSubstation, setAnalyzingSubstation] = useState<string | null>(null);
+  const [deletingSubstation, setDeletingSubstation] = useState<string | null>(null);
+  const { estimateCapacity, loading: capacityLoading } = useCapacityEstimator();
   const { toast } = useToast();
 
   // Default power requirement for large industrial clients (50 MW)
@@ -126,7 +140,6 @@ export function UltimatePowerInfrastructureFinder() {
       const { data, error } = await supabase
         .from('substations')
         .select('*')
-        .eq('coordinates_source', 'ultimate_finder')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -213,7 +226,6 @@ export function UltimatePowerInfrastructureFinder() {
   const executeUltimateSearch = async () => {
     setSearching(true);
     setProgress(0);
-    setResults([]);
     setSearchStats(null);
 
     try {
@@ -287,7 +299,7 @@ export function UltimatePowerInfrastructureFinder() {
       setProgress(80);
 
       // Phase 5: Data Validation & Rate Estimation (100% progress)
-      setCurrentPhase('Phase 5: Data Validation & Rate Estimation');
+      setCurrentPhase('Phase 5: Data Validation & Storage');
       
       const consolidatedResults = await consolidateAllSources(
         regulatoryData,
@@ -304,14 +316,19 @@ export function UltimatePowerInfrastructureFinder() {
         })
       );
 
-      setResults(resultsWithRates);
+      // Auto-store all new substations found
+      await storeNewSubstations(resultsWithRates);
+
       setSearchStats(consolidatedResults.stats);
       setProgress(100);
+
+      // Reload stored substations to show the new ones
+      await loadStoredSubstations();
 
       const searchArea = selectedCity !== 'All Cities' ? `${selectedCity}, ${searchRegion}` : `entire ${searchRegion} region`;
       toast({
         title: "Ultimate Search Complete!",
-        description: `Found ${resultsWithRates.length} substations with rate estimations in ${searchArea}`,
+        description: `Found and stored ${resultsWithRates.length} substations with rate estimations in ${searchArea}`,
       });
 
     } catch (error: any) {
@@ -324,6 +341,50 @@ export function UltimatePowerInfrastructureFinder() {
     } finally {
       setSearching(false);
       setCurrentPhase('');
+    }
+  };
+
+  const storeNewSubstations = async (results: FinderResult[]) => {
+    const newSubstations = [];
+    
+    for (const result of results) {
+      // Check if substation already exists
+      const { data: existing } = await supabase
+        .from('substations')
+        .select('id')
+        .eq('latitude', result.coordinates.lat)
+        .eq('longitude', result.coordinates.lng)
+        .single();
+
+      if (!existing) {
+        newSubstations.push({
+          name: result.name,
+          latitude: result.coordinates.lat,
+          longitude: result.coordinates.lng,
+          capacity_mva: parseInt(result.capacity_estimate.split(' ')[0]) || 100,
+          voltage_level: result.voltage_level,
+          utility_owner: result.utility_owner || 'Unknown',
+          city: selectedCity !== 'All Cities' ? selectedCity : (searchRegion === 'texas' ? 'Texas' : 'Alberta'),
+          state: searchRegion === 'texas' ? 'TX' : 'AB',
+          coordinates_source: result.source.toLowerCase().replace(/\s+/g, '_'),
+          status: 'active',
+          interconnection_type: 'transmission',
+          load_factor: 0.75
+        });
+      }
+    }
+
+    if (newSubstations.length > 0) {
+      const { error } = await supabase
+        .from('substations')
+        .insert(newSubstations);
+
+      if (error) {
+        console.error('Error storing substations:', error);
+        throw error;
+      }
+
+      console.log(`Stored ${newSubstations.length} new substations`);
     }
   };
 
@@ -406,54 +467,93 @@ export function UltimatePowerInfrastructureFinder() {
     return { results: allResults, stats };
   };
 
-  const validateResult = async (result: FinderResult, status: 'confirmed' | 'rejected') => {
-    try {
-      if (status === 'confirmed') {
-        // Store confirmed result in database
-        const { error } = await supabase
-          .from('substations')
-          .insert({
-            name: result.name,
-            latitude: result.coordinates.lat,
-            longitude: result.coordinates.lng,
-            capacity_mva: parseInt(result.capacity_estimate.split(' ')[0]) || 100,
-            voltage_level: result.voltage_level,
-            utility_owner: result.utility_owner || 'Unknown',
-            city: selectedCity !== 'All Cities' ? selectedCity : (searchRegion === 'texas' ? 'Texas' : 'Alberta'),
-            state: searchRegion === 'texas' ? 'TX' : 'AB',
-            coordinates_source: 'ultimate_finder',
-            status: 'active',
-            interconnection_type: 'transmission',
-            load_factor: 0.75
-          });
+  const handleSubstationClick = (substation: StoredSubstation) => {
+    setSelectedSubstation(substation);
+    setIsDetailsModalOpen(true);
+  };
 
-        if (error) throw error;
-
-        // Reload stored substations
-        await loadStoredSubstations();
-      }
-
-      // Update local state
-      setResults(prev => 
-        prev.map(r => 
-          r.id === result.id 
-            ? { ...r, validation_status: status }
-            : r
-        )
-      );
-
+  const handleAnalyzeSubstation = async (substation: StoredSubstation) => {
+    if (!substation.latitude || !substation.longitude) {
       toast({
-        title: status === 'confirmed' ? "Result Confirmed" : "Result Rejected",
-        description: status === 'confirmed' ? "Substation added to database" : "Result marked as invalid",
-      });
-
-    } catch (error: any) {
-      console.error('Validation error:', error);
-      toast({
-        title: "Validation Error",
-        description: error.message || "Failed to validate result",
+        title: "Analysis Error",
+        description: "Cannot analyze substation without coordinates",
         variant: "destructive"
       });
+      return;
+    }
+
+    setAnalyzingSubstation(substation.id);
+    
+    try {
+      await estimateCapacity({
+        latitude: substation.latitude,
+        longitude: substation.longitude,
+        manualOverride: {
+          transformers: 3,
+          capacity: substation.capacity_mva,
+          substationType: 'transmission',
+          utilityContext: {
+            company: substation.utility_owner,
+            voltage: substation.voltage_level,
+            name: substation.name,
+            notes: `Load factor: ${substation.load_factor}%, Status: ${substation.status}`
+          }
+        }
+      });
+
+      toast({
+        title: "Analysis Complete",
+        description: `Capacity estimation completed for ${substation.name}`,
+      });
+    } catch (error: any) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "Analysis Error",
+        description: error.message || "Failed to analyze substation",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzingSubstation(null);
+    }
+  };
+
+  const handleDeleteSubstation = async (substation: StoredSubstation) => {
+    if (!confirm(`Are you sure you want to delete ${substation.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingSubstation(substation.id);
+    
+    try {
+      const { error } = await supabase
+        .from('substations')
+        .delete()
+        .eq('id', substation.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Substation Deleted",
+        description: `${substation.name} has been removed`,
+      });
+
+      // Reload the list
+      await loadStoredSubstations();
+      
+      // Close modal if this substation was selected
+      if (selectedSubstation?.id === substation.id) {
+        setIsDetailsModalOpen(false);
+        setSelectedSubstation(null);
+      }
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Delete Error",
+        description: error.message || "Failed to delete substation",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingSubstation(null);
     }
   };
 
@@ -461,13 +561,6 @@ export function UltimatePowerInfrastructureFinder() {
     if (confidence >= 90) return 'bg-green-100 text-green-800 border-green-200';
     if (confidence >= 70) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     return 'bg-red-100 text-red-800 border-red-200';
-  };
-
-  const getSourceIcon = (source: string) => {
-    if (source.includes('Satellite')) return <Satellite className="w-4 h-4" />;
-    if (source.includes('Database')) return <Database className="w-4 h-4" />;
-    if (source.includes('Google')) return <Search className="w-4 h-4" />;
-    return <MapPin className="w-4 h-4" />;
   };
 
   const formatCurrency = (amount: number) => {
@@ -628,245 +721,127 @@ export function UltimatePowerInfrastructureFinder() {
         </Card>
       )}
 
-      {/* Results Tabs */}
-      <Tabs defaultValue="current" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="current">
-            Current Search ({results.length})
-          </TabsTrigger>
-          <TabsTrigger value="stored" className="flex items-center gap-2">
-            <Database className="w-4 h-4" />
-            Stored Substations ({storedSubstations.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="current">
-          {results.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Discovery Results with Rate Analysis ({results.length})
-                  {selectedCity !== 'All Cities' && (
-                    <Badge variant="outline" className="ml-2">
-                      {selectedCity}
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {results.map((result) => (
-                    <div key={result.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          {getSourceIcon(result.source)}
-                          <span className="font-medium">{result.name}</span>
-                          <Badge className={getConfidenceColor(result.confidence_score)}>
-                            {result.confidence_score}% confidence
-                          </Badge>
-                          <Badge variant="outline">{result.voltage_level}</Badge>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          {result.validation_status === 'pending' && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => validateResult(result, 'confirmed')}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Confirm
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => validateResult(result, 'rejected')}
-                              >
-                                <AlertTriangle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          {result.validation_status === 'confirmed' && (
-                            <Badge className="bg-green-100 text-green-800">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Confirmed
-                            </Badge>
-                          )}
-                          {result.validation_status === 'rejected' && (
-                            <Badge className="bg-red-100 text-red-800">
-                              <AlertTriangle className="w-3 h-3 mr-1" />
-                              Rejected
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-3">
-                        <div>
-                          <strong>Location:</strong> {result.coordinates.lat.toFixed(4)}, {result.coordinates.lng.toFixed(4)}
-                        </div>
-                        <div>
-                          <strong>Capacity:</strong> {result.capacity_estimate}
-                        </div>
-                        <div>
-                          <strong>Source:</strong> {result.source}
-                        </div>
-                      </div>
-
-                      {/* Rate Estimation Display */}
-                      {result.rate_estimation && (
-                        <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 mt-3">
-                          <div className="flex items-center gap-2 mb-3">
-                            <DollarSign className="w-4 h-4 text-blue-600" />
-                            <strong className="text-blue-800 dark:text-blue-200">Industrial Rate Estimation (50 MW)</strong>
-                            <Badge variant="outline" className="text-xs">
-                              {result.rate_estimation.rate_tier}
-                            </Badge>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <p className="text-muted-foreground">Energy Rate</p>
-                              <p className="font-bold text-lg">
-                                ${(result.rate_estimation.estimated_rate_per_kwh * 1000).toFixed(2)}/MWh
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Demand Charge</p>
-                              <p className="font-bold text-lg">
-                                ${result.rate_estimation.demand_charge_per_kw}/kW
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Monthly Cost</p>
-                              <p className="font-bold text-lg text-green-600">
-                                {formatCurrency(result.rate_estimation.monthly_cost_estimate)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Annual Cost</p>
-                              <p className="font-bold text-lg text-blue-600">
-                                {formatCurrency(result.rate_estimation.annual_cost_estimate)}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-2 text-xs text-muted-foreground">
-                            <strong>Market:</strong> {result.rate_estimation.utility_market} | 
-                            <strong> Consumption:</strong> {(defaultPowerRequirement * 24 * 30).toLocaleString()} MWh/month
-                          </div>
-                        </div>
-                      )}
-
-                      {result.infrastructure_features.length > 0 && (
-                        <div className="mt-3">
-                          <strong className="text-sm">Features:</strong>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {result.infrastructure_features.map((feature, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {feature}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+      {/* Stored Substations */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5" />
+              Substation Database ({storedSubstations.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadStoredSubstations}
+              disabled={loadingStored}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loadingStored ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingStored ? (
+            <div className="text-center py-8">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+              <p className="text-muted-foreground">Loading substations...</p>
+            </div>
+          ) : storedSubstations.length > 0 ? (
+            <div className="space-y-4">
+              {storedSubstations.map((substation) => (
+                <div key={substation.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <Database className="w-4 h-4 text-green-600" />
+                      <span className="font-medium">{substation.name}</span>
+                      <Badge className="bg-green-100 text-green-800">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Stored
+                      </Badge>
+                      <Badge variant="outline">{substation.voltage_level}</Badge>
                     </div>
-                  ))}
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSubstationClick(substation)}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Details
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAnalyzeSubstation(substation)}
+                        disabled={analyzingSubstation === substation.id || capacityLoading}
+                      >
+                        {analyzingSubstation === substation.id ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <Activity className="w-4 h-4 mr-1" />
+                        )}
+                        Analyze
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteSubstation(substation)}
+                        disabled={deletingSubstation === substation.id}
+                      >
+                        {deletingSubstation === substation.id ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 mr-1" />
+                        )}
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <strong>Location:</strong> {substation.latitude?.toFixed(4)}, {substation.longitude?.toFixed(4)}
+                    </div>
+                    <div>
+                      <strong>Capacity:</strong> {substation.capacity_mva} MVA
+                    </div>
+                    <div>
+                      <strong>Owner:</strong> {substation.utility_owner}
+                    </div>
+                    <div>
+                      <strong>Status:</strong> {substation.status}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    <strong>City:</strong> {substation.city}, {substation.state} | 
+                    <strong> Added:</strong> {new Date(substation.created_at).toLocaleDateString()}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Calculator className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-muted-foreground mb-2">No Search Results</h3>
-                <p className="text-muted-foreground">
-                  Execute an Ultimate Search to discover substations with rate analysis 
-                  {selectedCity !== 'All Cities' ? ` in ${selectedCity}` : ' across the entire region'}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-8">
+              <Database className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-muted-foreground mb-2">No Substations Found</h3>
+              <p className="text-muted-foreground">
+                Execute an Ultimate Search to discover and analyze substations
+              </p>
+            </div>
           )}
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="stored">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="w-5 h-5" />
-                  Stored Substations from Ultimate Finder
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={loadStoredSubstations}
-                  disabled={loadingStored}
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loadingStored ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingStored ? (
-                <div className="text-center py-8">
-                  <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-                  <p className="text-muted-foreground">Loading stored substations...</p>
-                </div>
-              ) : storedSubstations.length > 0 ? (
-                <div className="space-y-4">
-                  {storedSubstations.map((substation) => (
-                    <div key={substation.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Database className="w-4 h-4 text-green-600" />
-                          <span className="font-medium">{substation.name}</span>
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Stored
-                          </Badge>
-                          <Badge variant="outline">{substation.voltage_level}</Badge>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <strong>Location:</strong> {substation.latitude.toFixed(4)}, {substation.longitude.toFixed(4)}
-                        </div>
-                        <div>
-                          <strong>Capacity:</strong> {substation.capacity_mva} MVA
-                        </div>
-                        <div>
-                          <strong>Owner:</strong> {substation.utility_owner}
-                        </div>
-                        <div>
-                          <strong>Status:</strong> {substation.status}
-                        </div>
-                      </div>
-
-                      <div className="mt-3 text-xs text-muted-foreground">
-                        <strong>City:</strong> {substation.city}, {substation.state} | 
-                        <strong> Added:</strong> {new Date(substation.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Database className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-medium text-muted-foreground mb-2">No Stored Substations</h3>
-                  <p className="text-muted-foreground">
-                    Confirmed substations from Ultimate Finder searches will appear here
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Substation Details Modal */}
+      <SubstationDetailsModal
+        substation={selectedSubstation}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedSubstation(null);
+        }}
+      />
     </div>
   );
 }
