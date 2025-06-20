@@ -23,7 +23,7 @@ serve(async (req) => {
       throw new Error('Google Maps API key not configured')
     }
 
-    const { location, maxResults = 0, useImageAnalysis = true }: SubstationSearchRequest = await req.json()
+    const { location, maxResults = 0, useImageAnalysis = false }: SubstationSearchRequest = await req.json()
 
     console.log('Enhanced substation search in:', location, 'with ML analysis:', useImageAnalysis)
 
@@ -42,14 +42,18 @@ serve(async (req) => {
 
     const substations: DiscoveredSubstation[] = []
     
-    // Phase 1: Enhanced Google Maps Search
+    // Phase 1: Enhanced Google Maps Search (primary method)
     console.log('Phase 1: Enhanced Google Maps Search')
     await performEnhancedGoogleMapsSearch(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY)
+    console.log(`Phase 1 complete: Found ${substations.length} substations via Google Maps`)
     
-    // Phase 2: Grid-based Satellite Image Analysis
-    if (useImageAnalysis && OPENAI_API_KEY) {
+    // Phase 2: ML-powered Satellite Image Analysis (optional, disabled by default for speed)
+    if (useImageAnalysis && OPENAI_API_KEY && substations.length < 100) {
       console.log('Phase 2: ML-powered Satellite Image Analysis')
       await performMLImageAnalysis(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY, OPENAI_API_KEY)
+      console.log(`Phase 2 complete: Total substations now ${substations.length}`)
+    } else {
+      console.log('Phase 2: Skipped ML analysis (disabled or sufficient results found)')
     }
 
     // Phase 3: Cross-reference and validate findings
@@ -60,7 +64,7 @@ serve(async (req) => {
     const uniqueSubstations = removeDuplicatesAndSort(validatedSubstations)
     const finalResults = maxResults > 0 ? uniqueSubstations.slice(0, maxResults) : uniqueSubstations
 
-    console.log(`Found ${finalResults.length} verified substations with enhanced detection`)
+    console.log(`Search complete: Found ${finalResults.length} verified substations`)
 
     return new Response(
       JSON.stringify({ 
@@ -72,7 +76,13 @@ serve(async (req) => {
         },
         totalFound: finalResults.length,
         limitApplied: maxResults > 0 ? maxResults : null,
-        enhancedAnalysis: useImageAnalysis
+        enhancedAnalysis: useImageAnalysis,
+        searchStats: {
+          googleMapsResults: substations.filter(s => s.detection_method?.includes('google_maps')).length,
+          mlDetections: substations.filter(s => s.detection_method === 'ml_image_analysis').length,
+          afterValidation: validatedSubstations.length,
+          afterDeduplication: uniqueSubstations.length
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

@@ -1,113 +1,120 @@
 import { DiscoveredSubstation } from './types.ts'
 
 export function isActualSubstation(place: any): boolean {
+  if (!place || !place.name) return false
+  
   const name = place.name.toLowerCase()
   const types = place.types || []
   
-  // Must contain substation or specific electrical terms
-  const requiredKeywords = ['substation', 'electrical', 'transmission', 'distribution', 'switchyard', 'switching', 'transformer']
-  const hasRequiredKeyword = requiredKeywords.some(keyword => name.includes(keyword))
-  
-  if (!hasRequiredKeyword) {
-    return false
-  }
-  
-  // Additional electrical infrastructure keywords
-  const electricalKeywords = [
-    'kv', 'kilovolt', 'voltage', 'transformer', 'switching', 'grid', 
-    'utility', 'power', 'electric', 'energy', 'sce', 'pge', 'sdge',
-    'ercot', 'aeso', 'hydro', 'oncor', 'centerpoint', 'aep', 'duke'
+  // Enhanced validation - look for substation-related keywords
+  const substationKeywords = [
+    'substation', 'transmission', 'distribution', 'switching', 'transformer',
+    'electrical', 'power', 'utility', 'grid', 'voltage', 'electric',
+    'station', 'substtn', 'sub station', 'elec', 'kv', 'mva'
   ]
   
-  const hasElectricalContext = electricalKeywords.some(keyword => name.includes(keyword))
+  // Check if name contains substation keywords
+  const hasSubstationKeyword = substationKeywords.some(keyword => 
+    name.includes(keyword)
+  )
   
-  // Exclude obviously non-electrical facilities
+  // Check Google Places types
+  const relevantTypes = [
+    'establishment',
+    'point_of_interest',
+    'premise',
+    'subpremise'
+  ]
+  
+  const hasRelevantType = types.some((type: string) => 
+    relevantTypes.includes(type)
+  )
+  
+  // Exclude obvious non-substations
   const excludeKeywords = [
-    'restaurant', 'food', 'gas station', 'convenience', 'store', 'shop',
-    'hotel', 'motel', 'hospital', 'school', 'church', 'bank', 'pharmacy',
-    'park', 'recreation', 'museum', 'library', 'fire', 'police', 'city hall',
-    'post office', 'dmv', 'courthouse', 'mall', 'shopping', 'automotive',
-    'repair', 'service', 'car wash', 'laundry', 'dry clean', 'hair', 'nail',
-    'spa', 'gym', 'fitness', 'dental', 'medical', 'clinic', 'veterinary',
-    'pet', 'animal', 'bar', 'pub', 'brewery', 'winery', 'cafe', 'coffee',
-    'bakery', 'pizza', 'burger', 'taco', 'chinese', 'mexican', 'indian',
-    'thai', 'japanese', 'korean', 'italian', 'american', 'fast food'
+    'restaurant', 'hotel', 'store', 'shop', 'mall', 'school', 'hospital',
+    'church', 'park', 'gas station', 'bank', 'office', 'apartment',
+    'house', 'street', 'road', 'avenue', 'boulevard', 'drive'
   ]
   
-  const isExcluded = excludeKeywords.some(keyword => name.includes(keyword))
+  const isExcluded = excludeKeywords.some(keyword => 
+    name.includes(keyword)
+  )
   
-  // Check place types for utility-related categories
-  const utilityTypes = [
-    'establishment', 'point_of_interest', 'premise'
-  ]
-  
-  const hasUtilityType = types.some((type: string) => utilityTypes.includes(type))
-  
-  // Must have substation in name AND electrical context, not be excluded, and have appropriate type
-  return hasRequiredKeyword && (hasElectricalContext || name.includes('substation')) && !isExcluded && hasUtilityType
-}
-
-export function removeDuplicatesAndSort(substations: DiscoveredSubstation[]): DiscoveredSubstation[] {
-  // Remove duplicates based on proximity (within ~100m)
-  const unique = []
-  
-  for (const substation of substations) {
-    const isDuplicate = unique.find(u => 
-      Math.abs(u.latitude - substation.latitude) < 0.001 &&
-      Math.abs(u.longitude - substation.longitude) < 0.001
-    )
-    
-    if (!isDuplicate) {
-      unique.push(substation)
-    } else {
-      // Keep the higher confidence detection
-      const existingIndex = unique.findIndex(u => 
-        Math.abs(u.latitude - substation.latitude) < 0.001 &&
-        Math.abs(u.longitude - substation.longitude) < 0.001
-      )
-      if ((substation.confidence_score || 0) > (unique[existingIndex].confidence_score || 0)) {
-        unique[existingIndex] = substation
-      }
-    }
-  }
-  
-  // Sort by confidence score (highest first)
-  return unique.sort((a, b) => (b.confidence_score || 0) - (a.confidence_score || 0))
+  // More lenient validation - if it has substation keywords and isn't obviously excluded
+  return hasSubstationKeyword && !isExcluded && hasRelevantType
 }
 
 export async function validateSubstations(substations: DiscoveredSubstation[]): Promise<DiscoveredSubstation[]> {
-  // Cross-validate findings between different detection methods
-  const validated = []
+  console.log(`Validating ${substations.length} discovered substations`)
   
-  for (const substation of substations) {
-    let validationScore = substation.confidence_score || 50
+  // Enhanced validation with additional checks
+  const validated = substations.filter(substation => {
+    const name = substation.name.toLowerCase()
     
-    // Boost confidence if multiple methods detect nearby substations
-    const nearbyDetections = substations.filter(s => 
-      s.id !== substation.id &&
-      Math.abs(s.latitude - substation.latitude) < 0.01 &&
-      Math.abs(s.longitude - substation.longitude) < 0.01
+    // Additional name-based validation
+    const strongIndicators = [
+      'substation', 'transmission', 'distribution', 'switching station',
+      'transformer station', 'electrical substation', 'power substation'
+    ]
+    
+    const hasStrongIndicator = strongIndicators.some(indicator => 
+      name.includes(indicator)
     )
     
-    if (nearbyDetections.length > 0) {
-      validationScore += 20
+    // If it has strong indicators, keep it
+    if (hasStrongIndicator) {
+      substation.confidence_score = Math.max(substation.confidence_score || 0, 90)
+      return true
     }
     
-    // Boost confidence for ML detections with high image analysis scores
-    if (substation.detection_method === 'ml_image_analysis' && substation.image_analysis) {
-      if (substation.image_analysis.has_transformers) validationScore += 15
-      if (substation.image_analysis.has_transmission_lines) validationScore += 10
-      if (substation.image_analysis.has_switching_equipment) validationScore += 10
+    // For ML detections, keep if confidence is reasonable
+    if (substation.detection_method === 'ml_image_analysis') {
+      return (substation.confidence_score || 0) > 60
     }
     
-    // Only include high-confidence detections
-    if (validationScore >= 60) {
-      validated.push({
-        ...substation,
-        confidence_score: Math.min(validationScore, 100)
-      })
-    }
-  }
+    // For Google Maps results, be more lenient
+    return (substation.confidence_score || 0) > 50
+  })
   
+  console.log(`Validation complete: ${validated.length}/${substations.length} substations passed validation`)
   return validated
+}
+
+export function removeDuplicatesAndSort(substations: DiscoveredSubstation[]): DiscoveredSubstation[] {
+  console.log(`Removing duplicates from ${substations.length} substations`)
+  
+  const uniqueSubstations = new Map<string, DiscoveredSubstation>()
+  
+  substations.forEach(substation => {
+    // Create a key based on location (within ~100m) and name similarity
+    const latKey = Math.round(substation.latitude * 1000) // ~100m precision
+    const lngKey = Math.round(substation.longitude * 1000)
+    const locationKey = `${latKey}_${lngKey}`
+    
+    const existing = uniqueSubstations.get(locationKey)
+    
+    if (!existing) {
+      uniqueSubstations.set(locationKey, substation)
+    } else {
+      // Keep the one with higher confidence or better detection method
+      const currentScore = substation.confidence_score || 0
+      const existingScore = existing.confidence_score || 0
+      
+      if (currentScore > existingScore || 
+          (currentScore === existingScore && substation.detection_method === 'google_maps_enhanced')) {
+        uniqueSubstations.set(locationKey, substation)
+      }
+    }
+  })
+  
+  const uniqueArray = Array.from(uniqueSubstations.values())
+  
+  // Sort by confidence score descending
+  const sorted = uniqueArray.sort((a, b) => 
+    (b.confidence_score || 0) - (a.confidence_score || 0)
+  )
+  
+  console.log(`Deduplication complete: ${sorted.length} unique substations (removed ${substations.length - sorted.length} duplicates)`)
+  return sorted
 }
