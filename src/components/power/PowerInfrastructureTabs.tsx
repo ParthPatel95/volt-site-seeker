@@ -11,8 +11,8 @@ export function PowerInfrastructureTabs() {
         <TabsTrigger value="capacity-estimator" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           Capacity AI
         </TabsTrigger>
-        <TabsTrigger value="comprehensive-finder" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
-          Complete Finder
+        <TabsTrigger value="ultimate-finder" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
+          Ultimate Finder
         </TabsTrigger>
         <TabsTrigger value="ercot-live" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           ERCOT Live
