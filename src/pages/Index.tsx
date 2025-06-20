@@ -49,7 +49,7 @@ export default function Index() {
           ? 'ml-0' 
           : isCollapsed 
             ? 'ml-16' 
-            : 'ml-60'
+            : 'ml-72'
       }`}>
         {/* Mobile Header */}
         {isMobile && (

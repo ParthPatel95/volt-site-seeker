@@ -58,11 +58,11 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen,
       <div className={`flex items-center gap-3 p-4 border-b ${isCollapsed && !isMobile ? 'justify-center' : ''}`}>
         <EnhancedLogo className={isCollapsed && !isMobile ? 'w-8 h-8' : 'w-10 h-10'} />
         {(!isCollapsed || isMobile) && (
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
               VoltScout
             </h1>
-            <p className="text-xs text-muted-foreground">Power Intelligence Platform</p>
+            <p className="text-xs text-muted-foreground truncate">Power Intelligence Platform</p>
           </div>
         )}
       </div>
@@ -78,15 +78,16 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen,
                 variant={isActive ? "secondary" : "ghost"}
                 className={`w-full justify-start gap-3 ${
                   isCollapsed && !isMobile ? 'px-2' : 'px-3'
-                } ${isActive ? 'bg-secondary/80' : 'hover:bg-secondary/50'}`}
+                } ${isActive ? 'bg-secondary/80' : 'hover:bg-secondary/50'} min-h-[44px]`}
                 onClick={() => handleNavigation(item.path)}
+                title={isCollapsed && !isMobile ? item.label : undefined}
               >
                 <item.icon className={`${isCollapsed && !isMobile ? 'w-5 h-5' : 'w-4 h-4'} flex-shrink-0`} />
                 {(!isCollapsed || isMobile) && (
                   <>
-                    <span className="flex-1 text-left">{item.label}</span>
+                    <span className="flex-1 text-left truncate">{item.label}</span>
                     {item.badge && (
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5 flex-shrink-0">
                         {item.badge}
                       </Badge>
                     )}
@@ -107,7 +108,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen,
               variant="ghost"
               size="sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2"
+              className="p-2 flex-shrink-0"
             >
               {isCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
@@ -134,7 +135,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen,
   return (
     <aside 
       className={`fixed left-0 top-0 z-40 h-screen bg-background border-r transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-60'
+        isCollapsed ? 'w-16' : 'w-72'
       }`}
     >
       <SidebarContent />
