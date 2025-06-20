@@ -73,10 +73,30 @@ interface StoredSubstation {
   created_at: string;
 }
 
+const TEXAS_CITIES = [
+  'All Cities',
+  'Houston', 'San Antonio', 'Dallas', 'Austin', 'Fort Worth', 'El Paso',
+  'Arlington', 'Corpus Christi', 'Plano', 'Lubbock', 'Laredo', 'Irving',
+  'Garland', 'Frisco', 'McKinney', 'Grand Prairie', 'Amarillo', 'Mesquite',
+  'Killeen', 'Brownsville', 'Pasadena', 'McAllen', 'Carrollton', 'Beaumont',
+  'Abilene', 'Round Rock', 'Richardson', 'Waco', 'Denton', 'Midland',
+  'Odessa', 'Lewisville', 'Tyler', 'College Station', 'Pearland', 'Sugar Land'
+];
+
+const ALBERTA_CITIES = [
+  'All Cities',
+  'Calgary', 'Edmonton', 'Red Deer', 'Lethbridge', 'Medicine Hat',
+  'Grande Prairie', 'Airdrie', 'Spruce Grove', 'Okotoks', 'Lloydminster',
+  'Camrose', 'Brooks', 'Cold Lake', 'Wetaskiwin', 'Leduc', 'Fort Saskatchewan',
+  'Stony Plain', 'Cochrane', 'Lacombe', 'Taber', 'Whitecourt', 'High River',
+  'Hinton', 'Canmore', 'Sylvan Lake', 'Innisfail', 'Blackfalds', 'Didsbury',
+  'Olds', 'Slave Lake', 'Drayton Valley', 'Sundre', 'Athabasca'
+];
+
 export function UltimatePowerInfrastructureFinder() {
   const [searchRegion, setSearchRegion] = useState<'alberta' | 'texas'>('texas');
+  const [selectedCity, setSelectedCity] = useState('All Cities');
   const [centerCoordinates, setCenterCoordinates] = useState('');
-  const [powerRequirement, setPowerRequirement] = useState(50); // MW for large industrial
   const [searching, setSearching] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState('');
@@ -86,9 +106,17 @@ export function UltimatePowerInfrastructureFinder() {
   const [loadingStored, setLoadingStored] = useState(true);
   const { toast } = useToast();
 
+  // Default power requirement for large industrial clients (50 MW)
+  const defaultPowerRequirement = 50;
+
   useEffect(() => {
     loadStoredSubstations();
   }, []);
+
+  // Reset city selection when region changes
+  useEffect(() => {
+    setSelectedCity('All Cities');
+  }, [searchRegion]);
 
   const loadStoredSubstations = async () => {
     try {
@@ -125,8 +153,8 @@ export function UltimatePowerInfrastructureFinder() {
       const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
         body: {
           action: 'calculate_energy_costs',
-          monthly_consumption_mwh: powerRequirement * 24 * 30, // MW to MWh per month
-          peak_demand_mw: powerRequirement,
+          monthly_consumption_mwh: defaultPowerRequirement * 24 * 30, // MW to MWh per month
+          peak_demand_mw: defaultPowerRequirement,
           location: { state: searchRegion === 'texas' ? 'TX' : 'AB' },
           substation_info: {
             voltage_level: result.voltage_level,
@@ -151,9 +179,9 @@ export function UltimatePowerInfrastructureFinder() {
       }
 
       const estimatedRate = baseRate * rateMultiplier;
-      const monthlyEnergyConsumption = powerRequirement * 24 * 30; // MWh
+      const monthlyEnergyConsumption = defaultPowerRequirement * 24 * 30; // MWh
       const monthlyEnergyCost = monthlyEnergyConsumption * estimatedRate * 1000; // Convert to kWh
-      const monthlyDemandCost = powerRequirement * 1000 * demandCharge; // Convert MW to kW
+      const monthlyDemandCost = defaultPowerRequirement * 1000 * demandCharge; // Convert MW to kW
       const totalMonthlyCost = monthlyEnergyCost + monthlyDemandCost;
 
       return {
@@ -161,15 +189,15 @@ export function UltimatePowerInfrastructureFinder() {
         demand_charge_per_kw: demandCharge,
         monthly_cost_estimate: totalMonthlyCost,
         annual_cost_estimate: totalMonthlyCost * 12,
-        rate_tier: powerRequirement > 100 ? 'Ultra-Large Industrial' : 'Large Industrial',
+        rate_tier: defaultPowerRequirement > 100 ? 'Ultra-Large Industrial' : 'Large Industrial',
         utility_market: searchRegion === 'texas' ? 'ERCOT Competitive' : 'Alberta Regulated'
       };
     } catch (error) {
       console.error('Rate estimation error:', error);
       // Fallback estimation
       const fallbackRate = searchRegion === 'texas' ? 0.05 : 0.07;
-      const monthlyConsumption = powerRequirement * 24 * 30;
-      const monthlyCost = monthlyConsumption * fallbackRate * 1000 + (powerRequirement * 1000 * 15);
+      const monthlyConsumption = defaultPowerRequirement * 24 * 30;
+      const monthlyCost = monthlyConsumption * fallbackRate * 1000 + (defaultPowerRequirement * 1000 * 15);
       
       return {
         estimated_rate_per_kwh: fallbackRate,
@@ -189,7 +217,7 @@ export function UltimatePowerInfrastructureFinder() {
     setSearchStats(null);
 
     try {
-      console.log('Starting ultimate substation search for', searchRegion);
+      console.log('Starting ultimate substation search for', searchRegion, selectedCity !== 'All Cities' ? `in ${selectedCity}` : '');
       
       // Phase 1: Regulatory Data Integration (20% progress)
       setCurrentPhase('Phase 1: Regulatory Data Integration');
@@ -198,7 +226,8 @@ export function UltimatePowerInfrastructureFinder() {
       const { data: regulatoryData, error: regError } = await supabase.functions.invoke('regulatory-data-integration', {
         body: {
           action: searchRegion === 'alberta' ? 'fetch_aeso_data' : 'fetch_ercot_data',
-          region: searchRegion
+          region: searchRegion,
+          city: selectedCity !== 'All Cities' ? selectedCity : undefined
         }
       });
 
@@ -212,6 +241,7 @@ export function UltimatePowerInfrastructureFinder() {
         body: {
           action: 'ml_detection',
           region: searchRegion,
+          city: selectedCity !== 'All Cities' ? selectedCity : undefined,
           analysis_type: 'comprehensive',
           ml_models: ['substation_detector', 'transmission_line_detector', 'change_detector']
         }
@@ -223,10 +253,14 @@ export function UltimatePowerInfrastructureFinder() {
       // Phase 3: Google Maps Integration (60% progress)
       setCurrentPhase('Phase 3: Google Maps Integration');
       
+      const searchLocation = selectedCity !== 'All Cities' 
+        ? `${selectedCity}, ${searchRegion === 'texas' ? 'Texas, USA' : 'Alberta, Canada'}`
+        : searchRegion === 'texas' ? 'Texas, USA' : 'Alberta, Canada';
+      
       const { data: googleData, error: googleError } = await supabase.functions.invoke('google-maps-substation-finder', {
         body: {
           action: 'comprehensive_search',
-          location: searchRegion === 'texas' ? 'Texas, USA' : 'Alberta, Canada',
+          location: searchLocation,
           maxResults: 0,
           searchTerms: ['electrical substation', 'power substation', 'transmission substation', 'distribution substation']
         }
@@ -238,10 +272,16 @@ export function UltimatePowerInfrastructureFinder() {
       // Phase 4: Database Integration (80% progress)
       setCurrentPhase('Phase 4: Database Cross-Reference');
       
-      const { data: existingSubstations, error: dbError } = await supabase
+      let dbQuery = supabase
         .from('substations')
         .select('*')
         .eq('state', searchRegion === 'texas' ? 'TX' : 'AB');
+
+      if (selectedCity !== 'All Cities') {
+        dbQuery = dbQuery.eq('city', selectedCity);
+      }
+
+      const { data: existingSubstations, error: dbError } = await dbQuery;
 
       if (dbError) throw dbError;
       setProgress(80);
@@ -268,9 +308,10 @@ export function UltimatePowerInfrastructureFinder() {
       setSearchStats(consolidatedResults.stats);
       setProgress(100);
 
+      const searchArea = selectedCity !== 'All Cities' ? `${selectedCity}, ${searchRegion}` : `entire ${searchRegion} region`;
       toast({
         title: "Ultimate Search Complete!",
-        description: `Found ${resultsWithRates.length} substations with rate estimations across entire ${searchRegion} region`,
+        description: `Found ${resultsWithRates.length} substations with rate estimations in ${searchArea}`,
       });
 
     } catch (error: any) {
@@ -378,7 +419,7 @@ export function UltimatePowerInfrastructureFinder() {
             capacity_mva: parseInt(result.capacity_estimate.split(' ')[0]) || 100,
             voltage_level: result.voltage_level,
             utility_owner: result.utility_owner || 'Unknown',
-            city: searchRegion === 'texas' ? 'Texas' : 'Alberta',
+            city: selectedCity !== 'All Cities' ? selectedCity : (searchRegion === 'texas' ? 'Texas' : 'Alberta'),
             state: searchRegion === 'texas' ? 'TX' : 'AB',
             coordinates_source: 'ultimate_finder',
             status: 'active',
@@ -438,6 +479,10 @@ export function UltimatePowerInfrastructureFinder() {
     }).format(amount);
   };
 
+  const getCitiesForRegion = () => {
+    return searchRegion === 'texas' ? TEXAS_CITIES : ALBERTA_CITIES;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -453,7 +498,7 @@ export function UltimatePowerInfrastructureFinder() {
             </Badge>
           </CardTitle>
           <p className="text-muted-foreground text-lg">
-            Advanced AI-powered substation discovery with real-time industrial energy rate estimations for large-scale power requirements
+            Advanced AI-powered substation discovery with real-time industrial energy rate estimations for large-scale power requirements (50 MW)
           </p>
         </CardHeader>
       </Card>
@@ -481,16 +526,16 @@ export function UltimatePowerInfrastructureFinder() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Power Requirement (MW)</label>
-              <Input
-                type="number"
-                value={powerRequirement}
-                onChange={(e) => setPowerRequirement(Number(e.target.value))}
-                placeholder="50"
-                min="1"
-                max="1000"
-                className="p-3"
-              />
+              <label className="text-sm font-medium mb-2 block">City Filter (Optional)</label>
+              <select 
+                className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800"
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+              >
+                {getCitiesForRegion().map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -504,13 +549,30 @@ export function UltimatePowerInfrastructureFinder() {
             </div>
           </div>
 
+          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Industrial Rate Analysis Configuration
+              </span>
+            </div>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Rate estimations calculated for <strong>50 MW large industrial client</strong> with 24/7 operations
+              {selectedCity !== 'All Cities' && (
+                <span className="block mt-1">
+                  <strong>City Focus:</strong> {selectedCity}, {searchRegion === 'texas' ? 'Texas' : 'Alberta'}
+                </span>
+              )}
+            </p>
+          </div>
+
           <Button 
             onClick={executeUltimateSearch}
             disabled={searching}
             className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             <Shield className="w-5 h-5 mr-2" />
-            Execute Region-Wide Ultimate Search with Rate Analysis
+            Execute {selectedCity !== 'All Cities' ? `${selectedCity} ` : 'Region-Wide '}Ultimate Search with Rate Analysis
           </Button>
 
           {searching && (
@@ -532,6 +594,11 @@ export function UltimatePowerInfrastructureFinder() {
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Search Results Overview
+              {selectedCity !== 'All Cities' && (
+                <Badge variant="outline" className="ml-2">
+                  {selectedCity}
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -577,7 +644,14 @@ export function UltimatePowerInfrastructureFinder() {
           {results.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Discovery Results with Rate Analysis ({results.length})</CardTitle>
+                <CardTitle>
+                  Discovery Results with Rate Analysis ({results.length})
+                  {selectedCity !== 'All Cities' && (
+                    <Badge variant="outline" className="ml-2">
+                      {selectedCity}
+                    </Badge>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -646,7 +720,7 @@ export function UltimatePowerInfrastructureFinder() {
                         <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 mt-3">
                           <div className="flex items-center gap-2 mb-3">
                             <DollarSign className="w-4 h-4 text-blue-600" />
-                            <strong className="text-blue-800 dark:text-blue-200">Industrial Rate Estimation ({powerRequirement} MW)</strong>
+                            <strong className="text-blue-800 dark:text-blue-200">Industrial Rate Estimation (50 MW)</strong>
                             <Badge variant="outline" className="text-xs">
                               {result.rate_estimation.rate_tier}
                             </Badge>
@@ -681,7 +755,7 @@ export function UltimatePowerInfrastructureFinder() {
                           
                           <div className="mt-2 text-xs text-muted-foreground">
                             <strong>Market:</strong> {result.rate_estimation.utility_market} | 
-                            <strong> Consumption:</strong> {(powerRequirement * 24 * 30).toLocaleString()} MWh/month
+                            <strong> Consumption:</strong> {(defaultPowerRequirement * 24 * 30).toLocaleString()} MWh/month
                           </div>
                         </div>
                       )}
@@ -708,7 +782,10 @@ export function UltimatePowerInfrastructureFinder() {
               <CardContent className="p-12 text-center">
                 <Calculator className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-medium text-muted-foreground mb-2">No Search Results</h3>
-                <p className="text-muted-foreground">Execute an Ultimate Search to discover substations with rate analysis across the entire region</p>
+                <p className="text-muted-foreground">
+                  Execute an Ultimate Search to discover substations with rate analysis 
+                  {selectedCity !== 'All Cities' ? ` in ${selectedCity}` : ' across the entire region'}
+                </p>
               </CardContent>
             </Card>
           )}
