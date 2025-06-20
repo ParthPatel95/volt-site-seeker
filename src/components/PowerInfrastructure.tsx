@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
@@ -11,6 +12,7 @@ import { FERCDashboard } from './power/FERCDashboard';
 import { USGSDashboard } from './power/USGSDashboard';
 import { EnvironmentalDashboard } from './power/EnvironmentalDashboard';
 import { IdleIndustryScanner } from './power/IdleIndustryScanner';
+import { EnergyRateIntelligence } from './energy/EnergyRateIntelligence';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -100,6 +102,10 @@ export function PowerInfrastructure() {
 
           <TabsContent value="capacity-estimator">
             <EnhancedCapacityEstimator />
+          </TabsContent>
+
+          <TabsContent value="energy-rates">
+            <EnergyRateIntelligence />
           </TabsContent>
 
           <TabsContent value="ercot-live">

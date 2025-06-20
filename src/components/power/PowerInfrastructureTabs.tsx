@@ -4,7 +4,7 @@ import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 export function PowerInfrastructureTabs() {
   return (
     <div className="w-full overflow-x-auto">
-      <TabsList className="grid w-full min-w-max grid-cols-8 h-auto p-1">
+      <TabsList className="grid w-full min-w-max grid-cols-9 h-auto p-1">
         <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           Overview
         </TabsTrigger>
@@ -13,6 +13,9 @@ export function PowerInfrastructureTabs() {
         </TabsTrigger>
         <TabsTrigger value="capacity-estimator" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           Capacity AI
+        </TabsTrigger>
+        <TabsTrigger value="energy-rates" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
+          Energy Rates
         </TabsTrigger>
         <TabsTrigger value="ercot-live" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           ERCOT Live
