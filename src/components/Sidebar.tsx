@@ -31,14 +31,14 @@ interface SidebarProps {
 }
 
 const navigationItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-  { path: '/properties', icon: Building, label: 'Properties', badge: null },
-  { path: '/scraper', icon: Search, label: 'Property Scraper', badge: 'Beta' },
-  { path: '/energy-rates', icon: Zap, label: 'Energy Rates', badge: 'AI' },
-  { path: '/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: 'AI' },
-  { path: '/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: 'New' },
-  { path: '/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
-  { path: '/data-management', icon: Database, label: 'Data Management', badge: null },
+  { path: '/app', icon: LayoutDashboard, label: 'Dashboard', badge: null },
+  { path: '/app/properties', icon: Building, label: 'Properties', badge: null },
+  { path: '/app/scraper', icon: Search, label: 'Property Scraper', badge: 'Beta' },
+  { path: '/app/energy-rates', icon: Zap, label: 'Energy Rates', badge: 'AI' },
+  { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: 'AI' },
+  { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: 'New' },
+  { path: '/app/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
+  { path: '/app/data-management', icon: Database, label: 'Data Management', badge: null },
 ];
 
 export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
