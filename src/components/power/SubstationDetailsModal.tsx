@@ -1,8 +1,8 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Zap, Building, Calendar, Activity, TrendingUp, ExternalLink } from 'lucide-react';
+import { EnhancedMapboxMap } from '../EnhancedMapboxMap';
 
 interface Substation {
   id: string;
@@ -73,7 +73,7 @@ export function SubstationDetailsModal({ substation, isOpen, onClose }: Substati
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex-shrink-0">
@@ -91,7 +91,7 @@ export function SubstationDetailsModal({ substation, isOpen, onClose }: Substati
                 className="self-start sm:self-auto"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
-                View on Map
+                View on Google Maps
               </Button>
             )}
           </DialogTitle>
@@ -115,6 +115,30 @@ export function SubstationDetailsModal({ substation, isOpen, onClose }: Substati
               </Badge>
             )}
           </div>
+
+          {/* Embedded Map View */}
+          {substation.latitude && substation.longitude && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold flex items-center">
+                <MapPin className="w-5 h-5 mr-2" />
+                Location Map
+              </h3>
+              <div className="border rounded-lg overflow-hidden">
+                <EnhancedMapboxMap
+                  height="h-80"
+                  initialCenter={[substation.longitude, substation.latitude]}
+                  initialZoom={15}
+                  showControls={true}
+                  mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+                  substations={[{
+                    ...substation,
+                    latitude: substation.latitude,
+                    longitude: substation.longitude
+                  }]}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Main Information Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
