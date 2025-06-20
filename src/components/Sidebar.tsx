@@ -17,10 +17,12 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  LogOut
 } from 'lucide-react';
 import { ModeToggle } from './ModeToggle';
 import { EnhancedLogo } from './EnhancedLogo';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -44,12 +46,18 @@ const navigationItems = [
 export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const handleNavigation = (path: string) => {
     navigate(path);
     if (isMobile) {
       setIsOpen(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
   };
 
   const SidebarContent = () => (
@@ -96,8 +104,20 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen,
 
       {/* Footer */}
       <div className="p-4 border-t">
-        <div className={`flex items-center gap-3 ${isCollapsed && !isMobile ? 'justify-center' : 'justify-between'}`}>
-          <ModeToggle />
+        <div className={`flex items-center gap-2 ${isCollapsed && !isMobile ? 'justify-center flex-col' : 'justify-between'}`}>
+          <div className="flex items-center gap-2">
+            <ModeToggle />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="p-2 flex-shrink-0"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+              {(!isCollapsed || isMobile) && <span className="ml-1">Sign Out</span>}
+            </Button>
+          </div>
           {!isMobile && (
             <Button
               variant="ghost"
