@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -22,7 +23,8 @@ import {
   TrendingUp,
   MapPin,
   Eye,
-  Merge
+  Merge,
+  RefreshCw
 } from 'lucide-react';
 
 interface FinderResult {
@@ -47,6 +49,21 @@ interface SearchStats {
   high_confidence: number;
 }
 
+interface StoredSubstation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  capacity_mva: number;
+  voltage_level: string;
+  utility_owner: string;
+  city: string;
+  state: string;
+  status: string;
+  coordinates_source: string;
+  created_at: string;
+}
+
 export function UltimatePowerInfrastructureFinder() {
   const [searchRegion, setSearchRegion] = useState<'alberta' | 'texas'>('texas');
   const [searchRadius, setSearchRadius] = useState(100);
@@ -56,7 +73,43 @@ export function UltimatePowerInfrastructureFinder() {
   const [currentPhase, setCurrentPhase] = useState('');
   const [results, setResults] = useState<FinderResult[]>([]);
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null);
+  const [storedSubstations, setStoredSubstations] = useState<StoredSubstation[]>([]);
+  const [loadingStored, setLoadingStored] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadStoredSubstations();
+  }, []);
+
+  const loadStoredSubstations = async () => {
+    try {
+      setLoadingStored(true);
+      console.log('Loading stored substations...');
+      
+      const { data, error } = await supabase
+        .from('substations')
+        .select('*')
+        .eq('coordinates_source', 'ultimate_finder')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading stored substations:', error);
+        throw error;
+      }
+
+      setStoredSubstations(data || []);
+      console.log('Loaded stored substations:', data?.length || 0);
+    } catch (error: any) {
+      console.error('Failed to load stored substations:', error);
+      toast({
+        title: "Error Loading Stored Data",
+        description: error.message || "Failed to load stored substations",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingStored(false);
+    }
+  };
 
   const executeUltimateSearch = async () => {
     setSearching(true);
@@ -228,13 +281,16 @@ export function UltimatePowerInfrastructureFinder() {
             utility_owner: result.utility_owner || 'Unknown',
             city: searchRegion === 'texas' ? 'Texas' : 'Alberta',
             state: searchRegion === 'texas' ? 'TX' : 'AB',
-            coordinates_source: result.discovery_method,
+            coordinates_source: 'ultimate_finder',
             status: 'active',
             interconnection_type: 'transmission',
             load_factor: 0.75
           });
 
         if (error) throw error;
+
+        // Reload stored substations
+        await loadStoredSubstations();
       }
 
       // Update local state
@@ -396,92 +452,190 @@ export function UltimatePowerInfrastructureFinder() {
         </Card>
       )}
 
-      {/* Results */}
-      {results.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Discovery Results ({results.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {results.map((result) => (
-                <div key={result.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {getSourceIcon(result.source)}
-                      <span className="font-medium">{result.name}</span>
-                      <Badge className={getConfidenceColor(result.confidence_score)}>
-                        {result.confidence_score}% confidence
-                      </Badge>
-                      <Badge variant="outline">{result.voltage_level}</Badge>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      {result.validation_status === 'pending' && (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => validateResult(result, 'confirmed')}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Confirm
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => validateResult(result, 'rejected')}
-                          >
-                            <AlertTriangle className="w-4 h-4 mr-1" />
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                      {result.validation_status === 'confirmed' && (
-                        <Badge className="bg-green-100 text-green-800">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Confirmed
-                        </Badge>
-                      )}
-                      {result.validation_status === 'rejected' && (
-                        <Badge className="bg-red-100 text-red-800">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Rejected
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+      {/* Results Tabs */}
+      <Tabs defaultValue="current" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="current">
+            Current Search ({results.length})
+          </TabsTrigger>
+          <TabsTrigger value="stored" className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Stored Substations ({storedSubstations.length})
+          </TabsTrigger>
+        </TabsList>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <strong>Location:</strong> {result.coordinates.lat.toFixed(4)}, {result.coordinates.lng.toFixed(4)}
-                    </div>
-                    <div>
-                      <strong>Capacity:</strong> {result.capacity_estimate}
-                    </div>
-                    <div>
-                      <strong>Source:</strong> {result.source}
-                    </div>
-                  </div>
-
-                  {result.infrastructure_features.length > 0 && (
-                    <div className="mt-3">
-                      <strong className="text-sm">Features:</strong>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {result.infrastructure_features.map((feature, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {feature}
+        <TabsContent value="current">
+          {results.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Discovery Results ({results.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {results.map((result) => (
+                    <div key={result.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {getSourceIcon(result.source)}
+                          <span className="font-medium">{result.name}</span>
+                          <Badge className={getConfidenceColor(result.confidence_score)}>
+                            {result.confidence_score}% confidence
                           </Badge>
-                        ))}
+                          <Badge variant="outline">{result.voltage_level}</Badge>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          {result.validation_status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => validateResult(result, 'confirmed')}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Confirm
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => validateResult(result, 'rejected')}
+                              >
+                                <AlertTriangle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {result.validation_status === 'confirmed' && (
+                            <Badge className="bg-green-100 text-green-800">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Confirmed
+                            </Badge>
+                          )}
+                          {result.validation_status === 'rejected' && (
+                            <Badge className="bg-red-100 text-red-800">
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Rejected
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <strong>Location:</strong> {result.coordinates.lat.toFixed(4)}, {result.coordinates.lng.toFixed(4)}
+                        </div>
+                        <div>
+                          <strong>Capacity:</strong> {result.capacity_estimate}
+                        </div>
+                        <div>
+                          <strong>Source:</strong> {result.source}
+                        </div>
+                      </div>
+
+                      {result.infrastructure_features.length > 0 && (
+                        <div className="mt-3">
+                          <strong className="text-sm">Features:</strong>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {result.infrastructure_features.map((feature, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {feature}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Zap className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-muted-foreground mb-2">No Search Results</h3>
+                <p className="text-muted-foreground">Execute an Ultimate Search to discover substations</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="stored">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="w-5 h-5" />
+                  Stored Substations from Ultimate Finder
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadStoredSubstations}
+                  disabled={loadingStored}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${loadingStored ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingStored ? (
+                <div className="text-center py-8">
+                  <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+                  <p className="text-muted-foreground">Loading stored substations...</p>
+                </div>
+              ) : storedSubstations.length > 0 ? (
+                <div className="space-y-4">
+                  {storedSubstations.map((substation) => (
+                    <div key={substation.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Database className="w-4 h-4 text-green-600" />
+                          <span className="font-medium">{substation.name}</span>
+                          <Badge className="bg-green-100 text-green-800">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Stored
+                          </Badge>
+                          <Badge variant="outline">{substation.voltage_level}</Badge>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <strong>Location:</strong> {substation.latitude.toFixed(4)}, {substation.longitude.toFixed(4)}
+                        </div>
+                        <div>
+                          <strong>Capacity:</strong> {substation.capacity_mva} MVA
+                        </div>
+                        <div>
+                          <strong>Owner:</strong> {substation.utility_owner}
+                        </div>
+                        <div>
+                          <strong>Status:</strong> {substation.status}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        <strong>City:</strong> {substation.city}, {substation.state} | 
+                        <strong> Added:</strong> {new Date(substation.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              ) : (
+                <div className="text-center py-8">
+                  <Database className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-medium text-muted-foreground mb-2">No Stored Substations</h3>
+                  <p className="text-muted-foreground">
+                    Confirmed substations from Ultimate Finder searches will appear here
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
