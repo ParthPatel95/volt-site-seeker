@@ -54,26 +54,22 @@ serve(async (req) => {
     // For region-wide searches, use a large search radius
     const searchRadius = maxResults === 0 ? 500000 : 100000 // 500km for unlimited, 100km for limited
 
-    // Search for substations using Places API with expanded search terms
+    // Search for substations using Places API with very specific search terms
     const substations: DiscoveredSubstation[] = []
     
-    // Comprehensive search terms to find different types of substations and power facilities
+    // More specific search terms focused only on electrical substations
     const searchTerms = [
       'electrical substation',
       'power substation', 
       'transmission substation',
       'distribution substation',
-      'utility substation',
-      'electric utility',
-      'power station',
-      'generating station',
-      'electrical facility',
-      'transmission facility'
+      'electric substation',
+      'utility substation'
     ]
 
     for (const searchTerm of searchTerms) {
       try {
-        // Use both text search and nearby search for comprehensive coverage
+        // Use text search with location bias
         const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchTerm)}&location=${lat},${lng}&radius=${searchRadius}&key=${GOOGLE_MAPS_API_KEY}`
         
         const textResponse = await fetch(textSearchUrl)
@@ -81,8 +77,8 @@ serve(async (req) => {
 
         if (textData.status === 'OK' && textData.results) {
           for (const place of textData.results) {
-            // Check if this is likely a power facility
-            if (isLikelyPowerFacility(place) && !substations.find(s => s.place_id === place.place_id)) {
+            // Much stricter filtering for actual substations
+            if (isActualSubstation(place) && !substations.find(s => s.place_id === place.place_id)) {
               substations.push({
                 id: place.place_id,
                 name: place.name,
@@ -97,7 +93,7 @@ serve(async (req) => {
           }
         }
 
-        // Check for more results using pagination token - continue until no more pages or max reached
+        // Check for more results using pagination token
         let nextPageToken = textData.next_page_token
         while (nextPageToken && (maxResults === 0 || substations.length < maxResults)) {
           await new Promise(resolve => setTimeout(resolve, 2000)) // Required delay for next_page_token
@@ -108,7 +104,7 @@ serve(async (req) => {
           
           if (nextData.status === 'OK' && nextData.results) {
             for (const place of nextData.results) {
-              if (isLikelyPowerFacility(place) && !substations.find(s => s.place_id === place.place_id)) {
+              if (isActualSubstation(place) && !substations.find(s => s.place_id === place.place_id)) {
                 substations.push({
                   id: place.place_id,
                   name: place.name,
@@ -120,7 +116,6 @@ serve(async (req) => {
                   types: place.types || []
                 })
                 
-                // Break if we've reached the max results limit (if specified)
                 if (maxResults > 0 && substations.length >= maxResults) {
                   break
                 }
@@ -130,7 +125,6 @@ serve(async (req) => {
           
           nextPageToken = nextData.next_page_token
           
-          // Break if we've reached the max results limit (if specified)
           if (maxResults > 0 && substations.length >= maxResults) {
             break
           }
@@ -139,7 +133,6 @@ serve(async (req) => {
         // Add delay to respect API rate limits
         await new Promise(resolve => setTimeout(resolve, 200))
         
-        // Break if we've reached the max results limit (if specified)
         if (maxResults > 0 && substations.length >= maxResults) {
           break
         }
@@ -149,63 +142,85 @@ serve(async (req) => {
       }
     }
 
-    // Enhanced filtering function
-    function isLikelyPowerFacility(place: any): boolean {
+    // Much stricter filtering function for actual electrical substations
+    function isActualSubstation(place: any): boolean {
       const name = place.name.toLowerCase()
       const types = place.types || []
       
-      // Power facility keywords
-      const powerKeywords = [
-        'substation', 'electrical', 'power', 'transmission', 'distribution',
-        'utility', 'generating', 'station', 'plant', 'grid', 'facility',
-        'energy', 'electric', 'voltage', 'transformer', 'switchyard'
+      // Must contain substation or specific electrical terms
+      const requiredKeywords = ['substation', 'electrical', 'transmission', 'distribution', 'switchyard']
+      const hasRequiredKeyword = requiredKeywords.some(keyword => name.includes(keyword))
+      
+      if (!hasRequiredKeyword) {
+        return false
+      }
+      
+      // Additional electrical infrastructure keywords
+      const electricalKeywords = [
+        'kv', 'kilovolt', 'voltage', 'transformer', 'switching', 'grid', 
+        'utility', 'power', 'electric', 'energy', 'sce', 'pge', 'sdge',
+        'ercot', 'aeso', 'hydro', 'oncor', 'centerpoint', 'aep', 'duke'
       ]
       
-      // Check name for power-related terms
-      const hasPowerKeyword = powerKeywords.some(keyword => name.includes(keyword))
+      const hasElectricalContext = electricalKeywords.some(keyword => name.includes(keyword))
       
-      // Check types for relevant categories
-      const relevantTypes = types.some((type: string) => 
-        type.includes('establishment') || 
-        type.includes('point_of_interest') ||
-        type.includes('gas_station') || // Sometimes power facilities are misclassified
-        type.includes('store') // Sometimes utility facilities are classified as stores
-      )
-      
-      // Exclude obviously non-power facilities
+      // Exclude obviously non-electrical facilities
       const excludeKeywords = [
         'restaurant', 'food', 'gas station', 'convenience', 'store', 'shop',
-        'hotel', 'motel', 'hospital', 'school', 'church', 'bank', 'pharmacy'
+        'hotel', 'motel', 'hospital', 'school', 'church', 'bank', 'pharmacy',
+        'park', 'recreation', 'museum', 'library', 'fire', 'police', 'city hall',
+        'post office', 'dmv', 'courthouse', 'mall', 'shopping', 'automotive',
+        'repair', 'service', 'car wash', 'laundry', 'dry clean', 'hair', 'nail',
+        'spa', 'gym', 'fitness', 'dental', 'medical', 'clinic', 'veterinary',
+        'pet', 'animal', 'bar', 'pub', 'brewery', 'winery', 'cafe', 'coffee',
+        'bakery', 'pizza', 'burger', 'taco', 'chinese', 'mexican', 'indian',
+        'thai', 'japanese', 'korean', 'italian', 'american', 'fast food'
       ]
       
       const isExcluded = excludeKeywords.some(keyword => name.includes(keyword))
       
-      return hasPowerKeyword && relevantTypes && !isExcluded
+      // Check place types for utility-related categories
+      const utilityTypes = [
+        'establishment', 'point_of_interest', 'premise'
+      ]
+      
+      const hasUtilityType = types.some((type: string) => utilityTypes.includes(type))
+      
+      // Must have substation in name AND electrical context, not be excluded, and have appropriate type
+      return hasRequiredKeyword && (hasElectricalContext || name.includes('substation')) && !isExcluded && hasUtilityType
     }
 
-    // Remove duplicates and sort by relevance
+    // Remove duplicates and sort by relevance (prioritize actual substation names)
     const uniqueSubstations = substations
       .filter((sub, index, self) => 
         index === self.findIndex(s => s.place_id === sub.place_id)
       )
       .sort((a, b) => {
-        // Prioritize substations with "substation" in the name
+        // Prioritize entries with "substation" in the name
         const aHasSubstation = a.name.toLowerCase().includes('substation')
         const bHasSubstation = b.name.toLowerCase().includes('substation')
         
         if (aHasSubstation && !bHasSubstation) return -1
         if (!aHasSubstation && bHasSubstation) return 1
         
-        // Then prioritize by rating if available
+        // Then prioritize by electrical utility keywords
+        const electricalUtilities = ['sce', 'pge', 'sdge', 'oncor', 'centerpoint', 'aep', 'duke', 'ercot', 'aeso']
+        const aHasUtility = electricalUtilities.some(util => a.name.toLowerCase().includes(util))
+        const bHasUtility = electricalUtilities.some(util => b.name.toLowerCase().includes(util))
+        
+        if (aHasUtility && !bHasUtility) return -1
+        if (!aHasUtility && bHasUtility) return 1
+        
+        // Then by rating if available
         if (a.rating && b.rating) return b.rating - a.rating
         
         return 0
       })
 
-    // Apply final limit if specified, otherwise return all
+    // Apply final limit if specified
     const finalResults = maxResults > 0 ? uniqueSubstations.slice(0, maxResults) : uniqueSubstations
 
-    // Get additional details for substations (limited to first 50 to avoid timeout)
+    // Get additional details for substations (limited to avoid timeout)
     const detailedSubstations = []
     const detailLimit = Math.min(finalResults.length, 50)
     
@@ -218,14 +233,15 @@ serve(async (req) => {
         const detailsData = await detailsResponse.json()
 
         if (detailsData.status === 'OK' && detailsData.result) {
-          detailedSubstations.push({
-            ...substation,
-            name: detailsData.result.name || substation.name,
-            address: detailsData.result.formatted_address || substation.address,
-            types: detailsData.result.types || substation.types
-          })
-        } else {
-          detailedSubstations.push(substation)
+          // Final validation of the detailed result
+          if (isActualSubstation(detailsData.result)) {
+            detailedSubstations.push({
+              ...substation,
+              name: detailsData.result.name || substation.name,
+              address: detailsData.result.formatted_address || substation.address,
+              types: detailsData.result.types || substation.types
+            })
+          }
         }
 
         // Rate limiting
@@ -233,16 +249,20 @@ serve(async (req) => {
         
       } catch (error) {
         console.error(`Error getting details for ${finalResults[i].name}:`, error)
-        detailedSubstations.push(finalResults[i])
+        // Only add if it passes our strict filtering
+        if (isActualSubstation(finalResults[i])) {
+          detailedSubstations.push(finalResults[i])
+        }
       }
     }
 
     // Add remaining substations without detailed info if we hit the detail limit
     if (finalResults.length > detailLimit) {
-      detailedSubstations.push(...finalResults.slice(detailLimit))
+      const remaining = finalResults.slice(detailLimit).filter(sub => isActualSubstation(sub))
+      detailedSubstations.push(...remaining)
     }
 
-    console.log(`Found ${detailedSubstations.length} substations in ${location} ${maxResults === 0 ? '(unlimited)' : `(limit: ${maxResults})`}`)
+    console.log(`Found ${detailedSubstations.length} verified substations in ${location}`)
 
     return new Response(
       JSON.stringify({ 
