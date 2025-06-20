@@ -10,6 +10,7 @@ import { MultiSourceScraper } from '@/components/MultiSourceScraper';
 import { EnergyRateIntelligence } from '@/components/energy/EnergyRateIntelligence';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { PowerInfrastructure } from '@/components/PowerInfrastructure';
+import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
 import { DataManagement } from '@/components/DataManagement';
 
 export default function Index() {
@@ -73,6 +74,7 @@ export default function Index() {
             <Route path="/scraper" element={<MultiSourceScraper />} />
             <Route path="/energy-rates" element={<EnergyRateIntelligence />} />
             <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
+            <Route path="/idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
             <Route path="/data-management" element={<DataManagement />} />
           </Routes>

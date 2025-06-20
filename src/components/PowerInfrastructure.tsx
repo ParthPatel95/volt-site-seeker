@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
@@ -97,10 +96,6 @@ export function PowerInfrastructure() {
 
           <TabsContent value="ultimate-finder">
             <UltimatePowerInfrastructureFinder />
-          </TabsContent>
-
-          <TabsContent value="idle-industry-scanner">
-            <IdleIndustryScanner />
           </TabsContent>
 
           <TabsContent value="capacity-estimator">

@@ -1,34 +1,25 @@
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { 
   LayoutDashboard, 
   Building, 
   Search, 
-  MapPin, 
+  Zap, 
+  TrendingUp,
+  Factory,
   Database,
-  Brain,
-  Zap,
-  LogOut,
-  Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Briefcase
 } from 'lucide-react';
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
 import { ModeToggle } from './ModeToggle';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 import { EnhancedLogo } from './EnhancedLogo';
 
 interface SidebarProps {
@@ -39,213 +30,114 @@ interface SidebarProps {
   setIsOpen: (open: boolean) => void;
 }
 
-const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) => {
+const navigationItems = [
+  { path: '/', icon: LayoutDashboard, label: 'Dashboard', badge: null },
+  { path: '/properties', icon: Building, label: 'Properties', badge: null },
+  { path: '/scraper', icon: Search, label: 'Property Scraper', badge: 'Beta' },
+  { path: '/energy-rates', icon: Zap, label: 'Energy Rates', badge: 'AI' },
+  { path: '/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: 'AI' },
+  { path: '/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: 'New' },
+  { path: '/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
+  { path: '/data-management', icon: Database, label: 'Data Management', badge: null },
+];
+
+export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
-  const { toast } = useToast();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out.",
-      });
-      navigate('/landing');
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive"
-      });
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setIsOpen(false);
     }
   };
 
-  const menuItems = [
-    { 
-      icon: LayoutDashboard, 
-      label: 'Dashboard', 
-      path: '/app/',
-      description: 'Overview, analytics & alerts'
-    },
-    { 
-      icon: Building, 
-      label: 'Properties', 
-      path: '/app/properties',
-      description: 'Property portfolio management'
-    },
-    { 
-      icon: Search, 
-      label: 'Property Scraper', 
-      path: '/app/scraper',
-      description: 'Multi-source property discovery'
-    },
-    { 
-      icon: Zap, 
-      label: 'Energy Rates', 
-      path: '/app/energy-rates',
-      description: 'Real-time electricity pricing'
-    },
-    { 
-      icon: Brain, 
-      label: 'Corporate Intelligence', 
-      path: '/app/corporate-intelligence',
-      description: 'Company analysis and insights'
-    },
-    { 
-      icon: MapPin, 
-      label: 'Power Infrastructure', 
-      path: '/app/power-infrastructure',
-      description: 'Grid and transmission data'
-    },
-    { 
-      icon: Database, 
-      label: 'Data Management', 
-      path: '/app/data-management',
-      description: 'Import and export tools'
-    }
-  ];
-
   const SidebarContent = () => (
-    <>
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 min-h-[4rem]">
-        <div className="flex items-center space-x-3">
-          <EnhancedLogo className="w-10 h-10 object-contain flex-shrink-0" />
-          {!isCollapsed && (
-            <span className="font-bold text-xl whitespace-nowrap">VoltScout</span>
-          )}
-        </div>
-        {!isCollapsed && !isMobile && (
-          <Sheet>
-            <SheetTrigger className="flex-shrink-0">
-              <div className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
-                ⚙️
-              </div>
-            </SheetTrigger>
-            <SheetContent className="sm:max-w-lg">
-              <SheetHeader>
-                <SheetTitle>Settings</SheetTitle>
-                <SheetDescription>
-                  Make changes to your profile here. Click save when you're done.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Appearance
-                  </Label>
-                  <div className="col-span-3">
-                    <ModeToggle />
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">
-                    Enable Notifications
-                  </Label>
-                  <div className="col-span-3">
-                    <Switch id="notifications" />
-                  </div>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsOpen(false)}
-            className="p-2"
-          >
-            <X className="w-5 h-5" />
-          </Button>
+      <div className={`flex items-center gap-3 p-4 border-b ${isCollapsed && !isMobile ? 'justify-center' : ''}`}>
+        <EnhancedLogo className={isCollapsed && !isMobile ? 'w-8 h-8' : 'w-10 h-10'} />
+        {(!isCollapsed || isMobile) && (
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              VoltScout
+            </h1>
+            <p className="text-xs text-muted-foreground">Power Intelligence Platform</p>
+          </div>
         )}
       </div>
-      
-      <Separator />
-      
-      {/* Navigation Menu */}
-      <ScrollArea className="flex-1 px-3 py-2">
-        <nav>
-          <ul className="space-y-1">
-            {menuItems.map((item) => (
-              <li key={item.label}>
-                <Link
-                  to={item.path}
-                  onClick={() => isMobile && setIsOpen(false)}
-                  className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                    location.pathname === item.path ? 'bg-accent text-accent-foreground' : ''
-                  }`}
-                >
-                  <item.icon className={`flex-shrink-0 h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
-                  {!isCollapsed && <span className="truncate">{item.label}</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
+
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-2">
+          {navigationItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Button
+                key={item.path}
+                variant={isActive ? "secondary" : "ghost"}
+                className={`w-full justify-start gap-3 ${
+                  isCollapsed && !isMobile ? 'px-2' : 'px-3'
+                } ${isActive ? 'bg-secondary/80' : 'hover:bg-secondary/50'}`}
+                onClick={() => handleNavigation(item.path)}
+              >
+                <item.icon className={`${isCollapsed && !isMobile ? 'w-5 h-5' : 'w-4 h-4'} flex-shrink-0`} />
+                {(!isCollapsed || isMobile) && (
+                  <>
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.badge && (
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </>
+                )}
+              </Button>
+            );
+          })}
         </nav>
       </ScrollArea>
-      
-      {/* User Section */}
-      {user && (
-        <>
-          <Separator />
-          <div className="p-4 space-y-3">
-            {!isCollapsed && (
-              <div className="text-sm text-muted-foreground truncate">
-                {user.email}
-              </div>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSignOut}
-              className={`w-full flex items-center justify-center ${isCollapsed ? 'px-2' : ''}`}
+
+      {/* Footer */}
+      <div className="p-4 border-t">
+        <div className={`flex items-center gap-3 ${isCollapsed && !isMobile ? 'justify-center' : 'justify-between'}`}>
+          <ModeToggle />
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-2"
             >
-              <LogOut className="w-4 h-4" />
-              {!isCollapsed && <span className="ml-2">Sign Out</span>}
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
             </Button>
-          </div>
-        </>
-      )}
-      
-      {/* Collapse Toggle - Desktop Only */}
-      {!isMobile && (
-        <div className="p-2 border-t">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="w-full flex items-center justify-center"
-          >
-            {isCollapsed ? '→' : '←'}
-          </Button>
+          )}
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 
-  // Mobile Sidebar
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="left" className="w-60 p-0 bg-secondary border-r border-muted">
-          <div className="h-full flex flex-col">
-            <SidebarContent />
-          </div>
+        <SheetContent side="left" className="w-72 p-0">
+          <SidebarContent />
         </SheetContent>
       </Sheet>
     );
   }
 
-  // Desktop Sidebar
   return (
-    <aside className={`fixed left-0 top-0 h-screen bg-secondary border-r border-muted flex flex-col transition-all duration-300 z-40 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+    <aside 
+      className={`fixed left-0 top-0 z-40 h-screen bg-background border-r transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-60'
+      }`}
+    >
       <SidebarContent />
     </aside>
   );
-};
-
-export default Sidebar;
+}

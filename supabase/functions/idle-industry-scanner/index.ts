@@ -274,7 +274,7 @@ function generateMockIndustrialSites(jurisdiction: string) {
   ]
   
   const sites = []
-  const numSites = Math.floor(Math.random() * 20) + 15 // 15-35 sites
+  const numSites = Math.floor(Math.random() * 50) + 25 // 25-75 sites (removed limit)
   
   for (let i = 0; i < numSites; i++) {
     const industry = industries[Math.floor(Math.random() * industries.length)]
