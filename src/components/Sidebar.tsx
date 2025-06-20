@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,7 +35,6 @@ const navigationItems = [
   { path: '/app', icon: LayoutDashboard, label: 'Dashboard', badge: null },
   { path: '/app/properties', icon: Building, label: 'Properties', badge: null },
   { path: '/app/scraper', icon: Search, label: 'Property Scraper', badge: null },
-  { path: '/app/energy-rates', icon: Zap, label: 'Energy Rates', badge: null },
   { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: null },
   { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: null },
   { path: '/app/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
