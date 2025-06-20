@@ -33,10 +33,10 @@ interface SidebarProps {
 const navigationItems = [
   { path: '/app', icon: LayoutDashboard, label: 'Dashboard', badge: null },
   { path: '/app/properties', icon: Building, label: 'Properties', badge: null },
-  { path: '/app/scraper', icon: Search, label: 'Property Scraper', badge: 'Beta' },
-  { path: '/app/energy-rates', icon: Zap, label: 'Energy Rates', badge: 'AI' },
-  { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: 'AI' },
-  { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: 'New' },
+  { path: '/app/scraper', icon: Search, label: 'Property Scraper', badge: null },
+  { path: '/app/energy-rates', icon: Zap, label: 'Energy Rates', badge: null },
+  { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: null },
+  { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: null },
   { path: '/app/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
   { path: '/app/data-management', icon: Database, label: 'Data Management', badge: null },
 ];
@@ -86,11 +86,6 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen,
                 {(!isCollapsed || isMobile) && (
                   <>
                     <span className="flex-1 text-left truncate">{item.label}</span>
-                    {item.badge && (
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5 flex-shrink-0">
-                        {item.badge}
-                      </Badge>
-                    )}
                   </>
                 )}
               </Button>
