@@ -2,9 +2,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Target, Shield, Zap } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Search, Zap, MapPin, Satellite, Brain } from 'lucide-react';
 import { TEXAS_CITIES, ALBERTA_CITIES } from './UltimateFinderTypes';
 
 interface UltimateFinderSearchControlsProps {
@@ -17,7 +21,9 @@ interface UltimateFinderSearchControlsProps {
   searching: boolean;
   progress: number;
   currentPhase: string;
-  onExecuteSearch: () => void;
+  useMLAnalysis: boolean;
+  setUseMLAnalysis: (use: boolean) => void;
+  onExecuteSearch: () => Promise<void>;
 }
 
 export function UltimateFinderSearchControls({
@@ -30,91 +36,145 @@ export function UltimateFinderSearchControls({
   searching,
   progress,
   currentPhase,
+  useMLAnalysis,
+  setUseMLAnalysis,
   onExecuteSearch
 }: UltimateFinderSearchControlsProps) {
-  const getCitiesForRegion = () => {
-    return searchRegion === 'texas' ? TEXAS_CITIES : ALBERTA_CITIES;
-  };
+  const cities = searchRegion === 'texas' ? TEXAS_CITIES : ALBERTA_CITIES;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="w-5 h-5" />
-          Search Configuration
-        </CardTitle>
+        <div className="flex items-center gap-2">
+          <Search className="w-5 h-5" />
+          <CardTitle>Ultimate Search Configuration</CardTitle>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Target Region</label>
-            <select 
-              className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800"
-              value={searchRegion}
-              onChange={(e) => setSearchRegion(e.target.value as 'alberta' | 'texas')}
-            >
-              <option value="texas">Texas (ERCOT) - Full State Coverage</option>
-              <option value="alberta">Alberta (AESO) - Full Province Coverage</option>
-            </select>
+      
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="region">Region</Label>
+            <Select value={searchRegion} onValueChange={(value: 'alberta' | 'texas') => setSearchRegion(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select region" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="texas">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    Texas (ERCOT)
+                  </div>
+                </SelectItem>
+                <SelectItem value="alberta">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Alberta (AESO)
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label className="text-sm font-medium mb-2 block">City Filter (Optional)</label>
-            <select 
-              className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800"
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-            >
-              {getCitiesForRegion().map((city) => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
+          <div className="space-y-2">
+            <Label htmlFor="city">City Focus</Label>
+            <Select value={selectedCity} onValueChange={setSelectedCity}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select city or all" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All Cities">All Cities</SelectItem>
+                {cities.map((city) => (
+                  <SelectItem key={city} value={city}>
+                    {city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        </div>
 
-          <div>
-            <label className="text-sm font-medium mb-2 block">Focus Coordinates (optional)</label>
-            <Input
-              value={centerCoordinates}
-              onChange={(e) => setCenterCoordinates(e.target.value)}
-              placeholder="lat, lng (for prioritization)"
-              className="p-3"
+        <div className="space-y-2">
+          <Label htmlFor="coordinates">Center Coordinates (Optional)</Label>
+          <Input
+            id="coordinates"
+            placeholder="e.g., 32.7767, -96.7970 (Dallas, TX)"
+            value={centerCoordinates}
+            onChange={(e) => setCenterCoordinates(e.target.value)}
+            disabled={searching}
+          />
+        </div>
+
+        <div className="border rounded-lg p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Brain className="w-4 h-4" />
+                <Label htmlFor="ml-analysis" className="font-medium">
+                  AI Satellite Analysis
+                </Label>
+                <Badge variant="secondary" className="text-xs">
+                  <Satellite className="w-3 h-3 mr-1" />
+                  Enhanced
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Use advanced AI vision to detect substations from satellite imagery. 
+                Provides higher accuracy but takes longer.
+              </p>
+            </div>
+            <Switch
+              id="ml-analysis"
+              checked={useMLAnalysis}
+              onCheckedChange={setUseMLAnalysis}
+              disabled={searching}
             />
           </div>
+          
+          {useMLAnalysis && (
+            <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded border-l-4 border-blue-200">
+              <strong>AI Analysis Features:</strong>
+              <ul className="mt-1 space-y-1 list-disc list-inside">
+                <li>Multi-zoom satellite image analysis</li>
+                <li>Advanced transformer and transmission line detection</li>
+                <li>Voltage level estimation from equipment size</li>
+                <li>Enhanced confidence scoring</li>
+              </ul>
+            </div>
+          )}
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-              Industrial Rate Analysis Configuration
-            </span>
-          </div>
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            Rate estimations calculated for <strong>50 MW large industrial client</strong> with 24/7 operations
-            {selectedCity !== 'All Cities' && (
-              <span className="block mt-1">
-                <strong>City Focus:</strong> {selectedCity}, {searchRegion === 'texas' ? 'Texas' : 'Alberta'}
-              </span>
-            )}
-          </p>
-        </div>
-
-        <Button 
+        <Button
           onClick={onExecuteSearch}
           disabled={searching}
-          className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          className="w-full"
+          size="lg"
         >
-          <Shield className="w-5 h-5 mr-2" />
-          Execute {selectedCity !== 'All Cities' ? `${selectedCity} ` : 'Region-Wide '}Ultimate Search with Rate Analysis
+          {searching ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+              Searching...
+            </>
+          ) : (
+            <>
+              <Search className="w-4 h-4 mr-2" />
+              Execute Ultimate Search
+              {useMLAnalysis && (
+                <Badge variant="secondary" className="ml-2 text-xs">
+                  +AI
+                </Badge>
+              )}
+            </>
+          )}
         </Button>
 
         {searching && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm font-medium">
-              <span>{currentPhase}</span>
-              <span>{progress}%</span>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">{currentPhase}</span>
+              <span className="font-medium">{progress}%</span>
             </div>
-            <Progress value={progress} className="w-full h-2" />
+            <Progress value={progress} className="w-full" />
           </div>
         )}
       </CardContent>

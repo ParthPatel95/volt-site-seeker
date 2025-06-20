@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,6 +34,7 @@ export function UltimatePowerInfrastructureFinder() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [analyzingSubstation, setAnalyzingSubstation] = useState<string | null>(null);
   const [deletingSubstation, setDeletingSubstation] = useState<string | null>(null);
+  const [useMLAnalysis, setUseMLAnalysis] = useState(false);
   const { estimateCapacity, loading: capacityLoading } = useCapacityEstimator();
   const { toast } = useToast();
 
@@ -81,7 +81,7 @@ export function UltimatePowerInfrastructureFinder() {
     setSearchStats(null);
 
     try {
-      console.log('Starting ultimate substation search for', searchRegion, selectedCity !== 'All Cities' ? `in ${selectedCity}` : '');
+      console.log('Starting ultimate substation search for', searchRegion, selectedCity !== 'All Cities' ? `in ${selectedCity}` : '', useMLAnalysis ? 'with AI analysis' : '');
       
       setCurrentPhase('Phase 1: Regulatory Data Integration');
       setProgress(5);
@@ -112,7 +112,7 @@ export function UltimatePowerInfrastructureFinder() {
       if (satError) throw satError;
       setProgress(40);
 
-      setCurrentPhase('Phase 3: Google Maps Integration');
+      setCurrentPhase('Phase 3: Enhanced Google Maps + AI Integration');
       
       const searchLocation = selectedCity !== 'All Cities' 
         ? `${selectedCity}, ${searchRegion === 'texas' ? 'Texas, USA' : 'Alberta, Canada'}`
@@ -120,10 +120,9 @@ export function UltimatePowerInfrastructureFinder() {
       
       const { data: googleData, error: googleError } = await supabase.functions.invoke('google-maps-substation-finder', {
         body: {
-          action: 'comprehensive_search',
           location: searchLocation,
           maxResults: 0,
-          searchTerms: ['electrical substation', 'power substation', 'transmission substation', 'distribution substation']
+          useImageAnalysis: useMLAnalysis
         }
       });
 
@@ -170,9 +169,10 @@ export function UltimatePowerInfrastructureFinder() {
       await loadStoredSubstations();
 
       const searchArea = selectedCity !== 'All Cities' ? `${selectedCity}, ${searchRegion}` : `entire ${searchRegion} region`;
+      const analysisType = useMLAnalysis ? 'with AI satellite analysis' : '';
       toast({
         title: "Ultimate Search Complete!",
-        description: `Found and stored ${resultsWithRates.length} substations with rate estimations in ${searchArea}`,
+        description: `Found and stored ${resultsWithRates.length} substations ${analysisType} in ${searchArea}`,
       });
 
     } catch (error: any) {
@@ -290,6 +290,8 @@ export function UltimatePowerInfrastructureFinder() {
         searching={searching}
         progress={progress}
         currentPhase={currentPhase}
+        useMLAnalysis={useMLAnalysis}
+        setUseMLAnalysis={setUseMLAnalysis}
         onExecuteSearch={executeUltimateSearch}
       />
 

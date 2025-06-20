@@ -47,13 +47,21 @@ serve(async (req) => {
     await performEnhancedGoogleMapsSearch(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY)
     console.log(`Phase 1 complete: Found ${substations.length} substations via Google Maps`)
     
-    // Phase 2: ML-powered Satellite Image Analysis (optional, disabled by default for speed)
-    if (useImageAnalysis && OPENAI_API_KEY && substations.length < 100) {
-      console.log('Phase 2: ML-powered Satellite Image Analysis')
-      await performMLImageAnalysis(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY, OPENAI_API_KEY)
-      console.log(`Phase 2 complete: Total substations now ${substations.length}`)
+    // Phase 2: ML-powered Satellite Image Analysis (optional, user-controlled)
+    if (useImageAnalysis && OPENAI_API_KEY) {
+      console.log('Phase 2: Enhanced ML-powered Satellite Image Analysis')
+      if (!OPENAI_API_KEY) {
+        console.log('Warning: OpenAI API key not available for ML analysis')
+      } else {
+        try {
+          await performMLImageAnalysis(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY, OPENAI_API_KEY)
+          console.log(`Phase 2 complete: Total substations now ${substations.length}`)
+        } catch (mlError) {
+          console.error('ML Analysis failed but continuing with Google Maps results:', mlError)
+        }
+      }
     } else {
-      console.log('Phase 2: Skipped ML analysis (disabled or sufficient results found)')
+      console.log('Phase 2: ML analysis skipped (disabled by user or missing OpenAI key)')
     }
 
     // Phase 3: Cross-reference and validate findings
@@ -66,6 +74,14 @@ serve(async (req) => {
 
     console.log(`Search complete: Found ${finalResults.length} verified substations`)
 
+    const searchStats = {
+      googleMapsResults: substations.filter(s => s.detection_method?.includes('google_maps')).length,
+      mlDetections: substations.filter(s => s.detection_method?.includes('ml_image_analysis')).length,
+      afterValidation: validatedSubstations.length,
+      afterDeduplication: uniqueSubstations.length,
+      mlAnalysisUsed: useImageAnalysis && !!OPENAI_API_KEY
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -77,12 +93,8 @@ serve(async (req) => {
         totalFound: finalResults.length,
         limitApplied: maxResults > 0 ? maxResults : null,
         enhancedAnalysis: useImageAnalysis,
-        searchStats: {
-          googleMapsResults: substations.filter(s => s.detection_method?.includes('google_maps')).length,
-          mlDetections: substations.filter(s => s.detection_method === 'ml_image_analysis').length,
-          afterValidation: validatedSubstations.length,
-          afterDeduplication: uniqueSubstations.length
-        }
+        mlAnalysisAvailable: !!OPENAI_API_KEY,
+        searchStats
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
