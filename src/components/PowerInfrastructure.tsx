@@ -5,7 +5,7 @@ import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
 import { PowerInfrastructureLoading } from './power/PowerInfrastructureLoading';
 import { PowerOverviewCards } from './power/PowerOverviewCards';
 import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
-import { UnifiedSubstationFinder } from './power/UnifiedSubstationFinder';
+import { ComprehensiveSubstationFinder } from './power/ComprehensiveSubstationFinder';
 import { EIADataPanel } from './power/EIADataPanel';
 import { MapboxPowerInfrastructure } from './power/MapboxPowerInfrastructure';
 import { ERCOTDashboard } from './power/ERCOTDashboard';
@@ -89,7 +89,7 @@ export function PowerInfrastructure() {
             {powerData.totalSubstations === 0 && (
               <div className="text-center py-8">
                 <p className="text-slate-600 dark:text-slate-400 mb-4">
-                  No substation data available. Use the Substation Finder to discover and analyze substations.
+                  No substation data available. Use the Complete Finder to discover and analyze substations with all 5 phases.
                 </p>
               </div>
             )}
@@ -99,8 +99,8 @@ export function PowerInfrastructure() {
             <EnhancedCapacityEstimator />
           </TabsContent>
 
-          <TabsContent value="google-finder">
-            <UnifiedSubstationFinder />
+          <TabsContent value="comprehensive-finder">
+            <ComprehensiveSubstationFinder />
           </TabsContent>
 
           <TabsContent value="ercot-live">
