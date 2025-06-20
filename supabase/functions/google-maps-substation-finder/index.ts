@@ -10,7 +10,6 @@ const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
 
 interface SubstationSearchRequest {
   location: string
-  searchRadius?: number
   maxResults?: number // 0 means no limit
 }
 
@@ -35,7 +34,7 @@ serve(async (req) => {
       throw new Error('Google Maps API key not configured')
     }
 
-    const { location, searchRadius = 100000, maxResults = 0 }: SubstationSearchRequest = await req.json()
+    const { location, maxResults = 0 }: SubstationSearchRequest = await req.json()
 
     console.log('Searching for substations in:', location, 'with max results:', maxResults === 0 ? 'unlimited' : maxResults)
 
@@ -52,24 +51,24 @@ serve(async (req) => {
     const { lat, lng } = geocodeData.results[0].geometry.location
     console.log(`Geocoded ${location} to:`, lat, lng)
 
+    // For region-wide searches, use a large search radius
+    const searchRadius = maxResults === 0 ? 500000 : 100000 // 500km for unlimited, 100km for limited
+
     // Search for substations using Places API with expanded search terms
     const substations: DiscoveredSubstation[] = []
     
     // Comprehensive search terms to find different types of substations and power facilities
     const searchTerms = [
       'electrical substation',
-      'power substation',
+      'power substation', 
       'transmission substation',
       'distribution substation',
       'utility substation',
       'electric utility',
       'power station',
       'generating station',
-      'power plant',
       'electrical facility',
-      'transmission facility',
-      'power grid',
-      'electrical infrastructure'
+      'transmission facility'
     ]
 
     for (const searchTerm of searchTerms) {
@@ -82,7 +81,7 @@ serve(async (req) => {
 
         if (textData.status === 'OK' && textData.results) {
           for (const place of textData.results) {
-            // Check if this is likely a substation or power facility
+            // Check if this is likely a power facility
             if (isLikelyPowerFacility(place) && !substations.find(s => s.place_id === place.place_id)) {
               substations.push({
                 id: place.place_id,
@@ -206,9 +205,11 @@ serve(async (req) => {
     // Apply final limit if specified, otherwise return all
     const finalResults = maxResults > 0 ? uniqueSubstations.slice(0, maxResults) : uniqueSubstations
 
-    // Get additional details for substations
+    // Get additional details for substations (limited to first 50 to avoid timeout)
     const detailedSubstations = []
-    for (let i = 0; i < finalResults.length; i++) {
+    const detailLimit = Math.min(finalResults.length, 50)
+    
+    for (let i = 0; i < detailLimit; i++) {
       try {
         const substation = finalResults[i]
         const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${substation.place_id}&fields=name,formatted_address,geometry,rating,types,vicinity&key=${GOOGLE_MAPS_API_KEY}`
@@ -234,6 +235,11 @@ serve(async (req) => {
         console.error(`Error getting details for ${finalResults[i].name}:`, error)
         detailedSubstations.push(finalResults[i])
       }
+    }
+
+    // Add remaining substations without detailed info if we hit the detail limit
+    if (finalResults.length > detailLimit) {
+      detailedSubstations.push(...finalResults.slice(detailLimit))
     }
 
     console.log(`Found ${detailedSubstations.length} substations in ${location} ${maxResults === 0 ? '(unlimited)' : `(limit: ${maxResults})`}`)
