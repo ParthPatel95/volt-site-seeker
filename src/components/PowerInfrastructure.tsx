@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
@@ -10,6 +11,7 @@ import { ERCOTDashboard } from './power/ERCOTDashboard';
 import { FERCDashboard } from './power/FERCDashboard';
 import { USGSDashboard } from './power/USGSDashboard';
 import { EnvironmentalDashboard } from './power/EnvironmentalDashboard';
+import { IdleIndustryScanner } from './power/IdleIndustryScanner';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -95,6 +97,10 @@ export function PowerInfrastructure() {
 
           <TabsContent value="ultimate-finder">
             <UltimatePowerInfrastructureFinder />
+          </TabsContent>
+
+          <TabsContent value="idle-industry-scanner">
+            <IdleIndustryScanner />
           </TabsContent>
 
           <TabsContent value="capacity-estimator">

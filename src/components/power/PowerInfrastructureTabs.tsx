@@ -4,12 +4,15 @@ import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 export function PowerInfrastructureTabs() {
   return (
     <div className="w-full overflow-x-auto">
-      <TabsList className="grid w-full min-w-max grid-cols-8 h-auto p-1">
+      <TabsList className="grid w-full min-w-max grid-cols-9 h-auto p-1">
         <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           Overview
         </TabsTrigger>
         <TabsTrigger value="ultimate-finder" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           Ultimate Finder
+        </TabsTrigger>
+        <TabsTrigger value="idle-industry-scanner" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
+          Idle Industry Scanner
         </TabsTrigger>
         <TabsTrigger value="capacity-estimator" className="text-xs sm:text-sm px-2 py-2 sm:px-3 whitespace-nowrap">
           Capacity AI
