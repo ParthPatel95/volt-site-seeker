@@ -6,7 +6,7 @@ import { IdleIndustrySite, IdleIndustryScanFilters, IdleIndustryScanStats } from
 
 export function useIdleIndustryScanner() {
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedCity, setSelectedCity] = useState('all');
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState('');
@@ -46,7 +46,7 @@ export function useIdleIndustryScanner() {
     setResults([]);
 
     try {
-      console.log('Starting idle industry scan for:', selectedJurisdiction, selectedCity || 'all cities');
+      console.log('Starting idle industry scan for:', selectedJurisdiction, selectedCity === 'all' ? 'all cities' : selectedCity);
       
       // Phase 1: Industrial Site Discovery
       setCurrentPhase('Discovering industrial sites...');
@@ -56,7 +56,7 @@ export function useIdleIndustryScanner() {
         body: { 
           action: 'discover_sites',
           jurisdiction: selectedJurisdiction,
-          city: selectedCity || undefined
+          city: selectedCity === 'all' ? undefined : selectedCity
         }
       });
 
@@ -106,7 +106,7 @@ export function useIdleIndustryScanner() {
 
       toast({
         title: "Scan Completed",
-        description: `Found ${opportunityData.sites?.length || 0} industrial sites in ${selectedJurisdiction}${selectedCity ? ` - ${selectedCity}` : ''}`,
+        description: `Found ${opportunityData.sites?.length || 0} industrial sites in ${selectedJurisdiction}${selectedCity !== 'all' ? ` - ${selectedCity}` : ''}`,
       });
 
     } catch (error: any) {
@@ -149,7 +149,7 @@ export function useIdleIndustryScanner() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `idle-industry-scan-${selectedJurisdiction.toLowerCase().replace(/\s+/g, '-')}${selectedCity ? `-${selectedCity.toLowerCase().replace(/\s+/g, '-')}` : ''}.csv`;
+    a.download = `idle-industry-scan-${selectedJurisdiction.toLowerCase().replace(/\s+/g, '-')}${selectedCity !== 'all' ? `-${selectedCity.toLowerCase().replace(/\s+/g, '-')}` : ''}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
 

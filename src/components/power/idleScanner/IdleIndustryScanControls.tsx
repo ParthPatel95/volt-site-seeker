@@ -60,7 +60,7 @@ export function IdleIndustryScanControls({
             <label className="text-sm font-medium">Jurisdiction *</label>
             <Select value={selectedJurisdiction} onValueChange={(value) => {
               setSelectedJurisdiction(value);
-              setSelectedCity(''); // Reset city when jurisdiction changes
+              setSelectedCity('all'); // Reset city when jurisdiction changes
             }} disabled={scanning}>
               <SelectTrigger>
                 <SelectValue placeholder="Select state or province" />
@@ -92,7 +92,7 @@ export function IdleIndustryScanControls({
                 } />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Cities</SelectItem>
+                <SelectItem value="all">All Cities</SelectItem>
                 {availableCities.map(city => (
                   <SelectItem key={city} value={city}>
                     {city}
@@ -103,7 +103,7 @@ export function IdleIndustryScanControls({
           </div>
         </div>
 
-        {selectedCity && (
+        {selectedCity && selectedCity !== 'all' && (
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400">
               <AlertTriangle className="w-4 h-4" />
@@ -145,7 +145,7 @@ export function IdleIndustryScanControls({
           <p>• Scans industrial facilities for underutilization patterns</p>
           <p>• Uses AI-powered satellite imagery analysis</p>
           <p>• Estimates available power capacity for data center conversion</p>
-          {selectedCity && <p>• City-specific search reduces processing time</p>}
+          {selectedCity && selectedCity !== 'all' && <p>• City-specific search reduces processing time</p>}
         </div>
       </CardContent>
     </Card>
