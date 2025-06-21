@@ -1358,6 +1358,63 @@ export type Database = {
         }
         Relationships: []
       }
+      site_scan_sessions: {
+        Row: {
+          city: string | null
+          completed_at: string | null
+          config: Json | null
+          created_at: string
+          created_by: string | null
+          current_phase: string | null
+          data_sources_used: Json | null
+          filters: Json | null
+          id: string
+          jurisdiction: string
+          processing_time_minutes: number | null
+          progress: number | null
+          scan_type: string
+          sites_discovered: number | null
+          sites_verified: number | null
+          status: string
+        }
+        Insert: {
+          city?: string | null
+          completed_at?: string | null
+          config?: Json | null
+          created_at?: string
+          created_by?: string | null
+          current_phase?: string | null
+          data_sources_used?: Json | null
+          filters?: Json | null
+          id?: string
+          jurisdiction: string
+          processing_time_minutes?: number | null
+          progress?: number | null
+          scan_type?: string
+          sites_discovered?: number | null
+          sites_verified?: number | null
+          status?: string
+        }
+        Update: {
+          city?: string | null
+          completed_at?: string | null
+          config?: Json | null
+          created_at?: string
+          created_by?: string | null
+          current_phase?: string | null
+          data_sources_used?: Json | null
+          filters?: Json | null
+          id?: string
+          jurisdiction?: string
+          processing_time_minutes?: number | null
+          progress?: number | null
+          scan_type?: string
+          sites_discovered?: number | null
+          sites_verified?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       social_intelligence: {
         Row: {
           author: string | null
@@ -1655,6 +1712,156 @@ export type Database = {
           },
         ]
       }
+      verified_heavy_power_sites: {
+        Row: {
+          address: string
+          business_status: string | null
+          capacity_utilization: number | null
+          city: string
+          confidence_level: string | null
+          confidence_score: number | null
+          coordinates: unknown | null
+          created_at: string
+          created_by: string | null
+          data_sources: Json | null
+          deleted_at: string | null
+          discovery_method: string | null
+          environmental_permits: Json | null
+          estimated_current_mw: number | null
+          estimated_free_mw: number | null
+          facility_type: string | null
+          historical_peak_mw: number | null
+          id: string
+          idle_score: number | null
+          industry_type: string
+          jurisdiction: string
+          last_scan_at: string | null
+          last_verified_at: string | null
+          listing_price: number | null
+          lot_size_acres: number | null
+          market_data: Json | null
+          naics_code: string | null
+          name: string
+          power_potential: string | null
+          price_per_sqft: number | null
+          property_type: string | null
+          regulatory_status: Json | null
+          risk_factors: Json | null
+          satellite_analysis: Json | null
+          satellite_image_url: string | null
+          scan_id: string | null
+          square_footage: number | null
+          state: string
+          substation_distance_km: number | null
+          transmission_access: boolean | null
+          updated_at: string
+          validation_status: string | null
+          verified_sources_count: number | null
+          visual_status: string | null
+          year_built: number | null
+          zip_code: string | null
+          zoning: string | null
+        }
+        Insert: {
+          address: string
+          business_status?: string | null
+          capacity_utilization?: number | null
+          city: string
+          confidence_level?: string | null
+          confidence_score?: number | null
+          coordinates?: unknown | null
+          created_at?: string
+          created_by?: string | null
+          data_sources?: Json | null
+          deleted_at?: string | null
+          discovery_method?: string | null
+          environmental_permits?: Json | null
+          estimated_current_mw?: number | null
+          estimated_free_mw?: number | null
+          facility_type?: string | null
+          historical_peak_mw?: number | null
+          id?: string
+          idle_score?: number | null
+          industry_type: string
+          jurisdiction: string
+          last_scan_at?: string | null
+          last_verified_at?: string | null
+          listing_price?: number | null
+          lot_size_acres?: number | null
+          market_data?: Json | null
+          naics_code?: string | null
+          name: string
+          power_potential?: string | null
+          price_per_sqft?: number | null
+          property_type?: string | null
+          regulatory_status?: Json | null
+          risk_factors?: Json | null
+          satellite_analysis?: Json | null
+          satellite_image_url?: string | null
+          scan_id?: string | null
+          square_footage?: number | null
+          state: string
+          substation_distance_km?: number | null
+          transmission_access?: boolean | null
+          updated_at?: string
+          validation_status?: string | null
+          verified_sources_count?: number | null
+          visual_status?: string | null
+          year_built?: number | null
+          zip_code?: string | null
+          zoning?: string | null
+        }
+        Update: {
+          address?: string
+          business_status?: string | null
+          capacity_utilization?: number | null
+          city?: string
+          confidence_level?: string | null
+          confidence_score?: number | null
+          coordinates?: unknown | null
+          created_at?: string
+          created_by?: string | null
+          data_sources?: Json | null
+          deleted_at?: string | null
+          discovery_method?: string | null
+          environmental_permits?: Json | null
+          estimated_current_mw?: number | null
+          estimated_free_mw?: number | null
+          facility_type?: string | null
+          historical_peak_mw?: number | null
+          id?: string
+          idle_score?: number | null
+          industry_type?: string
+          jurisdiction?: string
+          last_scan_at?: string | null
+          last_verified_at?: string | null
+          listing_price?: number | null
+          lot_size_acres?: number | null
+          market_data?: Json | null
+          naics_code?: string | null
+          name?: string
+          power_potential?: string | null
+          price_per_sqft?: number | null
+          property_type?: string | null
+          regulatory_status?: Json | null
+          risk_factors?: Json | null
+          satellite_analysis?: Json | null
+          satellite_image_url?: string | null
+          scan_id?: string | null
+          square_footage?: number | null
+          state?: string
+          substation_distance_km?: number | null
+          transmission_access?: boolean | null
+          updated_at?: string
+          validation_status?: string | null
+          verified_sources_count?: number | null
+          visual_status?: string | null
+          year_built?: number | null
+          zip_code?: string | null
+          zoning?: string | null
+        }
+        Relationships: []
+      }
       volt_scores: {
         Row: {
           calculated_at: string
@@ -1710,7 +1917,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      bulk_delete_verified_sites: {
+        Args: { site_ids: string[] }
+        Returns: number
+      }
+      restore_verified_site: {
+        Args: { site_id: string }
+        Returns: boolean
+      }
+      soft_delete_verified_site: {
+        Args: { site_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       alert_type:
