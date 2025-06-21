@@ -1,4 +1,3 @@
-
 export interface EnhancedVerifiedSite {
   id: string;
   name: string;
@@ -81,11 +80,11 @@ export interface EnhancedVerifiedSite {
 export interface ScanSession {
   id: string;
   jurisdiction: string;
-  city?: string;
+  city?: string | null;
   scan_type: string;
-  status: string; // Changed from union type to string to match database
+  status: string;
   progress: number;
-  current_phase?: string;
+  current_phase?: string | null;
   
   config: any;
   filters: any;
@@ -93,11 +92,11 @@ export interface ScanSession {
   sites_discovered: number;
   sites_verified: number;
   data_sources_used: string[];
-  processing_time_minutes?: number;
+  processing_time_minutes?: number | null;
   
   created_at: string;
-  completed_at?: string;
-  created_by?: string;
+  completed_at?: string | null;
+  created_by?: string | null;
 }
 
 export interface EnhancedScanConfig {

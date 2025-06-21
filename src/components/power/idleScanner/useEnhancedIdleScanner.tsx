@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -198,9 +197,11 @@ export function useEnhancedIdleScanner() {
       if (error) throw error;
       
       // Convert the data to match our ScanSession interface
-      const formattedHistory = (data || []).map(session => ({
+      const formattedHistory: ScanSession[] = (data || []).map(session => ({
         ...session,
-        data_sources_used: Array.isArray(session.data_sources_used) ? session.data_sources_used : []
+        data_sources_used: Array.isArray(session.data_sources_used) 
+          ? (session.data_sources_used as any[]).map(item => String(item))
+          : []
       }));
       
       setScanHistory(formattedHistory);
