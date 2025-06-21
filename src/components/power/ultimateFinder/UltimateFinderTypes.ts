@@ -50,7 +50,6 @@ export interface StoredSubstation {
 }
 
 export const TEXAS_CITIES = [
-  'All Cities',
   'Houston', 'San Antonio', 'Dallas', 'Austin', 'Fort Worth', 'El Paso',
   'Arlington', 'Corpus Christi', 'Plano', 'Lubbock', 'Laredo', 'Irving',
   'Garland', 'Frisco', 'McKinney', 'Grand Prairie', 'Amarillo', 'Mesquite',
@@ -60,7 +59,6 @@ export const TEXAS_CITIES = [
 ];
 
 export const ALBERTA_CITIES = [
-  'All Cities',
   'Calgary', 'Edmonton', 'Red Deer', 'Lethbridge', 'Medicine Hat',
   'Grande Prairie', 'Airdrie', 'Spruce Grove', 'Okotoks', 'Lloydminster',
   'Camrose', 'Brooks', 'Cold Lake', 'Wetaskiwin', 'Leduc', 'Fort Saskatchewan',
