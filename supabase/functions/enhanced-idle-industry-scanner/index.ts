@@ -214,8 +214,7 @@ async function scanGooglePlacesReal(config: any) {
             business_status: place.business_status || 'unknown',
             data_sources: ['GOOGLE_PLACES'],
             discovery_method: 'Google Places API',
-            rating: place.rating,
-            place_id: place.place_id
+            rating: place.rating
           });
         }
       }
@@ -317,7 +316,6 @@ async function scanEPAFacilitiesReal(config: any) {
               data_sources: ['EPA_FRS'],
               discovery_method: 'EPA Facility Registry',
               naics_code: facility.NAICS_CODE,
-              sic_code: facility.SIC_CODE,
               environmental_permits: ['EPA Regulated']
             });
           }
@@ -512,13 +510,32 @@ async function storeVerifiedSites(sites: any[], scanId: string, config: any) {
   }
   
   const sitesToStore = sites.map(site => ({
-    ...site,
+    name: site.name,
+    address: site.address,
+    city: site.city || 'Unknown',
+    state: config.jurisdiction,
+    zip_code: site.zip_code || null,
+    naics_code: site.naics_code || null,
+    industry_type: site.industry_type,
+    facility_type: site.facility_type || 'Industrial Facility',
+    business_status: site.business_status || 'unknown',
+    confidence_score: site.confidence_score || 50,
+    confidence_level: site.confidence_level || 'Medium',
+    idle_score: site.idle_score || 30,
+    power_potential: site.power_potential || 'Medium',
+    estimated_free_mw: site.estimated_free_mw || 20,
+    data_sources: site.data_sources || [],
+    verified_sources_count: site.data_sources?.length || 1,
+    last_verified_at: site.last_verified_at || new Date().toISOString(),
+    validation_status: site.validation_status || 'verified',
+    satellite_image_url: site.satellite_image_url || null,
+    visual_status: site.visual_status || 'Active',
+    discovery_method: site.discovery_method || 'Multi-source scan',
     scan_id: scanId,
     jurisdiction: config.jurisdiction,
     created_by: config.userId,
     coordinates: site.coordinates ? `POINT(${site.coordinates.lng || 0} ${site.coordinates.lat || 0})` : null,
-    city: site.city || 'Unknown',
-    state: config.jurisdiction
+    last_scan_at: new Date().toISOString()
   }));
   
   const { error } = await supabase
