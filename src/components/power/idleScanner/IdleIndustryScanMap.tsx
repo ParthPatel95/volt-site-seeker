@@ -3,22 +3,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Zap, Factory, Eye } from 'lucide-react';
-import { IdleIndustrySite, IdleIndustryScanFilters } from './types';
+import { IdleIndustrySite } from './types';
 
 interface IdleIndustryScanMapProps {
-  results: IdleIndustrySite[];
-  filters: IdleIndustryScanFilters;
+  sites: IdleIndustrySite[];
 }
 
-export function IdleIndustryScanMap({ results, filters }: IdleIndustryScanMapProps) {
-  const filteredResults = results.filter(site => {
-    return (
-      site.idleScore >= filters.minIdleScore &&
-      site.estimatedFreeMW >= filters.minFreeMW &&
-      site.substationDistanceKm <= filters.maxSubstationDistance
-    );
-  });
-
+export function IdleIndustryScanMap({ sites }: IdleIndustryScanMapProps) {
   const getIdleScoreColor = (score: number) => {
     if (score >= 80) return 'bg-red-500';
     if (score >= 60) return 'bg-orange-500';
@@ -31,7 +22,7 @@ export function IdleIndustryScanMap({ results, filters }: IdleIndustryScanMapPro
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MapPin className="w-5 h-5" />
-          Interactive Map ({filteredResults.length} sites)
+          Interactive Map ({sites.length} sites)
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -66,29 +57,31 @@ export function IdleIndustryScanMap({ results, filters }: IdleIndustryScanMapPro
           </div>
 
           {/* Sample Pins Preview */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-            {filteredResults.slice(0, 4).map((site) => (
-              <div key={site.id} className="bg-white dark:bg-slate-700 rounded-lg p-3 border">
-                <div className="flex items-start gap-3">
-                  <div className={`w-4 h-4 ${getIdleScoreColor(site.idleScore)} rounded-full mt-1`}></div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">{site.name}</h4>
-                    <p className="text-xs text-muted-foreground">{site.city}, {site.state}</p>
-                    <div className="flex items-center gap-3 mt-2 text-xs">
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {site.idleScore}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
-                        {site.estimatedFreeMW}MW
-                      </span>
+          {sites.length > 0 && (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+              {sites.slice(0, 4).map((site) => (
+                <div key={site.id} className="bg-white dark:bg-slate-700 rounded-lg p-3 border">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-4 h-4 ${getIdleScoreColor(site.idleScore)} rounded-full mt-1`}></div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm truncate">{site.name}</h4>
+                      <p className="text-xs text-muted-foreground">{site.city}, {site.state}</p>
+                      <div className="flex items-center gap-3 mt-2 text-xs">
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          {site.idleScore}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Zap className="w-3 h-3" />
+                          {site.estimatedFreeMW}MW
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -15,7 +15,9 @@ interface IdleIndustryScanControlsProps {
   scanning: boolean;
   progress: number;
   currentPhase: string;
-  onExecuteScan: () => void;
+  executeScan: () => void;
+  exportToCsv: () => void;
+  exportToPdf: () => Promise<void>;
 }
 
 const JURISDICTIONS = [
@@ -31,7 +33,9 @@ export function IdleIndustryScanControls({
   scanning,
   progress,
   currentPhase,
-  onExecuteScan
+  executeScan,
+  exportToCsv,
+  exportToPdf
 }: IdleIndustryScanControlsProps) {
   const getCitiesForJurisdiction = (jurisdiction: string) => {
     switch (jurisdiction) {
@@ -123,7 +127,7 @@ export function IdleIndustryScanControls({
         )}
 
         <Button 
-          onClick={onExecuteScan}
+          onClick={executeScan}
           disabled={scanning || !selectedJurisdiction}
           className="w-full"
           size="lg"
