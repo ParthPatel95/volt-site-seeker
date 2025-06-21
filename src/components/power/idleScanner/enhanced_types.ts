@@ -83,7 +83,7 @@ export interface ScanSession {
   jurisdiction: string;
   city?: string;
   scan_type: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: string; // Changed from union type to string to match database
   progress: number;
   current_phase?: string;
   

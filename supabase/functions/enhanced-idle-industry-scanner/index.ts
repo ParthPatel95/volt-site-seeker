@@ -375,7 +375,7 @@ async function calculateAdvancedConfidence(sites: any[]) {
       estimated_free_mw: Math.floor(Math.random() * 200) + 50,
       substation_distance_km: Math.random() * 10 + 1
     };
-  }));
+  });
 }
 
 async function storeVerifiedSites(sites: any[], scanId: string, config: any) {

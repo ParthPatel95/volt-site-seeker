@@ -196,7 +196,14 @@ export function useEnhancedIdleScanner() {
         .limit(10);
 
       if (error) throw error;
-      setScanHistory(data || []);
+      
+      // Convert the data to match our ScanSession interface
+      const formattedHistory = (data || []).map(session => ({
+        ...session,
+        data_sources_used: Array.isArray(session.data_sources_used) ? session.data_sources_used : []
+      }));
+      
+      setScanHistory(formattedHistory);
     } catch (error) {
       console.error('Error loading scan history:', error);
     }
