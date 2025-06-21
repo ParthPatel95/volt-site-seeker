@@ -1,14 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Zap, Factory, Calendar, Phone, Globe, Star, Clock, AlertTriangle } from 'lucide-react';
+import { MapPin, Zap, Factory, Calendar, Phone, Globe, Star, Clock, AlertTriangle, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { IdleIndustrySite } from './types';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+// Mapbox public token
+mapboxgl.accessToken = 'pk.eyJ1Ijoidm9sdHNjb3V0IiwiYSI6ImNtYnpqeWtmeDF5YjkycXB2MzQ3YWk0YzIifQ.YkeTxxJcGkgHTpt9miLk6A';
 
 interface IdleIndustrySiteDetailsModalProps {
   site: IdleIndustrySite | null;
@@ -33,6 +38,8 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
   const [siteDetails, setSiteDetails] = useState<SiteDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
 
   const fetchSiteDetails = async () => {
     if (!site) return;
@@ -62,10 +69,58 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
     }
   };
 
+  const initializeMap = () => {
+    if (!mapContainer.current || !site || map.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
+      center: [site.coordinates.lng, site.coordinates.lat],
+      zoom: 16,
+      pitch: 45,
+      bearing: 0
+    });
+
+    // Add navigation controls
+    map.current.addControl(
+      new mapboxgl.NavigationControl({
+        visualizePitch: true,
+      }),
+      'top-right'
+    );
+
+    // Add a marker for the industrial site
+    const marker = new mapboxgl.Marker({
+      color: '#f59e0b',
+      scale: 1.2
+    })
+      .setLngLat([site.coordinates.lng, site.coordinates.lat])
+      .setPopup(new mapboxgl.Popup().setHTML(`
+        <div class="p-2">
+          <h3 class="font-semibold text-sm">${site.name}</h3>
+          <p class="text-xs text-gray-600">${site.industryType}</p>
+          <p class="text-xs">${site.city}, ${site.state}</p>
+        </div>
+      `))
+      .addTo(map.current);
+
+    // Show popup initially
+    marker.getPopup().addTo(map.current);
+  };
+
   useEffect(() => {
     if (open && site) {
       fetchSiteDetails();
+      // Initialize map with a slight delay to ensure the container is rendered
+      setTimeout(initializeMap, 100);
     }
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
   }, [open, site]);
 
   if (!site) return null;
@@ -99,19 +154,34 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
     </Badge>;
   };
 
+  const handleViewOnGoogleMaps = () => {
+    const url = `https://maps.google.com/?q=${site.coordinates.lat},${site.coordinates.lng}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Factory className="w-6 h-6 text-orange-600" />
             {site.name}
+            <Button
+              onClick={handleViewOnGoogleMaps}
+              size="sm"
+              variant="outline"
+              className="ml-auto"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Google Maps
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="location">Location</TabsTrigger>
             <TabsTrigger value="analysis">Analysis</TabsTrigger>
             <TabsTrigger value="opportunity">Opportunity</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
@@ -123,18 +193,10 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <MapPin className="w-5 h-5" />
-                    Location & Basic Info
+                    Basic Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Address</label>
-                    <p className="text-sm">{site.address}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">City, State</label>
-                    <p className="text-sm">{site.city}, {site.state}</p>
-                  </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Industry Type</label>
                     <p className="text-sm">{site.industryType}</p>
@@ -142,6 +204,14 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                   <div>
                     <label className="text-sm font-medium text-gray-600">NAICS Code</label>
                     <p className="text-sm">{site.naicsCode}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Address</label>
+                    <p className="text-sm">{site.address}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">City, State</label>
+                    <p className="text-sm">{site.city}, {site.state}</p>
                   </div>
                   {site.operationalStatus && (
                     <div>
@@ -156,7 +226,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Zap className="w-5 h-5" />
-                    Power Capacity
+                    Power Metrics
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -173,8 +243,8 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                     <p className="text-sm">{site.capacityUtilization}%</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Substation Distance</label>
-                    <p className="text-sm">{site.substationDistanceKm.toFixed(1)} km</p>
+                    <label className="text-sm font-medium text-gray-600">Idle Score</label>
+                    <div className="mt-1">{getIdleScoreBadge(site.idleScore)}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -199,6 +269,42 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="location" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Facility Location Map
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Coordinates:</span>
+                      <p className="font-mono">{site.coordinates.lat.toFixed(6)}, {site.coordinates.lng.toFixed(6)}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Substation Distance:</span>
+                      <p>{site.substationDistanceKm.toFixed(1)} km</p>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    ref={mapContainer} 
+                    className="w-full h-96 rounded-lg border"
+                    style={{ minHeight: '400px' }}
+                  />
+                  
+                  <div className="flex justify-between items-center text-xs text-gray-500">
+                    <span>Satellite imagery shows industrial facility layout</span>
+                    <span>© Mapbox © OpenStreetMap</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="analysis" className="space-y-4">
@@ -351,7 +457,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
 
                     {siteDetails.openingHours && siteDetails.openingHours.length > 0 && (
                       <div>
-                        <label className="text-sm font-medium text-gray-600">Opening Hours</label>
+                        <label className="text-sm font-medium text-gray-600">Operating Hours</label>
                         <div className="mt-1 space-y-1">
                           {siteDetails.openingHours.map((hours, index) => (
                             <div key={index} className="flex items-center gap-2 text-sm">
