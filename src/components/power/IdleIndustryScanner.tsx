@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { IdleIndustryScanResults } from './idleScanner/IdleIndustryScanResults';
 import { IdleIndustryScanMap } from './idleScanner/IdleIndustryScanMap';
 import { IdleIndustryScanStats } from './idleScanner/IdleIndustryScanStats';
 import { useIdleIndustryScanner } from './idleScanner/useIdleIndustryScanner';
+import { RealDataVerifiedSitesPanel } from './idleScanner/RealDataVerifiedSitesPanel';
 
 export function IdleIndustryScanner() {
   const {
@@ -33,104 +33,73 @@ export function IdleIndustryScanner() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
-              <Factory className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
-              <CardTitle className="text-xl">Idle Industry Scanner</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Discover underutilized industrial facilities with high power capacity potential for data center conversion
-              </p>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Factory className="w-6 h-6 text-orange-600" />
+            High Power Industry Map
+            <Badge variant="outline" className="ml-auto">AI-Powered Analysis</Badge>
+          </CardTitle>
         </CardHeader>
-      </Card>
-
-      {/* Scan Controls */}
-      <IdleIndustryScanControls
-        selectedJurisdiction={selectedJurisdiction}
-        setSelectedJurisdiction={setSelectedJurisdiction}
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
-        scanning={scanning}
-        progress={progress}
-        currentPhase={currentPhase}
-        onExecuteScan={executeScan}
-      />
-
-      {/* Results Section */}
-      {results.length > 0 && (
-        <>
-          {/* Stats Overview */}
-          <IdleIndustryScanStats 
-            scanStats={scanStats}
-            results={results}
-            onExportCsv={exportToCsv}
-            onExportPdf={exportToPdf}
-          />
-
-          {/* Results Tabs */}
-          <Tabs defaultValue="table" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="table" className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                Results Table
-              </TabsTrigger>
-              <TabsTrigger value="map" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                Interactive Map
-              </TabsTrigger>
+        <CardContent>
+          <Tabs defaultValue="scanner" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="scanner">🏭 Idle Industry Scanner</TabsTrigger>
+              <TabsTrigger value="verified">✅ Verified Heavy Power Sites</TabsTrigger>
+              <TabsTrigger value="map">🗺️ Interactive Map</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="table">
-              <IdleIndustryScanResults
-                results={results}
-                filters={filters}
-                setFilters={setFilters}
+            <TabsContent value="scanner" className="space-y-6">
+              <IdleIndustryScanControls
+                selectedJurisdiction={selectedJurisdiction}
+                setSelectedJurisdiction={setSelectedJurisdiction}
+                selectedCity={selectedCity}
+                setSelectedCity={setSelectedCity}
+                scanning={scanning}
+                progress={progress}
+                currentPhase={currentPhase}
+                executeScan={executeScan}
+                exportToCsv={exportToCsv}
+                exportToPdf={exportToPdf}
               />
+
+              {scanStats && (
+                <IdleIndustryScanStats stats={scanStats} />
+              )}
+
+              {results.length > 0 && (
+                <IdleIndustryScanResults
+                  results={results}
+                  filters={filters}
+                  setFilters={setFilters}
+                />
+              )}
             </TabsContent>
 
-            <TabsContent value="map">
-              <IdleIndustryScanMap
-                results={results}
-                filters={filters}
-              />
+            <TabsContent value="verified">
+              <RealDataVerifiedSitesPanel />
+            </TabsContent>
+
+            <TabsContent value="map" className="space-y-4">
+              {results.length > 0 ? (
+                <IdleIndustryScanMap 
+                  sites={results.filter(site => 
+                    site.idleScore >= filters.minIdleScore &&
+                    site.estimatedFreeMW >= filters.minFreeMW &&
+                    site.substationDistanceKm <= filters.maxSubstationDistance
+                  )}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <Factory className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No scan results yet</h3>
+                  <p className="text-gray-500">Run a scan to see sites on the interactive map</p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
-        </>
-      )}
-
-      {/* Empty State */}
-      {!scanning && results.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Factory className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Ready to Scan for Idle Industries</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Select a jurisdiction and optionally a specific city to discover underutilized industrial facilities 
-              with high power capacity potential for data center conversion.
-            </p>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center justify-center gap-2">
-                <Eye className="w-4 h-4" />
-                <span>AI-powered satellite analysis</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <Zap className="w-4 h-4" />
-                <span>Power capacity estimation</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span>Substation proximity analysis</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
