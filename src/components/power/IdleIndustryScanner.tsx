@@ -17,6 +17,8 @@ export function IdleIndustryScanner() {
   const {
     selectedJurisdiction,
     setSelectedJurisdiction,
+    selectedCity,
+    setSelectedCity,
     scanning,
     progress,
     currentPhase,
@@ -52,6 +54,8 @@ export function IdleIndustryScanner() {
       <IdleIndustryScanControls
         selectedJurisdiction={selectedJurisdiction}
         setSelectedJurisdiction={setSelectedJurisdiction}
+        selectedCity={selectedCity}
+        setSelectedCity={setSelectedCity}
         scanning={scanning}
         progress={progress}
         currentPhase={currentPhase}
@@ -107,7 +111,7 @@ export function IdleIndustryScanner() {
             <Factory className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Ready to Scan for Idle Industries</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Select a jurisdiction and run a scan to discover underutilized industrial facilities 
+              Select a jurisdiction and optionally a specific city to discover underutilized industrial facilities 
               with high power capacity potential for data center conversion.
             </p>
             <div className="space-y-2 text-sm text-muted-foreground">

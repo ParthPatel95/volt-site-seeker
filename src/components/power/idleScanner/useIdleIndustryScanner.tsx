@@ -6,6 +6,7 @@ import { IdleIndustrySite, IdleIndustryScanFilters, IdleIndustryScanStats } from
 
 export function useIdleIndustryScanner() {
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState('');
@@ -45,7 +46,7 @@ export function useIdleIndustryScanner() {
     setResults([]);
 
     try {
-      console.log('Starting idle industry scan for:', selectedJurisdiction);
+      console.log('Starting idle industry scan for:', selectedJurisdiction, selectedCity || 'all cities');
       
       // Phase 1: Industrial Site Discovery
       setCurrentPhase('Discovering industrial sites...');
@@ -54,7 +55,8 @@ export function useIdleIndustryScanner() {
       const { data: siteData, error: siteError } = await supabase.functions.invoke('idle-industry-scanner', {
         body: { 
           action: 'discover_sites',
-          jurisdiction: selectedJurisdiction 
+          jurisdiction: selectedJurisdiction,
+          city: selectedCity || undefined
         }
       });
 
@@ -104,7 +106,7 @@ export function useIdleIndustryScanner() {
 
       toast({
         title: "Scan Completed",
-        description: `Found ${opportunityData.sites?.length || 0} industrial sites in ${selectedJurisdiction}`,
+        description: `Found ${opportunityData.sites?.length || 0} industrial sites in ${selectedJurisdiction}${selectedCity ? ` - ${selectedCity}` : ''}`,
       });
 
     } catch (error: any) {
@@ -129,9 +131,7 @@ export function useIdleIndustryScanner() {
     );
 
     const csvContent = [
-      // CSV Header
       ['Site Name', 'Industry', 'City', 'State', 'Idle Score', 'Est Free MW', 'Substation Distance (km)', 'Strategy', 'Retrofit Cost'].join(','),
-      // CSV Data
       ...filteredResults.map(site => [
         site.name,
         site.industryType,
@@ -149,7 +149,7 @@ export function useIdleIndustryScanner() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `idle-industry-scan-${selectedJurisdiction.toLowerCase().replace(/\s+/g, '-')}.csv`;
+    a.download = `idle-industry-scan-${selectedJurisdiction.toLowerCase().replace(/\s+/g, '-')}${selectedCity ? `-${selectedCity.toLowerCase().replace(/\s+/g, '-')}` : ''}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
 
@@ -177,7 +177,6 @@ export function useIdleIndustryScanner() {
 
       if (error) throw error;
 
-      // Handle PDF download
       const blob = new Blob([data.pdfBuffer], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -203,6 +202,8 @@ export function useIdleIndustryScanner() {
   return {
     selectedJurisdiction,
     setSelectedJurisdiction,
+    selectedCity,
+    setSelectedCity,
     scanning,
     progress,
     currentPhase,
