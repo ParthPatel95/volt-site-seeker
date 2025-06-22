@@ -47,21 +47,20 @@ serve(async (req) => {
     await performEnhancedGoogleMapsSearch(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY)
     console.log(`Phase 1 complete: Found ${substations.length} substations via Google Maps`)
     
-    // Phase 2: ML-powered Satellite Image Analysis (optional, user-controlled)
+    // Phase 2: ML-powered Satellite Image Analysis (optional, only if enabled and API key available)
     if (useImageAnalysis && OPENAI_API_KEY) {
-      console.log('Phase 2: Enhanced ML-powered Satellite Image Analysis')
-      if (!OPENAI_API_KEY) {
-        console.log('Warning: OpenAI API key not available for ML analysis')
-      } else {
-        try {
-          await performMLImageAnalysis(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY, OPENAI_API_KEY)
-          console.log(`Phase 2 complete: Total substations now ${substations.length}`)
-        } catch (mlError) {
-          console.error('ML Analysis failed but continuing with Google Maps results:', mlError)
-        }
+      console.log('Phase 2: ML-powered Satellite Image Analysis')
+      try {
+        await performMLImageAnalysis(lat, lng, maxResults, substations, GOOGLE_MAPS_API_KEY, OPENAI_API_KEY)
+        console.log(`Phase 2 complete: Total substations now ${substations.length}`)
+      } catch (mlError) {
+        console.error('ML Analysis failed but continuing with Google Maps results:', mlError)
+        // Continue with Google Maps results even if ML fails
       }
+    } else if (useImageAnalysis && !OPENAI_API_KEY) {
+      console.log('Phase 2: ML analysis requested but OpenAI API key not available')
     } else {
-      console.log('Phase 2: ML analysis skipped (disabled by user or missing OpenAI key)')
+      console.log('Phase 2: ML analysis disabled by user')
     }
 
     // Phase 3: Cross-reference and validate findings
@@ -75,11 +74,12 @@ serve(async (req) => {
     console.log(`Search complete: Found ${finalResults.length} verified substations`)
 
     const searchStats = {
-      googleMapsResults: substations.filter(s => s.detection_method?.includes('google_maps')).length,
-      mlDetections: substations.filter(s => s.detection_method?.includes('ml_image_analysis')).length,
+      googleMapsResults: substations.filter(s => s.detection_method?.includes('google_maps') || !s.detection_method?.includes('ml')).length,
+      mlDetections: substations.filter(s => s.detection_method?.includes('ml')).length,
       afterValidation: validatedSubstations.length,
       afterDeduplication: uniqueSubstations.length,
-      mlAnalysisUsed: useImageAnalysis && !!OPENAI_API_KEY
+      mlAnalysisUsed: useImageAnalysis && !!OPENAI_API_KEY,
+      mlAnalysisAvailable: !!OPENAI_API_KEY
     }
 
     return new Response(
@@ -104,7 +104,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message,
+        details: 'Check edge function logs for more information'
       }),
       { 
         status: 500,
