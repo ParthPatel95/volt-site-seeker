@@ -3,7 +3,6 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PowerInfrastructureHeader } from './power/PowerInfrastructureHeader';
 import { PowerInfrastructureTabs } from './power/PowerInfrastructureTabs';
 import { PowerInfrastructureLoading } from './power/PowerInfrastructureLoading';
-import { PowerOverviewCards } from './power/PowerOverviewCards';
 import { EnhancedCapacityEstimator } from './power/EnhancedCapacityEstimator';
 import { UltimatePowerInfrastructureFinder } from './power/UltimatePowerInfrastructureFinder';
 import { EIADataPanel } from './power/EIADataPanel';
@@ -99,8 +98,6 @@ export function PowerInfrastructure() {
           <PowerInfrastructureTabs />
 
           <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-            <PowerOverviewCards powerData={powerData} />
-            
             {error && (
               <div className="text-center py-4 px-6 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-destructive mb-2">Error loading data: {error}</p>
