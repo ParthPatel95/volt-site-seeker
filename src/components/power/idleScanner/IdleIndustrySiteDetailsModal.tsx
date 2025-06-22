@@ -5,10 +5,30 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Zap, Factory, Calendar, Phone, Globe, Star, Clock, AlertTriangle, ExternalLink } from 'lucide-react';
+import { 
+  MapPin, 
+  Zap, 
+  Factory, 
+  Calendar, 
+  Phone, 
+  Globe, 
+  Star, 
+  Clock, 
+  AlertTriangle, 
+  ExternalLink,
+  Building2,
+  DollarSign,
+  Ruler,
+  Target,
+  Shield,
+  TrendingUp,
+  Database,
+  Eye,
+  Satellite
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { IdleIndustrySite } from './types';
+import { EnhancedVerifiedSite } from './enhanced_types';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -16,7 +36,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 mapboxgl.accessToken = 'pk.eyJ1Ijoidm9sdHNjb3V0IiwiYSI6ImNtYnpqeWtmeDF5YjkycXB2MzQ3YWk0YzIifQ.YkeTxxJcGkgHTpt9miLk6A';
 
 interface IdleIndustrySiteDetailsModalProps {
-  site: IdleIndustrySite | null;
+  site: EnhancedVerifiedSite | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -46,7 +66,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('idle-industry-scanner', {
+      const { data, error } = await supabase.functions.invoke('enhanced-idle-industry-scanner', {
         body: {
           action: 'get_site_details',
           coordinates: site.coordinates,
@@ -55,8 +75,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
       });
 
       if (error) throw error;
-
-      setSiteDetails(data.details);
+      setSiteDetails(data?.details || null);
     } catch (error: any) {
       console.error('Error fetching site details:', error);
       toast({
@@ -70,7 +89,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
   };
 
   const initializeMap = () => {
-    if (!mapContainer.current || !site || map.current) return;
+    if (!mapContainer.current || !site?.coordinates || map.current) return;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -98,7 +117,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
       .setPopup(new mapboxgl.Popup().setHTML(`
         <div class="p-2">
           <h3 class="font-semibold text-sm">${site.name}</h3>
-          <p class="text-xs text-gray-600">${site.industryType}</p>
+          <p class="text-xs text-gray-600">${site.industry_type}</p>
           <p class="text-xs">${site.city}, ${site.state}</p>
         </div>
       `))
@@ -125,38 +144,51 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
 
   if (!site) return null;
 
-  const getIdleScoreBadge = (score: number) => {
-    if (score >= 80) return <Badge className="bg-red-100 text-red-800">Critical ({score})</Badge>;
-    if (score >= 60) return <Badge className="bg-orange-100 text-orange-800">High ({score})</Badge>;
-    if (score >= 40) return <Badge className="bg-yellow-100 text-yellow-800">Medium ({score})</Badge>;
-    return <Badge className="bg-green-100 text-green-800">Low ({score})</Badge>;
+  const getConfidenceColor = (score: number) => {
+    if (score >= 80) return 'bg-green-100 text-green-800';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
   };
 
-  const getRetrofitCostBadge = (cost: string) => {
+  const getPowerPotentialColor = (potential: string) => {
     const colors = {
-      'L': 'bg-green-100 text-green-800',
-      'M': 'bg-yellow-100 text-yellow-800', 
-      'H': 'bg-red-100 text-red-800'
+      'High': 'bg-green-100 text-green-800',
+      'Medium': 'bg-yellow-100 text-yellow-800',
+      'Low': 'bg-red-100 text-red-800'
     };
-    const labels = { 'L': 'Low', 'M': 'Medium', 'H': 'High' };
-    return <Badge className={colors[cost as keyof typeof colors]}>{labels[cost as keyof typeof labels]}</Badge>;
+    return colors[potential as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const getBusinessStatusBadge = (status: string) => {
-    const statusColors = {
-      'OPERATIONAL': 'bg-green-100 text-green-800',
-      'CLOSED_TEMPORARILY': 'bg-yellow-100 text-yellow-800',
-      'CLOSED_PERMANENTLY': 'bg-red-100 text-red-800',
-      'UNKNOWN': 'bg-gray-100 text-gray-800'
+  const getBusinessStatusColor = (status: string) => {
+    const colors = {
+      'active': 'bg-green-100 text-green-800',
+      'operational': 'bg-green-100 text-green-800',
+      'inactive': 'bg-red-100 text-red-800',
+      'unknown': 'bg-gray-100 text-gray-800'
     };
-    return <Badge className={statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}>
-      {status.replace('_', ' ')}
-    </Badge>;
+    return colors[status?.toLowerCase() as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatCurrency = (value: number | null | undefined) => {
+    if (!value) return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  };
+
+  const formatNumber = (value: number | null | undefined, suffix = '') => {
+    if (value === null || value === undefined) return 'N/A';
+    return new Intl.NumberFormat('en-US').format(value) + suffix;
   };
 
   const handleViewOnGoogleMaps = () => {
-    const url = `https://maps.google.com/?q=${site.coordinates.lat},${site.coordinates.lng}`;
-    window.open(url, '_blank');
+    if (site.coordinates) {
+      const url = `https://maps.google.com/?q=${site.coordinates.lat},${site.coordinates.lng}`;
+      window.open(url, '_blank');
+    }
   };
 
   return (
@@ -166,352 +198,468 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
           <DialogTitle className="flex items-center gap-3">
             <Factory className="w-6 h-6 text-orange-600" />
             {site.name}
-            <Button
-              onClick={handleViewOnGoogleMaps}
-              size="sm"
-              variant="outline"
-              className="ml-auto"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Google Maps
-            </Button>
+            {site.coordinates && (
+              <Button
+                onClick={handleViewOnGoogleMaps}
+                size="sm"
+                variant="outline"
+                className="ml-auto"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Google Maps
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="location">Location</TabsTrigger>
-            <TabsTrigger value="analysis">Analysis</TabsTrigger>
-            <TabsTrigger value="opportunity">Opportunity</TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="power">Power Analysis</TabsTrigger>
+            <TabsTrigger value="business">Business Info</TabsTrigger>
+            <TabsTrigger value="financial">Financial</TabsTrigger>
+            <TabsTrigger value="technical">Technical</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Confidence Score</p>
+                      <Badge className={getConfidenceColor(site.confidence_score)}>
+                        {site.confidence_score}%
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-orange-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Power Potential</p>
+                      <Badge className={getPowerPotentialColor(site.power_potential || 'Unknown')}>
+                        {site.power_potential || 'Unknown'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Business Status</p>
+                      <Badge className={getBusinessStatusColor(site.business_status)}>
+                        {site.business_status || 'Unknown'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Idle Score</p>
+                      <p className="text-lg font-bold">{site.idle_score}%</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
+                    <Factory className="w-5 h-5" />
                     Basic Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-600">Industry Type</label>
-                    <p className="text-sm">{site.industryType}</p>
+                    <p className="text-sm">{site.industry_type}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Facility Type</label>
+                    <p className="text-sm">{site.facility_type || 'Not specified'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">NAICS Code</label>
-                    <p className="text-sm">{site.naicsCode}</p>
+                    <p className="text-sm">{site.naics_code || 'Not available'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Address</label>
-                    <p className="text-sm">{site.address}</p>
+                    <label className="text-sm font-medium text-gray-600">Discovery Method</label>
+                    <p className="text-sm">{site.discovery_method || 'Multi-source scan'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">City, State</label>
-                    <p className="text-sm">{site.city}, {site.state}</p>
-                  </div>
-                  {site.operationalStatus && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Operational Status</label>
-                      <div className="mt-1">{getBusinessStatusBadge(site.operationalStatus)}</div>
+                    <label className="text-sm font-medium text-gray-600">Data Sources</label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {site.data_sources?.map((source, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {source.replace(/_/g, ' ')}
+                        </Badge>
+                      )) || <span className="text-sm text-gray-500">No sources specified</span>}
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Zap className="w-5 h-5" />
-                    Power Metrics
+                    <MapPin className="w-5 h-5" />
+                    Location Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Historical Peak</label>
-                    <p className="text-lg font-semibold">{site.historicalPeakMW} MW</p>
+                    <label className="text-sm font-medium text-gray-600">Address</label>
+                    <p className="text-sm">{site.address}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Estimated Free Capacity</label>
-                    <p className="text-lg font-semibold text-green-600">{site.estimatedFreeMW} MW</p>
+                    <label className="text-sm font-medium text-gray-600">City</label>
+                    <p className="text-sm">{site.city}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">State/Province</label>
+                    <p className="text-sm">{site.state}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">ZIP Code</label>
+                    <p className="text-sm">{site.zip_code || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Jurisdiction</label>
+                    <p className="text-sm">{site.jurisdiction}</p>
+                  </div>
+                  {site.coordinates && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Coordinates</label>
+                      <p className="text-sm">{site.coordinates.lat.toFixed(6)}, {site.coordinates.lng.toFixed(6)}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="location" className="space-y-4">
+            {site.coordinates ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Satellite View</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div ref={mapContainer} className="w-full h-96 rounded-lg" />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No Coordinates Available</h3>
+                  <p className="text-gray-500">Location coordinates are not available for this site.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {site.substation_distance_km && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    Infrastructure Proximity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Distance to Nearest Substation</label>
+                      <p className="text-sm">{site.substation_distance_km} km</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Transmission Access</label>
+                      <Badge className={site.transmission_access ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                        {site.transmission_access ? 'Available' : 'Not Available'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="power" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    Power Consumption Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Historical Peak (MW)</label>
+                    <p className="text-lg font-semibold">{formatNumber(site.historical_peak_mw)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Current Estimated (MW)</label>
+                    <p className="text-lg font-semibold">{formatNumber(site.estimated_current_mw)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Available Capacity (MW)</label>
+                    <p className="text-lg font-semibold text-green-600">{formatNumber(site.estimated_free_mw)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Capacity Utilization</label>
-                    <p className="text-sm">{site.capacityUtilization}%</p>
+                    <p className="text-lg font-semibold">{formatNumber(site.capacity_utilization, '%')}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5" />
+                    Assessment Scores
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Power Potential</label>
+                    <Badge className={getPowerPotentialColor(site.power_potential || 'Unknown')}>
+                      {site.power_potential || 'Unknown'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Confidence Level</label>
+                    <Badge className={getConfidenceColor(site.confidence_score)}>
+                      {site.confidence_level} ({site.confidence_score}%)
+                    </Badge>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Idle Score</label>
-                    <div className="mt-1">{getIdleScoreBadge(site.idleScore)}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-orange-500 h-2 rounded-full" 
+                          style={{ width: `${site.idle_score}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium">{site.idle_score}%</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
 
-            {siteDetails?.photos && siteDetails.photos.length > 0 && (
+          <TabsContent value="business" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Facility Photos</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    Business Information
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {siteDetails.photos.map((photo, index) => (
-                      <img
-                        key={index}
-                        src={photo}
-                        alt={`${site.name} photo ${index + 1}`}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="location" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Facility Location Map
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Coordinates:</span>
-                      <p className="font-mono">{site.coordinates.lat.toFixed(6)}, {site.coordinates.lng.toFixed(6)}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Substation Distance:</span>
-                      <p>{site.substationDistanceKm.toFixed(1)} km</p>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    ref={mapContainer} 
-                    className="w-full h-96 rounded-lg border"
-                    style={{ minHeight: '400px' }}
-                  />
-                  
-                  <div className="flex justify-between items-center text-xs text-gray-500">
-                    <span>Satellite imagery shows industrial facility layout</span>
-                    <span>© Mapbox © OpenStreetMap</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analysis" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" />
-                  Idle Score Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
+                <CardContent className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Idle Score</label>
-                    <div className="mt-1">{getIdleScoreBadge(site.idleScore)}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Confidence Level</label>
-                    <p className="text-sm">{site.confidenceLevel}%</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Analysis Evidence</label>
-                  <p className="text-sm mt-1 p-3 bg-gray-50 rounded-lg">{site.evidenceText}</p>
-                </div>
-
-                {site.visionAnalysis && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Vision Analysis Indicators</label>
-                    <div className="grid grid-cols-2 gap-3 mt-2">
-                      {Object.entries(site.visionAnalysis).map(([key, value]) => (
-                        typeof value === 'number' && (
-                          <div key={key} className="flex justify-between text-sm">
-                            <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                            <span>{(value * 100).toFixed(1)}%</span>
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="opportunity" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Investment Opportunity</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Recommended Strategy</label>
-                    <Badge variant="secondary" className="mt-1">
-                      {site.recommendedStrategy.replace('_', ' ').toUpperCase()}
+                    <label className="text-sm font-medium text-gray-600">Business Status</label>
+                    <Badge className={getBusinessStatusColor(site.business_status)}>
+                      {site.business_status || 'Unknown'}
                     </Badge>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Retrofit Cost Class</label>
-                    <div className="mt-1">{getRetrofitCostBadge(site.retrofitCostClass)}</div>
+                    <label className="text-sm font-medium text-gray-600">Property Type</label>
+                    <p className="text-sm">{site.property_type || 'Not specified'}</p>
                   </div>
-                </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Year Built</label>
+                    <p className="text-sm">{site.year_built || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Zoning</label>
+                    <p className="text-sm">{site.zoning || 'Not specified'}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Facility Information</label>
-                  <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Facility Size:</span>
-                      <span>{site.facilitySize?.toLocaleString()} sq ft</span>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Regulatory & Environmental
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Environmental Permits</label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {site.environmental_permits?.length ? 
+                        site.environmental_permits.map((permit, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {permit}
+                          </Badge>
+                        )) : 
+                        <span className="text-sm text-gray-500">No permits listed</span>
+                      }
                     </div>
-                    {site.yearBuilt && (
-                      <div className="flex justify-between">
-                        <span>Year Built:</span>
-                        <span>{site.yearBuilt}</span>
-                      </div>
-                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Validation Status</label>
+                    <Badge variant={site.validation_status === 'verified' ? 'default' : 'secondary'}>
+                      {site.validation_status || 'Pending'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Risk Factors</label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {site.risk_factors?.length ? 
+                        site.risk_factors.map((risk, index) => (
+                          <Badge key={index} variant="outline" className="text-xs text-red-600">
+                            {risk}
+                          </Badge>
+                        )) : 
+                        <span className="text-sm text-gray-500">No risks identified</span>
+                      }
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="details" className="space-y-4">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-                  <p className="text-sm text-gray-600 mt-2">Loading additional details...</p>
-                </div>
-              </div>
-            ) : siteDetails ? (
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Google Places Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Business Name</label>
-                        <p className="text-sm">{siteDetails.name}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Address</label>
-                        <p className="text-sm">{siteDetails.address}</p>
-                      </div>
-                      {siteDetails.rating && (
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Rating</label>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm">{siteDetails.rating}</span>
-                          </div>
-                        </div>
-                      )}
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Business Status</label>
-                        <div className="mt-1">{getBusinessStatusBadge(siteDetails.businessStatus)}</div>
-                      </div>
+          <TabsContent value="financial" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Financial Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Listing Price</label>
+                    <p className="text-lg font-semibold">{formatCurrency(site.listing_price)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Price per Sq Ft</label>
+                    <p className="text-lg font-semibold">{formatCurrency(site.price_per_sqft)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Square Footage</label>
+                    <p className="text-lg font-semibold">{formatNumber(site.square_footage, ' sq ft')}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Lot Size</label>
+                    <p className="text-lg font-semibold">{formatNumber(site.lot_size_acres, ' acres')}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Market Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {site.market_data ? (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Market Data</label>
+                      <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
+                        {JSON.stringify(site.market_data, null, 2)}
+                      </pre>
                     </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No market data available</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
-                    {siteDetails.phoneNumber && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Phone</label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Phone className="w-4 h-4" />
-                          <span className="text-sm">{siteDetails.phoneNumber}</span>
-                        </div>
-                      </div>
-                    )}
+          <TabsContent value="technical" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="w-5 h-5" />
+                    Data & Verification
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Verified Sources Count</label>
+                    <p className="text-lg font-semibold">{site.verified_sources_count || 0}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Last Verified</label>
+                    <p className="text-sm">{site.last_verified_at ? new Date(site.last_verified_at).toLocaleDateString() : 'Never'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Last Scanned</label>
+                    <p className="text-sm">{site.last_scan_at ? new Date(site.last_scan_at).toLocaleDateString() : 'Never'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Created</label>
+                    <p className="text-sm">{new Date(site.created_at).toLocaleDateString()}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-                    {siteDetails.website && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Website</label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Globe className="w-4 h-4" />
-                          <a 
-                            href={siteDetails.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            {siteDetails.website}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-
-                    {siteDetails.openingHours && siteDetails.openingHours.length > 0 && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Operating Hours</label>
-                        <div className="mt-1 space-y-1">
-                          {siteDetails.openingHours.map((hours, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <Clock className="w-3 h-3" />
-                              <span>{hours}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {siteDetails.reviews && siteDetails.reviews.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Recent Reviews</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {siteDetails.reviews.map((review, index) => (
-                          <div key={index} className="border-l-2 border-gray-200 pl-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="flex items-center gap-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star 
-                                    key={i} 
-                                    className={`w-3 h-3 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-sm font-medium">{review.author_name}</span>
-                            </div>
-                            <p className="text-sm text-gray-600">{review.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-sm text-gray-600">No additional details available</p>
-                <Button 
-                  onClick={fetchSiteDetails} 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-2"
-                >
-                  Retry Loading Details
-                </Button>
-              </div>
-            )}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Satellite className="w-5 h-5" />
+                    Visual Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Visual Status</label>
+                    <Badge variant={site.visual_status === 'Active' ? 'default' : 'secondary'}>
+                      {site.visual_status || 'Unknown'}
+                    </Badge>
+                  </div>
+                  {site.satellite_image_url && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Satellite Image</label>
+                      <img 
+                        src={site.satellite_image_url} 
+                        alt="Satellite view"
+                        className="w-full h-32 object-cover rounded-lg mt-1"
+                      />
+                    </div>
+                  )}
+                  {site.satellite_analysis && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Satellite Analysis</label>
+                      <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto max-h-32">
+                        {JSON.stringify(site.satellite_analysis, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
