@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,7 +64,7 @@ export function SubstationsOverview() {
   const [substations, setSubstations] = useState<DiscoveredSubstation[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const [selectedSubstation, setSelectedSubstation] = useState<DiscoveredSubstation | null>(null);
+  const [selectedSubstation, setSelectedSubstation] = useState<Substation | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -180,7 +181,28 @@ export function SubstationsOverview() {
   }, []);
 
   const handleSubstationClick = (substation: DiscoveredSubstation) => {
-    setSelectedSubstation(substation);
+    // Convert DiscoveredSubstation to Substation format for the modal
+    const convertedSubstation: Substation = {
+      id: substation.id,
+      name: substation.name,
+      city: substation.address.split(',')[0]?.trim() || 'Unknown',
+      state: substation.address.split(',')[1]?.trim() || 'Unknown',
+      voltage_level: substation.details?.voltage_level || 'Unknown',
+      capacity_mva: substation.capacity_estimate?.max || 0,
+      utility_owner: substation.details?.utility_owner || 'Unknown',
+      interconnection_type: substation.details?.interconnection_type || 'Unknown',
+      load_factor: substation.details?.load_factor || 0,
+      status: substation.details?.status || 'active',
+      commissioning_date: substation.details?.commissioning_date,
+      upgrade_potential: 0,
+      latitude: substation.latitude,
+      longitude: substation.longitude,
+      coordinates_source: 'database',
+      created_at: substation.stored_at || new Date().toISOString(),
+      updated_at: substation.stored_at || new Date().toISOString()
+    };
+    
+    setSelectedSubstation(convertedSubstation);
     setIsModalOpen(true);
   };
 
