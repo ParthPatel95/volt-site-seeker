@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
@@ -693,7 +694,8 @@ async function storeVerifiedSites(sites: any[], scanId: string, config: any) {
     scan_id: scanId,
     jurisdiction: config.jurisdiction,
     created_by: config.userId,
-    coordinates: site.coordinates ? `POINT(${site.coordinates.lng || 0} ${site.coordinates.lat || 0})` : null,
+    // Fixed coordinate storage format - use proper PostgreSQL POINT format
+    coordinates: site.coordinates ? `(${site.coordinates.lng || 0},${site.coordinates.lat || 0})` : null,
     last_scan_at: new Date().toISOString()
   }));
   
