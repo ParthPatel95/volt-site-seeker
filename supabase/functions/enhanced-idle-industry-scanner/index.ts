@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
@@ -35,7 +34,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, config, scanId } = await req.json();
+    const { action, config, scanId, coordinates, siteName } = await req.json();
     console.log(`Enhanced idle industry scanner: ${action}`, config);
 
     switch (action) {
@@ -47,6 +46,9 @@ serve(async (req) => {
       
       case 'get_verified_sites':
         return await getVerifiedSites(config);
+      
+      case 'get_site_details':
+        return await getSiteDetails(coordinates, siteName);
       
       case 'delete_sites':
         return await deleteSites(config.siteIds);
@@ -75,6 +77,47 @@ serve(async (req) => {
     );
   }
 });
+
+async function getSiteDetails(coordinates: any, siteName: string) {
+  console.log('Fetching site details for:', siteName, coordinates);
+  
+  try {
+    // Mock site details for now - in production this would call Google Places API
+    const mockDetails = {
+      name: siteName || 'Industrial Site',
+      address: 'Address not available',
+      photos: [],
+      reviews: [],
+      businessStatus: 'OPERATIONAL',
+      rating: null,
+      openingHours: [],
+      phoneNumber: null,
+      website: null
+    };
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        details: mockDetails 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+    
+  } catch (error: any) {
+    console.error('Error fetching site details:', error);
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        details: null
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
+  }
+}
 
 async function startComprehensiveScan(config: any) {
   console.log('Starting comprehensive scan with real data sources for:', config.jurisdiction);
