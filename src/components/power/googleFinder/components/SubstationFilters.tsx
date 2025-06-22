@@ -17,6 +17,10 @@ interface SubstationFiltersProps {
   setCapacityFilter: (capacity: string) => void;
   locationFilter: string;
   setLocationFilter: (location: string) => void;
+  detectionMethodFilter: string;
+  setDetectionMethodFilter: (method: string) => void;
+  confidenceFilter: string;
+  setConfidenceFilter: (confidence: string) => void;
   onClearFilters: () => void;
   totalResults: number;
   filteredResults: number;
@@ -31,11 +35,16 @@ export function SubstationFilters({
   setCapacityFilter,
   locationFilter,
   setLocationFilter,
+  detectionMethodFilter,
+  setDetectionMethodFilter,
+  confidenceFilter,
+  setConfidenceFilter,
   onClearFilters,
   totalResults,
   filteredResults
 }: SubstationFiltersProps) {
-  const hasActiveFilters = searchTerm || statusFilter !== 'all' || capacityFilter !== 'all' || locationFilter;
+  const hasActiveFilters = searchTerm || statusFilter !== 'all' || capacityFilter !== 'all' || 
+    locationFilter || detectionMethodFilter !== 'all' || confidenceFilter !== 'all';
 
   return (
     <Card>
@@ -64,7 +73,7 @@ export function SubstationFilters({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="search" className="text-sm font-medium">Search</Label>
             <Input
@@ -90,7 +99,19 @@ export function SubstationFilters({
               </SelectContent>
             </Select>
           </div>
-          
+
+          <div>
+            <Label htmlFor="location" className="text-sm font-medium">Location</Label>
+            <Input
+              id="location"
+              placeholder="Filter by city/state..."
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="capacity" className="text-sm font-medium">Capacity Range</Label>
             <Select value={capacityFilter} onValueChange={setCapacityFilter}>
@@ -109,13 +130,33 @@ export function SubstationFilters({
           </div>
           
           <div>
-            <Label htmlFor="location" className="text-sm font-medium">Location</Label>
-            <Input
-              id="location"
-              placeholder="Filter by city/state..."
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-            />
+            <Label htmlFor="detection" className="text-sm font-medium">Detection Method</Label>
+            <Select value={detectionMethodFilter} onValueChange={setDetectionMethodFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All methods" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Methods</SelectItem>
+                <SelectItem value="google_maps">Google Maps</SelectItem>
+                <SelectItem value="ml_satellite">AI Satellite</SelectItem>
+                <SelectItem value="manual">Manual Entry</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="confidence" className="text-sm font-medium">Confidence Level</Label>
+            <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All levels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="high">High (80%+)</SelectItem>
+                <SelectItem value="medium">Medium (60-79%)</SelectItem>
+                <SelectItem value="low">Low (<60%)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardContent>

@@ -14,6 +14,8 @@ interface DiscoveredSubstation {
     confidence: number;
   };
   analysis_status: 'pending' | 'analyzing' | 'completed' | 'failed';
+  detection_method?: string;
+  confidence_score?: number;
 }
 
 export function useSubstationFilters(substations: DiscoveredSubstation[]) {
@@ -21,6 +23,8 @@ export function useSubstationFilters(substations: DiscoveredSubstation[]) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [capacityFilter, setCapacityFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('');
+  const [detectionMethodFilter, setDetectionMethodFilter] = useState('all');
+  const [confidenceFilter, setConfidenceFilter] = useState('all');
 
   const filteredSubstations = useMemo(() => {
     return substations.filter(substation => {
@@ -36,6 +40,28 @@ export function useSubstationFilters(substations: DiscoveredSubstation[]) {
       // Status filter
       if (statusFilter !== 'all' && substation.analysis_status !== statusFilter) {
         return false;
+      }
+
+      // Detection method filter
+      if (detectionMethodFilter !== 'all') {
+        if (!substation.detection_method || !substation.detection_method.includes(detectionMethodFilter)) {
+          return false;
+        }
+      }
+
+      // Confidence filter
+      if (confidenceFilter !== 'all' && substation.confidence_score) {
+        switch (confidenceFilter) {
+          case 'high':
+            if (substation.confidence_score < 80) return false;
+            break;
+          case 'medium':
+            if (substation.confidence_score < 60 || substation.confidence_score >= 80) return false;
+            break;
+          case 'low':
+            if (substation.confidence_score >= 60) return false;
+            break;
+        }
       }
 
       // Capacity filter
@@ -59,7 +85,7 @@ export function useSubstationFilters(substations: DiscoveredSubstation[]) {
             break;
         }
       } else if (capacityFilter !== 'all' && !substation.capacity_estimate) {
-        return false; // Filter out substations without capacity estimates when capacity filter is active
+        return false;
       }
 
       // Location filter
@@ -72,13 +98,15 @@ export function useSubstationFilters(substations: DiscoveredSubstation[]) {
 
       return true;
     });
-  }, [substations, searchTerm, statusFilter, capacityFilter, locationFilter]);
+  }, [substations, searchTerm, statusFilter, capacityFilter, locationFilter, detectionMethodFilter, confidenceFilter]);
 
   const clearFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setCapacityFilter('all');
     setLocationFilter('');
+    setDetectionMethodFilter('all');
+    setConfidenceFilter('all');
   };
 
   return {
@@ -90,6 +118,10 @@ export function useSubstationFilters(substations: DiscoveredSubstation[]) {
     setCapacityFilter,
     locationFilter,
     setLocationFilter,
+    detectionMethodFilter,
+    setDetectionMethodFilter,
+    confidenceFilter,
+    setConfidenceFilter,
     filteredSubstations,
     clearFilters
   };

@@ -3,6 +3,12 @@ interface OwnershipResult {
   owner: string;
   confidence: number;
   source: string;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+    website?: string;
+    address?: string;
+  };
 }
 
 interface AESOSubstation {
@@ -16,25 +22,131 @@ interface USUtilityData {
   name: string;
   serviceTerritory: string[];
   states: string[];
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+    website?: string;
+    address?: string;
+  };
 }
 
-// Known utility companies by region
+// Known utility companies by region with contact information
 const REGIONAL_UTILITIES: Record<string, USUtilityData[]> = {
   'alberta': [
-    { name: 'AltaLink Management Ltd.', serviceTerritory: ['Calgary', 'Edmonton', 'Red Deer'], states: ['AB'] },
-    { name: 'ATCO Electric Ltd.', serviceTerritory: ['Northern Alberta', 'Rural Alberta'], states: ['AB'] },
-    { name: 'ENMAX Power Corporation', serviceTerritory: ['Calgary'], states: ['AB'] },
-    { name: 'EPCOR Distribution & Transmission Inc.', serviceTerritory: ['Edmonton'], states: ['AB'] }
+    { 
+      name: 'AltaLink Management Ltd.', 
+      serviceTerritory: ['Calgary', 'Edmonton', 'Red Deer'], 
+      states: ['AB'],
+      contactInfo: {
+        phone: '+1-888-333-6767',
+        email: 'info@altalink.ca',
+        website: 'https://www.altalink.ca',
+        address: '2611 3 Avenue SE, Calgary, AB T2A 7W7'
+      }
+    },
+    { 
+      name: 'ATCO Electric Ltd.', 
+      serviceTerritory: ['Northern Alberta', 'Rural Alberta'], 
+      states: ['AB'],
+      contactInfo: {
+        phone: '+1-780-420-7400',
+        email: 'info@atco.com',
+        website: 'https://www.atco.com',
+        address: '10035 105 Street NW, Edmonton, AB T5J 2V6'
+      }
+    },
+    { 
+      name: 'ENMAX Power Corporation', 
+      serviceTerritory: ['Calgary'], 
+      states: ['AB'],
+      contactInfo: {
+        phone: '+1-310-2010',
+        email: 'customercare@enmax.com',
+        website: 'https://www.enmax.com',
+        address: '141 50 Avenue SE, Calgary, AB T2G 4S7'
+      }
+    },
+    { 
+      name: 'EPCOR Distribution & Transmission Inc.', 
+      serviceTerritory: ['Edmonton'], 
+      states: ['AB'],
+      contactInfo: {
+        phone: '+1-780-412-4500',
+        email: 'info@epcor.com',
+        website: 'https://www.epcor.com',
+        address: '2000 10423 101 Street NW, Edmonton, AB T5H 0E8'
+      }
+    }
   ],
   'texas': [
-    { name: 'Oncor Electric Delivery Company LLC', serviceTerritory: ['Dallas', 'Fort Worth'], states: ['TX'] },
-    { name: 'CenterPoint Energy Houston Electric LLC', serviceTerritory: ['Houston'], states: ['TX'] },
-    { name: 'AEP Texas Inc.', serviceTerritory: ['South Texas'], states: ['TX'] }
+    { 
+      name: 'Oncor Electric Delivery Company LLC', 
+      serviceTerritory: ['Dallas', 'Fort Worth'], 
+      states: ['TX'],
+      contactInfo: {
+        phone: '+1-888-313-4747',
+        email: 'customerservice@oncor.com',
+        website: 'https://www.oncor.com',
+        address: '1616 Woodall Rodgers Freeway, Dallas, TX 75202'
+      }
+    },
+    { 
+      name: 'CenterPoint Energy Houston Electric LLC', 
+      serviceTerritory: ['Houston'], 
+      states: ['TX'],
+      contactInfo: {
+        phone: '+1-713-207-2222',
+        email: 'customer.service@centerpointenergy.com',
+        website: 'https://www.centerpointenergy.com',
+        address: '1111 Louisiana Street, Houston, TX 77002'
+      }
+    },
+    { 
+      name: 'AEP Texas Inc.', 
+      serviceTerritory: ['South Texas'], 
+      states: ['TX'],
+      contactInfo: {
+        phone: '+1-866-223-8508',
+        email: 'info@aeptexas.com',
+        website: 'https://www.aeptexas.com',
+        address: '539 South Main Street, Corpus Christi, TX 78401'
+      }
+    }
   ],
   'california': [
-    { name: 'Pacific Gas and Electric Company', serviceTerritory: ['Northern California'], states: ['CA'] },
-    { name: 'Southern California Edison Company', serviceTerritory: ['Southern California'], states: ['CA'] },
-    { name: 'San Diego Gas & Electric Company', serviceTerritory: ['San Diego'], states: ['CA'] }
+    { 
+      name: 'Pacific Gas and Electric Company', 
+      serviceTerritory: ['Northern California'], 
+      states: ['CA'],
+      contactInfo: {
+        phone: '+1-800-743-5000',
+        email: 'customer_service@pge.com',
+        website: 'https://www.pge.com',
+        address: '77 Beale Street, San Francisco, CA 94105'
+      }
+    },
+    { 
+      name: 'Southern California Edison Company', 
+      serviceTerritory: ['Southern California'], 
+      states: ['CA'],
+      contactInfo: {
+        phone: '+1-800-655-4555',
+        email: 'customerservice@sce.com',
+        website: 'https://www.sce.com',
+        address: '2244 Walnut Grove Avenue, Rosemead, CA 91770'
+      }
+    },
+    { 
+      name: 'San Diego Gas & Electric Company', 
+      serviceTerritory: ['San Diego'], 
+      states: ['CA'],
+      contactInfo: {
+        phone: '+1-800-411-7343',
+        email: 'customerservice@sdge.com',
+        website: 'https://www.sdge.com',
+        address: '8326 Century Park Court, San Diego, CA 92123'
+      }
+    }
   ]
 };
 
@@ -49,10 +161,12 @@ export async function detectSubstationOwnership(
   if (isInAlberta(latitude, longitude)) {
     const aesoOwner = await checkAESOData(substationName, latitude, longitude);
     if (aesoOwner) {
+      const utilityData = REGIONAL_UTILITIES['alberta'].find(u => u.name === aesoOwner);
       return {
         owner: aesoOwner,
         confidence: 0.95,
-        source: 'AESO Database'
+        source: 'AESO Database',
+        contactInfo: utilityData?.contactInfo
       };
     }
   }
@@ -60,7 +174,14 @@ export async function detectSubstationOwnership(
   // Method 2: Analyze substation name for utility indicators
   const nameAnalysis = analyzeSubstationName(substationName);
   if (nameAnalysis.confidence > 0.7) {
-    return nameAnalysis;
+    const region = determineRegion(latitude, longitude, address);
+    const utilities = REGIONAL_UTILITIES[region] || [];
+    const utilityData = utilities.find(u => u.name === nameAnalysis.owner);
+    
+    return {
+      ...nameAnalysis,
+      contactInfo: utilityData?.contactInfo
+    };
   }
 
   // Method 3: Check regional utility ownership patterns
@@ -69,7 +190,8 @@ export async function detectSubstationOwnership(
     return {
       owner: regionalOwner.name,
       confidence: 0.6,
-      source: 'Regional Utility Database'
+      source: 'Regional Utility Database',
+      contactInfo: regionalOwner.contactInfo
     };
   }
 

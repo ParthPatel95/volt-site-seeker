@@ -4,6 +4,8 @@ import { Table, TableBody } from '@/components/ui/table';
 import { SubstationDetailsModal } from './SubstationDetailsModal';
 import { SubstationTableHeader } from './SubstationTableHeader';
 import { SubstationTableRow } from './SubstationTableRow';
+import { SubstationFilters } from './SubstationFilters';
+import { useSubstationFilters } from '../hooks/useSubstationFilters';
 
 interface DiscoveredSubstation {
   id: string;
@@ -19,6 +21,8 @@ interface DiscoveredSubstation {
   };
   analysis_status: 'pending' | 'analyzing' | 'completed' | 'failed';
   stored_at?: string;
+  detection_method?: string;
+  confidence_score?: number;
   details?: {
     utility_owner?: string;
     voltage_level?: string;
@@ -53,6 +57,23 @@ export function SubstationTable({
   const [selectedSubstation, setSelectedSubstation] = React.useState<DiscoveredSubstation | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
+  const {
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    capacityFilter,
+    setCapacityFilter,
+    locationFilter,
+    setLocationFilter,
+    detectionMethodFilter,
+    setDetectionMethodFilter,
+    confidenceFilter,
+    setConfidenceFilter,
+    filteredSubstations,
+    clearFilters
+  } = useSubstationFilters(substations);
+
   const handleViewDetails = (substation: DiscoveredSubstation) => {
     setSelectedSubstation(substation);
     setIsModalOpen(true);
@@ -67,12 +88,30 @@ export function SubstationTable({
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <SubstationFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        capacityFilter={capacityFilter}
+        setCapacityFilter={setCapacityFilter}
+        locationFilter={locationFilter}
+        setLocationFilter={setLocationFilter}
+        detectionMethodFilter={detectionMethodFilter}
+        setDetectionMethodFilter={setDetectionMethodFilter}
+        confidenceFilter={confidenceFilter}
+        setConfidenceFilter={setConfidenceFilter}
+        onClearFilters={clearFilters}
+        totalResults={substations.length}
+        filteredResults={filteredSubstations.length}
+      />
+
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <SubstationTableHeader showCheckboxes={showCheckboxes} />
           <TableBody>
-            {substations.map((substation) => (
+            {filteredSubstations.map((substation) => (
               <SubstationTableRow
                 key={substation.id}
                 substation={substation}
@@ -94,6 +133,6 @@ export function SubstationTable({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-    </>
+    </div>
   );
 }

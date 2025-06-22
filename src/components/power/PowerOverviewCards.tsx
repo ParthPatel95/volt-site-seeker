@@ -62,8 +62,8 @@ export function PowerOverviewCards({ powerData: externalPowerData }: PowerOvervi
     }
   };
 
-  // Use real data if available, otherwise show zeros
-  const powerData = externalPowerData || realPowerData;
+  // Use real data from database instead of external data
+  const powerData = realPowerData;
 
   const cards = [
     {
