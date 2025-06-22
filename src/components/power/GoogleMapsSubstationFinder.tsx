@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -398,6 +397,10 @@ export function GoogleMapsSubstationFinder() {
                 setCapacityFilter={discoveredFilters.setCapacityFilter}
                 locationFilter={discoveredFilters.locationFilter}
                 setLocationFilter={discoveredFilters.setLocationFilter}
+                detectionMethodFilter={discoveredFilters.detectionMethodFilter}
+                setDetectionMethodFilter={discoveredFilters.setDetectionMethodFilter}
+                confidenceFilter={discoveredFilters.confidenceFilter}
+                setConfidenceFilter={discoveredFilters.setConfidenceFilter}
                 onClearFilters={discoveredFilters.clearFilters}
                 totalResults={discoveredSubstations.length}
                 filteredResults={discoveredFilters.filteredSubstations.length}
@@ -421,6 +424,10 @@ export function GoogleMapsSubstationFinder() {
             setCapacityFilter={storedFilters.setCapacityFilter}
             locationFilter={storedFilters.locationFilter}
             setLocationFilter={storedFilters.setLocationFilter}
+            detectionMethodFilter={storedFilters.detectionMethodFilter}
+            setDetectionMethodFilter={storedFilters.setDetectionMethodFilter}
+            confidenceFilter={storedFilters.confidenceFilter}
+            setConfidenceFilter={storedFilters.setConfidenceFilter}
             onClearFilters={storedFilters.clearFilters}
             totalResults={storedSubstations.length}
             filteredResults={storedFilters.filteredSubstations.length}
