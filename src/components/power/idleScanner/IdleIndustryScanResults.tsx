@@ -81,6 +81,31 @@ export function IdleIndustryScanResults({
     return `${capacity.toFixed(1)} MW`;
   };
 
+  // Helper function to map business status to valid enum values
+  const mapBusinessStatus = (status: string | undefined): "unknown" | "active" | "operational" | "inactive" => {
+    if (!status) return 'unknown';
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'active' || lowerStatus === 'operational' || lowerStatus === 'inactive') {
+      return lowerStatus as "active" | "operational" | "inactive";
+    }
+    return 'unknown';
+  };
+
+  // Helper function to create proper satellite analysis object
+  const createSatelliteAnalysis = (visionAnalysis: { [key: string]: any } | undefined) => {
+    if (!visionAnalysis) return null;
+    
+    return {
+      visual_status: visionAnalysis.visual_status || 'unknown',
+      overgrowth_detected: Boolean(visionAnalysis.overgrowth_detected),
+      empty_parking_lots: Boolean(visionAnalysis.empty_parking_lots),
+      rusted_infrastructure: Boolean(visionAnalysis.rusted_infrastructure),
+      active_smokestacks: Boolean(visionAnalysis.active_smokestacks),
+      analysis_confidence: Number(visionAnalysis.analysis_confidence) || 0,
+      last_analyzed: visionAnalysis.last_analyzed || new Date().toISOString()
+    };
+  };
+
   if (loading) {
     return (
       <Card>
@@ -263,7 +288,7 @@ export function IdleIndustryScanResults({
             ...selectedSite,
             // Map IdleIndustrySite properties to EnhancedVerifiedSite properties
             industry_type: selectedSite.industryType,
-            business_status: selectedSite.operationalStatus || 'unknown',
+            business_status: mapBusinessStatus(selectedSite.operationalStatus),
             transmission_access: false,
             confidence_score: selectedSite.confidenceLevel,
             idle_score: selectedSite.idleScore,
@@ -271,7 +296,7 @@ export function IdleIndustryScanResults({
             verified_sources_count: 0,
             property_type: 'Industrial',
             last_verified_at: null,
-            satellite_analysis: selectedSite.visionAnalysis || null,
+            satellite_analysis: createSatelliteAnalysis(selectedSite.visionAnalysis),
             listing_price: null,
             price_per_sqft: null,
             square_footage: selectedSite.facilitySize || null,
