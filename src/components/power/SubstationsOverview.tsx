@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { SubstationDetailsModal } from './SubstationDetailsModal';
@@ -18,9 +18,9 @@ export function SubstationsOverview() {
   const [deleting, setDeleting] = useState(false);
   const [selectedSubstation, setSelectedSubstation] = useState<Substation | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Use the same filter hook as the other components
   const {
     searchTerm,
     setSearchTerm,
@@ -38,21 +38,23 @@ export function SubstationsOverview() {
     clearFilters
   } = useSubstationFilters(substations);
 
-  const loadSubstations = async () => {
+  const loadSubstations = useCallback(async () => {
     try {
       console.log('Loading substations data...');
       setLoading(true);
+      setError(null);
       
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('substations')
         .select('*')
         .order('capacity_mva', { ascending: false });
 
-      if (error) {
-        console.error('Error loading substations:', error);
+      if (fetchError) {
+        console.error('Error loading substations:', fetchError);
+        setError(fetchError.message);
         toast({
           title: "Error Loading Data",
-          description: error.message,
+          description: fetchError.message,
           variant: "destructive"
         });
         return;
@@ -89,15 +91,17 @@ export function SubstationsOverview() {
       console.log('Substations loaded:', substationsData.length, 'substations');
     } catch (error) {
       console.error('Error loading substations:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load substations data';
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "Failed to load substations data",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const deleteAllSubstations = async () => {
     setDeleting(true);
@@ -105,7 +109,7 @@ export function SubstationsOverview() {
       const { error } = await supabase
         .from('substations')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
       if (error) throw error;
 
@@ -114,7 +118,6 @@ export function SubstationsOverview() {
         description: "Successfully deleted all stored substations",
       });
 
-      // Reload the data
       await loadSubstations();
     } catch (error: any) {
       console.error('Error deleting all substations:', error);
@@ -130,9 +133,9 @@ export function SubstationsOverview() {
 
   useEffect(() => {
     loadSubstations();
-  }, []);
+  }, [loadSubstations]);
 
-  const handleSubstationClick = (substation: DiscoveredSubstation) => {
+  const handleSubstationClick = useCallback((substation: DiscoveredSubstation) => {
     // Convert DiscoveredSubstation to Substation format for the modal
     const convertedSubstation: Substation = {
       id: substation.id,
@@ -156,10 +159,35 @@ export function SubstationsOverview() {
     
     setSelectedSubstation(convertedSubstation);
     setIsModalOpen(true);
-  };
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedSubstation(null);
+  }, []);
 
   if (loading) {
     return <SubstationLoadingCard />;
+  }
+
+  if (error && substations.length === 0) {
+    return (
+      <div className="space-y-6">
+        <SubstationHeader
+          title="Substations Database"
+          description="Manage and analyze power infrastructure substations"
+        />
+        <div className="text-center py-8">
+          <p className="text-destructive mb-4">Error loading substations: {error}</p>
+          <button 
+            onClick={loadSubstations}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -215,7 +243,7 @@ export function SubstationsOverview() {
       <SubstationDetailsModal
         substation={selectedSubstation}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
       />
     </div>
   );
