@@ -154,7 +154,7 @@ export function SubstationFilters({
                 <SelectItem value="all">All Levels</SelectItem>
                 <SelectItem value="high">High (80%+)</SelectItem>
                 <SelectItem value="medium">Medium (60-79%)</SelectItem>
-                <SelectItem value="low">Low (<60%)</SelectItem>
+                <SelectItem value="low">Low (&lt;60%)</SelectItem>
               </SelectContent>
             </Select>
           </div>
