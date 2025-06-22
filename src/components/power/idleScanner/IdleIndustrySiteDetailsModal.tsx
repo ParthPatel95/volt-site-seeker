@@ -230,8 +230,8 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                     <Target className="w-5 h-5 text-blue-600" />
                     <div>
                       <p className="text-sm text-gray-600">Confidence Score</p>
-                      <Badge className={getConfidenceColor(site.confidence_score)}>
-                        {site.confidence_score}%
+                      <Badge className={getConfidenceColor(site.confidence_score || 0)}>
+                        {site.confidence_score || 0}%
                       </Badge>
                     </div>
                   </div>
@@ -258,7 +258,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                     <Building2 className="w-5 h-5 text-green-600" />
                     <div>
                       <p className="text-sm text-gray-600">Business Status</p>
-                      <Badge className={getBusinessStatusColor(site.business_status)}>
+                      <Badge className={getBusinessStatusColor(site.business_status || 'unknown')}>
                         {site.business_status || 'Unknown'}
                       </Badge>
                     </div>
@@ -272,13 +272,14 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                     <TrendingUp className="w-5 h-5 text-purple-600" />
                     <div>
                       <p className="text-sm text-gray-600">Idle Score</p>
-                      <p className="text-lg font-bold">{site.idle_score}%</p>
+                      <p className="text-lg font-bold">{site.idle_score || 0}%</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
+            {/* Basic Information Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
@@ -307,11 +308,14 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                   <div>
                     <label className="text-sm font-medium text-gray-600">Data Sources</label>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {site.data_sources?.map((source, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {source.replace(/_/g, ' ')}
-                        </Badge>
-                      )) || <span className="text-sm text-gray-500">No sources specified</span>}
+                      {site.data_sources && Array.isArray(site.data_sources) ? 
+                        site.data_sources.map((source, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {typeof source === 'string' ? source.replace(/_/g, ' ') : 'Unknown'}
+                          </Badge>
+                        )) : 
+                        <span className="text-sm text-gray-500">No sources specified</span>
+                      }
                     </div>
                   </div>
                 </CardContent>
@@ -348,7 +352,9 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                   {site.coordinates && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Coordinates</label>
-                      <p className="text-sm">{site.coordinates.lat.toFixed(6)}, {site.coordinates.lng.toFixed(6)}</p>
+                      <p className="text-sm">
+                        {site.coordinates.lat?.toFixed(6) || 'N/A'}, {site.coordinates.lng?.toFixed(6) || 'N/A'}
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -447,8 +453,8 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Confidence Level</label>
-                    <Badge className={getConfidenceColor(site.confidence_score)}>
-                      {site.confidence_level} ({site.confidence_score}%)
+                    <Badge className={getConfidenceColor(site.confidence_score || 0)}>
+                      {site.confidence_level || 'Unknown'} ({site.confidence_score || 0}%)
                     </Badge>
                   </div>
                   <div>
@@ -457,10 +463,10 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                       <div className="flex-1 bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-orange-500 h-2 rounded-full" 
-                          style={{ width: `${site.idle_score}%` }}
+                          style={{ width: `${site.idle_score || 0}%` }}
                         />
                       </div>
-                      <span className="text-sm font-medium">{site.idle_score}%</span>
+                      <span className="text-sm font-medium">{site.idle_score || 0}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -480,7 +486,7 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                 <CardContent className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-600">Business Status</label>
-                    <Badge className={getBusinessStatusColor(site.business_status)}>
+                    <Badge className={getBusinessStatusColor(site.business_status || 'unknown')}>
                       {site.business_status || 'Unknown'}
                     </Badge>
                   </div>
@@ -510,10 +516,10 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                   <div>
                     <label className="text-sm font-medium text-gray-600">Environmental Permits</label>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {site.environmental_permits?.length ? 
+                      {site.environmental_permits && Array.isArray(site.environmental_permits) && site.environmental_permits.length > 0 ? 
                         site.environmental_permits.map((permit, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
-                            {permit}
+                            {typeof permit === 'string' ? permit : 'Unknown'}
                           </Badge>
                         )) : 
                         <span className="text-sm text-gray-500">No permits listed</span>
@@ -529,10 +535,10 @@ export function IdleIndustrySiteDetailsModal({ site, open, onOpenChange }: IdleI
                   <div>
                     <label className="text-sm font-medium text-gray-600">Risk Factors</label>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {site.risk_factors?.length ? 
+                      {site.risk_factors && Array.isArray(site.risk_factors) && site.risk_factors.length > 0 ? 
                         site.risk_factors.map((risk, index) => (
                           <Badge key={index} variant="outline" className="text-xs text-red-600">
-                            {risk}
+                            {typeof risk === 'string' ? risk : 'Unknown'}
                           </Badge>
                         )) : 
                         <span className="text-sm text-gray-500">No risks identified</span>
