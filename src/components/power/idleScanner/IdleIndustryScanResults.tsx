@@ -146,13 +146,13 @@ export function IdleIndustryScanResults({
               <div className="bg-green-50 p-3 rounded-lg">
                 <div className="text-sm text-green-600">Available Power</div>
                 <div className="text-xl font-bold text-green-800">
-                  {Math.round(sites.reduce((sum, site) => sum + (site.powerCapacity || 0), 0))} MW
+                  {Math.round(sites.reduce((sum, site) => sum + (site.estimatedFreeMW || 0), 0))} MW
                 </div>
               </div>
               <div className="bg-orange-50 p-3 rounded-lg">
                 <div className="text-sm text-orange-600">High Confidence</div>
                 <div className="text-xl font-bold text-orange-800">
-                  {sites.filter(site => site.confidence >= 80).length}
+                  {sites.filter(site => site.confidenceLevel >= 80).length}
                 </div>
               </div>
               <div className="bg-purple-50 p-3 rounded-lg">
@@ -196,22 +196,22 @@ export function IdleIndustryScanResults({
                       <TableCell>
                         <div>
                           <div className="font-medium">{site.name}</div>
-                          <div className="text-sm text-gray-500">{site.type}</div>
+                          <div className="text-sm text-gray-500">{site.industryType}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <MapPin className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm">{site.location}</span>
+                          <span className="text-sm">{site.address}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">{site.industry}</div>
+                        <div className="text-sm">{site.industryType}</div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Zap className="w-3 h-3 text-orange-500" />
-                          <span className="font-medium">{formatPowerCapacity(site.powerCapacity)}</span>
+                          <span className="font-medium">{formatPowerCapacity(site.estimatedFreeMW)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -220,13 +220,13 @@ export function IdleIndustryScanResults({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getConfidenceColor(site.confidence)}>
-                          {site.confidence}%
+                        <Badge className={getConfidenceColor(site.confidenceLevel)}>
+                          {site.confidenceLevel}%
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={site.status === 'active' ? 'default' : 'secondary'}>
-                          {site.status}
+                        <Badge variant={site.operationalStatus === 'active' ? 'default' : 'secondary'}>
+                          {site.operationalStatus || 'unknown'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -256,55 +256,58 @@ export function IdleIndustryScanResults({
         </CardContent>
       </Card>
 
-      {/* Details Modal - Note: This will show basic site info since IdleIndustrySite doesn't have all EnhancedVerifiedSite properties */}
+      {/* Details Modal */}
       {selectedSite && (
         <IdleIndustrySiteDetailsModal
           site={{
             ...selectedSite,
             // Map IdleIndustrySite properties to EnhancedVerifiedSite properties
-            industry_type: selectedSite.industry,
-            business_status: selectedSite.status,
+            industry_type: selectedSite.industryType,
+            business_status: selectedSite.operationalStatus || 'unknown',
             transmission_access: false,
-            confidence_score: selectedSite.confidence,
+            confidence_score: selectedSite.confidenceLevel,
             idle_score: selectedSite.idleScore,
             data_sources: [],
             verified_sources_count: 0,
-            property_type: selectedSite.type,
+            property_type: 'Industrial',
             last_verified_at: null,
-            satellite_analysis: null,
+            satellite_analysis: selectedSite.visionAnalysis || null,
             listing_price: null,
             price_per_sqft: null,
-            square_footage: null,
+            square_footage: selectedSite.facilitySize || null,
             lot_size_acres: null,
-            year_built: null,
+            year_built: selectedSite.yearBuilt || null,
             environmental_permits: [],
             risk_factors: [],
-            confidence_level: selectedSite.confidence >= 80 ? 'High' : selectedSite.confidence >= 60 ? 'Medium' : 'Low',
+            confidence_level: selectedSite.confidenceLevel >= 80 ? 'High' : selectedSite.confidenceLevel >= 60 ? 'Medium' : 'Low',
             market_data: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            created_at: selectedSite.discoveredAt,
+            updated_at: selectedSite.lastSatelliteUpdate || selectedSite.discoveredAt,
             deleted_at: null,
             created_by: null,
-            address: selectedSite.location,
-            last_scan_at: new Date().toISOString(),
+            address: selectedSite.address,
+            last_scan_at: selectedSite.lastSatelliteUpdate || selectedSite.discoveredAt,
             validation_status: 'pending',
-            city: selectedSite.location.split(',')[0] || '',
-            state: selectedSite.location.split(',')[1]?.trim() || '',
+            city: selectedSite.city,
+            state: selectedSite.state,
             zip_code: null,
-            facility_type: selectedSite.type,
+            facility_type: 'Industrial',
             satellite_image_url: null,
             visual_status: null,
             discovery_method: 'scanner',
-            power_potential: selectedSite.confidence >= 80 ? 'High' : selectedSite.confidence >= 60 ? 'Medium' : 'Low',
-            coordinates: null,
-            historical_peak_mw: null,
+            power_potential: selectedSite.confidenceLevel >= 80 ? 'High' : selectedSite.confidenceLevel >= 60 ? 'Medium' : 'Low',
+            coordinates: selectedSite.coordinates ? {
+              lat: selectedSite.coordinates.lat,
+              lng: selectedSite.coordinates.lng
+            } : null,
+            historical_peak_mw: selectedSite.historicalPeakMW || null,
             estimated_current_mw: null,
-            estimated_free_mw: selectedSite.powerCapacity,
-            capacity_utilization: null,
-            substation_distance_km: null,
-            naics_code: null,
+            estimated_free_mw: selectedSite.estimatedFreeMW || null,
+            capacity_utilization: selectedSite.capacityUtilization || null,
+            substation_distance_km: selectedSite.substationDistanceKm || null,
+            naics_code: selectedSite.naicsCode || null,
             zoning: null,
-            jurisdiction: selectedSite.location.split(',')[1]?.trim() || '',
+            jurisdiction: selectedSite.state,
             regulatory_status: null,
             scan_id: null
           }}
