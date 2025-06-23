@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Menu, Zap, TrendingUp, Activity, AlertTriangle, Building2, Search, Factory, Database, BarChart, Brain, RefreshCw, Globe, Users, DollarSign } from 'lucide-react';
+import { Menu, Zap, TrendingUp, Activity, AlertTriangle, Building2, Search, Factory, Database, BarChart, Brain, RefreshCw, Globe, Users, DollarSign, MapPin, Satellite } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { useLocation } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
@@ -102,11 +103,23 @@ function EnhancedDashboardHome() {
     companiesAnalyzed: 0,
     alertsActive: 0
   });
+  const [substationData, setSubstationData] = useState({
+    recentSubstations: [],
+    totalCapacity: 0,
+    highCapacityCount: 0
+  });
+  const [idleSitesData, setIdleSitesData] = useState({
+    recentSites: [],
+    totalSites: 0,
+    highScoreSites: 0
+  });
 
   const refreshAllData = () => {
     refetchAESO();
     refetchERCOT();
     loadPlatformStats();
+    loadSubstationData();
+    loadIdleSitesData();
   };
 
   const loadPlatformStats = async () => {
@@ -129,8 +142,56 @@ function EnhancedDashboardHome() {
     }
   };
 
+  const loadSubstationData = async () => {
+    try {
+      const { data: substations, error } = await supabase
+        .from('substations')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      const totalCapacity = substations?.reduce((sum, sub) => sum + (sub.capacity_mva || 0), 0) || 0;
+      const highCapacityCount = substations?.filter(sub => (sub.capacity_mva || 0) > 100).length || 0;
+
+      setSubstationData({
+        recentSubstations: substations || [],
+        totalCapacity: Math.round(totalCapacity),
+        highCapacityCount
+      });
+    } catch (error) {
+      console.error('Error loading substation data:', error);
+    }
+  };
+
+  const loadIdleSitesData = async () => {
+    try {
+      const { data: sites, error } = await supabase
+        .from('verified_heavy_power_sites')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      const highScoreSites = sites?.filter(site => (site.idle_score || 0) > 70).length || 0;
+
+      setIdleSitesData({
+        recentSites: sites || [],
+        totalSites: sites?.length || 0,
+        highScoreSites
+      });
+    } catch (error) {
+      console.error('Error loading idle sites data:', error);
+    }
+  };
+
   useEffect(() => {
     loadPlatformStats();
+    loadSubstationData();
+    loadIdleSitesData();
   }, []);
 
   return (
@@ -245,44 +306,86 @@ function EnhancedDashboardHome() {
               </Card>
             </div>
 
-            {/* Platform Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="hover:shadow-lg transition-shadow">
+            {/* Substation Tool Results */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <BarChart className="w-5 h-5 mr-2 text-green-600" />
-                    Energy Rate Calculator
+                    <Factory className="w-5 h-5 mr-2 text-green-600" />
+                    Power Infrastructure Discovery
+                    <Badge variant="secondary" className="ml-auto">{substationData.recentSubstations.length} Recent</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 mb-3">Calculate comprehensive energy costs with real market data</p>
-                  <Badge variant="secondary">Active Features</Badge>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Capacity</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {substationData.totalCapacity.toLocaleString()} MVA
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">High Capacity Sites</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {substationData.highCapacityCount}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Recent Discoveries:</h4>
+                      {substationData.recentSubstations.slice(0, 3).map((substation: any) => (
+                        <div key={substation.id} className="flex items-center justify-between text-sm">
+                          <span className="truncate">{substation.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {substation.capacity_mva} MVA
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Brain className="w-5 h-5 mr-2 text-purple-600" />
-                    Market Intelligence
+                    <Satellite className="w-5 h-5 mr-2 text-purple-600" />
+                    Idle Industry Scanner
+                    <Badge variant="secondary" className="ml-auto">{idleSitesData.totalSites} Sites</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 mb-3">Advanced analytics and forecasting for energy markets</p>
-                  <Badge variant="secondary">AI-Powered</Badge>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Building2 className="w-5 h-5 mr-2 text-blue-600" />
-                    Corporate Intelligence
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-3">Deep company analysis and investment opportunities</p>
-                  <Badge variant="secondary">Enterprise</Badge>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Sites Found</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {idleSitesData.totalSites}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">High Score Sites</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {idleSitesData.highScoreSites}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Recent Discoveries:</h4>
+                      {idleSitesData.recentSites.slice(0, 3).map((site: any) => (
+                        <div key={site.id} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-3 h-3 text-purple-500" />
+                            <span className="truncate">{site.name}</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {site.idle_score || 0}% idle
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
