@@ -208,18 +208,23 @@ async function getMarketData(territory: any, currency: string) {
 async function getTariffData(territory: any, customerClass: string) {
   console.log('Getting tariff data for:', territory.utility, customerClass);
   
-  // Simplified tariff structure - in production would parse actual utility PDFs
+  // Enhanced tariff structure for large industrial clients (data centers)
   const baseTariff = {
-    transmission: 1.2, // ¢/kWh
-    distribution: 1.8, // ¢/kWh
-    riders: 0.6, // ¢/kWh
-    demandCharge: customerClass === 'Industrial' ? 15.0 : 12.0, // $/kW-month
+    transmission: 0.8, // ¢/kWh - Lower for large clients
+    distribution: 1.2, // ¢/kWh - Reduced for high load factor customers
+    riders: 0.4, // ¢/kWh - Reduced environmental and system riders for large clients
+    demandCharge: customerClass === 'Industrial' ? 12.0 : 15.0, // $/kW-month - Lower for large industrial
   };
   
-  // Adjust for territory
+  // Further adjustments for territory and large client discounts
   if (territory.market === 'AESO') {
-    baseTariff.transmission *= 1.1;
-    baseTariff.distribution *= 1.05;
+    baseTariff.transmission *= 1.05; // Slightly higher in Alberta
+    baseTariff.distribution *= 1.0; // Competitive distribution rates
+    baseTariff.demandCharge *= 0.95; // Volume discount for large clients
+  } else if (territory.market === 'ERCOT') {
+    baseTariff.transmission *= 0.95; // Lower transmission in Texas
+    baseTariff.distribution *= 0.9; // Competitive market benefits
+    baseTariff.demandCharge *= 0.92; // Large client discount
   }
   
   return baseTariff;
@@ -232,7 +237,7 @@ async function calculateMonthlyCosts(
   retailAdder: number,
   currency: string
 ) {
-  console.log('Calculating monthly costs...');
+  console.log('Calculating monthly costs for data center operation...');
   
   const monthlyData = [];
   
@@ -253,11 +258,9 @@ async function calculateMonthlyCosts(
     // Riders and fees
     const riders = tariffData.riders;
     
-    // Calculate demand charge component correctly
-    // Demand charge is $/kW-month, need to convert to ¢/kWh
-    // Formula: ($/kW-month * MW * 1000 kW/MW) / (MW * 1000 kW/MW * hours * load_factor * kWh/kW) * 100 ¢/$
-    // Simplified: ($/kW-month) / (hours * load_factor) * 100
-    const loadFactor = 0.70; // Typical industrial load factor 70%
+    // Calculate demand charge component for data center (98% load factor)
+    // Data centers operate at very high load factors due to consistent power demand
+    const loadFactor = 0.98; // Data center load factor 98%
     const demandChargePerKWh = (tariffData.demandCharge) / (hoursInMonth * loadFactor) * 100; // Convert to ¢/kWh
     
     const totalBeforeTax = energyPrice + transmissionDistribution + riders + demandChargePerKWh;
