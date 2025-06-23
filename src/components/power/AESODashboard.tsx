@@ -12,9 +12,11 @@ import {
   Sun,
   Fuel,
   RefreshCw,
-  MapPin
+  MapPin,
+  DollarSign
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 export function AESODashboard() {
   const { 
@@ -25,12 +27,22 @@ export function AESODashboard() {
     refetch 
   } = useAESOData();
 
+  const { exchangeRate, convertToUSD } = useExchangeRate();
+
   const getMarketConditionColor = (condition: string) => {
     switch (condition) {
       case 'high_demand': return 'destructive';
       case 'normal': return 'default';
       default: return 'secondary';
     }
+  };
+
+  const formatPrice = (cadPrice: number) => {
+    const usdPrice = convertToUSD(cadPrice);
+    return {
+      cad: `CA$${cadPrice.toFixed(2)}`,
+      usd: `$${usdPrice.toFixed(2)} USD`
+    };
   };
 
   return (
@@ -59,31 +71,61 @@ export function AESODashboard() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Zap className="w-5 h-5 mr-2 text-yellow-600" />
-            Real-Time Pricing (CAD)
+            Real-Time Pricing
           </CardTitle>
         </CardHeader>
         <CardContent>
           {pricing ? (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Current Price</p>
-                <p className="text-2xl font-bold">CA${pricing.current_price.toFixed(2)}/MWh</p>
-                <Badge variant={getMarketConditionColor(pricing.market_conditions)}>
-                  {pricing.market_conditions.replace('_', ' ').toUpperCase()}
-                </Badge>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Current Price</p>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold">{formatPrice(pricing.current_price).cad}/MWh</p>
+                    <p className="text-lg text-muted-foreground">{formatPrice(pricing.current_price).usd}/MWh</p>
+                  </div>
+                  <Badge variant={getMarketConditionColor(pricing.market_conditions)}>
+                    {pricing.market_conditions.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Average Price</p>
+                  <div className="space-y-1">
+                    <p className="text-xl font-semibold">{formatPrice(pricing.average_price).cad}/MWh</p>
+                    <p className="text-base text-muted-foreground">{formatPrice(pricing.average_price).usd}/MWh</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Peak Price</p>
+                  <div className="space-y-1">
+                    <p className="text-xl font-semibold">{formatPrice(pricing.peak_price).cad}/MWh</p>
+                    <p className="text-base text-muted-foreground">{formatPrice(pricing.peak_price).usd}/MWh</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Off-Peak Price</p>
+                  <div className="space-y-1">
+                    <p className="text-xl font-semibold">{formatPrice(pricing.off_peak_price).cad}/MWh</p>
+                    <p className="text-base text-muted-foreground">{formatPrice(pricing.off_peak_price).usd}/MWh</p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Average Price</p>
-                <p className="text-xl font-semibold">CA${pricing.average_price.toFixed(2)}/MWh</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Peak Price</p>
-                <p className="text-xl font-semibold">CA${pricing.peak_price.toFixed(2)}/MWh</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Off-Peak Price</p>
-                <p className="text-xl font-semibold">CA${pricing.off_peak_price.toFixed(2)}/MWh</p>
-              </div>
+              
+              {/* Exchange Rate Info */}
+              {exchangeRate && (
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium">Exchange Rate:</span>
+                      <span>1 CAD = {exchangeRate.rate.toFixed(4)} USD</span>
+                    </div>
+                    <div className="text-muted-foreground">
+                      Updated: {new Date(exchangeRate.lastUpdated).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-8">
