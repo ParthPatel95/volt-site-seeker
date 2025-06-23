@@ -1358,6 +1358,42 @@ export type Database = {
         }
         Relationships: []
       }
+      site_access_requests: {
+        Row: {
+          company_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          location: string
+          phone: string
+          power_requirement: string
+          status: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          location: string
+          phone: string
+          power_requirement: string
+          status?: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          location?: string
+          phone?: string
+          power_requirement?: string
+          status?: string
+        }
+        Relationships: []
+      }
       site_scan_sessions: {
         Row: {
           city: string | null

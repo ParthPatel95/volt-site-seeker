@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Zap, TrendingUp, Sparkles } from 'lucide-react';
+import { SiteAccessRequestModal } from './SiteAccessRequestModal';
 
 export const OptimizedHeroSection = () => {
   return (
@@ -71,13 +72,16 @@ export const OptimizedHeroSection = () => {
               </span>
             </Button>
           </Link>
-          <Button 
-            size="lg" 
-            variant="outline" 
-            className="w-full sm:w-auto border-2 border-slate-300 text-slate-100 hover:bg-slate-800 hover:text-white hover:border-electric-blue px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold bg-slate-900/50 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-          >
-            View Pipeline
-          </Button>
+          
+          <SiteAccessRequestModal>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="w-full sm:w-auto border-2 border-slate-300 text-slate-100 hover:bg-slate-800 hover:text-white hover:border-electric-blue px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold bg-slate-900/50 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            >
+              View Available Sites
+            </Button>
+          </SiteAccessRequestModal>
         </div>
 
         {/* Key metrics */}
