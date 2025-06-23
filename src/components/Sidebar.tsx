@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Sheet,
@@ -19,7 +20,15 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-export function Sidebar() {
+interface SidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+  isMobile: boolean;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+}
+
+export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
 
   const menuItems = [
@@ -61,34 +70,79 @@ export function Sidebar() {
     },
   ];
 
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent className="w-full sm:w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Menu</SheetTitle>
+            <SheetDescription>
+              Navigate through the application
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex flex-col space-y-2">
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.label}
+                to={item.href}
+                className={({ isActive }) => cn(
+                  "flex items-center px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700",
+                  isActive ? "bg-gray-100 dark:bg-gray-700 font-medium" : "text-gray-600 dark:text-gray-400"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <item.icon className="w-4 h-4 mr-2" />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Menu className="md:hidden absolute top-4 left-4 text-gray-500 hover:text-gray-800 cursor-pointer" />
-      </SheetTrigger>
-      <SheetContent className="w-full sm:w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50">
-        <SheetHeader className="mb-4">
-          <SheetTitle>Menu</SheetTitle>
-          <SheetDescription>
-            Navigate through the application
-          </SheetDescription>
-        </SheetHeader>
-        <div className="flex flex-col space-y-2">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.label}
-              to={item.href}
-              className={({ isActive }) => cn(
-                "flex items-center px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700",
-                isActive ? "bg-gray-100 dark:bg-gray-700 font-medium" : "text-gray-600 dark:text-gray-400"
-              )}
+    <div className={cn(
+      "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300",
+      isCollapsed ? "w-16" : "w-72"
+    )}>
+      <div className="flex flex-col h-full">
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            {!isCollapsed && (
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                VoltScout
+              </h2>
+            )}
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <item.icon className="w-4 h-4 mr-2" />
-              {item.label}
-            </NavLink>
-          ))}
+              <Menu className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </SheetContent>
-    </Sheet>
+        
+        <div className="flex-1 px-2">
+          <div className="flex flex-col space-y-1">
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.label}
+                to={item.href}
+                className={({ isActive }) => cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors",
+                  isActive ? "bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400",
+                  isCollapsed && "justify-center"
+                )}
+                title={isCollapsed ? item.label : undefined}
+              >
+                <item.icon className={cn("w-4 h-4", !isCollapsed && "mr-3")} />
+                {!isCollapsed && <span>{item.label}</span>}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
