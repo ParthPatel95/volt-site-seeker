@@ -111,7 +111,8 @@ async function fetchCurrentPrices(apiKey: string) {
 async function fetchLoadForecast(apiKey: string) {
   console.log('Fetching AESO load forecast...');
   
-  const url = 'https://api.aeso.ca/report/v1.1/load/albertaInternalLoad';
+  // Updated endpoint based on AESO API documentation
+  const url = 'https://api.aeso.ca/report/v1.1/load/forecast';
   
   try {
     console.log('Making request to:', url);
@@ -119,26 +120,55 @@ async function fetchLoadForecast(apiKey: string) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'X-API-Key': apiKey,
+        'Ocp-Apim-Subscription-Key': apiKey, // Proper header for Azure API Management
         'User-Agent': 'VoltScout-Dashboard/1.0'
       }
     });
 
     console.log('AESO Load API response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.log('AESO Load API error response:', errorText);
-      throw new Error(`AESO Load API responded with status: ${response.status} - ${response.statusText}`);
+      
+      // Try alternative endpoint if first fails
+      return await fetchAlternativeLoadData(apiKey);
     }
 
     const data = await response.json();
-    console.log('AESO load response received, processing...');
+    console.log('AESO load response received:', data);
     return parseAESOLoadData(data);
     
   } catch (error) {
     console.error('Error fetching AESO load data:', error);
+    // Try alternative endpoint
+    return await fetchAlternativeLoadData(apiKey);
+  }
+}
+
+async function fetchAlternativeLoadData(apiKey: string) {
+  console.log('Trying alternative load endpoint...');
+  const url = 'https://api.aeso.ca/report/v1.1/load/albertaInternalLoad';
+  
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Ocp-Apim-Subscription-Key': apiKey,
+        'User-Agent': 'VoltScout-Dashboard/1.0'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Alternative load API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return parseAESOLoadData(data);
+    
+  } catch (error) {
+    console.error('Alternative load endpoint also failed:', error);
     throw error;
   }
 }
@@ -154,7 +184,7 @@ async function fetchGenerationMix(apiKey: string) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'X-API-Key': apiKey,
+        'Ocp-Apim-Subscription-Key': apiKey,
         'User-Agent': 'VoltScout-Dashboard/1.0'
       }
     });
@@ -168,7 +198,7 @@ async function fetchGenerationMix(apiKey: string) {
     }
 
     const data = await response.json();
-    console.log('AESO generation response received, processing...');
+    console.log('AESO generation response received:', data);
     return parseAESOGenerationData(data);
     
   } catch (error) {
@@ -188,7 +218,7 @@ async function fetchSystemMarginalPrice(apiKey: string) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'X-API-Key': apiKey,
+        'Ocp-Apim-Subscription-Key': apiKey,
         'User-Agent': 'VoltScout-Dashboard/1.0'
       }
     });
@@ -198,7 +228,12 @@ async function fetchSystemMarginalPrice(apiKey: string) {
     if (!response.ok) {
       const errorText = await response.text();
       console.log('AESO SMP API error response:', errorText);
-      throw new Error(`AESO SMP API responded with status: ${response.status} - ${response.statusText}`);
+      
+      // Log detailed error information
+      const responseHeaders = Object.fromEntries(response.headers.entries());
+      console.log('Response headers:', responseHeaders);
+      
+      throw new Error(`AESO SMP API responded with status: ${response.status} - ${response.statusText}. Response: ${errorText}`);
     }
 
     const data = await response.json();
@@ -217,7 +252,7 @@ async function fetchOperatingReserve(apiKey: string) {
   const response = await fetch(url, {
     headers: {
       'Accept': 'application/json',
-      'X-API-Key': apiKey,
+      'Ocp-Apim-Subscription-Key': apiKey,
       'User-Agent': 'VoltScout-Dashboard/1.0'
     }
   });
@@ -238,7 +273,7 @@ async function fetchInterchange(apiKey: string) {
   const response = await fetch(url, {
     headers: {
       'Accept': 'application/json',
-      'X-API-Key': apiKey,
+      'Ocp-Apim-Subscription-Key': apiKey,
       'User-Agent': 'VoltScout-Dashboard/1.0'
     }
   });
@@ -259,7 +294,7 @@ async function fetchTransmissionConstraints(apiKey: string) {
   const response = await fetch(url, {
     headers: {
       'Accept': 'application/json',
-      'X-API-Key': apiKey,
+      'Ocp-Apim-Subscription-Key': apiKey,
       'User-Agent': 'VoltScout-Dashboard/1.0'
     }
   });
@@ -280,7 +315,7 @@ async function fetchEnergyStorage(apiKey: string) {
   const response = await fetch(url, {
     headers: {
       'Accept': 'application/json',
-      'X-API-Key': apiKey,
+      'Ocp-Apim-Subscription-Key': apiKey,
       'User-Agent': 'VoltScout-Dashboard/1.0'
     }
   });
