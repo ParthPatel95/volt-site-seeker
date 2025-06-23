@@ -8,6 +8,7 @@ import { AuthWrapper } from "./components/AuthWrapper";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import EnergyRates from "./pages/EnergyRates";
+import EnergyRatesTest from "./pages/EnergyRatesTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,14 @@ const App = () => (
             element={
               <AuthWrapper>
                 <EnergyRates />
+              </AuthWrapper>
+            }
+          />
+          <Route
+            path="/energy-rates-test"
+            element={
+              <AuthWrapper>
+                <EnergyRatesTest />
               </AuthWrapper>
             }
           />
