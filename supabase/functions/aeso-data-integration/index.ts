@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -77,6 +76,22 @@ serve(async (req) => {
           data = await fetchEnergyStorage(aesoApiKey);
           qaMetrics.endpoint_used = 'energy-storage';
           break;
+        case 'fetch_wind_solar_forecast':
+          data = await fetchWindSolarForecast(aesoApiKey);
+          qaMetrics.endpoint_used = 'wind-solar-forecast';
+          break;
+        case 'fetch_asset_outages':
+          data = await fetchAssetOutages(aesoApiKey);
+          qaMetrics.endpoint_used = 'asset-outages';
+          break;
+        case 'fetch_historical_prices':
+          data = await fetchHistoricalPrices(aesoApiKey);
+          qaMetrics.endpoint_used = 'historical-prices';
+          break;
+        case 'fetch_market_analytics':
+          data = await fetchMarketAnalytics(aesoApiKey);
+          qaMetrics.endpoint_used = 'market-analytics';
+          break;
         default:
           throw new Error('Invalid action');
       }
@@ -145,6 +160,17 @@ serve(async (req) => {
 function getDateRange() {
   const endDate = new Date();
   const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+  
+  return {
+    startDate: formatAESODate(startDate),
+    endDate: formatAESODate(endDate)
+  };
+}
+
+// Get extended date range for historical data
+function getExtendedDateRange(days = 30) {
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
   
   return {
     startDate: formatAESODate(startDate),
@@ -405,6 +431,119 @@ async function fetchEnergyStorage(apiKey: string) {
   return parseEnergyStorageData(data);
 }
 
+// Wind and Solar Forecast endpoint
+async function fetchWindSolarForecast(apiKey: string) {
+  console.log('Fetching AESO wind and solar forecast...');
+  
+  const { startDate, endDate } = getDateRange();
+  const url = `https://api.aeso.ca/report/v1.1/forecast/windSolarForecast?startDate=${startDate}&endDate=${endDate}`;
+  
+  console.log('Wind Solar Forecast URL:', url);
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-API-Key': apiKey
+    }
+  });
+
+  console.log('Wind Solar Forecast API response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Wind Solar Forecast API error response:', errorText);
+    throw new Error(`Wind Solar Forecast API returned status ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('Wind Solar Forecast response received:', JSON.stringify(data, null, 2));
+  
+  return parseWindSolarForecastData(data);
+}
+
+// Asset Outages endpoint
+async function fetchAssetOutages(apiKey: string) {
+  console.log('Fetching AESO asset outages...');
+  
+  const { startDate, endDate } = getDateRange();
+  const url = `https://api.aeso.ca/report/v1.1/outages/assetOutageReport?startDate=${startDate}&endDate=${endDate}`;
+  
+  console.log('Asset Outages URL:', url);
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-API-Key': apiKey
+    }
+  });
+
+  console.log('Asset Outages API response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Asset Outages API error response:', errorText);
+    throw new Error(`Asset Outages API returned status ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('Asset Outages response received:', JSON.stringify(data, null, 2));
+  
+  return parseAssetOutagesData(data);
+}
+
+// Historical Prices endpoint
+async function fetchHistoricalPrices(apiKey: string) {
+  console.log('Fetching AESO historical prices...');
+  
+  const { startDate, endDate } = getExtendedDateRange(30);
+  const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
+  
+  console.log('Historical Prices URL:', url);
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-API-Key': apiKey
+    }
+  });
+
+  console.log('Historical Prices API response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Historical Prices API error response:', errorText);
+    throw new Error(`Historical Prices API returned status ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('Historical Prices response received:', JSON.stringify(data, null, 2));
+  
+  return parseHistoricalPricesData(data);
+}
+
+// Market Analytics (combined endpoint for advanced analytics)
+async function fetchMarketAnalytics(apiKey: string) {
+  console.log('Fetching AESO market analytics...');
+  
+  try {
+    // Fetch multiple datasets for analytics
+    const [prices, load, generation, reserves] = await Promise.all([
+      fetchHistoricalPrices(apiKey),
+      fetchLoadForecast(apiKey),
+      fetchCurrentSupplyDemand(apiKey),
+      fetchOperatingReserve(apiKey)
+    ]);
+
+    return calculateMarketAnalytics(prices, load, generation, reserves);
+  } catch (error) {
+    console.error('Error fetching market analytics:', error);
+    throw new Error(`Failed to fetch market analytics: ${error.message}`);
+  }
+}
+
 // Data parsing functions
 function parsePoolPriceData(data: any) {
   try {
@@ -614,14 +753,260 @@ function parseEnergyStorageData(data: any) {
   }
 }
 
-// Helper functions
-function calculateCapacityMargin(currentLoad: number): number {
-  const totalCapacity = 16000; // Alberta's approximate total capacity
-  return ((totalCapacity - currentLoad) / totalCapacity) * 100;
+// NEW: Parse Wind Solar Forecast data
+function parseWindSolarForecastData(data: any) {
+  try {
+    console.log('Parsing wind solar forecast data:', JSON.stringify(data, null, 2));
+    
+    const records = data.return?.data || [];
+    if (!Array.isArray(records) || records.length === 0) {
+      throw new Error('No wind solar forecast data available');
+    }
+    
+    const forecasts = records.map((record: any) => ({
+      datetime: record.begin_datetime_mpt || new Date().toISOString(),
+      wind_forecast_mw: record.wind_forecast || 0,
+      solar_forecast_mw: record.solar_forecast || 0,
+      total_renewable_forecast_mw: (record.wind_forecast || 0) + (record.solar_forecast || 0)
+    }));
+    
+    return {
+      forecasts,
+      timestamp: new Date().toISOString(),
+      total_forecasts: forecasts.length
+    };
+  } catch (error) {
+    console.error('Error parsing wind solar forecast data:', error);
+    throw new Error(`Failed to parse wind solar forecast data: ${error.message}`);
+  }
 }
 
-function calculateReserveMargin(currentLoad: number): number {
-  return calculateCapacityMargin(currentLoad) + 5;
+// NEW: Parse Asset Outages data
+function parseAssetOutagesData(data: any) {
+  try {
+    console.log('Parsing asset outages data:', JSON.stringify(data, null, 2));
+    
+    const records = data.return?.data || [];
+    
+    const outages = records.map((record: any) => ({
+      asset_name: record.asset_name || 'Unknown Asset',
+      outage_type: record.outage_type || 'Unknown',
+      capacity_mw: record.capacity_mw || 0,
+      start_date: record.start_date || new Date().toISOString(),
+      end_date: record.end_date || null,
+      status: record.status || 'Active',
+      reason: record.reason || 'Not specified'
+    }));
+    
+    const totalOutageCapacity = outages.reduce((sum, outage) => sum + outage.capacity_mw, 0);
+    
+    return {
+      outages,
+      total_outages: outages.length,
+      total_outage_capacity_mw: totalOutageCapacity,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error parsing asset outages data:', error);
+    throw new Error(`Failed to parse asset outages data: ${error.message}`);
+  }
+}
+
+// NEW: Parse Historical Prices data
+function parseHistoricalPricesData(data: any) {
+  try {
+    console.log('Parsing historical prices data:', JSON.stringify(data, null, 2));
+    
+    const records = data.return?.data || [];
+    if (!Array.isArray(records) || records.length === 0) {
+      throw new Error('No historical prices data available');
+    }
+    
+    const prices = records.map((record: any) => ({
+      datetime: record.begin_datetime_mpt || new Date().toISOString(),
+      pool_price: record.pool_price || 0,
+      forecast_pool_price: record.forecast_pool_price || 0
+    }));
+    
+    // Calculate statistics
+    const poolPrices = prices.map(p => p.pool_price);
+    const avgPrice = poolPrices.reduce((sum, price) => sum + price, 0) / poolPrices.length;
+    const maxPrice = Math.max(...poolPrices);
+    const minPrice = Math.min(...poolPrices);
+    
+    return {
+      prices,
+      statistics: {
+        average_price: avgPrice,
+        max_price: maxPrice,
+        min_price: minPrice,
+        price_volatility: calculateVolatility(poolPrices),
+        total_records: prices.length
+      },
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error parsing historical prices data:', error);
+    throw new Error(`Failed to parse historical prices data: ${error.message}`);
+  }
+}
+
+// NEW: Calculate Market Analytics
+function calculateMarketAnalytics(prices: any, load: any, generation: any, reserves: any) {
+  try {
+    const analytics = {
+      market_stress_score: calculateMarketStressScore(prices, load, reserves),
+      price_prediction: calculatePricePrediction(prices),
+      capacity_gap_analysis: calculateCapacityGap(load, generation),
+      investment_opportunities: calculateInvestmentOpportunities(prices, generation),
+      risk_assessment: calculateRiskAssessment(prices, load, reserves),
+      market_timing_signals: calculateMarketTimingSignals(prices, generation),
+      timestamp: new Date().toISOString()
+    };
+    
+    return analytics;
+  } catch (error) {
+    console.error('Error calculating market analytics:', error);
+    throw new Error(`Failed to calculate market analytics: ${error.message}`);
+  }
+}
+
+// Helper Analytics Functions
+function calculateMarketStressScore(prices: any, load: any, reserves: any): number {
+  let stressScore = 0;
+  
+  // Price stress (0-40 points)
+  if (prices?.statistics?.average_price > 100) stressScore += 20;
+  if (prices?.statistics?.price_volatility > 50) stressScore += 20;
+  
+  // Load stress (0-30 points)
+  if (load?.capacity_margin < 10) stressScore += 15;
+  if (load?.reserve_margin < 15) stressScore += 15;
+  
+  // Reserve stress (0-30 points)
+  if (reserves?.total_reserve_mw < 500) stressScore += 30;
+  
+  return Math.min(stressScore, 100);
+}
+
+function calculatePricePrediction(prices: any): any {
+  if (!prices?.prices || prices.prices.length < 5) {
+    return { prediction: 'insufficient_data' };
+  }
+  
+  const recentPrices = prices.prices.slice(-24); // Last 24 hours
+  const avgRecent = recentPrices.reduce((sum: number, p: any) => sum + p.pool_price, 0) / recentPrices.length;
+  const trend = recentPrices[recentPrices.length - 1].pool_price - recentPrices[0].pool_price;
+  
+  return {
+    next_hour_prediction: avgRecent + (trend * 0.1),
+    confidence: Math.min(85, Math.max(50, 100 - Math.abs(prices.statistics.price_volatility))),
+    trend_direction: trend > 0 ? 'increasing' : 'decreasing',
+    predicted_range: {
+      low: avgRecent * 0.9,
+      high: avgRecent * 1.1
+    }
+  };
+}
+
+function calculateCapacityGap(load: any, generation: any): any {
+  const currentLoad = load?.current_demand_mw || 0;
+  const totalGeneration = generation?.total_generation_mw || 0;
+  const gap = totalGeneration - currentLoad;
+  
+  return {
+    current_gap_mw: gap,
+    utilization_rate: currentLoad / totalGeneration * 100,
+    status: gap > 1000 ? 'surplus' : gap > 0 ? 'adequate' : 'deficit',
+    recommendation: gap < 500 ? 'increase_generation' : 'optimal'
+  };
+}
+
+function calculateInvestmentOpportunities(prices: any, generation: any): any[] {
+  const opportunities = [];
+  
+  // High price opportunity
+  if (prices?.statistics?.average_price > 80) {
+    opportunities.push({
+      type: 'generation_expansion',
+      priority: 'high',
+      reason: 'High average prices indicate strong market demand',
+      potential_return: 'high'
+    });
+  }
+  
+  // Renewable opportunity
+  const renewablePercent = generation?.renewable_percentage || 0;
+  if (renewablePercent < 50) {
+    opportunities.push({
+      type: 'renewable_development',
+      priority: 'medium',
+      reason: 'Low renewable penetration presents growth opportunity',
+      potential_return: 'medium'
+    });
+  }
+  
+  return opportunities;
+}
+
+function calculateRiskAssessment(prices: any, load: any, reserves: any): any {
+  const risks = [];
+  
+  // Price volatility risk
+  if (prices?.statistics?.price_volatility > 75) {
+    risks.push({
+      type: 'price_volatility',
+      level: 'high',
+      impact: 'revenue_uncertainty'
+    });
+  }
+  
+  // Supply adequacy risk
+  if (reserves?.total_reserve_mw < 300) {
+    risks.push({
+      type: 'supply_adequacy',
+      level: 'high',
+      impact: 'grid_reliability'
+    });
+  }
+  
+  return {
+    risks,
+    overall_risk_level: risks.length > 2 ? 'high' : risks.length > 0 ? 'medium' : 'low'
+  };
+}
+
+function calculateMarketTimingSignals(prices: any, generation: any): any {
+  const signals = [];
+  
+  // Buy signal
+  if (prices?.statistics?.average_price < 40) {
+    signals.push({
+      type: 'buy_opportunity',
+      strength: 'strong',
+      timeframe: 'short_term'
+    });
+  }
+  
+  // Development signal
+  const renewablePercent = generation?.renewable_percentage || 0;
+  if (renewablePercent > 60) {
+    signals.push({
+      type: 'renewable_saturation',
+      strength: 'medium',
+      timeframe: 'long_term'
+    });
+  }
+  
+  return signals;
+}
+
+function calculateVolatility(prices: number[]): number {
+  if (prices.length < 2) return 0;
+  
+  const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+  const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
+  return Math.sqrt(variance);
 }
 
 // Data validation functions

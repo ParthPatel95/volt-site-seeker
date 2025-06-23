@@ -1,162 +1,94 @@
-import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import React from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Menu } from "lucide-react"
+import { NavLink, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
-  Zap, 
-  TrendingUp,
-  Factory,
-  Database,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Briefcase,
-  LogOut,
-  Calculator,
-  MapPin
+  Zap,
+  Brain,
+  BarChart,
+  Settings,
+  HelpCircle
 } from 'lucide-react';
-import { ModeToggle } from './ModeToggle';
-import { EnhancedLogo } from './EnhancedLogo';
-import { useAuth } from '@/hooks/useAuth';
 
-interface SidebarProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (collapsed: boolean) => void;
-  isMobile: boolean;
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-}
-
-const navigationItems = [
-  { path: '/app', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-  { path: '/app/aeso-market', icon: MapPin, label: 'AESO Market', badge: 'NEW' },
-  { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: null },
-  { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: null },
-  { path: '/app/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
-  { path: '/energy-rates', icon: Calculator, label: 'Energy Rate Estimator', badge: null },
-  { path: '/app/data-management', icon: Database, label: 'Data Management', badge: null },
-];
-
-export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
+export function Sidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { signOut } = useAuth();
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (isMobile) {
-      setIsOpen(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className={`flex items-center gap-3 p-4 border-b ${isCollapsed && !isMobile ? 'justify-center' : ''}`}>
-        <EnhancedLogo className={isCollapsed && !isMobile ? 'w-8 h-8' : 'w-10 h-10'} />
-        {(!isCollapsed || isMobile) && (
-          <div className="flex flex-col min-w-0">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
-              VoltScout
-            </h1>
-            <p className="text-xs text-muted-foreground truncate">Power Intelligence Platform</p>
-          </div>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-2">
-          {navigationItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Button
-                key={item.path}
-                variant={isActive ? "secondary" : "ghost"}
-                className={`w-full justify-start gap-3 ${
-                  isCollapsed && !isMobile ? 'px-2' : 'px-3'
-                } ${isActive ? 'bg-secondary/80' : 'hover:bg-secondary/50'} min-h-[44px]`}
-                onClick={() => handleNavigation(item.path)}
-                title={isCollapsed && !isMobile ? item.label : undefined}
-              >
-                <item.icon className={`${isCollapsed && !isMobile ? 'w-5 h-5' : 'w-4 h-4'} flex-shrink-0`} />
-                {(!isCollapsed || isMobile) && (
-                  <>
-                    <span className="flex-1 text-left truncate">{item.label}</span>
-                    {item.badge && (
-                      <Badge variant="secondary" className="text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </Button>
-            );
-          })}
-        </nav>
-      </ScrollArea>
-
-      {/* Footer */}
-      <div className="p-4 border-t">
-        <div className={`flex items-center gap-2 ${isCollapsed && !isMobile ? 'justify-center flex-col' : 'justify-between'}`}>
-          <div className="flex items-center gap-2">
-            <ModeToggle />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="p-2 flex-shrink-0"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-              {(!isCollapsed || isMobile) && <span className="ml-1">Sign Out</span>}
-            </Button>
-          </div>
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 flex-shrink-0"
-            >
-              {isCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <ChevronLeft className="w-4 h-4" />
-              )}
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="left" className="w-72 p-0">
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
-    );
-  }
+  const menuItems = [
+    {
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+      href: '/app',
+      active: location.pathname === '/app'
+    },
+    {
+      icon: Zap,
+      label: 'AESO Market',
+      href: '/app/aeso-market',
+      active: location.pathname === '/app/aeso-market'
+    },
+    {
+      icon: Brain,
+      label: 'Market Intelligence',
+      href: '/app/aeso-intelligence',
+      active: location.pathname === '/app/aeso-intelligence'
+    },
+    {
+      icon: BarChart,
+      label: 'Energy Rates',
+      href: '/app/energy-rates',
+      active: location.pathname === '/app/energy-rates'
+    },
+    {
+      icon: Settings,
+      label: 'Settings',
+      href: '/app/settings',
+      active: location.pathname === '/app/settings'
+    },
+    {
+      icon: HelpCircle,
+      label: 'Help & Support',
+      href: '/app/help',
+      active: location.pathname === '/app/help'
+    },
+  ];
 
   return (
-    <aside 
-      className={`fixed left-0 top-0 z-40 h-screen bg-background border-r transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-72'
-      }`}
-    >
-      <SidebarContent />
-    </aside>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Menu className="md:hidden absolute top-4 left-4 text-gray-500 hover:text-gray-800 cursor-pointer" />
+      </SheetTrigger>
+      <SheetContent className="w-full sm:w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50">
+        <SheetHeader className="mb-4">
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>
+            Navigate through the application
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex flex-col space-y-2">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.label}
+              to={item.href}
+              className={({ isActive }) => cn(
+                "flex items-center px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700",
+                isActive ? "bg-gray-100 dark:bg-gray-700 font-medium" : "text-gray-600 dark:text-gray-400"
+              )}
+            >
+              <item.icon className="w-4 h-4 mr-2" />
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

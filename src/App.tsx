@@ -1,56 +1,30 @@
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthWrapper } from './components/AuthWrapper';
+import { Dashboard } from './components/Dashboard';
+import { Landing } from './components/Landing';
+import { NotFound } from './components/NotFound';
+import { EnergyRates } from './components/EnergyRates';
+import { EnergyRatesTest } from './components/EnergyRatesTest';
+import { AESOMarket } from './components/AESOMarket';
+import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthWrapper } from "./components/AuthWrapper";
-import Index from "./pages/Index";
-import Landing from "./pages/Landing";
-import EnergyRates from "./pages/EnergyRates";
-import EnergyRatesTest from "./pages/EnergyRatesTest";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+function App() {
+  return (
+    <Router>
+      <div className="min-h-screen bg-background">
         <Routes>
-          <Route path="/landing" element={<Landing />} />
-          <Route
-            path="/app/*"
-            element={
-              <AuthWrapper>
-                <Index />
-              </AuthWrapper>
-            }
-          />
-          <Route
-            path="/energy-rates"
-            element={
-              <AuthWrapper>
-                <EnergyRates />
-              </AuthWrapper>
-            }
-          />
-          <Route
-            path="/energy-rates-test"
-            element={
-              <AuthWrapper>
-                <EnergyRatesTest />
-              </AuthWrapper>
-            }
-          />
           <Route path="/" element={<Landing />} />
+          <Route path="/app" element={<AuthWrapper><Dashboard /></AuthWrapper>} />
+          <Route path="/app/aeso-market" element={<AuthWrapper><AESOMarket /></AuthWrapper>} />
+          <Route path="/app/aeso-intelligence" element={<AuthWrapper><AESOMarketIntelligence /></AuthWrapper>} />
+          <Route path="/app/energy-rates" element={<AuthWrapper><EnergyRates /></AuthWrapper>} />
+          <Route path="/app/energy-rates-test" element={<AuthWrapper><EnergyRatesTest /></AuthWrapper>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </div>
+    </Router>
+  );
+}
 
 export default App;
