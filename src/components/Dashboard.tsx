@@ -222,7 +222,7 @@ export function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
-                  <p className="text-xl sm:text-2xl font-bold">${pricing.current_price?.toFixed(2) || '0.00'}/MWh</p>
+                  <p className="text-xl sm:text-2xl font-bold">${(pricing.current_price || 0).toFixed(2)}/MWh</p>
                   <Badge variant="default" className="text-xs">
                     {pricing.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
                   </Badge>
@@ -234,13 +234,13 @@ export function Dashboard() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
-                  <p className="text-xl sm:text-2xl font-bold">{loadData.reserve_margin?.toFixed(1) || '0.0'}%</p>
+                  <p className="text-xl sm:text-2xl font-bold">{(loadData.reserve_margin || 0).toFixed(1)}%</p>
                   <p className="text-xs text-muted-foreground">Grid reliability</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
                   <p className="text-xl sm:text-2xl font-bold">
-                    {generationMix?.renewable_percentage?.toFixed(1) || '0.0'}%
+                    {(generationMix?.renewable_percentage || 0).toFixed(1)}%
                   </p>
                   <p className="text-xs text-muted-foreground">Of total generation</p>
                 </div>
@@ -283,13 +283,13 @@ export function Dashboard() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
-                  <p className="text-xl sm:text-2xl font-bold">{aesoLoadData.reserve_margin?.toFixed(1) || '0.0'}%</p>
+                  <p className="text-xl sm:text-2xl font-bold">{(aesoLoadData.reserve_margin || 0).toFixed(1)}%</p>
                   <p className="text-xs text-muted-foreground">Grid reliability</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
                   <p className="text-xl sm:text-2xl font-bold">
-                    {aesoGenerationMix?.renewable_percentage?.toFixed(1) || '0.0'}%
+                    {(aesoGenerationMix?.renewable_percentage || 0).toFixed(1)}%
                   </p>
                   <p className="text-xs text-muted-foreground">Of total generation</p>
                 </div>
@@ -640,7 +640,7 @@ export function Dashboard() {
             </Button>
           </div>
         </CardContent>
-      </div>
+      </Card>
     </div>
   );
 }
