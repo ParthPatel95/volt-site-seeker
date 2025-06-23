@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
-import { PropertyList } from '@/components/PropertyList';
-import { MultiSourceScraper } from '@/components/MultiSourceScraper';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { PowerInfrastructure } from '@/components/PowerInfrastructure';
 import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
@@ -69,8 +67,6 @@ export default function Index() {
         <main className="flex-1 overflow-auto">
           <Routes>
             <Route index element={<Dashboard />} />
-            <Route path="properties" element={<PropertyList />} />
-            <Route path="scraper" element={<MultiSourceScraper />} />
             <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
             <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="power-infrastructure" element={<PowerInfrastructure />} />
