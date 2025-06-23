@@ -17,7 +17,11 @@ import {
   Brain,
   BarChart,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Building2,
+  Factory,
+  Database,
+  Search
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -55,6 +59,30 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
       label: 'Energy Rates',
       href: '/app/energy-rates',
       active: location.pathname === '/app/energy-rates'
+    },
+    {
+      icon: Building2,
+      label: 'Corporate Intelligence',
+      href: '/app/corporate-intelligence',
+      active: location.pathname === '/app/corporate-intelligence'
+    },
+    {
+      icon: Search,
+      label: 'Idle Industry Scanner',
+      href: '/app/idle-industry-scanner',
+      active: location.pathname === '/app/idle-industry-scanner'
+    },
+    {
+      icon: Factory,
+      label: 'Power Infrastructure',
+      href: '/app/power-infrastructure',
+      active: location.pathname === '/app/power-infrastructure'
+    },
+    {
+      icon: Database,
+      label: 'Data Management',
+      href: '/app/data-management',
+      active: location.pathname === '/app/data-management'
     },
     {
       icon: Settings,

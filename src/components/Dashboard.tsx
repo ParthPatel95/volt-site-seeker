@@ -80,6 +80,8 @@ export function Dashboard() {
             <Route path="/idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
             <Route path="/data-management" element={<DataManagement />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/help" element={<HelpPage />} />
           </Routes>
         </main>
       </div>
@@ -115,6 +117,32 @@ function DashboardHome() {
             <h3 className="text-lg font-semibold mb-2">Market Intelligence</h3>
             <p className="text-gray-600">Advanced analytics and forecasting</p>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsPage() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Settings</h1>
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <p className="text-gray-600">Settings panel coming soon...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HelpPage() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Help & Support</h1>
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <p className="text-gray-600">Help documentation coming soon...</p>
         </div>
       </div>
     </div>
