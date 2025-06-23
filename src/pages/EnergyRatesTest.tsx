@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import Sidebar from '@/components/Sidebar';
+import { Sidebar } from '@/components/Sidebar';
 import { EnergyRateEstimatorTest } from '@/components/energy/EnergyRateEstimatorTest';
 
 export default function EnergyRatesTest() {

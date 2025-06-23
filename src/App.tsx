@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthWrapper } from './components/AuthWrapper';
 import { Dashboard } from './components/Dashboard';
-import { Landing } from './components/Landing';
-import { NotFound } from './components/NotFound';
-import { EnergyRates } from './components/EnergyRates';
-import { EnergyRatesTest } from './components/EnergyRatesTest';
+import Landing from './pages/Landing';
+import NotFound from './pages/NotFound';
+import EnergyRates from './pages/EnergyRates';
+import EnergyRatesTest from './pages/EnergyRatesTest';
 import { AESOMarket } from './components/AESOMarket';
 import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
 

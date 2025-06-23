@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import Sidebar from '@/components/Sidebar';
+import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { PowerInfrastructure } from '@/components/PowerInfrastructure';
