@@ -17,6 +17,7 @@ serve(async (req) => {
     console.log('AESO API Request:', { action });
 
     const aesoApiKey = Deno.env.get('AESO_API_KEY');
+    console.log('AESO API Key available:', aesoApiKey ? 'Yes' : 'No');
     
     let data;
     
@@ -66,7 +67,8 @@ serve(async (req) => {
     console.error('AESO API error:', error);
     
     // Return fallback data for demo purposes
-    const fallbackData = getFallbackData(await req.json().then(body => body.action).catch(() => 'fetch_current_prices'));
+    const requestBody = await req.json().catch(() => ({ action: 'fetch_current_prices' }));
+    const fallbackData = getFallbackData(requestBody.action);
     
     return new Response(
       JSON.stringify({
@@ -74,7 +76,7 @@ serve(async (req) => {
         data: fallbackData,
         source: 'fallback',
         timestamp: new Date().toISOString(),
-        note: 'Using fallback data - check AESO API key configuration'
+        note: 'Using fallback data - AESO API error occurred'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -88,6 +90,7 @@ async function fetchCurrentPrices(apiKey: string | undefined) {
   console.log('Fetching AESO current prices...');
   
   if (!apiKey) {
+    console.log('No AESO API key provided, using fallback');
     throw new Error('AESO API key not configured');
   }
   
@@ -95,6 +98,7 @@ async function fetchCurrentPrices(apiKey: string | undefined) {
   const url = 'https://api.aeso.ca/report/v1.1/price/systemMarginalPrice';
   
   try {
+    console.log('Making request to:', url);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -104,12 +108,15 @@ async function fetchCurrentPrices(apiKey: string | undefined) {
       }
     });
 
+    console.log('AESO API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`AESO API responded with status: ${response.status}`);
+      console.log('AESO API response not OK:', response.statusText);
+      throw new Error(`AESO API responded with status: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('AESO pricing response received');
+    console.log('AESO pricing response received, processing...');
     
     return parseAESOPricingData(data);
     
@@ -201,7 +208,8 @@ async function fetchSystemMarginalPrice(apiKey: string | undefined) {
     throw new Error(`AESO SMP API responded with status: ${response.status}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  return parseAESOPricingData(data);
 }
 
 async function fetchOperatingReserve(apiKey: string | undefined) {
@@ -222,7 +230,8 @@ async function fetchOperatingReserve(apiKey: string | undefined) {
     throw new Error(`AESO Operating Reserve API responded with status: ${response.status}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  return parseOperatingReserveData(data);
 }
 
 async function fetchInterchange(apiKey: string | undefined) {
@@ -243,7 +252,8 @@ async function fetchInterchange(apiKey: string | undefined) {
     throw new Error(`AESO Interchange API responded with status: ${response.status}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  return parseInterchangeData(data);
 }
 
 async function fetchTransmissionConstraints(apiKey: string | undefined) {
@@ -264,7 +274,8 @@ async function fetchTransmissionConstraints(apiKey: string | undefined) {
     throw new Error(`AESO Transmission API responded with status: ${response.status}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  return parseTransmissionData(data);
 }
 
 async function fetchEnergyStorage(apiKey: string | undefined) {
@@ -285,21 +296,21 @@ async function fetchEnergyStorage(apiKey: string | undefined) {
     throw new Error(`AESO Energy Storage API responded with status: ${response.status}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  return parseEnergyStorageData(data);
 }
 
 function parseAESOPricingData(data: any) {
   try {
     // Parse real AESO pricing data structure
-    const latestRecord = data.return?.data?.[0] || {};
+    const records = data.return?.data || [];
+    const latestRecord = records[0] || {};
     
     return {
-      current_price: latestRecord.price || 0,
-      average_price: calculateAveragePrice(data.return?.data || []),
-      peak_price: findPeakPrice(data.return?.data || []),
-      off_peak_price: findOffPeakPrice(data.return?.data || []),
+      price: latestRecord.price || 0,
       timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString(),
-      market_conditions: determineMarketConditions(latestRecord.price || 0)
+      forecast_pool_price: latestRecord.forecast_pool_price || latestRecord.price || 0,
+      begin_datetime_mpt: latestRecord.begin_datetime_mpt || new Date().toISOString()
     };
   } catch (error) {
     console.error('Error parsing AESO pricing data:', error);
@@ -309,11 +320,12 @@ function parseAESOPricingData(data: any) {
 
 function parseAESOLoadData(data: any) {
   try {
-    const latestRecord = data.return?.data?.[0] || {};
+    const records = data.return?.data || [];
+    const latestRecord = records[0] || {};
     
     return {
       current_demand_mw: latestRecord.albertaInternalLoad || 0,
-      peak_forecast_mw: calculatePeakForecast(data.return?.data || []),
+      peak_forecast_mw: calculatePeakForecast(records),
       forecast_date: latestRecord.begin_datetime_mpt || new Date().toISOString(),
       capacity_margin: calculateCapacityMargin(latestRecord.albertaInternalLoad || 0),
       reserve_margin: calculateReserveMargin(latestRecord.albertaInternalLoad || 0)
@@ -326,7 +338,8 @@ function parseAESOLoadData(data: any) {
 
 function parseAESOGenerationData(data: any) {
   try {
-    const latestRecord = data.return?.data?.[0] || {};
+    const records = data.return?.data || [];
+    const latestRecord = records[0] || {};
     
     // Extract generation by source
     const naturalGas = latestRecord.gas || 0;
@@ -357,42 +370,92 @@ function parseAESOGenerationData(data: any) {
   }
 }
 
+function parseOperatingReserveData(data: any) {
+  try {
+    const records = data.return?.data || [];
+    const latestRecord = records[0] || {};
+    
+    return {
+      total_reserve_mw: latestRecord.total_reserve || 0,
+      spinning_reserve_mw: latestRecord.spinning_reserve || 0,
+      supplemental_reserve_mw: latestRecord.supplemental_reserve || 0,
+      timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error parsing operating reserve data:', error);
+    throw error;
+  }
+}
+
+function parseInterchangeData(data: any) {
+  try {
+    const records = data.return?.data || [];
+    const latestRecord = records[0] || {};
+    
+    return {
+      alberta_british_columbia: latestRecord.alberta_british_columbia || 0,
+      alberta_saskatchewan: latestRecord.alberta_saskatchewan || 0,
+      alberta_montana: latestRecord.alberta_montana || 0,
+      total_net_interchange: latestRecord.total_net_interchange || 0,
+      timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error parsing interchange data:', error);
+    throw error;
+  }
+}
+
+function parseTransmissionData(data: any) {
+  try {
+    const records = data.return?.data || [];
+    
+    const constraints = records.map((record: any) => ({
+      constraint_name: record.constraint_name || 'Unknown',
+      status: record.status || 'Active',
+      limit_mw: record.limit_mw || 0,
+      flow_mw: record.flow_mw || 0
+    }));
+    
+    return {
+      constraints,
+      timestamp: records[0]?.begin_datetime_mpt || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error parsing transmission data:', error);
+    throw error;
+  }
+}
+
+function parseEnergyStorageData(data: any) {
+  try {
+    const records = data.return?.data || [];
+    const latestRecord = records[0] || {};
+    
+    return {
+      charging_mw: latestRecord.charging_mw || 0,
+      discharging_mw: latestRecord.discharging_mw || 0,
+      net_storage_mw: latestRecord.net_storage_mw || 0,
+      state_of_charge_percent: latestRecord.state_of_charge_percent || 0,
+      timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error parsing energy storage data:', error);
+    throw error;
+  }
+}
+
 // Helper functions
-function calculateAveragePrice(data: any[]): number {
-  if (!data.length) return 0;
-  const sum = data.reduce((acc, record) => acc + (record.price || 0), 0);
-  return sum / data.length;
-}
-
-function findPeakPrice(data: any[]): number {
-  if (!data.length) return 0;
-  return Math.max(...data.map(record => record.price || 0));
-}
-
-function findOffPeakPrice(data: any[]): number {
-  if (!data.length) return 0;
-  return Math.min(...data.map(record => record.price || 0));
-}
-
-function determineMarketConditions(price: number): string {
-  if (price > 100) return 'high_demand';
-  if (price > 60) return 'elevated';
-  return 'normal';
-}
-
 function calculatePeakForecast(data: any[]): number {
   if (!data.length) return 0;
   return Math.max(...data.map(record => record.albertaInternalLoad || 0));
 }
 
 function calculateCapacityMargin(currentLoad: number): number {
-  // Estimated based on Alberta's typical capacity
-  const totalCapacity = 16000; // MW approximate
+  const totalCapacity = 16000;
   return ((totalCapacity - currentLoad) / totalCapacity) * 100;
 }
 
 function calculateReserveMargin(currentLoad: number): number {
-  // Estimated reserve margin
   return calculateCapacityMargin(currentLoad) + 5;
 }
 
@@ -402,15 +465,14 @@ function getFallbackData(action: string) {
   
   switch (action) {
     case 'fetch_current_prices':
+    case 'fetch_system_marginal_price':
       const basePrice = 45.67;
       const currentPrice = basePrice + (variation * 20);
       return {
-        current_price: Math.max(20, currentPrice),
-        average_price: 42.30,
-        peak_price: Math.max(60, currentPrice * 1.8),
-        off_peak_price: Math.max(15, currentPrice * 0.6),
+        price: Math.max(20, currentPrice),
         timestamp: new Date().toISOString(),
-        market_conditions: currentPrice > 60 ? 'high_demand' : 'normal'
+        forecast_pool_price: Math.max(22, currentPrice * 1.1),
+        begin_datetime_mpt: new Date().toISOString()
       };
     case 'fetch_load_forecast':
       const baseDemand = 9850;
@@ -444,6 +506,41 @@ function getFallbackData(action: string) {
         other_mw: Math.max(0, other),
         total_generation_mw: total,
         renewable_percentage: Math.min(80, Math.max(20, renewablePercentage)),
+        timestamp: new Date().toISOString()
+      };
+    case 'fetch_operating_reserve':
+      return {
+        total_reserve_mw: 1200 + (variation * 100),
+        spinning_reserve_mw: 800 + (variation * 50),
+        supplemental_reserve_mw: 400 + (variation * 50),
+        timestamp: new Date().toISOString()
+      };
+    case 'fetch_interchange':
+      return {
+        alberta_british_columbia: -150 + (variation * 50),
+        alberta_saskatchewan: 75 + (variation * 25),
+        alberta_montana: 25 + (variation * 15),
+        total_net_interchange: -50 + (variation * 30),
+        timestamp: new Date().toISOString()
+      };
+    case 'fetch_transmission_constraints':
+      return {
+        constraints: [
+          {
+            constraint_name: 'Calgary Area Transmission Constraint',
+            status: 'Active',
+            limit_mw: 500,
+            flow_mw: 450 + (variation * 50)
+          }
+        ],
+        timestamp: new Date().toISOString()
+      };
+    case 'fetch_energy_storage':
+      return {
+        charging_mw: 25 + (variation * 10),
+        discharging_mw: 15 + (variation * 8),
+        net_storage_mw: 10 + (variation * 5),
+        state_of_charge_percent: 65 + (variation * 10),
         timestamp: new Date().toISOString()
       };
     default:

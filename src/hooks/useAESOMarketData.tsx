@@ -51,6 +51,7 @@ export function useAESOMarketData() {
   const [energyStorage, setEnergyStorage] = useState<AESOEnergyStorage | null>(null);
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback'>('connecting');
+  const [hasShownFallbackNotice, setHasShownFallbackNotice] = useState(false);
   const { toast } = useToast();
 
   const fetchAESOMarketData = async (dataType: string) => {
@@ -78,12 +79,15 @@ export function useAESOMarketData() {
       // Update connection status based on data source
       if (data?.source === 'aeso_api') {
         setConnectionStatus('connected');
+        setHasShownFallbackNotice(false);
       } else if (data?.source === 'fallback') {
         setConnectionStatus('fallback');
-        if (connectionStatus !== 'fallback') {
+        // Only show toast once when first switching to fallback
+        if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
+          setHasShownFallbackNotice(true);
           toast({
-            title: "AESO API Info",
-            description: "Check AESO API key configuration - using simulated data",
+            title: "AESO API Configuration",
+            description: "Check AESO API key - using simulated data for demonstration",
             variant: "default"
           });
         }
@@ -154,7 +158,7 @@ export function useAESOMarketData() {
 
     fetchAllData();
     
-    // Set up interval to refresh data every 5 minutes
+    // Set up interval to refresh data every 5 minutes (less frequent)
     const interval = setInterval(fetchAllData, 5 * 60 * 1000);
 
     return () => clearInterval(interval);

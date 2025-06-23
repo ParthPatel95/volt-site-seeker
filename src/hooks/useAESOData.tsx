@@ -38,6 +38,7 @@ export function useAESOData() {
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback'>('connecting');
+  const [hasShownFallbackNotice, setHasShownFallbackNotice] = useState(false);
   const { toast } = useToast();
 
   const fetchAESOData = async (dataType: string) => {
@@ -65,10 +66,12 @@ export function useAESOData() {
       // Update connection status based on data source
       if (data?.source === 'aeso_api') {
         setConnectionStatus('connected');
+        setHasShownFallbackNotice(false);
       } else if (data?.source === 'fallback') {
         setConnectionStatus('fallback');
-        // Show info toast only once when switching to fallback
-        if (connectionStatus !== 'fallback') {
+        // Only show info toast once when first switching to fallback
+        if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
+          setHasShownFallbackNotice(true);
           toast({
             title: "AESO API Info",
             description: "Using simulated data while real AESO integration is in progress",
@@ -89,7 +92,6 @@ export function useAESOData() {
         return fallbackData;
       }
       
-      // Don't show error toast for fallback data usage
       return null;
     } finally {
       setLoading(false);
@@ -182,12 +184,12 @@ export function useAESOData() {
     getLoadForecast();
     getGenerationMix();
     
-    // Set up interval to refresh data every 2 minutes for more real-time feel
+    // Set up interval to refresh data every 5 minutes (less frequent)
     const interval = setInterval(() => {
       getCurrentPrices();
       getLoadForecast();
       getGenerationMix();
-    }, 2 * 60 * 1000);
+    }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);

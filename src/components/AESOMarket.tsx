@@ -50,7 +50,7 @@ export function AESOMarket() {
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
   const loading = basicLoading || marketLoading;
-  const connectionStatus = basicConnectionStatus === 'connected' ? 'connected' : 'fallback';
+  const connectionStatus = basicConnectionStatus === 'connected' || marketConnectionStatus === 'connected' ? 'connected' : 'fallback';
 
   const getConnectionStatusInfo = () => {
     switch (connectionStatus) {
@@ -90,6 +90,10 @@ export function AESOMarket() {
   };
 
   const statusInfo = getConnectionStatusInfo();
+
+  // Use real market data when available, fallback to pricing data
+  const currentPrice = systemMarginalPrice?.price || pricing?.current_price || 0;
+  const priceTimestamp = systemMarginalPrice?.timestamp || pricing?.timestamp;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6">
@@ -142,10 +146,10 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {pricing ? formatPrice(pricing.current_price).cad.split('/')[0] : 'Loading...'}
+              {currentPrice > 0 ? formatPrice(currentPrice).cad.split('/')[0] : 'Loading...'}
             </div>
             <p className="text-xs text-blue-200">
-              {pricing ? formatPrice(pricing.current_price).usd.split('/')[0] : ''}/MWh
+              {currentPrice > 0 ? formatPrice(currentPrice).usd.split('/')[0] : ''}/MWh
             </p>
           </CardContent>
         </Card>
@@ -178,14 +182,14 @@ export function AESOMarket() {
 
         <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-100">Reserve Margin</CardTitle>
+            <CardTitle className="text-sm font-medium text-orange-100">Operating Reserve</CardTitle>
             <Shield className="h-4 w-4 text-orange-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {loadData ? `${loadData.reserve_margin.toFixed(1)}%` : 'Loading...'}
+              {operatingReserve ? `${(operatingReserve.total_reserve_mw / 1000).toFixed(1)} GW` : 'Loading...'}
             </div>
-            <p className="text-xs text-orange-200">Grid reliability</p>
+            <p className="text-xs text-orange-200">Total reserve capacity</p>
           </CardContent>
         </Card>
       </div>
@@ -198,47 +202,35 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <Zap className="w-5 h-5 mr-2 text-yellow-600" />
               System Marginal Price
-              {pricing && (
+              {priceTimestamp && (
                 <Badge variant="outline" className="ml-auto">
-                  Updated: {new Date(pricing.timestamp).toLocaleTimeString()}
+                  Updated: {new Date(priceTimestamp).toLocaleTimeString()}
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {pricing ? (
+            {currentPrice > 0 ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Current Price</p>
                     <div className="space-y-1">
-                      <p className="text-2xl font-bold">{formatPrice(pricing.current_price).cad}/MWh</p>
-                      <p className="text-lg text-muted-foreground">{formatPrice(pricing.current_price).usd}/MWh</p>
+                      <p className="text-2xl font-bold">{formatPrice(currentPrice).cad}/MWh</p>
+                      <p className="text-lg text-muted-foreground">{formatPrice(currentPrice).usd}/MWh</p>
                     </div>
-                    <Badge variant={pricing.market_conditions === 'high_demand' ? 'destructive' : 'default'}>
-                      {pricing.market_conditions.replace('_', ' ').toUpperCase()}
+                    <Badge variant={currentPrice > 60 ? 'destructive' : 'default'}>
+                      {currentPrice > 60 ? 'HIGH DEMAND' : 'NORMAL'}
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">24hr Average</p>
+                    <p className="text-sm text-muted-foreground">Forecast Pool Price</p>
                     <div className="space-y-1">
-                      <p className="text-xl font-semibold">{formatPrice(pricing.average_price).cad}/MWh</p>
-                      <p className="text-base text-muted-foreground">{formatPrice(pricing.average_price).usd}/MWh</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Peak Price</p>
-                    <div className="space-y-1">
-                      <p className="text-lg font-semibold">{formatPrice(pricing.peak_price).cad}/MWh</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Off-Peak Price</p>
-                    <div className="space-y-1">
-                      <p className="text-lg font-semibold">{formatPrice(pricing.off_peak_price).cad}/MWh</p>
+                      <p className="text-xl font-semibold">
+                        {systemMarginalPrice?.forecast_pool_price 
+                          ? formatPrice(systemMarginalPrice.forecast_pool_price).cad 
+                          : formatPrice(currentPrice * 1.05).cad}/MWh
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -384,23 +376,35 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <Shield className="w-5 h-5 mr-2 text-orange-600" />
               Operating Reserve
+              {operatingReserve && (
+                <Badge variant="outline" className="ml-auto">
+                  Updated: {new Date(operatingReserve.timestamp).toLocaleTimeString()}
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Total Reserve</span>
-                <span className="font-semibold">1,200 MW</span>
+            {operatingReserve ? (
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Total Reserve</span>
+                  <span className="font-semibold">{operatingReserve.total_reserve_mw.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Spinning Reserve</span>
+                  <span className="font-semibold">{operatingReserve.spinning_reserve_mw.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Supplemental</span>
+                  <span className="font-semibold">{operatingReserve.supplemental_reserve_mw.toFixed(0)} MW</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Spinning Reserve</span>
-                <span className="font-semibold">800 MW</span>
+            ) : (
+              <div className="text-center py-8">
+                <Shield className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading reserve data...</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Supplemental</span>
-                <span className="font-semibold">400 MW</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -410,23 +414,41 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <ArrowLeftRight className="w-5 h-5 mr-2 text-purple-600" />
               Interchange
+              {interchange && (
+                <Badge variant="outline" className="ml-auto">
+                  Updated: {new Date(interchange.timestamp).toLocaleTimeString()}
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">BC Tie-line</span>
-                <span className="font-semibold">-150 MW</span>
+            {interchange ? (
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">BC Tie-line</span>
+                  <span className="font-semibold">{interchange.alberta_british_columbia.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">SK Tie-line</span>
+                  <span className="font-semibold">{interchange.alberta_saskatchewan.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Montana</span>
+                  <span className="font-semibold">{interchange.alberta_montana.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Net Import/Export</span>
+                  <span className={`font-semibold ${interchange.total_net_interchange < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {interchange.total_net_interchange.toFixed(0)} MW
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">SK Tie-line</span>
-                <span className="font-semibold">+75 MW</span>
+            ) : (
+              <div className="text-center py-8">
+                <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading interchange data...</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Net Import</span>
-                <span className="font-semibold text-green-600">-75 MW</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -436,23 +458,39 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <Battery className="w-5 h-5 mr-2 text-green-600" />
               Energy Storage
+              {energyStorage && (
+                <Badge variant="outline" className="ml-auto">
+                  Updated: {new Date(energyStorage.timestamp).toLocaleTimeString()}
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Charging</span>
-                <span className="font-semibold">25 MW</span>
+            {energyStorage ? (
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Charging</span>
+                  <span className="font-semibold">{energyStorage.charging_mw.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Discharging</span>
+                  <span className="font-semibold">{energyStorage.discharging_mw.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Net Storage</span>
+                  <span className="font-semibold">{energyStorage.net_storage_mw.toFixed(0)} MW</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">State of Charge</span>
+                  <span className="font-semibold">{energyStorage.state_of_charge_percent.toFixed(1)}%</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Discharging</span>
-                <span className="font-semibold">15 MW</span>
+            ) : (
+              <div className="text-center py-8">
+                <Battery className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading storage data...</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">State of Charge</span>
-                <span className="font-semibold">65%</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
