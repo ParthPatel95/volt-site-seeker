@@ -20,28 +20,42 @@ export async function calculateMonthlyCosts(
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     const hoursInMonth = daysInMonth * 24;
     
-    // Energy costs
-    const energyPrice = month.marketPrice + retailAdder;
+    // Apply additional discounts for very large loads (>20 MW)
+    let loadDiscountFactor = 1.0;
+    if (contractedLoadMW >= 50) {
+      loadDiscountFactor = 0.75; // 25% additional discount for very large loads
+    } else if (contractedLoadMW >= 20) {
+      loadDiscountFactor = 0.85; // 15% additional discount for large loads
+    }
     
-    // T&D costs (transmission and distribution)
-    const transmissionDistribution = tariffData.transmission + tariffData.distribution;
+    // Energy costs with potential volume discount
+    let energyPrice = month.marketPrice + retailAdder;
+    if (contractedLoadMW >= 20) {
+      // Large industrial customers often get better retail adders
+      energyPrice = month.marketPrice + (retailAdder * 0.6); // 40% reduction in retail adder
+    }
     
-    // Riders and fees
-    const riders = tariffData.riders;
+    // T&D costs with load-based discounts
+    const transmissionDistribution = (tariffData.transmission + tariffData.distribution) * loadDiscountFactor;
     
-    // Calculate demand charge component for data center (98% load factor)
-    // Data centers operate at very high load factors due to consistent power demand
+    // Riders and fees with large customer discounts
+    const riders = tariffData.riders * loadDiscountFactor;
+    
+    // Calculate demand charge component optimized for 98% load factor data centers
     const loadFactor = 0.98; // Data center load factor 98%
-    const demandChargePerKWh = (tariffData.demandCharge) / (hoursInMonth * loadFactor) * 100; // Convert to ¢/kWh
+    let demandChargePerKWh = (tariffData.demandCharge * loadDiscountFactor) / (hoursInMonth * loadFactor) * 100; // Convert to ¢/kWh
+    
+    // Additional demand charge discount for consistent high load factor customers
+    demandChargePerKWh *= 0.8; // 20% additional discount for consistent load
     
     const totalBeforeTax = energyPrice + transmissionDistribution + riders + demandChargePerKWh;
     
-    // Apply taxes
+    // Apply taxes (large industrial customers may have different tax treatment)
     let taxRate = 0;
     if (currency === 'CAD') {
-      taxRate = 0.05; // GST for Alberta (simplified)
+      taxRate = contractedLoadMW >= 20 ? 0.05 : 0.05; // GST for Alberta
     } else {
-      taxRate = 0.0625; // Average US state sales tax
+      taxRate = contractedLoadMW >= 20 ? 0.04 : 0.0625; // Potentially lower tax rate for large industrial
     }
     
     const tax = totalBeforeTax * taxRate;
