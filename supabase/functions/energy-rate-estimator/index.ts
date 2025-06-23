@@ -237,26 +237,35 @@ async function calculateMonthlyCosts(
   const monthlyData = [];
   
   for (const month of marketData) {
+    // Get actual days in this month for accurate calculation
+    const monthDate = new Date(month.month + ' 1');
+    const year = monthDate.getFullYear();
+    const monthIndex = monthDate.getMonth();
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const hoursInMonth = daysInMonth * 24;
+    
     // Energy costs
     const energyPrice = month.marketPrice + retailAdder;
     
-    // T&D costs
+    // T&D costs (transmission and distribution)
     const transmissionDistribution = tariffData.transmission + tariffData.distribution;
     
     // Riders and fees
     const riders = tariffData.riders;
     
-    // Calculate demand charge component ($/kW-month converted to ¢/kWh)
-    // Assume 730 hours per month average, 75% load factor
-    const demandChargePerKWh = (tariffData.demandCharge * contractedLoadMW * 1000) / 
-                              (contractedLoadMW * 1000 * 730 * 0.75) * 100; // Convert to ¢/kWh
+    // Calculate demand charge component correctly
+    // Demand charge is $/kW-month, need to convert to ¢/kWh
+    // Formula: ($/kW-month * MW * 1000 kW/MW) / (MW * 1000 kW/MW * hours * load_factor * kWh/kW) * 100 ¢/$
+    // Simplified: ($/kW-month) / (hours * load_factor) * 100
+    const loadFactor = 0.70; // Typical industrial load factor 70%
+    const demandChargePerKWh = (tariffData.demandCharge) / (hoursInMonth * loadFactor) * 100; // Convert to ¢/kWh
     
     const totalBeforeTax = energyPrice + transmissionDistribution + riders + demandChargePerKWh;
     
     // Apply taxes
     let taxRate = 0;
     if (currency === 'CAD') {
-      taxRate = 0.05; // GST for Alberta
+      taxRate = 0.05; // GST for Alberta (simplified)
     } else {
       taxRate = 0.0625; // Average US state sales tax
     }
