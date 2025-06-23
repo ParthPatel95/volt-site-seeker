@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -153,6 +154,21 @@ export function Dashboard() {
   const totalPowerCapacity = properties.reduce((sum, prop) => sum + (prop.power_capacity_mw || 0), 0);
   const unreadAlerts = alerts.filter(alert => !alert.is_read).length;
 
+  // Helper function to safely format prices with null checks
+  const formatPrice = (cadPrice: number | null | undefined) => {
+    if (!cadPrice || !exchangeRate) {
+      return {
+        cad: 'Loading...',
+        usd: 'Loading...'
+      };
+    }
+    const usdPrice = convertToUSD(cadPrice);
+    return {
+      cad: `CA$${cadPrice.toFixed(2)}`,
+      usd: `$${usdPrice.toFixed(2)} USD`
+    };
+  };
+
   if (loading && ercotLoading && aesoLoading && fercLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center p-4">
@@ -206,25 +222,25 @@ export function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
-                  <p className="text-xl sm:text-2xl font-bold">${pricing.current_price.toFixed(2)}/MWh</p>
+                  <p className="text-xl sm:text-2xl font-bold">${pricing.current_price?.toFixed(2) || '0.00'}/MWh</p>
                   <Badge variant="default" className="text-xs">
-                    {pricing.market_conditions.replace('_', ' ').toUpperCase()}
+                    {pricing.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
                   </Badge>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">System Load</p>
-                  <p className="text-xl sm:text-2xl font-bold">{(loadData.current_demand_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xl sm:text-2xl font-bold">{loadData.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">Current demand</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
-                  <p className="text-xl sm:text-2xl font-bold">{loadData.reserve_margin.toFixed(1)}%</p>
+                  <p className="text-xl sm:text-2xl font-bold">{loadData.reserve_margin?.toFixed(1) || '0.0'}%</p>
                   <p className="text-xs text-muted-foreground">Grid reliability</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
                   <p className="text-xl sm:text-2xl font-bold">
-                    {generationMix ? generationMix.renewable_percentage.toFixed(1) : '0'}%
+                    {generationMix?.renewable_percentage?.toFixed(1) || '0.0'}%
                   </p>
                   <p className="text-xs text-muted-foreground">Of total generation</p>
                 </div>
@@ -253,29 +269,27 @@ export function Dashboard() {
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
                   <div className="space-y-1">
-                    <p className="text-xl sm:text-2xl font-bold">CA${aesoPricing.current_price.toFixed(2)}/MWh</p>
-                    {exchangeRate && (
-                      <p className="text-base text-muted-foreground">${convertToUSD(aesoPricing.current_price).toFixed(2)} USD/MWh</p>
-                    )}
+                    <p className="text-xl sm:text-2xl font-bold">{formatPrice(aesoPricing.current_price).cad}/MWh</p>
+                    <p className="text-base text-muted-foreground">{formatPrice(aesoPricing.current_price).usd}/MWh</p>
                   </div>
                   <Badge variant="default" className="text-xs">
-                    {aesoPricing.market_conditions.replace('_', ' ').toUpperCase()}
+                    {aesoPricing.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
                   </Badge>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">System Load</p>
-                  <p className="text-xl sm:text-2xl font-bold">{(aesoLoadData.current_demand_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xl sm:text-2xl font-bold">{aesoLoadData.current_demand_mw ? (aesoLoadData.current_demand_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">Current demand</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
-                  <p className="text-xl sm:text-2xl font-bold">{aesoLoadData.reserve_margin.toFixed(1)}%</p>
+                  <p className="text-xl sm:text-2xl font-bold">{aesoLoadData.reserve_margin?.toFixed(1) || '0.0'}%</p>
                   <p className="text-xs text-muted-foreground">Grid reliability</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
                   <p className="text-xl sm:text-2xl font-bold">
-                    {aesoGenerationMix ? aesoGenerationMix.renewable_percentage.toFixed(1) : '0'}%
+                    {aesoGenerationMix?.renewable_percentage?.toFixed(1) || '0.0'}%
                   </p>
                   <p className="text-xs text-muted-foreground">Of total generation</p>
                 </div>
@@ -325,7 +339,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {interconnectionQueue ? interconnectionQueue.summary.total_projects.toLocaleString() : 'Loading...'}
+              {interconnectionQueue?.summary?.total_projects ? interconnectionQueue.summary.total_projects.toLocaleString() : 'Loading...'}
             </div>
             <p className="text-xs text-green-200">Interconnection projects</p>
           </CardContent>
@@ -338,7 +352,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {epaData ? epaData.air_quality_index : 'Loading...'}
+              {epaData?.air_quality_index || 'Loading...'}
             </div>
             <p className="text-xs text-purple-200">Air Quality Index</p>
           </CardContent>
@@ -351,7 +365,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {elevationData ? `${elevationData.elevation_feet.toFixed(0)}'` : 'Loading...'}
+              {elevationData?.elevation_feet ? `${elevationData.elevation_feet.toFixed(0)}'` : 'Loading...'}
             </div>
             <p className="text-xs text-orange-200">Elevation data</p>
           </CardContent>
@@ -377,28 +391,28 @@ export function Dashboard() {
                     <Fuel className="w-4 h-4 text-blue-500" />
                     <div>
                       <p className="text-sm text-muted-foreground">Natural Gas</p>
-                      <p className="font-semibold">{(generationMix.natural_gas_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{generationMix.natural_gas_mw ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Wind className="w-4 h-4 text-green-500" />
                     <div>
                       <p className="text-sm text-muted-foreground">Wind</p>
-                      <p className="font-semibold">{(generationMix.wind_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{generationMix.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Sun className="w-4 h-4 text-yellow-500" />
                     <div>
                       <p className="text-sm text-muted-foreground">Solar</p>
-                      <p className="font-semibold">{(generationMix.solar_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{generationMix.solar_mw ? (generationMix.solar_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Zap className="w-4 h-4 text-purple-500" />
                     <div>
                       <p className="text-sm text-muted-foreground">Nuclear</p>
-                      <p className="font-semibold">{(generationMix.nuclear_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{generationMix.nuclear_mw ? (generationMix.nuclear_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                 </div>
@@ -407,7 +421,7 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Total Generation</span>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
+                      {generationMix.total_generation_mw ? (generationMix.total_generation_mw / 1000).toFixed(1) : '0.0'} GW
                     </Badge>
                   </div>
                 </div>
@@ -438,28 +452,28 @@ export function Dashboard() {
                     <Fuel className="w-4 h-4 text-blue-500" />
                     <div>
                       <p className="text-sm text-muted-foreground">Natural Gas</p>
-                      <p className="font-semibold">{(aesoGenerationMix.natural_gas_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{aesoGenerationMix.natural_gas_mw ? (aesoGenerationMix.natural_gas_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Wind className="w-4 h-4 text-green-500" />
                     <div>
                       <p className="text-sm text-muted-foreground">Wind</p>
-                      <p className="font-semibold">{(aesoGenerationMix.wind_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{aesoGenerationMix.wind_mw ? (aesoGenerationMix.wind_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Sun className="w-4 h-4 text-yellow-500" />
                     <div>
                       <p className="text-sm text-muted-foreground">Solar</p>
-                      <p className="font-semibold">{(aesoGenerationMix.solar_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{aesoGenerationMix.solar_mw ? (aesoGenerationMix.solar_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Activity className="w-4 h-4 text-blue-600" />
                     <div>
                       <p className="text-sm text-muted-foreground">Hydro</p>
-                      <p className="font-semibold">{(aesoGenerationMix.hydro_mw / 1000).toFixed(1)} GW</p>
+                      <p className="font-semibold">{aesoGenerationMix.hydro_mw ? (aesoGenerationMix.hydro_mw / 1000).toFixed(1) : '0.0'} GW</p>
                     </div>
                   </div>
                 </div>
@@ -468,7 +482,7 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Total Generation</span>
                     <Badge variant="secondary" className="bg-red-100 text-red-800">
-                      {(aesoGenerationMix.total_generation_mw / 1000).toFixed(1)} GW
+                      {aesoGenerationMix.total_generation_mw ? (aesoGenerationMix.total_generation_mw / 1000).toFixed(1) : '0.0'} GW
                     </Badge>
                   </div>
                 </div>
@@ -497,26 +511,26 @@ export function Dashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Projects</p>
-                    <p className="text-2xl font-bold">{interconnectionQueue.summary.total_projects.toLocaleString()}</p>
+                    <p className="text-2xl font-bold">{interconnectionQueue.summary?.total_projects?.toLocaleString() || '0'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Capacity</p>
-                    <p className="text-2xl font-bold">{(interconnectionQueue.summary.total_capacity_mw / 1000).toFixed(1)} GW</p>
+                    <p className="text-2xl font-bold">{interconnectionQueue.summary?.total_capacity_mw ? (interconnectionQueue.summary.total_capacity_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Solar Projects</span>
-                    <span className="font-medium">{(interconnectionQueue.summary.solar_capacity_mw / 1000).toFixed(1)} GW</span>
+                    <span className="font-medium">{interconnectionQueue.summary?.solar_capacity_mw ? (interconnectionQueue.summary.solar_capacity_mw / 1000).toFixed(1) : '0.0'} GW</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Wind Projects</span>
-                    <span className="font-medium">{(interconnectionQueue.summary.wind_capacity_mw / 1000).toFixed(1)} GW</span>
+                    <span className="font-medium">{interconnectionQueue.summary?.wind_capacity_mw ? (interconnectionQueue.summary.wind_capacity_mw / 1000).toFixed(1) : '0.0'} GW</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Storage Projects</span>
-                    <span className="font-medium">{(interconnectionQueue.summary.storage_capacity_mw / 1000).toFixed(1)} GW</span>
+                    <span className="font-medium">{interconnectionQueue.summary?.storage_capacity_mw ? (interconnectionQueue.summary.storage_capacity_mw / 1000).toFixed(1) : '0.0'} GW</span>
                   </div>
                 </div>
                 
@@ -524,7 +538,7 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Avg Queue Time</span>
                     <Badge variant="outline">
-                      {interconnectionQueue.summary.average_queue_time_months} months
+                      {interconnectionQueue.summary?.average_queue_time_months || '0'} months
                     </Badge>
                   </div>
                 </div>
@@ -553,14 +567,14 @@ export function Dashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Air Quality Index</p>
-                    <p className="text-2xl font-bold">{epaData.air_quality_index}</p>
+                    <p className="text-2xl font-bold">{epaData.air_quality_index || '0'}</p>
                     <Badge variant="secondary" className="text-xs">
-                      {epaData.aqi_category}
+                      {epaData.aqi_category || 'Unknown'}
                     </Badge>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Solar Potential</p>
-                    <p className="text-2xl font-bold">{solarData.peak_sun_hours}</p>
+                    <p className="text-2xl font-bold">{solarData.peak_sun_hours || '0'}</p>
                     <p className="text-xs text-muted-foreground">Peak sun hours</p>
                   </div>
                 </div>
@@ -568,11 +582,11 @@ export function Dashboard() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Renewable Energy</span>
-                    <span className="font-medium">{epaData.renewable_energy_percent}%</span>
+                    <span className="font-medium">{epaData.renewable_energy_percent || '0'}%</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Carbon Intensity</span>
-                    <span className="font-medium">{epaData.carbon_intensity_lb_per_mwh} lb/MWh</span>
+                    <span className="font-medium">{epaData.carbon_intensity_lb_per_mwh || '0'} lb/MWh</span>
                   </div>
                 </div>
               </div>
@@ -626,7 +640,7 @@ export function Dashboard() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }
