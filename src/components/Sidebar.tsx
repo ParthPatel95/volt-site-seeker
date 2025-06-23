@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Briefcase,
   LogOut,
-  Calculator
+  Calculator,
+  MapPin
 } from 'lucide-react';
 import { ModeToggle } from './ModeToggle';
 import { EnhancedLogo } from './EnhancedLogo';
@@ -32,6 +33,7 @@ interface SidebarProps {
 
 const navigationItems = [
   { path: '/app', icon: LayoutDashboard, label: 'Dashboard', badge: null },
+  { path: '/app/aeso-market', icon: MapPin, label: 'AESO Market', badge: 'NEW' },
   { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: null },
   { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: null },
   { path: '/app/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { PowerInfrastructure } from '@/components/PowerInfrastructure';
 import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
 import { DataManagement } from '@/components/DataManagement';
+import { AESOMarket } from '@/components/AESOMarket';
 
 export default function Index() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -67,6 +67,7 @@ export default function Index() {
         <main className="flex-1 overflow-auto">
           <Routes>
             <Route index element={<Dashboard />} />
+            <Route path="aeso-market" element={<AESOMarket />} />
             <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
             <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="power-infrastructure" element={<PowerInfrastructure />} />

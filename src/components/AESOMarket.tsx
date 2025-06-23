@@ -1,0 +1,461 @@
+
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  Zap, 
+  TrendingUp, 
+  Activity,
+  Gauge,
+  Wind,
+  Sun,
+  Fuel,
+  RefreshCw,
+  MapPin,
+  DollarSign,
+  Wifi,
+  WifiOff,
+  AlertCircle,
+  Battery,
+  Cable,
+  ArrowLeftRight,
+  Shield
+} from 'lucide-react';
+import { useAESOData } from '@/hooks/useAESOData';
+import { useAESOMarketData } from '@/hooks/useAESOMarketData';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
+
+export function AESOMarket() {
+  const { 
+    pricing, 
+    loadData, 
+    generationMix, 
+    loading: basicLoading, 
+    connectionStatus: basicConnectionStatus,
+    refetch: refetchBasic 
+  } = useAESOData();
+
+  const {
+    systemMarginalPrice,
+    operatingReserve,
+    interchange,
+    transmissionConstraints,
+    energyStorage,
+    loading: marketLoading,
+    connectionStatus: marketConnectionStatus,
+    refetch: refetchMarket
+  } = useAESOMarketData();
+
+  const { exchangeRate, convertToUSD } = useExchangeRate();
+
+  const loading = basicLoading || marketLoading;
+  const connectionStatus = basicConnectionStatus === 'connected' ? 'connected' : 'fallback';
+
+  const getConnectionStatusInfo = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return {
+          icon: <Wifi className="w-4 h-4 text-green-500" />,
+          text: 'Live AESO Data',
+          color: 'text-green-600'
+        };
+      case 'fallback':
+        return {
+          icon: <AlertCircle className="w-4 h-4 text-yellow-500" />,
+          text: 'Simulated Data',
+          color: 'text-yellow-600'
+        };
+      default:
+        return {
+          icon: <WifiOff className="w-4 h-4 text-gray-500" />,
+          text: 'Connecting...',
+          color: 'text-gray-600'
+        };
+    }
+  };
+
+  const formatPrice = (cadPrice: number) => {
+    if (!exchangeRate) return { cad: 'Loading...', usd: 'Loading...' };
+    const usdPrice = convertToUSD(cadPrice);
+    return {
+      cad: `CA$${cadPrice.toFixed(2)}`,
+      usd: `$${usdPrice.toFixed(2)} USD`
+    };
+  };
+
+  const handleRefreshAll = () => {
+    refetchBasic();
+    refetchMarket();
+  };
+
+  const statusInfo = getConnectionStatusInfo();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center">
+            <MapPin className="w-6 h-6 mr-2 text-red-600" />
+            AESO Market Intelligence
+            <div className="ml-3 flex items-center space-x-2">
+              {statusInfo.icon}
+              <span className={`text-sm ${statusInfo.color}`}>
+                {statusInfo.text}
+              </span>
+            </div>
+          </h1>
+          <p className="text-muted-foreground">Comprehensive Alberta Electric System Operator market data</p>
+        </div>
+        <Button 
+          onClick={handleRefreshAll}
+          disabled={loading}
+          className="bg-gradient-to-r from-red-600 to-red-700"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh All Data
+        </Button>
+      </div>
+
+      {/* Connection Status Banner */}
+      {connectionStatus === 'fallback' && (
+        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
+              <AlertCircle className="w-5 h-5" />
+              <p className="text-sm">
+                <strong>API Configuration Required:</strong> Please check your AESO API key configuration. 
+                Currently displaying simulated data for demonstration purposes.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Real-time Market Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-100">Current Price</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {pricing ? formatPrice(pricing.current_price).cad.split('/')[0] : 'Loading...'}
+            </div>
+            <p className="text-xs text-blue-200">
+              {pricing ? formatPrice(pricing.current_price).usd.split('/')[0] : ''}/MWh
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-100">System Load</CardTitle>
+            <Gauge className="h-4 w-4 text-green-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {loadData ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : 'Loading...'}
+            </div>
+            <p className="text-xs text-green-200">Current demand</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-purple-100">Renewables</CardTitle>
+            <Wind className="h-4 w-4 text-purple-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {generationMix ? `${generationMix.renewable_percentage.toFixed(1)}%` : 'Loading...'}
+            </div>
+            <p className="text-xs text-purple-200">Of total generation</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-orange-100">Reserve Margin</CardTitle>
+            <Shield className="h-4 w-4 text-orange-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {loadData ? `${loadData.reserve_margin.toFixed(1)}%` : 'Loading...'}
+            </div>
+            <p className="text-xs text-orange-200">Grid reliability</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Data Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Real-time Pricing */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-yellow-600" />
+              System Marginal Price
+              {pricing && (
+                <Badge variant="outline" className="ml-auto">
+                  Updated: {new Date(pricing.timestamp).toLocaleTimeString()}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pricing ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Current Price</p>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-bold">{formatPrice(pricing.current_price).cad}/MWh</p>
+                      <p className="text-lg text-muted-foreground">{formatPrice(pricing.current_price).usd}/MWh</p>
+                    </div>
+                    <Badge variant={pricing.market_conditions === 'high_demand' ? 'destructive' : 'default'}>
+                      {pricing.market_conditions.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">24hr Average</p>
+                    <div className="space-y-1">
+                      <p className="text-xl font-semibold">{formatPrice(pricing.average_price).cad}/MWh</p>
+                      <p className="text-base text-muted-foreground">{formatPrice(pricing.average_price).usd}/MWh</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Peak Price</p>
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold">{formatPrice(pricing.peak_price).cad}/MWh</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Off-Peak Price</p>
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold">{formatPrice(pricing.off_peak_price).cad}/MWh</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading pricing data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* System Load & Demand */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Gauge className="w-5 h-5 mr-2 text-blue-600" />
+              System Load & Demand
+              {loadData && (
+                <Badge variant="outline" className="ml-auto">
+                  Updated: {new Date(loadData.forecast_date).toLocaleTimeString()}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadData ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Current Demand</p>
+                  <p className="text-2xl font-bold">{(loadData.current_demand_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{loadData.current_demand_mw.toFixed(0)} MW</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Peak Forecast</p>
+                  <p className="text-xl font-semibold">{(loadData.peak_forecast_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{loadData.peak_forecast_mw.toFixed(0)} MW</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Capacity Margin</p>
+                  <p className="text-xl font-semibold">{loadData.capacity_margin.toFixed(1)}%</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Reserve Margin</p>
+                  <p className="text-xl font-semibold">{loadData.reserve_margin.toFixed(1)}%</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading demand data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Generation Mix */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Activity className="w-5 h-5 mr-2 text-green-600" />
+            Current Generation Mix
+            {generationMix && (
+              <Badge variant="outline" className="ml-auto">
+                Updated: {new Date(generationMix.timestamp).toLocaleTimeString()}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {generationMix ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <Fuel className="w-6 h-6 mx-auto mb-2 text-blue-500" />
+                  <p className="text-sm text-muted-foreground">Natural Gas</p>
+                  <p className="text-xl font-bold">{(generationMix.natural_gas_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <Wind className="w-6 h-6 mx-auto mb-2 text-green-500" />
+                  <p className="text-sm text-muted-foreground">Wind</p>
+                  <p className="text-xl font-bold">{(generationMix.wind_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{((generationMix.wind_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                </div>
+                <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <Sun className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
+                  <p className="text-sm text-muted-foreground">Solar</p>
+                  <p className="text-xl font-bold">{(generationMix.solar_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{((generationMix.solar_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                </div>
+                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <Activity className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                  <p className="text-sm text-muted-foreground">Hydro</p>
+                  <p className="text-xl font-bold">{(generationMix.hydro_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{((generationMix.hydro_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                </div>
+                <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+                  <Fuel className="w-6 h-6 mx-auto mb-2 text-gray-600" />
+                  <p className="text-sm text-muted-foreground">Coal</p>
+                  <p className="text-xl font-bold">{(generationMix.coal_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{((generationMix.coal_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <Zap className="w-6 h-6 mx-auto mb-2 text-purple-500" />
+                  <p className="text-sm text-muted-foreground">Other</p>
+                  <p className="text-xl font-bold">{(generationMix.other_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">{((generationMix.other_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div>
+                  <span className="text-lg font-medium">Renewable Generation</span>
+                  <p className="text-sm text-muted-foreground">Wind + Hydro + Solar</p>
+                </div>
+                <div className="text-right">
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-lg px-3 py-1">
+                    {generationMix.renewable_percentage.toFixed(1)}%
+                  </Badge>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Total: {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-muted-foreground">Loading generation data...</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Additional Market Data */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Operating Reserve */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Shield className="w-5 h-5 mr-2 text-orange-600" />
+              Operating Reserve
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Total Reserve</span>
+                <span className="font-semibold">1,200 MW</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Spinning Reserve</span>
+                <span className="font-semibold">800 MW</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Supplemental</span>
+                <span className="font-semibold">400 MW</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Interchange */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <ArrowLeftRight className="w-5 h-5 mr-2 text-purple-600" />
+              Interchange
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">BC Tie-line</span>
+                <span className="font-semibold">-150 MW</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">SK Tie-line</span>
+                <span className="font-semibold">+75 MW</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Net Import</span>
+                <span className="font-semibold text-green-600">-75 MW</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Energy Storage */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Battery className="w-5 h-5 mr-2 text-green-600" />
+              Energy Storage
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Charging</span>
+                <span className="font-semibold">25 MW</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Discharging</span>
+                <span className="font-semibold">15 MW</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">State of Charge</span>
+                <span className="font-semibold">65%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
