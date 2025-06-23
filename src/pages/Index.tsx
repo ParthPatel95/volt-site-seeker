@@ -68,13 +68,13 @@ export default function Index() {
         
         <main className="flex-1 overflow-auto">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/properties" element={<PropertyList />} />
-            <Route path="/scraper" element={<MultiSourceScraper />} />
-            <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
-            <Route path="/idle-industry-scanner" element={<IdleIndustryScanner />} />
-            <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
-            <Route path="/data-management" element={<DataManagement />} />
+            <Route index element={<Dashboard />} />
+            <Route path="properties" element={<PropertyList />} />
+            <Route path="scraper" element={<MultiSourceScraper />} />
+            <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
+            <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
+            <Route path="power-infrastructure" element={<PowerInfrastructure />} />
+            <Route path="data-management" element={<DataManagement />} />
           </Routes>
         </main>
       </div>

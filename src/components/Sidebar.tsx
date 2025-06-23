@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Briefcase,
-  LogOut
+  LogOut,
+  Calculator
 } from 'lucide-react';
 import { ModeToggle } from './ModeToggle';
 import { EnhancedLogo } from './EnhancedLogo';
@@ -38,6 +40,7 @@ const navigationItems = [
   { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: null },
   { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: null },
   { path: '/app/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
+  { path: '/energy-rates', icon: Calculator, label: 'Energy Rate Estimator', badge: 'New' },
   { path: '/app/data-management', icon: Database, label: 'Data Management', badge: null },
 ];
 
@@ -92,6 +95,11 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen,
                 {(!isCollapsed || isMobile) && (
                   <>
                     <span className="flex-1 text-left truncate">{item.label}</span>
+                    {item.badge && (
+                      <Badge variant="secondary" className="text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </>
                 )}
               </Button>

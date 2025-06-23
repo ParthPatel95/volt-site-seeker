@@ -22,7 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/landing" element={<Landing />} />
           <Route
-            path="/"
+            path="/app/*"
             element={
               <AuthWrapper>
                 <Index />
@@ -45,6 +45,7 @@ const App = () => (
               </AuthWrapper>
             }
           />
+          <Route path="/" element={<Landing />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
