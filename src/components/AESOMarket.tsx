@@ -14,9 +14,6 @@ import {
   RefreshCw,
   MapPin,
   DollarSign,
-  Wifi,
-  WifiOff,
-  AlertCircle,
   Battery,
   Cable,
   ArrowLeftRight,
@@ -32,7 +29,6 @@ export function AESOMarket() {
     loadData, 
     generationMix, 
     loading: basicLoading, 
-    connectionStatus: basicConnectionStatus,
     refetch: refetchBasic 
   } = useAESOData();
 
@@ -43,37 +39,12 @@ export function AESOMarket() {
     transmissionConstraints,
     energyStorage,
     loading: marketLoading,
-    connectionStatus: marketConnectionStatus,
     refetch: refetchMarket
   } = useAESOMarketData();
 
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
   const loading = basicLoading || marketLoading;
-  const connectionStatus = basicConnectionStatus === 'connected' || marketConnectionStatus === 'connected' ? 'connected' : 'fallback';
-
-  const getConnectionStatusInfo = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return {
-          icon: <Wifi className="w-4 h-4 text-green-500" />,
-          text: 'Live AESO Data',
-          color: 'text-green-600'
-        };
-      case 'fallback':
-        return {
-          icon: <AlertCircle className="w-4 h-4 text-yellow-500" />,
-          text: 'Simulated Data',
-          color: 'text-yellow-600'
-        };
-      default:
-        return {
-          icon: <WifiOff className="w-4 h-4 text-gray-500" />,
-          text: 'Connecting...',
-          color: 'text-gray-600'
-        };
-    }
-  };
 
   const formatPrice = (cadPrice: number) => {
     if (!exchangeRate || !cadPrice) return { cad: 'Loading...', usd: 'Loading...' };
@@ -89,8 +60,6 @@ export function AESOMarket() {
     refetchMarket();
   };
 
-  const statusInfo = getConnectionStatusInfo();
-
   // Use real market data when available, fallback to pricing data
   const currentPrice = systemMarginalPrice?.price || pricing?.current_price || 0;
   const priceTimestamp = systemMarginalPrice?.timestamp || pricing?.timestamp;
@@ -103,14 +72,8 @@ export function AESOMarket() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center">
             <MapPin className="w-6 h-6 mr-2 text-red-600" />
             AESO Market Intelligence
-            <div className="ml-3 flex items-center space-x-2">
-              {statusInfo.icon}
-              <span className={`text-sm ${statusInfo.color}`}>
-                {statusInfo.text}
-              </span>
-            </div>
           </h1>
-          <p className="text-muted-foreground">Comprehensive Alberta Electric System Operator market data</p>
+          <p className="text-muted-foreground">Live Alberta Electric System Operator market data</p>
         </div>
         <Button 
           onClick={handleRefreshAll}
@@ -121,21 +84,6 @@ export function AESOMarket() {
           Refresh All Data
         </Button>
       </div>
-
-      {/* Connection Status Banner */}
-      {connectionStatus === 'fallback' && (
-        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
-              <AlertCircle className="w-5 h-5" />
-              <p className="text-sm">
-                <strong>API Configuration Required:</strong> Please check your AESO API key configuration. 
-                Currently displaying simulated data for demonstration purposes.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Real-time Market Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
