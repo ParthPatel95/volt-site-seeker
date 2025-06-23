@@ -39,95 +39,119 @@ export const VoltScoutSection = () => {
           </p>
         </div>
 
-        {/* Core Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+        {/* Core Features Grid - 6 Cards Layout */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
           <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-xl hover:shadow-electric-blue/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center space-x-2 mb-2">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2 mb-3">
                 <Globe className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform" />
                 <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
               </div>
-              <CardTitle className="text-white text-base">Live Infrastructure Mapping</CardTitle>
+              <CardTitle className="text-white text-lg">Live Infrastructure Mapping</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-200 mb-2 text-sm">Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring</p>
-              <div className="text-xs text-electric-blue font-semibold">• 50,000+ substations tracked</div>
-              <div className="text-xs text-electric-yellow font-semibold">• Live capacity updates</div>
+              <p className="text-slate-200 mb-4 text-sm leading-relaxed">
+                Real-time substation and transformer mapping across USA/Canada with 24/7 grid monitoring
+              </p>
+              <div className="space-y-2">
+                <div className="text-sm text-electric-blue font-semibold">• 50,000+ substations tracked</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Live capacity updates</div>
+              </div>
             </CardContent>
           </Card>
           
           <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-yellow/50 transition-all group hover:shadow-xl hover:shadow-electric-yellow/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center space-x-2 mb-2">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2 mb-3">
                 <BarChart3 className="w-6 h-6 text-electric-yellow group-hover:scale-110 transition-transform" />
                 <Badge className="bg-electric-yellow/20 text-electric-yellow text-xs">AI-Powered</Badge>
               </div>
-              <CardTitle className="text-white text-base">VoltScore™ AI Engine</CardTitle>
+              <CardTitle className="text-white text-lg">VoltScore™ AI Engine</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-200 mb-2 text-sm">Proprietary machine learning algorithm scoring sites 0-100 based on development potential</p>
-              <div className="text-xs text-neon-green font-semibold">• 97% accuracy rate</div>
-              <div className="text-xs text-electric-yellow font-semibold">• 15+ scoring factors</div>
+              <p className="text-slate-200 mb-4 text-sm leading-relaxed">
+                Proprietary machine learning algorithm scoring sites 0-100 based on development potential
+              </p>
+              <div className="space-y-2">
+                <div className="text-sm text-neon-green font-semibold">• 97% accuracy rate</div>
+                <div className="text-sm text-electric-yellow font-semibold">• 15+ scoring factors</div>
+              </div>
             </CardContent>
           </Card>
           
           <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-xl hover:shadow-neon-green/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center space-x-2 mb-2">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2 mb-3">
                 <Satellite className="w-6 h-6 text-neon-green group-hover:scale-110 transition-transform" />
                 <Badge className="bg-neon-green/20 text-neon-green text-xs">Computer Vision</Badge>
               </div>
-              <CardTitle className="text-white text-base">Satellite Intelligence</CardTitle>
+              <CardTitle className="text-white text-lg">Satellite Intelligence</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-200 mb-2 text-sm">AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns</p>
-              <div className="text-xs text-electric-blue font-semibold">• 1m resolution imagery</div>
-              <div className="text-xs text-electric-yellow font-semibold">• Monthly updates</div>
+              <p className="text-slate-200 mb-4 text-sm leading-relaxed">
+                AI-powered satellite analysis detecting industrial sites, cooling infrastructure, and land use patterns
+              </p>
+              <div className="space-y-2">
+                <div className="text-sm text-electric-blue font-semibold">• 1m resolution imagery</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Monthly updates</div>
+              </div>
             </CardContent>
           </Card>
 
           <Card className="bg-slate-800/50 border-slate-700 hover:border-warm-orange/50 transition-all group hover:shadow-xl hover:shadow-warm-orange/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center space-x-2 mb-2">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2 mb-3">
                 <Activity className="w-6 h-6 text-warm-orange group-hover:scale-110 transition-transform" />
                 <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
               </div>
-              <CardTitle className="text-white text-base">Power Rate Forecasting</CardTitle>
+              <CardTitle className="text-white text-lg">Power Rate Forecasting</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-200 mb-2 text-sm">Predictive analytics for electricity pricing based on grid congestion and weather patterns</p>
-              <div className="text-xs text-warm-orange font-semibold">• 3-year forecasts</div>
-              <div className="text-xs text-electric-yellow font-semibold">• Climate modeling</div>
+              <p className="text-slate-200 mb-4 text-sm leading-relaxed">
+                Predictive analytics for electricity pricing based on grid congestion and weather patterns
+              </p>
+              <div className="space-y-2">
+                <div className="text-sm text-warm-orange font-semibold">• 3-year forecasts</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Climate modeling</div>
+              </div>
             </CardContent>
           </Card>
 
           <Card className="bg-slate-800/50 border-slate-700 hover:border-electric-blue/50 transition-all group hover:shadow-xl hover:shadow-electric-blue/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center space-x-2 mb-2">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2 mb-3">
                 <AlertTriangle className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform" />
                 <Badge className="bg-electric-blue/20 text-electric-blue text-xs">Auto-Alert</Badge>
               </div>
-              <CardTitle className="text-white text-base">Broker Auto-Alerting</CardTitle>
+              <CardTitle className="text-white text-lg">Broker Auto-Alerting</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-200 mb-2 text-sm">Automated broker outreach and utility interconnect queue monitoring with instant notifications</p>
-              <div className="text-xs text-bright-cyan font-semibold">• 2,000+ broker network</div>
-              <div className="text-xs text-electric-yellow font-semibold">• Queue position tracking</div>
+              <p className="text-slate-200 mb-4 text-sm leading-relaxed">
+                Automated broker outreach and utility interconnect queue monitoring with instant notifications
+              </p>
+              <div className="space-y-2">
+                <div className="text-sm text-bright-cyan font-semibold">• 2,000+ broker network</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Queue position tracking</div>
+              </div>
             </CardContent>
           </Card>
 
           <Card className="bg-slate-800/50 border-slate-700 hover:border-neon-green/50 transition-all group hover:shadow-xl hover:shadow-neon-green/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center space-x-2 mb-2">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2 mb-3">
                 <Target className="w-6 h-6 text-neon-green group-hover:scale-110 transition-transform" />
                 <Badge className="bg-neon-green/20 text-neon-green text-xs">Hyperscaler Ready</Badge>
               </div>
-              <CardTitle className="text-white text-base">Data Center Suitability</CardTitle>
+              <CardTitle className="text-white text-lg">Data Center Suitability</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-200 mb-2 text-sm">Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications</p>
-              <div className="text-xs text-electric-blue font-semibold">• Tier compliance check</div>
-              <div className="text-xs text-electric-yellow font-semibold">• Latency modeling</div>
+              <p className="text-slate-200 mb-4 text-sm leading-relaxed">
+                Advanced scoring for hyperscaler requirements including AWS, Google Cloud, and Meta specifications
+              </p>
+              <div className="space-y-2">
+                <div className="text-sm text-electric-blue font-semibold">• Tier compliance check</div>
+                <div className="text-sm text-electric-yellow font-semibold">• Latency modeling</div>
+              </div>
             </CardContent>
           </Card>
         </div>
