@@ -76,7 +76,7 @@ export function AESOMarket() {
   };
 
   const formatPrice = (cadPrice: number) => {
-    if (!exchangeRate) return { cad: 'Loading...', usd: 'Loading...' };
+    if (!exchangeRate || !cadPrice) return { cad: 'Loading...', usd: 'Loading...' };
     const usdPrice = convertToUSD(cadPrice);
     return {
       cad: `CA$${cadPrice.toFixed(2)}`,
@@ -161,7 +161,7 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {loadData ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : 'Loading...'}
+              {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : 'Loading...'}
             </div>
             <p className="text-xs text-green-200">Current demand</p>
           </CardContent>
@@ -174,7 +174,7 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {generationMix ? `${generationMix.renewable_percentage.toFixed(1)}%` : 'Loading...'}
+              {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : 'Loading...'}
             </div>
             <p className="text-xs text-purple-200">Of total generation</p>
           </CardContent>
@@ -187,7 +187,7 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {operatingReserve ? `${(operatingReserve.total_reserve_mw / 1000).toFixed(1)} GW` : 'Loading...'}
+              {operatingReserve?.total_reserve_mw ? `${(operatingReserve.total_reserve_mw / 1000).toFixed(1)} GW` : 'Loading...'}
             </div>
             <p className="text-xs text-orange-200">Total reserve capacity</p>
           </CardContent>
@@ -250,7 +250,7 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <Gauge className="w-5 h-5 mr-2 text-blue-600" />
               System Load & Demand
-              {loadData && (
+              {loadData?.forecast_date && (
                 <Badge variant="outline" className="ml-auto">
                   Updated: {new Date(loadData.forecast_date).toLocaleTimeString()}
                 </Badge>
@@ -262,21 +262,21 @@ export function AESOMarket() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Current Demand</p>
-                  <p className="text-2xl font-bold">{(loadData.current_demand_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{loadData.current_demand_mw.toFixed(0)} MW</p>
+                  <p className="text-2xl font-bold">{loadData.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{loadData.current_demand_mw?.toFixed(0) || '0'} MW</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Peak Forecast</p>
-                  <p className="text-xl font-semibold">{(loadData.peak_forecast_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{loadData.peak_forecast_mw.toFixed(0)} MW</p>
+                  <p className="text-xl font-semibold">{loadData.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{loadData.peak_forecast_mw?.toFixed(0) || '0'} MW</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Capacity Margin</p>
-                  <p className="text-xl font-semibold">{loadData.capacity_margin.toFixed(1)}%</p>
+                  <p className="text-xl font-semibold">{loadData.capacity_margin?.toFixed(1) || '0.0'}%</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Reserve Margin</p>
-                  <p className="text-xl font-semibold">{loadData.reserve_margin.toFixed(1)}%</p>
+                  <p className="text-xl font-semibold">{loadData.reserve_margin?.toFixed(1) || '0.0'}%</p>
                 </div>
               </div>
             ) : (
@@ -295,7 +295,7 @@ export function AESOMarket() {
           <CardTitle className="flex items-center">
             <Activity className="w-5 h-5 mr-2 text-green-600" />
             Current Generation Mix
-            {generationMix && (
+            {generationMix?.timestamp && (
               <Badge variant="outline" className="ml-auto">
                 Updated: {new Date(generationMix.timestamp).toLocaleTimeString()}
               </Badge>
@@ -309,38 +309,38 @@ export function AESOMarket() {
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <Fuel className="w-6 h-6 mx-auto mb-2 text-blue-500" />
                   <p className="text-sm text-muted-foreground">Natural Gas</p>
-                  <p className="text-xl font-bold">{(generationMix.natural_gas_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                  <p className="text-xl font-bold">{generationMix.natural_gas_mw ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <Wind className="w-6 h-6 mx-auto mb-2 text-green-500" />
                   <p className="text-sm text-muted-foreground">Wind</p>
-                  <p className="text-xl font-bold">{(generationMix.wind_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{((generationMix.wind_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                  <p className="text-xl font-bold">{generationMix.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.wind_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                   <Sun className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
                   <p className="text-sm text-muted-foreground">Solar</p>
-                  <p className="text-xl font-bold">{(generationMix.solar_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{((generationMix.solar_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                  <p className="text-xl font-bold">{generationMix.solar_mw ? (generationMix.solar_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.solar_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <Activity className="w-6 h-6 mx-auto mb-2 text-blue-600" />
                   <p className="text-sm text-muted-foreground">Hydro</p>
-                  <p className="text-xl font-bold">{(generationMix.hydro_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{((generationMix.hydro_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                  <p className="text-xl font-bold">{generationMix.hydro_mw ? (generationMix.hydro_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.hydro_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
                   <Fuel className="w-6 h-6 mx-auto mb-2 text-gray-600" />
                   <p className="text-sm text-muted-foreground">Coal</p>
-                  <p className="text-xl font-bold">{(generationMix.coal_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{((generationMix.coal_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                  <p className="text-xl font-bold">{generationMix.coal_mw ? (generationMix.coal_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.coal_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                   <Zap className="w-6 h-6 mx-auto mb-2 text-purple-500" />
                   <p className="text-sm text-muted-foreground">Other</p>
-                  <p className="text-xl font-bold">{(generationMix.other_mw / 1000).toFixed(1)} GW</p>
-                  <p className="text-xs text-muted-foreground">{((generationMix.other_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
+                  <p className="text-xl font-bold">{generationMix.other_mw ? (generationMix.other_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.other_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
               </div>
               
@@ -351,10 +351,10 @@ export function AESOMarket() {
                 </div>
                 <div className="text-right">
                   <Badge variant="secondary" className="bg-green-100 text-green-800 text-lg px-3 py-1">
-                    {generationMix.renewable_percentage.toFixed(1)}%
+                    {generationMix.renewable_percentage?.toFixed(1) || '0.0'}%
                   </Badge>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Total: {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
+                    Total: {generationMix.total_generation_mw ? (generationMix.total_generation_mw / 1000).toFixed(1) : '0.0'} GW
                   </p>
                 </div>
               </div>
@@ -376,7 +376,7 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <Shield className="w-5 h-5 mr-2 text-orange-600" />
               Operating Reserve
-              {operatingReserve && (
+              {operatingReserve?.timestamp && (
                 <Badge variant="outline" className="ml-auto">
                   Updated: {new Date(operatingReserve.timestamp).toLocaleTimeString()}
                 </Badge>
@@ -388,15 +388,15 @@ export function AESOMarket() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Total Reserve</span>
-                  <span className="font-semibold">{operatingReserve.total_reserve_mw.toFixed(0)} MW</span>
+                  <span className="font-semibold">{operatingReserve.total_reserve_mw?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Spinning Reserve</span>
-                  <span className="font-semibold">{operatingReserve.spinning_reserve_mw.toFixed(0)} MW</span>
+                  <span className="font-semibold">{operatingReserve.spinning_reserve_mw?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Supplemental</span>
-                  <span className="font-semibold">{operatingReserve.supplemental_reserve_mw.toFixed(0)} MW</span>
+                  <span className="font-semibold">{operatingReserve.supplemental_reserve_mw?.toFixed(0) || '0'} MW</span>
                 </div>
               </div>
             ) : (
@@ -414,7 +414,7 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <ArrowLeftRight className="w-5 h-5 mr-2 text-purple-600" />
               Interchange
-              {interchange && (
+              {interchange?.timestamp && (
                 <Badge variant="outline" className="ml-auto">
                   Updated: {new Date(interchange.timestamp).toLocaleTimeString()}
                 </Badge>
@@ -426,20 +426,20 @@ export function AESOMarket() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">BC Tie-line</span>
-                  <span className="font-semibold">{interchange.alberta_british_columbia.toFixed(0)} MW</span>
+                  <span className="font-semibold">{interchange.alberta_british_columbia?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">SK Tie-line</span>
-                  <span className="font-semibold">{interchange.alberta_saskatchewan.toFixed(0)} MW</span>
+                  <span className="font-semibold">{interchange.alberta_saskatchewan?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Montana</span>
-                  <span className="font-semibold">{interchange.alberta_montana.toFixed(0)} MW</span>
+                  <span className="font-semibold">{interchange.alberta_montana?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Net Import/Export</span>
-                  <span className={`font-semibold ${interchange.total_net_interchange < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {interchange.total_net_interchange.toFixed(0)} MW
+                  <span className={`font-semibold ${(interchange.total_net_interchange || 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {interchange.total_net_interchange?.toFixed(0) || '0'} MW
                   </span>
                 </div>
               </div>
@@ -458,7 +458,7 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <Battery className="w-5 h-5 mr-2 text-green-600" />
               Energy Storage
-              {energyStorage && (
+              {energyStorage?.timestamp && (
                 <Badge variant="outline" className="ml-auto">
                   Updated: {new Date(energyStorage.timestamp).toLocaleTimeString()}
                 </Badge>
@@ -470,19 +470,19 @@ export function AESOMarket() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Charging</span>
-                  <span className="font-semibold">{energyStorage.charging_mw.toFixed(0)} MW</span>
+                  <span className="font-semibold">{energyStorage.charging_mw?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Discharging</span>
-                  <span className="font-semibold">{energyStorage.discharging_mw.toFixed(0)} MW</span>
+                  <span className="font-semibold">{energyStorage.discharging_mw?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Net Storage</span>
-                  <span className="font-semibold">{energyStorage.net_storage_mw.toFixed(0)} MW</span>
+                  <span className="font-semibold">{energyStorage.net_storage_mw?.toFixed(0) || '0'} MW</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">State of Charge</span>
-                  <span className="font-semibold">{energyStorage.state_of_charge_percent.toFixed(1)}%</span>
+                  <span className="font-semibold">{energyStorage.state_of_charge_percent?.toFixed(1) || '0.0'}%</span>
                 </div>
               </div>
             ) : (
