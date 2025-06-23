@@ -17,7 +17,6 @@ serve(async (req) => {
 
     const aesoApiKey = Deno.env.get('AESO_API_KEY');
     console.log('AESO API Key available:', aesoApiKey ? 'Yes' : 'No');
-    console.log('AESO API Key length:', aesoApiKey ? aesoApiKey.length : 0);
     
     if (!aesoApiKey) {
       console.log('No AESO API key found, using fallback data');
@@ -28,8 +27,7 @@ serve(async (req) => {
           data: fallbackData,
           source: 'fallback',
           timestamp: new Date().toISOString(),
-          note: 'AESO API key not configured - using simulated data',
-          qa_status: 'fallback_mode'
+          note: 'AESO API key not configured - using simulated data'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -52,35 +50,35 @@ serve(async (req) => {
       switch (action) {
         case 'fetch_current_prices':
           data = await fetchCurrentPrices(aesoApiKey);
-          qaMetrics.endpoint_used = 'systemMarginalPrice';
+          qaMetrics.endpoint_used = 'pool-price';
           break;
         case 'fetch_load_forecast':
           data = await fetchLoadForecast(aesoApiKey);
-          qaMetrics.endpoint_used = 'load/forecast';
+          qaMetrics.endpoint_used = 'load-forecast';
           break;
         case 'fetch_generation_mix':
           data = await fetchGenerationMix(aesoApiKey);
-          qaMetrics.endpoint_used = 'generation/currentSupplyDemand';
+          qaMetrics.endpoint_used = 'current-supply-demand';
           break;
         case 'fetch_system_marginal_price':
           data = await fetchSystemMarginalPrice(aesoApiKey);
-          qaMetrics.endpoint_used = 'price/systemMarginalPrice';
+          qaMetrics.endpoint_used = 'pool-price';
           break;
         case 'fetch_operating_reserve':
           data = await fetchOperatingReserve(aesoApiKey);
-          qaMetrics.endpoint_used = 'reserve/operatingReserve';
+          qaMetrics.endpoint_used = 'operating-reserve';
           break;
         case 'fetch_interchange':
           data = await fetchInterchange(aesoApiKey);
-          qaMetrics.endpoint_used = 'interchange/currentInterchange';
+          qaMetrics.endpoint_used = 'interchange';
           break;
         case 'fetch_transmission_constraints':
           data = await fetchTransmissionConstraints(aesoApiKey);
-          qaMetrics.endpoint_used = 'transmission/constraintsAndOutages';
+          qaMetrics.endpoint_used = 'transmission-constraints';
           break;
         case 'fetch_energy_storage':
           data = await fetchEnergyStorage(aesoApiKey);
-          qaMetrics.endpoint_used = 'storage/energyStorageData';
+          qaMetrics.endpoint_used = 'energy-storage';
           break;
         default:
           throw new Error('Invalid action');
@@ -116,7 +114,7 @@ serve(async (req) => {
       
       qaMetrics.response_time_ms = Date.now() - startTime;
       qaMetrics.data_quality = 'fallback';
-      qaMetrics.validation_passed = true; // Fallback data is always valid
+      qaMetrics.validation_passed = true;
       
       return new Response(
         JSON.stringify({
@@ -160,23 +158,82 @@ serve(async (req) => {
   }
 });
 
+// Helper function to get current date range (last 24 hours)
+function getDateRange() {
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+  
+  return {
+    startDate: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
+    endDate: endDate.toISOString().split('T')[0]
+  };
+}
+
 async function fetchCurrentPrices(apiKey: string) {
   return await fetchSystemMarginalPrice(apiKey);
+}
+
+async function fetchSystemMarginalPrice(apiKey: string) {
+  console.log('Fetching AESO system marginal price...');
+  
+  const { startDate, endDate } = getDateRange();
+  
+  // AESO uses different base URL and endpoint structure
+  const baseUrl = 'https://api.aeso.ca/report/v1.1';
+  const endpoints = [
+    `${baseUrl}/price/poolPrice?startDate=${startDate}&endDate=${endDate}`,
+    `${baseUrl}/price/systemMarginalPrice?startDate=${startDate}&endDate=${endDate}`
+  ];
+  
+  for (const url of endpoints) {
+    try {
+      console.log('Trying AESO endpoint:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Ocp-Apim-Subscription-Key': apiKey,
+          'User-Agent': 'VoltScout-Dashboard/1.0'
+        }
+      });
+
+      console.log('AESO API response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('AESO price response received:', JSON.stringify(data, null, 2));
+        return parseAESOPricingData(data);
+      } else {
+        const errorText = await response.text();
+        console.error('AESO API error response:', errorText);
+        throw new Error(`API returned status ${response.status}: ${errorText}`);
+      }
+      
+    } catch (error) {
+      console.error('AESO API call error:', error);
+      continue;
+    }
+  }
+  
+  throw new Error('All AESO pricing endpoints failed');
 }
 
 async function fetchLoadForecast(apiKey: string) {
   console.log('Fetching AESO load forecast...');
   
-  // Try multiple endpoints as AESO may have different available endpoints
+  const { startDate, endDate } = getDateRange();
+  const baseUrl = 'https://api.aeso.ca/report/v1.1';
+  
   const endpoints = [
-    'https://api.aeso.ca/report/v1.1/load/forecast',
-    'https://api.aeso.ca/report/v1.1/load/albertaInternalLoad',
-    'https://api.aeso.ca/report/v1/load/forecast'
+    `${baseUrl}/load/forecast?startDate=${startDate}&endDate=${endDate}`,
+    `${baseUrl}/load/albertaInternalLoad?startDate=${startDate}&endDate=${endDate}`
   ];
   
   for (const url of endpoints) {
     try {
-      console.log('Trying endpoint:', url);
+      console.log('Trying AESO load endpoint:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -191,34 +248,37 @@ async function fetchLoadForecast(apiKey: string) {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('AESO load response received from:', url);
+        console.log('AESO load response received:', JSON.stringify(data, null, 2));
         return parseAESOLoadData(data);
       } else {
-        console.log('Endpoint failed with status:', response.status);
         const errorText = await response.text();
-        console.log('Error response:', errorText);
+        console.error('Load API error:', errorText);
+        continue;
       }
       
     } catch (error) {
-      console.log('Endpoint error:', error.message);
+      console.error('Load endpoint error:', error);
       continue;
     }
   }
   
-  throw new Error('All load forecast endpoints failed');
+  throw new Error('All AESO load forecast endpoints failed');
 }
 
 async function fetchGenerationMix(apiKey: string) {
   console.log('Fetching AESO generation mix...');
   
+  const { startDate, endDate } = getDateRange();
+  const baseUrl = 'https://api.aeso.ca/report/v1.1';
+  
   const endpoints = [
-    'https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand',
-    'https://api.aeso.ca/report/v1/generation/currentSupplyDemand'
+    `${baseUrl}/generation/currentSupplyDemand?startDate=${startDate}&endDate=${endDate}`,
+    `${baseUrl}/generation/assetList?startDate=${startDate}&endDate=${endDate}`
   ];
   
   for (const url of endpoints) {
     try {
-      console.log('Trying endpoint:', url);
+      console.log('Trying AESO generation endpoint:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -233,69 +293,30 @@ async function fetchGenerationMix(apiKey: string) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('AESO generation response received from:', url);
+        console.log('AESO generation response received:', JSON.stringify(data, null, 2));
         return parseAESOGenerationData(data);
       } else {
-        console.log('Endpoint failed with status:', response.status);
         const errorText = await response.text();
-        console.log('Error response:', errorText);
+        console.error('Generation API error:', errorText);
+        continue;
       }
       
     } catch (error) {
-      console.log('Endpoint error:', error.message);
+      console.error('Generation endpoint error:', error);
       continue;
     }
   }
   
-  throw new Error('All generation mix endpoints failed');
-}
-
-async function fetchSystemMarginalPrice(apiKey: string) {
-  console.log('Fetching AESO system marginal price...');
-  
-  const endpoints = [
-    'https://api.aeso.ca/report/v1.1/price/systemMarginalPrice',
-    'https://api.aeso.ca/report/v1/price/systemMarginalPrice'
-  ];
-  
-  for (const url of endpoints) {
-    try {
-      console.log('Trying endpoint:', url);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Ocp-Apim-Subscription-Key': apiKey,
-          'User-Agent': 'VoltScout-Dashboard/1.0'
-        }
-      });
-
-      console.log('AESO SMP API response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('AESO SMP response received from:', url);
-        return parseAESOPricingData(data);
-      } else {
-        console.log('Endpoint failed with status:', response.status);
-        const errorText = await response.text();
-        console.log('Error response:', errorText);
-      }
-      
-    } catch (error) {
-      console.log('Endpoint error:', error.message);
-      continue;
-    }
-  }
-  
-  throw new Error('All system marginal price endpoints failed');
+  throw new Error('All AESO generation mix endpoints failed');
 }
 
 async function fetchOperatingReserve(apiKey: string) {
+  const { startDate, endDate } = getDateRange();
+  const baseUrl = 'https://api.aeso.ca/report/v1.1';
+  
   const endpoints = [
-    'https://api.aeso.ca/report/v1.1/reserve/operatingReserve',
-    'https://api.aeso.ca/report/v1/reserve/operatingReserve'
+    `${baseUrl}/reserve/operatingReserve?startDate=${startDate}&endDate=${endDate}`,
+    `${baseUrl}/reserve/reserves?startDate=${startDate}&endDate=${endDate}`
   ];
   
   for (const url of endpoints) {
@@ -317,13 +338,16 @@ async function fetchOperatingReserve(apiKey: string) {
     }
   }
   
-  throw new Error('All operating reserve endpoints failed');
+  throw new Error('All AESO operating reserve endpoints failed');
 }
 
 async function fetchInterchange(apiKey: string) {
+  const { startDate, endDate } = getDateRange();
+  const baseUrl = 'https://api.aeso.ca/report/v1.1';
+  
   const endpoints = [
-    'https://api.aeso.ca/report/v1.1/interchange/currentInterchange',
-    'https://api.aeso.ca/report/v1/interchange/currentInterchange'
+    `${baseUrl}/interchange/currentInterchange?startDate=${startDate}&endDate=${endDate}`,
+    `${baseUrl}/interchange/interchange?startDate=${startDate}&endDate=${endDate}`
   ];
   
   for (const url of endpoints) {
@@ -345,13 +369,16 @@ async function fetchInterchange(apiKey: string) {
     }
   }
   
-  throw new Error('All interchange endpoints failed');
+  throw new Error('All AESO interchange endpoints failed');
 }
 
 async function fetchTransmissionConstraints(apiKey: string) {
+  const { startDate, endDate } = getDateRange();
+  const baseUrl = 'https://api.aeso.ca/report/v1.1';
+  
   const endpoints = [
-    'https://api.aeso.ca/report/v1.1/transmission/constraintsAndOutages',
-    'https://api.aeso.ca/report/v1/transmission/constraintsAndOutages'
+    `${baseUrl}/transmission/constraintsAndOutages?startDate=${startDate}&endDate=${endDate}`,
+    `${baseUrl}/transmission/constraints?startDate=${startDate}&endDate=${endDate}`
   ];
   
   for (const url of endpoints) {
@@ -373,13 +400,16 @@ async function fetchTransmissionConstraints(apiKey: string) {
     }
   }
   
-  throw new Error('All transmission constraints endpoints failed');
+  throw new Error('All AESO transmission constraints endpoints failed');
 }
 
 async function fetchEnergyStorage(apiKey: string) {
+  const { startDate, endDate } = getDateRange();
+  const baseUrl = 'https://api.aeso.ca/report/v1.1';
+  
   const endpoints = [
-    'https://api.aeso.ca/report/v1.1/storage/energyStorageData',
-    'https://api.aeso.ca/report/v1/storage/energyStorageData'
+    `${baseUrl}/storage/energyStorageData?startDate=${startDate}&endDate=${endDate}`,
+    `${baseUrl}/generation/currentSupplyDemand?startDate=${startDate}&endDate=${endDate}`
   ];
   
   for (const url of endpoints) {
@@ -401,45 +431,57 @@ async function fetchEnergyStorage(apiKey: string) {
     }
   }
   
-  throw new Error('All energy storage endpoints failed');
+  throw new Error('All AESO energy storage endpoints failed');
 }
 
 function parseAESOPricingData(data: any) {
   try {
     console.log('Parsing AESO pricing data:', JSON.stringify(data, null, 2));
     
-    // Handle different possible response structures
-    const records = data.return?.data || data.data || data || [];
-    const latestRecord = Array.isArray(records) ? records[0] : records;
+    // AESO API returns data in 'return' object with 'data' array
+    const records = data.return?.data || data.data || [];
     
-    if (!latestRecord) {
-      throw new Error('No pricing data found in response');
+    if (!Array.isArray(records) || records.length === 0) {
+      console.log('No pricing records found, using latest available data');
+      const singleRecord = data.return || data;
+      return parseSinglePricingRecord(singleRecord);
     }
     
-    return {
-      current_price: latestRecord.price || latestRecord.system_marginal_price || 0,
-      average_price: latestRecord.forecast_pool_price || latestRecord.price || 0,
-      peak_price: (latestRecord.price || 0) * 1.5,
-      off_peak_price: (latestRecord.price || 0) * 0.7,
-      timestamp: latestRecord.begin_datetime_mpt || latestRecord.timestamp || new Date().toISOString(),
-      market_conditions: (latestRecord.price || 0) > 60 ? 'high_demand' : 'normal'
-    };
+    // Get the most recent record
+    const latestRecord = records[records.length - 1] || records[0];
+    return parseSinglePricingRecord(latestRecord);
+    
   } catch (error) {
     console.error('Error parsing AESO pricing data:', error);
     throw error;
   }
 }
 
+function parseSinglePricingRecord(record: any) {
+  const price = record.pool_price || record.price || record.system_marginal_price || 0;
+  const timestamp = record.begin_datetime_mpt || record.begin_datetime || record.timestamp || new Date().toISOString();
+  
+  return {
+    current_price: price,
+    average_price: record.forecast_pool_price || price,
+    peak_price: price * 1.5,
+    off_peak_price: price * 0.7,
+    timestamp: timestamp,
+    market_conditions: price > 60 ? 'high_demand' : 'normal'
+  };
+}
+
 function parseAESOLoadData(data: any) {
   try {
-    const records = data.return?.data || data.data || data || [];
-    const latestRecord = Array.isArray(records) ? records[0] : records;
+    const records = data.return?.data || data.data || [];
+    const latestRecord = Array.isArray(records) && records.length > 0 ? records[records.length - 1] : data.return || data;
     
-    const currentLoad = latestRecord.albertaInternalLoad || latestRecord.load || latestRecord.demand || 9850;
+    const currentLoad = latestRecord.alberta_internal_load || latestRecord.load || latestRecord.demand || 9850;
+    const forecastLoad = latestRecord.forecast_load || currentLoad * 1.1;
     
     return {
       current_demand_mw: currentLoad,
-      peak_forecast_mw: Math.max(currentLoad * 1.2, 11200),
+      peak_forecast_mw: Math.max(forecastLoad, currentLoad * 1.2),
       forecast_date: latestRecord.begin_datetime_mpt || latestRecord.timestamp || new Date().toISOString(),
       capacity_margin: calculateCapacityMargin(currentLoad),
       reserve_margin: calculateReserveMargin(currentLoad)
@@ -452,11 +494,11 @@ function parseAESOLoadData(data: any) {
 
 function parseAESOGenerationData(data: any) {
   try {
-    const records = data.return?.data || data.data || data || [];
-    const latestRecord = Array.isArray(records) ? records[0] : records;
+    const records = data.return?.data || data.data || [];
+    const latestRecord = Array.isArray(records) && records.length > 0 ? records[records.length - 1] : data.return || data;
     
-    // Extract generation by source with fallbacks
-    const naturalGas = latestRecord.gas || latestRecord.natural_gas || latestRecord.NATURAL_GAS || 4200;
+    // Parse generation by fuel type
+    const naturalGas = latestRecord.natural_gas || latestRecord.gas || latestRecord.NATURAL_GAS || 4200;
     const wind = latestRecord.wind || latestRecord.WIND || 2800;
     const hydro = latestRecord.hydro || latestRecord.HYDRO || 1500;
     const solar = latestRecord.solar || latestRecord.SOLAR || 500;
@@ -486,8 +528,8 @@ function parseAESOGenerationData(data: any) {
 
 function parseOperatingReserveData(data: any) {
   try {
-    const records = data.return?.data || data.data || data || [];
-    const latestRecord = Array.isArray(records) ? records[0] : records;
+    const records = data.return?.data || data.data || [];
+    const latestRecord = Array.isArray(records) && records.length > 0 ? records[records.length - 1] : data.return || data;
     
     return {
       total_reserve_mw: latestRecord.total_reserve || latestRecord.totalReserve || 1200,
@@ -503,8 +545,8 @@ function parseOperatingReserveData(data: any) {
 
 function parseInterchangeData(data: any) {
   try {
-    const records = data.return?.data || data.data || data || [];
-    const latestRecord = Array.isArray(records) ? records[0] : records;
+    const records = data.return?.data || data.data || [];
+    const latestRecord = Array.isArray(records) && records.length > 0 ? records[records.length - 1] : data.return || data;
     
     return {
       alberta_british_columbia: latestRecord.alberta_british_columbia || latestRecord.bc || -150,
@@ -521,7 +563,7 @@ function parseInterchangeData(data: any) {
 
 function parseTransmissionData(data: any) {
   try {
-    const records = data.return?.data || data.data || data || [];
+    const records = data.return?.data || data.data || [];
     
     const constraints = Array.isArray(records) ? records.map((record: any) => ({
       constraint_name: record.constraint_name || record.name || 'Unknown Constraint',
@@ -539,7 +581,7 @@ function parseTransmissionData(data: any) {
     
     return {
       constraints,
-      timestamp: (Array.isArray(records) ? records[0] : records)?.begin_datetime_mpt || new Date().toISOString()
+      timestamp: (Array.isArray(records) && records.length > 0 ? records[0] : data.return)?.begin_datetime_mpt || new Date().toISOString()
     };
   } catch (error) {
     console.error('Error parsing transmission data:', error);
@@ -549,8 +591,8 @@ function parseTransmissionData(data: any) {
 
 function parseEnergyStorageData(data: any) {
   try {
-    const records = data.return?.data || data.data || data || [];
-    const latestRecord = Array.isArray(records) ? records[0] : records;
+    const records = data.return?.data || data.data || [];
+    const latestRecord = Array.isArray(records) && records.length > 0 ? records[records.length - 1] : data.return || data;
     
     return {
       charging_mw: latestRecord.charging_mw || latestRecord.charging || 25,
@@ -574,6 +616,8 @@ function calculateCapacityMargin(currentLoad: number): number {
 function calculateReserveMargin(currentLoad: number): number {
   return calculateCapacityMargin(currentLoad) + 5;
 }
+
+// ... keep existing code (getFallbackData, validateAESOData, assessDataQuality functions)
 
 function getFallbackData(action: string) {
   const baseTime = Date.now();
