@@ -65,25 +65,25 @@ const Landing = () => {
           
           <SectionDivider color="yellow" />
           
-          <section aria-label="Fund Overview" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <FundOverviewSection />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="purple" />
-          
           <section aria-label="Leadership Team" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <LeadershipTeamSection />
             </Suspense>
           </section>
           
-          <SectionDivider color="cyan" />
+          <SectionDivider color="purple" />
           
           <section aria-label="Fund Growth Plan" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <FundGrowthPlanSection />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="cyan" />
+          
+          <section aria-label="Fund Overview" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <FundOverviewSection />
             </Suspense>
           </section>
           
