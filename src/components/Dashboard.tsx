@@ -36,9 +36,6 @@ export function Dashboard() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Check if we're at the root dashboard path
-  const isDashboardHome = location.pathname === '/app' || location.pathname === '/app/';
-
   return (
     <div className="min-h-screen flex w-full bg-background">
       <Sidebar 
@@ -74,15 +71,15 @@ export function Dashboard() {
         
         <main className="flex-1 overflow-auto">
           <Routes>
-            <Route index element={<DashboardHome />} />
-            <Route path="aeso-market" element={<AESOMarket />} />
-            <Route path="aeso-intelligence" element={<AESOMarketIntelligence />} />
-            <Route path="energy-rates" element={<EnergyRates />} />
-            <Route path="energy-rates-test" element={<EnergyRatesTest />} />
-            <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
-            <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
-            <Route path="power-infrastructure" element={<PowerInfrastructure />} />
-            <Route path="data-management" element={<DataManagement />} />
+            <Route path="/" element={<DashboardHome />} />
+            <Route path="/aeso-market" element={<AESOMarket />} />
+            <Route path="/aeso-intelligence" element={<AESOMarketIntelligence />} />
+            <Route path="/energy-rates" element={<EnergyRates />} />
+            <Route path="/energy-rates-test" element={<EnergyRatesTest />} />
+            <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
+            <Route path="/idle-industry-scanner" element={<IdleIndustryScanner />} />
+            <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
+            <Route path="/data-management" element={<DataManagement />} />
           </Routes>
         </main>
       </div>

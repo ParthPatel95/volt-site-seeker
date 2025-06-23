@@ -16,23 +16,11 @@ function App() {
       <div className="min-h-screen bg-background">
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/app/*" element={<AuthWrapper><AppRoutes /></AuthWrapper>} />
+          <Route path="/app/*" element={<AuthWrapper><Dashboard /></AuthWrapper>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>
-  );
-}
-
-function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/aeso-market" element={<AESOMarket />} />
-      <Route path="/aeso-intelligence" element={<AESOMarketIntelligence />} />
-      <Route path="/energy-rates" element={<EnergyRates />} />
-      <Route path="/energy-rates-test" element={<EnergyRatesTest />} />
-    </Routes>
   );
 }
 
