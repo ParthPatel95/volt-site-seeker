@@ -35,7 +35,7 @@ const navigationItems = [
   { path: '/app/corporate-intelligence', icon: TrendingUp, label: 'Corporate Intelligence', badge: null },
   { path: '/app/idle-industry-scanner', icon: Factory, label: 'Idle Industry Scanner', badge: null },
   { path: '/app/power-infrastructure', icon: Zap, label: 'Power Infrastructure', badge: null },
-  { path: '/energy-rates', icon: Calculator, label: 'Energy Rate Estimator', badge: 'New' },
+  { path: '/energy-rates', icon: Calculator, label: 'Energy Rate Estimator', badge: null },
   { path: '/app/data-management', icon: Database, label: 'Data Management', badge: null },
 ];
 
