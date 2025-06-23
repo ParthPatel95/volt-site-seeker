@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,7 +96,7 @@ export function Dashboard() {
 }
 
 function EnhancedDashboardHome() {
-  const { currentPrices, systemLoad, loading: aesoLoading, refetch: refetchAESO } = useAESOData();
+  const { pricing: aesoPricing, loadData: aesoLoadData, loading: aesoLoading, refetch: refetchAESO } = useAESOData();
   const { pricing: ercotPricing, loadData: ercotLoad, loading: ercotLoading, refetch: refetchERCOT } = useERCOTData();
 
   const refreshAllData = () => {
@@ -156,13 +157,13 @@ function EnhancedDashboardHome() {
                         <div>
                           <p className="text-sm text-gray-600">Current Price</p>
                           <p className="text-2xl font-bold text-blue-600">
-                            ${currentPrices?.price || 'N/A'}/MWh
+                            ${aesoPricing?.current_price || 'N/A'}/MWh
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">System Load</p>
                           <p className="text-2xl font-bold text-blue-600">
-                            {systemLoad ? `${(systemLoad.current_load / 1000).toFixed(1)} GW` : 'N/A'}
+                            {aesoLoadData ? `${(aesoLoadData.current_demand_mw / 1000).toFixed(1)} GW` : 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -426,40 +427,6 @@ function PlatformFeaturesGuide() {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function DashboardHome() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            VoltScout Dashboard
-          </h1>
-          <p className="text-lg text-gray-600">
-            Welcome to your energy market intelligence platform
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold mb-2">AESO Market Data</h3>
-            <p className="text-gray-600">Real-time Alberta electricity market information</p>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold mb-2">Energy Rate Calculator</h3>
-            <p className="text-gray-600">Calculate comprehensive energy costs</p>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold mb-2">Market Intelligence</h3>
-            <p className="text-gray-600">Advanced analytics and forecasting</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
