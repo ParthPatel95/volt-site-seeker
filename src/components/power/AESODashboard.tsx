@@ -13,7 +13,10 @@ import {
   Fuel,
   RefreshCw,
   MapPin,
-  DollarSign
+  DollarSign,
+  Wifi,
+  WifiOff,
+  AlertCircle
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -24,6 +27,7 @@ export function AESODashboard() {
     loadData, 
     generationMix, 
     loading, 
+    connectionStatus,
     refetch 
   } = useAESOData();
 
@@ -37,6 +41,29 @@ export function AESODashboard() {
     }
   };
 
+  const getConnectionStatusInfo = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return {
+          icon: <Wifi className="w-4 h-4 text-green-500" />,
+          text: 'Live AESO Data',
+          color: 'text-green-600'
+        };
+      case 'fallback':
+        return {
+          icon: <AlertCircle className="w-4 h-4 text-yellow-500" />,
+          text: 'Simulated Data',
+          color: 'text-yellow-600'
+        };
+      default:
+        return {
+          icon: <WifiOff className="w-4 h-4 text-gray-500" />,
+          text: 'Connecting...',
+          color: 'text-gray-600'
+        };
+    }
+  };
+
   const formatPrice = (cadPrice: number) => {
     const usdPrice = convertToUSD(cadPrice);
     return {
@@ -44,6 +71,8 @@ export function AESODashboard() {
       usd: `$${usdPrice.toFixed(2)} USD`
     };
   };
+
+  const statusInfo = getConnectionStatusInfo();
 
   return (
     <div className="space-y-6">
@@ -53,6 +82,12 @@ export function AESODashboard() {
           <h2 className="text-2xl font-bold text-foreground flex items-center">
             <MapPin className="w-6 h-6 mr-2 text-red-600" />
             AESO Live Data (Alberta)
+            <div className="ml-3 flex items-center space-x-2">
+              {statusInfo.icon}
+              <span className={`text-sm ${statusInfo.color}`}>
+                {statusInfo.text}
+              </span>
+            </div>
           </h2>
           <p className="text-muted-foreground">Real-time Alberta grid operations and pricing</p>
         </div>
@@ -66,12 +101,32 @@ export function AESODashboard() {
         </Button>
       </div>
 
+      {/* Connection Status Banner */}
+      {connectionStatus === 'fallback' && (
+        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
+              <AlertCircle className="w-5 h-5" />
+              <p className="text-sm">
+                <strong>Development Mode:</strong> Displaying realistic simulated AESO data. 
+                Real-time integration with AESO API is in development.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Real-time Pricing */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Zap className="w-5 h-5 mr-2 text-yellow-600" />
             Real-Time Pricing
+            {pricing && (
+              <Badge variant="outline" className="ml-auto">
+                Updated: {new Date(pricing.timestamp).toLocaleTimeString()}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -142,18 +197,29 @@ export function AESODashboard() {
           <CardTitle className="flex items-center">
             <Gauge className="w-5 h-5 mr-2 text-blue-600" />
             System Load & Demand
+            {loadData && (
+              <Badge variant="outline" className="ml-auto">
+                Updated: {new Date(loadData.forecast_date).toLocaleTimeString()}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loadData ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Current Demand</p>
                 <p className="text-2xl font-bold">{(loadData.current_demand_mw / 1000).toFixed(1)} GW</p>
+                <p className="text-xs text-muted-foreground">{loadData.current_demand_mw.toFixed(0)} MW</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Peak Forecast</p>
                 <p className="text-xl font-semibold">{(loadData.peak_forecast_mw / 1000).toFixed(1)} GW</p>
+                <p className="text-xs text-muted-foreground">{loadData.peak_forecast_mw.toFixed(0)} MW</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Capacity Margin</p>
+                <p className="text-xl font-semibold">{loadData.capacity_margin.toFixed(1)}%</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Reserve Margin</p>
@@ -175,6 +241,11 @@ export function AESODashboard() {
           <CardTitle className="flex items-center">
             <Activity className="w-5 h-5 mr-2 text-green-600" />
             Generation Mix
+            {generationMix && (
+              <Badge variant="outline" className="ml-auto">
+                Updated: {new Date(generationMix.timestamp).toLocaleTimeString()}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -186,6 +257,7 @@ export function AESODashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Natural Gas</p>
                     <p className="font-semibold">{(generationMix.natural_gas_mw / 1000).toFixed(1)} GW</p>
+                    <p className="text-xs text-muted-foreground">{((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -193,6 +265,7 @@ export function AESODashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Wind</p>
                     <p className="font-semibold">{(generationMix.wind_mw / 1000).toFixed(1)} GW</p>
+                    <p className="text-xs text-muted-foreground">{((generationMix.wind_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -200,6 +273,7 @@ export function AESODashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Solar</p>
                     <p className="font-semibold">{(generationMix.solar_mw / 1000).toFixed(1)} GW</p>
+                    <p className="text-xs text-muted-foreground">{((generationMix.solar_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -207,6 +281,7 @@ export function AESODashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Hydro</p>
                     <p className="font-semibold">{(generationMix.hydro_mw / 1000).toFixed(1)} GW</p>
+                    <p className="text-xs text-muted-foreground">{((generationMix.hydro_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -214,6 +289,7 @@ export function AESODashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Coal</p>
                     <p className="font-semibold">{(generationMix.coal_mw / 1000).toFixed(1)} GW</p>
+                    <p className="text-xs text-muted-foreground">{((generationMix.coal_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -221,6 +297,7 @@ export function AESODashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Other</p>
                     <p className="font-semibold">{(generationMix.other_mw / 1000).toFixed(1)} GW</p>
+                    <p className="text-xs text-muted-foreground">{((generationMix.other_mw / generationMix.total_generation_mw) * 100).toFixed(1)}%</p>
                   </div>
                 </div>
               </div>
@@ -231,6 +308,9 @@ export function AESODashboard() {
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                     {generationMix.renewable_percentage.toFixed(1)}%
                   </Badge>
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Total Generation: {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
                 </div>
               </div>
             </div>
