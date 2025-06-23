@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,12 +31,21 @@ export interface AESOGenerationMix {
   timestamp: string;
 }
 
+export interface QAMetrics {
+  endpoint_used: string;
+  response_time_ms: number;
+  data_quality: 'fresh' | 'moderate' | 'stale' | 'unknown';
+  validation_passed: boolean;
+}
+
 export function useAESOData() {
   const [pricing, setPricing] = useState<AESOPricing | null>(null);
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback'>('connecting');
+  const [qaMetrics, setQaMetrics] = useState<Record<string, QAMetrics>>({});
+  const [lastFetchTime, setLastFetchTime] = useState<string>('');
   const [hasShownFallbackNotice, setHasShownFallbackNotice] = useState(false);
   const { toast } = useToast();
 
@@ -63,18 +71,36 @@ export function useAESOData() {
 
       console.log('AESO data received:', data);
       
+      // Update QA metrics
+      if (data?.qa_metrics) {
+        setQaMetrics(prev => ({
+          ...prev,
+          [dataType]: data.qa_metrics
+        }));
+      }
+      
       // Update connection status based on data source
       if (data?.source === 'aeso_api') {
         setConnectionStatus('connected');
         setHasShownFallbackNotice(false);
+        setLastFetchTime(data.timestamp);
+        
+        // Show success toast for real data
+        if (!hasShownFallbackNotice) {
+          toast({
+            title: "AESO API Connected",
+            description: "Now receiving live market data from AESO",
+            variant: "default"
+          });
+        }
       } else if (data?.source === 'fallback') {
         setConnectionStatus('fallback');
-        // Only show info toast once when first switching to fallback
+        // Only show toast once when first switching to fallback
         if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
           setHasShownFallbackNotice(true);
           toast({
-            title: "AESO API Info",
-            description: "Using simulated data while real AESO integration is in progress",
+            title: "Using Simulated Data",
+            description: "Check AESO API key configuration for live data",
             variant: "default"
           });
         }
@@ -180,16 +206,18 @@ export function useAESOData() {
 
   // Auto-fetch data on component mount
   useEffect(() => {
-    getCurrentPrices();
-    getLoadForecast();
-    getGenerationMix();
+    const fetchAllData = async () => {
+      await Promise.all([
+        getCurrentPrices(),
+        getLoadForecast(),
+        getGenerationMix()
+      ]);
+    };
+
+    fetchAllData();
     
-    // Set up interval to refresh data every 5 minutes (less frequent)
-    const interval = setInterval(() => {
-      getCurrentPrices();
-      getLoadForecast();
-      getGenerationMix();
-    }, 5 * 60 * 1000);
+    // Set up interval to refresh data every 5 minutes
+    const interval = setInterval(fetchAllData, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -200,6 +228,8 @@ export function useAESOData() {
     generationMix,
     loading,
     connectionStatus,
+    qaMetrics,
+    lastFetchTime,
     getCurrentPrices,
     getLoadForecast,
     getGenerationMix,

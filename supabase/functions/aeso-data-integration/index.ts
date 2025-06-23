@@ -13,10 +13,11 @@ serve(async (req) => {
 
   try {
     const { action } = await req.json();
-    console.log('AESO API Request:', { action });
+    console.log('AESO API Request:', { action, timestamp: new Date().toISOString() });
 
     const aesoApiKey = Deno.env.get('AESO_API_KEY');
     console.log('AESO API Key available:', aesoApiKey ? 'Yes' : 'No');
+    console.log('AESO API Key length:', aesoApiKey ? aesoApiKey.length : 0);
     
     if (!aesoApiKey) {
       console.log('No AESO API key found, using fallback data');
@@ -27,7 +28,8 @@ serve(async (req) => {
           data: fallbackData,
           source: 'fallback',
           timestamp: new Date().toISOString(),
-          note: 'AESO API key not configured - using simulated data'
+          note: 'AESO API key not configured - using simulated data',
+          qa_status: 'fallback_mode'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -37,42 +39,66 @@ serve(async (req) => {
     }
     
     let data;
+    let qaMetrics = {
+      endpoint_used: '',
+      response_time_ms: 0,
+      data_quality: 'unknown',
+      validation_passed: false
+    };
+    
+    const startTime = Date.now();
     
     switch (action) {
       case 'fetch_current_prices':
         data = await fetchCurrentPrices(aesoApiKey);
+        qaMetrics.endpoint_used = 'systemMarginalPrice';
         break;
       case 'fetch_load_forecast':
         data = await fetchLoadForecast(aesoApiKey);
+        qaMetrics.endpoint_used = 'load/forecast';
         break;
       case 'fetch_generation_mix':
         data = await fetchGenerationMix(aesoApiKey);
+        qaMetrics.endpoint_used = 'generation/currentSupplyDemand';
         break;
       case 'fetch_system_marginal_price':
         data = await fetchSystemMarginalPrice(aesoApiKey);
+        qaMetrics.endpoint_used = 'price/systemMarginalPrice';
         break;
       case 'fetch_operating_reserve':
         data = await fetchOperatingReserve(aesoApiKey);
+        qaMetrics.endpoint_used = 'reserve/operatingReserve';
         break;
       case 'fetch_interchange':
         data = await fetchInterchange(aesoApiKey);
+        qaMetrics.endpoint_used = 'interchange/currentInterchange';
         break;
       case 'fetch_transmission_constraints':
         data = await fetchTransmissionConstraints(aesoApiKey);
+        qaMetrics.endpoint_used = 'transmission/constraintsAndOutages';
         break;
       case 'fetch_energy_storage':
         data = await fetchEnergyStorage(aesoApiKey);
+        qaMetrics.endpoint_used = 'storage/energyStorageData';
         break;
       default:
         throw new Error('Invalid action');
     }
+
+    qaMetrics.response_time_ms = Date.now() - startTime;
+    qaMetrics.validation_passed = validateAESOData(data, action);
+    qaMetrics.data_quality = assessDataQuality(data, action);
+    
+    console.log('QA Metrics:', qaMetrics);
+    console.log('Data validation result:', qaMetrics.validation_passed ? 'PASSED' : 'FAILED');
 
     return new Response(
       JSON.stringify({
         success: true,
         data,
         source: 'aeso_api',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        qa_metrics: qaMetrics
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -82,6 +108,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('AESO API error:', error);
+    console.error('Error stack:', error.stack);
     
     // Return fallback data for demo purposes
     const requestBody = await req.json().catch(() => ({ action: 'fetch_current_prices' }));
@@ -94,7 +121,8 @@ serve(async (req) => {
         source: 'fallback',
         timestamp: new Date().toISOString(),
         note: 'AESO API error occurred - using simulated data',
-        error: error.message
+        error: error.message,
+        qa_status: 'error_fallback'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -120,23 +148,25 @@ async function fetchLoadForecast(apiKey: string) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Ocp-Apim-Subscription-Key': apiKey, // Proper header for Azure API Management
+        'Ocp-Apim-Subscription-Key': apiKey,
         'User-Agent': 'VoltScout-Dashboard/1.0'
       }
     });
 
     console.log('AESO Load API response status:', response.status);
+    console.log('Response headers received:', response.headers.get('content-type'));
     
     if (!response.ok) {
       const errorText = await response.text();
       console.log('AESO Load API error response:', errorText);
+      console.log('Trying alternative endpoint...');
       
       // Try alternative endpoint if first fails
       return await fetchAlternativeLoadData(apiKey);
     }
 
     const data = await response.json();
-    console.log('AESO load response received:', data);
+    console.log('AESO load response received:', JSON.stringify(data, null, 2));
     return parseAESOLoadData(data);
     
   } catch (error) {
@@ -190,15 +220,16 @@ async function fetchGenerationMix(apiKey: string) {
     });
 
     console.log('AESO Generation API response status:', response.status);
+    console.log('Response content-type:', response.headers.get('content-type'));
 
     if (!response.ok) {
       const errorText = await response.text();
       console.log('AESO Generation API error response:', errorText);
-      throw new Error(`AESO Generation API responded with status: ${response.status} - ${response.statusText}`);
+      throw new Error(`AESO Generation API responded with status: ${response.status} - ${response.statusText}: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('AESO generation response received:', data);
+    console.log('AESO generation response received:', JSON.stringify(data, null, 2));
     return parseAESOGenerationData(data);
     
   } catch (error) {
@@ -224,6 +255,7 @@ async function fetchSystemMarginalPrice(apiKey: string) {
     });
 
     console.log('AESO SMP API response status:', response.status);
+    console.log('Response content-type:', response.headers.get('content-type'));
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -581,5 +613,60 @@ function getFallbackData(action: string) {
       };
     default:
       return null;
+  }
+}
+
+// Data validation functions
+function validateAESOData(data: any, action: string): boolean {
+  if (!data) {
+    console.log('QA FAIL: No data received');
+    return false;
+  }
+
+  try {
+    switch (action) {
+      case 'fetch_current_prices':
+      case 'fetch_system_marginal_price':
+        const hasPrice = data.price !== undefined && data.price !== null;
+        const hasTimestamp = data.timestamp || data.begin_datetime_mpt;
+        const validPrice = typeof data.price === 'number' && data.price >= 0;
+        console.log('Price validation:', { hasPrice, hasTimestamp, validPrice, price: data.price });
+        return hasPrice && hasTimestamp && validPrice;
+        
+      case 'fetch_load_forecast':
+        const hasDemand = data.current_demand_mw !== undefined && data.current_demand_mw !== null;
+        const hasValidDemand = typeof data.current_demand_mw === 'number' && data.current_demand_mw > 0;
+        console.log('Load validation:', { hasDemand, hasValidDemand, demand: data.current_demand_mw });
+        return hasDemand && hasValidDemand;
+        
+      case 'fetch_generation_mix':
+        const hasTotal = data.total_generation_mw !== undefined && data.total_generation_mw !== null;
+        const hasValidTotal = typeof data.total_generation_mw === 'number' && data.total_generation_mw > 0;
+        const hasRenewablePct = data.renewable_percentage !== undefined;
+        console.log('Generation validation:', { hasTotal, hasValidTotal, hasRenewablePct, total: data.total_generation_mw });
+        return hasTotal && hasValidTotal && hasRenewablePct;
+        
+      default:
+        return data !== null && typeof data === 'object';
+    }
+  } catch (error) {
+    console.log('QA validation error:', error);
+    return false;
+  }
+}
+
+function assessDataQuality(data: any, action: string): string {
+  if (!data) return 'no_data';
+  
+  try {
+    const now = new Date();
+    const dataTimestamp = new Date(data.timestamp || data.begin_datetime_mpt || now);
+    const ageMinutes = (now.getTime() - dataTimestamp.getTime()) / (1000 * 60);
+    
+    if (ageMinutes > 60) return 'stale'; // Data older than 1 hour
+    if (ageMinutes > 15) return 'moderate'; // Data older than 15 minutes
+    return 'fresh'; // Recent data
+  } catch (error) {
+    return 'unknown';
   }
 }
