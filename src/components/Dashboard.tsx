@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Menu, Zap, TrendingUp, Activity, AlertTriangle, Building2, Search, Factory, Database, BarChart, Brain, RefreshCw } from 'lucide-react';
+import { Menu, Zap, TrendingUp, Activity, AlertTriangle, Building2, Search, Factory, Database, BarChart, Brain, RefreshCw, Globe, Users, DollarSign } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { useLocation } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
@@ -19,6 +18,7 @@ import EnergyRates from '@/pages/EnergyRates';
 import EnergyRatesTest from '@/pages/EnergyRatesTest';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useERCOTData } from '@/hooks/useERCOTData';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Dashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -30,7 +30,6 @@ export function Dashboard() {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-collapse sidebar on mobile
       if (mobile) {
         setIsCollapsed(true);
       }
@@ -59,7 +58,6 @@ export function Dashboard() {
             ? 'ml-16' 
             : 'ml-72'
       }`}>
-        {/* Mobile Header */}
         {isMobile && (
           <header className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
             <Button
@@ -71,7 +69,7 @@ export function Dashboard() {
               <Menu className="w-5 h-5" />
             </Button>
             <h1 className="text-lg font-semibold">VoltScout</h1>
-            <div className="w-9" /> {/* Spacer for alignment */}
+            <div className="w-9" />
           </header>
         )}
         
@@ -98,16 +96,47 @@ export function Dashboard() {
 function EnhancedDashboardHome() {
   const { pricing: aesoPricing, loadData: aesoLoadData, loading: aesoLoading, refetch: refetchAESO } = useAESOData();
   const { pricing: ercotPricing, loadData: ercotLoad, loading: ercotLoading, refetch: refetchERCOT } = useERCOTData();
+  const [platformStats, setPlatformStats] = useState({
+    totalSubstations: 0,
+    totalProperties: 0,
+    companiesAnalyzed: 0,
+    alertsActive: 0
+  });
 
   const refreshAllData = () => {
     refetchAESO();
     refetchERCOT();
+    loadPlatformStats();
   };
+
+  const loadPlatformStats = async () => {
+    try {
+      const [substations, properties, companies, alerts] = await Promise.all([
+        supabase.from('substations').select('id', { count: 'exact', head: true }),
+        supabase.from('properties').select('id', { count: 'exact', head: true }),
+        supabase.from('companies').select('id', { count: 'exact', head: true }),
+        supabase.from('alerts').select('id', { count: 'exact', head: true })
+      ]);
+
+      setPlatformStats({
+        totalSubstations: substations.count || 0,
+        totalProperties: properties.count || 0,
+        companiesAnalyzed: companies.count || 0,
+        alertsActive: alerts.count || 0
+      });
+    } catch (error) {
+      console.error('Error loading platform stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadPlatformStats();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header with Live Data Refresh */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -128,9 +157,10 @@ function EnhancedDashboardHome() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Live Market Overview</TabsTrigger>
-            <TabsTrigger value="features">Platform Features Guide</TabsTrigger>
+            <TabsTrigger value="platform">Platform Analytics</TabsTrigger>
+            <TabsTrigger value="features">Features Guide</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -157,7 +187,7 @@ function EnhancedDashboardHome() {
                         <div>
                           <p className="text-sm text-gray-600">Current Price</p>
                           <p className="text-2xl font-bold text-blue-600">
-                            ${aesoPricing?.current_price || 'N/A'}/MWh
+                            ${aesoPricing?.current_price ? Number(aesoPricing.current_price).toFixed(2) : 'N/A'}/MWh
                           </p>
                         </div>
                         <div>
@@ -196,7 +226,7 @@ function EnhancedDashboardHome() {
                         <div>
                           <p className="text-sm text-gray-600">Real-Time Price</p>
                           <p className="text-2xl font-bold text-orange-600">
-                            ${ercotPricing?.current_price?.toFixed(2) || 'N/A'}/MWh
+                            ${ercotPricing?.current_price ? Number(ercotPricing.current_price).toFixed(2) : 'N/A'}/MWh
                           </p>
                         </div>
                         <div>
@@ -253,6 +283,116 @@ function EnhancedDashboardHome() {
                 <CardContent>
                   <p className="text-gray-600 mb-3">Deep company analysis and investment opportunities</p>
                   <Badge variant="secondary">Enterprise</Badge>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="platform" className="space-y-6">
+            {/* Platform Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-600 font-medium">Power Infrastructure</p>
+                      <p className="text-3xl font-bold text-green-700">{platformStats.totalSubstations.toLocaleString()}</p>
+                      <p className="text-xs text-green-600">Substations Tracked</p>
+                    </div>
+                    <Factory className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-purple-600 font-medium">Properties</p>
+                      <p className="text-3xl font-bold text-purple-700">{platformStats.totalProperties.toLocaleString()}</p>
+                      <p className="text-xs text-purple-600">In Database</p>
+                    </div>
+                    <Building2 className="w-8 h-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-600 font-medium">Companies</p>
+                      <p className="text-3xl font-bold text-blue-700">{platformStats.companiesAnalyzed.toLocaleString()}</p>
+                      <p className="text-xs text-blue-600">Analyzed</p>
+                    </div>
+                    <Users className="w-8 h-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-yellow-600 font-medium">Active Alerts</p>
+                      <p className="text-3xl font-bold text-yellow-700">{platformStats.alertsActive.toLocaleString()}</p>
+                      <p className="text-xs text-yellow-600">Monitoring</p>
+                    </div>
+                    <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Platform Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Globe className="w-5 h-5 mr-2 text-blue-600" />
+                    Geographic Coverage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Alberta (AESO)</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Texas (ERCOT)</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Additional Markets</span>
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Planned</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                    Market Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">AESO Avg Price (24h)</span>
+                      <span className="font-semibold">${aesoPricing?.average_price ? Number(aesoPricing.average_price).toFixed(2) : 'N/A'}/MWh</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">ERCOT Avg Price (24h)</span>
+                      <span className="font-semibold">${ercotPricing?.average_price ? Number(ercotPricing.average_price).toFixed(2) : 'N/A'}/MWh</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Data Quality</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Excellent</Badge>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
