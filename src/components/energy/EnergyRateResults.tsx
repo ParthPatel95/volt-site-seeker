@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, FileText, TrendingUp } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { EnergyRateInput } from './EnergyRateEstimator';
+import { EnergyRateInput } from './EnergyRateInputTypes';
 
 export interface EnergyRateResults {
   monthlyData: MonthlyRateData[];
