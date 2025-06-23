@@ -76,12 +76,7 @@ export function useAESOData() {
         errorMessage = "AESO service temporarily unavailable";
       }
       
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      
+      // Don't show toast for fallback data usage
       return null;
     } finally {
       setLoading(false);

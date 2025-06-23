@@ -31,6 +31,7 @@ import { useFERCData } from '@/hooks/useFERCData';
 import { useEnergyData } from '@/hooks/useEnergyData';
 import { useUSGSData } from '@/hooks/useUSGSData';
 import { AESODashboard } from '@/components/power/AESODashboard';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 interface Property {
   id: string;
@@ -66,6 +67,7 @@ export function Dashboard() {
   const { interconnectionQueue, loading: fercLoading, refetch: refetchFERC } = useFERCData();
   const { epaData, solarData, loading: energyLoading } = useEnergyData();
   const { elevationData, loading: usgsLoading } = useUSGSData();
+  const { exchangeRate, convertToUSD } = useExchangeRate();
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -250,7 +252,12 @@ export function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
-                  <p className="text-xl sm:text-2xl font-bold">CA${aesoPricing.current_price.toFixed(2)}/MWh</p>
+                  <div className="space-y-1">
+                    <p className="text-xl sm:text-2xl font-bold">CA${aesoPricing.current_price.toFixed(2)}/MWh</p>
+                    {exchangeRate && (
+                      <p className="text-base text-muted-foreground">${convertToUSD(aesoPricing.current_price).toFixed(2)} USD/MWh</p>
+                    )}
+                  </div>
                   <Badge variant="default" className="text-xs">
                     {aesoPricing.market_conditions.replace('_', ' ').toUpperCase()}
                   </Badge>
