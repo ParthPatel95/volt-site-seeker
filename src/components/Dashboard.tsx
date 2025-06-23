@@ -26,9 +26,11 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnergyRates } from '@/hooks/useEnergyRates';
 import { useERCOTData } from '@/hooks/useERCOTData';
+import { useAESOData } from '@/hooks/useAESOData';
 import { useFERCData } from '@/hooks/useFERCData';
 import { useEnergyData } from '@/hooks/useEnergyData';
 import { useUSGSData } from '@/hooks/useUSGSData';
+import { AESODashboard } from '@/components/power/AESODashboard';
 
 interface Property {
   id: string;
@@ -60,6 +62,7 @@ export function Dashboard() {
   const { toast } = useToast();
   const { currentRates } = useEnergyRates();
   const { pricing, loadData, generationMix, loading: ercotLoading, refetch: refetchERCOT } = useERCOTData();
+  const { pricing: aesoPricing, loadData: aesoLoadData, generationMix: aesoGenerationMix, loading: aesoLoading, refetch: refetchAESO } = useAESOData();
   const { interconnectionQueue, loading: fercLoading, refetch: refetchFERC } = useFERCData();
   const { epaData, solarData, loading: energyLoading } = useEnergyData();
   const { elevationData, loading: usgsLoading } = useUSGSData();
@@ -121,6 +124,7 @@ export function Dashboard() {
       await Promise.all([
         loadDashboardData(),
         refetchERCOT(),
+        refetchAESO(),
         refetchFERC(),
       ]);
 
@@ -147,7 +151,7 @@ export function Dashboard() {
   const totalPowerCapacity = properties.reduce((sum, prop) => sum + (prop.power_capacity_mw || 0), 0);
   const unreadAlerts = alerts.filter(alert => !alert.is_read).length;
 
-  if (loading && ercotLoading && fercLoading) {
+  if (loading && ercotLoading && aesoLoading && fercLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center p-4">
         <Card className="p-6 sm:p-8">
@@ -184,54 +188,103 @@ export function Dashboard() {
         </Button>
       </div>
 
-      {/* Real-time Energy Market Overview */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center text-lg sm:text-xl">
-            <Activity className="w-5 h-5 mr-2 text-yellow-600" />
-            Live Energy Market (ERCOT)
-          </CardTitle>
-          <CardDescription className="text-sm">Real-time Texas grid operations and pricing</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {pricing && loadData ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
-                <p className="text-xl sm:text-2xl font-bold">${pricing.current_price.toFixed(2)}/MWh</p>
-                <Badge variant="default" className="text-xs">
-                  {pricing.market_conditions.replace('_', ' ').toUpperCase()}
-                </Badge>
+      {/* Real-time Energy Markets Overview - Texas & Alberta */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* ERCOT (Texas) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg sm:text-xl">
+              <Activity className="w-5 h-5 mr-2 text-yellow-600" />
+              Live Energy Market (ERCOT - Texas)
+            </CardTitle>
+            <CardDescription className="text-sm">Real-time Texas grid operations and pricing</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pricing && loadData ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
+                  <p className="text-xl sm:text-2xl font-bold">${pricing.current_price.toFixed(2)}/MWh</p>
+                  <Badge variant="default" className="text-xs">
+                    {pricing.market_conditions.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">System Load</p>
+                  <p className="text-xl sm:text-2xl font-bold">{(loadData.current_demand_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">Current demand</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
+                  <p className="text-xl sm:text-2xl font-bold">{loadData.reserve_margin.toFixed(1)}%</p>
+                  <p className="text-xs text-muted-foreground">Grid reliability</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {generationMix ? generationMix.renewable_percentage.toFixed(1) : '0'}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">Of total generation</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs sm:text-sm text-muted-foreground">System Load</p>
-                <p className="text-xl sm:text-2xl font-bold">{(loadData.current_demand_mw / 1000).toFixed(1)} GW</p>
-                <p className="text-xs text-muted-foreground">Current demand</p>
+            ) : (
+              <div className="text-center py-6">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground text-sm">Loading real-time market data...</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
-                <p className="text-xl sm:text-2xl font-bold">{loadData.reserve_margin.toFixed(1)}%</p>
-                <p className="text-xs text-muted-foreground">Grid reliability</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* AESO (Alberta) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg sm:text-xl">
+              <MapPin className="w-5 h-5 mr-2 text-red-600" />
+              Live Energy Market (AESO - Alberta)
+            </CardTitle>
+            <CardDescription className="text-sm">Real-time Alberta grid operations and pricing</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {aesoPricing && aesoLoadData ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
+                  <p className="text-xl sm:text-2xl font-bold">CA${aesoPricing.current_price.toFixed(2)}/MWh</p>
+                  <Badge variant="default" className="text-xs">
+                    {aesoPricing.market_conditions.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">System Load</p>
+                  <p className="text-xl sm:text-2xl font-bold">{(aesoLoadData.current_demand_mw / 1000).toFixed(1)} GW</p>
+                  <p className="text-xs text-muted-foreground">Current demand</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Reserve Margin</p>
+                  <p className="text-xl sm:text-2xl font-bold">{aesoLoadData.reserve_margin.toFixed(1)}%</p>
+                  <p className="text-xs text-muted-foreground">Grid reliability</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {aesoGenerationMix ? aesoGenerationMix.renewable_percentage.toFixed(1) : '0'}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">Of total generation</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs sm:text-sm text-muted-foreground">Renewables</p>
-                <p className="text-xl sm:text-2xl font-bold">
-                  {generationMix ? generationMix.renewable_percentage.toFixed(1) : '0'}%
-                </p>
-                <p className="text-xs text-muted-foreground">Of total generation</p>
+            ) : (
+              <div className="text-center py-6">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground text-sm">Loading real-time market data...</p>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-muted-foreground text-sm">Loading real-time market data...</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Key API Data Integration Status */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-100">ERCOT API</CardTitle>
@@ -242,6 +295,19 @@ export function Dashboard() {
               {pricing ? 'LIVE' : 'Loading...'}
             </div>
             <p className="text-xs text-blue-200">Real-time pricing & load</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-red-100">AESO API</CardTitle>
+            <MapPin className="h-4 w-4 text-red-200" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {aesoPricing ? 'LIVE' : 'Loading...'}
+            </div>
+            <p className="text-xs text-red-200">Alberta grid data</p>
           </CardContent>
         </Card>
 
@@ -292,7 +358,7 @@ export function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <Activity className="w-5 h-5 mr-2 text-green-600" />
-              Live Generation Mix
+              Live Generation Mix (Texas)
             </CardTitle>
             <CardDescription className="text-sm">Current power generation sources in Texas</CardDescription>
           </CardHeader>
@@ -335,6 +401,67 @@ export function Dashboard() {
                     <span className="text-sm font-medium">Total Generation</span>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
                       {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground text-sm">Loading generation data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Generation Mix from AESO */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Activity className="w-5 h-5 mr-2 text-red-600" />
+              Live Generation Mix (Alberta)
+            </CardTitle>
+            <CardDescription className="text-sm">Current power generation sources in Alberta</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {aesoGenerationMix ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <Fuel className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Natural Gas</p>
+                      <p className="font-semibold">{(aesoGenerationMix.natural_gas_mw / 1000).toFixed(1)} GW</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Wind className="w-4 h-4 text-green-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Wind</p>
+                      <p className="font-semibold">{(aesoGenerationMix.wind_mw / 1000).toFixed(1)} GW</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Sun className="w-4 h-4 text-yellow-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Solar</p>
+                      <p className="font-semibold">{(aesoGenerationMix.solar_mw / 1000).toFixed(1)} GW</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Activity className="w-4 h-4 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Hydro</p>
+                      <p className="font-semibold">{(aesoGenerationMix.hydro_mw / 1000).toFixed(1)} GW</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Total Generation</span>
+                    <Badge variant="secondary" className="bg-red-100 text-red-800">
+                      {(aesoGenerationMix.total_generation_mw / 1000).toFixed(1)} GW
                     </Badge>
                   </div>
                 </div>
@@ -450,49 +577,6 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Properties & Substations Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <Building className="w-5 h-5 mr-2 text-purple-600" />
-              Infrastructure Summary
-            </CardTitle>
-            <CardDescription className="text-sm">Power properties and transmission infrastructure</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Properties</p>
-                  <p className="text-2xl font-bold">{properties.length}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Substations</p>
-                  <p className="text-2xl font-bold">{substations.length}</p>
-                </div>
-              </div>
-              
-              {totalPowerCapacity > 0 && (
-                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Total Power Capacity</span>
-                    <Badge variant="outline">
-                      {Math.round(totalPowerCapacity)} MW
-                    </Badge>
-                  </div>
-                </div>
-              )}
-              
-              {unreadAlerts > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-orange-600">Active Alerts</span>
-                  <Badge variant="destructive">{unreadAlerts}</Badge>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Quick Actions - Mobile Optimized */}
@@ -527,10 +611,10 @@ export function Dashboard() {
               </div>
             </Button>
             <Button variant="outline" className="justify-start text-sm h-auto py-3">
-              <Building className="w-4 h-4 mr-2" />
+              <MapPin className="w-4 h-4 mr-2" />
               <div className="text-left">
-                <div className="font-medium">FERC Queue</div>
-                <div className="text-xs text-muted-foreground">Interconnection data</div>
+                <div className="font-medium">AESO Live</div>
+                <div className="text-xs text-muted-foreground">Alberta grid data</div>
               </div>
             </Button>
           </div>
