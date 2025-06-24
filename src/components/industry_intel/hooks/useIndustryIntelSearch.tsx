@@ -137,6 +137,21 @@ export function useIndustryIntelSearch() {
           }
         }
 
+        // Safely parse satellite_analysis JSON
+        let aiInsights = 'Satellite analysis indicates reduced activity';
+        if (site.satellite_analysis) {
+          try {
+            const analysis = typeof site.satellite_analysis === 'string' 
+              ? JSON.parse(site.satellite_analysis) 
+              : site.satellite_analysis;
+            if (analysis && typeof analysis === 'object' && 'summary' in analysis) {
+              aiInsights = analysis.summary || aiInsights;
+            }
+          } catch (e) {
+            console.warn('Failed to parse satellite_analysis:', e);
+          }
+        }
+
         return {
           id: site.id,
           type: 'idle' as const,
@@ -145,7 +160,7 @@ export function useIndustryIntelSearch() {
           coordinates,
           estimatedPowerMW: site.estimated_free_mw || 0,
           distressScore: site.idle_score || 0,
-          aiInsights: site.satellite_analysis?.summary || 'Satellite analysis indicates reduced activity',
+          aiInsights,
           sources: ['Satellite Imagery', 'Industrial Database'],
           lastUpdated: site.updated_at || site.created_at,
           status: 'monitoring' as const
