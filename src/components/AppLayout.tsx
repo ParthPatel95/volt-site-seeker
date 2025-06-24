@@ -1,16 +1,18 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Menu } from 'lucide-react';
-import { useState } from 'react';
-import { IdleIndustryScanner as IdleIndustryScannerComponent } from '@/components/power/IdleIndustryScanner';
 
-export default function IdleIndustryScanner() {
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+export function AppLayout({ children }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -44,7 +46,7 @@ export default function IdleIndustryScanner() {
         )}
         
         <div className="p-6">
-          <IdleIndustryScannerComponent />
+          {children}
         </div>
       </div>
     </div>

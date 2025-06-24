@@ -13,9 +13,9 @@ import { CorporateIntelligence } from "@/components/CorporateIntelligence";
 import { PowerInfrastructure } from "@/components/PowerInfrastructure";
 import { DataManagement } from "@/components/DataManagement";
 import { SecureAuth } from "@/components/SecureAuth";
+import { IdleIndustryScannerWrapper } from "@/components/IdleIndustryScannerWrapper";
 import Index from "./pages/Index";
 import EnergyRates from "./pages/EnergyRates";
-import IdleIndustryScanner from "./pages/IdleIndustryScanner";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 
@@ -82,7 +82,7 @@ const App = () => (
             path="/app/idle-industry-scanner"
             element={
               <AuthWrapper>
-                <IdleIndustryScanner />
+                <IdleIndustryScannerWrapper />
               </AuthWrapper>
             }
           />
