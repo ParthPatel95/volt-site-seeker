@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Sheet,
@@ -19,7 +20,8 @@ import {
   Building2,
   Factory,
   Database,
-  Search
+  Search,
+  TrendingDown
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -57,6 +59,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
       label: 'Energy Rates',
       href: '/app/energy-rates',
       active: location.pathname === '/app/energy-rates'
+    },
+    {
+      icon: TrendingDown,
+      label: 'Industry Intelligence',
+      href: '/app/industry-intelligence',
+      active: location.pathname === '/app/industry-intelligence'
     },
     {
       icon: Building2,

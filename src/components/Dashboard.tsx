@@ -20,6 +20,7 @@ import { useAESOData } from '@/hooks/useAESOData';
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { supabase } from '@/integrations/supabase/client';
 import { AccessRequestsSettings } from '@/components/settings/AccessRequestsSettings';
+import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
 
 export function Dashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -81,6 +82,7 @@ export function Dashboard() {
             <Route path="/aeso-intelligence" element={<AESOMarketIntelligence />} />
             <Route path="/energy-rates" element={<EnergyRates />} />
             <Route path="/energy-rates-test" element={<EnergyRatesTest />} />
+            <Route path="/industry-intelligence" element={<IndustryIntelligence />} />
             <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
             <Route path="/idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
