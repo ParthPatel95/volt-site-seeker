@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,7 +47,13 @@ export default function Settings() {
         return;
       }
 
-      setAccessRequests(data || []);
+      // Type assertion to ensure the data matches our interface
+      const typedData = (data || []).map(item => ({
+        ...item,
+        status: item.status as 'pending' | 'approved' | 'rejected'
+      })) as AccessRequest[];
+
+      setAccessRequests(typedData);
     } catch (err) {
       console.error('Error in loadAccessRequests:', err);
       toast({
