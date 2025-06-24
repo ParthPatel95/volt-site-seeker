@@ -105,7 +105,7 @@ export interface AESOIntertieFlows {
 export interface AESOWeatherImpact {
   wind_forecast_impact: {
     current_capacity_factor: number;
-    24h_forecast: Array<{
+    forecast_24h: Array<{
       hour: number;
       capacity_factor: number;
       wind_speed_ms: number;
@@ -114,7 +114,7 @@ export interface AESOWeatherImpact {
   };
   solar_forecast_impact: {
     current_capacity_factor: number;
-    24h_forecast: Array<{
+    forecast_24h: Array<{
       hour: number;
       capacity_factor: number;
       cloud_cover_percent: number;
