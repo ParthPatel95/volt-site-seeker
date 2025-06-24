@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -29,7 +30,7 @@ import {
   Clock,
   WifiOff
 } from 'lucide-react';
-import { useAESOData } from '@/hooks/useAESOData';
+import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import { useERCOTData } from '@/hooks/useERCOTData';
 
 interface DashboardOverviewProps {
@@ -44,7 +45,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
     loading: aesoLoading,
     connectionStatus: aesoStatus,
     refetch: aesoRefetch
-  } = useAESOData();
+  } = useAESOMarketData();
 
   const { 
     pricing: ercotPricing, 
