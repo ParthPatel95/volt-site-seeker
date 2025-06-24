@@ -9,7 +9,7 @@ import { CorporateIntelligence } from './CorporateIntelligence';
 import { DataManagement } from './DataManagement';
 import EnergyRates from '@/pages/EnergyRates';
 import Settings from '@/pages/Settings';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardOverviewProps {
   children?: React.ReactNode;
@@ -55,7 +55,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
 export function Dashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (isMobile) {
