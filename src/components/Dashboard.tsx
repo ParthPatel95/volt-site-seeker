@@ -65,7 +65,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'connected': return 'bg-green-100 text-green-800';
-      case 'fallback': return 'bg-red-100 text-red-800';
+      case 'disconnected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -105,7 +105,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
       </div>
 
       {/* API Status Alert */}
-      {aesoStatus === 'fallback' && (
+      {aesoStatus === 'disconnected' && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
@@ -131,7 +131,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
               <>
                 <div className="text-2xl font-bold">{formatPrice(aesoPricing.current_price)}/MWh</div>
                 <Badge variant="secondary" className={getStatusColor(aesoStatus)}>
-                  Live Data
+                  {aesoStatus === 'connected' ? 'Live Data' : 'Offline'}
                 </Badge>
               </>
             ) : (

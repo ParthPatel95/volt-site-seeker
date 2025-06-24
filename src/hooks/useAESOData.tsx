@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,7 +43,7 @@ export function useAESOData() {
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'fallback'>('connecting');
   const [qaMetrics, setQaMetrics] = useState<Record<string, QAMetrics>>({});
   const [lastFetchTime, setLastFetchTime] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
