@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -27,7 +26,8 @@ import {
   Users,
   Building2,
   Database,
-  Clock
+  Clock,
+  WifiOff
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useERCOTData } from '@/hooks/useERCOTData';
@@ -65,7 +65,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'connected': return 'bg-green-100 text-green-800';
-      case 'fallback': return 'bg-yellow-100 text-yellow-800';
+      case 'fallback': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -104,6 +104,21 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
         </div>
       </div>
 
+      {/* API Status Alert */}
+      {aesoStatus === 'fallback' && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <WifiOff className="w-5 h-5 text-red-600" />
+              <div>
+                <p className="text-red-800 font-medium">AESO API Connection Issue</p>
+                <p className="text-red-600 text-sm">Unable to fetch live AESO data. Please check API configuration in settings.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Market Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -112,10 +127,19 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(aesoPricing?.current_price)}/MWh</div>
-            <Badge variant="secondary" className={getStatusColor(aesoStatus)}>
-              {aesoStatus === 'connected' ? 'Live Data' : 'Simulated'}
-            </Badge>
+            {aesoPricing ? (
+              <>
+                <div className="text-2xl font-bold">{formatPrice(aesoPricing.current_price)}/MWh</div>
+                <Badge variant="secondary" className={getStatusColor(aesoStatus)}>
+                  Live Data
+                </Badge>
+              </>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <div className="text-2xl font-bold text-gray-400">No Data</div>
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -138,10 +162,19 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
             <Gauge className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatPower(aesoLoad?.current_demand_mw)}</div>
-            <p className="text-xs text-muted-foreground">
-              Reserve: {aesoLoad?.reserve_margin?.toFixed(1) || 'N/A'}%
-            </p>
+            {aesoLoad ? (
+              <>
+                <div className="text-2xl font-bold">{formatPower(aesoLoad.current_demand_mw)}</div>
+                <p className="text-xs text-muted-foreground">
+                  Reserve: {aesoLoad.reserve_margin?.toFixed(1)}%
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <div className="text-2xl font-bold text-gray-400">No Data</div>
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -206,15 +239,16 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Renewable Generation</span>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      {aesoGeneration.renewable_percentage?.toFixed(1) || 'N/A'}%
+                      {aesoGeneration.renewable_percentage?.toFixed(1)}%
                     </Badge>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="text-center py-8">
-                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-muted-foreground">Loading generation data...</p>
+                <WifiOff className="w-8 h-8 mx-auto mb-2 text-red-500" />
+                <p className="text-muted-foreground">AESO data unavailable</p>
+                <p className="text-sm text-red-600">Check API configuration</p>
               </div>
             )}
           </CardContent>
@@ -230,6 +264,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
           </CardHeader>
           <CardContent>
             {ercotGeneration ? (
+              
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
@@ -265,7 +300,7 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Renewable Generation</span>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      {ercotGeneration.renewable_percentage?.toFixed(1) || 'N/A'}%
+                      {ercotGeneration.renewable_percentage?.toFixed(1)}%
                     </Badge>
                   </div>
                 </div>
@@ -357,10 +392,10 @@ function DashboardOverview({ children }: DashboardOverviewProps) {
               <span className="text-sm font-medium">Database</span>
               <Badge variant="default" className="bg-green-100 text-green-800">Online</Badge>
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
               <span className="text-sm font-medium">AESO API</span>
               <Badge variant="secondary" className={getStatusColor(aesoStatus)}>
-                {aesoStatus === 'connected' ? 'Connected' : 'Fallback Mode'}
+                {aesoStatus === 'connected' ? 'Connected' : 'Offline'}
               </Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
