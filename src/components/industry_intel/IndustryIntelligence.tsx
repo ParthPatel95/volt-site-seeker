@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { TrendingDown, Search, MapPin, AlertTriangle, Eye, Brain, Target, Zap } from 'lucide-react';
+import { TrendingDown, Search, MapPin, AlertTriangle, Eye, Brain, Target, Zap, Database } from 'lucide-react';
 import { IndustryIntelSearchEngine } from './IndustryIntelSearchEngine';
 import { IndustryIntelMap } from './IndustryIntelMap';
 import { IndustryIntelDashboard } from './IndustryIntelDashboard';
 import { IndustryIntelAlerts } from './IndustryIntelAlerts';
 import { IndustryIntelAnalytics } from './IndustryIntelAnalytics';
+import { IndustryIntelResultsViewer } from './IndustryIntelResultsViewer';
 
 export function IndustryIntelligence() {
   const [activeOpportunities, setActiveOpportunities] = useState([]);
@@ -42,10 +43,14 @@ export function IndustryIntelligence() {
         </div>
 
         <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="search" className="flex items-center gap-2">
               <Search className="w-4 h-4" />
               Search Engine
+            </TabsTrigger>
+            <TabsTrigger value="results" className="flex items-center gap-2">
+              <Database className="w-4 h-4" />
+              Stored Results
             </TabsTrigger>
             <TabsTrigger value="map" className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
@@ -69,6 +74,10 @@ export function IndustryIntelligence() {
             <IndustryIntelSearchEngine 
               onOpportunitiesFound={setActiveOpportunities}
             />
+          </TabsContent>
+
+          <TabsContent value="results" className="space-y-6">
+            <IndustryIntelResultsViewer />
           </TabsContent>
 
           <TabsContent value="map" className="space-y-6">

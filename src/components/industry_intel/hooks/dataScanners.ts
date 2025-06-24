@@ -23,13 +23,36 @@ export async function scanIdleProperties(jurisdiction: string): Promise<Opportun
         type: 'idle' as const,
         name: site.name || 'Unknown Facility',
         location: `${site.city || ''}, ${jurisdiction}`,
+        address: site.address,
+        city: site.city,
+        state: site.state,
+        zipCode: site.zip_code,
         coordinates,
         estimatedPowerMW: site.estimated_free_mw || 0,
         distressScore: site.idle_score || 0,
         aiInsights,
         sources: ['Satellite Imagery', 'Industrial Database'],
         lastUpdated: site.updated_at || site.created_at,
-        status: 'monitoring' as const
+        status: 'monitoring' as const,
+        opportunityDetails: {
+          facilityType: site.facility_type,
+          industryType: site.industry_type,
+          businessStatus: site.business_status,
+          confidenceLevel: site.confidence_level,
+          powerPotential: site.power_potential,
+          validationStatus: site.validation_status,
+          satelliteImageUrl: site.satellite_image_url,
+          capacityUtilization: site.capacity_utilization,
+          transmissionAccess: site.transmission_access,
+          substationDistance: site.substation_distance_km,
+          yearBuilt: site.year_built,
+          lotSize: site.lot_size_acres,
+          squareFootage: site.square_footage,
+          listingPrice: site.listing_price,
+          pricePerSqft: site.price_per_sqft,
+          zoning: site.zoning,
+          naicsCode: site.naics_code
+        }
       };
     });
   } catch (error) {
@@ -54,12 +77,26 @@ export async function analyzeCorporateDistress(jurisdiction: string): Promise<Op
       type: 'distressed' as const,
       name: company.name,
       location: jurisdiction,
+      coordinates: undefined,
       estimatedPowerMW: company.power_usage_estimate || 0,
       distressScore: 100 - (company.financial_health_score || 0),
       aiInsights: `Financial distress signals detected: ${(company.distress_signals || []).join(', ')}`,
       sources: ['SEC Filings', 'Financial Data', 'News Intelligence'],
       lastUpdated: company.updated_at,
-      status: 'active' as const
+      status: 'active' as const,
+      opportunityDetails: {
+        ticker: company.ticker,
+        industry: company.industry,
+        sector: company.sector,
+        marketCap: company.market_cap,
+        financialHealthScore: company.financial_health_score,
+        currentRatio: company.current_ratio,
+        debtToEquity: company.debt_to_equity,
+        revenueGrowth: company.revenue_growth,
+        profitMargin: company.profit_margin,
+        distressSignals: company.distress_signals,
+        locations: company.locations
+      }
     }));
   } catch (error) {
     console.error('Error analyzing corporate distress:', error);

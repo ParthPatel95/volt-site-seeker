@@ -22,6 +22,10 @@ export interface Opportunity {
   type: 'distressed' | 'idle' | 'corporate';
   name: string;
   location: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   coordinates?: [number, number];
   estimatedPowerMW: number;
   distressScore: number;
@@ -29,4 +33,26 @@ export interface Opportunity {
   sources: string[];
   lastUpdated: string;
   status: 'active' | 'closed' | 'monitoring';
+  opportunityDetails?: any;
+}
+
+export interface StoredIntelResult {
+  id: string;
+  scan_session_id?: string;
+  opportunity_type: 'distressed' | 'idle' | 'corporate';
+  name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  coordinates?: any;
+  estimated_power_mw: number;
+  distress_score: number;
+  ai_insights?: string;
+  data_sources: string[];
+  opportunity_details?: any;
+  status: 'active' | 'closed' | 'monitoring';
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
 }

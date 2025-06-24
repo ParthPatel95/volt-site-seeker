@@ -688,6 +688,77 @@ export type Database = {
           },
         ]
       }
+      industry_intel_results: {
+        Row: {
+          address: string | null
+          ai_insights: string | null
+          city: string | null
+          coordinates: unknown | null
+          created_at: string
+          created_by: string | null
+          data_sources: Json | null
+          distress_score: number | null
+          estimated_power_mw: number | null
+          id: string
+          name: string
+          opportunity_details: Json | null
+          opportunity_type: string
+          scan_session_id: string | null
+          state: string | null
+          status: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          ai_insights?: string | null
+          city?: string | null
+          coordinates?: unknown | null
+          created_at?: string
+          created_by?: string | null
+          data_sources?: Json | null
+          distress_score?: number | null
+          estimated_power_mw?: number | null
+          id?: string
+          name: string
+          opportunity_details?: Json | null
+          opportunity_type: string
+          scan_session_id?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          ai_insights?: string | null
+          city?: string | null
+          coordinates?: unknown | null
+          created_at?: string
+          created_by?: string | null
+          data_sources?: Json | null
+          distress_score?: number | null
+          estimated_power_mw?: number | null
+          id?: string
+          name?: string
+          opportunity_details?: Json | null
+          opportunity_type?: string
+          scan_session_id?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "industry_intel_results_scan_session_id_fkey"
+            columns: ["scan_session_id"]
+            isOneToOne: false
+            referencedRelation: "site_scan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       industry_intelligence: {
         Row: {
           company_name: string

@@ -38,7 +38,7 @@ export function useIndustryIntelSearch() {
       
       toast({
         title: "Intelligence Scan Complete",
-        description: `Found ${opportunities.length} opportunities in ${config.jurisdiction}`,
+        description: `Found ${opportunities.length} opportunities in ${config.jurisdiction}. Results have been saved to your database.`,
       });
 
     } catch (err) {

@@ -1,6 +1,8 @@
 
 import { SearchConfig, ScanStats, Opportunity } from './types';
 import { scanIdleProperties, analyzeCorporateDistress, analyzeSECFilings, performSatelliteAnalysis } from './dataScanners';
+import { saveIntelResults } from './industryIntelService';
+import { supabase } from '@/integrations/supabase/client';
 
 export async function executeUnifiedScan(
   config: SearchConfig,
@@ -8,9 +10,42 @@ export async function executeUnifiedScan(
   onOpportunitiesUpdate: (opportunities: Opportunity[]) => void
 ): Promise<ScanStats> {
   const opportunities: Opportunity[] = [];
+  let scanSessionId: string | undefined;
 
-  // Phase 1: Initialize scan
+  // Phase 1: Initialize scan and create session
   onProgress(10, 'Initializing intelligence scan...');
+  
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: session, error } = await supabase
+        .from('site_scan_sessions')
+        .insert({
+          jurisdiction: config.jurisdiction,
+          scan_type: 'industry_intelligence',
+          status: 'processing',
+          created_by: user.id,
+          config: {
+            enableIdleProperties: config.enableIdleProperties,
+            enableCorporateDistress: config.enableCorporateDistress,
+            enableSatelliteAnalysis: config.enableSatelliteAnalysis,
+            enableSECFilings: config.enableSECFilings,
+            enableBankruptcyData: config.enableBankruptcyData,
+            enableNewsIntelligence: config.enableNewsIntelligence,
+            maxResults: config.maxResults
+          }
+        })
+        .select('id')
+        .single();
+
+      if (!error && session) {
+        scanSessionId = session.id;
+      }
+    }
+  } catch (error) {
+    console.error('Error creating scan session:', error);
+  }
+
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   // Phase 2: Scan idle properties
@@ -41,8 +76,32 @@ export async function executeUnifiedScan(
     await performSatelliteAnalysis(config.jurisdiction);
   }
 
-  // Phase 6: Complete
-  onProgress(95, 'Cross-referencing data sources...');
+  // Phase 6: Save results and complete
+  onProgress(90, 'Saving scan results...');
+  
+  if (opportunities.length > 0) {
+    const saved = await saveIntelResults(opportunities, scanSessionId);
+    if (saved) {
+      console.log(`Successfully saved ${opportunities.length} opportunities`);
+    }
+  }
+
+  // Update scan session status
+  if (scanSessionId) {
+    try {
+      await supabase
+        .from('site_scan_sessions')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          sites_discovered: opportunities.length
+        })
+        .eq('id', scanSessionId);
+    } catch (error) {
+      console.error('Error updating scan session:', error);
+    }
+  }
+
   onProgress(100, 'Scan complete');
 
   // Calculate final stats
