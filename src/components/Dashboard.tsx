@@ -10,42 +10,366 @@ import { DataManagement } from './DataManagement';
 import EnergyRates from '@/pages/EnergyRates';
 import Settings from '@/pages/Settings';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  Zap, 
+  TrendingUp, 
+  Activity,
+  Gauge,
+  AlertTriangle,
+  RefreshCw,
+  DollarSign,
+  Wind,
+  Sun,
+  Fuel,
+  Users,
+  Building2,
+  Database,
+  Clock
+} from 'lucide-react';
+import { useAESOData } from '@/hooks/useAESOData';
+import { useERCOTData } from '@/hooks/useERCOTData';
 
 interface DashboardOverviewProps {
   children?: React.ReactNode;
 }
 
 function DashboardOverview({ children }: DashboardOverviewProps) {
+  const { 
+    pricing: aesoPricing, 
+    loadData: aesoLoad, 
+    generationMix: aesoGeneration,
+    loading: aesoLoading,
+    connectionStatus: aesoStatus,
+    refetch: aesoRefetch
+  } = useAESOData();
+
+  const { 
+    pricing: ercotPricing, 
+    loadData: ercotLoad, 
+    generationMix: ercotGeneration,
+    loading: ercotLoading,
+    refetch: ercotRefetch
+  } = useERCOTData();
+
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+
+  const refreshAllData = () => {
+    aesoRefetch();
+    ercotRefetch();
+    setLastUpdate(new Date());
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'connected': return 'bg-green-100 text-green-800';
+      case 'fallback': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatPrice = (price?: number) => {
+    return price ? `$${price.toFixed(2)}` : 'N/A';
+  };
+
+  const formatPower = (mw?: number) => {
+    return mw ? `${(mw / 1000).toFixed(1)} GW` : 'N/A';
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-        <p className="text-lg text-gray-600">
-          Welcome to VoltScout - Your comprehensive energy intelligence platform
-        </p>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
+          <p className="text-lg text-gray-600">
+            Real-time energy market intelligence and infrastructure insights
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-500 flex items-center">
+            <Clock className="w-4 h-4 mr-1" />
+            Updated: {lastUpdate.toLocaleTimeString()}
+          </div>
+          <Button 
+            onClick={refreshAllData}
+            disabled={aesoLoading || ercotLoading}
+            className="bg-gradient-to-r from-blue-600 to-indigo-700"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${(aesoLoading || ercotLoading) ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </Button>
+        </div>
       </div>
-      
+
+      {/* Market Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-2">Market Analysis</h3>
-          <p className="text-gray-600">Real-time AESO market data and intelligence</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-2">Power Infrastructure</h3>
-          <p className="text-gray-600">Comprehensive substation and grid analysis</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-2">Corporate Intelligence</h3>
-          <p className="text-gray-600">AI-powered company analysis and insights</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-2">Energy Rates</h3>
-          <p className="text-gray-600">Advanced rate estimation and forecasting</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">AESO Price</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatPrice(aesoPricing?.current_price)}/MWh</div>
+            <Badge variant="secondary" className={getStatusColor(aesoStatus)}>
+              {aesoStatus === 'connected' ? 'Live Data' : 'Simulated'}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">ERCOT Price</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatPrice(ercotPricing?.current_price)}/MWh</div>
+            <Badge variant={ercotPricing?.market_conditions === 'high_demand' ? 'destructive' : 'default'}>
+              {ercotPricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'Normal'}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Alberta Demand</CardTitle>
+            <Gauge className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatPower(aesoLoad?.current_demand_mw)}</div>
+            <p className="text-xs text-muted-foreground">
+              Reserve: {aesoLoad?.reserve_margin?.toFixed(1) || 'N/A'}%
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Texas Demand</CardTitle>
+            <Gauge className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatPower(ercotLoad?.current_demand_mw)}</div>
+            <p className="text-xs text-muted-foreground">
+              Peak Forecast: {formatPower(ercotLoad?.peak_forecast_mw)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Live Market Data */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* AESO Generation Mix */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-blue-600" />
+              Alberta Generation Mix
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {aesoGeneration ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Fuel className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Natural Gas</p>
+                      <p className="font-semibold">{formatPower(aesoGeneration.natural_gas_mw)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Wind className="w-4 h-4 text-green-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Wind</p>
+                      <p className="font-semibold">{formatPower(aesoGeneration.wind_mw)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Sun className="w-4 h-4 text-yellow-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Solar</p>
+                      <p className="font-semibold">{formatPower(aesoGeneration.solar_mw)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Activity className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Hydro</p>
+                      <p className="font-semibold">{formatPower(aesoGeneration.hydro_mw)}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Renewable Generation</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {aesoGeneration.renewable_percentage?.toFixed(1) || 'N/A'}%
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading generation data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ERCOT Generation Mix */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-yellow-600" />
+              Texas Generation Mix
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {ercotGeneration ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Fuel className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Natural Gas</p>
+                      <p className="font-semibold">{formatPower(ercotGeneration.natural_gas_mw)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Wind className="w-4 h-4 text-green-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Wind</p>
+                      <p className="font-semibold">{formatPower(ercotGeneration.wind_mw)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Sun className="w-4 h-4 text-yellow-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Solar</p>
+                      <p className="font-semibold">{formatPower(ercotGeneration.solar_mw)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Zap className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nuclear</p>
+                      <p className="font-semibold">{formatPower(ercotGeneration.nuclear_mw)}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Renewable Generation</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {ercotGeneration.renewable_percentage?.toFixed(1) || 'N/A'}%
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Loading generation data...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Platform Features Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+              Market Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-3">Real-time AESO and ERCOT market data with intelligent forecasting</p>
+            <div className="text-sm text-muted-foreground">
+              Live pricing • Load forecasts • Generation mix
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Building2 className="w-5 h-5 mr-2 text-green-600" />
+              Power Infrastructure
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-3">Comprehensive substation mapping and grid capacity analysis</p>
+            <div className="text-sm text-muted-foreground">
+              Substation finder • Capacity estimation • Grid analysis
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Users className="w-5 h-5 mr-2 text-purple-600" />
+              Corporate Intelligence
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-3">AI-powered company analysis and investment insights</p>
+            <div className="text-sm text-muted-foreground">
+              Company analysis • Risk assessment • Investment scoring
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Database className="w-5 h-5 mr-2 text-orange-600" />
+              Energy Rates
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-3">Advanced rate estimation and cost forecasting tools</p>
+            <div className="text-sm text-muted-foreground">
+              Rate calculator • Territory mapping • Cost optimization
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* System Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Activity className="w-5 h-5 mr-2 text-green-600" />
+            System Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <span className="text-sm font-medium">Database</span>
+              <Badge variant="default" className="bg-green-100 text-green-800">Online</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <span className="text-sm font-medium">AESO API</span>
+              <Badge variant="secondary" className={getStatusColor(aesoStatus)}>
+                {aesoStatus === 'connected' ? 'Connected' : 'Fallback Mode'}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <span className="text-sm font-medium">ERCOT Integration</span>
+              <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       {children}
     </div>
