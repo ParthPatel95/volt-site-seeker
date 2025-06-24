@@ -17,6 +17,7 @@ import {
   Brain,
   BarChart,
   Settings,
+  HelpCircle,
   Building2,
   Factory,
   Database,
@@ -39,7 +40,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
       icon: LayoutDashboard,
       label: 'Dashboard',
       href: '/app',
-      active: location.pathname === '/app' || location.pathname === '/app/'
+      active: location.pathname === '/app'
     },
     {
       icon: Zap,
@@ -85,9 +86,15 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
     },
     {
       icon: Settings,
-      label: 'Admin',
+      label: 'Settings',
       href: '/app/settings',
       active: location.pathname === '/app/settings'
+    },
+    {
+      icon: HelpCircle,
+      label: 'Help & Support',
+      href: '/app/help',
+      active: location.pathname === '/app/help'
     },
   ];
 
@@ -108,7 +115,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
                 to={item.href}
                 className={({ isActive }) => cn(
                   "flex items-center px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700",
-                  item.active ? "bg-gray-100 dark:bg-gray-700 font-medium" : "text-gray-600 dark:text-gray-400"
+                  isActive ? "bg-gray-100 dark:bg-gray-700 font-medium" : "text-gray-600 dark:text-gray-400"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -152,7 +159,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
                 to={item.href}
                 className={({ isActive }) => cn(
                   "flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors",
-                  item.active ? "bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400",
+                  isActive ? "bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400",
                   isCollapsed && "justify-center"
                 )}
                 title={isCollapsed ? item.label : undefined}
