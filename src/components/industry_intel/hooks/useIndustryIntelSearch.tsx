@@ -125,19 +125,32 @@ export function useIndustryIntelSearch() {
 
       if (error) throw error;
 
-      const idleOpportunities: Opportunity[] = (idleSites || []).map(site => ({
-        id: site.id,
-        type: 'idle' as const,
-        name: site.name || 'Unknown Facility',
-        location: `${site.city || ''}, ${jurisdiction}`,
-        coordinates: site.latitude && site.longitude ? [site.longitude, site.latitude] : undefined,
-        estimatedPowerMW: site.estimated_free_mw || 0,
-        distressScore: site.idle_score || 0,
-        aiInsights: site.gpt_analysis || 'Satellite analysis indicates reduced activity',
-        sources: ['Satellite Imagery', 'Industrial Database'],
-        lastUpdated: site.updated_at || site.created_at,
-        status: 'monitoring' as const
-      }));
+      const idleOpportunities: Opportunity[] = (idleSites || []).map(site => {
+        // Parse coordinates from point type if available
+        let coordinates: [number, number] | undefined;
+        if (site.coordinates) {
+          // Coordinates are stored as point type, need to extract lat/lng
+          const coordStr = String(site.coordinates);
+          const match = coordStr.match(/\(([^,]+),([^)]+)\)/);
+          if (match) {
+            coordinates = [parseFloat(match[2]), parseFloat(match[1])]; // [lat, lng]
+          }
+        }
+
+        return {
+          id: site.id,
+          type: 'idle' as const,
+          name: site.name || 'Unknown Facility',
+          location: `${site.city || ''}, ${jurisdiction}`,
+          coordinates,
+          estimatedPowerMW: site.estimated_free_mw || 0,
+          distressScore: site.idle_score || 0,
+          aiInsights: site.satellite_analysis?.summary || 'Satellite analysis indicates reduced activity',
+          sources: ['Satellite Imagery', 'Industrial Database'],
+          lastUpdated: site.updated_at || site.created_at,
+          status: 'monitoring' as const
+        };
+      });
 
       setOpportunities(prev => [...prev, ...idleOpportunities]);
     } catch (error) {
