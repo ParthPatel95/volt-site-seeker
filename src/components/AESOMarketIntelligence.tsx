@@ -10,7 +10,7 @@ import { useAESOData } from '@/hooks/useAESOData';
 
 export function AESOMarketIntelligence() {
   const [activeTab, setActiveTab] = useState('analytics');
-  const { loading, refreshData } = useAESOData();
+  const { loading, refetch } = useAESOData();
 
   const intelligenceMetrics = [
     { label: 'Price Volatility', value: '12.4%', trend: 'down', color: 'text-green-600' },
@@ -35,7 +35,7 @@ export function AESOMarketIntelligence() {
                 </div>
               </div>
               <Button 
-                onClick={refreshData}
+                onClick={refetch}
                 disabled={loading}
                 className="flex items-center"
               >

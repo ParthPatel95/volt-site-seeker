@@ -11,14 +11,19 @@ import { useAESOData } from '@/hooks/useAESOData';
 export function AESOMarket() {
   const [activeTab, setActiveTab] = useState('current');
   const { 
-    currentPrice, 
-    systemMarginalPrice, 
-    totalDemand, 
-    availableCapacity, 
+    pricing,
+    loadData,
     loading, 
-    lastUpdated,
-    refreshData 
+    connectionStatus,
+    refetch 
   } = useAESOData();
+
+  // Extract values from the data structures
+  const currentPrice = pricing?.pool_price || 45.50;
+  const systemMarginalPrice = pricing?.pool_price || 52.30;
+  const totalDemand = loadData?.alberta_load || 8450;
+  const availableCapacity = 12800; // Static for now
+  const lastUpdated = new Date().toLocaleTimeString();
 
   return (
     <AppLayout>
@@ -36,7 +41,7 @@ export function AESOMarket() {
                 </div>
               </div>
               <Button 
-                onClick={refreshData}
+                onClick={refetch}
                 disabled={loading}
                 className="flex items-center"
               >
@@ -55,7 +60,7 @@ export function AESOMarket() {
                 <div>
                   <p className="text-sm text-muted-foreground">Current Price</p>
                   <p className="text-2xl font-bold">
-                    ${currentPrice?.toFixed(2) || '45.50'}/MWh
+                    ${currentPrice?.toFixed(2)}/MWh
                   </p>
                 </div>
                 <Zap className="w-8 h-8 text-yellow-500" />
@@ -69,7 +74,7 @@ export function AESOMarket() {
                 <div>
                   <p className="text-sm text-muted-foreground">System Price</p>
                   <p className="text-2xl font-bold">
-                    ${systemMarginalPrice?.toFixed(2) || '52.30'}/MWh
+                    ${systemMarginalPrice?.toFixed(2)}/MWh
                   </p>
                 </div>
                 <BarChart3 className="w-8 h-8 text-blue-500" />
@@ -83,7 +88,7 @@ export function AESOMarket() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Demand</p>
                   <p className="text-2xl font-bold">
-                    {totalDemand?.toFixed(0) || '8,450'} MW
+                    {totalDemand?.toFixed(0)} MW
                   </p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-green-500" />
@@ -97,7 +102,7 @@ export function AESOMarket() {
                 <div>
                   <p className="text-sm text-muted-foreground">Available Capacity</p>
                   <p className="text-2xl font-bold">
-                    {availableCapacity?.toFixed(0) || '12,800'} MW
+                    {availableCapacity?.toFixed(0)} MW
                   </p>
                 </div>
                 <Clock className="w-8 h-8 text-purple-500" />
@@ -114,11 +119,9 @@ export function AESOMarket() {
               <Badge variant="default" className="bg-green-100 text-green-800">
                 Normal Operations
               </Badge>
-              {lastUpdated && (
-                <span className="text-sm text-muted-foreground">
-                  Last updated: {new Date(lastUpdated).toLocaleTimeString()}
-                </span>
-              )}
+              <span className="text-sm text-muted-foreground">
+                Last updated: {lastUpdated}
+              </span>
             </div>
           </CardHeader>
           <CardContent>
@@ -137,7 +140,7 @@ export function AESOMarket() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold text-blue-600">
-                        ${currentPrice?.toFixed(2) || '45.50'}/MWh
+                        ${currentPrice?.toFixed(2)}/MWh
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
                         Real-time electricity price in Alberta
@@ -151,7 +154,7 @@ export function AESOMarket() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold text-green-600">
-                        {totalDemand?.toFixed(0) || '8,450'} MW
+                        {totalDemand?.toFixed(0)} MW
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
                         Current system-wide electricity demand

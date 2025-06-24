@@ -20,7 +20,6 @@ export function CorporateIntelligence() {
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [storedAiAnalyses, setStoredAiAnalyses] = useState<any[]>([]);
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({
-    companies: false,
     analyzing: false,
     distressAlerts: false
   });
@@ -34,7 +33,7 @@ export function CorporateIntelligence() {
   }, []);
 
   const fetchCompanies = async () => {
-    setLoadingStates(prev => ({ ...prev, companies: true }));
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('companies')
@@ -51,7 +50,7 @@ export function CorporateIntelligence() {
         variant: "destructive"
       });
     } finally {
-      setLoadingStates(prev => ({ ...prev, companies: false }));
+      setLoading(false);
     }
   };
 
@@ -75,7 +74,7 @@ export function CorporateIntelligence() {
   const fetchStoredAnalyses = async () => {
     try {
       const { data, error } = await supabase
-        .from('ai_company_analyses')
+        .from('ai_company_analysis')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
