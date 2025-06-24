@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,7 +44,7 @@ export function useAESOData() {
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'fallback'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [qaMetrics, setQaMetrics] = useState<Record<string, QAMetrics>>({});
   const [lastFetchTime, setLastFetchTime] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -92,7 +93,7 @@ export function useAESOData() {
         setLastFetchTime(data.timestamp);
         setErrorMessage('');
         
-        // Show success toast if we were previously disconnected
+        // Show success toast only once when transitioning from disconnected to connected
         if (connectionStatus === 'disconnected') {
           toast({
             title: "AESO API Connected",
@@ -127,19 +128,19 @@ export function useAESOData() {
 
   const getCurrentPrices = async () => {
     const data = await fetchAESOData('fetch_current_prices');
-    setPricing(data);
+    if (data) setPricing(data);
     return data;
   };
 
   const getLoadForecast = async () => {
     const data = await fetchAESOData('fetch_load_forecast');
-    setLoadData(data);
+    if (data) setLoadData(data);
     return data;
   };
 
   const getGenerationMix = async () => {
     const data = await fetchAESOData('fetch_generation_mix');
-    setGenerationMix(data);
+    if (data) setGenerationMix(data);
     return data;
   };
 
