@@ -44,14 +44,16 @@ export function useAESOData() {
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [qaMetrics, setQaMetrics] = useState<Record<string, QAMetrics>>({});
   const [lastFetchTime, setLastFetchTime] = useState<string>('');
-  const [hasShownFallbackNotice, setHasShownFallbackNotice] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const { toast } = useToast();
 
   const fetchAESOData = async (dataType: string) => {
     setLoading(true);
+    setErrorMessage('');
+    
     try {
       console.log('Fetching AESO data:', dataType);
       
@@ -71,7 +73,11 @@ export function useAESOData() {
         throw new Error(data.error || 'Failed to fetch AESO data');
       }
 
-      console.log('AESO data received:', data);
+      console.log('AESO data received successfully:', { 
+        source: data?.source, 
+        timestamp: data?.timestamp,
+        qa_metrics: data?.qa_metrics 
+      });
       
       // Update QA metrics
       if (data?.qa_metrics) {
@@ -81,50 +87,39 @@ export function useAESOData() {
         }));
       }
       
-      // Update connection status based on data source
-      if (data?.source === 'aeso_api') {
+      // Update connection status based on successful API response
+      if (data?.source === 'aeso_api' && data?.qa_metrics?.validation_passed) {
         setConnectionStatus('connected');
-        setHasShownFallbackNotice(false);
         setLastFetchTime(data.timestamp);
+        setErrorMessage('');
         
-        // Show success toast for real data
-        if (connectionStatus === 'fallback') {
+        // Show success toast if we were previously disconnected
+        if (connectionStatus === 'disconnected') {
           toast({
             title: "AESO API Connected",
-            description: "Now receiving live market data from AESO",
+            description: "Successfully receiving live market data from AESO",
             variant: "default"
           });
         }
       } else {
-        setConnectionStatus('fallback');
-        // Only show toast once when first switching to fallback
-        if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
-          setHasShownFallbackNotice(true);
-          toast({
-            title: "AESO API Issue",
-            description: "Unable to connect to AESO API. Please check API configuration in settings.",
-            variant: "destructive"
-          });
-        }
+        throw new Error('Invalid or failed data validation');
       }
       
       return data?.data || data;
 
     } catch (error: any) {
       console.error('Error fetching AESO data:', error);
-      setConnectionStatus('fallback');
+      setConnectionStatus('disconnected');
+      setErrorMessage(error.message || 'Connection failed');
       
-      // Show error notification
-      if (!hasShownFallbackNotice) {
-        setHasShownFallbackNotice(true);
-        toast({
-          title: "AESO API Connection Failed",
-          description: "Check AESO API key configuration. Using demo data temporarily.",
-          variant: "destructive"
-        });
-      }
+      // Show error notification for real API failures
+      toast({
+        title: "AESO API Connection Failed",
+        description: "Unable to fetch live data. Please check API configuration in settings.",
+        variant: "destructive"
+      });
       
-      // Return null to indicate failure - no fallback data for real-only mode
+      // Return null for failed requests - no fallback data in real-only mode
       return null;
     } finally {
       setLoading(false);
@@ -133,37 +128,26 @@ export function useAESOData() {
 
   const getCurrentPrices = async () => {
     const data = await fetchAESOData('fetch_current_prices');
-    if (data) {
-      setPricing(data);
-    } else {
-      setPricing(null);
-    }
+    setPricing(data);
     return data;
   };
 
   const getLoadForecast = async () => {
     const data = await fetchAESOData('fetch_load_forecast');
-    if (data) {
-      setLoadData(data);
-    } else {
-      setLoadData(null);
-    }
+    setLoadData(data);
     return data;
   };
 
   const getGenerationMix = async () => {
     const data = await fetchAESOData('fetch_generation_mix');
-    if (data) {
-      setGenerationMix(data);
-    } else {
-      setGenerationMix(null);
-    }
+    setGenerationMix(data);
     return data;
   };
 
-  // Auto-fetch data on component mount
+  // Auto-fetch data on component mount and set up refresh interval
   useEffect(() => {
     const fetchAllData = async () => {
+      console.log('Starting AESO data fetch cycle...');
       await Promise.all([
         getCurrentPrices(),
         getLoadForecast(),
@@ -173,8 +157,8 @@ export function useAESOData() {
 
     fetchAllData();
     
-    // Set up interval to refresh data every 5 minutes
-    const interval = setInterval(fetchAllData, 5 * 60 * 1000);
+    // Set up interval to refresh data every 2 minutes for live data
+    const interval = setInterval(fetchAllData, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -187,6 +171,7 @@ export function useAESOData() {
     connectionStatus,
     qaMetrics,
     lastFetchTime,
+    errorMessage,
     getCurrentPrices,
     getLoadForecast,
     getGenerationMix,
