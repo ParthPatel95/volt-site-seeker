@@ -46,7 +46,13 @@ export function AccessRequestsSettings() {
         return;
       }
 
-      setAccessRequests(data || []);
+      // Type cast the data to ensure status field matches our interface
+      const typedData = (data || []).map(request => ({
+        ...request,
+        status: request.status as 'pending' | 'approved' | 'rejected'
+      }));
+
+      setAccessRequests(typedData);
     } catch (error) {
       console.error('Error:', error);
       toast({
