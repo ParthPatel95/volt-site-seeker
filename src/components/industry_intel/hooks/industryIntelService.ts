@@ -59,7 +59,11 @@ export async function getStoredIntelResults(): Promise<StoredIntelResult[]> {
       return [];
     }
 
-    return data || [];
+    // Type cast the results to ensure proper typing
+    return (data || []).map(result => ({
+      ...result,
+      opportunity_type: result.opportunity_type as 'distressed' | 'idle' | 'corporate'
+    })) as StoredIntelResult[];
   } catch (error) {
     console.error('Error in getStoredIntelResults:', error);
     return [];
