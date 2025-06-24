@@ -21,8 +21,7 @@ import {
   Building2,
   Factory,
   Database,
-  Search,
-  Lightbulb
+  Search
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -54,12 +53,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
       label: 'Market Intelligence',
       href: '/app/aeso-intelligence',
       active: location.pathname === '/app/aeso-intelligence'
-    },
-    {
-      icon: Lightbulb,
-      label: 'AESO Intelligence',
-      href: '/app/aeso-intelligence-tools',
-      active: location.pathname === '/app/aeso-intelligence-tools'
     },
     {
       icon: BarChart,

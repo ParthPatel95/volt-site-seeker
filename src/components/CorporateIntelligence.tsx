@@ -1,225 +1,194 @@
-
-import React, { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, RefreshCw, AlertTriangle, TrendingUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MainContentTabs } from '@/components/corporateIntelligence/MainContentTabs';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
+import { QuickSearchSection } from './corporateIntelligence/QuickSearchSection';
+import { QuickActionsGrid } from './corporateIntelligence/QuickActionsGrid';
+import { MainContentTabs } from './corporateIntelligence/MainContentTabs';
+import { CompanyDetailsModal } from './corporateIntelligence/CompanyDetailsModal';
+import { Company, LoadingStates, DistressAlert } from '@/types/corporateIntelligence';
 import { supabase } from '@/integrations/supabase/client';
-import { Company, DistressAlert, LoadingStates } from '@/types/corporateIntelligence';
+import { useToast } from '@/hooks/use-toast';
 
 export function CorporateIntelligence() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState<LoadingStates>({
+    analyzing: false,
+    scanning: false,
+    detecting: false,
+    monitoring: false,
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [industryFilter, setIndustryFilter] = useState('all');
   const [distressAlerts, setDistressAlerts] = useState<DistressAlert[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [storedAiAnalyses, setStoredAiAnalyses] = useState<any[]>([]);
-  const [loadingStates, setLoadingStates] = useState<LoadingStates>({
-    analyzing: false,
-    distressAlerts: false
-  });
-
+  const [error, setError] = useState<string | null>(null);
+  const [quickSearchTerm, setQuickSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCompanies();
-    fetchDistressAlerts();
-    fetchStoredAnalyses();
-  }, []);
+    loadCompanies();
+    loadStoredAiAnalyses();
+  }, [searchTerm, industryFilter]);
 
-  const fetchCompanies = async () => {
+  const loadCompanies = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
         .select('*')
-        .order('name');
+        .order('analyzed_at', { ascending: false });
 
-      if (error) throw error;
+      if (industryFilter && industryFilter !== 'all') {
+        query = query.eq('industry', industryFilter);
+      }
+      
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error loading companies:', error);
+        setError('Failed to load companies. Please try again.');
+        toast({
+          title: "Error Loading Companies",
+          description: "Failed to load company data. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       setCompanies(data || []);
-    } catch (error: any) {
-      console.error('Error fetching companies:', error);
-      toast({
-        title: "Error fetching companies",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (err: any) {
+      console.error('Error in loadCompanies:', err);
+      setError('An unexpected error occurred while loading companies.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchDistressAlerts = async () => {
-    setLoadingStates(prev => ({ ...prev, distressAlerts: true }));
+  const loadStoredAiAnalyses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('distress_alerts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDistressAlerts(data || []);
-    } catch (error: any) {
-      console.error('Error fetching distress alerts:', error);
-    } finally {
-      setLoadingStates(prev => ({ ...prev, distressAlerts: false }));
-    }
-  };
-
-  const fetchStoredAnalyses = async () => {
-    try {
-      const { data, error } = await supabase
+      // Using any type to bypass TypeScript error until Supabase types are regenerated
+      const { data, error } = await (supabase as any)
         .from('ai_company_analysis')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('analyzed_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading AI analyses:', error);
+        return;
+      }
+
       setStoredAiAnalyses(data || []);
-    } catch (error: any) {
-      console.error('Error fetching stored analyses:', error);
+    } catch (err: any) {
+      console.error('Error in loadStoredAiAnalyses:', err);
     }
   };
 
   const handleAnalyze = async (companyName: string, ticker?: string) => {
-    setLoadingStates(prev => ({ ...prev, analyzing: true }));
+    console.log('handleAnalyze called with:', { companyName, ticker });
+    
+    if (!companyName?.trim()) {
+      toast({
+        title: "Company name required",
+        description: "Please enter a company name to analyze",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoadingStates((prev) => ({ ...prev, analyzing: true }));
+
     try {
       const { data, error } = await supabase.functions.invoke('corporate-intelligence', {
-        body: {
-          action: 'analyze_company',
-          company_name: companyName,
-          ticker: ticker
-        }
+        body: { 
+          action: 'analyze_company', 
+          company_name: companyName.trim(),
+          ticker: ticker?.trim() || ''
+        },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Analysis error:', error);
+        toast({
+          title: "Analysis Error",
+          description: error.message || "Failed to analyze company",
+          variant: "destructive"
+        });
+        return;
+      }
 
       if (data?.success) {
         toast({
           title: "Analysis Complete",
-          description: `Analysis for ${companyName} completed successfully`,
+          description: `Successfully analyzed ${companyName}`,
         });
-        fetchStoredAnalyses();
+        loadCompanies();
+      } else {
+        toast({
+          title: "Analysis Warning",
+          description: data?.message || "Analysis completed with warnings",
+          variant: "default"
+        });
       }
-    } catch (error: any) {
-      console.error('Error analyzing company:', error);
+    } catch (err: any) {
+      console.error('Error in handleAnalyze:', err);
       toast({
         title: "Analysis Error",
-        description: error.message,
+        description: "An unexpected error occurred during analysis",
         variant: "destructive"
       });
     } finally {
-      setLoadingStates(prev => ({ ...prev, analyzing: false }));
+      setLoadingStates((prev) => ({ ...prev, analyzing: false }));
     }
   };
 
   const handleAIAnalysisComplete = (analysis: any) => {
     setAiAnalysis(analysis);
-    fetchStoredAnalyses();
+    loadStoredAiAnalyses();
+    loadCompanies();
   };
 
   const handleInvestigateAlert = (alert: DistressAlert) => {
+    console.log('Investigating alert:', alert);
     toast({
-      title: "Investigating Alert",
-      description: `Opening detailed analysis for ${alert.company_name}`,
+      title: "Alert Investigation",
+      description: `Investigating alert for ${alert.company_name}`,
     });
   };
 
-  const filteredCompanies = companies.filter(company => {
-    const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesIndustry = industryFilter === 'all' || company.industry === industryFilter;
-    return matchesSearch && matchesIndustry;
-  });
-
   return (
-    <AppLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Building2 className="w-8 h-8 mr-3 text-blue-600" />
-                <div>
-                  <CardTitle className="text-2xl">Corporate Intelligence Platform</CardTitle>
-                  <p className="text-muted-foreground mt-1">
-                    AI-powered business analytics and company intelligence
-                  </p>
-                </div>
-              </div>
-              <Button 
-                onClick={fetchCompanies}
-                disabled={loading}
-                className="flex items-center"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh Data
-              </Button>
-            </div>
-          </CardHeader>
-        </Card>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="container-responsive padding-responsive space-y-4 sm:space-y-6 lg:space-y-8">
+        <QuickSearchSection 
+          quickSearchTerm={quickSearchTerm}
+          onQuickSearchChange={setQuickSearchTerm}
+        />
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Companies</p>
-                  <p className="text-2xl font-bold">{companies.length}</p>
-                </div>
-                <Building2 className="w-8 h-8 text-blue-500" />
+        <QuickActionsGrid />
+
+        {error && (
+          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 mx-4 sm:mx-0">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <span className="font-medium text-red-800 dark:text-red-200 text-sm">Error</span>
               </div>
+              <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
             </CardContent>
           </Card>
+        )}
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Alerts</p>
-                  <p className="text-2xl font-bold">{distressAlerts.length}</p>
-                </div>
-                <AlertTriangle className="w-8 h-8 text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">AI Analyses</p>
-                  <p className="text-2xl font-bold">{storedAiAnalyses.length}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <Badge variant="default">Active</Badge>
-                </div>
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
         <MainContentTabs
-          companies={filteredCompanies}
+          companies={companies}
           selectedCompany={selectedCompany}
           loading={loading}
           loadingStates={loadingStates}
@@ -235,7 +204,13 @@ export function CorporateIntelligence() {
           onSelectCompany={setSelectedCompany}
           onInvestigateAlert={handleInvestigateAlert}
         />
+
+        <CompanyDetailsModal
+          company={selectedCompany}
+          open={!!selectedCompany}
+          onOpenChange={(open) => !open && setSelectedCompany(null)}
+        />
       </div>
-    </AppLayout>
+    </div>
   );
 }
