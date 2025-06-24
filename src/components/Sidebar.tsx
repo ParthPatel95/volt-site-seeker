@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Sheet,
@@ -17,7 +16,6 @@ import {
   Brain,
   BarChart,
   Settings,
-  HelpCircle,
   Building2,
   Factory,
   Database,
@@ -89,12 +87,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
       label: 'Settings',
       href: '/app/settings',
       active: location.pathname === '/app/settings'
-    },
-    {
-      icon: HelpCircle,
-      label: 'Help & Support',
-      href: '/app/help',
-      active: location.pathname === '/app/help'
     },
   ];
 

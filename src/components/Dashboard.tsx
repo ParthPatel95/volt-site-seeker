@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +19,7 @@ import EnergyRatesTest from '@/pages/EnergyRatesTest';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { supabase } from '@/integrations/supabase/client';
+import { AccessRequestsSettings } from '@/components/settings/AccessRequestsSettings';
 
 export function Dashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -86,7 +86,6 @@ export function Dashboard() {
             <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
             <Route path="/data-management" element={<DataManagement />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/help" element={<HelpPage />} />
           </Routes>
         </main>
       </div>
@@ -677,24 +676,8 @@ function PlatformFeaturesGuide() {
 function SettingsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Settings</h1>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <p className="text-gray-600">Settings panel coming soon...</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HelpPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Help & Support</h1>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <p className="text-gray-600">Help documentation coming soon...</p>
-        </div>
+      <div className="max-w-6xl mx-auto">
+        <AccessRequestsSettings />
       </div>
     </div>
   );
