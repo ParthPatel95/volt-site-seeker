@@ -7,6 +7,7 @@ import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
 import EnergyRates from './pages/EnergyRates';
 import EnergyRatesTest from './pages/EnergyRatesTest';
+import Settings from './pages/Settings';
 import { AESOMarket } from './components/AESOMarket';
 import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
 
