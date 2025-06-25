@@ -123,7 +123,7 @@ export function DashboardTab({
                     <p className="text-xs text-red-700 mt-1">{alert.alert_type}</p>
                   </div>
                   <Badge variant="destructive" className="text-xs flex-shrink-0">
-                    {alert.severity}
+                    {alert.distress_level}%
                   </Badge>
                 </div>
                 <Button 
