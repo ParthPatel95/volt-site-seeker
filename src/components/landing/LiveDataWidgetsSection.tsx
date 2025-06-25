@@ -21,12 +21,14 @@ export const LiveDataWidgetsSection = () => {
           </div>
         </ScrollReveal>
 
-        {/* Live Data Grid */}
+        {/* Live Data Grid - Updated for 3 widgets */}
         <ScrollReveal delay={200}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             <InteractiveInvestmentCalculator />
             <LiveDataPreview />
-            <LiveERCOTData />
+            <div className="lg:col-span-2 xl:col-span-1">
+              <LiveERCOTData />
+            </div>
           </div>
         </ScrollReveal>
       </div>
