@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
+import { LiveDataWidgetsSection } from '@/components/landing/LiveDataWidgetsSection';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -53,13 +54,19 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
+          <section aria-label="Live Market Data" className="relative">
+            <LiveDataWidgetsSection />
+          </section>
+          
+          <SectionDivider color="green" />
+          
           <section aria-label="Problem and Solution" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <ProblemSolutionSection />
             </Suspense>
           </section>
           
-          <SectionDivider color="green" />
+          <SectionDivider color="yellow" />
           
           <section aria-label="Market Opportunity" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -67,7 +74,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="yellow" />
+          <SectionDivider color="purple" />
           
           <section aria-label="Leadership Team" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -75,7 +82,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="purple" />
+          <SectionDivider color="cyan" />
           
           <section aria-label="Fund Growth Plan" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -83,7 +90,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="cyan" />
+          <SectionDivider color="blue" />
           
           <section aria-label="Fund Overview" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -91,7 +98,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="blue" />
+          <SectionDivider color="green" />
           
           <section aria-label="Investment Thesis" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -99,7 +106,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="green" />
+          <SectionDivider color="yellow" />
           
           <section aria-label="VoltScout Platform" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -107,7 +114,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="yellow" />
+          <SectionDivider color="purple" />
           
           <section aria-label="LP Portal" className="relative">
             <Suspense fallback={<SectionLoader />}>
