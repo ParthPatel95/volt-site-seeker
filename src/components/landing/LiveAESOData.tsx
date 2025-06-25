@@ -21,7 +21,7 @@ export const LiveAESOData = () => {
     switch (connectionStatus) {
       case 'connected': return 'neon-green';
       case 'fallback': return 'electric-yellow';
-      default: return 'electric-blue';
+      default: return 'slate-400';
     }
   };
 
@@ -42,13 +42,17 @@ export const LiveAESOData = () => {
             <CardTitle className="text-white text-xl">AESO Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 bg-${getStatusColor()} rounded-full animate-pulse`}></div>
+            <div className={`w-2 h-2 bg-${getStatusColor()} rounded-full ${connectionStatus === 'connected' ? 'animate-pulse' : ''}`}></div>
             <Badge className={`bg-${getStatusColor()}/20 text-${getStatusColor()} text-xs border-${getStatusColor()}/30`}>
               {getStatusText()}
             </Badge>
           </div>
         </div>
-        <p className="text-slate-300 text-sm">Real-time Alberta electricity market data</p>
+        <p className="text-slate-300 text-sm">
+          {connectionStatus === 'connected' 
+            ? 'Real-time Alberta electricity market data' 
+            : 'Alberta electricity market data (demo mode)'}
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Live Metrics Grid */}
@@ -59,7 +63,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Pool Price</span>
             </div>
             <div className="text-lg font-bold text-electric-blue">
-              ${pricing?.current_price?.toFixed(2) || '45.67'}/MWh
+              ${pricing?.current_price?.toFixed(2) || '46.08'}/MWh
             </div>
           </div>
           
@@ -69,7 +73,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Demand</span>
             </div>
             <div className="text-lg font-bold text-electric-yellow">
-              {loadData ? (loadData.current_demand_mw / 1000).toFixed(1) : '9.85'} GW
+              {loadData ? (loadData.current_demand_mw / 1000).toFixed(1) : '9.9'} GW
             </div>
           </div>
           
@@ -79,7 +83,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Wind Power</span>
             </div>
             <div className="text-lg font-bold text-neon-green">
-              {generationMix ? (generationMix.wind_mw / 1000).toFixed(1) : '2.4'} GW
+              {generationMix ? (generationMix.wind_mw / 1000).toFixed(1) : '2.8'} GW
             </div>
           </div>
           
@@ -89,7 +93,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Renewables</span>
             </div>
             <div className="text-lg font-bold text-warm-orange">
-              {generationMix?.renewable_percentage?.toFixed(1) || '45.2'}%
+              {generationMix?.renewable_percentage?.toFixed(1) || '48.4'}%
             </div>
           </div>
         </div>
@@ -122,7 +126,9 @@ export const LiveAESOData = () => {
         </div>
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
-          * Alberta Electric System Operator real-time data. Updates every 5 minutes.
+          {connectionStatus === 'connected' 
+            ? '* Alberta Electric System Operator real-time data. Updates every 5 minutes.'
+            : '* Demo data simulating Alberta Electric System Operator feed. Real API connection needed for live data.'}
         </div>
       </CardContent>
     </Card>
