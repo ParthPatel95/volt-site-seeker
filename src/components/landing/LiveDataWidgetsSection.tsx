@@ -2,7 +2,6 @@
 import { InteractiveInvestmentCalculator } from './InteractiveInvestmentCalculator';
 import { LiveDataPreview } from './LiveDataPreview';
 import { LiveERCOTData } from './LiveERCOTData';
-import { LiveAESOData } from './LiveAESOData';
 import { ScrollReveal } from './ScrollAnimations';
 
 export const LiveDataWidgetsSection = () => {
@@ -28,7 +27,6 @@ export const LiveDataWidgetsSection = () => {
             <InteractiveInvestmentCalculator />
             <LiveDataPreview />
             <LiveERCOTData />
-            <LiveAESOData />
           </div>
         </ScrollReveal>
       </div>
