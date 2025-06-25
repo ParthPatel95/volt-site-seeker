@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthWrapper } from './components/AuthWrapper';
 import { Dashboard } from './components/Dashboard';
 import { AccessRequestForm } from './components/AccessRequestForm';
+import { VoltScoutAccessPage } from './components/VoltScoutAccessPage';
 import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
 import EnergyRates from './pages/EnergyRates';
@@ -22,11 +23,7 @@ function App() {
               <AccessRequestForm />
             </div>
           } />
-          <Route path="/voltscout" element={
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/30 p-4">
-              <AccessRequestForm />
-            </div>
-          } />
+          <Route path="/voltscout" element={<VoltScoutAccessPage />} />
           <Route path="/app/*" element={<AuthWrapper><Dashboard /></AuthWrapper>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
