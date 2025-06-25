@@ -1,6 +1,7 @@
 
 import { LiveDataPreview } from './LiveDataPreview';
 import { LiveERCOTData } from './LiveERCOTData';
+import { LiveAESOData } from './LiveAESOData';
 import { ScrollReveal } from './ScrollAnimations';
 
 export const LiveDataWidgetsSection = () => {
@@ -20,14 +21,17 @@ export const LiveDataWidgetsSection = () => {
           </div>
         </ScrollReveal>
 
-        {/* Live Data Grid - Two widgets side by side */}
+        {/* Live Data Grid - Three widgets */}
         <ScrollReveal delay={200}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="w-full">
               <LiveDataPreview />
             </div>
             <div className="w-full">
               <LiveERCOTData />
+            </div>
+            <div className="w-full">
+              <LiveAESOData />
             </div>
           </div>
         </ScrollReveal>
