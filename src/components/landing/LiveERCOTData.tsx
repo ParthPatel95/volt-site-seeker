@@ -33,44 +33,44 @@ export const LiveERCOTData = () => {
         <p className="text-slate-300 text-sm">Real-time Texas grid operations and pricing</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <Zap className="w-4 h-4 text-electric-blue" />
+        {/* Live Metrics Grid - Changed to 2x2 layout */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <Zap className="w-4 h-4 text-electric-blue flex-shrink-0" />
               <span className="text-xs text-slate-400">RT Price</span>
             </div>
-            <div className="text-lg font-bold text-electric-blue">
+            <div className="text-lg font-bold text-electric-blue break-words">
               ${pricing?.current_price?.toFixed(2) || '42.50'}/MWh
             </div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-electric-yellow" />
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-electric-yellow flex-shrink-0" />
               <span className="text-xs text-slate-400">Load</span>
             </div>
-            <div className="text-lg font-bold text-electric-yellow">
+            <div className="text-lg font-bold text-electric-yellow break-words">
               {loadData ? (loadData.current_demand_mw / 1000).toFixed(1) : '52.0'} GW
             </div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <Sun className="w-4 h-4 text-neon-green" />
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <Sun className="w-4 h-4 text-neon-green flex-shrink-0" />
               <span className="text-xs text-slate-400">Solar</span>
             </div>
-            <div className="text-lg font-bold text-neon-green">
+            <div className="text-lg font-bold text-neon-green break-words">
               {generationMix ? (generationMix.solar_mw / 1000).toFixed(1) : '4.5'} GW
             </div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <MapPin className="w-4 h-4 text-warm-orange" />
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <MapPin className="w-4 h-4 text-warm-orange flex-shrink-0" />
               <span className="text-xs text-slate-400">Renewables</span>
             </div>
-            <div className="text-lg font-bold text-warm-orange">
+            <div className="text-lg font-bold text-warm-orange break-words">
               {generationMix?.renewable_percentage?.toFixed(1) || '33.9'}%
             </div>
           </div>
@@ -88,25 +88,25 @@ export const LiveERCOTData = () => {
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
               <span className="text-slate-400">Natural Gas:</span>
-              <span className="text-electric-blue font-semibold">
+              <span className="text-electric-blue font-semibold break-words">
                 {generationMix ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '28.0'} GW
               </span>
             </div>
             <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
               <span className="text-slate-400">Wind:</span>
-              <span className="text-neon-green font-semibold">
+              <span className="text-neon-green font-semibold break-words">
                 {generationMix ? (generationMix.wind_mw / 1000).toFixed(1) : '15.0'} GW
               </span>
             </div>
             <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
               <span className="text-slate-400">Nuclear:</span>
-              <span className="text-electric-yellow font-semibold">
+              <span className="text-electric-yellow font-semibold break-words">
                 {generationMix ? (generationMix.nuclear_mw / 1000).toFixed(1) : '5.0'} GW
               </span>
             </div>
             <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
               <span className="text-slate-400">Coal:</span>
-              <span className="text-warm-orange font-semibold">
+              <span className="text-warm-orange font-semibold break-words">
                 {generationMix ? (generationMix.coal_mw / 1000).toFixed(1) : '3.5'} GW
               </span>
             </div>

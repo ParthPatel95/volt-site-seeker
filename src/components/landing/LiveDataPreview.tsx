@@ -56,38 +56,38 @@ export const LiveDataPreview = () => {
         <p className="text-slate-300 text-sm">Real-time intelligence from VoltScout platform</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <Eye className="w-4 h-4 text-electric-blue" />
+        {/* Live Metrics Grid - Changed to 2x2 layout */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <Eye className="w-4 h-4 text-electric-blue flex-shrink-0" />
               <span className="text-xs text-slate-400">Active Sites</span>
             </div>
-            <div className="text-lg font-bold text-electric-blue">{liveData.activeSites}</div>
+            <div className="text-lg font-bold text-electric-blue break-words">{liveData.activeSites}</div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <Zap className="w-4 h-4 text-electric-yellow" />
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <Zap className="w-4 h-4 text-electric-yellow flex-shrink-0" />
               <span className="text-xs text-slate-400">Total MW</span>
             </div>
-            <div className="text-lg font-bold text-electric-yellow">{liveData.totalMW.toLocaleString()}</div>
+            <div className="text-lg font-bold text-electric-yellow break-words">{liveData.totalMW.toLocaleString()}</div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-neon-green" />
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-neon-green flex-shrink-0" />
               <span className="text-xs text-slate-400">Avg VoltScore</span>
             </div>
-            <div className="text-lg font-bold text-neon-green">{liveData.avgVoltScore}</div>
+            <div className="text-lg font-bold text-neon-green break-words">{liveData.avgVoltScore}</div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <MapPin className="w-4 h-4 text-warm-orange" />
+          <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <MapPin className="w-4 h-4 text-warm-orange flex-shrink-0" />
               <span className="text-xs text-slate-400">$/MWh</span>
             </div>
-            <div className="text-lg font-bold text-warm-orange">${liveData.pricePerMWh.toFixed(2)}</div>
+            <div className="text-lg font-bold text-warm-orange break-words">${liveData.pricePerMWh.toFixed(2)}</div>
           </div>
         </div>
 
@@ -101,15 +101,15 @@ export const LiveDataPreview = () => {
           <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
             {recentSites.map((site, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-slate-800/20 rounded-lg hover:bg-slate-800/40 transition-colors duration-200 group/item border border-slate-700/20 hover:border-slate-600/30">
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-white group-hover/item:text-electric-blue transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white group-hover/item:text-electric-blue transition-colors truncate">
                     {site.name}
                   </div>
                   <div className="text-xs text-slate-400">
                     {site.mw}MW • VoltScore {site.score}
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <Badge 
                     className={`text-xs border ${
                       site.status === 'active' 
