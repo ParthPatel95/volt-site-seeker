@@ -1,4 +1,5 @@
-import { useState, lazy, Suspense } from 'react';
+
+import React, { useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
@@ -24,7 +25,7 @@ const SectionLoader = () => (
   </div>
 );
 
-const Landing = () => {
+const Landing: React.FC = () => {
   const [showSignUpForm, setShowSignUpForm] = useState(false);
 
   return (
