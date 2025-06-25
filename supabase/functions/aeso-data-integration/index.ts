@@ -27,6 +27,7 @@ serve(async (req) => {
           success: true,
           data: fallbackData,
           source: 'fallback',
+          data_source: 'fallback',
           timestamp: new Date().toISOString(),
           qa_metrics: {
             endpoint_used: 'fallback',
@@ -160,7 +161,7 @@ function formatAESODate(date: Date): string {
   return date.toISOString().slice(0, 16);
 }
 
-// Pool Price endpoint with improved error handling and timeout
+// Pool Price endpoint with proper headers and error handling
 async function fetchPoolPrice(apiKey: string) {
   console.log('Fetching AESO pool price...');
   
@@ -170,7 +171,7 @@ async function fetchPoolPrice(apiKey: string) {
   console.log('Pool Price URL:', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
   
   try {
     const response = await fetch(url, {
@@ -178,7 +179,8 @@ async function fetchPoolPrice(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'X-API-Key': apiKey,
-        'User-Agent': 'WattByte-Platform/1.0'
+        'User-Agent': 'WattByte-Platform/1.0',
+        'Cache-Control': 'no-cache'
       },
       signal: controller.signal
     });
@@ -193,7 +195,7 @@ async function fetchPoolPrice(apiKey: string) {
     }
 
     const data = await response.json();
-    console.log('Pool Price response received successfully');
+    console.log('Pool Price response received successfully, record count:', data?.return?.data?.length || 0);
     
     return parsePoolPriceData(data);
   } catch (error) {
@@ -203,7 +205,7 @@ async function fetchPoolPrice(apiKey: string) {
   }
 }
 
-// Load Forecast endpoint with improved error handling
+// Load Forecast endpoint
 async function fetchLoadForecast(apiKey: string) {
   console.log('Fetching AESO load forecast...');
   
@@ -213,7 +215,7 @@ async function fetchLoadForecast(apiKey: string) {
   console.log('Load Forecast URL:', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
   
   try {
     const response = await fetch(url, {
@@ -221,7 +223,8 @@ async function fetchLoadForecast(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'X-API-Key': apiKey,
-        'User-Agent': 'WattByte-Platform/1.0'
+        'User-Agent': 'WattByte-Platform/1.0',
+        'Cache-Control': 'no-cache'
       },
       signal: controller.signal
     });
@@ -236,7 +239,7 @@ async function fetchLoadForecast(apiKey: string) {
     }
 
     const data = await response.json();
-    console.log('Load Forecast response received successfully');
+    console.log('Load Forecast response received successfully, record count:', data?.return?.data?.length || 0);
     
     return parseLoadForecastData(data);
   } catch (error) {
@@ -246,7 +249,7 @@ async function fetchLoadForecast(apiKey: string) {
   }
 }
 
-// Current Supply Demand endpoint with improved error handling
+// Current Supply Demand endpoint
 async function fetchCurrentSupplyDemand(apiKey: string) {
   console.log('Fetching AESO current supply demand...');
   
@@ -256,7 +259,7 @@ async function fetchCurrentSupplyDemand(apiKey: string) {
   console.log('Current Supply Demand URL:', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
   
   try {
     const response = await fetch(url, {
@@ -264,7 +267,8 @@ async function fetchCurrentSupplyDemand(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'X-API-Key': apiKey,
-        'User-Agent': 'WattByte-Platform/1.0'
+        'User-Agent': 'WattByte-Platform/1.0',
+        'Cache-Control': 'no-cache'
       },
       signal: controller.signal
     });
@@ -279,7 +283,7 @@ async function fetchCurrentSupplyDemand(apiKey: string) {
     }
 
     const data = await response.json();
-    console.log('Current Supply Demand response received successfully');
+    console.log('Current Supply Demand response received successfully, record count:', data?.return?.data?.length || 0);
     
     return parseCurrentSupplyDemandData(data);
   } catch (error) {

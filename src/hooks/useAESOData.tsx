@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -102,8 +103,8 @@ export function useAESOData() {
         if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
           setHasShownFallbackNotice(true);
           toast({
-            title: "Using Simulated Data",
-            description: "AESO API unavailable, showing demo data for demonstration",
+            title: "Using Demo Data",
+            description: "AESO API unavailable, showing realistic demo data",
             variant: "default"
           });
         }
