@@ -105,7 +105,7 @@ export const LiveDataPreview = () => {
             <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">+{liveData.recentOpportunities} this week</Badge>
           </div>
           
-          <div className="space-y-2 max-h-32 sm:max-h-40 overflow-y-auto custom-scrollbar">
+          <div className="space-y-2 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar">
             {recentSites.map((site, index) => (
               <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-slate-800/20 rounded-lg hover:bg-slate-800/40 transition-colors duration-200 group/item border border-slate-700/20 hover:border-slate-600/30">
                 <div className="flex-1 min-w-0">
