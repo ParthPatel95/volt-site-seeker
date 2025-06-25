@@ -20,7 +20,7 @@ export const LiveAESOData = () => {
   const getStatusColor = () => {
     switch (connectionStatus) {
       case 'connected': return 'neon-green';
-      case 'fallback': return 'electric-yellow';
+      case 'error': return 'red-500';
       default: return 'slate-400';
     }
   };
@@ -28,7 +28,7 @@ export const LiveAESOData = () => {
   const getStatusText = () => {
     switch (connectionStatus) {
       case 'connected': return 'Live';
-      case 'fallback': return 'Demo';
+      case 'error': return 'Error';
       default: return 'Connecting';
     }
   };
@@ -51,84 +51,102 @@ export const LiveAESOData = () => {
         <p className="text-slate-300 text-sm">
           {connectionStatus === 'connected' 
             ? 'Real-time Alberta electricity market data' 
-            : 'Alberta electricity market data (demo mode)'}
+            : connectionStatus === 'error'
+            ? 'Unable to connect to AESO API'
+            : 'Connecting to Alberta electricity market data'}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <Zap className="w-4 h-4 text-electric-blue" />
-              <span className="text-xs text-slate-400">Pool Price</span>
+        {connectionStatus === 'connected' && (
+          <>
+            {/* Live Metrics Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Zap className="w-4 h-4 text-electric-blue" />
+                  <span className="text-xs text-slate-400">Pool Price</span>
+                </div>
+                <div className="text-lg font-bold text-electric-blue">
+                  ${pricing?.current_price?.toFixed(2) || '--'}/MWh
+                </div>
+              </div>
+              
+              <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <TrendingUp className="w-4 h-4 text-electric-yellow" />
+                  <span className="text-xs text-slate-400">Demand</span>
+                </div>
+                <div className="text-lg font-bold text-electric-yellow">
+                  {loadData ? (loadData.current_demand_mw / 1000).toFixed(1) : '--'} GW
+                </div>
+              </div>
+              
+              <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Wind className="w-4 h-4 text-neon-green" />
+                  <span className="text-xs text-slate-400">Wind Power</span>
+                </div>
+                <div className="text-lg font-bold text-neon-green">
+                  {generationMix ? (generationMix.wind_mw / 1000).toFixed(1) : '--'} GW
+                </div>
+              </div>
+              
+              <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <MapPin className="w-4 h-4 text-warm-orange" />
+                  <span className="text-xs text-slate-400">Renewables</span>
+                </div>
+                <div className="text-lg font-bold text-warm-orange">
+                  {generationMix?.renewable_percentage?.toFixed(1) || '--'}%
+                </div>
+              </div>
             </div>
-            <div className="text-lg font-bold text-electric-blue">
-              ${pricing?.current_price?.toFixed(2) || '46.08'}/MWh
-            </div>
-          </div>
-          
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-electric-yellow" />
-              <span className="text-xs text-slate-400">Demand</span>
-            </div>
-            <div className="text-lg font-bold text-electric-yellow">
-              {loadData ? (loadData.current_demand_mw / 1000).toFixed(1) : '9.9'} GW
-            </div>
-          </div>
-          
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <Wind className="w-4 h-4 text-neon-green" />
-              <span className="text-xs text-slate-400">Wind Power</span>
-            </div>
-            <div className="text-lg font-bold text-neon-green">
-              {generationMix ? (generationMix.wind_mw / 1000).toFixed(1) : '2.8'} GW
-            </div>
-          </div>
-          
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
-            <div className="flex items-center space-x-2 mb-1">
-              <MapPin className="w-4 h-4 text-warm-orange" />
-              <span className="text-xs text-slate-400">Renewables</span>
-            </div>
-            <div className="text-lg font-bold text-warm-orange">
-              {generationMix?.renewable_percentage?.toFixed(1) || '48.4'}%
-            </div>
-          </div>
-        </div>
 
-        {/* Market Status */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-slate-200">Market Status</h4>
-            <Badge className={`bg-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/20 text-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'} text-xs border-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/30`}>
-              {pricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
-            </Badge>
-          </div>
-          
-          <div className="p-3 bg-slate-800/20 rounded-lg border border-slate-700/20">
-            <div className="text-sm text-slate-300">
-              <div className="flex justify-between items-center mb-2">
-                <span>Reserve Margin:</span>
-                <span className="text-electric-blue font-semibold">
-                  {loadData?.reserve_margin?.toFixed(1) || '18.7'}%
-                </span>
+            {/* Market Status */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-200">Market Status</h4>
+                <Badge className={`bg-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/20 text-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'} text-xs border-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/30`}>
+                  {pricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
+                </Badge>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Peak Forecast:</span>
-                <span className="text-electric-yellow font-semibold">
-                  {loadData ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '11.2'} GW
-                </span>
+              
+              <div className="p-3 bg-slate-800/20 rounded-lg border border-slate-700/20">
+                <div className="text-sm text-slate-300">
+                  <div className="flex justify-between items-center mb-2">
+                    <span>Reserve Margin:</span>
+                    <span className="text-electric-blue font-semibold">
+                      {loadData?.reserve_margin?.toFixed(1) || '--'}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Peak Forecast:</span>
+                    <span className="text-electric-yellow font-semibold">
+                      {loadData ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '--'} GW
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
+          </>
+        )}
+
+        {connectionStatus === 'error' && (
+          <div className="text-center py-8">
+            <div className="text-red-400 mb-2">Unable to connect to AESO API</div>
+            <div className="text-slate-500 text-sm">Please check API configuration and try again</div>
           </div>
-        </div>
+        )}
+
+        {connectionStatus === 'connecting' && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-blue mx-auto mb-2"></div>
+            <div className="text-slate-400">Connecting to AESO API...</div>
+          </div>
+        )}
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
-          {connectionStatus === 'connected' 
-            ? '* Alberta Electric System Operator real-time data. Updates every 5 minutes.'
-            : '* Demo data simulating Alberta Electric System Operator feed. Real API connection needed for live data.'}
+          * Alberta Electric System Operator real-time data. Updates every 5 minutes.
         </div>
       </CardContent>
     </Card>

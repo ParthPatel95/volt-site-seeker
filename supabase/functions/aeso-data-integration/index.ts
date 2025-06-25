@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -128,8 +127,8 @@ serve(async (req) => {
 // Helper function to get current date range for API requests
 function getAESODateRange() {
   const now = new Date();
-  // Get data from the last hour to current time
-  const startDate = new Date(now.getTime() - 60 * 60 * 1000);
+  // Get data from the last 2 hours to current time for better data availability
+  const startDate = new Date(now.getTime() - 2 * 60 * 60 * 1000);
   
   return {
     startDate: formatAESODate(startDate),
@@ -173,19 +172,26 @@ async function retryAESORequest(requestFunc: () => Promise<any>, maxRetries = 3)
   throw lastError;
 }
 
-// AESO Pool Price endpoint with retry
+// AESO Pool Price endpoint with proper authentication
 async function fetchAESOPoolPriceWithRetry(apiKey: string) {
   return await retryAESORequest(async () => {
-    console.log('Fetching AESO pool price...');
+    console.log('Fetching AESO pool price with proper authentication...');
     
     const { startDate, endDate } = getAESODateRange();
-    const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
     
-    console.log('Pool Price URL:', url);
+    // Use the correct AESO API Gateway URL format
+    const baseUrl = 'https://api.aeso.ca/report/v1.1/price/poolPrice';
+    const params = new URLSearchParams({
+      startDate: startDate,
+      endDate: endDate
+    });
+    const url = `${baseUrl}?${params.toString()}`;
+    
+    console.log('Pool Price API URL:', url);
     console.log('Date range:', { startDate, endDate });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
     try {
       const response = await fetch(url, {
@@ -194,6 +200,7 @@ async function fetchAESOPoolPriceWithRetry(apiKey: string) {
           'Accept': 'application/json',
           'X-API-Key': apiKey,
           'User-Agent': 'WattByte-Analytics/1.0',
+          'Content-Type': 'application/json'
         },
         signal: controller.signal
       });
@@ -221,26 +228,32 @@ async function fetchAESOPoolPriceWithRetry(apiKey: string) {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+        throw new Error('Request timeout - AESO API did not respond within 15 seconds');
       }
       throw error;
     }
   });
 }
 
-// AESO Load Forecast endpoint with retry
+// AESO Load Forecast endpoint with proper authentication
 async function fetchAESOLoadForecastWithRetry(apiKey: string) {
   return await retryAESORequest(async () => {
-    console.log('Fetching AESO load forecast...');
+    console.log('Fetching AESO load forecast with proper authentication...');
     
     const { startDate, endDate } = getAESODateRange();
-    const url = `https://api.aeso.ca/report/v1.1/load/forecast?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
     
-    console.log('Load Forecast URL:', url);
+    const baseUrl = 'https://api.aeso.ca/report/v1.1/load/forecast';
+    const params = new URLSearchParams({
+      startDate: startDate,
+      endDate: endDate
+    });
+    const url = `${baseUrl}?${params.toString()}`;
+    
+    console.log('Load Forecast API URL:', url);
     console.log('Date range:', { startDate, endDate });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     
     try {
       const response = await fetch(url, {
@@ -249,6 +262,7 @@ async function fetchAESOLoadForecastWithRetry(apiKey: string) {
           'Accept': 'application/json',
           'X-API-Key': apiKey,
           'User-Agent': 'WattByte-Analytics/1.0',
+          'Content-Type': 'application/json'
         },
         signal: controller.signal
       });
@@ -275,26 +289,32 @@ async function fetchAESOLoadForecastWithRetry(apiKey: string) {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+        throw new Error('Request timeout - AESO API did not respond within 15 seconds');
       }
       throw error;
     }
   });
 }
 
-// AESO Current Supply Demand endpoint with retry
+// AESO Current Supply Demand endpoint with proper authentication
 async function fetchAESOCurrentSupplyDemandWithRetry(apiKey: string) {
   return await retryAESORequest(async () => {
-    console.log('Fetching AESO current supply demand...');
+    console.log('Fetching AESO current supply demand with proper authentication...');
     
     const { startDate, endDate } = getAESODateRange();
-    const url = `https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
     
-    console.log('Current Supply Demand URL:', url);
+    const baseUrl = 'https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand';
+    const params = new URLSearchParams({
+      startDate: startDate,
+      endDate: endDate
+    });
+    const url = `${baseUrl}?${params.toString()}`;
+    
+    console.log('Current Supply Demand API URL:', url);
     console.log('Date range:', { startDate, endDate });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     
     try {
       const response = await fetch(url, {
@@ -303,6 +323,7 @@ async function fetchAESOCurrentSupplyDemandWithRetry(apiKey: string) {
           'Accept': 'application/json',
           'X-API-Key': apiKey,
           'User-Agent': 'WattByte-Analytics/1.0',
+          'Content-Type': 'application/json'
         },
         signal: controller.signal
       });
@@ -329,7 +350,7 @@ async function fetchAESOCurrentSupplyDemandWithRetry(apiKey: string) {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+        throw new Error('Request timeout - AESO API did not respond within 15 seconds');
       }
       throw error;
     }
