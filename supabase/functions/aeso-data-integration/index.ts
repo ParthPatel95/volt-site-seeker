@@ -56,15 +56,15 @@ serve(async (req) => {
     try {
       switch (action) {
         case 'fetch_current_prices':
-          data = await fetchPoolPrice(aesoApiKey);
+          data = await fetchAESOPoolPrice(aesoApiKey);
           qaMetrics.endpoint_used = 'pool-price';
           break;
         case 'fetch_load_forecast':
-          data = await fetchLoadForecast(aesoApiKey);
+          data = await fetchAESOLoadForecast(aesoApiKey);
           qaMetrics.endpoint_used = 'load-forecast';
           break;
         case 'fetch_generation_mix':
-          data = await fetchCurrentSupplyDemand(aesoApiKey);
+          data = await fetchAESOCurrentSupplyDemand(aesoApiKey);
           qaMetrics.endpoint_used = 'current-supply-demand';
           break;
         default:
@@ -75,7 +75,7 @@ serve(async (req) => {
       qaMetrics.validation_passed = validateAESOData(data, action);
       qaMetrics.data_quality = assessDataQuality(data, action);
       
-      console.log('API call successful, QA Metrics:', qaMetrics);
+      console.log('AESO API call successful, QA Metrics:', qaMetrics);
       console.log('Data validation result:', qaMetrics.validation_passed ? 'PASSED' : 'FAILED');
 
       return new Response(
@@ -145,10 +145,10 @@ serve(async (req) => {
   }
 });
 
-// Helper function to get current date range for API requests
-function getDateRange() {
+// Helper function to get current date range for API requests (AESO requires specific date format)
+function getAESODateRange() {
   const endDate = new Date();
-  const startDate = new Date(endDate.getTime() - 2 * 60 * 60 * 1000); // 2 hours ago for more recent data
+  const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago for more data
   
   return {
     startDate: formatAESODate(startDate),
@@ -161,114 +161,104 @@ function formatAESODate(date: Date): string {
   return date.toISOString().slice(0, 16);
 }
 
-// Pool Price endpoint with simplified approach
-async function fetchPoolPrice(apiKey: string) {
+// AESO Pool Price endpoint
+async function fetchAESOPoolPrice(apiKey: string) {
   console.log('Fetching AESO pool price...');
   
-  const { startDate, endDate } = getDateRange();
-  
-  // Try the basic pool price endpoint first
+  const { startDate, endDate } = getAESODateRange();
   const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
   
   console.log('Pool Price URL:', url);
+  console.log('Date range:', { startDate, endDate });
   
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-API-Key': apiKey,
-      }
-    });
-
-    console.log('Pool Price API response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Pool Price API error response:', errorText);
-      throw new Error(`Pool Price API returned status ${response.status}: ${errorText}`);
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-API-Key': apiKey,
+      'User-Agent': 'WattByte-Dashboard/1.0',
     }
+  });
 
-    const data = await response.json();
-    console.log('Pool Price response received successfully, data structure:', JSON.stringify(data, null, 2));
-    
-    return parsePoolPriceData(data);
-  } catch (error) {
-    console.error('Pool Price fetch error:', error);
-    throw error;
+  console.log('Pool Price API response status:', response.status);
+  console.log('Pool Price API response headers:', Object.fromEntries(response.headers.entries()));
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Pool Price API error response:', errorText);
+    throw new Error(`Pool Price API returned status ${response.status}: ${errorText}`);
   }
+
+  const data = await response.json();
+  console.log('Pool Price response structure:', JSON.stringify(data, null, 2));
+  
+  return parseAESOPoolPriceData(data);
 }
 
-// Load Forecast endpoint
-async function fetchLoadForecast(apiKey: string) {
+// AESO Load Forecast endpoint
+async function fetchAESOLoadForecast(apiKey: string) {
   console.log('Fetching AESO load forecast...');
   
-  const { startDate, endDate } = getDateRange();
+  const { startDate, endDate } = getAESODateRange();
   const url = `https://api.aeso.ca/report/v1.1/load/forecast?startDate=${startDate}&endDate=${endDate}`;
   
   console.log('Load Forecast URL:', url);
+  console.log('Date range:', { startDate, endDate });
   
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-API-Key': apiKey,
-      }
-    });
-
-    console.log('Load Forecast API response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Load Forecast API error response:', errorText);
-      throw new Error(`Load Forecast API returned status ${response.status}: ${errorText}`);
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-API-Key': apiKey,
+      'User-Agent': 'WattByte-Dashboard/1.0',
     }
+  });
 
-    const data = await response.json();
-    console.log('Load Forecast response received successfully, data structure:', JSON.stringify(data, null, 2));
-    
-    return parseLoadForecastData(data);
-  } catch (error) {
-    console.error('Load Forecast fetch error:', error);
-    throw error;
+  console.log('Load Forecast API response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Load Forecast API error response:', errorText);
+    throw new Error(`Load Forecast API returned status ${response.status}: ${errorText}`);
   }
+
+  const data = await response.json();
+  console.log('Load Forecast response structure:', JSON.stringify(data, null, 2));
+  
+  return parseAESOLoadForecastData(data);
 }
 
-// Current Supply Demand endpoint
-async function fetchCurrentSupplyDemand(apiKey: string) {
+// AESO Current Supply Demand endpoint
+async function fetchAESOCurrentSupplyDemand(apiKey: string) {
   console.log('Fetching AESO current supply demand...');
   
-  const { startDate, endDate } = getDateRange();
+  const { startDate, endDate } = getAESODateRange();
   const url = `https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand?startDate=${startDate}&endDate=${endDate}`;
   
   console.log('Current Supply Demand URL:', url);
+  console.log('Date range:', { startDate, endDate });
   
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-API-Key': apiKey,
-      }
-    });
-
-    console.log('Current Supply Demand API response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Current Supply Demand API error response:', errorText);
-      throw new Error(`Current Supply Demand API returned status ${response.status}: ${errorText}`);
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-API-Key': apiKey,
+      'User-Agent': 'WattByte-Dashboard/1.0',
     }
+  });
 
-    const data = await response.json();
-    console.log('Current Supply Demand response received successfully, data structure:', JSON.stringify(data, null, 2));
-    
-    return parseCurrentSupplyDemandData(data);
-  } catch (error) {
-    console.error('Current Supply Demand fetch error:', error);
-    throw error;
+  console.log('Current Supply Demand API response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Current Supply Demand API error response:', errorText);
+    throw new Error(`Current Supply Demand API returned status ${response.status}: ${errorText}`);
   }
+
+  const data = await response.json();
+  console.log('Current Supply Demand response structure:', JSON.stringify(data, null, 2));
+  
+  return parseAESOCurrentSupplyDemandData(data);
 }
 
 // Enhanced fallback data generator
@@ -329,34 +319,39 @@ function getEnhancedFallbackData(dataType: string) {
 }
 
 // Data parsing functions
-function parsePoolPriceData(data: any) {
+function parseAESOPoolPriceData(data: any) {
   try {
-    console.log('Parsing pool price data structure');
+    console.log('Parsing AESO pool price data structure');
     
     const records = data.return?.data || [];
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error('No pool price data available');
     }
     
+    // Get the most recent record
     const latestRecord = records[records.length - 1];
+    console.log('Latest pool price record:', latestRecord);
+    
+    const currentPrice = latestRecord.pool_price || 0;
+    const allPrices = records.map(r => r.pool_price || 0).filter(p => p > 0);
     
     return {
-      current_price: latestRecord.pool_price || 0,
-      average_price: latestRecord.forecast_pool_price || latestRecord.pool_price || 0,
-      peak_price: Math.max(...records.map(r => r.pool_price || 0)),
-      off_peak_price: Math.min(...records.map(r => r.pool_price || 0)),
+      current_price: currentPrice,
+      average_price: allPrices.length > 0 ? allPrices.reduce((a, b) => a + b, 0) / allPrices.length : currentPrice,
+      peak_price: Math.max(...allPrices),
+      off_peak_price: Math.min(...allPrices),
       timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString(),
-      market_conditions: (latestRecord.pool_price || 0) > 100 ? 'high_demand' : 'normal'
+      market_conditions: currentPrice > 100 ? 'high_demand' : 'normal'
     };
   } catch (error) {
-    console.error('Error parsing pool price data:', error);
+    console.error('Error parsing AESO pool price data:', error);
     throw new Error(`Failed to parse pool price data: ${error.message}`);
   }
 }
 
-function parseLoadForecastData(data: any) {
+function parseAESOLoadForecastData(data: any) {
   try {
-    console.log('Parsing load forecast data structure');
+    console.log('Parsing AESO load forecast data structure');
     
     const records = data.return?.data || [];
     if (!Array.isArray(records) || records.length === 0) {
@@ -364,24 +359,27 @@ function parseLoadForecastData(data: any) {
     }
     
     const latestRecord = records[records.length - 1];
-    const currentLoad = latestRecord.alberta_internal_load || 0;
+    console.log('Latest load forecast record:', latestRecord);
+    
+    const currentLoad = latestRecord.alberta_internal_load || latestRecord.forecast || 0;
+    const allLoads = records.map(r => r.alberta_internal_load || r.forecast || 0).filter(l => l > 0);
     
     return {
       current_demand_mw: currentLoad,
-      peak_forecast_mw: Math.max(...records.map(r => r.forecast || r.alberta_internal_load || 0)),
+      peak_forecast_mw: Math.max(...allLoads),
       forecast_date: latestRecord.begin_datetime_mpt || new Date().toISOString(),
       capacity_margin: calculateCapacityMargin(currentLoad),
       reserve_margin: calculateReserveMargin(currentLoad)
     };
   } catch (error) {
-    console.error('Error parsing load forecast data:', error);
+    console.error('Error parsing AESO load forecast data:', error);
     throw new Error(`Failed to parse load forecast data: ${error.message}`);
   }
 }
 
-function parseCurrentSupplyDemandData(data: any) {
+function parseAESOCurrentSupplyDemandData(data: any) {
   try {
-    console.log('Parsing current supply demand data structure');
+    console.log('Parsing AESO current supply demand data structure');
     
     const records = data.return?.data || [];
     if (!Array.isArray(records) || records.length === 0) {
@@ -389,14 +387,15 @@ function parseCurrentSupplyDemandData(data: any) {
     }
     
     const latestRecord = records[records.length - 1];
+    console.log('Latest supply demand record:', latestRecord);
     
-    // Parse generation by fuel type from AESO data structure
-    const naturalGas = latestRecord.natural_gas || 0;
+    // AESO API uses different field names - need to map them correctly
+    const naturalGas = latestRecord.natural_gas || latestRecord.gas || 0;
     const wind = latestRecord.wind || 0;
     const hydro = latestRecord.hydro || 0;
     const solar = latestRecord.solar || 0;
     const coal = latestRecord.coal || 0;
-    const other = latestRecord.other || 0;
+    const other = latestRecord.other || latestRecord.biomass || latestRecord.storage || 0;
     
     const totalGeneration = naturalGas + wind + hydro + solar + coal + other;
     const renewableGeneration = wind + hydro + solar;
@@ -414,7 +413,7 @@ function parseCurrentSupplyDemandData(data: any) {
       timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString()
     };
   } catch (error) {
-    console.error('Error parsing current supply demand data:', error);
+    console.error('Error parsing AESO current supply demand data:', error);
     throw new Error(`Failed to parse current supply demand data: ${error.message}`);
   }
 }

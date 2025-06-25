@@ -52,7 +52,6 @@ export function useAESOData() {
   const { toast } = useToast();
 
   const fetchAESOData = async (dataType: string) => {
-    setLoading(true);
     try {
       console.log('Fetching AESO data:', dataType);
       
@@ -78,10 +77,16 @@ export function useAESOData() {
       }
       
       // Check if this is live API data or fallback data
-      const isLiveData = data?.source === 'aeso_api' || data?.data_source === 'api';
-      const isFallback = data?.source === 'fallback' || data?.data_source === 'fallback';
+      const isLiveData = data?.source === 'aeso_api' && data?.qa_metrics?.validation_passed === true;
+      const isFallback = data?.source === 'fallback' || data?.qa_metrics?.validation_passed === false;
       
-      console.log('Data source detection:', { isLiveData, isFallback, source: data?.source, data_source: data?.data_source });
+      console.log('Data source detection:', { 
+        isLiveData, 
+        isFallback, 
+        source: data?.source, 
+        validation_passed: data?.qa_metrics?.validation_passed,
+        endpoint_used: data?.qa_metrics?.endpoint_used
+      });
       
       if (isLiveData) {
         setConnectionStatus('connected');
@@ -106,8 +111,8 @@ export function useAESOData() {
           setHasShownFallbackNotice(true);
           toast({
             title: "Using Demo Data",
-            description: "AESO API unavailable, showing realistic demo data",
-            variant: "default"
+            description: data?.api_error ? `AESO API error: ${data.api_error}` : "AESO API unavailable, showing demo data",
+            variant: "destructive"
           });
         }
       }
@@ -127,15 +132,13 @@ export function useAESOData() {
         toast({
           title: "Connection Issue",
           description: "Using demo data while AESO API is unavailable",
-          variant: "default"
+          variant: "destructive"
         });
       }
       
       // Return enhanced fallback data for continuity
       const fallbackData = getEnhancedFallbackData(dataType);
       return fallbackData;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -196,27 +199,42 @@ export function useAESOData() {
   };
 
   const getCurrentPrices = async () => {
-    const data = await fetchAESOData('fetch_current_prices');
-    if (data) {
-      setPricing(data);
+    setLoading(true);
+    try {
+      const data = await fetchAESOData('fetch_current_prices');
+      if (data) {
+        setPricing(data);
+      }
+      return data;
+    } finally {
+      setLoading(false);
     }
-    return data;
   };
 
   const getLoadForecast = async () => {
-    const data = await fetchAESOData('fetch_load_forecast');
-    if (data) {
-      setLoadData(data);
+    setLoading(true);
+    try {
+      const data = await fetchAESOData('fetch_load_forecast');
+      if (data) {
+        setLoadData(data);
+      }
+      return data;
+    } finally {
+      setLoading(false);
     }
-    return data;
   };
 
   const getGenerationMix = async () => {
-    const data = await fetchAESOData('fetch_generation_mix');
-    if (data) {
-      setGenerationMix(data);
+    setLoading(true);
+    try {
+      const data = await fetchAESOData('fetch_generation_mix');
+      if (data) {
+        setGenerationMix(data);
+      }
+      return data;
+    } finally {
+      setLoading(false);
     }
-    return data;
   };
 
   // Auto-fetch data on component mount
