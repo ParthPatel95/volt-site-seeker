@@ -57,19 +57,24 @@ export function useAESOData() {
         throw error;
       }
 
-      if (data?.success === false) {
-        throw new Error(data.error || 'Failed to fetch AESO data');
-      }
-
       console.log('AESO data received:', data);
       
+      // Validate the response structure
+      if (!data || data.success === false) {
+        throw new Error(data?.error || 'Failed to fetch AESO data');
+      }
+
+      // Validate that we have actual data
+      if (!data.data) {
+        throw new Error('No data returned from AESO API');
+      }
+
       // Update connection status based on data source
-      if (data?.source === 'aeso_api') {
+      if (data.source === 'aeso_api') {
         setConnectionStatus('connected');
         setHasShownFallbackNotice(false);
         setLastFetchTime(data.timestamp);
         
-        // Show success toast for real data connection
         if (connectionStatus !== 'connected') {
           toast({
             title: "AESO API Connected",
@@ -77,20 +82,19 @@ export function useAESOData() {
             variant: "default"
           });
         }
-      } else if (data?.source === 'fallback') {
+      } else if (data.source === 'fallback') {
         setConnectionStatus('fallback');
-        // Only show toast once when first switching to fallback
         if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
           setHasShownFallbackNotice(true);
           toast({
-            title: "AESO API Configuration Needed",
-            description: "Check AESO subscription key configuration for live data",
+            title: "Using Simulated Data",
+            description: "AESO API unavailable, showing realistic test data",
             variant: "default"
           });
         }
       }
       
-      return data?.data || data;
+      return data.data;
 
     } catch (error: any) {
       console.error('Error fetching AESO data:', error);
@@ -103,7 +107,7 @@ export function useAESOData() {
 
   const getCurrentPrices = async () => {
     const data = await fetchAESOData('fetch_current_prices');
-    if (data) {
+    if (data && typeof data.current_price === 'number' && !isNaN(data.current_price)) {
       setPricing(data);
     }
     return data;
@@ -111,7 +115,7 @@ export function useAESOData() {
 
   const getLoadForecast = async () => {
     const data = await fetchAESOData('fetch_load_forecast');
-    if (data) {
+    if (data && typeof data.current_demand_mw === 'number' && !isNaN(data.current_demand_mw)) {
       setLoadData(data);
     }
     return data;
@@ -119,7 +123,7 @@ export function useAESOData() {
 
   const getGenerationMix = async () => {
     const data = await fetchAESOData('fetch_generation_mix');
-    if (data) {
+    if (data && typeof data.total_generation_mw === 'number' && !isNaN(data.total_generation_mw)) {
       setGenerationMix(data);
     }
     return data;
@@ -128,6 +132,7 @@ export function useAESOData() {
   // Auto-fetch data on component mount
   useEffect(() => {
     const fetchAllData = async () => {
+      console.log('Starting AESO data fetch...');
       await Promise.all([
         getCurrentPrices(),
         getLoadForecast(),
