@@ -177,4 +177,78 @@
   .padding-responsive {
     @apply p-3 sm:p-4 lg:p-6;
   }
+
+  /* Mobile-first touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Safe area utilities for mobile devices */
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Enhanced mobile typography */
+  .text-mobile-friendly {
+    @apply text-base leading-relaxed;
+    line-height: 1.6;
+  }
+
+  .text-mobile-heading {
+    @apply text-xl font-semibold leading-tight;
+  }
+
+  /* Better focus states for accessibility */
+  .focus-visible-enhanced {
+    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Mobile-optimized shadows */
+  .shadow-mobile {
+    @apply shadow-sm sm:shadow-md;
+  }
+}
+
+/* Enhanced scroll behavior */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Better scrollbars on desktop */
+  @media (min-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: hsl(var(--muted));
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: hsl(var(--border));
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--muted-foreground));
+    }
+  }
 }

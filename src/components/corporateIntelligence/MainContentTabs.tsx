@@ -1,6 +1,7 @@
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
 import { Activity, BarChart3, Users, Settings, Lightbulb, TrendingUp } from 'lucide-react';
+import { ResponsiveTabs } from '@/components/ui/responsive-tabs';
 import { DashboardTab } from './DashboardTab';
 import { AnalysisTab } from './AnalysisTab';
 import { IntelligenceTab } from './IntelligenceTab';
@@ -27,6 +28,15 @@ interface MainContentTabsProps {
   onInvestigateAlert: (alert: DistressAlert) => void;
 }
 
+const tabItems = [
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart3, priority: 1 },
+  { id: 'analysis', label: 'Analysis', icon: Activity, priority: 2 },
+  { id: 'intelligence', label: 'Intelligence', icon: Lightbulb, priority: 3 },
+  { id: 'insights', label: 'Insights', icon: TrendingUp, priority: 4 },
+  { id: 'portfolio', label: 'Portfolio', icon: Users, priority: 5 },
+  { id: 'settings', label: 'Settings', icon: Settings, priority: 6 }
+];
+
 export function MainContentTabs({
   companies,
   selectedCompany,
@@ -45,34 +55,7 @@ export function MainContentTabs({
   onInvestigateAlert
 }: MainContentTabsProps) {
   return (
-    <Tabs defaultValue="dashboard" className="w-full">
-      <TabsList className="grid w-full grid-cols-6 mb-4 sm:mb-6">
-        <TabsTrigger value="dashboard" className="flex items-center gap-2 text-xs sm:text-sm">
-          <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Dashboard</span>
-        </TabsTrigger>
-        <TabsTrigger value="analysis" className="flex items-center gap-2 text-xs sm:text-sm">
-          <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Analysis</span>
-        </TabsTrigger>
-        <TabsTrigger value="intelligence" className="flex items-center gap-2 text-xs sm:text-sm">
-          <Lightbulb className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Intelligence</span>
-        </TabsTrigger>
-        <TabsTrigger value="insights" className="flex items-center gap-2 text-xs sm:text-sm">
-          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Insights</span>
-        </TabsTrigger>
-        <TabsTrigger value="portfolio" className="flex items-center gap-2 text-xs sm:text-sm">
-          <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Portfolio</span>
-        </TabsTrigger>
-        <TabsTrigger value="settings" className="flex items-center gap-2 text-xs sm:text-sm">
-          <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Settings</span>
-        </TabsTrigger>
-      </TabsList>
-
+    <ResponsiveTabs items={tabItems} defaultValue="dashboard" className="w-full">
       <TabsContent value="dashboard">
         <DashboardTab
           companies={companies}
@@ -118,6 +101,6 @@ export function MainContentTabs({
           onInvestigateAlert={onInvestigateAlert}
         />
       </TabsContent>
-    </Tabs>
+    </ResponsiveTabs>
   );
 }

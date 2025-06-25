@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { BottomNavigation } from '@/components/ui/bottom-navigation';
+import { Menu, Home, Zap, Building2, Factory, Database, Brain } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
@@ -15,12 +16,13 @@ export default function Index() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-collapse sidebar on mobile
       if (mobile) {
         setIsCollapsed(true);
       }
@@ -28,9 +30,46 @@ export default function Index() {
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
-
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const bottomNavItems = [
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: Home,
+      onClick: () => navigate('/'),
+      active: location.pathname === '/'
+    },
+    {
+      id: 'aeso-market',
+      label: 'AESO',
+      icon: Zap,
+      onClick: () => navigate('/aeso-market'),
+      active: location.pathname === '/aeso-market'
+    },
+    {
+      id: 'corporate',
+      label: 'Corporate',
+      icon: Building2,
+      onClick: () => navigate('/corporate-intelligence'),
+      active: location.pathname === '/corporate-intelligence'
+    },
+    {
+      id: 'power',
+      label: 'Power',
+      icon: Factory,
+      onClick: () => navigate('/power-infrastructure'),
+      active: location.pathname === '/power-infrastructure'
+    },
+    {
+      id: 'data',
+      label: 'Data',
+      icon: Database,
+      onClick: () => navigate('/data-management'),
+      active: location.pathname === '/data-management'
+    }
+  ];
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -61,11 +100,11 @@ export default function Index() {
               <Menu className="w-5 h-5" />
             </Button>
             <h1 className="text-lg font-semibold">VoltScout</h1>
-            <div className="w-9" /> {/* Spacer for alignment */}
+            <div className="w-9" />
           </header>
         )}
         
-        <main className="flex-1 overflow-auto">
+        <main className={`flex-1 overflow-auto ${isMobile ? 'pb-16' : ''}`}>
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="aeso-market" element={<AESOMarket />} />
@@ -75,6 +114,11 @@ export default function Index() {
             <Route path="data-management" element={<DataManagement />} />
           </Routes>
         </main>
+
+        {/* Bottom Navigation for Mobile */}
+        {isMobile && (
+          <BottomNavigation items={bottomNavItems} />
+        )}
       </div>
     </div>
   );
