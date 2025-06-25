@@ -33,6 +33,61 @@ export interface AESOGenerationMix {
   timestamp: string;
 }
 
+const isValidNumber = (value: any): value is number => {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+};
+
+const validatePricingData = (data: any): AESOPricing | null => {
+  if (!data) return null;
+  
+  const pricing = {
+    current_price: isValidNumber(data.current_price) ? data.current_price : 0,
+    average_price: isValidNumber(data.average_price) ? data.average_price : 0,
+    peak_price: isValidNumber(data.peak_price) ? data.peak_price : 0,
+    off_peak_price: isValidNumber(data.off_peak_price) ? data.off_peak_price : 0,
+    timestamp: data.timestamp || new Date().toISOString(),
+    market_conditions: data.market_conditions || 'normal',
+    cents_per_kwh: isValidNumber(data.cents_per_kwh) ? data.cents_per_kwh : 0
+  };
+  
+  // Ensure at least current_price is valid
+  return pricing.current_price > 0 ? pricing : null;
+};
+
+const validateLoadData = (data: any): AESOLoadData | null => {
+  if (!data) return null;
+  
+  const loadData = {
+    current_demand_mw: isValidNumber(data.current_demand_mw) ? data.current_demand_mw : 0,
+    peak_forecast_mw: isValidNumber(data.peak_forecast_mw) ? data.peak_forecast_mw : 0,
+    forecast_date: data.forecast_date || new Date().toISOString(),
+    capacity_margin: isValidNumber(data.capacity_margin) ? data.capacity_margin : 0,
+    reserve_margin: isValidNumber(data.reserve_margin) ? data.reserve_margin : 0
+  };
+  
+  // Ensure at least current_demand_mw is valid
+  return loadData.current_demand_mw > 0 ? loadData : null;
+};
+
+const validateGenerationData = (data: any): AESOGenerationMix | null => {
+  if (!data) return null;
+  
+  const genData = {
+    natural_gas_mw: isValidNumber(data.natural_gas_mw) ? data.natural_gas_mw : 0,
+    wind_mw: isValidNumber(data.wind_mw) ? data.wind_mw : 0,
+    solar_mw: isValidNumber(data.solar_mw) ? data.solar_mw : 0,
+    hydro_mw: isValidNumber(data.hydro_mw) ? data.hydro_mw : 0,
+    coal_mw: isValidNumber(data.coal_mw) ? data.coal_mw : 0,
+    other_mw: isValidNumber(data.other_mw) ? data.other_mw : 0,
+    total_generation_mw: isValidNumber(data.total_generation_mw) ? data.total_generation_mw : 0,
+    renewable_percentage: isValidNumber(data.renewable_percentage) ? data.renewable_percentage : 0,
+    timestamp: data.timestamp || new Date().toISOString()
+  };
+  
+  // Ensure total generation is valid
+  return genData.total_generation_mw > 0 ? genData : null;
+};
+
 export function useAESOData() {
   const [pricing, setPricing] = useState<AESOPricing | null>(null);
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
@@ -107,26 +162,38 @@ export function useAESOData() {
 
   const getCurrentPrices = async () => {
     const data = await fetchAESOData('fetch_current_prices');
-    if (data && typeof data.current_price === 'number' && !isNaN(data.current_price)) {
-      setPricing(data);
+    const validatedData = validatePricingData(data);
+    if (validatedData) {
+      setPricing(validatedData);
+      console.log('Pricing data updated:', validatedData);
+    } else {
+      console.warn('Invalid pricing data received, skipping update');
     }
-    return data;
+    return validatedData;
   };
 
   const getLoadForecast = async () => {
     const data = await fetchAESOData('fetch_load_forecast');
-    if (data && typeof data.current_demand_mw === 'number' && !isNaN(data.current_demand_mw)) {
-      setLoadData(data);
+    const validatedData = validateLoadData(data);
+    if (validatedData) {
+      setLoadData(validatedData);
+      console.log('Load data updated:', validatedData);
+    } else {
+      console.warn('Invalid load data received, skipping update');
     }
-    return data;
+    return validatedData;
   };
 
   const getGenerationMix = async () => {
     const data = await fetchAESOData('fetch_generation_mix');
-    if (data && typeof data.total_generation_mw === 'number' && !isNaN(data.total_generation_mw)) {
-      setGenerationMix(data);
+    const validatedData = validateGenerationData(data);
+    if (validatedData) {
+      setGenerationMix(validatedData);
+      console.log('Generation data updated:', validatedData);
+    } else {
+      console.warn('Invalid generation data received, skipping update');
     }
-    return data;
+    return validatedData;
   };
 
   // Auto-fetch data on component mount
