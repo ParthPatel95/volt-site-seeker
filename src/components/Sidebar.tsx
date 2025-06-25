@@ -8,7 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
+import { Menu, LogOut } from "lucide-react"
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -23,6 +23,9 @@ import {
   Search,
   TrendingDown
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -34,6 +37,24 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing you out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const menuItems = [
     {
@@ -108,7 +129,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
               Navigate through the application
             </SheetDescription>
           </SheetHeader>
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-2 flex-1">
             {menuItems.map((item) => (
               <NavLink
                 key={item.label}
@@ -123,6 +144,18 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
                 {item.label}
               </NavLink>
             ))}
+          </div>
+          
+          {/* Mobile Sign Out Button */}
+          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="w-full justify-start px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
@@ -169,6 +202,22 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOp
               </NavLink>
             ))}
           </div>
+        </div>
+
+        {/* Desktop Sign Out Button */}
+        <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            className={cn(
+              "w-full text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400",
+              isCollapsed ? "justify-center px-3 py-2" : "justify-start px-3 py-2"
+            )}
+            title={isCollapsed ? "Sign Out" : undefined}
+          >
+            <LogOut className={cn("w-4 h-4", !isCollapsed && "mr-3")} />
+            {!isCollapsed && <span>Sign Out</span>}
+          </Button>
         </div>
       </div>
     </div>
