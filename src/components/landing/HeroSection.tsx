@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -79,7 +78,7 @@ export const HeroSection = () => {
         
         {/* Enhanced CTA buttons with improved animations */}
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-10">
-          <Link to="/app" className="w-full sm:w-auto group">
+          <Link to="/request-access" className="w-full sm:w-auto group">
             <Button 
               size="lg" 
               className="w-full sm:w-auto relative overflow-hidden bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-electric-blue text-white px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold shadow-2xl shadow-electric-blue/25 hover:shadow-electric-blue/40 transition-all duration-500 hover:scale-105 border border-electric-blue/20"
