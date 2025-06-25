@@ -41,7 +41,7 @@ export const LiveDataPreview = () => {
   ];
 
   return (
-    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 hover:border-neon-green/30 transition-all duration-300 group">
+    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-neon-green/30 transition-all duration-300 group">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -50,7 +50,7 @@ export const LiveDataPreview = () => {
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-            <Badge className="bg-neon-green/20 text-neon-green text-xs">Live</Badge>
+            <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">Live</Badge>
           </div>
         </div>
         <p className="text-slate-300 text-sm">Real-time intelligence from VoltScout platform</p>
@@ -58,7 +58,7 @@ export const LiveDataPreview = () => {
       <CardContent className="space-y-6">
         {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 ${isAnimating ? 'scale-105 bg-slate-800/50' : ''}`}>
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-1">
               <Eye className="w-4 h-4 text-electric-blue" />
               <span className="text-xs text-slate-400">Active Sites</span>
@@ -66,7 +66,7 @@ export const LiveDataPreview = () => {
             <div className="text-lg font-bold text-electric-blue">{liveData.activeSites}</div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 ${isAnimating ? 'scale-105 bg-slate-800/50' : ''}`}>
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-1">
               <Zap className="w-4 h-4 text-electric-yellow" />
               <span className="text-xs text-slate-400">Total MW</span>
@@ -74,7 +74,7 @@ export const LiveDataPreview = () => {
             <div className="text-lg font-bold text-electric-yellow">{liveData.totalMW.toLocaleString()}</div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 ${isAnimating ? 'scale-105 bg-slate-800/50' : ''}`}>
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-1">
               <TrendingUp className="w-4 h-4 text-neon-green" />
               <span className="text-xs text-slate-400">Avg VoltScore</span>
@@ -82,7 +82,7 @@ export const LiveDataPreview = () => {
             <div className="text-lg font-bold text-neon-green">{liveData.avgVoltScore}</div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 ${isAnimating ? 'scale-105 bg-slate-800/50' : ''}`}>
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-1">
               <MapPin className="w-4 h-4 text-warm-orange" />
               <span className="text-xs text-slate-400">$/MWh</span>
@@ -95,12 +95,12 @@ export const LiveDataPreview = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold text-slate-200">Recent Opportunities</h4>
-            <Badge className="bg-electric-blue/20 text-electric-blue text-xs">+{liveData.recentOpportunities} this week</Badge>
+            <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">+{liveData.recentOpportunities} this week</Badge>
           </div>
           
           <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
             {recentSites.map((site, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-slate-800/20 rounded-lg hover:bg-slate-800/40 transition-colors duration-200 group/item">
+              <div key={index} className="flex items-center justify-between p-3 bg-slate-800/20 rounded-lg hover:bg-slate-800/40 transition-colors duration-200 group/item border border-slate-700/20 hover:border-slate-600/30">
                 <div className="flex-1">
                   <div className="text-sm font-medium text-white group-hover/item:text-electric-blue transition-colors">
                     {site.name}
@@ -111,10 +111,10 @@ export const LiveDataPreview = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Badge 
-                    className={`text-xs ${
+                    className={`text-xs border ${
                       site.status === 'active' 
-                        ? 'bg-neon-green/20 text-neon-green' 
-                        : 'bg-electric-yellow/20 text-electric-yellow'
+                        ? 'bg-neon-green/20 text-neon-green border-neon-green/30' 
+                        : 'bg-electric-yellow/20 text-electric-yellow border-electric-yellow/30'
                     }`}
                   >
                     {site.status}

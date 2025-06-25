@@ -40,12 +40,12 @@ export const InteractiveInvestmentCalculator = () => {
   }, [investmentAmount, timeHorizon, projectedReturns]);
 
   return (
-    <Card className="bg-gradient-to-br from-slate-800/50 to-transparent p-6 border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
+    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
       <CardHeader className="pb-4">
         <div className="flex items-center space-x-2 mb-2">
           <Calculator className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
           <CardTitle className="text-white text-xl">Investment Calculator</CardTitle>
-          <Badge className="bg-neon-green/20 text-neon-green text-xs">Interactive</Badge>
+          <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">Interactive</Badge>
         </div>
         <p className="text-slate-300 text-sm">Calculate your potential returns with WattByte Fund I</p>
       </CardHeader>
@@ -62,7 +62,7 @@ export const InteractiveInvestmentCalculator = () => {
             max={5000000}
             min={50000}
             step={25000}
-            className="w-full"
+            className="w-full [&_[role=slider]]:border-electric-blue [&_[role=slider]]:bg-slate-900 [&_.bg-primary]:bg-electric-blue"
           />
           <div className="flex justify-between text-xs text-slate-400">
             <span>$50K</span>
@@ -82,7 +82,7 @@ export const InteractiveInvestmentCalculator = () => {
             max={10}
             min={3}
             step={1}
-            className="w-full"
+            className="w-full [&_[role=slider]]:border-electric-yellow [&_[role=slider]]:bg-slate-900 [&_.bg-primary]:bg-electric-yellow"
           />
           <div className="flex justify-between text-xs text-slate-400">
             <span>3 years</span>
@@ -92,7 +92,7 @@ export const InteractiveInvestmentCalculator = () => {
 
         {/* Results */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
-          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200">
+          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-neon-green/30">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-4 h-4 text-neon-green" />
               <span className="text-slate-300 text-sm">Projected Returns</span>
@@ -105,7 +105,7 @@ export const InteractiveInvestmentCalculator = () => {
             </div>
           </div>
           
-          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200">
+          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-electric-yellow/30">
             <div className="flex items-center space-x-2 mb-2">
               <DollarSign className="w-4 h-4 text-electric-yellow" />
               <span className="text-slate-300 text-sm">MOIC Multiple</span>
