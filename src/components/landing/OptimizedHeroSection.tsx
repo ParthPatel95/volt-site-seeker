@@ -4,10 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Zap, TrendingUp, Sparkles } from 'lucide-react';
 import { SiteAccessRequestModal } from './SiteAccessRequestModal';
-import { InteractiveInvestmentCalculator } from './InteractiveInvestmentCalculator';
-import { LiveDataPreview } from './LiveDataPreview';
-import { LiveAESOData } from './LiveAESOData';
-import { LiveERCOTData } from './LiveERCOTData';
 import { ScrollReveal, ParallaxElement } from './ScrollAnimations';
 import './landing-animations.css';
 
@@ -79,7 +75,7 @@ export const OptimizedHeroSection = () => {
         
         {/* CTA buttons with scroll reveal */}
         <ScrollReveal delay={400}>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-10">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
             <Link to="/voltscout" className="w-full sm:w-auto group">
               <Button 
                 size="lg" 
@@ -101,16 +97,6 @@ export const OptimizedHeroSection = () => {
                 View Available Sites
               </Button>
             </SiteAccessRequestModal>
-          </div>
-        </ScrollReveal>
-
-        {/* Live Data Grid Section */}
-        <ScrollReveal delay={500}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <InteractiveInvestmentCalculator />
-            <LiveDataPreview />
-            <LiveERCOTData />
-            <LiveAESOData />
           </div>
         </ScrollReveal>
       </div>
