@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Zap, TrendingUp, Sparkles } from 'lucide-react';
 import { SiteAccessRequestModal } from './SiteAccessRequestModal';
+import { InteractiveInvestmentCalculator } from './InteractiveInvestmentCalculator';
+import { LiveDataPreview } from './LiveDataPreview';
+import { LiveAESOData } from './LiveAESOData';
+import { LiveERCOTData } from './LiveERCOTData';
 import { ScrollReveal, ParallaxElement } from './ScrollAnimations';
 import './landing-animations.css';
 
@@ -97,6 +101,16 @@ export const OptimizedHeroSection = () => {
                 View Available Sites
               </Button>
             </SiteAccessRequestModal>
+          </div>
+        </ScrollReveal>
+
+        {/* Live Data Grid Section */}
+        <ScrollReveal delay={500}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <InteractiveInvestmentCalculator />
+            <LiveDataPreview />
+            <LiveERCOTData />
+            <LiveAESOData />
           </div>
         </ScrollReveal>
       </div>
