@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle, Zap, Building, TrendingUp } from 'lucide-re
 
 export const ProblemSolutionSection = () => {
   return (
-    <section className="relative z-10 py-8 md:py-16 px-4 sm:px-6">
+    <section className="relative z-10 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
