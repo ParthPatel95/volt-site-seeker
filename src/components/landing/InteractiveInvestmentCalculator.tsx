@@ -11,10 +11,13 @@ export const InteractiveInvestmentCalculator = () => {
   const [animatedReturns, setAnimatedReturns] = useState(0);
   const [animatedMOIC, setAnimatedMOIC] = useState(0);
 
-  const targetMOIC = 2.25; // Average of 2.0-2.5x range
-  const projectedReturns = investmentAmount[0] * targetMOIC;
+  // Calculate dynamic MOIC based on time horizon
+  // Assuming an annual return rate of ~17% which gives us 2.0-2.5x MOIC range
+  const annualReturnRate = 0.17; // 17% annual return
+  const calculatedMOIC = Math.pow(1 + annualReturnRate, timeHorizon[0]);
+  const projectedReturns = investmentAmount[0] * calculatedMOIC;
   const totalProfit = projectedReturns - investmentAmount[0];
-  const annualizedReturn = Math.pow(targetMOIC, 1/timeHorizon[0]) - 1;
+  const annualizedReturn = annualReturnRate;
 
   // Animate numbers when values change
   useEffect(() => {
@@ -28,18 +31,18 @@ export const InteractiveInvestmentCalculator = () => {
       const easeOut = 1 - Math.pow(1 - progress, 3);
       
       setAnimatedReturns(projectedReturns * easeOut);
-      setAnimatedMOIC(targetMOIC * easeOut);
+      setAnimatedMOIC(calculatedMOIC * easeOut);
       
       currentStep++;
       if (currentStep > steps) {
         setAnimatedReturns(projectedReturns);
-        setAnimatedMOIC(targetMOIC);
+        setAnimatedMOIC(calculatedMOIC);
         clearInterval(interval);
       }
     }, stepDuration);
 
     return () => clearInterval(interval);
-  }, [investmentAmount, timeHorizon, projectedReturns]);
+  }, [investmentAmount, timeHorizon, projectedReturns, calculatedMOIC]);
 
   const handleInvestmentChange = (value: number[]) => {
     setInvestmentAmount(value);
@@ -130,7 +133,7 @@ export const InteractiveInvestmentCalculator = () => {
         </div>
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
-          * Projections based on 2.0-2.5x target MOIC. Past performance does not guarantee future results.
+          * Projections based on 17% annual returns. Past performance does not guarantee future results.
         </div>
       </CardContent>
     </Card>
