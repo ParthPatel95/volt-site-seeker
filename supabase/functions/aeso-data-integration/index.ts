@@ -129,8 +129,8 @@ function getAESODateRange() {
   // Convert to MST (UTC-7) - Alberta timezone
   const albertaNow = new Date(now.getTime() - 7 * 60 * 60 * 1000);
   
-  // Get current date for API call
-  const startDate = new Date(albertaNow.getTime() - 2 * 60 * 60 * 1000); // 2 hours ago
+  // Get current date for API call - use last hour for better data availability
+  const startDate = new Date(albertaNow.getTime() - 60 * 60 * 1000); // 1 hour ago
   const endDate = albertaNow;
   
   return {
@@ -150,24 +150,25 @@ function formatAESODate(date: Date): string {
   return `${month}/${day}/${year} ${hour}:${minute}`;
 }
 
-// AESO Pool Price endpoint with Azure APIM authentication
+// AESO Pool Price endpoint with proper Azure APIM authentication
 async function fetchAESOPoolPrice(apiKey: string) {
-  console.log('Fetching AESO pool price with Azure APIM...');
+  console.log('Fetching AESO pool price through Azure APIM Gateway...');
   
   const { startDate, endDate } = getAESODateRange();
   
-  const baseUrl = 'https://api.aeso.ca/report/v1.1/price/poolPrice';
+  // Use the Azure APIM gateway URL format
+  const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/price/poolPrice';
   const params = new URLSearchParams({
     startDate: startDate,
     endDate: endDate
   });
   const url = `${baseUrl}?${params.toString()}`;
   
-  console.log('Pool Price API URL:', url);
+  console.log('Pool Price API URL (Azure APIM):', url);
   console.log('Date range (MST):', { startDate, endDate });
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
   
   try {
     const response = await fetch(url, {
@@ -175,8 +176,7 @@ async function fetchAESOPoolPrice(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': apiKey,
-        'Cache-Control': 'no-cache',
-        'User-Agent': 'WattByte-Analytics/1.0'
+        'Cache-Control': 'no-cache'
       },
       signal: controller.signal
     });
@@ -193,35 +193,41 @@ async function fetchAESOPoolPrice(apiKey: string) {
     }
 
     const data = await response.json();
-    console.log('Pool Price raw response received, records count:', Array.isArray(data?.return?.Pool_Price_Report) ? data.return.Pool_Price_Report.length : 'Not array or no data');
+    console.log('Pool Price raw response structure:', {
+      hasReturn: !!data?.return,
+      hasReport: !!data?.return?.Pool_Price_Report,
+      recordCount: Array.isArray(data?.return?.Pool_Price_Report) ? data.return.Pool_Price_Report.length : 'Not array'
+    });
     
     return parseAESOPoolPriceData(data);
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 30 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
     }
+    console.error('Pool Price fetch error details:', error);
     throw error;
   }
 }
 
-// AESO Load Forecast endpoint with Azure APIM authentication
+// AESO Load Forecast endpoint with proper Azure APIM authentication
 async function fetchAESOLoadForecast(apiKey: string) {
-  console.log('Fetching AESO load forecast with Azure APIM...');
+  console.log('Fetching AESO load forecast through Azure APIM Gateway...');
   
   const { startDate, endDate } = getAESODateRange();
   
-  const baseUrl = 'https://api.aeso.ca/report/v1.1/load/forecast';
+  // Use the Azure APIM gateway URL format
+  const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/load/forecast';
   const params = new URLSearchParams({
     startDate: startDate,
     endDate: endDate
   });
   const url = `${baseUrl}?${params.toString()}`;
   
-  console.log('Load Forecast API URL:', url);
+  console.log('Load Forecast API URL (Azure APIM):', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   
   try {
     const response = await fetch(url, {
@@ -229,8 +235,7 @@ async function fetchAESOLoadForecast(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': apiKey,
-        'Cache-Control': 'no-cache',
-        'User-Agent': 'WattByte-Analytics/1.0'
+        'Cache-Control': 'no-cache'
       },
       signal: controller.signal
     });
@@ -246,35 +251,41 @@ async function fetchAESOLoadForecast(apiKey: string) {
     }
 
     const data = await response.json();
-    console.log('Load Forecast raw response received, records count:', Array.isArray(data?.return?.Forecast_Report) ? data.return.Forecast_Report.length : 'Not array or no data');
+    console.log('Load Forecast raw response structure:', {
+      hasReturn: !!data?.return,
+      hasReport: !!data?.return?.Forecast_Report,
+      recordCount: Array.isArray(data?.return?.Forecast_Report) ? data.return.Forecast_Report.length : 'Not array'
+    });
     
     return parseAESOLoadForecastData(data);
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 30 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
     }
+    console.error('Load Forecast fetch error details:', error);
     throw error;
   }
 }
 
-// AESO Current Supply Demand endpoint with Azure APIM authentication
+// AESO Current Supply Demand endpoint with proper Azure APIM authentication
 async function fetchAESOCurrentSupplyDemand(apiKey: string) {
-  console.log('Fetching AESO current supply demand with Azure APIM...');
+  console.log('Fetching AESO current supply demand through Azure APIM Gateway...');
   
   const { startDate, endDate } = getAESODateRange();
   
-  const baseUrl = 'https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand';
+  // Use the Azure APIM gateway URL format
+  const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/generation/currentSupplyDemand';
   const params = new URLSearchParams({
     startDate: startDate,
     endDate: endDate
   });
   const url = `${baseUrl}?${params.toString()}`;
   
-  console.log('Current Supply Demand API URL:', url);
+  console.log('Current Supply Demand API URL (Azure APIM):', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   
   try {
     const response = await fetch(url, {
@@ -282,8 +293,7 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': apiKey,
-        'Cache-Control': 'no-cache',
-        'User-Agent': 'WattByte-Analytics/1.0'
+        'Cache-Control': 'no-cache'
       },
       signal: controller.signal
     });
@@ -299,14 +309,19 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
     }
 
     const data = await response.json();
-    console.log('Current Supply Demand raw response received, records count:', Array.isArray(data?.return?.Current_Supply_Demand_Report) ? data.return.Current_Supply_Demand_Report.length : 'Not array or no data');
+    console.log('Current Supply Demand raw response structure:', {
+      hasReturn: !!data?.return,
+      hasReport: !!data?.return?.Current_Supply_Demand_Report,
+      recordCount: Array.isArray(data?.return?.Current_Supply_Demand_Report) ? data.return.Current_Supply_Demand_Report.length : 'Not array'
+    });
     
     return parseAESOCurrentSupplyDemandData(data);
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 30 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
     }
+    console.error('Current Supply Demand fetch error details:', error);
     throw error;
   }
 }
