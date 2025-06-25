@@ -1,34 +1,79 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AESOPricing {
-  current_price: number;
-  average_price: number;
-  peak_price: number;
-  off_peak_price: number;
+  source: string;
   timestamp: string;
+  current_price_cents_kwh: number;
+  current_price_dollars_mwh: number;
+  rates: {
+    hourly: Array<{timestamp: string; price_cents_per_kwh: number}>;
+    daily_avg: number;
+    monthly_avg: number;
+    trailing12mo_avg: number;
+  };
   market_conditions: string;
 }
 
 export interface AESOLoadData {
-  current_demand_mw: number;
-  peak_forecast_mw: number;
-  forecast_date: string;
+  source: string;
+  timestamp: string;
+  load: {
+    current_mw: number;
+    peak_mw: number;
+    avg_mw: number;
+    current_gw: string;
+    peak_gw: string;
+    avg_gw: string;
+  };
   capacity_margin: number;
   reserve_margin: number;
 }
 
 export interface AESOGenerationMix {
-  natural_gas_mw: number;
-  wind_mw: number;
-  solar_mw: number;
-  hydro_mw: number;
-  coal_mw: number;
-  other_mw: number;
-  total_generation_mw: number;
-  renewable_percentage: number;
+  source: string;
   timestamp: string;
+  fuel_mix: {
+    gas_percent: string;
+    wind_percent: string;
+    solar_percent: string;
+    hydro_percent: string;
+    coal_percent: string;
+    other_percent: string;
+    renewable_percent: string;
+  };
+  generation_mw: {
+    gas_mw: number;
+    wind_mw: number;
+    solar_mw: number;
+    hydro_mw: number;
+    coal_mw: number;
+    other_mw: number;
+    total_mw: number;
+  };
+}
+
+export interface AESOForecast {
+  source: string;
+  timestamp: string;
+  forecast: {
+    tomorrow_avg_cents_kwh: number;
+    next_hour_cents_kwh: number;
+    trend: string;
+  };
+}
+
+export interface AESOOutageData {
+  source: string;
+  timestamp: string;
+  outages: {
+    active_count: number;
+    planned_count: number;
+    transmission_issues: number;
+    risk_level: string;
+  };
 }
 
 export interface QAMetrics {
@@ -42,6 +87,8 @@ export function useAESOData() {
   const [pricing, setPricing] = useState<AESOPricing | null>(null);
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
+  const [forecast, setForecast] = useState<AESOForecast | null>(null);
+  const [outageData, setOutageData] = useState<AESOOutageData | null>(null);
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [qaMetrics, setQaMetrics] = useState<Record<string, QAMetrics>>({});
@@ -78,7 +125,7 @@ export function useAESOData() {
         }));
       }
       
-      // Only accept live API data - no fallback allowed
+      // Only accept live API data
       const isLiveData = data?.source === 'aeso_api';
       const isValidData = data?.qa_metrics?.validation_passed === true;
       
@@ -98,7 +145,7 @@ export function useAESOData() {
         console.log('✅ Successfully received live AESO data');
         return data?.data || data;
       } else {
-        throw new Error('Only live AESO data is accepted - no fallback data allowed');
+        throw new Error('Only live AESO data is accepted - API validation failed');
       }
 
     } catch (error: any) {
@@ -159,7 +206,35 @@ export function useAESOData() {
     }
   };
 
-  // Auto-fetch data on component mount with strict live data requirement
+  const getForecastPrices = async () => {
+    try {
+      const data = await fetchAESOData('fetch_forecast_prices');
+      if (data) {
+        setForecast(data);
+        console.log('Forecast data updated:', data);
+      }
+      return data;
+    } catch (error) {
+      console.error('Failed to get forecast prices:', error);
+      return null;
+    }
+  };
+
+  const getOutageData = async () => {
+    try {
+      const data = await fetchAESOData('fetch_outage_data');
+      if (data) {
+        setOutageData(data);
+        console.log('Outage data updated:', data);
+      }
+      return data;
+    } catch (error) {
+      console.error('Failed to get outage data:', error);
+      return null;
+    }
+  };
+
+  // Auto-fetch all data on component mount
   useEffect(() => {
     const fetchAllData = async () => {
       console.log('Starting AESO live data fetch...');
@@ -170,7 +245,9 @@ export function useAESOData() {
         const results = await Promise.allSettled([
           getCurrentPrices(),
           getLoadForecast(),
-          getGenerationMix()
+          getGenerationMix(),
+          getForecastPrices(),
+          getOutageData()
         ]);
         
         // Check if at least one fetch succeeded
@@ -179,7 +256,7 @@ export function useAESOData() {
         );
         
         if (successfulResults.length > 0) {
-          console.log(`AESO live data fetch completed: ${successfulResults.length}/3 successful`);
+          console.log(`AESO live data fetch completed: ${successfulResults.length}/5 successful`);
           setConnectionStatus('connected');
         } else {
           console.log('All AESO live data fetches failed');
@@ -211,6 +288,8 @@ export function useAESOData() {
     pricing,
     loadData,
     generationMix,
+    forecast,
+    outageData,
     loading,
     connectionStatus,
     qaMetrics,
@@ -219,13 +298,17 @@ export function useAESOData() {
     getCurrentPrices,
     getLoadForecast,
     getGenerationMix,
+    getForecastPrices,
+    getOutageData,
     refetch: () => {
       console.log('Manual refetch of live data triggered');
       setLoading(true);
       Promise.allSettled([
         getCurrentPrices(),
         getLoadForecast(),
-        getGenerationMix()
+        getGenerationMix(),
+        getForecastPrices(),
+        getOutageData()
       ]).finally(() => setLoading(false));
     }
   };
