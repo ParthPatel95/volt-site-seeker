@@ -16,10 +16,10 @@ export const InteractiveInvestmentCalculator = () => {
   const totalProfit = projectedReturns - investmentAmount[0];
   const annualizedReturn = Math.pow(targetMOIC, 1/timeHorizon[0]) - 1;
 
-  // Animate numbers
+  // Animate numbers when values change
   useEffect(() => {
-    const duration = 1000;
-    const steps = 50;
+    const duration = 800;
+    const steps = 30;
     const stepDuration = duration / steps;
     
     let currentStep = 0;
@@ -32,12 +32,22 @@ export const InteractiveInvestmentCalculator = () => {
       
       currentStep++;
       if (currentStep > steps) {
+        setAnimatedReturns(projectedReturns);
+        setAnimatedMOIC(targetMOIC);
         clearInterval(interval);
       }
     }, stepDuration);
 
     return () => clearInterval(interval);
   }, [investmentAmount, timeHorizon, projectedReturns]);
+
+  const handleInvestmentChange = (value: number[]) => {
+    setInvestmentAmount(value);
+  };
+
+  const handleTimeHorizonChange = (value: number[]) => {
+    setTimeHorizon(value);
+  };
 
   return (
     <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
@@ -58,7 +68,7 @@ export const InteractiveInvestmentCalculator = () => {
           </div>
           <Slider
             value={investmentAmount}
-            onValueChange={setInvestmentAmount}
+            onValueChange={handleInvestmentChange}
             max={5000000}
             min={50000}
             step={25000}
@@ -78,7 +88,7 @@ export const InteractiveInvestmentCalculator = () => {
           </div>
           <Slider
             value={timeHorizon}
-            onValueChange={setTimeHorizon}
+            onValueChange={handleTimeHorizonChange}
             max={10}
             min={3}
             step={1}
@@ -101,7 +111,7 @@ export const InteractiveInvestmentCalculator = () => {
               ${Math.round(animatedReturns).toLocaleString()}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              +${Math.round(animatedReturns - investmentAmount[0]).toLocaleString()} profit
+              +${Math.round(Math.max(0, animatedReturns - investmentAmount[0])).toLocaleString()} profit
             </div>
           </div>
           

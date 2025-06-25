@@ -79,7 +79,7 @@ export const OptimizedHeroSection = () => {
         
         {/* CTA buttons with scroll reveal */}
         <ScrollReveal delay={400}>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-12">
             <Link to="/voltscout" className="w-full sm:w-auto group">
               <Button 
                 size="lg" 
