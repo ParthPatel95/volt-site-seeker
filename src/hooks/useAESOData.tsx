@@ -81,6 +81,8 @@ export function useAESOData() {
       const isLiveData = data?.source === 'aeso_api' || data?.data_source === 'api';
       const isFallback = data?.source === 'fallback' || data?.data_source === 'fallback';
       
+      console.log('Data source detection:', { isLiveData, isFallback, source: data?.source, data_source: data?.data_source });
+      
       if (isLiveData) {
         setConnectionStatus('connected');
         setHasShownFallbackNotice(false);
