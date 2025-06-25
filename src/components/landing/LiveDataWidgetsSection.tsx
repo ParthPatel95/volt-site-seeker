@@ -11,22 +11,26 @@ export const LiveDataWidgetsSection = () => {
         {/* Section Header */}
         <ScrollReveal delay={100}>
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
               Live Market Intelligence
             </h2>
-            <p className="text-lg md:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed px-4">
               Real-time data and interactive tools to analyze investment opportunities 
               and market conditions across North American power markets.
             </p>
           </div>
         </ScrollReveal>
 
-        {/* Live Data Grid - Updated for 3 widgets */}
+        {/* Live Data Grid - Fully Responsive */}
         <ScrollReveal delay={200}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            <InteractiveInvestmentCalculator />
-            <LiveDataPreview />
-            <div className="lg:col-span-2 xl:col-span-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div className="w-full">
+              <InteractiveInvestmentCalculator />
+            </div>
+            <div className="w-full">
+              <LiveDataPreview />
+            </div>
+            <div className="w-full md:col-span-2 xl:col-span-1">
               <LiveERCOTData />
             </div>
           </div>
