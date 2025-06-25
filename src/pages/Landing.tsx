@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
+import { LiveDataSection } from '@/components/landing/LiveDataSection';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -52,6 +53,10 @@ const Landing: React.FC = () => {
           <OptimizedHeroSection />
           
           <SectionDivider color="blue" />
+          
+          <LiveDataSection />
+          
+          <SectionDivider color="green" />
           
           <section aria-label="Problem and Solution" className="relative">
             <Suspense fallback={<SectionLoader />}>
