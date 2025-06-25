@@ -61,7 +61,7 @@ export function AESOMarket() {
   };
 
   // Use real market data when available, fallback to pricing data
-  const currentPrice = systemMarginalPrice?.price || pricing?.current_price || 0;
+  const currentPrice = systemMarginalPrice?.price || pricing?.current_price_cents_kwh || 0;
   const priceTimestamp = systemMarginalPrice?.timestamp || pricing?.timestamp;
 
   // Generate fallback data when API data is not available
@@ -152,7 +152,7 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : '10.8 GW'}
+              {loadData?.load?.current_mw ? `${(loadData.load.current_mw / 1000).toFixed(1)} GW` : '10.8 GW'}
             </div>
             <p className="text-xs text-green-200">Current demand</p>
           </CardContent>
@@ -165,7 +165,7 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : '32.5%'}
+              {generationMix?.fuel_mix?.renewable_percent ? `${generationMix.fuel_mix.renewable_percent}%` : '32.5%'}
             </div>
             <p className="text-xs text-purple-200">Of total generation</p>
           </CardContent>
@@ -234,9 +234,9 @@ export function AESOMarket() {
             <CardTitle className="flex items-center">
               <Gauge className="w-5 h-5 mr-2 text-blue-600" />
               System Load & Demand
-              {loadData?.forecast_date && (
+              {loadData?.timestamp && (
                 <Badge variant="outline" className="ml-auto">
-                  Updated: {new Date(loadData.forecast_date).toLocaleTimeString()}
+                  Updated: {new Date(loadData.timestamp).toLocaleTimeString()}
                 </Badge>
               )}
             </CardTitle>
@@ -245,13 +245,13 @@ export function AESOMarket() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Current Demand</p>
-                <p className="text-2xl font-bold">{loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '10.8'} GW</p>
-                <p className="text-xs text-muted-foreground">{loadData?.current_demand_mw?.toFixed(0) || '10,800'} MW</p>
+                <p className="text-2xl font-bold">{loadData?.load?.current_mw ? (loadData.load.current_mw / 1000).toFixed(1) : '10.8'} GW</p>
+                <p className="text-xs text-muted-foreground">{loadData?.load?.current_mw?.toFixed(0) || '10,800'} MW</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Peak Forecast</p>
-                <p className="text-xl font-semibold">{loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '11.5'} GW</p>
-                <p className="text-xs text-muted-foreground">{loadData?.peak_forecast_mw?.toFixed(0) || '11,500'} MW</p>
+                <p className="text-xl font-semibold">{loadData?.load?.peak_mw ? (loadData.load.peak_mw / 1000).toFixed(1) : '11.5'} GW</p>
+                <p className="text-xs text-muted-foreground">{loadData?.load?.peak_mw?.toFixed(0) || '11,500'} MW</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Capacity Margin</p>
@@ -286,38 +286,38 @@ export function AESOMarket() {
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <Fuel className="w-6 h-6 mx-auto mb-2 text-blue-500" />
                   <p className="text-sm text-muted-foreground">Natural Gas</p>
-                  <p className="text-xl font-bold">{generationMix.natural_gas_mw ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '0.0'} GW</p>
-                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
+                  <p className="text-xl font-bold">{generationMix.generation_mw?.gas_mw ? (generationMix.generation_mw.gas_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.generation_mw?.total_mw ? ((generationMix.generation_mw.gas_mw / generationMix.generation_mw.total_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <Wind className="w-6 h-6 mx-auto mb-2 text-green-500" />
                   <p className="text-sm text-muted-foreground">Wind</p>
-                  <p className="text-xl font-bold">{generationMix.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : '0.0'} GW</p>
-                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.wind_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
+                  <p className="text-xl font-bold">{generationMix.generation_mw?.wind_mw ? (generationMix.generation_mw.wind_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.generation_mw?.total_mw ? ((generationMix.generation_mw.wind_mw / generationMix.generation_mw.total_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                   <Sun className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
                   <p className="text-sm text-muted-foreground">Solar</p>
-                  <p className="text-xl font-bold">{generationMix.solar_mw ? (generationMix.solar_mw / 1000).toFixed(1) : '0.0'} GW</p>
-                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.solar_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
+                  <p className="text-xl font-bold">{generationMix.generation_mw?.solar_mw ? (generationMix.generation_mw.solar_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.generation_mw?.total_mw ? ((generationMix.generation_mw.solar_mw / generationMix.generation_mw.total_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <Activity className="w-6 h-6 mx-auto mb-2 text-blue-600" />
                   <p className="text-sm text-muted-foreground">Hydro</p>
-                  <p className="text-xl font-bold">{generationMix.hydro_mw ? (generationMix.hydro_mw / 1000).toFixed(1) : '0.0'} GW</p>
-                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.hydro_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
+                  <p className="text-xl font-bold">{generationMix.generation_mw?.hydro_mw ? (generationMix.generation_mw.hydro_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.generation_mw?.total_mw ? ((generationMix.generation_mw.hydro_mw / generationMix.generation_mw.total_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
                   <Fuel className="w-6 h-6 mx-auto mb-2 text-gray-600" />
                   <p className="text-sm text-muted-foreground">Coal</p>
-                  <p className="text-xl font-bold">{generationMix.coal_mw ? (generationMix.coal_mw / 1000).toFixed(1) : '0.0'} GW</p>
-                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.coal_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
+                  <p className="text-xl font-bold">{generationMix.generation_mw?.coal_mw ? (generationMix.generation_mw.coal_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.generation_mw?.total_mw ? ((generationMix.generation_mw.coal_mw / generationMix.generation_mw.total_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                   <Zap className="w-6 h-6 mx-auto mb-2 text-purple-500" />
                   <p className="text-sm text-muted-foreground">Other</p>
-                  <p className="text-xl font-bold">{generationMix.other_mw ? (generationMix.other_mw / 1000).toFixed(1) : '0.0'} GW</p>
-                  <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.other_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
+                  <p className="text-xl font-bold">{generationMix.generation_mw?.other_mw ? (generationMix.generation_mw.other_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                  <p className="text-xs text-muted-foreground">{generationMix.generation_mw?.total_mw ? ((generationMix.generation_mw.other_mw / generationMix.generation_mw.total_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
               </div>
               
@@ -328,10 +328,10 @@ export function AESOMarket() {
                 </div>
                 <div className="text-right">
                   <Badge variant="secondary" className="bg-green-100 text-green-800 text-lg px-3 py-1">
-                    {generationMix.renewable_percentage?.toFixed(1) || '0.0'}%
+                    {generationMix.fuel_mix?.renewable_percent || '0.0'}%
                   </Badge>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Total: {generationMix.total_generation_mw ? (generationMix.total_generation_mw / 1000).toFixed(1) : '0.0'} GW
+                    Total: {generationMix.generation_mw?.total_mw ? (generationMix.generation_mw.total_mw / 1000).toFixed(1) : '0.0'} GW
                   </p>
                 </div>
               </div>
