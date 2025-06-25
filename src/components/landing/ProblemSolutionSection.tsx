@@ -3,10 +3,10 @@ import { AlertTriangle, CheckCircle, Zap, Building, TrendingUp } from 'lucide-re
 
 export const ProblemSolutionSection = () => {
   return (
-    <section className="relative z-10 py-8 md:py-16 px-4 sm:px-6">
+    <section className="relative z-10 py-6 md:py-12 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Turning Power Constraints Into 
             <span className="text-electric-yellow"> Profit Opportunities</span>
@@ -19,7 +19,7 @@ export const ProblemSolutionSection = () => {
         </div>
         
         {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
           {/* Challenge Side */}
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
