@@ -1,8 +1,10 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Zap, TrendingUp, Sparkles } from 'lucide-react';
+import { PlatformAccessModal } from './PlatformAccessModal';
 
 export const HeroSection = () => {
   return (
@@ -78,10 +80,10 @@ export const HeroSection = () => {
         
         {/* Enhanced CTA buttons with improved animations */}
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-10">
-          <Link to="/request-access" className="w-full sm:w-auto group">
+          <PlatformAccessModal>
             <Button 
               size="lg" 
-              className="w-full sm:w-auto relative overflow-hidden bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-electric-blue text-white px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold shadow-2xl shadow-electric-blue/25 hover:shadow-electric-blue/40 transition-all duration-500 hover:scale-105 border border-electric-blue/20"
+              className="w-full sm:w-auto relative overflow-hidden bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-electric-blue text-white px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold shadow-2xl shadow-electric-blue/25 hover:shadow-electric-blue/40 transition-all duration-500 hover:scale-105 border border-electric-blue/20 group"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
               <span className="relative z-10 flex items-center">
@@ -89,7 +91,7 @@ export const HeroSection = () => {
                 <ArrowRight className="ml-2 sm:ml-3 w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 group-hover:translate-x-1 transition-transform duration-300" />
               </span>
             </Button>
-          </Link>
+          </PlatformAccessModal>
           <Button 
             size="lg" 
             variant="outline" 
