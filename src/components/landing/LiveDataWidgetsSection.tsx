@@ -1,5 +1,4 @@
 
-import { InteractiveInvestmentCalculator } from './InteractiveInvestmentCalculator';
 import { LiveDataPreview } from './LiveDataPreview';
 import { LiveERCOTData } from './LiveERCOTData';
 import { ScrollReveal } from './ScrollAnimations';
@@ -21,16 +20,13 @@ export const LiveDataWidgetsSection = () => {
           </div>
         </ScrollReveal>
 
-        {/* Live Data Grid - Fully Responsive */}
+        {/* Live Data Grid - Two widgets side by side */}
         <ScrollReveal delay={200}>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-            <div className="w-full">
-              <InteractiveInvestmentCalculator />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className="w-full">
               <LiveDataPreview />
             </div>
-            <div className="w-full md:col-span-2 xl:col-span-1">
+            <div className="w-full">
               <LiveERCOTData />
             </div>
           </div>
