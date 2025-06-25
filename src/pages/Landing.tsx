@@ -1,4 +1,3 @@
-
 import { useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
@@ -7,6 +6,7 @@ import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection'
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 
 // Lazy load sections for better performance
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
@@ -29,6 +29,9 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      {/* Smooth scroll functionality */}
+      <SmoothScroll />
+      
       {/* SEO content */}
       <header>
         <h1 className="sr-only">WattByte Infrastructure Fund - AI-Powered Energy Discovery Platform</h1>
