@@ -39,7 +39,8 @@ export const InteractiveInvestmentCalculator = () => {
     return () => clearInterval(interval);
   }, [investmentAmount, timeHorizon, projectedReturns]);
 
-  return (to-transparent-00 p-6 border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
+  return (
+    <Card className="bg-gradient-to-br from-slate-800/50 to-transparent p-6 border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
       <CardHeader className="pb-4">
         <div className="flex items-center space-x-2 mb-2">
           <Calculator className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
