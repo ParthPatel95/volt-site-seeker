@@ -33,8 +33,8 @@ export const LiveERCOTData = () => {
         <p className="text-slate-300 text-xs sm:text-sm">Real-time Texas grid operations and pricing</p>
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-5 px-4 sm:px-6 pb-4 sm:pb-6">
-        {/* Live Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        {/* Live Metrics Grid - Changed to 2 columns per row */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <div className={`bg-slate-800/30 rounded-lg p-2 sm:p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
             <div className="flex items-center space-x-1 mb-1">
               <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-electric-blue flex-shrink-0" />
