@@ -13,7 +13,7 @@ import './landing-animations.css';
 
 export const OptimizedHeroSection = () => {
   return (
-    <section className="relative z-10 pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6">
+    <section className="relative z-10 pt-16 sm:pt-20 md:pt-24 pb-2 px-4 sm:px-6">
       {/* Enhanced background with parallax */}
       <div className="absolute inset-0 overflow-hidden">
         <ParallaxElement speed={0.3}>
@@ -68,7 +68,7 @@ export const OptimizedHeroSection = () => {
         
         {/* Description with scroll reveal */}
         <ScrollReveal delay={300}>
-          <div className="relative mb-6 sm:mb-8">
+          <div className="relative mb-4 sm:mb-6">
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-200 max-w-5xl mx-auto leading-relaxed font-medium px-2 bg-slate-900/20 rounded-2xl py-6 border border-slate-700/30 hover-glow">
               Next-generation infrastructure fund acquiring power-rich land across North America 
               for <span className="text-electric-blue font-semibold">AI</span>, <span className="text-electric-yellow font-semibold">HPC</span>, and <span className="text-neon-green font-semibold">crypto data centers</span>, 
@@ -79,7 +79,7 @@ export const OptimizedHeroSection = () => {
         
         {/* CTA buttons with scroll reveal */}
         <ScrollReveal delay={400}>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-4 sm:mb-6">
             <Link to="/voltscout" className="w-full sm:w-auto group">
               <Button 
                 size="lg" 
@@ -106,29 +106,11 @@ export const OptimizedHeroSection = () => {
 
         {/* Live Data Grid Section */}
         <ScrollReveal delay={500}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <InteractiveInvestmentCalculator />
             <LiveDataPreview />
             <LiveERCOTData />
             <LiveAESOData />
-          </div>
-        </ScrollReveal>
-
-        {/* Key metrics with staggered scroll reveal */}
-        <ScrollReveal delay={600}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-electric-blue/50 transition-all duration-200 hover:bg-slate-800/70 hover-lift stagger-1">
-              <div className="text-2xl sm:text-3xl font-bold text-electric-blue mb-2">675MW+</div>
-              <div className="text-slate-200 text-sm sm:text-base">Deal Experience</div>
-            </div>
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-electric-yellow/50 transition-all duration-200 hover:bg-slate-800/70 hover-lift stagger-2">
-              <div className="text-2xl sm:text-3xl font-bold text-electric-yellow mb-2">$25M</div>
-              <div className="text-slate-200 text-sm sm:text-base">Target Fund Size</div>
-            </div>
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-neon-green/50 transition-all duration-200 hover:bg-slate-800/70 hover-lift stagger-3">
-              <div className="text-2xl sm:text-3xl font-bold text-neon-green mb-2">2.5x</div>
-              <div className="text-slate-200 text-sm sm:text-base">Target MOIC</div>
-            </div>
           </div>
         </ScrollReveal>
       </div>
