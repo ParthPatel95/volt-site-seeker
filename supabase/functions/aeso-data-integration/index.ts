@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -18,6 +19,30 @@ serve(async (req) => {
     const aesoApiKey = Deno.env.get('AESO_API_KEY');
     console.log('AESO API Key available:', aesoApiKey ? 'Yes' : 'No');
     
+    if (!aesoApiKey) {
+      console.log('No AESO API key configured, using fallback data');
+      const fallbackData = generateFallbackData(action);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: fallbackData,
+          source: 'fallback',
+          timestamp: new Date().toISOString(),
+          qa_metrics: {
+            endpoint_used: 'fallback',
+            response_time_ms: 0,
+            data_quality: 'fallback',
+            validation_passed: true
+          },
+          notice: 'Using simulated data - AESO API key not configured'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
+    
     let data;
     let qaMetrics = {
       endpoint_used: '',
@@ -29,11 +54,6 @@ serve(async (req) => {
     const startTime = Date.now();
     
     try {
-      if (!aesoApiKey) {
-        console.log('No API key available, using fallback data');
-        throw new Error('AESO API key not configured');
-      }
-
       switch (action) {
         case 'fetch_current_prices':
           data = await fetchAESOPoolPrice(aesoApiKey);
@@ -76,7 +96,7 @@ serve(async (req) => {
       );
 
     } catch (apiError) {
-      console.error('AESO API call failed, using fallback data:', apiError);
+      console.error('AESO API call failed:', apiError);
       
       // Use fallback data when API fails
       data = generateFallbackData(action);
@@ -92,7 +112,8 @@ serve(async (req) => {
           source: 'fallback',
           timestamp: new Date().toISOString(),
           qa_metrics: qaMetrics,
-          notice: 'Using simulated data - AESO API temporarily unavailable'
+          notice: 'Using simulated data - AESO API temporarily unavailable',
+          error_details: apiError.message
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -151,7 +172,7 @@ async function fetchAESOPoolPrice(apiKey: string) {
   
   const { startDate, endDate } = getAESODateRange();
   
-  // Use the correct Azure APIM gateway URL format from the documentation
+  // Use the correct Azure APIM gateway URL format
   const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/price/poolPrice';
   const params = new URLSearchParams({
     startDate: startDate,
@@ -159,11 +180,11 @@ async function fetchAESOPoolPrice(apiKey: string) {
   });
   const url = `${baseUrl}?${params.toString()}`;
   
-  console.log('Pool Price API URL (Azure APIM):', url);
+  console.log('Pool Price API URL:', url);
   console.log('Date range (MST):', { startDate, endDate });
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
   
   try {
     const response = await fetch(url, {
@@ -171,7 +192,8 @@ async function fetchAESOPoolPrice(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': apiKey,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'User-Agent': 'VoltScout-AESO-Client/1.0'
       },
       signal: controller.signal
     });
@@ -184,7 +206,7 @@ async function fetchAESOPoolPrice(apiKey: string) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Pool Price API error response:', errorText);
-      throw new Error(`Pool Price API returned status ${response.status}: ${errorText}`);
+      throw new Error(`AESO Pool Price API returned status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -198,20 +220,19 @@ async function fetchAESOPoolPrice(apiKey: string) {
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
     }
     console.error('Pool Price fetch error details:', error);
     throw error;
   }
 }
 
-// AESO Load Forecast endpoint with proper Azure APIM authentication
+// AESO Load Forecast endpoint
 async function fetchAESOLoadForecast(apiKey: string) {
   console.log('Fetching AESO load forecast through Azure APIM Gateway...');
   
   const { startDate, endDate } = getAESODateRange();
   
-  // Use the correct Azure APIM gateway URL format from the documentation
   const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/load/forecast';
   const params = new URLSearchParams({
     startDate: startDate,
@@ -219,10 +240,10 @@ async function fetchAESOLoadForecast(apiKey: string) {
   });
   const url = `${baseUrl}?${params.toString()}`;
   
-  console.log('Load Forecast API URL (Azure APIM):', url);
+  console.log('Load Forecast API URL:', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   
   try {
     const response = await fetch(url, {
@@ -230,7 +251,8 @@ async function fetchAESOLoadForecast(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': apiKey,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'User-Agent': 'VoltScout-AESO-Client/1.0'
       },
       signal: controller.signal
     });
@@ -242,7 +264,7 @@ async function fetchAESOLoadForecast(apiKey: string) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Load Forecast API error response:', errorText);
-      throw new Error(`Load Forecast API returned status ${response.status}: ${errorText}`);
+      throw new Error(`AESO Load Forecast API returned status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -256,20 +278,19 @@ async function fetchAESOLoadForecast(apiKey: string) {
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
     }
     console.error('Load Forecast fetch error details:', error);
     throw error;
   }
 }
 
-// AESO Current Supply Demand endpoint with proper Azure APIM authentication
+// AESO Current Supply Demand endpoint
 async function fetchAESOCurrentSupplyDemand(apiKey: string) {
   console.log('Fetching AESO current supply demand through Azure APIM Gateway...');
   
   const { startDate, endDate } = getAESODateRange();
   
-  // Use the correct Azure APIM gateway URL format from the documentation
   const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/generation/currentSupplyDemand';
   const params = new URLSearchParams({
     startDate: startDate,
@@ -277,10 +298,10 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
   });
   const url = `${baseUrl}?${params.toString()}`;
   
-  console.log('Current Supply Demand API URL (Azure APIM):', url);
+  console.log('Current Supply Demand API URL:', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   
   try {
     const response = await fetch(url, {
@@ -288,7 +309,8 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
       headers: {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': apiKey,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'User-Agent': 'VoltScout-AESO-Client/1.0'
       },
       signal: controller.signal
     });
@@ -300,7 +322,7 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Current Supply Demand API error response:', errorText);
-      throw new Error(`Current Supply Demand API returned status ${response.status}: ${errorText}`);
+      throw new Error(`AESO Current Supply Demand API returned status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -314,7 +336,7 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
     }
     console.error('Current Supply Demand fetch error details:', error);
     throw error;
