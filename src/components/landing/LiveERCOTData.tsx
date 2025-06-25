@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Zap, MapPin, TrendingUp, Sun } from 'lucide-react';
+import { Activity, Zap, MapPin, TrendingUp, Sun, Clock, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 
 export const LiveERCOTData = () => {
@@ -108,6 +108,82 @@ export const LiveERCOTData = () => {
               <span className="text-slate-400 truncate mr-2">Coal:</span>
               <span className="text-warm-orange font-semibold flex-shrink-0">
                 {generationMix ? (generationMix.coal_mw / 1000).toFixed(1) : '3.5'} GW
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Market Capacity & Reserve Info */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-200">Grid Capacity</h4>
+            <div className="flex items-center space-x-1">
+              <BarChart3 className="w-3 h-3 text-electric-blue" />
+              <span className="text-xs text-slate-400">Reserve Status</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">Reserve Margin:</span>
+              <span className="text-electric-blue font-semibold flex-shrink-0">
+                {loadData?.reserve_margin?.toFixed(1) || '14.2'}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">Peak Forecast:</span>
+              <span className="text-electric-yellow font-semibold flex-shrink-0">
+                {loadData ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '62.5'} GW
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">Total Capacity:</span>
+              <span className="text-neon-green font-semibold flex-shrink-0">
+                {generationMix ? (generationMix.total_generation_mw / 1000).toFixed(1) : '70.3'} GW
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">Load Factor:</span>
+              <span className="text-warm-orange font-semibold flex-shrink-0">
+                {loadData?.capacity_margin ? (100 - loadData.capacity_margin).toFixed(1) : '74.0'}%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Price Trends */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-200">Price Trends</h4>
+            <div className="flex items-center space-x-1">
+              <Clock className="w-3 h-3 text-electric-blue" />
+              <span className="text-xs text-slate-400">24h Range</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">24h Average:</span>
+              <span className="text-electric-blue font-semibold flex-shrink-0">
+                ${pricing?.average_price?.toFixed(2) || '38.75'}/MWh
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">24h Peak:</span>
+              <span className="text-warm-orange font-semibold flex-shrink-0">
+                ${pricing?.peak_price?.toFixed(2) || '65.20'}/MWh
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">Off-Peak:</span>
+              <span className="text-neon-green font-semibold flex-shrink-0">
+                ${pricing?.off_peak_price?.toFixed(2) || '22.40'}/MWh
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+              <span className="text-slate-400 truncate mr-2">Load Zone:</span>
+              <span className="text-electric-yellow font-semibold flex-shrink-0 truncate">
+                {pricing?.load_zone || 'HOUSTON'}
               </span>
             </div>
           </div>
