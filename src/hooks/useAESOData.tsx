@@ -79,14 +79,15 @@ export function useAESOData() {
         }));
       }
       
-      // Only accept live API data - no fallback allowed
+      // Only accept live API data with validation
       const isLiveData = data?.source === 'aeso_api' && data?.qa_metrics?.validation_passed === true;
       
       console.log('Data source validation:', { 
         isLiveData, 
         source: data?.source, 
         validation_passed: data?.qa_metrics?.validation_passed,
-        endpoint_used: data?.qa_metrics?.endpoint_used
+        endpoint_used: data?.qa_metrics?.endpoint_used,
+        data_quality: data?.qa_metrics?.data_quality
       });
       
       if (isLiveData) {
@@ -106,79 +107,91 @@ export function useAESOData() {
       setConnectionStatus('error');
       setError(error.message || 'Failed to fetch live data');
       
-      toast({
-        title: "AESO API Error",
-        description: `Failed to fetch live data: ${error.message}`,
-        variant: "destructive"
-      });
+      // Only show toast for unexpected errors, not API connectivity issues
+      if (!error.message?.includes('API key') && !error.message?.includes('timeout')) {
+        toast({
+          title: "AESO API Error",
+          description: `Failed to fetch live data: ${error.message}`,
+          variant: "destructive"
+        });
+      }
       
       throw error;
     }
   };
 
   const getCurrentPrices = async () => {
-    setLoading(true);
     try {
       const data = await fetchAESOData('fetch_current_prices');
       if (data) {
         setPricing(data);
+        console.log('Pricing data updated:', data);
       }
       return data;
     } catch (error) {
       console.error('Failed to get current prices:', error);
       return null;
-    } finally {
-      setLoading(false);
     }
   };
 
   const getLoadForecast = async () => {
-    setLoading(true);
     try {
       const data = await fetchAESOData('fetch_load_forecast');
       if (data) {
         setLoadData(data);
+        console.log('Load data updated:', data);
       }
       return data;
     } catch (error) {
       console.error('Failed to get load forecast:', error);
       return null;
-    } finally {
-      setLoading(false);
     }
   };
 
   const getGenerationMix = async () => {
-    setLoading(true);
     try {
       const data = await fetchAESOData('fetch_generation_mix');
       if (data) {
         setGenerationMix(data);
+        console.log('Generation mix updated:', data);
       }
       return data;
     } catch (error) {
       console.error('Failed to get generation mix:', error);
       return null;
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Auto-fetch data on component mount with retry logic
+  // Auto-fetch data on component mount with improved error handling
   useEffect(() => {
     const fetchAllData = async () => {
       console.log('Starting AESO data fetch...');
       setLoading(true);
       
       try {
-        await Promise.all([
+        // Fetch all data types concurrently
+        const results = await Promise.allSettled([
           getCurrentPrices(),
           getLoadForecast(),
           getGenerationMix()
         ]);
-        console.log('AESO data fetch completed successfully');
+        
+        // Check if at least one fetch succeeded
+        const successfulResults = results.filter(result => 
+          result.status === 'fulfilled' && result.value !== null
+        );
+        
+        if (successfulResults.length > 0) {
+          console.log(`AESO data fetch completed: ${successfulResults.length}/3 successful`);
+          setConnectionStatus('connected');
+        } else {
+          console.log('All AESO data fetches failed');
+          setConnectionStatus('error');
+        }
+        
       } catch (error) {
         console.error('Failed to fetch AESO data:', error);
+        setConnectionStatus('error');
       } finally {
         setLoading(false);
       }
@@ -209,9 +222,12 @@ export function useAESOData() {
     getGenerationMix,
     refetch: () => {
       console.log('Manual refetch triggered');
-      getCurrentPrices();
-      getLoadForecast();
-      getGenerationMix();
+      setLoading(true);
+      Promise.allSettled([
+        getCurrentPrices(),
+        getLoadForecast(),
+        getGenerationMix()
+      ]).finally(() => setLoading(false));
     }
   };
 }

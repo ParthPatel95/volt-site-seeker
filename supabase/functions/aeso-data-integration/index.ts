@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -124,27 +125,31 @@ serve(async (req) => {
   }
 });
 
-// Helper function to get current date range for API requests
+// Helper function to get current date range for API requests (MST timezone)
 function getAESODateRange() {
   const now = new Date();
-  // Get data from the last 2 hours to current time for better data availability
-  const startDate = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  // Convert to MST (UTC-7) / MDT (UTC-6) - Alberta timezone
+  const albertaOffset = -7; // MST offset (adjust for daylight saving if needed)
+  const albertaNow = new Date(now.getTime() + (albertaOffset * 60 * 60 * 1000));
+  
+  // Get data from the last 3 hours to current time for better data availability
+  const startDate = new Date(albertaNow.getTime() - 3 * 60 * 60 * 1000);
   
   return {
     startDate: formatAESODate(startDate),
-    endDate: formatAESODate(now)
+    endDate: formatAESODate(albertaNow)
   };
 }
 
-// Format date for AESO API (YYYY-MM-DD HH:mm)
+// Format date for AESO API (MM/dd/yyyy HH:mm)
 function formatAESODate(date: Date): string {
-  const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
   const hour = String(date.getHours()).padStart(2, '0');
   const minute = String(date.getMinutes()).padStart(2, '0');
   
-  return `${year}-${month}-${day} ${hour}:${minute}`;
+  return `${month}/${day}/${year} ${hour}:${minute}`;
 }
 
 // Retry wrapper for AESO API calls
@@ -172,14 +177,14 @@ async function retryAESORequest(requestFunc: () => Promise<any>, maxRetries = 3)
   throw lastError;
 }
 
-// AESO Pool Price endpoint with proper authentication
+// AESO Pool Price endpoint with proper APIM authentication
 async function fetchAESOPoolPriceWithRetry(apiKey: string) {
   return await retryAESORequest(async () => {
-    console.log('Fetching AESO pool price with proper authentication...');
+    console.log('Fetching AESO pool price with APIM authentication...');
     
     const { startDate, endDate } = getAESODateRange();
     
-    // Use the correct AESO API Gateway URL format
+    // Use the correct AESO APIM Gateway URL
     const baseUrl = 'https://api.aeso.ca/report/v1.1/price/poolPrice';
     const params = new URLSearchParams({
       startDate: startDate,
@@ -188,17 +193,17 @@ async function fetchAESOPoolPriceWithRetry(apiKey: string) {
     const url = `${baseUrl}?${params.toString()}`;
     
     console.log('Pool Price API URL:', url);
-    console.log('Date range:', { startDate, endDate });
+    console.log('Date range (MST):', { startDate, endDate });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
     
     try {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'X-API-Key': apiKey,
+          'Ocp-Apim-Subscription-Key': apiKey, // Correct APIM header
           'User-Agent': 'WattByte-Analytics/1.0',
           'Content-Type': 'application/json'
         },
@@ -218,27 +223,28 @@ async function fetchAESOPoolPriceWithRetry(apiKey: string) {
 
       const data = await response.json();
       console.log('Pool Price raw response structure:', {
-        hasReturn: !!data.return,
-        hasData: !!data.return?.data,
-        dataLength: data.return?.data?.length || 0,
-        sampleRecord: data.return?.data?.[0]
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        keys: Object.keys(data || {}),
+        dataLength: Array.isArray(data) ? data.length : 'N/A',
+        sampleRecord: Array.isArray(data) ? data[0] : data
       });
       
       return parseAESOPoolPriceData(data);
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - AESO API did not respond within 15 seconds');
+        throw new Error('Request timeout - AESO API did not respond within 20 seconds');
       }
       throw error;
     }
   });
 }
 
-// AESO Load Forecast endpoint with proper authentication
+// AESO Load Forecast endpoint with proper APIM authentication
 async function fetchAESOLoadForecastWithRetry(apiKey: string) {
   return await retryAESORequest(async () => {
-    console.log('Fetching AESO load forecast with proper authentication...');
+    console.log('Fetching AESO load forecast with APIM authentication...');
     
     const { startDate, endDate } = getAESODateRange();
     
@@ -250,17 +256,17 @@ async function fetchAESOLoadForecastWithRetry(apiKey: string) {
     const url = `${baseUrl}?${params.toString()}`;
     
     console.log('Load Forecast API URL:', url);
-    console.log('Date range:', { startDate, endDate });
+    console.log('Date range (MST):', { startDate, endDate });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     
     try {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'X-API-Key': apiKey,
+          'Ocp-Apim-Subscription-Key': apiKey, // Correct APIM header
           'User-Agent': 'WattByte-Analytics/1.0',
           'Content-Type': 'application/json'
         },
@@ -279,27 +285,28 @@ async function fetchAESOLoadForecastWithRetry(apiKey: string) {
 
       const data = await response.json();
       console.log('Load Forecast raw response structure:', {
-        hasReturn: !!data.return,
-        hasData: !!data.return?.data,
-        dataLength: data.return?.data?.length || 0,
-        sampleRecord: data.return?.data?.[0]
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        keys: Object.keys(data || {}),
+        dataLength: Array.isArray(data) ? data.length : 'N/A',
+        sampleRecord: Array.isArray(data) ? data[0] : data
       });
       
       return parseAESOLoadForecastData(data);
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - AESO API did not respond within 15 seconds');
+        throw new Error('Request timeout - AESO API did not respond within 20 seconds');
       }
       throw error;
     }
   });
 }
 
-// AESO Current Supply Demand endpoint with proper authentication
+// AESO Current Supply Demand endpoint with proper APIM authentication
 async function fetchAESOCurrentSupplyDemandWithRetry(apiKey: string) {
   return await retryAESORequest(async () => {
-    console.log('Fetching AESO current supply demand with proper authentication...');
+    console.log('Fetching AESO current supply demand with APIM authentication...');
     
     const { startDate, endDate } = getAESODateRange();
     
@@ -311,17 +318,17 @@ async function fetchAESOCurrentSupplyDemandWithRetry(apiKey: string) {
     const url = `${baseUrl}?${params.toString()}`;
     
     console.log('Current Supply Demand API URL:', url);
-    console.log('Date range:', { startDate, endDate });
+    console.log('Date range (MST):', { startDate, endDate });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     
     try {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'X-API-Key': apiKey,
+          'Ocp-Apim-Subscription-Key': apiKey, // Correct APIM header
           'User-Agent': 'WattByte-Analytics/1.0',
           'Content-Type': 'application/json'
         },
@@ -340,29 +347,35 @@ async function fetchAESOCurrentSupplyDemandWithRetry(apiKey: string) {
 
       const data = await response.json();
       console.log('Current Supply Demand raw response structure:', {
-        hasReturn: !!data.return,
-        hasData: !!data.return?.data,
-        dataLength: data.return?.data?.length || 0,
-        sampleRecord: data.return?.data?.[0]
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        keys: Object.keys(data || {}),
+        dataLength: Array.isArray(data) ? data.length : 'N/A',
+        sampleRecord: Array.isArray(data) ? data[0] : data
       });
       
       return parseAESOCurrentSupplyDemandData(data);
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - AESO API did not respond within 15 seconds');
+        throw new Error('Request timeout - AESO API did not respond within 20 seconds');
       }
       throw error;
     }
   });
 }
 
-// Data parsing functions
+// Updated data parsing functions to handle actual AESO API response structure
 function parseAESOPoolPriceData(data: any) {
   try {
     console.log('Parsing AESO pool price data structure');
     
-    const records = data.return?.data || [];
+    // Handle both direct array and wrapped response formats
+    let records = data;
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      records = data.return?.data || data.data || data.records || [];
+    }
+    
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error('No pool price data available in API response');
     }
@@ -370,8 +383,18 @@ function parseAESOPoolPriceData(data: any) {
     const latestRecord = records[records.length - 1];
     console.log('Latest pool price record:', latestRecord);
     
-    const currentPrice = parseFloat(latestRecord.pool_price) || 0;
-    const allPrices = records.map(r => parseFloat(r.pool_price) || 0).filter(p => p > 0);
+    // Handle different possible field names for price
+    const currentPrice = parseFloat(
+      latestRecord.pool_price || 
+      latestRecord.price || 
+      latestRecord.poolPrice || 
+      latestRecord.Pool_Price || 
+      0
+    );
+    
+    const allPrices = records.map(r => parseFloat(
+      r.pool_price || r.price || r.poolPrice || r.Pool_Price || 0
+    )).filter(p => p > 0);
     
     if (allPrices.length === 0) {
       throw new Error('No valid price data found');
@@ -382,7 +405,7 @@ function parseAESOPoolPriceData(data: any) {
       average_price: allPrices.reduce((a, b) => a + b, 0) / allPrices.length,
       peak_price: Math.max(...allPrices),
       off_peak_price: Math.min(...allPrices),
-      timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString(),
+      timestamp: latestRecord.begin_datetime_mpt || latestRecord.datetime || latestRecord.timestamp || new Date().toISOString(),
       market_conditions: currentPrice > 100 ? 'high_demand' : 'normal'
     };
   } catch (error) {
@@ -395,7 +418,12 @@ function parseAESOLoadForecastData(data: any) {
   try {
     console.log('Parsing AESO load forecast data structure');
     
-    const records = data.return?.data || [];
+    // Handle both direct array and wrapped response formats
+    let records = data;
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      records = data.return?.data || data.data || data.records || [];
+    }
+    
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error('No load forecast data available in API response');
     }
@@ -403,8 +431,18 @@ function parseAESOLoadForecastData(data: any) {
     const latestRecord = records[records.length - 1];
     console.log('Latest load forecast record:', latestRecord);
     
-    const currentLoad = parseFloat(latestRecord.alberta_internal_load) || parseFloat(latestRecord.forecast) || 0;
-    const allLoads = records.map(r => parseFloat(r.alberta_internal_load) || parseFloat(r.forecast) || 0).filter(l => l > 0);
+    // Handle different possible field names for load
+    const currentLoad = parseFloat(
+      latestRecord.alberta_internal_load || 
+      latestRecord.forecast || 
+      latestRecord.load || 
+      latestRecord.demand || 
+      0
+    );
+    
+    const allLoads = records.map(r => parseFloat(
+      r.alberta_internal_load || r.forecast || r.load || r.demand || 0
+    )).filter(l => l > 0);
     
     if (allLoads.length === 0) {
       throw new Error('No valid load data found');
@@ -413,7 +451,7 @@ function parseAESOLoadForecastData(data: any) {
     return {
       current_demand_mw: currentLoad,
       peak_forecast_mw: Math.max(...allLoads),
-      forecast_date: latestRecord.begin_datetime_mpt || new Date().toISOString(),
+      forecast_date: latestRecord.begin_datetime_mpt || latestRecord.datetime || latestRecord.timestamp || new Date().toISOString(),
       capacity_margin: calculateCapacityMargin(currentLoad),
       reserve_margin: calculateReserveMargin(currentLoad)
     };
@@ -427,7 +465,12 @@ function parseAESOCurrentSupplyDemandData(data: any) {
   try {
     console.log('Parsing AESO current supply demand data structure');
     
-    const records = data.return?.data || [];
+    // Handle both direct array and wrapped response formats
+    let records = data;
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      records = data.return?.data || data.data || data.records || [];
+    }
+    
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error('No current supply demand data available in API response');
     }
@@ -435,12 +478,13 @@ function parseAESOCurrentSupplyDemandData(data: any) {
     const latestRecord = records[records.length - 1];
     console.log('Latest supply demand record:', latestRecord);
     
-    const naturalGas = parseFloat(latestRecord.gas) || parseFloat(latestRecord.natural_gas) || 0;
-    const wind = parseFloat(latestRecord.wind) || 0;
-    const hydro = parseFloat(latestRecord.hydro) || 0;
-    const solar = parseFloat(latestRecord.solar) || 0;
-    const coal = parseFloat(latestRecord.coal) || 0;
-    const other = parseFloat(latestRecord.other) || parseFloat(latestRecord.biomass) || parseFloat(latestRecord.storage) || 0;
+    // Handle different possible field names for generation sources
+    const naturalGas = parseFloat(latestRecord.gas || latestRecord.natural_gas || latestRecord.Gas || 0);
+    const wind = parseFloat(latestRecord.wind || latestRecord.Wind || 0);
+    const hydro = parseFloat(latestRecord.hydro || latestRecord.Hydro || 0);
+    const solar = parseFloat(latestRecord.solar || latestRecord.Solar || 0);
+    const coal = parseFloat(latestRecord.coal || latestRecord.Coal || 0);
+    const other = parseFloat(latestRecord.other || latestRecord.biomass || latestRecord.storage || latestRecord.Other || 0);
     
     const totalGeneration = naturalGas + wind + hydro + solar + coal + other;
     
@@ -460,7 +504,7 @@ function parseAESOCurrentSupplyDemandData(data: any) {
       other_mw: other,
       total_generation_mw: totalGeneration,
       renewable_percentage: renewablePercentage,
-      timestamp: latestRecord.begin_datetime_mpt || new Date().toISOString()
+      timestamp: latestRecord.begin_datetime_mpt || latestRecord.datetime || latestRecord.timestamp || new Date().toISOString()
     };
   } catch (error) {
     console.error('Error parsing AESO current supply demand data:', error);
@@ -470,7 +514,7 @@ function parseAESOCurrentSupplyDemandData(data: any) {
 
 // Helper calculation functions
 function calculateCapacityMargin(currentLoad: number): number {
-  const estimatedCapacity = 16000; // MW
+  const estimatedCapacity = 16000; // MW - Alberta's approximate capacity
   return ((estimatedCapacity - currentLoad) / estimatedCapacity) * 100;
 }
 
@@ -479,7 +523,7 @@ function calculateReserveMargin(currentLoad: number): number {
   return (estimatedReserve / currentLoad) * 100;
 }
 
-// Data validation functions
+// Enhanced data validation functions
 function validateAESOData(data: any, action: string): boolean {
   if (!data) {
     console.log('QA FAIL: No data received');
