@@ -59,7 +59,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Pool Price</span>
             </div>
             <div className="text-lg font-bold text-electric-blue">
-              {pricing?.current_price_cents_kwh ? `${pricing.current_price_cents_kwh.toFixed(2)}¢/kWh` : '4.57¢/kWh'}
+              {pricing?.current_price ? `$${pricing.current_price.toFixed(2)}/MWh` : '$45.67/MWh'}
             </div>
           </div>
           
@@ -69,7 +69,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Demand</span>
             </div>
             <div className="text-lg font-bold text-electric-yellow">
-              {loadData?.load.current_mw ? (loadData.load.current_mw / 1000).toFixed(1) : '9.85'} GW
+              {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '9.85'} GW
             </div>
           </div>
           
@@ -79,7 +79,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Wind Power</span>
             </div>
             <div className="text-lg font-bold text-neon-green">
-              {generationMix?.generation_mw.wind ? (generationMix.generation_mw.wind / 1000).toFixed(1) : '2.4'} GW
+              {generationMix?.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : '2.4'} GW
             </div>
           </div>
           
@@ -89,7 +89,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Renewables</span>
             </div>
             <div className="text-lg font-bold text-warm-orange">
-              {generationMix?.renewable_percent?.toFixed(1) || '45.2'}%
+              {generationMix?.renewable_percentage?.toFixed(1) || '45.2'}%
             </div>
           </div>
         </div>
@@ -98,8 +98,8 @@ export const LiveAESOData = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold text-slate-200">Market Status</h4>
-            <Badge className={`bg-${pricing?.rates.forecast.tomorrow_avg > 5 ? 'warm-orange' : 'neon-green'}/20 text-${pricing?.rates.forecast.tomorrow_avg > 5 ? 'warm-orange' : 'neon-green'} text-xs border-${pricing?.rates.forecast.tomorrow_avg > 5 ? 'warm-orange' : 'neon-green'}/30`}>
-              {pricing?.rates.forecast.tomorrow_avg > 5 ? 'HIGH DEMAND' : 'NORMAL'}
+            <Badge className={`bg-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/20 text-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'} text-xs border-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/30`}>
+              {pricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
             </Badge>
           </div>
           
@@ -108,13 +108,13 @@ export const LiveAESOData = () => {
               <div className="flex justify-between items-center mb-2">
                 <span>System Load:</span>
                 <span className="text-electric-blue font-semibold">
-                  {loadData?.load.current_mw ? `${(loadData.load.current_mw / 1000).toFixed(1)} GW` : '9.85 GW'}
+                  {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : '9.85 GW'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Tomorrow Forecast:</span>
+                <span>Peak Forecast:</span>
                 <span className="text-electric-yellow font-semibold">
-                  {pricing?.rates.forecast.tomorrow_avg ? `${pricing.rates.forecast.tomorrow_avg.toFixed(2)}¢/kWh` : '4.21¢/kWh'}
+                  {loadData?.peak_forecast_mw ? `${(loadData.peak_forecast_mw / 1000).toFixed(1)} GW` : '11.2 GW'}
                 </span>
               </div>
             </div>
