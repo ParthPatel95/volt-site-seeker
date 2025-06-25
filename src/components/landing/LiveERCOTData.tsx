@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Zap, MapPin, TrendingUp, Sun, Clock, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Activity, Zap, MapPin, TrendingUp, Sun } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 
 export const LiveERCOTData = () => {
@@ -18,59 +18,59 @@ export const LiveERCOTData = () => {
   }, [pricing, loadData, generationMix]);
 
   return (
-    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group h-full">
-      <CardHeader className="pb-3 px-4 sm:px-6">
+    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
-            <CardTitle className="text-white text-base sm:text-lg md:text-xl">ERCOT Live Data</CardTitle>
+            <Activity className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
+            <CardTitle className="text-white text-xl">ERCOT Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-electric-blue rounded-full animate-pulse"></div>
             <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">Live</Badge>
           </div>
         </div>
-        <p className="text-slate-300 text-xs sm:text-sm">Real-time Texas grid operations and pricing</p>
+        <p className="text-slate-300 text-sm">Real-time Texas grid operations and pricing</p>
       </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-5 px-4 sm:px-6 pb-4 sm:pb-6">
-        {/* Live Metrics Grid - Changed to 2 columns per row */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          <div className={`bg-slate-800/30 rounded-lg p-2 sm:p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
-            <div className="flex items-center space-x-1 mb-1">
-              <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-electric-blue flex-shrink-0" />
-              <span className="text-xs text-slate-400 truncate">RT Price</span>
+      <CardContent className="space-y-6">
+        {/* Live Metrics Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-1">
+              <Zap className="w-4 h-4 text-electric-blue" />
+              <span className="text-xs text-slate-400">RT Price</span>
             </div>
-            <div className="text-sm sm:text-base lg:text-lg font-bold text-electric-blue break-words">
+            <div className="text-lg font-bold text-electric-blue">
               ${pricing?.current_price?.toFixed(2) || '42.50'}/MWh
             </div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-2 sm:p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
-            <div className="flex items-center space-x-1 mb-1">
-              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-electric-yellow flex-shrink-0" />
-              <span className="text-xs text-slate-400 truncate">Load</span>
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-1">
+              <TrendingUp className="w-4 h-4 text-electric-yellow" />
+              <span className="text-xs text-slate-400">Load</span>
             </div>
-            <div className="text-sm sm:text-base lg:text-lg font-bold text-electric-yellow break-words">
+            <div className="text-lg font-bold text-electric-yellow">
               {loadData ? (loadData.current_demand_mw / 1000).toFixed(1) : '52.0'} GW
             </div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-2 sm:p-3 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
-            <div className="flex items-center space-x-1 mb-1">
-              <Sun className="w-3 h-3 sm:w-4 sm:h-4 text-neon-green flex-shrink-0" />
-              <span className="text-xs text-slate-400 truncate">Solar</span>
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-1">
+              <Sun className="w-4 h-4 text-neon-green" />
+              <span className="text-xs text-slate-400">Solar</span>
             </div>
-            <div className="text-sm sm:text-base lg:text-lg font-bold text-neon-green break-words">
+            <div className="text-lg font-bold text-neon-green">
               {generationMix ? (generationMix.solar_mw / 1000).toFixed(1) : '4.5'} GW
             </div>
           </div>
           
-          <div className={`bg-slate-800/30 rounded-lg p-2 sm:p-3 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
-            <div className="flex items-center space-x-1 mb-1">
-              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-warm-orange flex-shrink-0" />
-              <span className="text-xs text-slate-400 truncate">Renewables</span>
+          <div className={`bg-slate-800/30 rounded-lg p-3 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-1">
+              <MapPin className="w-4 h-4 text-warm-orange" />
+              <span className="text-xs text-slate-400">Renewables</span>
             </div>
-            <div className="text-sm sm:text-base lg:text-lg font-bold text-warm-orange break-words">
+            <div className="text-lg font-bold text-warm-orange">
               {generationMix?.renewable_percentage?.toFixed(1) || '33.9'}%
             </div>
           </div>
@@ -79,117 +79,41 @@ export const LiveERCOTData = () => {
         {/* Generation Mix Summary */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs sm:text-sm font-semibold text-slate-200">Generation Mix</h4>
+            <h4 className="text-sm font-semibold text-slate-200">Generation Mix</h4>
             <Badge className={`bg-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/20 text-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'} text-xs border-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/30`}>
               {pricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
             </Badge>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Natural Gas:</span>
-              <span className="text-electric-blue font-semibold flex-shrink-0">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
+              <span className="text-slate-400">Natural Gas:</span>
+              <span className="text-electric-blue font-semibold">
                 {generationMix ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '28.0'} GW
               </span>
             </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Wind:</span>
-              <span className="text-neon-green font-semibold flex-shrink-0">
+            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
+              <span className="text-slate-400">Wind:</span>
+              <span className="text-neon-green font-semibold">
                 {generationMix ? (generationMix.wind_mw / 1000).toFixed(1) : '15.0'} GW
               </span>
             </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Nuclear:</span>
-              <span className="text-electric-yellow font-semibold flex-shrink-0">
+            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
+              <span className="text-slate-400">Nuclear:</span>
+              <span className="text-electric-yellow font-semibold">
                 {generationMix ? (generationMix.nuclear_mw / 1000).toFixed(1) : '5.0'} GW
               </span>
             </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Coal:</span>
-              <span className="text-warm-orange font-semibold flex-shrink-0">
+            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
+              <span className="text-slate-400">Coal:</span>
+              <span className="text-warm-orange font-semibold">
                 {generationMix ? (generationMix.coal_mw / 1000).toFixed(1) : '3.5'} GW
               </span>
             </div>
           </div>
         </div>
 
-        {/* Market Capacity & Reserve Info */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs sm:text-sm font-semibold text-slate-200">Grid Capacity</h4>
-            <div className="flex items-center space-x-1">
-              <BarChart3 className="w-3 h-3 text-electric-blue" />
-              <span className="text-xs text-slate-400">Reserve Status</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Reserve Margin:</span>
-              <span className="text-electric-blue font-semibold flex-shrink-0">
-                {loadData?.reserve_margin?.toFixed(1) || '14.2'}%
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Peak Forecast:</span>
-              <span className="text-electric-yellow font-semibold flex-shrink-0">
-                {loadData ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '62.5'} GW
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Total Capacity:</span>
-              <span className="text-neon-green font-semibold flex-shrink-0">
-                {generationMix ? (generationMix.total_generation_mw / 1000).toFixed(1) : '70.3'} GW
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Load Factor:</span>
-              <span className="text-warm-orange font-semibold flex-shrink-0">
-                {loadData?.capacity_margin ? (100 - loadData.capacity_margin).toFixed(1) : '74.0'}%
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Price Trends */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs sm:text-sm font-semibold text-slate-200">Price Trends</h4>
-            <div className="flex items-center space-x-1">
-              <Clock className="w-3 h-3 text-electric-blue" />
-              <span className="text-xs text-slate-400">24h Range</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">24h Average:</span>
-              <span className="text-electric-blue font-semibold flex-shrink-0">
-                ${pricing?.average_price?.toFixed(2) || '38.75'}/MWh
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">24h Peak:</span>
-              <span className="text-warm-orange font-semibold flex-shrink-0">
-                ${pricing?.peak_price?.toFixed(2) || '65.20'}/MWh
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Off-Peak:</span>
-              <span className="text-neon-green font-semibold flex-shrink-0">
-                ${pricing?.off_peak_price?.toFixed(2) || '22.40'}/MWh
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
-              <span className="text-slate-400 truncate mr-2">Load Zone:</span>
-              <span className="text-electric-yellow font-semibold flex-shrink-0 truncate">
-                {pricing?.load_zone || 'HOUSTON'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-xs text-slate-500 pt-2 border-t border-slate-700/30 break-words">
+        <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
           * Electric Reliability Council of Texas real-time data. Updates every 5 minutes.
         </div>
       </CardContent>

@@ -11,18 +11,15 @@ export const InteractiveInvestmentCalculator = () => {
   const [animatedReturns, setAnimatedReturns] = useState(0);
   const [animatedMOIC, setAnimatedMOIC] = useState(0);
 
-  // Calculate dynamic MOIC based on time horizon
-  // Assuming an annual return rate of ~17% which gives us 2.0-2.5x MOIC range
-  const annualReturnRate = 0.17; // 17% annual return
-  const calculatedMOIC = Math.pow(1 + annualReturnRate, timeHorizon[0]);
-  const projectedReturns = investmentAmount[0] * calculatedMOIC;
+  const targetMOIC = 2.25; // Average of 2.0-2.5x range
+  const projectedReturns = investmentAmount[0] * targetMOIC;
   const totalProfit = projectedReturns - investmentAmount[0];
-  const annualizedReturn = annualReturnRate;
+  const annualizedReturn = Math.pow(targetMOIC, 1/timeHorizon[0]) - 1;
 
-  // Animate numbers when values change
+  // Animate numbers
   useEffect(() => {
-    const duration = 800;
-    const steps = 30;
+    const duration = 1000;
+    const steps = 50;
     const stepDuration = duration / steps;
     
     let currentStep = 0;
@@ -31,47 +28,37 @@ export const InteractiveInvestmentCalculator = () => {
       const easeOut = 1 - Math.pow(1 - progress, 3);
       
       setAnimatedReturns(projectedReturns * easeOut);
-      setAnimatedMOIC(calculatedMOIC * easeOut);
+      setAnimatedMOIC(targetMOIC * easeOut);
       
       currentStep++;
       if (currentStep > steps) {
-        setAnimatedReturns(projectedReturns);
-        setAnimatedMOIC(calculatedMOIC);
         clearInterval(interval);
       }
     }, stepDuration);
 
     return () => clearInterval(interval);
-  }, [investmentAmount, timeHorizon, projectedReturns, calculatedMOIC]);
-
-  const handleInvestmentChange = (value: number[]) => {
-    setInvestmentAmount(value);
-  };
-
-  const handleTimeHorizonChange = (value: number[]) => {
-    setTimeHorizon(value);
-  };
+  }, [investmentAmount, timeHorizon, projectedReturns]);
 
   return (
-    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group h-full">
+    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
       <CardHeader className="pb-4">
         <div className="flex items-center space-x-2 mb-2">
-          <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
-          <CardTitle className="text-white text-lg sm:text-xl">Investment Calculator</CardTitle>
+          <Calculator className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
+          <CardTitle className="text-white text-xl">Investment Calculator</CardTitle>
           <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">Interactive</Badge>
         </div>
-        <p className="text-slate-300 text-xs sm:text-sm">Calculate your potential returns with WattByte Fund I</p>
+        <p className="text-slate-300 text-sm">Calculate your potential returns with WattByte Fund I</p>
       </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-6">
+      <CardContent className="space-y-6">
         {/* Investment Amount Slider */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-slate-200 font-medium text-sm sm:text-base">Investment Amount</span>
-            <span className="text-electric-blue font-bold text-sm sm:text-base">${investmentAmount[0].toLocaleString()}</span>
+            <span className="text-slate-200 font-medium">Investment Amount</span>
+            <span className="text-electric-blue font-bold">${investmentAmount[0].toLocaleString()}</span>
           </div>
           <Slider
             value={investmentAmount}
-            onValueChange={handleInvestmentChange}
+            onValueChange={setInvestmentAmount}
             max={5000000}
             min={50000}
             step={25000}
@@ -86,12 +73,12 @@ export const InteractiveInvestmentCalculator = () => {
         {/* Time Horizon Slider */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-slate-200 font-medium text-sm sm:text-base">Investment Period</span>
-            <span className="text-electric-yellow font-bold text-sm sm:text-base">{timeHorizon[0]} years</span>
+            <span className="text-slate-200 font-medium">Investment Period</span>
+            <span className="text-electric-yellow font-bold">{timeHorizon[0]} years</span>
           </div>
           <Slider
             value={timeHorizon}
-            onValueChange={handleTimeHorizonChange}
+            onValueChange={setTimeHorizon}
             max={10}
             min={3}
             step={1}
@@ -104,26 +91,26 @@ export const InteractiveInvestmentCalculator = () => {
         </div>
 
         {/* Results */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4 border-t border-slate-700/50">
-          <div className="bg-slate-800/30 rounded-lg p-3 sm:p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-neon-green/30">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
+          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-neon-green/30">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-4 h-4 text-neon-green" />
-              <span className="text-slate-300 text-xs sm:text-sm">Projected Returns</span>
+              <span className="text-slate-300 text-sm">Projected Returns</span>
             </div>
-            <div className="text-lg sm:text-2xl font-bold text-neon-green">
+            <div className="text-2xl font-bold text-neon-green">
               ${Math.round(animatedReturns).toLocaleString()}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              +${Math.round(Math.max(0, animatedReturns - investmentAmount[0])).toLocaleString()} profit
+              +${Math.round(animatedReturns - investmentAmount[0]).toLocaleString()} profit
             </div>
           </div>
           
-          <div className="bg-slate-800/30 rounded-lg p-3 sm:p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-electric-yellow/30">
+          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-electric-yellow/30">
             <div className="flex items-center space-x-2 mb-2">
               <DollarSign className="w-4 h-4 text-electric-yellow" />
-              <span className="text-slate-300 text-xs sm:text-sm">MOIC Multiple</span>
+              <span className="text-slate-300 text-sm">MOIC Multiple</span>
             </div>
-            <div className="text-lg sm:text-2xl font-bold text-electric-yellow">
+            <div className="text-2xl font-bold text-electric-yellow">
               {animatedMOIC.toFixed(2)}x
             </div>
             <div className="text-xs text-slate-400 mt-1">
@@ -133,7 +120,7 @@ export const InteractiveInvestmentCalculator = () => {
         </div>
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
-          * Projections based on 17% annual returns. Past performance does not guarantee future results.
+          * Projections based on 2.0-2.5x target MOIC. Past performance does not guarantee future results.
         </div>
       </CardContent>
     </Card>

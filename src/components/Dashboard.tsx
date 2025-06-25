@@ -1,403 +1,686 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Zap, 
-  Activity, 
-  TrendingUp, 
-  MapPin, 
-  DollarSign, 
-  Home,
-  Search,
-  Filter,
-  RefreshCw,
-  Wind,
-  Sun,
-  Battery
-} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Menu, Zap, TrendingUp, Activity, AlertTriangle, Building2, Search, Factory, Database, BarChart, Brain, RefreshCw, Globe, Users, DollarSign, MapPin, Satellite } from 'lucide-react';
+import { Sidebar } from '@/components/Sidebar';
+import { useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { CorporateIntelligence } from '@/components/CorporateIntelligence';
+import { PowerInfrastructure } from '@/components/PowerInfrastructure';
+import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
+import { DataManagement } from '@/components/DataManagement';
+import { AESOMarket } from '@/components/AESOMarket';
+import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
+import { ERCOTDashboard } from '@/components/power/ERCOTDashboard';
+import EnergyRates from '@/pages/EnergyRates';
+import EnergyRatesTest from '@/pages/EnergyRatesTest';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useERCOTData } from '@/hooks/useERCOTData';
+import { supabase } from '@/integrations/supabase/client';
+import { AccessRequestsSettings } from '@/components/settings/AccessRequestsSettings';
+import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
 
-export const Dashboard = () => {
-  const { pricing, loadData, generationMix, loading: aesoLoading } = useAESOData();
-  const { pricing: ercotPricing, loading: ercotLoading } = useERCOTData();
-  const [selectedProperty, setSelectedProperty] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+export function Dashboard() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
-  // Mock property data - in real app this would come from your property database
-  const properties = [
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsCollapsed(true);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return (
+    <div className="min-h-screen flex w-full bg-background">
+      <Sidebar 
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        isMobile={isMobile}
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+      />
+      
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        isMobile 
+          ? 'ml-0' 
+          : isCollapsed 
+            ? 'ml-16' 
+            : 'ml-72'
+      }`}>
+        {isMobile && (
+          <header className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(true)}
+              className="p-2"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            <h1 className="text-lg font-semibold">VoltScout</h1>
+            <div className="w-9" />
+          </header>
+        )}
+        
+        <main className="flex-1 overflow-auto">
+          <Routes>
+            <Route path="/" element={<EnhancedDashboardHome />} />
+            <Route path="/aeso-market" element={<AESOMarket />} />
+            <Route path="/aeso-intelligence" element={<AESOMarketIntelligence />} />
+            <Route path="/energy-rates" element={<EnergyRates />} />
+            <Route path="/energy-rates-test" element={<EnergyRatesTest />} />
+            <Route path="/industry-intelligence" element={<IndustryIntelligence />} />
+            <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
+            <Route path="/idle-industry-scanner" element={<IdleIndustryScanner />} />
+            <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
+            <Route path="/data-management" element={<DataManagement />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function EnhancedDashboardHome() {
+  const { pricing: aesoPricing, loadData: aesoLoadData, loading: aesoLoading, refetch: refetchAESO } = useAESOData();
+  const { pricing: ercotPricing, loadData: ercotLoad, loading: ercotLoading, refetch: refetchERCOT } = useERCOTData();
+  const [platformStats, setPlatformStats] = useState({
+    totalSubstations: 0,
+    totalProperties: 0,
+    companiesAnalyzed: 0,
+    alertsActive: 0
+  });
+  const [substationData, setSubstationData] = useState({
+    recentSubstations: [],
+    totalCapacity: 0,
+    highCapacityCount: 0
+  });
+  const [idleSitesData, setIdleSitesData] = useState({
+    recentSites: [],
+    totalSites: 0,
+    highScoreSites: 0
+  });
+
+  const refreshAllData = () => {
+    refetchAESO();
+    refetchERCOT();
+    loadPlatformStats();
+    loadSubstationData();
+    loadIdleSitesData();
+  };
+
+  const loadPlatformStats = async () => {
+    try {
+      const [substations, properties, companies, alerts] = await Promise.all([
+        supabase.from('substations').select('id', { count: 'exact', head: true }),
+        supabase.from('properties').select('id', { count: 'exact', head: true }),
+        supabase.from('companies').select('id', { count: 'exact', head: true }),
+        supabase.from('alerts').select('id', { count: 'exact', head: true })
+      ]);
+
+      setPlatformStats({
+        totalSubstations: substations.count || 0,
+        totalProperties: properties.count || 0,
+        companiesAnalyzed: companies.count || 0,
+        alertsActive: alerts.count || 0
+      });
+    } catch (error) {
+      console.error('Error loading platform stats:', error);
+    }
+  };
+
+  const loadSubstationData = async () => {
+    try {
+      const { data: substations, error } = await supabase
+        .from('substations')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      const totalCapacity = substations?.reduce((sum, sub) => sum + (sub.capacity_mva || 0), 0) || 0;
+      const highCapacityCount = substations?.filter(sub => (sub.capacity_mva || 0) > 100).length || 0;
+
+      setSubstationData({
+        recentSubstations: substations || [],
+        totalCapacity: Math.round(totalCapacity),
+        highCapacityCount
+      });
+    } catch (error) {
+      console.error('Error loading substation data:', error);
+    }
+  };
+
+  const loadIdleSitesData = async () => {
+    try {
+      const { data: sites, error } = await supabase
+        .from('verified_heavy_power_sites')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      const highScoreSites = sites?.filter(site => (site.idle_score || 0) > 70).length || 0;
+
+      setIdleSitesData({
+        recentSites: sites || [],
+        totalSites: sites?.length || 0,
+        highScoreSites
+      });
+    } catch (error) {
+      console.error('Error loading idle sites data:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadPlatformStats();
+    loadSubstationData();
+    loadIdleSitesData();
+  }, []);
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              VoltScout Dashboard
+            </h1>
+            <p className="text-lg text-gray-600">
+              Live energy market intelligence platform with real-time data
+            </p>
+          </div>
+          <Button 
+            onClick={refreshAllData}
+            disabled={aesoLoading || ercotLoading}
+            className="bg-gradient-to-r from-blue-600 to-indigo-700"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${(aesoLoading || ercotLoading) ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </Button>
+        </div>
+
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Live Market Overview</TabsTrigger>
+            <TabsTrigger value="platform">Platform Analytics</TabsTrigger>
+            <TabsTrigger value="features">Features Guide</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Live Market Data Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* AESO Alberta Market */}
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Zap className="w-5 h-5 mr-2 text-blue-600" />
+                    AESO Alberta Market
+                    <Badge variant="outline" className="ml-auto">Live</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {aesoLoading ? (
+                    <div className="text-center py-4">
+                      <Activity className="w-6 h-6 mx-auto mb-2 animate-pulse" />
+                      <p className="text-sm text-gray-500">Loading AESO data...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Current Price</p>
+                          <p className="text-2xl font-bold text-blue-600">
+                            ${aesoPricing?.current_price ? Number(aesoPricing.current_price).toFixed(2) : 'N/A'}/MWh
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">System Load</p>
+                          <p className="text-2xl font-bold text-blue-600">
+                            {aesoLoadData ? `${(aesoLoadData.current_demand_mw / 1000).toFixed(1)} GW` : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Last updated: {new Date().toLocaleTimeString()}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* ERCOT Texas Market */}
+              <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2 text-orange-600" />
+                    ERCOT Texas Market
+                    <Badge variant="outline" className="ml-auto">Live</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {ercotLoading ? (
+                    <div className="text-center py-4">
+                      <Activity className="w-6 h-6 mx-auto mb-2 animate-pulse" />
+                      <p className="text-sm text-gray-500">Loading ERCOT data...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Real-Time Price</p>
+                          <p className="text-2xl font-bold text-orange-600">
+                            ${ercotPricing?.current_price ? Number(ercotPricing.current_price).toFixed(2) : 'N/A'}/MWh
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">System Demand</p>
+                          <p className="text-2xl font-bold text-orange-600">
+                            {ercotLoad ? `${(ercotLoad.current_demand_mw / 1000).toFixed(1)} GW` : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Last updated: {new Date().toLocaleTimeString()}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Substation Tool Results */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Factory className="w-5 h-5 mr-2 text-green-600" />
+                    Power Infrastructure Discovery
+                    <Badge variant="secondary" className="ml-auto">{substationData.recentSubstations.length} Recent</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Capacity</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {substationData.totalCapacity.toLocaleString()} MVA
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">High Capacity Sites</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {substationData.highCapacityCount}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Recent Discoveries:</h4>
+                      {substationData.recentSubstations.slice(0, 3).map((substation: any) => (
+                        <div key={substation.id} className="flex items-center justify-between text-sm">
+                          <span className="truncate">{substation.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {substation.capacity_mva} MVA
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Satellite className="w-5 h-5 mr-2 text-purple-600" />
+                    Idle Industry Scanner
+                    <Badge variant="secondary" className="ml-auto">{idleSitesData.totalSites} Sites</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Sites Found</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {idleSitesData.totalSites}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">High Score Sites</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {idleSitesData.highScoreSites}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Recent Discoveries:</h4>
+                      {idleSitesData.recentSites.slice(0, 3).map((site: any) => (
+                        <div key={site.id} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-3 h-3 text-purple-500" />
+                            <span className="truncate">{site.name}</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {site.idle_score || 0}% idle
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="platform" className="space-y-6">
+            {/* Platform Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-600 font-medium">Power Infrastructure</p>
+                      <p className="text-3xl font-bold text-green-700">{platformStats.totalSubstations.toLocaleString()}</p>
+                      <p className="text-xs text-green-600">Substations Tracked</p>
+                    </div>
+                    <Factory className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-purple-600 font-medium">Properties</p>
+                      <p className="text-3xl font-bold text-purple-700">{platformStats.totalProperties.toLocaleString()}</p>
+                      <p className="text-xs text-purple-600">In Database</p>
+                    </div>
+                    <Building2 className="w-8 h-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-600 font-medium">Companies</p>
+                      <p className="text-3xl font-bold text-blue-700">{platformStats.companiesAnalyzed.toLocaleString()}</p>
+                      <p className="text-xs text-blue-600">Analyzed</p>
+                    </div>
+                    <Users className="w-8 h-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-yellow-600 font-medium">Active Alerts</p>
+                      <p className="text-3xl font-bold text-yellow-700">{platformStats.alertsActive.toLocaleString()}</p>
+                      <p className="text-xs text-yellow-600">Monitoring</p>
+                    </div>
+                    <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Platform Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Globe className="w-5 h-5 mr-2 text-blue-600" />
+                    Geographic Coverage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Alberta (AESO)</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Texas (ERCOT)</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Additional Markets</span>
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Planned</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                    Market Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">AESO Avg Price (24h)</span>
+                      <span className="font-semibold">${aesoPricing?.average_price ? Number(aesoPricing.average_price).toFixed(2) : 'N/A'}/MWh</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">ERCOT Avg Price (24h)</span>
+                      <span className="font-semibold">${ercotPricing?.average_price ? Number(ercotPricing.average_price).toFixed(2) : 'N/A'}/MWh</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Data Quality</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Excellent</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="features" className="space-y-6">
+            <PlatformFeaturesGuide />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+function PlatformFeaturesGuide() {
+  const features = [
     {
-      id: 1,
-      address: '123 Industrial Ave, Calgary, AB',
-      type: 'Industrial',
-      size: '50,000 sq ft',
-      powerUsage: '2.5 MW',
-      monthlyCost: 15000,
-      efficiency: 'B+',
-      renewableReady: true
+      icon: Zap,
+      title: "AESO Market Data",
+      description: "Real-time Alberta electricity market information and pricing",
+      howItWorks: "Connects directly to AESO API to fetch current pool prices, system load, and market conditions",
+      howToUse: "Navigate to AESO Market section to view live pricing, historical trends, and market forecasts",
+      dataCalculation: "Prices are fetched every 5 minutes from AESO's real-time data feed. Load data includes current demand, available supply, and reserve margins calculated by AESO's dispatch algorithm",
+      color: "blue"
     },
     {
-      id: 2,
-      address: '456 Commerce St, Edmonton, AB',
-      type: 'Commercial',
-      size: '25,000 sq ft',
-      powerUsage: '1.2 MW',
-      monthlyCost: 8500,
-      efficiency: 'A-',
-      renewableReady: false
+      icon: TrendingUp,
+      title: "ERCOT Texas Market",
+      description: "Live Texas grid operations and pricing data",
+      howItWorks: "Integrates with ERCOT's public APIs to provide real-time settlement point prices and system conditions",
+      howToUse: "Access through Market Intelligence section for Texas-specific energy market data and generation mix",
+      dataCalculation: "Real-time locational marginal prices (LMP) calculated by ERCOT's Security Constrained Economic Dispatch (SCED) every 5 minutes",
+      color: "orange"
     },
     {
-      id: 3,
-      address: '789 Manufacturing Blvd, Red Deer, AB',
-      type: 'Manufacturing',
-      size: '75,000 sq ft',
-      powerUsage: '4.8 MW',
-      monthlyCost: 28000,
-      efficiency: 'C+',
-      renewableReady: true
+      icon: BarChart,
+      title: "Energy Rate Calculator",
+      description: "Comprehensive electricity cost calculation tool",
+      howItWorks: "Combines real-time market prices with transmission & distribution charges, regulatory fees, and taxes",
+      howToUse: "Input your location, consumption profile, and rate class to get fully-burdened electricity costs",
+      dataCalculation: "Total cost = (Energy Charge × Usage) + (Demand Charge × Peak) + T&D Charges + Riders + Taxes. Uses current tariff schedules from local utilities",
+      color: "green"
+    },
+    {
+      icon: Brain,
+      title: "Market Intelligence",
+      description: "AI-powered energy market analysis and forecasting",
+      howItWorks: "Machine learning algorithms analyze historical patterns, weather data, and market fundamentals",
+      howToUse: "Review forecasting models, price predictions, and market trend analysis in the Intelligence section",
+      dataCalculation: "Uses ensemble ML models (LSTM neural networks, random forests) trained on 5+ years of market data, weather patterns, and economic indicators",
+      color: "purple"
+    },
+    {
+      icon: Building2,
+      title: "Corporate Intelligence",
+      description: "Company analysis and investment opportunity identification",
+      howItWorks: "Aggregates public financial data, news sentiment, and market positioning for energy companies",
+      howToUse: "Search for companies, view financial health scores, and track investment opportunities",
+      dataCalculation: "Financial health score calculated using debt-to-equity ratios, cash flow analysis, and market performance metrics weighted by industry benchmarks",
+      color: "indigo"
+    },
+    {
+      icon: Search,
+      title: "Idle Industry Scanner",
+      description: "Identifies underutilized industrial properties for development",
+      howItWorks: "Satellite imagery analysis combined with power consumption data to identify idle facilities",
+      howToUse: "Set search parameters for location and property type, review identified opportunities with power capacity estimates",
+      dataCalculation: "Property scoring based on: (Idle Score × 0.4) + (Power Proximity × 0.3) + (Infrastructure Score × 0.3). Idle score derived from activity patterns and utility data",
+      color: "cyan"
+    },
+    {
+      icon: Factory,
+      title: "Power Infrastructure",
+      description: "Comprehensive electrical infrastructure mapping and analysis",
+      howItWorks: "Integrates multiple data sources including FERC, EIA, and utility filings to map power infrastructure",
+      howToUse: "Search by location to find substations, transmission lines, and generation facilities with capacity details",
+      dataCalculation: "Capacity estimates use regulatory filings, engineering standards, and satellite analysis. Confidence scores based on data source reliability and verification methods",
+      color: "red"
+    },
+    {
+      icon: Database,
+      title: "Data Management",
+      description: "Centralized data quality control and source management",
+      howItWorks: "Automated data validation, source tracking, and quality assurance across all platform data",
+      howToUse: "Monitor data freshness, source reliability, and validation status across all platform features",
+      dataCalculation: "Data quality score = (Freshness × 0.3) + (Source Reliability × 0.4) + (Validation Status × 0.3). Scores updated in real-time as data is refreshed",
+      color: "gray"
     }
   ];
 
-  const filteredProperties = properties.filter(property =>
-    property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const getColorClasses = (color: string) => {
+    const colors = {
+      blue: "border-blue-200 bg-blue-50",
+      orange: "border-orange-200 bg-orange-50",
+      green: "border-green-200 bg-green-50",
+      purple: "border-purple-200 bg-purple-50",
+      indigo: "border-indigo-200 bg-indigo-50",
+      cyan: "border-cyan-200 bg-cyan-50",
+      red: "border-red-200 bg-red-50",
+      gray: "border-gray-200 bg-gray-50"
+    };
+    return colors[color as keyof typeof colors] || colors.gray;
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Zap className="w-8 h-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">VoltScout</span>
-              </div>
-              <div className="hidden md:flex space-x-6">
-                <a href="#" className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Dashboard</a>
-                <a href="#" className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Properties</a>
-                <a href="#" className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Markets</a>
-                <a href="#" className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Analytics</a>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh Data
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Platform Features Guide</h2>
+        <p className="text-lg text-gray-600">Comprehensive overview of VoltScout's capabilities, methodologies, and data sources</p>
+      </div>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Power Infrastructure Intelligence</h1>
-          <p className="text-gray-600">Real-time market data and property analysis for strategic investments</p>
-        </div>
-
-        {/* Market Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-100">AESO Pool Price</CardTitle>
-              <Zap className="h-4 w-4 text-blue-200" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {pricing?.current_price_cents_kwh ? `${pricing.current_price_cents_kwh.toFixed(2)} ¢/kWh` : 'Loading...'}
-              </div>
-              <p className="text-xs text-blue-200">
-                Alberta market rate
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-100">System Load</CardTitle>
-              <Activity className="h-4 w-4 text-green-200" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {loadData?.load?.current_mw ? `${(loadData.load.current_mw / 1000).toFixed(1)} GW` : 'Loading...'}
-              </div>
-              <p className="text-xs text-green-200">Current demand</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-100">Renewables</CardTitle>
-              <Wind className="h-4 w-4 text-purple-200" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {generationMix?.fuel_mix?.renewable_percent || 'Loading...'}%
-              </div>
-              <p className="text-xs text-purple-200">Of total generation</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-orange-100">ERCOT Price</CardTitle>
-              <DollarSign className="h-4 w-4 text-orange-200" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {ercotPricing?.current_price ? `$${ercotPricing.current_price.toFixed(2)}/MWh` : 'Loading...'}
-              </div>
-              <p className="text-xs text-orange-200">Texas market rate</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {features.map((feature, index) => (
+          <Card key={index} className={`${getColorClasses(feature.color)} hover:shadow-lg transition-shadow`}>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2" />
-                Price Trends (24h)
+                <feature.icon className={`w-6 h-6 mr-3 text-${feature.color}-600`} />
+                {feature.title}
               </CardTitle>
+              <p className="text-gray-600">{feature.description}</p>
             </CardHeader>
-            <CardContent>
-              <div className="h-64 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Price trend chart would be displayed here</p>
-                  <p className="text-sm">Integration with charting library needed</p>
-                </div>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-sm text-gray-800 mb-1">How It Works</h4>
+                <p className="text-sm text-gray-600">{feature.howItWorks}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm text-gray-800 mb-1">How to Use</h4>
+                <p className="text-sm text-gray-600">{feature.howToUse}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm text-gray-800 mb-1">Data Calculation</h4>
+                <p className="text-sm text-gray-600">{feature.dataCalculation}</p>
               </div>
             </CardContent>
           </Card>
+        ))}
+      </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Battery className="w-5 h-5 mr-2" />
-                Generation Mix
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Natural Gas</span>
-                  <span className="font-medium">{generationMix?.fuel_mix?.gas_percent || '0'}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Wind</span>
-                  <span className="font-medium">{generationMix?.fuel_mix?.wind_percent || '0'}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Hydro</span>
-                  <span className="font-medium">{generationMix?.fuel_mix?.hydro_percent || '0'}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Solar</span>
-                  <span className="font-medium">{generationMix?.fuel_mix?.solar_percent || '0'}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Coal</span>
-                  <span className="font-medium">{generationMix?.fuel_mix?.coal_percent || '0'}%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Properties Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Properties List */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center">
-                    <Home className="w-5 h-5 mr-2" />
-                    Property Portfolio
-                  </CardTitle>
-                  <Badge variant="secondary">{filteredProperties.length} Properties</Badge>
-                </div>
-                <div className="flex items-center space-x-2 mt-4">
-                  <div className="relative flex-1">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input
-                      placeholder="Search properties..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {filteredProperties.map((property) => (
-                    <div
-                      key={property.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedProperty?.id === property.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setSelectedProperty(property)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="font-medium text-gray-900">{property.address}</h3>
-                            <Badge variant="outline">{property.type}</Badge>
-                            {property.renewableReady && (
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                <Sun className="w-3 h-3 mr-1" />
-                                Renewable Ready
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                            <div>
-                              <span className="font-medium">Size:</span> {property.size}
-                            </div>
-                            <div>
-                              <span className="font-medium">Power:</span> {property.powerUsage}
-                            </div>
-                            <div>
-                              <span className="font-medium">Monthly Cost:</span> ${property.monthlyCost.toLocaleString()}
-                            </div>
-                            <div>
-                              <span className="font-medium">Efficiency:</span> {property.efficiency}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900">
-                            ${property.monthlyCost.toLocaleString()}
-                          </div>
-                          <div className="text-sm text-gray-500">per month</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+      {/* Additional Information */}
+      <Card className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2 text-blue-600" />
+            Data Sources & Reliability
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-2">Primary Data Sources</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• AESO (Alberta Electric System Operator)</li>
+                <li>• ERCOT (Electric Reliability Council of Texas)</li>
+                <li>• FERC (Federal Energy Regulatory Commission)</li>
+                <li>• EIA (Energy Information Administration)</li>
+                <li>• Utility Regulatory Filings</li>
+                <li>• Satellite Imagery Providers</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Data Refresh Intervals</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Market Prices: Every 5 minutes</li>
+                <li>• System Load: Every 5 minutes</li>
+                <li>• Infrastructure Data: Daily</li>
+                <li>• Corporate Data: Weekly</li>
+                <li>• Satellite Imagery: Monthly</li>
+                <li>• Regulatory Filings: As available</li>
+              </ul>
+            </div>
           </div>
-
-          {/* Property Details Sidebar */}
-          <div className="space-y-6">
-            {selectedProperty ? (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Property Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">{selectedProperty.address}</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Type:</span>
-                          <span className="font-medium">{selectedProperty.type}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Size:</span>
-                          <span className="font-medium">{selectedProperty.size}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Power Usage:</span>
-                          <span className="font-medium">{selectedProperty.powerUsage}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Efficiency Rating:</span>
-                          <span className="font-medium">{selectedProperty.efficiency}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Renewable Ready:</span>
-                          <span className={`font-medium ${selectedProperty.renewableReady ? 'text-green-600' : 'text-red-600'}`}>
-                            {selectedProperty.renewableReady ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Cost Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Current Monthly Cost:</span>
-                        <span className="font-medium">${selectedProperty.monthlyCost.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Annual Cost:</span>
-                        <span className="font-medium">${(selectedProperty.monthlyCost * 12).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Cost per kWh:</span>
-                        <span className="font-medium">
-                          {pricing?.current_price_cents_kwh ? `${pricing.current_price_cents_kwh.toFixed(2)} ¢` : 'Loading...'}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <Home className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">Select a property to view details</p>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Market Insights */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-sm">
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Market Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Avg Rate (30-day):</span>
-                  <span className="font-medium">{pricing?.rates?.monthly_avg ? `${pricing.rates.monthly_avg.toFixed(2)} ¢/kWh` : 'Loading...'}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Peak Load Today:</span>
-                  <span className="font-medium">{loadData?.load?.peak_mw ? `${(loadData.load.peak_mw / 1000).toFixed(1)} GW` : 'Loading...'}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Renewable %:</span>
-                  <span className="font-medium">{generationMix?.fuel_mix?.renewable_percent || 'Loading...'}%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Market Condition:</span>
-                  <Badge variant={pricing?.market_conditions === 'high_demand' ? 'destructive' : 'default'} className="text-xs">
-                    {pricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </main>
+        </CardContent>
+      </Card>
     </div>
   );
-};
+}
+
+function SettingsPage() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto">
+        <AccessRequestsSettings />
+      </div>
+    </div>
+  );
+}
