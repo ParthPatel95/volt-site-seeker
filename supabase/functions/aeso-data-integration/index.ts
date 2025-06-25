@@ -20,25 +20,16 @@ serve(async (req) => {
     console.log('AESO API Key available:', aesoApiKey ? 'Yes' : 'No');
     
     if (!aesoApiKey) {
-      console.log('No AESO API key found, using fallback data');
-      const fallbackData = getEnhancedFallbackData(action);
+      console.error('AESO API key not found - this is required for live data');
       return new Response(
         JSON.stringify({
-          success: true,
-          data: fallbackData,
-          source: 'fallback',
-          data_source: 'fallback',
-          timestamp: new Date().toISOString(),
-          qa_metrics: {
-            endpoint_used: 'fallback',
-            response_time_ms: 0,
-            data_quality: 'simulated',
-            validation_passed: true
-          }
+          success: false,
+          error: 'AESO API key not configured',
+          message: 'API key is required for live data access'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
+          status: 400
         }
       );
     }
@@ -56,15 +47,15 @@ serve(async (req) => {
     try {
       switch (action) {
         case 'fetch_current_prices':
-          data = await fetchAESOPoolPrice(aesoApiKey);
+          data = await fetchAESOPoolPriceWithRetry(aesoApiKey);
           qaMetrics.endpoint_used = 'pool-price';
           break;
         case 'fetch_load_forecast':
-          data = await fetchAESOLoadForecast(aesoApiKey);
+          data = await fetchAESOLoadForecastWithRetry(aesoApiKey);
           qaMetrics.endpoint_used = 'load-forecast';
           break;
         case 'fetch_generation_mix':
-          data = await fetchAESOCurrentSupplyDemand(aesoApiKey);
+          data = await fetchAESOCurrentSupplyDemandWithRetry(aesoApiKey);
           qaMetrics.endpoint_used = 'current-supply-demand';
           break;
         default:
@@ -77,6 +68,10 @@ serve(async (req) => {
       
       console.log('AESO API call successful, QA Metrics:', qaMetrics);
       console.log('Data validation result:', qaMetrics.validation_passed ? 'PASSED' : 'FAILED');
+
+      if (!qaMetrics.validation_passed) {
+        throw new Error('Data validation failed - received invalid data from AESO API');
+      }
 
       return new Response(
         JSON.stringify({
@@ -94,29 +89,21 @@ serve(async (req) => {
       );
 
     } catch (apiError) {
-      console.error('AESO API call failed:', apiError);
-      console.log('API call failed, falling back to simulated data');
-      
+      console.error('AESO API call failed after retries:', apiError);
       qaMetrics.response_time_ms = Date.now() - startTime;
-      qaMetrics.data_quality = 'fallback_after_api_error';
+      qaMetrics.data_quality = 'failed';
       qaMetrics.validation_passed = false;
-      
-      // Return fallback data instead of error when API fails
-      const fallbackData = getEnhancedFallbackData(action);
       
       return new Response(
         JSON.stringify({
-          success: true,
-          data: fallbackData,
-          source: 'fallback',
-          data_source: 'fallback',
-          timestamp: new Date().toISOString(),
+          success: false,
+          error: apiError.message,
           qa_metrics: qaMetrics,
-          api_error: apiError.message
+          timestamp: new Date().toISOString()
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
+          status: 500
         }
       );
     }
@@ -124,22 +111,15 @@ serve(async (req) => {
   } catch (error) {
     console.error('Edge function error:', error);
     
-    // Return fallback data even for edge function errors
-    const fallbackData = getEnhancedFallbackData('fetch_current_prices');
-    
     return new Response(
       JSON.stringify({
-        success: true,
-        data: fallbackData,
-        source: 'fallback',
-        data_source: 'fallback',
-        timestamp: new Date().toISOString(),
-        error_handled: true,
-        original_error: error.message
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
+        status: 500
       }
     );
   }
@@ -148,8 +128,8 @@ serve(async (req) => {
 // Helper function to get current date range for API requests
 function getAESODateRange() {
   const now = new Date();
-  // Get data from the last 2 hours to ensure we have recent data
-  const startDate = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  // Get data from the last hour to current time
+  const startDate = new Date(now.getTime() - 60 * 60 * 1000);
   
   return {
     startDate: formatAESODate(startDate),
@@ -168,162 +148,192 @@ function formatAESODate(date: Date): string {
   return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
-// AESO Pool Price endpoint
-async function fetchAESOPoolPrice(apiKey: string) {
-  console.log('Fetching AESO pool price...');
+// Retry wrapper for AESO API calls
+async function retryAESORequest(requestFunc: () => Promise<any>, maxRetries = 3): Promise<any> {
+  let lastError;
   
-  const { startDate, endDate } = getAESODateRange();
-  // Correct AESO API URL structure
-  const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-  
-  console.log('Pool Price URL:', url);
-  console.log('Date range:', { startDate, endDate });
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'X-API-Key': apiKey,
-      'Content-Type': 'application/json',
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`AESO API attempt ${attempt}/${maxRetries}`);
+      const result = await requestFunc();
+      console.log(`AESO API attempt ${attempt} succeeded`);
+      return result;
+    } catch (error) {
+      console.error(`AESO API attempt ${attempt} failed:`, error.message);
+      lastError = error;
+      
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff
+        console.log(`Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-  });
-
-  console.log('Pool Price API response status:', response.status);
-  console.log('Pool Price API response headers:', Object.fromEntries(response.headers.entries()));
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Pool Price API error response:', errorText);
-    throw new Error(`Pool Price API returned status ${response.status}: ${errorText}`);
   }
-
-  const data = await response.json();
-  console.log('Pool Price raw response:', JSON.stringify(data, null, 2));
   
-  return parseAESOPoolPriceData(data);
+  throw lastError;
 }
 
-// AESO Load Forecast endpoint
-async function fetchAESOLoadForecast(apiKey: string) {
-  console.log('Fetching AESO load forecast...');
-  
-  const { startDate, endDate } = getAESODateRange();
-  const url = `https://api.aeso.ca/report/v1.1/load/forecast?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-  
-  console.log('Load Forecast URL:', url);
-  console.log('Date range:', { startDate, endDate });
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'X-API-Key': apiKey,
-      'Content-Type': 'application/json',
+// AESO Pool Price endpoint with retry
+async function fetchAESOPoolPriceWithRetry(apiKey: string) {
+  return await retryAESORequest(async () => {
+    console.log('Fetching AESO pool price...');
+    
+    const { startDate, endDate } = getAESODateRange();
+    const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    
+    console.log('Pool Price URL:', url);
+    console.log('Date range:', { startDate, endDate });
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-API-Key': apiKey,
+          'User-Agent': 'WattByte-Analytics/1.0',
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      
+      console.log('Pool Price API response status:', response.status);
+      console.log('Pool Price API response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Pool Price API error response:', errorText);
+        throw new Error(`Pool Price API returned status ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Pool Price raw response structure:', {
+        hasReturn: !!data.return,
+        hasData: !!data.return?.data,
+        dataLength: data.return?.data?.length || 0,
+        sampleRecord: data.return?.data?.[0]
+      });
+      
+      return parseAESOPoolPriceData(data);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+      }
+      throw error;
     }
   });
-
-  console.log('Load Forecast API response status:', response.status);
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Load Forecast API error response:', errorText);
-    throw new Error(`Load Forecast API returned status ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-  console.log('Load Forecast raw response:', JSON.stringify(data, null, 2));
-  
-  return parseAESOLoadForecastData(data);
 }
 
-// AESO Current Supply Demand endpoint
-async function fetchAESOCurrentSupplyDemand(apiKey: string) {
-  console.log('Fetching AESO current supply demand...');
-  
-  const { startDate, endDate } = getAESODateRange();
-  const url = `https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-  
-  console.log('Current Supply Demand URL:', url);
-  console.log('Date range:', { startDate, endDate });
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'X-API-Key': apiKey,
-      'Content-Type': 'application/json',
+// AESO Load Forecast endpoint with retry
+async function fetchAESOLoadForecastWithRetry(apiKey: string) {
+  return await retryAESORequest(async () => {
+    console.log('Fetching AESO load forecast...');
+    
+    const { startDate, endDate } = getAESODateRange();
+    const url = `https://api.aeso.ca/report/v1.1/load/forecast?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    
+    console.log('Load Forecast URL:', url);
+    console.log('Date range:', { startDate, endDate });
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-API-Key': apiKey,
+          'User-Agent': 'WattByte-Analytics/1.0',
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      
+      console.log('Load Forecast API response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Load Forecast API error response:', errorText);
+        throw new Error(`Load Forecast API returned status ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Load Forecast raw response structure:', {
+        hasReturn: !!data.return,
+        hasData: !!data.return?.data,
+        dataLength: data.return?.data?.length || 0,
+        sampleRecord: data.return?.data?.[0]
+      });
+      
+      return parseAESOLoadForecastData(data);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+      }
+      throw error;
     }
   });
-
-  console.log('Current Supply Demand API response status:', response.status);
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Current Supply Demand API error response:', errorText);
-    throw new Error(`Current Supply Demand API returned status ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-  console.log('Current Supply Demand raw response:', JSON.stringify(data, null, 2));
-  
-  return parseAESOCurrentSupplyDemandData(data);
 }
 
-// Enhanced fallback data generator
-function getEnhancedFallbackData(dataType: string) {
-  const baseTime = Date.now();
-  const variation = Math.sin(baseTime / 100000) * 0.1; // Gentle variation
-  
-  switch (dataType) {
-    case 'fetch_current_prices':
-      const basePrice = 46.08;
-      const currentPrice = basePrice + (variation * 15);
-      return {
-        current_price: Math.max(25, currentPrice),
-        average_price: 44.30,
-        peak_price: Math.max(65, currentPrice * 1.6),
-        off_peak_price: Math.max(20, currentPrice * 0.7),
-        timestamp: new Date().toISOString(),
-        market_conditions: currentPrice > 55 ? 'high_demand' : 'normal'
-      };
-    case 'fetch_load_forecast':
-      const baseDemand = 9900;
-      const currentDemand = baseDemand + (variation * 800);
-      return {
-        current_demand_mw: Math.max(8500, currentDemand),
-        peak_forecast_mw: 11200,
-        forecast_date: new Date().toISOString(),
-        capacity_margin: 16.5 + (variation * 2.5),
-        reserve_margin: 18.7 + (variation * 1.8)
-      };
-    case 'fetch_generation_mix':
-      const baseTotal = 9900;
-      const total = baseTotal + (variation * 600);
+// AESO Current Supply Demand endpoint with retry
+async function fetchAESOCurrentSupplyDemandWithRetry(apiKey: string) {
+  return await retryAESORequest(async () => {
+    console.log('Fetching AESO current supply demand...');
+    
+    const { startDate, endDate } = getAESODateRange();
+    const url = `https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+    
+    console.log('Current Supply Demand URL:', url);
+    console.log('Date range:', { startDate, endDate });
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-API-Key': apiKey,
+          'User-Agent': 'WattByte-Analytics/1.0',
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
       
-      // Alberta-typical generation mix with more realistic variations
-      const naturalGas = total * (0.40 + variation * 0.08);
-      const wind = total * (0.28 + variation * 0.12); // Wind varies significantly
-      const hydro = total * 0.16; // More stable
-      const solar = total * (0.06 + Math.max(0, variation * 0.04)); // Solar varies with time
-      const coal = total * (0.07 - variation * 0.03); // Decreasing coal use
-      const other = total - (naturalGas + wind + hydro + solar + coal);
+      console.log('Current Supply Demand API response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Current Supply Demand API error response:', errorText);
+        throw new Error(`Current Supply Demand API returned status ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Current Supply Demand raw response structure:', {
+        hasReturn: !!data.return,
+        hasData: !!data.return?.data,
+        dataLength: data.return?.data?.length || 0,
+        sampleRecord: data.return?.data?.[0]
+      });
       
-      const renewablePercentage = ((wind + hydro + solar) / total) * 100;
-      
-      return {
-        natural_gas_mw: Math.max(0, naturalGas),
-        wind_mw: Math.max(0, wind),
-        solar_mw: Math.max(0, solar),
-        hydro_mw: Math.max(0, hydro),
-        coal_mw: Math.max(0, coal),
-        other_mw: Math.max(0, other),
-        total_generation_mw: total,
-        renewable_percentage: Math.min(75, Math.max(25, renewablePercentage)),
-        timestamp: new Date().toISOString()
-      };
-    default:
-      return null;
-  }
+      return parseAESOCurrentSupplyDemandData(data);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - AESO API did not respond within 10 seconds');
+      }
+      throw error;
+    }
+  });
 }
 
 // Data parsing functions
@@ -331,17 +341,14 @@ function parseAESOPoolPriceData(data: any) {
   try {
     console.log('Parsing AESO pool price data structure');
     
-    // AESO API returns data in 'return' object with 'data' array
     const records = data.return?.data || [];
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error('No pool price data available in API response');
     }
     
-    // Get the most recent record
     const latestRecord = records[records.length - 1];
     console.log('Latest pool price record:', latestRecord);
     
-    // AESO pool price field is 'pool_price'
     const currentPrice = parseFloat(latestRecord.pool_price) || 0;
     const allPrices = records.map(r => parseFloat(r.pool_price) || 0).filter(p => p > 0);
     
@@ -375,7 +382,6 @@ function parseAESOLoadForecastData(data: any) {
     const latestRecord = records[records.length - 1];
     console.log('Latest load forecast record:', latestRecord);
     
-    // AESO load forecast field is 'alberta_internal_load'
     const currentLoad = parseFloat(latestRecord.alberta_internal_load) || parseFloat(latestRecord.forecast) || 0;
     const allLoads = records.map(r => parseFloat(r.alberta_internal_load) || parseFloat(r.forecast) || 0).filter(l => l > 0);
     
@@ -408,7 +414,6 @@ function parseAESOCurrentSupplyDemandData(data: any) {
     const latestRecord = records[records.length - 1];
     console.log('Latest supply demand record:', latestRecord);
     
-    // AESO API generation fields - need to check actual field names
     const naturalGas = parseFloat(latestRecord.gas) || parseFloat(latestRecord.natural_gas) || 0;
     const wind = parseFloat(latestRecord.wind) || 0;
     const hydro = parseFloat(latestRecord.hydro) || 0;
@@ -444,13 +449,11 @@ function parseAESOCurrentSupplyDemandData(data: any) {
 
 // Helper calculation functions
 function calculateCapacityMargin(currentLoad: number): number {
-  // Estimate capacity margin based on typical Alberta values
   const estimatedCapacity = 16000; // MW
   return ((estimatedCapacity - currentLoad) / estimatedCapacity) * 100;
 }
 
 function calculateReserveMargin(currentLoad: number): number {
-  // Estimate reserve margin based on typical Alberta values
   const estimatedReserve = currentLoad * 0.15; // 15% reserve
   return (estimatedReserve / currentLoad) * 100;
 }

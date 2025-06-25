@@ -44,11 +44,10 @@ export function useAESOData() {
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [qaMetrics, setQaMetrics] = useState<Record<string, QAMetrics>>({});
   const [lastFetchTime, setLastFetchTime] = useState<string>('');
-  const [hasShownFallbackNotice, setHasShownFallbackNotice] = useState(false);
-  const [hasShownLiveNotice, setHasShownLiveNotice] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchAESOData = async (dataType: string) => {
@@ -68,6 +67,10 @@ export function useAESOData() {
 
       console.log('AESO data received:', data);
       
+      if (!data.success) {
+        throw new Error(data.error || 'API request failed');
+      }
+      
       // Update QA metrics
       if (data?.qa_metrics) {
         setQaMetrics(prev => ({
@@ -76,13 +79,11 @@ export function useAESOData() {
         }));
       }
       
-      // Check if this is live API data or fallback data
+      // Only accept live API data - no fallback allowed
       const isLiveData = data?.source === 'aeso_api' && data?.qa_metrics?.validation_passed === true;
-      const isFallback = data?.source === 'fallback' || data?.qa_metrics?.validation_passed === false;
       
-      console.log('Data source detection:', { 
+      console.log('Data source validation:', { 
         isLiveData, 
-        isFallback, 
         source: data?.source, 
         validation_passed: data?.qa_metrics?.validation_passed,
         endpoint_used: data?.qa_metrics?.endpoint_used
@@ -90,111 +91,28 @@ export function useAESOData() {
       
       if (isLiveData) {
         setConnectionStatus('connected');
-        setHasShownFallbackNotice(false);
         setLastFetchTime(data.timestamp || new Date().toISOString());
+        setError(null);
         
-        // Show success toast only once when first connecting to live data
-        if (connectionStatus !== 'connected' && !hasShownLiveNotice) {
-          setHasShownLiveNotice(true);
-          toast({
-            title: "AESO API Connected",
-            description: "Now receiving live market data from AESO",
-            variant: "default"
-          });
-        }
-      } else if (isFallback) {
-        setConnectionStatus('fallback');
-        setHasShownLiveNotice(false);
-        
-        // Only show fallback toast once when first switching to fallback
-        if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
-          setHasShownFallbackNotice(true);
-          toast({
-            title: "Using Demo Data",
-            description: data?.api_error ? `AESO API error: ${data.api_error}` : "AESO API unavailable, showing demo data",
-            variant: "destructive"
-          });
-        }
+        console.log('✅ Successfully received live AESO data');
+        return data?.data || data;
+      } else {
+        throw new Error('Failed to receive valid live data from AESO API');
       }
-      
-      return data?.data || data;
 
     } catch (error: any) {
       console.error('Error fetching AESO data:', error);
       
-      // Always set to fallback on error
-      setConnectionStatus('fallback');
-      setHasShownLiveNotice(false);
+      setConnectionStatus('error');
+      setError(error.message || 'Failed to fetch live data');
       
-      // Only show fallback toast once
-      if (!hasShownFallbackNotice) {
-        setHasShownFallbackNotice(true);
-        toast({
-          title: "Connection Issue",
-          description: "Using demo data while AESO API is unavailable",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "AESO API Error",
+        description: `Failed to fetch live data: ${error.message}`,
+        variant: "destructive"
+      });
       
-      // Return enhanced fallback data for continuity
-      const fallbackData = getEnhancedFallbackData(dataType);
-      return fallbackData;
-    }
-  };
-
-  const getEnhancedFallbackData = (dataType: string) => {
-    const baseTime = Date.now();
-    const variation = Math.sin(baseTime / 100000) * 0.1; // Gentle variation
-    
-    switch (dataType) {
-      case 'fetch_current_prices':
-        const basePrice = 46.08;
-        const currentPrice = basePrice + (variation * 15);
-        return {
-          current_price: Math.max(25, currentPrice),
-          average_price: 44.30,
-          peak_price: Math.max(65, currentPrice * 1.6),
-          off_peak_price: Math.max(20, currentPrice * 0.7),
-          timestamp: new Date().toISOString(),
-          market_conditions: currentPrice > 55 ? 'high_demand' : 'normal'
-        };
-      case 'fetch_load_forecast':
-        const baseDemand = 9900;
-        const currentDemand = baseDemand + (variation * 800);
-        return {
-          current_demand_mw: Math.max(8500, currentDemand),
-          peak_forecast_mw: 11200,
-          forecast_date: new Date().toISOString(),
-          capacity_margin: 16.5 + (variation * 2.5),
-          reserve_margin: 18.7 + (variation * 1.8)
-        };
-      case 'fetch_generation_mix':
-        const baseTotal = 9900;
-        const total = baseTotal + (variation * 600);
-        
-        // Alberta-typical generation mix with more realistic variations
-        const naturalGas = total * (0.40 + variation * 0.08);
-        const wind = total * (0.28 + variation * 0.12); // Wind varies significantly
-        const hydro = total * 0.16; // More stable
-        const solar = total * (0.06 + Math.max(0, variation * 0.04)); // Solar varies with time
-        const coal = total * (0.07 - variation * 0.03); // Decreasing coal use
-        const other = total - (naturalGas + wind + hydro + solar + coal);
-        
-        const renewablePercentage = ((wind + hydro + solar) / total) * 100;
-        
-        return {
-          natural_gas_mw: Math.max(0, naturalGas),
-          wind_mw: Math.max(0, wind),
-          solar_mw: Math.max(0, solar),
-          hydro_mw: Math.max(0, hydro),
-          coal_mw: Math.max(0, coal),
-          other_mw: Math.max(0, other),
-          total_generation_mw: total,
-          renewable_percentage: Math.min(75, Math.max(25, renewablePercentage)),
-          timestamp: new Date().toISOString()
-        };
-      default:
-        return null;
+      throw error;
     }
   };
 
@@ -206,6 +124,9 @@ export function useAESOData() {
         setPricing(data);
       }
       return data;
+    } catch (error) {
+      console.error('Failed to get current prices:', error);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -219,6 +140,9 @@ export function useAESOData() {
         setLoadData(data);
       }
       return data;
+    } catch (error) {
+      console.error('Failed to get load forecast:', error);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -232,21 +156,32 @@ export function useAESOData() {
         setGenerationMix(data);
       }
       return data;
+    } catch (error) {
+      console.error('Failed to get generation mix:', error);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-fetch data on component mount
+  // Auto-fetch data on component mount with retry logic
   useEffect(() => {
     const fetchAllData = async () => {
-      console.log('Starting initial data fetch...');
-      await Promise.all([
-        getCurrentPrices(),
-        getLoadForecast(),
-        getGenerationMix()
-      ]);
-      console.log('Initial data fetch completed');
+      console.log('Starting AESO data fetch...');
+      setLoading(true);
+      
+      try {
+        await Promise.all([
+          getCurrentPrices(),
+          getLoadForecast(),
+          getGenerationMix()
+        ]);
+        console.log('AESO data fetch completed successfully');
+      } catch (error) {
+        console.error('Failed to fetch AESO data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAllData();
@@ -268,6 +203,7 @@ export function useAESOData() {
     connectionStatus,
     qaMetrics,
     lastFetchTime,
+    error,
     getCurrentPrices,
     getLoadForecast,
     getGenerationMix,
