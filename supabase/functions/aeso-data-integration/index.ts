@@ -156,7 +156,7 @@ async function fetchAESOPoolPrice(apiKey: string) {
   
   const { startDate, endDate } = getAESODateRange();
   
-  // Use the Azure APIM gateway URL format
+  // Use the correct Azure APIM gateway URL format from the documentation
   const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/price/poolPrice';
   const params = new URLSearchParams({
     startDate: startDate,
@@ -168,7 +168,7 @@ async function fetchAESOPoolPrice(apiKey: string) {
   console.log('Date range (MST):', { startDate, endDate });
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
   
   try {
     const response = await fetch(url, {
@@ -203,7 +203,7 @@ async function fetchAESOPoolPrice(apiKey: string) {
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 10 seconds');
     }
     console.error('Pool Price fetch error details:', error);
     throw error;
@@ -216,7 +216,7 @@ async function fetchAESOLoadForecast(apiKey: string) {
   
   const { startDate, endDate } = getAESODateRange();
   
-  // Use the Azure APIM gateway URL format
+  // Use the correct Azure APIM gateway URL format from the documentation
   const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/load/forecast';
   const params = new URLSearchParams({
     startDate: startDate,
@@ -227,7 +227,7 @@ async function fetchAESOLoadForecast(apiKey: string) {
   console.log('Load Forecast API URL (Azure APIM):', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   
   try {
     const response = await fetch(url, {
@@ -261,7 +261,7 @@ async function fetchAESOLoadForecast(apiKey: string) {
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 10 seconds');
     }
     console.error('Load Forecast fetch error details:', error);
     throw error;
@@ -274,7 +274,7 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
   
   const { startDate, endDate } = getAESODateRange();
   
-  // Use the Azure APIM gateway URL format
+  // Use the correct Azure APIM gateway URL format from the documentation
   const baseUrl = 'https://apim-aeso-external-prod.azure-api.net/public-market-reports/v1.1/generation/currentSupplyDemand';
   const params = new URLSearchParams({
     startDate: startDate,
@@ -285,7 +285,7 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
   console.log('Current Supply Demand API URL (Azure APIM):', url);
   
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   
   try {
     const response = await fetch(url, {
@@ -319,7 +319,7 @@ async function fetchAESOCurrentSupplyDemand(apiKey: string) {
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - AESO API did not respond within 15 seconds');
+      throw new Error('Request timeout - AESO API did not respond within 10 seconds');
     }
     console.error('Current Supply Demand fetch error details:', error);
     throw error;
