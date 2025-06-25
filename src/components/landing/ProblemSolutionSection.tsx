@@ -1,133 +1,195 @@
 
-import { AlertTriangle, CheckCircle, Zap, Building, TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  AlertTriangle, 
+  TrendingUp, 
+  Target, 
+  CheckCircle,
+  Zap,
+  Building2,
+  MapPin,
+  DollarSign
+} from 'lucide-react';
+import { InteractiveInvestmentCalculator } from './InteractiveInvestmentCalculator';
+import { LiveDataPreview } from './LiveDataPreview';
+import { LiveAESOData } from './LiveAESOData';
+import { LiveERCOTData } from './LiveERCOTData';
+import { ScrollReveal } from './ScrollAnimations';
 
 export const ProblemSolutionSection = () => {
+  const problems = [
+    {
+      icon: <AlertTriangle className="w-6 h-6 text-warm-orange" />,
+      title: "Power Scarcity Crisis",
+      description: "Data centers need 10-50MW+ but face 3-7 year grid connection waits, creating massive opportunity gaps."
+    },
+    {
+      icon: <Building2 className="w-6 h-6 text-electric-blue" />,
+      title: "Location Intelligence Gap",
+      description: "Developers lack real-time insights into power availability, pricing, and regulatory landscapes across regions."
+    },
+    {
+      icon: <DollarSign className="w-6 h-6 text-neon-green" />,
+      title: "Capital Inefficiency",
+      description: "Institutional investors struggle to identify and validate power-rich real estate opportunities at scale."
+    }
+  ];
+
+  const solutions = [
+    {
+      icon: <Target className="w-6 h-6 text-electric-blue" />,
+      title: "Strategic Land Banking",
+      description: "Acquire power-entitled land ahead of demand, creating immediate development-ready opportunities."
+    },
+    {
+      icon: <Zap className="w-6 h-6 text-electric-yellow" />,
+      title: "AI-Powered Discovery",
+      description: "VoltScout platform identifies optimal sites using real-time grid data, pricing analytics, and regulatory intelligence."
+    },
+    {
+      icon: <TrendingUp className="w-6 h-6 text-neon-green" />,
+      title: "Value Creation Engine",
+      description: "Turn power constraints into profit opportunities through strategic infrastructure investment."
+    }
+  ];
+
   return (
-    <section className="relative z-10 py-8 md:py-16 px-4 sm:px-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Turning Power Constraints Into 
-            <span className="text-electric-yellow"> Profit Opportunities</span>
-          </h2>
-          <p className="text-lg md:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            The data center industry faces <span className="text-electric-yellow font-semibold">critical bottlenecks</span> in scaling 
-            to meet explosive AI demand. Power constraints are the 
-            <span className="text-neon-green font-semibold"> #1 limiting factor</span> across North America.
-          </p>
-        </div>
-        
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
-          {/* Challenge Side */}
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-2xl p-8 border border-red-500/30">
-              <div className="flex items-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center mr-4">
-                  <AlertTriangle className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white">Industry Challenges</h3>
-                  <p className="text-red-400 font-medium">Data Center Developers Face</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {[
-                  "Sourcing power-rich, low-cost sites in competitive markets",
-                  "Complex land entitlement & permitting across jurisdictions", 
-                  "Securing favorable power purchase agreements (PPAs)",
-                  "Building critical utility and municipal relationships",
-                  "Rising acquisition costs in traditional DC markets",
-                  "Meeting environmental & sustainability requirements"
-                ].map((challenge, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-red-500/5 transition-colors">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-gray-300 text-sm leading-relaxed">{challenge}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-red-500/20 flex items-center text-red-400">
-                <Building className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">Critical Infrastructure Bottlenecks</span>
-              </div>
-            </div>
+    <section className="py-16 sm:py-20 px-4 sm:px-6 relative">
+      <div className="max-w-7xl mx-auto">
+        {/* Section Header */}
+        <ScrollReveal>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+              <span className="text-white">Turning Power Constraints</span>
+              <br />
+              <span className="text-electric-blue">Into Profit Opportunities</span>
+            </h2>
+            <p className="text-lg sm:text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+              The energy transition creates unprecedented infrastructure investment opportunities. 
+              WattByte bridges the gap between power availability and digital infrastructure demand.
+            </p>
           </div>
+        </ScrollReveal>
 
-          {/* Solution Side */}
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-neon-green to-electric-blue rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-2xl p-8 border border-neon-green/30">
-              <div className="flex items-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-neon-green to-electric-blue rounded-xl flex items-center justify-center mr-4">
-                  <CheckCircle className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white">WattByte's Solution</h3>
-                  <p className="text-neon-green font-medium">Turning Problems into Profits</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {[
-                  "Identifying stranded/underutilized energy assets across North America",
-                  "Fast-tracking site control through established processes",
-                  "Delivering plug-and-play brownfield assets with clear pathways", 
-                  "Leveraging existing relationships with power providers",
-                  "Strategic land acquisition in emerging DC markets",
-                  "Prioritizing renewable energy sites for ESG compliance"
-                ].map((solution, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-neon-green/5 transition-colors">
-                    <div className="w-2 h-2 bg-neon-green rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-gray-300 text-sm leading-relaxed">{solution}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-neon-green/20 flex items-center text-neon-green">
-                <Zap className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">AI-Powered Infrastructure Intelligence</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Results Section */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-electric-blue/10 via-electric-yellow/20 to-neon-green/10 rounded-2xl blur-xl"></div>
-          <div className="relative bg-slate-900/80 backdrop-blur-sm rounded-2xl p-8 border border-electric-blue/30 text-center">
-            <div className="flex items-center justify-center mb-6">
-              <TrendingUp className="w-8 h-8 text-electric-blue mr-3" />
-              <h3 className="text-3xl font-bold text-white">The Result</h3>
+        {/* Problem Statement */}
+        <ScrollReveal delay={200}>
+          <div className="mb-16">
+            <div className="text-center mb-10">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                The <span className="text-warm-orange">Challenge</span>
+              </h3>
+              <p className="text-slate-300 text-lg max-w-3xl mx-auto">
+                North America faces a critical power infrastructure bottleneck that's constraining digital economy growth
+              </p>
             </div>
             
-            <p className="text-lg text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
-              By solving these critical industry pain points, WattByte creates{' '}
-              <span className="text-electric-yellow font-bold">significant value</span>{' '}
-              for data center operators and investors seeking exposure to{' '}
-              <span className="text-neon-green font-bold">digital infrastructure growth</span>{' '}
-              without operational complexity.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-electric-blue mb-2">675MW+</div>
-                <div className="text-gray-400 font-medium">Deal Experience</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-electric-yellow mb-2">2.0-2.5x</div>
-                <div className="text-gray-400 font-medium">Target MOIC</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-neon-green mb-2">$25M</div>
-                <div className="text-gray-400 font-medium">Fund I Target</div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {problems.map((problem, index) => (
+                <Card key={index} className="bg-slate-800/30 border-slate-700/50 hover:border-warm-orange/30 transition-all duration-300 group">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center space-x-3 mb-2">
+                      {problem.icon}
+                      <CardTitle className="text-lg text-white group-hover:text-warm-orange transition-colors">
+                        {problem.title}
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-300 leading-relaxed">{problem.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
-        </div>
+        </ScrollReveal>
+
+        {/* Solution Framework */}
+        <ScrollReveal delay={300}>
+          <div className="mb-16">
+            <div className="text-center mb-10">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                Our <span className="text-neon-green">Solution</span>
+              </h3>
+              <p className="text-slate-300 text-lg max-w-3xl mx-auto">
+                Strategic infrastructure investment backed by real-time intelligence and proven execution
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {solutions.map((solution, index) => (
+                <Card key={index} className="bg-slate-800/30 border-slate-700/50 hover:border-neon-green/30 transition-all duration-300 group">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center space-x-3 mb-2">
+                      {solution.icon}
+                      <CardTitle className="text-lg text-white group-hover:text-neon-green transition-colors">
+                        {solution.title}
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-300 leading-relaxed">{solution.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Live Data Grid Section */}
+        <ScrollReveal delay={400}>
+          <div className="mb-16">
+            <div className="text-center mb-10">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                <span className="text-electric-blue">Real-Time</span> Market Intelligence
+              </h3>
+              <p className="text-slate-300 text-lg max-w-3xl mx-auto">
+                Live data and interactive tools powering informed investment decisions
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <InteractiveInvestmentCalculator />
+              <LiveDataPreview />
+              <LiveERCOTData />
+              <LiveAESOData />
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Value Proposition */}
+        <ScrollReveal delay={500}>
+          <div className="text-center">
+            <Card className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 border-slate-700/50 p-8">
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <CheckCircle className="w-8 h-8 text-neon-green" />
+                  <h3 className="text-2xl font-bold text-white">The WattByte Advantage</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+                  <div>
+                    <div className="text-3xl font-bold text-electric-blue mb-2">675MW+</div>
+                    <div className="text-sm text-slate-300">Deal Experience</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-neon-green mb-2">2.0-2.5x</div>
+                    <div className="text-sm text-slate-300">Target MOIC</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-electric-yellow mb-2">$25M</div>
+                    <div className="text-sm text-slate-300">Fund I Target</div>
+                  </div>
+                </div>
+                
+                <p className="text-lg text-slate-200 max-w-3xl mx-auto leading-relaxed">
+                  We transform power infrastructure challenges into profitable opportunities through 
+                  strategic land acquisition, advanced analytics, and proven execution capabilities.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
