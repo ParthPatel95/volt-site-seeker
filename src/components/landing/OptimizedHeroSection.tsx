@@ -13,7 +13,7 @@ import './landing-animations.css';
 
 export const OptimizedHeroSection = () => {
   return (
-    <section className="relative z-10 pt-8 sm:pt-12 md:pt-16 pb-2 sm:pb-4 md:pb-6 px-4 sm:px-6">
+    <section className="relative z-10 pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6">
       {/* Enhanced background with parallax */}
       <div className="absolute inset-0 overflow-hidden">
         <ParallaxElement speed={0.3}>
@@ -30,7 +30,7 @@ export const OptimizedHeroSection = () => {
       <div className="max-w-7xl mx-auto text-center relative z-10">
         {/* Fund badges with scroll reveal */}
         <ScrollReveal delay={100}>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-1 sm:mb-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
             <Badge 
               variant="outline" 
               className="border-electric-blue/50 text-electric-blue bg-electric-blue/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-electric-blue/20 transition-colors duration-200 hover-lift"
@@ -57,7 +57,7 @@ export const OptimizedHeroSection = () => {
         
         {/* Main heading with scroll reveal */}
         <ScrollReveal delay={200}>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-1 sm:mb-2 leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 leading-tight">
             <span className="text-white">Turning </span>
             <span className="text-electric-blue">Power</span>
             <br />
@@ -68,49 +68,66 @@ export const OptimizedHeroSection = () => {
         
         {/* Description with scroll reveal */}
         <ScrollReveal delay={300}>
-          <div className="relative mb-2 sm:mb-3">
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-200 max-w-5xl mx-auto leading-relaxed font-medium px-2 bg-slate-900/20 rounded-2xl py-3 sm:py-4 border border-slate-700/30 hover-glow">
+          <div className="relative mb-6 sm:mb-8">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-200 max-w-5xl mx-auto leading-relaxed font-medium px-2 bg-slate-900/20 rounded-2xl py-6 border border-slate-700/30 hover-glow">
               Next-generation infrastructure fund acquiring power-rich land across North America 
               for <span className="text-electric-blue font-semibold">AI</span>, <span className="text-electric-yellow font-semibold">HPC</span>, and <span className="text-neon-green font-semibold">crypto data centers</span>, 
-              backed by <span className="text-electric-blue font-bold text-lg md:text-xl lg:text-2xl">675MW+</span> of deal experience.
+              backed by <span className="text-electric-blue font-bold text-2xl md:text-3xl">675MW+</span> of deal experience.
             </p>
           </div>
         </ScrollReveal>
         
-        {/* CTA buttons and Live Data Grid - compact layout */}
+        {/* CTA buttons with scroll reveal */}
         <ScrollReveal delay={400}>
-          <div className="space-y-2 sm:space-y-3">
-            {/* CTA buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center">
-              <Link to="/voltscout" className="w-full sm:w-auto group">
-                <Button 
-                  size="lg" 
-                  className="w-full sm:w-auto bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-electric-blue text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-2xl transition-all duration-300 hover:scale-105 hover-glow"
-                >
-                  <span className="flex items-center">
-                    Request Platform Access
-                    <ArrowRight className="ml-2 w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                  </span>
-                </Button>
-              </Link>
-              
-              <SiteAccessRequestModal>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="w-full sm:w-auto border-2 border-slate-300 text-slate-100 hover:bg-slate-800 hover:text-white hover:border-electric-blue px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold bg-slate-900/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover-lift"
-                >
-                  View Available Sites
-                </Button>
-              </SiteAccessRequestModal>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-6 sm:mb-8">
+            <Link to="/voltscout" className="w-full sm:w-auto group">
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-electric-blue text-white px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold shadow-2xl transition-all duration-300 hover:scale-105 hover-glow"
+              >
+                <span className="flex items-center">
+                  Request Platform Access
+                  <ArrowRight className="ml-2 sm:ml-3 w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                </span>
+              </Button>
+            </Link>
+            
+            <SiteAccessRequestModal>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full sm:w-auto border-2 border-slate-300 text-slate-100 hover:bg-slate-800 hover:text-white hover:border-electric-blue px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold bg-slate-900/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover-lift"
+              >
+                View Available Sites
+              </Button>
+            </SiteAccessRequestModal>
+          </div>
+        </ScrollReveal>
 
-            {/* Live Data Grid Section - ultra compact */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5 sm:gap-2 max-w-6xl mx-auto">
-              <InteractiveInvestmentCalculator />
-              <LiveDataPreview />
-              <LiveERCOTData />
-              <LiveAESOData />
+        {/* Live Data Grid Section */}
+        <ScrollReveal delay={500}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 sm:mb-8">
+            <InteractiveInvestmentCalculator />
+            <LiveDataPreview />
+            <LiveERCOTData />
+            <LiveAESOData />
+          </div>
+        </ScrollReveal>
+
+        {/* Key metrics with staggered scroll reveal */}
+        <ScrollReveal delay={600}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto">
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-electric-blue/50 transition-all duration-200 hover:bg-slate-800/70 hover-lift stagger-1">
+              <div className="text-2xl sm:text-3xl font-bold text-electric-blue mb-2">675MW+</div>
+              <div className="text-slate-200 text-sm sm:text-base">Deal Experience</div>
+            </div>
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-electric-yellow/50 transition-all duration-200 hover:bg-slate-800/70 hover-lift stagger-2">
+              <div className="text-2xl sm:text-3xl font-bold text-electric-yellow mb-2">$25M</div>
+              <div className="text-slate-200 text-sm sm:text-base">Target Fund Size</div>
+            </div>
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-slate-600/50 hover:border-neon-green/50 transition-all duration-200 hover:bg-slate-800/70 hover-lift stagger-3">
+              <div className="text-2xl sm:text-3xl font-bold text-neon-green mb-2">2.5x</div>
+              <div className="text-slate-200 text-sm sm:text-base">Target MOIC</div>
             </div>
           </div>
         </ScrollReveal>
