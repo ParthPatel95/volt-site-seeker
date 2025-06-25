@@ -13,7 +13,7 @@ import './landing-animations.css';
 
 export const OptimizedHeroSection = () => {
   return (
-    <section className="relative z-10 pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-8 px-4 sm:px-6">
+    <section className="relative z-10 pt-8 sm:pt-12 md:pt-16 pb-2 sm:pb-4 md:pb-6 px-4 sm:px-6">
       {/* Enhanced background with parallax */}
       <div className="absolute inset-0 overflow-hidden">
         <ParallaxElement speed={0.3}>
@@ -30,7 +30,7 @@ export const OptimizedHeroSection = () => {
       <div className="max-w-7xl mx-auto text-center relative z-10">
         {/* Fund badges with scroll reveal */}
         <ScrollReveal delay={100}>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-2 sm:mb-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-1 sm:mb-2">
             <Badge 
               variant="outline" 
               className="border-electric-blue/50 text-electric-blue bg-electric-blue/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-electric-blue/20 transition-colors duration-200 hover-lift"
@@ -57,7 +57,7 @@ export const OptimizedHeroSection = () => {
         
         {/* Main heading with scroll reveal */}
         <ScrollReveal delay={200}>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-3 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-1 sm:mb-2 leading-tight">
             <span className="text-white">Turning </span>
             <span className="text-electric-blue">Power</span>
             <br />
@@ -68,8 +68,8 @@ export const OptimizedHeroSection = () => {
         
         {/* Description with scroll reveal */}
         <ScrollReveal delay={300}>
-          <div className="relative mb-3 sm:mb-4">
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-200 max-w-5xl mx-auto leading-relaxed font-medium px-2 bg-slate-900/20 rounded-2xl py-4 sm:py-6 border border-slate-700/30 hover-glow">
+          <div className="relative mb-2 sm:mb-3">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-200 max-w-5xl mx-auto leading-relaxed font-medium px-2 bg-slate-900/20 rounded-2xl py-3 sm:py-4 border border-slate-700/30 hover-glow">
               Next-generation infrastructure fund acquiring power-rich land across North America 
               for <span className="text-electric-blue font-semibold">AI</span>, <span className="text-electric-yellow font-semibold">HPC</span>, and <span className="text-neon-green font-semibold">crypto data centers</span>, 
               backed by <span className="text-electric-blue font-bold text-lg md:text-xl lg:text-2xl">675MW+</span> of deal experience.
@@ -77,11 +77,11 @@ export const OptimizedHeroSection = () => {
           </div>
         </ScrollReveal>
         
-        {/* CTA buttons and Live Data Grid - more compact */}
+        {/* CTA buttons and Live Data Grid - compact layout */}
         <ScrollReveal delay={400}>
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2 sm:space-y-3">
             {/* CTA buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center">
               <Link to="/voltscout" className="w-full sm:w-auto group">
                 <Button 
                   size="lg" 
@@ -105,8 +105,8 @@ export const OptimizedHeroSection = () => {
               </SiteAccessRequestModal>
             </div>
 
-            {/* Live Data Grid Section - more compact */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 max-w-6xl mx-auto">
+            {/* Live Data Grid Section - ultra compact */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5 sm:gap-2 max-w-6xl mx-auto">
               <InteractiveInvestmentCalculator />
               <LiveDataPreview />
               <LiveERCOTData />
