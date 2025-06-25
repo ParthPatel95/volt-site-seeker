@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Zap, MapPin, TrendingUp, Eye } from 'lucide-react';
+import { Activity, Zap, MapPin, TrendingUp, Eye, Clock, AlertTriangle } from 'lucide-react';
 
 export const LiveDataPreview = () => {
   const [liveData, setLiveData] = useState({
@@ -38,6 +38,13 @@ export const LiveDataPreview = () => {
     { name: "Ontario Manufacturing Hub", mw: 89, score: 87, status: "monitoring" },
     { name: "Texas Data Center Site", mw: 156, score: 91, status: "active" },
     { name: "Quebec Mining Facility", mw: 203, score: 89, status: "active" }
+  ];
+
+  const marketInsights = [
+    { label: "Market Trend", value: "Bullish", trend: "up" },
+    { label: "Avg Deal Size", value: "$2.8M", trend: "up" },
+    { label: "Time to Close", value: "45 days", trend: "down" },
+    { label: "Competition", value: "Moderate", trend: "neutral" }
   ];
 
   return (
@@ -98,7 +105,7 @@ export const LiveDataPreview = () => {
             <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">+{liveData.recentOpportunities} this week</Badge>
           </div>
           
-          <div className="space-y-2 max-h-32 sm:max-h-48 overflow-y-auto custom-scrollbar">
+          <div className="space-y-2 max-h-32 sm:max-h-40 overflow-y-auto custom-scrollbar">
             {recentSites.map((site, index) => (
               <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-slate-800/20 rounded-lg hover:bg-slate-800/40 transition-colors duration-200 group/item border border-slate-700/20 hover:border-slate-600/30">
                 <div className="flex-1 min-w-0">
@@ -119,6 +126,37 @@ export const LiveDataPreview = () => {
                   >
                     {site.status}
                   </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Market Insights */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-200">Market Insights</h4>
+            <div className="flex items-center space-x-1">
+              <Clock className="w-3 h-3 text-electric-blue" />
+              <span className="text-xs text-slate-400">Live Analysis</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
+            {marketInsights.map((insight, index) => (
+              <div key={index} className="flex justify-between items-center p-2 sm:p-3 bg-slate-800/20 rounded border border-slate-700/20 min-w-0">
+                <span className="text-slate-400 truncate mr-2">{insight.label}:</span>
+                <div className="flex items-center space-x-1 flex-shrink-0">
+                  <span className={`font-semibold ${
+                    insight.trend === 'up' ? 'text-neon-green' :
+                    insight.trend === 'down' ? 'text-warm-orange' :
+                    'text-electric-blue'
+                  }`}>
+                    {insight.value}
+                  </span>
+                  {insight.trend === 'up' && <TrendingUp className="w-3 h-3 text-neon-green" />}
+                  {insight.trend === 'down' && <TrendingUp className="w-3 h-3 text-warm-orange rotate-180" />}
+                  {insight.trend === 'neutral' && <AlertTriangle className="w-3 h-3 text-electric-blue" />}
                 </div>
               </div>
             ))}
