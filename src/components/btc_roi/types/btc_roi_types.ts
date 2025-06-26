@@ -1,3 +1,4 @@
+
 export interface BTCNetworkData {
   price: number;
   difficulty: number;
@@ -40,6 +41,9 @@ export interface BTCROIFormData {
   manualDistributionRate: number; // USD per kWh
   manualAncillaryRate: number; // USD per kWh
   manualRegulatoryRate: number; // USD per kWh
+  
+  // Site naming
+  siteName?: string; // Optional site name
 }
 
 export interface BTCROIResults {
@@ -80,6 +84,18 @@ export interface HostingROIResults {
   costAnalytics: CostAnalytics;
   competitiveAnalysis: CompetitiveAnalysis;
   taxAnalysis: TaxAnalysis;
+}
+
+// New interface for stored calculations
+export interface StoredCalculation {
+  id: string;
+  siteName: string;
+  calculationType: 'hosting' | 'self';
+  formData: BTCROIFormData;
+  networkData: BTCNetworkData;
+  results: HostingROIResults | BTCROIResults;
+  timestamp: Date;
+  notes?: string;
 }
 
 export interface MonthlyBreakdown {

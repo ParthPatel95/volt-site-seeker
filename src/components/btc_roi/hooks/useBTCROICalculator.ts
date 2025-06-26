@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { BTCNetworkData, BTCROIFormData, BTCROIResults, HostingROIResults } from '../types/btc_roi_types';
 import { HostingCalculatorService } from '../services/hostingCalculatorService';
+import { useStoredCalculations } from './useStoredCalculations';
 
 export const useBTCROICalculator = () => {
   const [networkData, setNetworkData] = useState<BTCNetworkData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [roiResults, setROIResults] = useState<BTCROIResults | null>(null);
   const [hostingResults, setHostingResults] = useState<HostingROIResults | null>(null);
+  const { saveCalculation, generateSiteName } = useStoredCalculations();
   
   const [formData, setFormData] = useState<BTCROIFormData>({
     asicModel: '',
@@ -40,7 +42,10 @@ export const useBTCROICalculator = () => {
     manualTransmissionRate: 0,
     manualDistributionRate: 0,
     manualAncillaryRate: 0,
-    manualRegulatoryRate: 0
+    manualRegulatoryRate: 0,
+    
+    // Site naming
+    siteName: ''
   });
 
   // Fetch live Bitcoin network data
@@ -173,6 +178,16 @@ export const useBTCROICalculator = () => {
     }
   };
 
+  // Save current calculation
+  const saveCurrentCalculation = (calculationType: 'hosting' | 'self', siteName?: string) => {
+    if (!networkData) return;
+    
+    const results = calculationType === 'hosting' ? hostingResults : roiResults;
+    if (!results) return;
+    
+    saveCalculation(calculationType, formData, networkData, results, siteName);
+  };
+
   // Fetch network data on component mount and every 60 seconds
   useEffect(() => {
     fetchNetworkData();
@@ -188,6 +203,8 @@ export const useBTCROICalculator = () => {
     hostingResults,
     calculateMiningROI,
     calculateHostingROI,
+    saveCurrentCalculation,
+    generateSiteName,
     isLoading
   };
 };

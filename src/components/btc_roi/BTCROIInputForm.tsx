@@ -131,6 +131,18 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
 
   const renderHostingInputs = () => (
     <>
+      {/* Site Name */}
+      <div className="space-y-2">
+        <Label htmlFor="siteName">Site Name (Optional)</Label>
+        <Input
+          id="siteName"
+          value={formData.siteName || ''}
+          onChange={(e) => handleInputChange('siteName', e.target.value)}
+          placeholder="e.g., Wattbyte Campus 1, Texas Facility"
+        />
+        <p className="text-xs text-gray-500">Leave blank for auto-generated name</p>
+      </div>
+
       {/* Facility Scale */}
       <div className="space-y-2">
         <Label htmlFor="totalLoadKW">Total Facility Load (kW)</Label>
@@ -350,6 +362,20 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Site Name for both modes */}
+        {mode === 'self' && (
+          <div className="space-y-2">
+            <Label htmlFor="siteName">Site Name (Optional)</Label>
+            <Input
+              id="siteName"
+              value={formData.siteName || ''}
+              onChange={(e) => handleInputChange('siteName', e.target.value)}
+              placeholder="e.g., Home Mining Setup, Garage Farm"
+            />
+            <p className="text-xs text-gray-500">Leave blank for auto-generated name</p>
+          </div>
+        )}
+
         {mode === 'self' ? renderSelfMiningInputs() : renderHostingInputs()}
 
         {/* Advanced Settings Toggle (only for self-mining) */}

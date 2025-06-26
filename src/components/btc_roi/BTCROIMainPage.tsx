@@ -7,12 +7,14 @@ import { BTCROIMiningModeSelector } from './BTCROIMiningModeSelector';
 import { BTCROIInputForm } from './BTCROIInputForm';
 import { BTCROIOutputTable } from './BTCROIOutputTable';
 import { BTCROIHostingOutputTable } from './BTCROIHostingOutputTable';
+import { BTCROIHostingAnalytics } from './BTCROIHostingAnalytics';
 import { BTCROISensitivityChart } from './BTCROISensitivityChart';
 import { BTCROIASICCatalog } from './BTCROIASICCatalog';
 import { BTCROIProfitabilityHeatmap } from './BTCROIProfitabilityHeatmap';
 import { BTCROILineChart } from './BTCROILineChart';
+import { BTCROIStoredCalculations } from './BTCROIStoredCalculations';
 import { useBTCROICalculator } from './hooks/useBTCROICalculator';
-import { Bitcoin, Calculator, TrendingUp, Grid3X3, Building2 } from 'lucide-react';
+import { Bitcoin, Calculator, TrendingUp, Grid3X3, Building2, BarChart3 } from 'lucide-react';
 
 export const BTCROIMainPage = () => {
   const [miningMode, setMiningMode] = useState<'hosting' | 'self'>('hosting');
@@ -24,6 +26,7 @@ export const BTCROIMainPage = () => {
     hostingResults,
     calculateMiningROI,
     calculateHostingROI,
+    saveCurrentCalculation,
     isLoading 
   } = useBTCROICalculator();
 
@@ -33,6 +36,10 @@ export const BTCROIMainPage = () => {
     } else {
       calculateMiningROI();
     }
+  };
+
+  const handleSaveCalculation = (siteName?: string) => {
+    saveCurrentCalculation(miningMode, siteName);
   };
 
   return (
@@ -60,7 +67,7 @@ export const BTCROIMainPage = () => {
         {/* Main Content Tabs */}
         <Tabs defaultValue="calculator" className="space-y-4 sm:space-y-6">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-4 min-w-[320px] h-auto p-1">
+            <TabsList className="grid w-full grid-cols-5 min-w-[400px] h-auto p-1">
               <TabsTrigger 
                 value="calculator" 
                 className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3 min-w-0"
@@ -72,11 +79,18 @@ export const BTCROIMainPage = () => {
                 <span className="truncate">{miningMode === 'hosting' ? 'Host' : 'Mine'}</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="analysis" 
+                className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3 min-w-0"
+              >
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">Analysis</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="sensitivity" 
                 className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3 min-w-0"
               >
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">Analysis</span>
+                <span className="truncate">Charts</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="catalog" 
@@ -115,6 +129,92 @@ export const BTCROIMainPage = () => {
                   <BTCROIHostingOutputTable hostingResults={hostingResults} />
                 ) : (
                   <BTCROIOutputTable roiResults={roiResults} />
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analysis" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+              <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+                {/* Enhanced Analytics for Hosting */}
+                {miningMode === 'hosting' && hostingResults && (
+                  <BTCROIHostingAnalytics hostingResults={hostingResults} />
+                )}
+                
+                {/* Stored Calculations */}
+                <BTCROIStoredCalculations
+                  currentCalculationType={miningMode}
+                  currentResults={miningMode === 'hosting' ? hostingResults : roiResults}
+                  onSaveCalculation={handleSaveCalculation}
+                />
+              </div>
+              
+              <div className="space-y-4 sm:space-y-6">
+                {/* Quick Stats or Summary */}
+                {(miningMode === 'hosting' ? hostingResults : roiResults) && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Current Results Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {miningMode === 'hosting' && hostingResults ? (
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                            <span>Net Annual Profit:</span>
+                            <span className="font-bold text-green-600">
+                              ${hostingResults.netProfit.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>ROI (12 months):</span>
+                            <span className="font-bold">
+                              {hostingResults.roi12Month.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Profit Margin:</span>
+                            <span className="font-bold">
+                              {hostingResults.profitMarginPercent.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Payback Period:</span>
+                            <span className="font-bold">
+                              {hostingResults.paybackPeriodYears.toFixed(1)} years
+                            </span>
+                          </div>
+                        </div>
+                      ) : roiResults && (
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                            <span>Daily Net Profit:</span>
+                            <span className="font-bold text-green-600">
+                              ${roiResults.dailyNetProfit.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Monthly Net Profit:</span>
+                            <span className="font-bold">
+                              ${roiResults.monthlyNetProfit.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>ROI (12 months):</span>
+                            <span className="font-bold">
+                              {roiResults.roi12Month.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Break Even:</span>
+                            <span className="font-bold">
+                              {roiResults.breakEvenDays.toFixed(0)} days
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             </div>
