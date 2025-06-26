@@ -37,13 +37,7 @@ export const LiveDataPreview = () => {
     { name: "Alberta Industrial Complex", mw: 125, score: 94, status: "active" },
     { name: "Ontario Manufacturing Hub", mw: 89, score: 87, status: "monitoring" },
     { name: "Texas Data Center Site", mw: 156, score: 91, status: "active" },
-    { name: "Quebec Mining Facility", mw: 203, score: 89, status: "active" },
-    { name: "British Columbia Smelter", mw: 178, score: 92, status: "active" },
-    { name: "Saskatchewan Power Plant", mw: 245, score: 88, status: "monitoring" },
-    { name: "Manitoba Steel Mill", mw: 134, score: 85, status: "active" },
-    { name: "New Brunswick Paper Mill", mw: 67, score: 83, status: "monitoring" },
-    { name: "Nova Scotia Energy Complex", mw: 198, score: 90, status: "active" },
-    { name: "Alberta Petrochemical Site", mw: 156, score: 86, status: "active" }
+    { name: "Quebec Mining Facility", mw: 203, score: 89, status: "active" }
   ];
 
   return (
@@ -97,14 +91,14 @@ export const LiveDataPreview = () => {
           </div>
         </div>
 
-        {/* Recent Opportunities - Expanded */}
+        {/* Recent Opportunities */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold text-slate-200">Recent Opportunities</h4>
             <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">+{liveData.recentOpportunities} this week</Badge>
           </div>
           
-          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+          <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
             {recentSites.map((site, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-slate-800/20 rounded-lg hover:bg-slate-800/40 transition-colors duration-200 group/item border border-slate-700/20 hover:border-slate-600/30">
                 <div className="flex-1 min-w-0">
