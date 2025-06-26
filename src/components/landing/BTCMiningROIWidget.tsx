@@ -50,7 +50,7 @@ export const BTCMiningROIWidget = () => {
         <div className="flex items-center space-x-2 mb-2">
           <Bitcoin className="w-6 h-6 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
           <CardTitle className="text-white text-xl">BTC Mining ROI Lab</CardTitle>
-          <Badge className="bg-orange-500/20 text-orange-400 text-xs border-orange-500/30">Live Tool</Badge>
+          <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">Live</Badge>
         </div>
         <p className="text-slate-300 text-sm">Calculate mining and hosting profitability with real-time data</p>
       </CardHeader>
