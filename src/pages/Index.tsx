@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { BottomNavigation } from '@/components/ui/bottom-navigation';
-import { Menu, Home, Zap, Building2, Factory, Database, Brain, Bitcoin, Target, BarChart3, TrendingUp } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
@@ -21,9 +20,7 @@ export default function Index() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-
+  
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
@@ -37,79 +34,6 @@ export default function Index() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  const bottomNavItems = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: Home,
-      onClick: () => navigate('/app'),
-      active: location.pathname === '/app'
-    },
-    {
-      id: 'aeso-market',
-      label: 'AESO',
-      icon: Zap,
-      onClick: () => navigate('/app/aeso-market'),
-      active: location.pathname === '/app/aeso-market'
-    },
-    {
-      id: 'market-intelligence',
-      label: 'Market Intel',
-      icon: Brain,
-      onClick: () => navigate('/app/market-intelligence'),
-      active: location.pathname === '/app/market-intelligence'
-    },
-    {
-      id: 'energy-rates',
-      label: 'Energy Rates',
-      icon: BarChart3,
-      onClick: () => navigate('/app/energy-rates'),
-      active: location.pathname === '/app/energy-rates'
-    },
-    {
-      id: 'industry-intelligence',
-      label: 'Industry Intel',
-      icon: TrendingUp,
-      onClick: () => navigate('/app/industry-intelligence'),
-      active: location.pathname === '/app/industry-intelligence'
-    },
-    {
-      id: 'corporate',
-      label: 'Corporate',
-      icon: Building2,
-      onClick: () => navigate('/app/corporate-intelligence'),
-      active: location.pathname === '/app/corporate-intelligence'
-    },
-    {
-      id: 'idle-scanner',
-      label: 'Scanner',
-      icon: Target,
-      onClick: () => navigate('/app/idle-industry-scanner'),
-      active: location.pathname === '/app/idle-industry-scanner'
-    },
-    {
-      id: 'power',
-      label: 'Power',
-      icon: Factory,
-      onClick: () => navigate('/app/power-infrastructure'),
-      active: location.pathname === '/app/power-infrastructure'
-    },
-    {
-      id: 'btc-roi',
-      label: 'BTC ROI',
-      icon: Bitcoin,
-      onClick: () => navigate('/app/btc-roi-lab'),
-      active: location.pathname === '/app/btc-roi-lab'
-    },
-    {
-      id: 'data',
-      label: 'Data',
-      icon: Database,
-      onClick: () => navigate('/app/data-management'),
-      active: location.pathname === '/app/data-management'
-    }
-  ];
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -144,7 +68,7 @@ export default function Index() {
           </header>
         )}
         
-        <main className={`flex-1 overflow-auto ${isMobile ? 'pb-16' : ''}`}>
+        <main className="flex-1 overflow-auto">
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="aeso-market" element={<AESOMarket />} />
@@ -159,11 +83,6 @@ export default function Index() {
             <Route path="settings" element={<Settings />} />
           </Routes>
         </main>
-
-        {/* Bottom Navigation for Mobile */}
-        {isMobile && (
-          <BottomNavigation items={bottomNavItems} />
-        )}
       </div>
     </div>
   );
