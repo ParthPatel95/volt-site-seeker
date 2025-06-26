@@ -40,12 +40,14 @@ export const BTCROIMainPage = () => {
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-4">
-            <Bitcoin className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-500" />
-            <h1 className="text-xl sm:text-2xl md:text-4xl font-bold text-gray-800">BTC Mining ROI Lab</h1>
-            <Calculator className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-orange-500" />
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-4 flex-wrap">
+            <Bitcoin className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-500 flex-shrink-0" />
+            <h1 className="text-xl sm:text-2xl md:text-4xl font-bold text-gray-800 break-words text-center">
+              BTC Mining ROI Lab
+            </h1>
+            <Calculator className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-orange-500 flex-shrink-0" />
           </div>
-          <p className="text-gray-600 text-xs sm:text-sm md:text-lg px-2 sm:px-4">
+          <p className="text-gray-600 text-xs sm:text-sm md:text-lg px-2 sm:px-4 max-w-4xl mx-auto leading-relaxed">
             Live Bitcoin mining profitability analyzer with real-time network data and hosting profitability tools
           </p>
         </div>
@@ -57,23 +59,38 @@ export const BTCROIMainPage = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="calculator" className="space-y-4 sm:space-y-6">
-          <div className="overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-4 min-w-[300px] h-auto p-1">
-              <TabsTrigger value="calculator" className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3">
-                {miningMode === 'hosting' ? <Building2 className="w-3 h-3 sm:w-4 sm:h-4" /> : <Calculator className="w-3 h-3 sm:w-4 sm:h-4" />}
-                <span>{miningMode === 'hosting' ? 'Host' : 'Mine'}</span>
+          <div className="w-full overflow-x-auto">
+            <TabsList className="grid w-full grid-cols-4 min-w-[320px] h-auto p-1">
+              <TabsTrigger 
+                value="calculator" 
+                className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3 min-w-0"
+              >
+                {miningMode === 'hosting' ? 
+                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> : 
+                  <Calculator className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                }
+                <span className="truncate">{miningMode === 'hosting' ? 'Host' : 'Mine'}</span>
               </TabsTrigger>
-              <TabsTrigger value="sensitivity" className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>Analysis</span>
+              <TabsTrigger 
+                value="sensitivity" 
+                className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3 min-w-0"
+              >
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">Analysis</span>
               </TabsTrigger>
-              <TabsTrigger value="catalog" className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3">
-                <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>ASICs</span>
+              <TabsTrigger 
+                value="catalog" 
+                className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3 min-w-0"
+              >
+                <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">ASICs</span>
               </TabsTrigger>
-              <TabsTrigger value="heatmap" className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3">
-                <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>Heat</span>
+              <TabsTrigger 
+                value="heatmap" 
+                className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3 min-w-0"
+              >
+                <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">Heat</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -93,7 +110,7 @@ export const BTCROIMainPage = () => {
                   isLoading={isLoading}
                 />
               </div>
-              <div className="order-1 lg:order-2">
+              <div className="order-1 lg:order-2 min-w-0">
                 {miningMode === 'hosting' ? (
                   <BTCROIHostingOutputTable hostingResults={hostingResults} />
                 ) : (
@@ -103,18 +120,18 @@ export const BTCROIMainPage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="sensitivity">
+          <TabsContent value="sensitivity" className="min-w-0">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-              <div className="order-2 xl:order-1">
+              <div className="order-2 xl:order-1 min-w-0">
                 <BTCROISensitivityChart roiResults={roiResults} networkData={networkData} />
               </div>
-              <div className="order-1 xl:order-2">
+              <div className="order-1 xl:order-2 min-w-0">
                 <BTCROILineChart roiResults={roiResults} />
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="catalog">
+          <TabsContent value="catalog" className="min-w-0">
             <BTCROIASICCatalog onSelectASIC={(asic) => {
               setFormData(prev => ({
                 ...prev,
@@ -127,7 +144,7 @@ export const BTCROIMainPage = () => {
             }} />
           </TabsContent>
 
-          <TabsContent value="heatmap">
+          <TabsContent value="heatmap" className="min-w-0">
             <BTCROIProfitabilityHeatmap 
               formData={formData} 
               networkData={networkData}
