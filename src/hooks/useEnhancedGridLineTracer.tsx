@@ -278,6 +278,26 @@ export function useEnhancedGridLineTracer() {
           gridConditions: 'normal'
         };
       } else if (market === 'ERCOT' && ercotPricing) {
+        // Convert ERCOTGenerationMix to the expected format
+        let generationMix = {
+          renewable: 35,
+          natural_gas: 45,
+          coal: 8,
+          nuclear: 10,
+          other: 2
+        };
+        
+        if (ercotGeneration) {
+          const totalGeneration = ercotGeneration.total_generation_mw || 1;
+          generationMix = {
+            renewable: Math.round(((ercotGeneration.wind_mw + ercotGeneration.solar_mw) / totalGeneration) * 100),
+            natural_gas: Math.round((ercotGeneration.natural_gas_mw / totalGeneration) * 100),
+            coal: Math.round((ercotGeneration.coal_mw / totalGeneration) * 100),
+            nuclear: Math.round((ercotGeneration.nuclear_mw / totalGeneration) * 100),
+            other: Math.round(((ercotGeneration.hydro_mw + ercotGeneration.other_mw) / totalGeneration) * 100)
+          };
+        }
+
         marketData = {
           market: 'ERCOT',
           timestamp: new Date().toISOString(),
@@ -286,13 +306,7 @@ export function useEnhancedGridLineTracer() {
           offPeakPrice: ercotPricing.off_peak_price,
           currency: 'USD',
           demandForecast: ercotLoad?.current_demand_mw || 65000,
-          generationMix: ercotGeneration || {
-            renewable: 35,
-            natural_gas: 45,
-            coal: 8,
-            nuclear: 10,
-            other: 2
-          },
+          generationMix: generationMix,
           gridConditions: ercotPricing.market_conditions as any || 'normal'
         };
       } else {
