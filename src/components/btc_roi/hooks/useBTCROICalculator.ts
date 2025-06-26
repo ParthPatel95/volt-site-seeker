@@ -32,7 +32,15 @@ export const useBTCROICalculator = () => {
     infrastructureCost: 200000, // $200k initial investment
     monthlyOverhead: 5000, // $5k monthly overhead
     powerOverheadPercent: 5, // 5% power overhead for cooling
-    expectedUptimePercent: 95 // 95% expected uptime
+    expectedUptimePercent: 95, // 95% expected uptime
+    
+    // Manual energy cost overrides
+    useManualEnergyCosts: false,
+    manualEnergyRate: 0,
+    manualTransmissionRate: 0,
+    manualDistributionRate: 0,
+    manualAncillaryRate: 0,
+    manualRegulatoryRate: 0
   });
 
   // Fetch live Bitcoin network data

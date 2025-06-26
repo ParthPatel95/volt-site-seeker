@@ -25,8 +25,9 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
   isLoading
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showManualEnergy, setShowManualEnergy] = useState(formData.useManualEnergyCosts || false);
 
-  const handleInputChange = (field: keyof BTCROIFormData, value: string | number) => {
+  const handleInputChange = (field: keyof BTCROIFormData, value: string | number | boolean) => {
     onFormDataChange({
       ...formData,
       [field]: value
@@ -145,7 +146,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
 
       {/* Hosting Fee Rate */}
       <div className="space-y-2">
-        <Label htmlFor="hostingFeeRate">Hosting Fee Rate ($/kWh)</Label>
+        <Label htmlFor="hostingFeeRate">Hosting Fee Rate ($/kWh USD)</Label>
         <Input
           id="hostingFeeRate"
           type="number"
@@ -154,7 +155,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
           onChange={(e) => handleInputChange('hostingFeeRate', parseFloat(e.target.value) || 0)}
           placeholder="e.g., 0.08"
         />
-        <p className="text-xs text-gray-500">Rate charged to clients per kWh consumed</p>
+        <p className="text-xs text-gray-500">Rate charged to clients per kWh consumed (always USD)</p>
       </div>
 
       {/* Region Selection */}
@@ -172,16 +173,16 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
         </Select>
         <p className="text-xs text-gray-500">
           {formData.region !== 'Other' 
-            ? 'Uses live wholesale electricity price data'
+            ? 'Uses live wholesale electricity price data with regional tax rates'
             : 'Allows manual electricity cost input'
           }
         </p>
       </div>
 
-      {/* Custom Electricity Cost (only for Other region) */}
-      {formData.region === 'Other' && (
+      {/* Custom Electricity Cost (only for Other region and when not using manual) */}
+      {formData.region === 'Other' && !showManualEnergy && (
         <div className="space-y-2">
-          <Label htmlFor="customElectricityCost">Your Electricity Cost ($/kWh)</Label>
+          <Label htmlFor="customElectricityCost">Your Electricity Cost ($/kWh USD)</Label>
           <Input
             id="customElectricityCost"
             type="number"
@@ -191,6 +192,95 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
             placeholder="e.g., 0.05"
           />
           <p className="text-xs text-gray-500">Wholesale electricity cost paid by your facility</p>
+        </div>
+      )}
+
+      {/* Manual Energy Costs Toggle */}
+      <div className="flex items-center space-x-2 pt-4 border-t">
+        <Switch
+          id="manualEnergy"
+          checked={showManualEnergy}
+          onCheckedChange={(checked) => {
+            setShowManualEnergy(checked);
+            handleInputChange('useManualEnergyCosts', checked);
+          }}
+        />
+        <Label htmlFor="manualEnergy" className="flex items-center gap-2">
+          <Zap className="w-4 h-4" />
+          Manual Energy Cost Override
+        </Label>
+      </div>
+
+      {/* Manual Energy Cost Inputs */}
+      {showManualEnergy && (
+        <div className="space-y-4 pt-4 border-t bg-blue-50 p-4 rounded-lg">
+          <h4 className="font-medium text-blue-800">Manual Energy Rate Components ($/kWh USD)</h4>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="manualEnergyRate">Wholesale Energy Rate</Label>
+              <Input
+                id="manualEnergyRate"
+                type="number"
+                step="0.0001"
+                value={formData.manualEnergyRate || 0}
+                onChange={(e) => handleInputChange('manualEnergyRate', parseFloat(e.target.value) || 0)}
+                placeholder="e.g., 0.0250"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="manualTransmissionRate">Transmission Rate</Label>
+              <Input
+                id="manualTransmissionRate"
+                type="number"
+                step="0.0001"
+                value={formData.manualTransmissionRate || 0}
+                onChange={(e) => handleInputChange('manualTransmissionRate', parseFloat(e.target.value) || 0)}
+                placeholder="e.g., 0.0015"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="manualDistributionRate">Distribution Rate</Label>
+              <Input
+                id="manualDistributionRate"
+                type="number"
+                step="0.0001"
+                value={formData.manualDistributionRate || 0}
+                onChange={(e) => handleInputChange('manualDistributionRate', parseFloat(e.target.value) || 0)}
+                placeholder="e.g., 0.0026"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="manualAncillaryRate">Ancillary Services</Label>
+              <Input
+                id="manualAncillaryRate"
+                type="number"
+                step="0.0001"
+                value={formData.manualAncillaryRate || 0}
+                onChange={(e) => handleInputChange('manualAncillaryRate', parseFloat(e.target.value) || 0)}
+                placeholder="e.g., 0.0015"
+              />
+            </div>
+            
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="manualRegulatoryRate">Regulatory Fees</Label>
+              <Input
+                id="manualRegulatoryRate"
+                type="number"
+                step="0.0001"
+                value={formData.manualRegulatoryRate || 0}
+                onChange={(e) => handleInputChange('manualRegulatoryRate', parseFloat(e.target.value) || 0)}
+                placeholder="e.g., 0.0015"
+              />
+            </div>
+          </div>
+          
+          <div className="text-sm text-blue-700 bg-blue-100 p-3 rounded">
+            <strong>Total Manual Rate: ${((formData.manualEnergyRate || 0) + (formData.manualTransmissionRate || 0) + (formData.manualDistributionRate || 0) + (formData.manualAncillaryRate || 0) + (formData.manualRegulatoryRate || 0)).toFixed(4)}/kWh USD</strong>
+          </div>
         </div>
       )}
 

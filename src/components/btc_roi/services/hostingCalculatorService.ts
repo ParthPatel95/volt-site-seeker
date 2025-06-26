@@ -1,4 +1,4 @@
-import { BTCROIFormData, HostingROIResults, RegionalEnergyData, HourlyPrice } from '../types/btc_roi_types';
+import { BTCROIFormData, HostingROIResults, RegionalEnergyData } from '../types/btc_roi_types';
 import { RegionalEnergyService } from './regionalEnergyService';
 
 export class HostingCalculatorService {
@@ -12,13 +12,14 @@ export class HostingCalculatorService {
       monthlyOverhead: formData.monthlyOverhead,
       powerOverheadPercent: formData.powerOverheadPercent,
       expectedUptimePercent: formData.expectedUptimePercent,
-      region: formData.region
+      region: formData.region,
+      useManualEnergyCosts: formData.useManualEnergyCosts
     });
     
-    // Get regional energy data if applicable
+    // Get regional energy data if applicable and not using manual costs
     let energyData: RegionalEnergyData | null = null;
     
-    if (formData.region !== 'Other') {
+    if (formData.region !== 'Other' && !formData.useManualEnergyCosts) {
       try {
         energyData = await RegionalEnergyService.getRegionalEnergyData(formData.region);
         console.log('Retrieved energy data for region:', formData.region, {
@@ -47,18 +48,58 @@ export class HostingCalculatorService {
       energyData,
       formData.customElectricityCost,
       formData.expectedUptimePercent,
-      formData.region
+      formData.region,
+      formData.useManualEnergyCosts ? {
+        energyRate: formData.manualEnergyRate,
+        transmissionRate: formData.manualTransmissionRate,
+        distributionRate: formData.manualDistributionRate,
+        ancillaryRate: formData.manualAncillaryRate,
+        regulatoryRate: formData.manualRegulatoryRate
+      } : undefined
     );
 
     console.log('Simulation results:', simulationResults);
 
+    // Calculate taxes based on region
+    const taxAnalysis = this.calculateTaxes(
+      formData.region,
+      simulationResults.totalElectricityCost,
+      simulationResults.totalKWhConsumed
+    );
+
     // Calculate costs and revenues - hosting fee rate is always in USD
     const totalHostingRevenue = simulationResults.totalKWhConsumed * formData.hostingFeeRate;
-    const totalElectricityCost = simulationResults.totalElectricityCost;
+    const totalElectricityCost = simulationResults.totalElectricityCost + taxAnalysis.totalAnnualTaxes;
     const totalOperationalCost = formData.monthlyOverhead * 12;
     
-    const grossProfit = totalHostingRevenue - totalElectricityCost;
-    const netProfit = grossProfit - totalOperationalCost;
+    const grossProfit = totalHostingRevenue - simulationResults.totalElectricityCost;
+    const netProfit = grossProfit - totalOperationalCost - taxAnalysis.totalAnnualTaxes;
+    
+    // Calculate monthly breakdown
+    const monthlyBreakdown = this.calculateMonthlyBreakdown(
+      simulationResults,
+      formData.hostingFeeRate,
+      formData.monthlyOverhead,
+      taxAnalysis.totalAnnualTaxes / 12
+    );
+
+    // Calculate cost analytics
+    const costAnalytics = this.calculateCostAnalytics(
+      totalHostingRevenue,
+      simulationResults.totalElectricityCost,
+      totalOperationalCost,
+      taxAnalysis.totalAnnualTaxes,
+      netProfit,
+      formData.hostingFeeRate,
+      simulationResults.averageElectricityCost
+    );
+
+    // Calculate competitive analysis
+    const competitiveAnalysis = this.calculateCompetitiveAnalysis(
+      formData.hostingFeeRate,
+      formData.region,
+      costAnalytics.breakEvenHostingRate
+    );
     
     console.log('Financial calculations:', {
       totalKWhConsumed: simulationResults.totalKWhConsumed,
@@ -68,7 +109,8 @@ export class HostingCalculatorService {
       averageElectricityCost: simulationResults.averageElectricityCost,
       totalOperationalCost,
       grossProfit,
-      netProfit
+      netProfit,
+      totalTaxes: taxAnalysis.totalAnnualTaxes
     });
     
     // Calculate ROI metrics
@@ -97,21 +139,29 @@ export class HostingCalculatorService {
       averageUptimePercent: simulationResults.actualUptimePercent,
       curtailedHours: simulationResults.curtailedHours,
       averageElectricityCost: simulationResults.averageElectricityCost,
-      energyRateBreakdown: simulationResults.energyRateBreakdown
+      energyRateBreakdown: {
+        ...simulationResults.energyRateBreakdown,
+        taxBreakdown: {
+          salesTaxRate: taxAnalysis.salesTax / simulationResults.totalElectricityCost * 100,
+          utilityTaxRate: taxAnalysis.utilityTax / simulationResults.totalElectricityCost * 100,
+          environmentalFeeRate: taxAnalysis.environmentalFees / simulationResults.totalElectricityCost * 100,
+          totalTaxRate: taxAnalysis.taxRate,
+          taxableAmount: simulationResults.totalElectricityCost,
+          totalTaxes: taxAnalysis.totalAnnualTaxes
+        }
+      },
+      monthlyBreakdown,
+      costAnalytics,
+      competitiveAnalysis,
+      taxAnalysis
     };
 
     console.log('=== FINAL HOSTING ROI RESULTS ===');
     console.log('Energy Usage:', formatEnergy(results.totalEnergyUsageKWh));
-    console.log('Hosting Revenue (USD):', formatCurrency(results.totalHostingRevenue), `(${simulationResults.totalKWhConsumed.toLocaleString()} kWh × $${formData.hostingFeeRate}/kWh USD)`);
-    console.log('Electricity Cost (USD):', formatCurrency(results.totalElectricityCost), `(avg $${results.averageElectricityCost.toFixed(4)}/kWh USD)`);
-    console.log('Operational Cost (USD):', formatCurrency(results.totalOperationalCost), `($${formData.monthlyOverhead}/month × 12)`);
-    console.log('Gross Profit (USD):', formatCurrency(results.grossProfit));
+    console.log('Hosting Revenue (USD):', formatCurrency(results.totalHostingRevenue));
+    console.log('Electricity Cost (USD):', formatCurrency(results.totalElectricityCost));
+    console.log('Total Taxes (USD):', formatCurrency(taxAnalysis.totalAnnualTaxes));
     console.log('Net Profit (USD):', formatCurrency(results.netProfit));
-    console.log('ROI (12-month):', `${results.roi12Month.toFixed(1)}%`);
-    console.log('Payback Period:', `${results.paybackPeriodYears.toFixed(1)} years`);
-    console.log('Profit Margin:', `${results.profitMarginPercent.toFixed(1)}%`);
-    console.log('Uptime:', `${results.averageUptimePercent.toFixed(1)}%`);
-    console.log('Curtailed Hours:', results.curtailedHours.toLocaleString());
     console.log('=== END CALCULATION ===');
     
     return results;
@@ -119,20 +169,78 @@ export class HostingCalculatorService {
 
   private static simulateYearlyOperation(
     totalLoadKW: number,
-    hostingFeeRateUSD: number, // Always in USD
+    hostingFeeRateUSD: number,
     energyData: RegionalEnergyData | null,
     customElectricityCost: number,
     expectedUptimePercent: number,
-    region: 'ERCOT' | 'AESO' | 'Other'
+    region: 'ERCOT' | 'AESO' | 'Other',
+    manualRates?: {
+      energyRate: number;
+      transmissionRate: number;
+      distributionRate: number;
+      ancillaryRate: number;
+      regulatoryRate: number;
+    }
   ) {
     console.log('=== YEARLY SIMULATION START ===');
     console.log('Simulation parameters:', {
       totalLoadKW,
-      hostingFeeRateUSD: `$${hostingFeeRateUSD}/kWh USD (what we charge clients)`,
-      customElectricityCost: `$${customElectricityCost}/kWh USD (fallback for Other region)`,
-      expectedUptimePercent,
-      region
+      hostingFeeRateUSD: `$${hostingFeeRateUSD}/kWh USD`,
+      region,
+      useManualRates: !!manualRates
     });
+
+    // If using manual rates, calculate directly
+    if (manualRates) {
+      const totalManualRate = manualRates.energyRate + manualRates.transmissionRate + 
+                             manualRates.distributionRate + manualRates.ancillaryRate + 
+                             manualRates.regulatoryRate;
+      
+      const hoursPerYear = 8760 * (expectedUptimePercent / 100);
+      const totalKWhConsumed = totalLoadKW * hoursPerYear;
+      const totalElectricityCost = totalKWhConsumed * totalManualRate;
+      
+      console.log('Using manual rates:', {
+        totalManualRate: `$${totalManualRate.toFixed(4)}/kWh`,
+        totalKWhConsumed: totalKWhConsumed.toLocaleString(),
+        totalElectricityCost: `$${totalElectricityCost.toLocaleString()}`
+      });
+      
+      return {
+        totalKWhConsumed,
+        totalElectricityCost,
+        actualUptimePercent: expectedUptimePercent,
+        curtailedHours: 8760 - hoursPerYear,
+        averageElectricityCost: totalManualRate,
+        energyRateBreakdown: {
+          region: 'Manual Override',
+          totalHours: 8760,
+          operatingHours: hoursPerYear,
+          curtailedHours: 8760 - hoursPerYear,
+          averageWholesalePrice: manualRates.energyRate,
+          minWholesalePrice: manualRates.energyRate,
+          maxWholesalePrice: manualRates.energyRate,
+          currencyNote: 'USD (Manual Override)',
+          curtailmentThreshold: totalManualRate,
+          curtailmentReason: 'Fixed uptime percentage applied',
+          detailedRateComponents: {
+            energyRate: manualRates.energyRate,
+            transmissionRate: manualRates.transmissionRate,
+            distributionRate: manualRates.distributionRate,
+            ancillaryServicesRate: manualRates.ancillaryRate,
+            regulatoryFeesRate: manualRates.regulatoryRate,
+            totalRate: totalManualRate,
+            breakdown: {
+              energy: `${((manualRates.energyRate / totalManualRate) * 100).toFixed(1)}%`,
+              transmission: `${((manualRates.transmissionRate / totalManualRate) * 100).toFixed(1)}%`,
+              distribution: `${((manualRates.distributionRate / totalManualRate) * 100).toFixed(1)}%`,
+              ancillaryServices: `${((manualRates.ancillaryRate / totalManualRate) * 100).toFixed(1)}%`,
+              regulatoryFees: `${((manualRates.regulatoryRate / totalManualRate) * 100).toFixed(1)}%`
+            }
+          }
+        }
+      };
+    }
 
     if (!energyData) {
       // Simple calculation for custom region with detailed breakdown
@@ -262,52 +370,6 @@ export class HostingCalculatorService {
       detailedRateComponents: avgDetailedRates
     };
 
-    console.log('=== DETAILED ENERGY RATE BREAKDOWN ===');
-    console.log('Price analysis:', {
-      region: energyRateBreakdown.region,
-      currencyNote: energyRateBreakdown.currencyNote,
-      originalMinPrice: `$${(minPrice/wholesaleDiscountFactor).toFixed(4)}/kWh`,
-      originalMaxPrice: `$${(maxPrice/wholesaleDiscountFactor).toFixed(4)}/kWh`,
-      discountedMinPrice: `$${minPrice.toFixed(4)}/kWh USD`,
-      discountedMaxPrice: `$${maxPrice.toFixed(4)}/kWh USD`,
-      originalAveragePrice: `$${(overallAveragePrice).toFixed(4)}/kWh`,
-      discountedAveragePrice: `$${(overallAveragePrice * wholesaleDiscountFactor).toFixed(4)}/kWh USD`,
-      averageOperatingPrice: `$${averageElectricityCost.toFixed(4)}/kWh USD`,
-      wholesaleDiscount: '60%',
-      hostingFeeRate: `$${hostingFeeRateUSD.toFixed(4)}/kWh USD (always USD)`
-    });
-    
-    console.log('=== DETAILED RATE COMPONENTS (Industrial Rate Structure) ===');
-    console.log('Energy Rate:', `$${avgDetailedRates.energyRate.toFixed(4)}/kWh`);
-    console.log('Transmission Rate:', `$${avgDetailedRates.transmissionRate.toFixed(4)}/kWh`);
-    console.log('Distribution Rate:', `$${avgDetailedRates.distributionRate.toFixed(4)}/kWh`);
-    console.log('Ancillary Services:', `$${avgDetailedRates.ancillaryServicesRate.toFixed(4)}/kWh`);
-    console.log('Regulatory Fees:', `$${avgDetailedRates.regulatoryFeesRate.toFixed(4)}/kWh`);
-    console.log('Total All-In Rate:', `$${avgDetailedRates.totalRate.toFixed(4)}/kWh`);
-    
-    console.log('Operation summary:', {
-      totalHours: 8760,
-      targetOperatingHours: targetOperatingHours.toLocaleString(),
-      targetCurtailedHours: targetCurtailedHours.toLocaleString(),
-      expectedUptimePercent: `${expectedUptimePercent}%`,
-      actualUptimePercent: `${actualUptimePercent.toFixed(1)}%`,
-      operatingStrategy: 'Operating during cheapest hours to maximize profitability'
-    });
-    
-    console.log('Financial summary (all in USD):', {
-      totalKWhConsumed: totalKWhConsumed.toLocaleString(),
-      totalElectricityCost: `$${totalElectricityCost.toLocaleString()} USD`,
-      averageElectricityCost: `$${averageElectricityCost.toFixed(4)}/kWh USD`,
-      hostingRevenue: `$${(totalKWhConsumed * hostingFeeRateUSD).toLocaleString()} USD`,
-      grossMargin: `$${((totalKWhConsumed * hostingFeeRateUSD) - totalElectricityCost).toLocaleString()} USD`,
-      grossMarginPercent: `${(((totalKWhConsumed * hostingFeeRateUSD) - totalElectricityCost) / (totalKWhConsumed * hostingFeeRateUSD) * 100).toFixed(1)}%`
-    });
-    
-    console.log('=== CURRENCY HANDLING ===');
-    console.log(`✅ Hosting fee rate: Always USD ($${hostingFeeRateUSD}/kWh)`);
-    console.log(`✅ Energy costs: ${region === 'AESO' ? 'CAD converted to USD' : 'USD'} with 60% wholesale discount`);
-    console.log(`✅ All final calculations: USD`);
-
     return {
       totalKWhConsumed,
       totalElectricityCost,
@@ -315,6 +377,131 @@ export class HostingCalculatorService {
       curtailedHours: targetCurtailedHours,
       averageElectricityCost,
       energyRateBreakdown
+    };
+  }
+
+  private static calculateTaxes(region: string, electricityCost: number, totalKWh: number) {
+    let salesTaxRate = 0;
+    let utilityTaxRate = 0;
+    let environmentalFeeRate = 0;
+
+    // Regional tax rates
+    switch (region) {
+      case 'ERCOT': // Texas
+        salesTaxRate = 0.0625; // 6.25% Texas sales tax
+        utilityTaxRate = 0.01; // 1% utility tax
+        environmentalFeeRate = 0.005; // 0.5% environmental fee
+        break;
+      case 'AESO': // Alberta
+        salesTaxRate = 0.05; // 5% GST
+        utilityTaxRate = 0.015; // 1.5% utility tax
+        environmentalFeeRate = 0.008; // 0.8% carbon levy
+        break;
+      default: // Other
+        salesTaxRate = 0.07; // Average 7% sales tax
+        utilityTaxRate = 0.012; // Average 1.2% utility tax
+        environmentalFeeRate = 0.006; // Average 0.6% environmental fee
+        break;
+    }
+
+    const salesTax = electricityCost * salesTaxRate;
+    const utilityTax = electricityCost * utilityTaxRate;
+    const environmentalFees = electricityCost * environmentalFeeRate;
+    const totalAnnualTaxes = salesTax + utilityTax + environmentalFees;
+    const effectiveTaxRate = (totalAnnualTaxes / electricityCost) * 100;
+
+    return {
+      totalAnnualTaxes,
+      salesTax,
+      utilityTax,
+      environmentalFees,
+      taxRate: effectiveTaxRate,
+      taxSavingsOpportunities: [
+        'Consider renewable energy tax credits',
+        'Evaluate industrial exemptions',
+        'Review energy efficiency incentives'
+      ],
+      deductibleExpenses: electricityCost * 0.8 // 80% of energy costs typically deductible
+    };
+  }
+
+  private static calculateMonthlyBreakdown(
+    simulationResults: any,
+    hostingFeeRate: number,
+    monthlyOverhead: number,
+    monthlyTaxes: number
+  ) {
+    const monthlyBreakdown = [];
+    const monthlyKWh = simulationResults.totalKWhConsumed / 12;
+    const monthlyElectricityCost = simulationResults.totalElectricityCost / 12;
+    const monthlyRevenue = monthlyKWh * hostingFeeRate;
+
+    for (let month = 1; month <= 12; month++) {
+      monthlyBreakdown.push({
+        month,
+        energyUsageKWh: monthlyKWh,
+        hostingRevenue: monthlyRevenue,
+        electricityCost: monthlyElectricityCost,
+        operationalCost: monthlyOverhead,
+        taxes: monthlyTaxes,
+        netProfit: monthlyRevenue - monthlyElectricityCost - monthlyOverhead - monthlyTaxes,
+        uptimePercent: simulationResults.actualUptimePercent,
+        averageElectricityRate: simulationResults.averageElectricityCost
+      });
+    }
+
+    return monthlyBreakdown;
+  }
+
+  private static calculateCostAnalytics(
+    totalRevenue: number,
+    electricityCost: number,
+    operationalCost: number,
+    taxes: number,
+    netProfit: number,
+    hostingRate: number,
+    averageElectricityRate: number
+  ) {
+    const totalCosts = electricityCost + operationalCost + taxes;
+    
+    return {
+      energyCostPercentage: (electricityCost / totalCosts) * 100,
+      operationalCostPercentage: (operationalCost / totalCosts) * 100,
+      taxPercentage: (taxes / totalCosts) * 100,
+      profitPercentage: (netProfit / totalRevenue) * 100,
+      breakEvenHostingRate: totalCosts / (totalRevenue / hostingRate),
+      marginOfSafety: ((hostingRate - (totalCosts / (totalRevenue / hostingRate))) / hostingRate) * 100,
+      sensitivityAnalysis: {
+        energyCostImpact: -1.2, // 1.2% profit decrease per 1% energy cost increase
+        hostingRateImpact: 1.8, // 1.8% profit increase per 1% hosting rate increase
+        uptimeImpact: 0.9 // 0.9% profit increase per 1% uptime increase
+      }
+    };
+  }
+
+  private static calculateCompetitiveAnalysis(
+    currentRate: number,
+    region: string,
+    breakEvenRate: number
+  ) {
+    // Market rates by region
+    const marketRates = {
+      ERCOT: { low: 0.06, average: 0.08, high: 0.12 },
+      AESO: { low: 0.05, average: 0.07, high: 0.10 },
+      Other: { low: 0.07, average: 0.09, high: 0.13 }
+    };
+
+    const rates = marketRates[region as keyof typeof marketRates] || marketRates.Other;
+    let position: 'below_market' | 'at_market' | 'above_market' = 'at_market';
+    
+    if (currentRate < rates.average * 0.95) position = 'below_market';
+    else if (currentRate > rates.average * 1.05) position = 'above_market';
+
+    return {
+      marketHostingRates: rates,
+      competitivePosition: position,
+      recommendedRate: Math.max(breakEvenRate * 1.15, rates.average), // 15% margin over break-even or market average
+      profitAdvantage: ((currentRate - rates.average) / rates.average) * 100
     };
   }
 

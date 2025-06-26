@@ -32,6 +32,14 @@ export interface BTCROIFormData {
   monthlyOverhead: number; // Fixed monthly operational costs
   powerOverheadPercent: number; // Additional power for cooling/infrastructure
   expectedUptimePercent: number; // Expected uptime percentage
+  
+  // Manual energy cost overrides
+  useManualEnergyCosts: boolean;
+  manualEnergyRate: number; // USD per kWh - wholesale energy
+  manualTransmissionRate: number; // USD per kWh
+  manualDistributionRate: number; // USD per kWh
+  manualAncillaryRate: number; // USD per kWh
+  manualRegulatoryRate: number; // USD per kWh
 }
 
 export interface BTCROIResults {
@@ -67,6 +75,58 @@ export interface HostingROIResults {
   curtailedHours: number;
   averageElectricityCost: number; // per kWh
   energyRateBreakdown?: EnergyRateBreakdown;
+  // Enhanced analytics
+  monthlyBreakdown: MonthlyBreakdown[];
+  costAnalytics: CostAnalytics;
+  competitiveAnalysis: CompetitiveAnalysis;
+  taxAnalysis: TaxAnalysis;
+}
+
+export interface MonthlyBreakdown {
+  month: number;
+  energyUsageKWh: number;
+  hostingRevenue: number;
+  electricityCost: number;
+  operationalCost: number;
+  taxes: number;
+  netProfit: number;
+  uptimePercent: number;
+  averageElectricityRate: number;
+}
+
+export interface CostAnalytics {
+  energyCostPercentage: number;
+  operationalCostPercentage: number;
+  taxPercentage: number;
+  profitPercentage: number;
+  breakEvenHostingRate: number;
+  marginOfSafety: number;
+  sensitivityAnalysis: {
+    energyCostImpact: number; // % change in profit per 1% change in energy cost
+    hostingRateImpact: number; // % change in profit per 1% change in hosting rate
+    uptimeImpact: number; // % change in profit per 1% change in uptime
+  };
+}
+
+export interface CompetitiveAnalysis {
+  marketHostingRates: {
+    low: number;
+    average: number;
+    high: number;
+  };
+  competitivePosition: 'below_market' | 'at_market' | 'above_market';
+  recommendedRate: number;
+  profitAdvantage: number; // % advantage over average market rate
+}
+
+export interface TaxAnalysis {
+  totalAnnualTaxes: number;
+  salesTax: number;
+  utilityTax: number;
+  environmentalFees: number;
+  taxRate: number; // effective tax rate as percentage
+  taxSavingsOpportunities: string[];
+  deductibleExpenses: number;
 }
 
 export interface EnergyRateBreakdown {
@@ -94,6 +154,14 @@ export interface EnergyRateBreakdown {
       ancillaryServices: string;
       regulatoryFees: string;
     };
+  };
+  taxBreakdown?: {
+    salesTaxRate: number;
+    utilityTaxRate: number;
+    environmentalFeeRate: number;
+    totalTaxRate: number;
+    taxableAmount: number;
+    totalTaxes: number;
   };
 }
 
