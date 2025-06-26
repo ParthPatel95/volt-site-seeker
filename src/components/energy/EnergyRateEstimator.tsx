@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,8 +6,9 @@ import { EnergyRateResults } from './EnergyRateResults';
 import { EnergyRateInputForm } from './EnergyRateInputForm';
 import { GridLineTracer } from './GridLineTracer';
 import { useEnergyRateEstimator } from '@/hooks/useEnergyRateEstimator';
-import { Calculator, Scan } from 'lucide-react';
+import { Calculator, Scan, Cpu } from 'lucide-react';
 import { EnergyRateInput } from './EnergyRateInputTypes';
+import { EnhancedGridLineTracer } from './EnhancedGridLineTracer';
 
 export function EnergyRateEstimator() {
   const [input, setInput] = useState<Partial<EnergyRateInput>>({
@@ -91,7 +91,7 @@ export function EnergyRateEstimator() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="rate-calculator" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="rate-calculator" className="flex items-center gap-2">
                 <Calculator className="h-4 w-4" />
                 Rate Calculator
@@ -99,6 +99,10 @@ export function EnergyRateEstimator() {
               <TabsTrigger value="grid-tracer" className="flex items-center gap-2">
                 <Scan className="h-4 w-4" />
                 Grid Line Tracer
+              </TabsTrigger>
+              <TabsTrigger value="enhanced-tracer" className="flex items-center gap-2">
+                <Cpu className="h-4 w-4" />
+                Enhanced AI Tracer
               </TabsTrigger>
             </TabsList>
 
@@ -123,6 +127,10 @@ export function EnergyRateEstimator() {
 
             <TabsContent value="grid-tracer" className="space-y-6">
               <GridLineTracer />
+            </TabsContent>
+
+            <TabsContent value="enhanced-tracer" className="space-y-6">
+              <EnhancedGridLineTracer />
             </TabsContent>
           </Tabs>
         </CardContent>
