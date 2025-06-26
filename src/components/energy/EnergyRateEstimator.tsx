@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { EnergyRateResults } from './EnergyRateResults';
 import { EnergyRateInputForm } from './EnergyRateInputForm';
+import { GridLineTracer } from './GridLineTracer';
 import { useEnergyRateEstimator } from '@/hooks/useEnergyRateEstimator';
-import { Calculator } from 'lucide-react';
+import { Calculator, Scan } from 'lucide-react';
 import { EnergyRateInput } from './EnergyRateInputTypes';
 
 export function EnergyRateEstimator() {
@@ -80,32 +82,51 @@ export function EnergyRateEstimator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Energy Rate Estimator
+            Energy Rate Intelligence Platform
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Calculate fully-burdened electricity costs for the past 12 months including market price, 
-            transmission & distribution, riders, surcharges, and taxes.
+            Calculate fully-burdened electricity costs and analyze grid infrastructure 
+            with real market data, transmission analysis, and AI-powered grid tracing.
           </p>
         </CardHeader>
         <CardContent>
-          <EnergyRateInputForm
-            input={input}
-            onInputChange={setInput}
-            onCalculate={handleCalculate}
-            onMapClick={handleMapClick}
-            loading={loading}
-          />
+          <Tabs defaultValue="rate-calculator" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="rate-calculator" className="flex items-center gap-2">
+                <Calculator className="h-4 w-4" />
+                Rate Calculator
+              </TabsTrigger>
+              <TabsTrigger value="grid-tracer" className="flex items-center gap-2">
+                <Scan className="h-4 w-4" />
+                Grid Line Tracer
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="rate-calculator" className="space-y-6">
+              <EnergyRateInputForm
+                input={input}
+                onInputChange={setInput}
+                onCalculate={handleCalculate}
+                onMapClick={handleMapClick}
+                loading={loading}
+              />
+
+              {results && (
+                <EnergyRateResults 
+                  results={results} 
+                  input={input as EnergyRateInput}
+                  onDownloadCSV={() => downloadCSV(results, input as EnergyRateInput)}
+                  onDownloadPDF={() => downloadPDF(results, input as EnergyRateInput)}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="grid-tracer" className="space-y-6">
+              <GridLineTracer />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-      {results && (
-        <EnergyRateResults 
-          results={results} 
-          input={input as EnergyRateInput}
-          onDownloadCSV={() => downloadCSV(results, input as EnergyRateInput)}
-          onDownloadPDF={() => downloadPDF(results, input as EnergyRateInput)}
-        />
-      )}
     </div>
   );
 }
