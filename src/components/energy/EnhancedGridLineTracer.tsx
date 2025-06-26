@@ -253,7 +253,7 @@ export function EnhancedGridLineTracer() {
                 value={input.customerClass || 'Rate65'}
                 onChange={(e) => setInput({ ...input, customerClass: e.target.value as any })}
               >
-                <option value="Rate65">Rate 65 - Transmission Connected Industrial (>50MW)</option>
+                <option value="Rate65">Rate 65 - Transmission Connected Industrial ({'>'}50MW)</option>
                 <option value="Rate31">Rate 31 - Large General Service (5-50MW)</option>
                 <option value="Industrial">Industrial - Standard Large Customer</option>
                 <option value="Commercial">Commercial - Medium Customer</option>
