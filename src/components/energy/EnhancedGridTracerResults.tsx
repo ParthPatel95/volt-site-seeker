@@ -91,20 +91,20 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center gap-2">
               <Cpu className="h-4 w-4 text-blue-600" />
               <span className="font-medium">AI Models Used:</span>
-              <Badge variant="secondary">{results.analysisMetadata.aiModelsUsed.length}</Badge>
+              <Badge variant="secondary">{results.analysisMetadata?.aiModelsUsed?.length || 0}</Badge>
             </div>
             <div className="flex items-center gap-2">
               <Database className="h-4 w-4 text-green-600" />
               <span className="font-medium">Database Cross-Check:</span>
-              <Badge variant={results.analysisMetadata.utilityDatabaseCrossCheck ? "default" : "outline"}>
-                {results.analysisMetadata.utilityDatabaseCrossCheck ? 'Verified' : 'Unavailable'}
+              <Badge variant={results.analysisMetadata?.utilityDatabaseCrossCheck ? "default" : "outline"}>
+                {results.analysisMetadata?.utilityDatabaseCrossCheck ? 'Verified' : 'Unavailable'}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-purple-600" />
               <span className="font-medium">Live Market Data:</span>
-              <Badge variant={results.analysisMetadata.marketDataIncluded ? "default" : "outline"}>
-                {results.analysisMetadata.marketDataIncluded ? 'Integrated' : 'Unavailable'}
+              <Badge variant={results.analysisMetadata?.marketDataIncluded ? "default" : "outline"}>
+                {results.analysisMetadata?.marketDataIncluded ? 'Integrated' : 'Unavailable'}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Substations</p>
-                <p className="text-2xl font-bold">{results.summary.totalSubstations}</p>
+                <p className="text-2xl font-bold">{results.summary?.totalSubstations || 0}</p>
               </div>
               <Zap className="h-8 w-8 text-orange-500" />
             </div>
@@ -135,7 +135,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Available Capacity</p>
-                <p className="text-2xl font-bold">{results.summary.totalAvailableCapacity}MW</p>
+                <p className="text-2xl font-bold">{results.summary?.totalAvailableCapacity || 0}MW</p>
               </div>
               <Activity className="h-8 w-8 text-blue-500" />
             </div>
@@ -147,7 +147,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Connection Cost</p>
-                <p className="text-lg font-bold">{formatCurrency(results.summary.averageConnectionCost)}</p>
+                <p className="text-lg font-bold">{formatCurrency(results.summary?.averageConnectionCost)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
@@ -160,7 +160,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
               <div>
                 <p className="text-sm font-medium text-gray-600">AI Confidence</p>
                 <p className="text-2xl font-bold">
-                  {(results.analysisMetadata.confidenceScore * 100).toFixed(0)}%
+                  {((results.analysisMetadata?.confidenceScore || 0) * 100).toFixed(0)}%
                 </p>
               </div>
               <Cpu className="h-8 w-8 text-purple-500" />
@@ -175,14 +175,14 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
                 <p className="text-sm font-medium text-gray-600">Grid Health</p>
                 <Badge 
                   className={`mt-1 ${
-                    results.summary.estimatedGridHealth === 'good' 
+                    results.summary?.estimatedGridHealth === 'good' 
                       ? 'bg-green-100 text-green-800' 
-                      : results.summary.estimatedGridHealth === 'moderate'
+                      : results.summary?.estimatedGridHealth === 'moderate'
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-red-100 text-red-800'
                   }`}
                 >
-                  {results.summary.estimatedGridHealth}
+                  {results.summary?.estimatedGridHealth || 'unknown'}
                 </Badge>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -205,25 +205,25 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-600">Current Rate</p>
                 <p className="text-xl font-bold text-blue-600">
-                  {results.marketAnalysis.liveRates.current.toFixed(2)}¢/kWh
+                  {(results.marketAnalysis.liveRates?.current || 0).toFixed(2)}¢/kWh
                 </p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-600">Peak Rate</p>
                 <p className="text-xl font-bold text-red-600">
-                  {results.marketAnalysis.liveRates.peak.toFixed(2)}¢/kWh
+                  {(results.marketAnalysis.liveRates?.peak || 0).toFixed(2)}¢/kWh
                 </p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-600">Off-Peak Rate</p>
                 <p className="text-xl font-bold text-green-600">
-                  {results.marketAnalysis.liveRates.offPeak.toFixed(2)}¢/kWh
+                  {(results.marketAnalysis.liveRates?.offPeak || 0).toFixed(2)}¢/kWh
                 </p>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Monthly Est. ({input.powerRequirement}MW)</p>
+                <p className="text-sm font-medium text-gray-600">Monthly Est. ({input.powerRequirement || 0}MW)</p>
                 <p className="text-xl font-bold text-purple-600">
-                  {formatCurrency(results.marketAnalysis.projectedMonthlyCost, results.marketAnalysis.liveRates.currency)}
+                  {formatCurrency(results.marketAnalysis.projectedMonthlyCost, results.marketAnalysis.liveRates?.currency)}
                 </p>
               </div>
             </div>
@@ -232,11 +232,11 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                 <p className="font-medium mb-2">{results.marketAnalysis.rateStructure.customerClass} Rate Structure:</p>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
-                  <div>Energy: {results.marketAnalysis.rateStructure.energyCharge.toFixed(2)}¢/kWh</div>
-                  <div>Demand: ${results.marketAnalysis.rateStructure.demandCharge.toFixed(2)}/kW/mo</div>
-                  <div>Transmission: {results.marketAnalysis.rateStructure.transmissionCharge.toFixed(2)}¢/kWh</div>
-                  <div>Distribution: {results.marketAnalysis.rateStructure.distributionCharge.toFixed(2)}¢/kWh</div>
-                  <div>Riders: {results.marketAnalysis.rateStructure.riders.toFixed(2)}¢/kWh</div>
+                  <div>Energy: {(results.marketAnalysis.rateStructure.energyCharge || 0).toFixed(2)}¢/kWh</div>
+                  <div>Demand: ${(results.marketAnalysis.rateStructure.demandCharge || 0).toFixed(2)}/kW/mo</div>
+                  <div>Transmission: {(results.marketAnalysis.rateStructure.transmissionCharge || 0).toFixed(2)}¢/kWh</div>
+                  <div>Distribution: {(results.marketAnalysis.rateStructure.distributionCharge || 0).toFixed(2)}¢/kWh</div>
+                  <div>Riders: {(results.marketAnalysis.rateStructure.riders || 0).toFixed(2)}¢/kWh</div>
                 </div>
               </div>
             )}
@@ -254,7 +254,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {results.detectedInfrastructure.map((item) => (
+            {results.detectedInfrastructure?.map((item) => (
               <div key={item.id} className="border rounded-lg p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -270,7 +270,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
                       )}
                       {item.multiModelConfidence && (
                         <Badge variant="secondary">
-                          {(item.multiModelConfidence.ensemble * 100).toFixed(0)}% ensemble confidence
+                          {((item.multiModelConfidence.ensemble || 0) * 100).toFixed(0)}% ensemble confidence
                         </Badge>
                       )}
                       {item.properties?.source && (
@@ -353,32 +353,32 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
                       <div>
                         <div className="flex justify-between">
                           <span>Roboflow:</span>
-                          <span className="font-medium">{(item.multiModelConfidence.roboflow * 100).toFixed(0)}%</span>
+                          <span className="font-medium">{((item.multiModelConfidence.roboflow || 0) * 100).toFixed(0)}%</span>
                         </div>
-                        <Progress value={item.multiModelConfidence.roboflow * 100} className="h-2 mt-1" />
+                        <Progress value={(item.multiModelConfidence.roboflow || 0) * 100} className="h-2 mt-1" />
                       </div>
                       <div>
                         <div className="flex justify-between">
                           <span>OpenAI:</span>
-                          <span className="font-medium">{(item.multiModelConfidence.openai * 100).toFixed(0)}%</span>
+                          <span className="font-medium">{((item.multiModelConfidence.openai || 0) * 100).toFixed(0)}%</span>
                         </div>
-                        <Progress value={item.multiModelConfidence.openai * 100} className="h-2 mt-1" />
+                        <Progress value={(item.multiModelConfidence.openai || 0) * 100} className="h-2 mt-1" />
                       </div>
                       {item.multiModelConfidence.google && (
                         <div>
                           <div className="flex justify-between">
                             <span>Google:</span>
-                            <span className="font-medium">{(item.multiModelConfidence.google * 100).toFixed(0)}%</span>
+                            <span className="font-medium">{((item.multiModelConfidence.google || 0) * 100).toFixed(0)}%</span>
                           </div>
-                          <Progress value={item.multiModelConfidence.google * 100} className="h-2 mt-1" />
+                          <Progress value={(item.multiModelConfidence.google || 0) * 100} className="h-2 mt-1" />
                         </div>
                       )}
                       <div>
                         <div className="flex justify-between">
                           <span className="font-semibold">Ensemble:</span>
-                          <span className="font-bold">{(item.multiModelConfidence.ensemble * 100).toFixed(0)}%</span>
+                          <span className="font-bold">{((item.multiModelConfidence.ensemble || 0) * 100).toFixed(0)}%</span>
                         </div>
-                        <Progress value={item.multiModelConfidence.ensemble * 100} className="h-2 mt-1" />
+                        <Progress value={(item.multiModelConfidence.ensemble || 0) * 100} className="h-2 mt-1" />
                       </div>
                     </div>
                   </div>
@@ -396,7 +396,11 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
                   </div>
                 )}
               </div>
-            ))}
+            )) || (
+              <div className="text-center py-8 text-gray-500">
+                No infrastructure detected. Try adjusting scan parameters or location.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -414,35 +418,41 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="font-semibold mb-3">Future Grid Expansion</h4>
-                {results.predictiveAnalytics.futureGridExpansion.map((expansion, idx) => (
+                {results.predictiveAnalytics.futureGridExpansion?.map((expansion, idx) => (
                   <div key={idx} className="p-3 bg-green-50 rounded-lg mb-2">
                     <div className="flex justify-between items-center">
                       <span className="font-medium">{expansion.capacity}MW Expansion</span>
-                      <Badge variant="outline">{(expansion.probability * 100).toFixed(0)}% probability</Badge>
+                      <Badge variant="outline">{((expansion.probability || 0) * 100).toFixed(0)}% probability</Badge>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">Expected in {expansion.timeframe}</p>
                   </div>
-                ))}
+                )) || (
+                  <div className="text-sm text-gray-500">No expansion data available</div>
+                )}
               </div>
               
               <div>
                 <h4 className="font-semibold mb-3">Investment Recommendation</h4>
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <p className="font-medium text-blue-800 mb-2">
-                    {results.predictiveAnalytics.optimalInvestmentTiming.recommendation}
-                  </p>
-                  <div className="text-sm space-y-1">
-                    <div><span className="font-medium">Expected ROI:</span> {(results.predictiveAnalytics.optimalInvestmentTiming.expectedROI * 100).toFixed(1)}%</div>
-                    <div className="mt-2">
-                      <span className="font-medium">Risk Factors:</span>
-                      <ul className="text-xs mt-1 ml-4">
-                        {results.predictiveAnalytics.optimalInvestmentTiming.riskFactors.map((factor, idx) => (
-                          <li key={idx}>• {factor}</li>
-                        ))}
-                      </ul>
+                {results.predictiveAnalytics.optimalInvestmentTiming ? (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="font-medium text-blue-800 mb-2">
+                      {results.predictiveAnalytics.optimalInvestmentTiming.recommendation}
+                    </p>
+                    <div className="text-sm space-y-1">
+                      <div><span className="font-medium">Expected ROI:</span> {((results.predictiveAnalytics.optimalInvestmentTiming.expectedROI || 0) * 100).toFixed(1)}%</div>
+                      <div className="mt-2">
+                        <span className="font-medium">Risk Factors:</span>
+                        <ul className="text-xs mt-1 ml-4">
+                          {results.predictiveAnalytics.optimalInvestmentTiming.riskFactors?.map((factor, idx) => (
+                            <li key={idx}>• {factor}</li>
+                          )) || <li>No risk factors identified</li>}
+                        </ul>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-sm text-gray-500">No investment timing data available</div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -462,10 +472,10 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div>
               <p className="font-medium mb-2">Scan Parameters:</p>
               <ul className="space-y-1 text-gray-600">
-                <li>Center: {results.scanArea.center[1].toFixed(4)}, {results.scanArea.center[0].toFixed(4)}</li>
-                <li>Radius: {results.scanArea.radius} km</li>
-                <li>Power Requirement: {input.powerRequirement}MW</li>
-                <li>Customer Class: {input.customerClass}</li>
+                <li>Center: {results.scanArea?.center?.[1]?.toFixed(4) || 'N/A'}, {results.scanArea?.center?.[0]?.toFixed(4) || 'N/A'}</li>
+                <li>Radius: {results.scanArea?.radius || 0} km</li>
+                <li>Power Requirement: {input.powerRequirement || 0}MW</li>
+                <li>Customer Class: {input.customerClass || 'N/A'}</li>
                 <li>Market Analysis: {input.enableMarketAnalysis ? 'Enabled' : 'Disabled'}</li>
                 <li>Accuracy Enhancement: {input.enableAccuracyEnhancement ? 'Enabled' : 'Disabled'}</li>
                 {input.targetSite && <li>Target Site: {input.targetSite}</li>}
@@ -475,11 +485,11 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div>
               <p className="font-medium mb-2">Enhanced AI Analysis Details:</p>
               <ul className="space-y-1 text-gray-600">
-                <li>Timestamp: {new Date(results.analysisMetadata.scanTimestamp).toLocaleString()}</li>
-                <li>Imagery Sources: {results.analysisMetadata.satelliteImagerySource}</li>
-                <li>AI Models: {results.analysisMetadata.aiModelsUsed.length} models used</li>
-                <li>Overall Confidence: {(results.analysisMetadata.confidenceScore * 100).toFixed(1)}%</li>
-                <li>Utility DB Cross-Check: {results.analysisMetadata.utilityDatabaseCrossCheck ? 'Verified' : 'Not Available'}</li>
+                <li>Timestamp: {results.analysisMetadata?.scanTimestamp ? new Date(results.analysisMetadata.scanTimestamp).toLocaleString() : 'N/A'}</li>
+                <li>Imagery Sources: {results.analysisMetadata?.satelliteImagerySource || 'N/A'}</li>
+                <li>AI Models: {results.analysisMetadata?.aiModelsUsed?.length || 0} models used</li>
+                <li>Overall Confidence: {((results.analysisMetadata?.confidenceScore || 0) * 100).toFixed(1)}%</li>
+                <li>Utility DB Cross-Check: {results.analysisMetadata?.utilityDatabaseCrossCheck ? 'Verified' : 'Not Available'}</li>
                 <li>Quality Grade: {results.accuracyMetrics?.qualityGrade || 'A'}</li>
               </ul>
             </div>
@@ -489,13 +499,13 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Enhanced Multi-AI Analysis Confidence</span>
               <span className="text-sm text-gray-600">
-                {(results.analysisMetadata.confidenceScore * 100).toFixed(1)}%
+                {((results.analysisMetadata?.confidenceScore || 0) * 100).toFixed(1)}%
               </span>
             </div>
-            <Progress value={results.analysisMetadata.confidenceScore * 100} className="w-full" />
+            <Progress value={(results.analysisMetadata?.confidenceScore || 0) * 100} className="w-full" />
             
             <div className="mt-3 text-xs text-gray-500">
-              <p>AI Models Used: {results.analysisMetadata.aiModelsUsed.join(' • ')}</p>
+              <p>AI Models Used: {results.analysisMetadata?.aiModelsUsed?.join(' • ') || 'None specified'}</p>
             </div>
           </div>
         </CardContent>
