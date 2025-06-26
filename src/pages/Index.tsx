@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
-import { Menu, Home, Zap, Building2, Factory, Database, Brain, Bitcoin } from 'lucide-react';
+import { Menu, Home, Zap, Building2, Factory, Database, Brain, Bitcoin, Target } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
@@ -64,6 +64,13 @@ export default function Index() {
       active: location.pathname === '/power-infrastructure'
     },
     {
+      id: 'idle-scanner',
+      label: 'Scanner',
+      icon: Target,
+      onClick: () => navigate('/idle-industry-scanner'),
+      active: location.pathname === '/idle-industry-scanner'
+    },
+    {
       id: 'btc-roi',
       label: 'BTC ROI',
       icon: Bitcoin,
@@ -117,8 +124,8 @@ export default function Index() {
             <Route index element={<Dashboard />} />
             <Route path="aeso-market" element={<AESOMarket />} />
             <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
-            <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="power-infrastructure" element={<PowerInfrastructure />} />
+            <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
             <Route path="data-management" element={<DataManagement />} />
           </Routes>
