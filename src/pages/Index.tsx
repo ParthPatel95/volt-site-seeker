@@ -12,6 +12,7 @@ import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
 import { DataManagement } from '@/components/DataManagement';
 import { AESOMarket } from '@/components/AESOMarket';
 import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
+import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
 import { BTCROIMainPage } from '@/components/btc_roi/BTCROIMainPage';
 import EnergyRates from './EnergyRates';
 import Settings from './Settings';
@@ -149,7 +150,7 @@ export default function Index() {
             <Route path="aeso-market" element={<AESOMarket />} />
             <Route path="market-intelligence" element={<AESOMarketIntelligence />} />
             <Route path="energy-rates" element={<EnergyRates />} />
-            <Route path="industry-intelligence" element={<AESOMarketIntelligence />} />
+            <Route path="industry-intelligence" element={<IndustryIntelligence />} />
             <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
             <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
             <Route path="power-infrastructure" element={<PowerInfrastructure />} />
