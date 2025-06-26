@@ -20,8 +20,14 @@ import {
   LineChart,
   RefreshCw,
   Settings,
-  Bell
+  Bell,
+  MapPin,
+  Wind,
+  Sun,
+  Fuel
 } from 'lucide-react';
+import { useERCOTData } from '@/hooks/useERCOTData';
+import { useAESOData } from '@/hooks/useAESOData';
 
 interface DashboardMetric {
   title: string;
@@ -42,6 +48,21 @@ interface AlertItem {
 export const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  // Live data hooks
+  const { 
+    pricing: ercotPricing, 
+    loadData: ercotLoad, 
+    generationMix: ercotGeneration,
+    loading: ercotLoading 
+  } = useERCOTData();
+
+  const { 
+    pricing: aesoPricing, 
+    loadData: aesoLoad, 
+    generationMix: aesoGeneration,
+    loading: aesoLoading 
+  } = useAESOData();
 
   // Simulate data loading
   useEffect(() => {
@@ -215,6 +236,133 @@ export const Dashboard = () => {
               </Card>
             );
           })}
+        </div>
+
+        {/* Live Energy Market Data */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ERCOT Live Data */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-blue-600" />
+                ERCOT (Texas) - Live Data
+                {ercotLoading && <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {ercotPricing && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="text-sm text-gray-600">Current Price</div>
+                    <div className="text-xl font-bold text-blue-600">
+                      ${ercotPricing.current_price.toFixed(2)}/MWh
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="text-sm text-gray-600">Market Status</div>
+                    <div className="text-lg font-semibold text-green-600 capitalize">
+                      {ercotPricing.market_conditions}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {ercotLoad && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Current Demand</span>
+                    <span className="font-bold">{(ercotLoad.current_demand_mw / 1000).toFixed(1)} GW</span>
+                  </div>
+                  <Progress value={(ercotLoad.current_demand_mw / ercotLoad.peak_forecast_mw) * 100} className="mt-2" />
+                </div>
+              )}
+
+              {ercotGeneration && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Generation Mix</div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Fuel className="w-3 h-3 text-blue-500" />
+                      <span>Gas: {((ercotGeneration.natural_gas_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Wind className="w-3 h-3 text-green-500" />
+                      <span>Wind: {((ercotGeneration.wind_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Sun className="w-3 h-3 text-yellow-500" />
+                      <span>Solar: {((ercotGeneration.solar_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-green-600 font-medium">
+                    Renewable: {ercotGeneration.renewable_percentage.toFixed(1)}%
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* AESO Live Data */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-red-600" />
+                AESO (Alberta) - Live Data
+                {aesoLoading && <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {aesoPricing && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-red-50 p-3 rounded-lg">
+                    <div className="text-sm text-gray-600">Current Price</div>
+                    <div className="text-xl font-bold text-red-600">
+                      CA${aesoPricing.current_price.toFixed(2)}/MWh
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="text-sm text-gray-600">Market Status</div>
+                    <div className="text-lg font-semibold text-green-600 capitalize">
+                      {aesoPricing.market_conditions}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {aesoLoad && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Current Demand</span>
+                    <span className="font-bold">{(aesoLoad.current_demand_mw / 1000).toFixed(1)} GW</span>
+                  </div>
+                  <Progress value={(aesoLoad.current_demand_mw / aesoLoad.peak_forecast_mw) * 100} className="mt-2" />
+                </div>
+              )}
+
+              {aesoGeneration && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Generation Mix</div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Fuel className="w-3 h-3 text-blue-500" />
+                      <span>Gas: {((aesoGeneration.natural_gas_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Wind className="w-3 h-3 text-green-500" />
+                      <span>Wind: {((aesoGeneration.wind_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Activity className="w-3 h-3 text-blue-600" />
+                      <span>Hydro: {((aesoGeneration.hydro_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-green-600 font-medium">
+                    Renewable: {aesoGeneration.renewable_percentage.toFixed(1)}%
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content */}
