@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -53,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence' },
     { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
-    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
+    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'Volt Analytics' },
     { path: '/app/data-management', icon: Database, label: 'Data Management' }
   ];
 
