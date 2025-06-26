@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
-import { Menu, Home, Zap, Building2, Factory, Database, Brain, Bitcoin, Target } from 'lucide-react';
+import { Menu, Home, Zap, Building2, Factory, Database, Brain, Bitcoin, Target, BarChart3, TrendingUp } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
@@ -11,7 +11,9 @@ import { PowerInfrastructure } from '@/components/PowerInfrastructure';
 import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
 import { DataManagement } from '@/components/DataManagement';
 import { AESOMarket } from '@/components/AESOMarket';
+import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
 import { BTCROIMainPage } from '@/components/btc_roi/BTCROIMainPage';
+import EnergyRates from './EnergyRates';
 
 export default function Index() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -50,6 +52,27 @@ export default function Index() {
       active: location.pathname === '/aeso-market'
     },
     {
+      id: 'market-intelligence',
+      label: 'Market Intel',
+      icon: Brain,
+      onClick: () => navigate('/market-intelligence'),
+      active: location.pathname === '/market-intelligence'
+    },
+    {
+      id: 'energy-rates',
+      label: 'Energy Rates',
+      icon: BarChart3,
+      onClick: () => navigate('/energy-rates'),
+      active: location.pathname === '/energy-rates'
+    },
+    {
+      id: 'industry-intelligence',
+      label: 'Industry Intel',
+      icon: TrendingUp,
+      onClick: () => navigate('/industry-intelligence'),
+      active: location.pathname === '/industry-intelligence'
+    },
+    {
       id: 'corporate',
       label: 'Corporate',
       icon: Building2,
@@ -57,18 +80,18 @@ export default function Index() {
       active: location.pathname === '/corporate-intelligence'
     },
     {
-      id: 'power',
-      label: 'Power',
-      icon: Factory,
-      onClick: () => navigate('/power-infrastructure'),
-      active: location.pathname === '/power-infrastructure'
-    },
-    {
       id: 'idle-scanner',
       label: 'Scanner',
       icon: Target,
       onClick: () => navigate('/idle-industry-scanner'),
       active: location.pathname === '/idle-industry-scanner'
+    },
+    {
+      id: 'power',
+      label: 'Power',
+      icon: Factory,
+      onClick: () => navigate('/power-infrastructure'),
+      active: location.pathname === '/power-infrastructure'
     },
     {
       id: 'btc-roi',
@@ -123,9 +146,12 @@ export default function Index() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="aeso-market" element={<AESOMarket />} />
+            <Route path="market-intelligence" element={<AESOMarketIntelligence />} />
+            <Route path="energy-rates" element={<EnergyRates />} />
+            <Route path="industry-intelligence" element={<AESOMarketIntelligence />} />
             <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
-            <Route path="power-infrastructure" element={<PowerInfrastructure />} />
             <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
+            <Route path="power-infrastructure" element={<PowerInfrastructure />} />
             <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
             <Route path="data-management" element={<DataManagement />} />
           </Routes>
