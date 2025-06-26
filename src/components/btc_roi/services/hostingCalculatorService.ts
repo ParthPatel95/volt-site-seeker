@@ -136,17 +136,26 @@ export class HostingCalculatorService {
     });
 
     if (!energyData) {
-      // Simple calculation for custom region
+      // Simple calculation for custom region with detailed breakdown
       const hoursPerYear = 8760 * (expectedUptimePercent / 100);
       const totalKWhConsumed = totalLoadKW * hoursPerYear;
-      const totalElectricityCost = totalKWhConsumed * customElectricityCost;
+      
+      // Apply 60% wholesale discount universally
+      const wholesaleDiscountFactor = 0.4; // 60% discount
+      const discountedElectricityCost = customElectricityCost * wholesaleDiscountFactor;
+      
+      // Detailed rate breakdown for custom region
+      const energyRateComponents = this.calculateDetailedRateBreakdown(discountedElectricityCost, 'Other');
+      const totalElectricityCost = totalKWhConsumed * energyRateComponents.totalRate;
       
       console.log('Using Other region (custom) calculation:', {
         hoursPerYear,
         totalKWhConsumed: totalKWhConsumed.toLocaleString(),
-        customElectricityCostRate: customElectricityCost,
+        originalCustomRate: customElectricityCost,
+        discountedRate: discountedElectricityCost,
+        detailedRateBreakdown: energyRateComponents,
         totalElectricityCost: totalElectricityCost.toLocaleString(),
-        averageElectricityCost: customElectricityCost
+        averageElectricityCost: energyRateComponents.totalRate
       });
       
       return {
@@ -154,25 +163,26 @@ export class HostingCalculatorService {
         totalElectricityCost,
         actualUptimePercent: expectedUptimePercent,
         curtailedHours: 8760 - hoursPerYear,
-        averageElectricityCost: customElectricityCost,
+        averageElectricityCost: energyRateComponents.totalRate,
         energyRateBreakdown: {
           region: 'Other',
           totalHours: 8760,
           operatingHours: hoursPerYear,
           curtailedHours: 8760 - hoursPerYear,
-          averageWholesalePrice: customElectricityCost,
-          minWholesalePrice: customElectricityCost,
-          maxWholesalePrice: customElectricityCost,
-          currencyNote: 'USD (Custom Rate)',
-          curtailmentThreshold: customElectricityCost,
-          curtailmentReason: 'Fixed uptime percentage applied'
+          averageWholesalePrice: energyRateComponents.totalRate,
+          minWholesalePrice: energyRateComponents.totalRate,
+          maxWholesalePrice: energyRateComponents.totalRate,
+          currencyNote: 'USD (Custom Rate with 60% wholesale discount)',
+          curtailmentThreshold: energyRateComponents.totalRate,
+          curtailmentReason: 'Fixed uptime percentage applied',
+          detailedRateComponents: energyRateComponents
         }
       };
     }
 
-    // Calculate special wholesale rates for large loads (45MW+)
-    const largLoadDiscountFactor = totalLoadKW >= 40000 ? 0.4 : 0.7; // 60% discount for 40MW+, 30% for smaller loads
-    console.log(`Large load discount factor: ${largLoadDiscountFactor} (${((1-largLoadDiscountFactor)*100).toFixed(0)}% discount for ${totalLoadKW/1000}MW load)`);
+    // Apply 60% wholesale discount universally for all load sizes
+    const wholesaleDiscountFactor = 0.4; // 60% discount for all loads
+    console.log(`Wholesale discount factor: ${wholesaleDiscountFactor} (60% discount applied universally)`);
 
     // Convert CAD to USD for AESO (approximate rate: 1 CAD = 0.73 USD)
     const cadToUsdRate = 0.73;
@@ -197,9 +207,9 @@ export class HostingCalculatorService {
     // Sort hours by price (lowest first) to operate during cheapest hours
     const sortedHours = energyData.hourlyPrices
       .map((hourlyPrice, index) => {
-        let wholesalePricePerKWhUSD = hourlyPrice.pricePerKWh * largLoadDiscountFactor;
+        let wholesalePricePerKWhUSD = hourlyPrice.pricePerKWh * wholesaleDiscountFactor;
         if (region === 'AESO') {
-          wholesalePricePerKWhUSD = hourlyPrice.pricePerKWh * cadToUsdRate * largLoadDiscountFactor;
+          wholesalePricePerKWhUSD = hourlyPrice.pricePerKWh * cadToUsdRate * wholesaleDiscountFactor;
         }
         
         priceSum += wholesalePricePerKWhUSD;
@@ -219,8 +229,14 @@ export class HostingCalculatorService {
       const hour = sortedHours[i];
       const kWhThisHour = totalLoadKW;
       totalKWhConsumed += kWhThisHour;
-      totalElectricityCost += kWhThisHour * hour.discountedPriceUSD;
-      totalPriceSum += hour.discountedPriceUSD;
+      
+      // Apply detailed rate breakdown to each hour
+      const baseWholesaleRate = hour.discountedPriceUSD;
+      const detailedRates = this.calculateDetailedRateBreakdown(baseWholesaleRate, region);
+      const totalHourlyRate = detailedRates.totalRate;
+      
+      totalElectricityCost += kWhThisHour * totalHourlyRate;
+      totalPriceSum += totalHourlyRate;
       priceCount++;
     }
 
@@ -228,33 +244,46 @@ export class HostingCalculatorService {
     const averageElectricityCost = priceCount > 0 ? totalPriceSum / priceCount : 0;
     const overallAveragePrice = priceSum / energyData.hourlyPrices.length;
 
+    // Calculate detailed rate breakdown for display
+    const avgDetailedRates = this.calculateDetailedRateBreakdown(averageElectricityCost * 0.7, region); // Approximate base wholesale component
+
     // Track detailed energy rate breakdown
     const energyRateBreakdown = {
-      region: `${region} (${region === 'AESO' ? 'CAD converted to USD' : 'USD'}) - Large Load Discount`,
+      region: `${region} (${region === 'AESO' ? 'CAD converted to USD' : 'USD'}) - 60% Wholesale Discount`,
       totalHours: energyData.hourlyPrices.length,
       operatingHours: targetOperatingHours,
       curtailedHours: targetCurtailedHours,
-      averageWholesalePrice: overallAveragePrice * largLoadDiscountFactor,
+      averageWholesalePrice: overallAveragePrice * wholesaleDiscountFactor,
       minWholesalePrice: minPrice,
       maxWholesalePrice: maxPrice,
-      currencyNote: region === 'AESO' ? `CAD converted to USD at ${cadToUsdRate} rate with ${((1-largLoadDiscountFactor)*100).toFixed(0)}% large load discount` : `USD with ${((1-largLoadDiscountFactor)*100).toFixed(0)}% large load discount`,
+      currencyNote: region === 'AESO' ? `CAD converted to USD at ${cadToUsdRate} rate with 60% wholesale discount` : `USD with 60% wholesale discount`,
       curtailmentThreshold: 0, // No price-based curtailment, only uptime-based
-      curtailmentReason: `Curtailment based on expected uptime (${expectedUptimePercent}%) - operating during cheapest ${targetOperatingHours} hours`
+      curtailmentReason: `Curtailment based on expected uptime (${expectedUptimePercent}%) - operating during cheapest ${targetOperatingHours} hours`,
+      detailedRateComponents: avgDetailedRates
     };
 
     console.log('=== DETAILED ENERGY RATE BREAKDOWN ===');
     console.log('Price analysis:', {
       region: energyRateBreakdown.region,
       currencyNote: energyRateBreakdown.currencyNote,
-      originalMinPrice: `$${(minPrice/largLoadDiscountFactor).toFixed(4)}/kWh`,
-      originalMaxPrice: `$${(maxPrice/largLoadDiscountFactor).toFixed(4)}/kWh`,
+      originalMinPrice: `$${(minPrice/wholesaleDiscountFactor).toFixed(4)}/kWh`,
+      originalMaxPrice: `$${(maxPrice/wholesaleDiscountFactor).toFixed(4)}/kWh`,
       discountedMinPrice: `$${minPrice.toFixed(4)}/kWh`,
       discountedMaxPrice: `$${maxPrice.toFixed(4)}/kWh`,
       originalAveragePrice: `$${(overallAveragePrice).toFixed(4)}/kWh`,
-      discountedAveragePrice: `$${(overallAveragePrice * largLoadDiscountFactor).toFixed(4)}/kWh`,
+      discountedAveragePrice: `$${(overallAveragePrice * wholesaleDiscountFactor).toFixed(4)}/kWh`,
       averageOperatingPrice: `$${averageElectricityCost.toFixed(4)}/kWh`,
-      largLoadDiscount: `${((1-largLoadDiscountFactor)*100).toFixed(0)}%`
+      wholesaleDiscount: '60%'
     });
+    
+    console.log('=== DETAILED RATE COMPONENTS ===');
+    console.log('Energy Rate:', `$${avgDetailedRates.energyRate.toFixed(4)}/kWh`);
+    console.log('Transmission Rate:', `$${avgDetailedRates.transmissionRate.toFixed(4)}/kWh`);
+    console.log('Distribution Rate:', `$${avgDetailedRates.distributionRate.toFixed(4)}/kWh`);
+    console.log('Ancillary Services:', `$${avgDetailedRates.ancillaryServicesRate.toFixed(4)}/kWh`);
+    console.log('Regulatory Fees:', `$${avgDetailedRates.regulatoryFeesRate.toFixed(4)}/kWh`);
+    console.log('Total All-In Rate:', `$${avgDetailedRates.totalRate.toFixed(4)}/kWh`);
+    
     console.log('Operation summary:', {
       totalHours: 8760,
       targetOperatingHours: targetOperatingHours.toLocaleString(),
@@ -263,6 +292,7 @@ export class HostingCalculatorService {
       actualUptimePercent: `${actualUptimePercent.toFixed(1)}%`,
       operatingStrategy: 'Operating during cheapest hours to maximize profitability'
     });
+    
     console.log('Financial summary:', {
       totalKWhConsumed: totalKWhConsumed.toLocaleString(),
       totalElectricityCost: `$${totalElectricityCost.toLocaleString()}`,
@@ -275,7 +305,7 @@ export class HostingCalculatorService {
     console.log('=== UPTIME ANALYSIS ===');
     console.log(`✅ Uptime target achieved: ${actualUptimePercent.toFixed(1)}% (target: ${expectedUptimePercent}%)`);
     console.log(`🎯 Operating during cheapest ${targetOperatingHours} hours to maximize profitability`);
-    console.log(`💰 Large load discount: ${((1-largLoadDiscountFactor)*100).toFixed(0)}% off wholesale rates`);
+    console.log(`💰 Wholesale discount: 60% off wholesale rates (applied universally)`);
 
     return {
       totalKWhConsumed,
@@ -284,6 +314,41 @@ export class HostingCalculatorService {
       curtailedHours: targetCurtailedHours,
       averageElectricityCost,
       energyRateBreakdown
+    };
+  }
+
+  private static calculateDetailedRateBreakdown(baseWholesaleRate: number, region: string) {
+    // Calculate detailed rate components based on typical utility rate structures
+    const energyRate = baseWholesaleRate; // Base wholesale energy cost
+    
+    // Transmission rates (typically 15-25% of energy rate)
+    const transmissionRate = energyRate * 0.20;
+    
+    // Distribution rates (typically 25-35% of energy rate)
+    const distributionRate = energyRate * 0.30;
+    
+    // Ancillary services (typically 5-10% of energy rate)
+    const ancillaryServicesRate = energyRate * 0.08;
+    
+    // Regulatory fees and other charges (typically 3-7% of energy rate)
+    const regulatoryFeesRate = energyRate * 0.05;
+    
+    const totalRate = energyRate + transmissionRate + distributionRate + ancillaryServicesRate + regulatoryFeesRate;
+    
+    return {
+      energyRate,
+      transmissionRate,
+      distributionRate,
+      ancillaryServicesRate,
+      regulatoryFeesRate,
+      totalRate,
+      breakdown: {
+        energy: `${((energyRate / totalRate) * 100).toFixed(1)}%`,
+        transmission: `${((transmissionRate / totalRate) * 100).toFixed(1)}%`,
+        distribution: `${((distributionRate / totalRate) * 100).toFixed(1)}%`,
+        ancillaryServices: `${((ancillaryServicesRate / totalRate) * 100).toFixed(1)}%`,
+        regulatoryFees: `${((regulatoryFeesRate / totalRate) * 100).toFixed(1)}%`
+      }
     };
   }
 }

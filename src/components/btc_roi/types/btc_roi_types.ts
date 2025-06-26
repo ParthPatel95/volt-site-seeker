@@ -80,6 +80,21 @@ export interface EnergyRateBreakdown {
   currencyNote: string;
   curtailmentThreshold: number;
   curtailmentReason: string;
+  detailedRateComponents?: {
+    energyRate: number;
+    transmissionRate: number;
+    distributionRate: number;
+    ancillaryServicesRate: number;
+    regulatoryFeesRate: number;
+    totalRate: number;
+    breakdown: {
+      energy: string;
+      transmission: string;
+      distribution: string;
+      ancillaryServices: string;
+      regulatoryFees: string;
+    };
+  };
 }
 
 export interface RegionalEnergyData {

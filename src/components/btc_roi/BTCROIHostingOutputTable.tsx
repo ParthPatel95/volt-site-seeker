@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -81,7 +80,7 @@ export const BTCROIHostingOutputTable: React.FC<BTCROIHostingOutputTableProps> =
           </div>
         </div>
 
-        {/* Energy Rate Breakdown */}
+        {/* Enhanced Energy Rate Breakdown */}
         {hostingResults.energyRateBreakdown && (
           <Card className="border-blue-200 bg-blue-50/30">
             <CardHeader className="pb-3">
@@ -90,7 +89,8 @@ export const BTCROIHostingOutputTable: React.FC<BTCROIHostingOutputTableProps> =
                 Energy Rate Analysis - {hostingResults.energyRateBreakdown.region}
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 space-y-4">
+              {/* Summary Stats */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
                 <div className="text-center p-2 bg-white rounded border">
                   <div className="font-semibold text-gray-800">
@@ -106,9 +106,9 @@ export const BTCROIHostingOutputTable: React.FC<BTCROIHostingOutputTableProps> =
                 </div>
                 <div className="text-center p-2 bg-white rounded border">
                   <div className="font-semibold text-gray-800">
-                    {formatRate(hostingResults.energyRateBreakdown.curtailmentThreshold)}
+                    {formatRate(hostingResults.averageElectricityCost)}
                   </div>
-                  <div className="text-xs text-gray-600">Curtailment Threshold</div>
+                  <div className="text-xs text-gray-600">All-In Rate</div>
                 </div>
                 <div className="text-center p-2 bg-white rounded border">
                   <div className="font-semibold text-gray-800">
@@ -117,7 +117,56 @@ export const BTCROIHostingOutputTable: React.FC<BTCROIHostingOutputTableProps> =
                   <div className="text-xs text-gray-600">Operating Hours</div>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-gray-600 text-center">
+
+              {/* Detailed Rate Components */}
+              {hostingResults.energyRateBreakdown.detailedRateComponents && (
+                <div className="bg-white rounded-lg border p-4">
+                  <h4 className="font-semibold text-gray-800 mb-3 text-sm">Detailed Rate Breakdown (per kWh)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-gray-600">Energy (Wholesale):</span>
+                      <div className="text-right">
+                        <span className="font-semibold">{formatRate(hostingResults.energyRateBreakdown.detailedRateComponents.energyRate)}</span>
+                        <span className="text-xs text-gray-500 ml-1">({hostingResults.energyRateBreakdown.detailedRateComponents.breakdown.energy})</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-gray-600">Transmission:</span>
+                      <div className="text-right">
+                        <span className="font-semibold">{formatRate(hostingResults.energyRateBreakdown.detailedRateComponents.transmissionRate)}</span>
+                        <span className="text-xs text-gray-500 ml-1">({hostingResults.energyRateBreakdown.detailedRateComponents.breakdown.transmission})</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-gray-600">Distribution:</span>
+                      <div className="text-right">
+                        <span className="font-semibold">{formatRate(hostingResults.energyRateBreakdown.detailedRateComponents.distributionRate)}</span>
+                        <span className="text-xs text-gray-500 ml-1">({hostingResults.energyRateBreakdown.detailedRateComponents.breakdown.distribution})</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-gray-600">Ancillary Services:</span>
+                      <div className="text-right">
+                        <span className="font-semibold">{formatRate(hostingResults.energyRateBreakdown.detailedRateComponents.ancillaryServicesRate)}</span>
+                        <span className="text-xs text-gray-500 ml-1">({hostingResults.energyRateBreakdown.detailedRateComponents.breakdown.ancillaryServices})</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-gray-600">Regulatory Fees:</span>
+                      <div className="text-right">
+                        <span className="font-semibold">{formatRate(hostingResults.energyRateBreakdown.detailedRateComponents.regulatoryFeesRate)}</span>
+                        <span className="text-xs text-gray-500 ml-1">({hostingResults.energyRateBreakdown.detailedRateComponents.breakdown.regulatoryFees})</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-t-2 border-blue-200 font-bold col-span-1 md:col-span-2">
+                      <span className="text-blue-800">Total All-In Rate:</span>
+                      <span className="text-blue-800">{formatRate(hostingResults.energyRateBreakdown.detailedRateComponents.totalRate)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="text-xs text-gray-600 text-center">
                 {hostingResults.energyRateBreakdown.currencyNote} • {hostingResults.energyRateBreakdown.curtailmentReason}
               </div>
             </CardContent>
