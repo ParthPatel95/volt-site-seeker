@@ -110,7 +110,7 @@ export interface EnhancedGridTracerResults {
     crossValidationScore: number;
     utilityDatabaseMatches: number;
     groundTruthAccuracy?: number;
-    qualityScore: 'A' | 'B' | 'C' | 'D';
+    qualityGrade: 'A' | 'B' | 'C' | 'D';
   };
   predictiveAnalytics?: {
     futureGridExpansion: Array<{
