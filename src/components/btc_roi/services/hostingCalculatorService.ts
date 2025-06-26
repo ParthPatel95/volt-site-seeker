@@ -98,7 +98,6 @@ export class HostingCalculatorService {
       averageUptimePercent: simulationResults.actualUptimePercent,
       curtailedHours: simulationResults.curtailedHours,
       averageElectricityCost: simulationResults.averageElectricityCost,
-      // Add detailed breakdown for UI
       energyRateBreakdown: simulationResults.energyRateBreakdown
     };
 
@@ -162,7 +161,10 @@ export class HostingCalculatorService {
           operatingHours: hoursPerYear,
           curtailedHours: 8760 - hoursPerYear,
           averageWholesalePrice: customElectricityCost,
+          minWholesalePrice: customElectricityCost,
+          maxWholesalePrice: customElectricityCost,
           currencyNote: 'USD (Custom Rate)',
+          curtailmentThreshold: customElectricityCost,
           curtailmentReason: 'Fixed uptime percentage applied'
         }
       };
@@ -181,10 +183,10 @@ export class HostingCalculatorService {
 
     console.log(`Processing ${energyData.hourlyPrices.length} hourly price points for ${region}`);
     
-    // NEW CURTAILMENT LOGIC: Only curtail when we lose money on the entire operation
-    // Calculate our break-even electricity price per kWh
-    const breakEvenElectricityPrice = hostingFeeRate; // Simplified - curtail only when wholesale > hosting fee
-    console.log(`Curtailment threshold: wholesale price > $${breakEvenElectricityPrice.toFixed(4)}/kWh`);
+    // Calculate break-even electricity price per kWh - we want at least 20% margin
+    const minimumMargin = 0.20; // 20% minimum margin
+    const curtailmentThreshold = hostingFeeRate * (1 - minimumMargin);
+    console.log(`Curtailment threshold: wholesale price > $${curtailmentThreshold.toFixed(4)}/kWh (allows ${(minimumMargin * 100).toFixed(0)}% margin)`);
 
     let curtailmentCount = 0;
     let priceSum = 0;
@@ -202,8 +204,8 @@ export class HostingCalculatorService {
       minWholesalePrice: 0,
       maxWholesalePrice: 0,
       currencyNote: region === 'AESO' ? `CAD converted to USD at ${cadToUsdRate} rate` : 'USD',
-      curtailmentThreshold: breakEvenElectricityPrice,
-      curtailmentReason: 'Wholesale electricity price exceeds hosting fee rate'
+      curtailmentThreshold: curtailmentThreshold,
+      curtailmentReason: `Wholesale electricity price exceeds hosting fee rate minus ${(minimumMargin * 100).toFixed(0)}% margin`
     };
 
     for (const hourlyPrice of energyData.hourlyPrices) {
@@ -217,12 +219,12 @@ export class HostingCalculatorService {
       minPrice = Math.min(minPrice, wholesalePricePerKWhUSD);
       maxPrice = Math.max(maxPrice, wholesalePricePerKWhUSD);
       
-      if (wholesalePricePerKWhUSD > breakEvenElectricityPrice) {
+      if (wholesalePricePerKWhUSD > curtailmentThreshold) {
         pricesAboveThreshold++;
       }
       
-      // FIXED CURTAILMENT LOGIC: Only curtail if wholesale price exceeds break-even
-      const shouldCurtail = wholesalePricePerKWhUSD > breakEvenElectricityPrice;
+      // SMART CURTAILMENT LOGIC: Only curtail if wholesale price exceeds our profitable threshold
+      const shouldCurtail = wholesalePricePerKWhUSD > curtailmentThreshold;
       
       if (!shouldCurtail) {
         // Operate this hour at wholesale market rates
@@ -233,7 +235,7 @@ export class HostingCalculatorService {
         priceCount++;
         operatingHours++;
       } else {
-        // Curtail this hour to avoid losses
+        // Curtail this hour to maintain profitability
         curtailedHours++;
         curtailmentCount++;
       }
@@ -258,9 +260,10 @@ export class HostingCalculatorService {
       maxPrice: `$${maxPrice.toFixed(4)}/kWh`,
       overallAveragePrice: `$${overallAveragePrice.toFixed(4)}/kWh`,
       averageOperatingPrice: `$${averageElectricityCost.toFixed(4)}/kWh`,
-      curtailmentThreshold: `$${breakEvenElectricityPrice}/kWh`,
+      curtailmentThreshold: `$${curtailmentThreshold.toFixed(4)}/kWh`,
       hoursAboveThreshold: pricesAboveThreshold.toLocaleString(),
-      percentAboveThreshold: `${(pricesAboveThreshold / 8760 * 100).toFixed(1)}%`
+      percentAboveThreshold: `${(pricesAboveThreshold / 8760 * 100).toFixed(1)}%`,
+      minimumMarginPercent: `${(minimumMargin * 100).toFixed(0)}%`
     });
     console.log('Operation summary:', {
       totalHours: 8760,
@@ -274,14 +277,19 @@ export class HostingCalculatorService {
     console.log('Financial summary:', {
       totalKWhConsumed: totalKWhConsumed.toLocaleString(),
       totalElectricityCost: `$${totalElectricityCost.toLocaleString()}`,
-      averageElectricityCost: `$${averageElectricityCost.toFixed(4)}/kWh`
+      averageElectricityCost: `$${averageElectricityCost.toFixed(4)}/kWh`,
+      hostingRevenue: `$${(totalKWhConsumed * hostingFeeRate).toLocaleString()}`,
+      grossMargin: `$${((totalKWhConsumed * hostingFeeRate) - totalElectricityCost).toLocaleString()}`,
+      grossMarginPercent: `${(((totalKWhConsumed * hostingFeeRate) - totalElectricityCost) / (totalKWhConsumed * hostingFeeRate) * 100).toFixed(1)}%`
     });
 
     console.log('=== UPTIME ANALYSIS ===');
     if (actualUptimePercent < expectedUptimePercent * 0.9) {
       console.log(`⚠️  WARNING: Actual uptime (${actualUptimePercent.toFixed(1)}%) is significantly below expected (${expectedUptimePercent}%)`);
-      console.log(`   This is due to high wholesale electricity prices in ${region}`);
-      console.log(`   Consider: 1) Raising hosting fee rate, 2) Different region, 3) Energy storage/hedging`);
+      console.log(`   This is due to high wholesale electricity prices in ${region} exceeding profitable thresholds`);
+      console.log(`   Consider: 1) Raising hosting fee rate, 2) Different region, 3) Energy storage/hedging, 4) Lower margin requirements`);
+    } else {
+      console.log(`✅ Uptime target achieved: ${actualUptimePercent.toFixed(1)}% (target: ${expectedUptimePercent}%)`);
     }
 
     return {
