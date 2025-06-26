@@ -75,6 +75,7 @@ export const useBTCROICalculator = () => {
     if (!networkData) return;
     
     setIsLoading(true);
+    console.log('Calculating mining ROI with network data:', networkData);
     
     try {
       // Basic calculations
@@ -138,6 +139,7 @@ export const useBTCROICalculator = () => {
         totalInvestment
       };
       
+      console.log('Mining ROI results:', results);
       setROIResults(results);
     } catch (error) {
       console.error('Error calculating ROI:', error);
@@ -149,12 +151,15 @@ export const useBTCROICalculator = () => {
   // Calculate hosting ROI
   const calculateHostingROI = async () => {
     setIsLoading(true);
+    console.log('Starting hosting ROI calculation...');
     
     try {
       const results = await HostingCalculatorService.calculateHostingROI(formData);
+      console.log('Hosting ROI calculation completed:', results);
       setHostingResults(results);
     } catch (error) {
       console.error('Error calculating hosting ROI:', error);
+      setHostingResults(null);
     } finally {
       setIsLoading(false);
     }

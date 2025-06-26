@@ -31,8 +31,7 @@ export class RegionalEnergyService {
   }
 
   private static async fetchERCOTData(): Promise<RegionalEnergyData> {
-    // In a real implementation, this would fetch from ERCOT API
-    // For now, we'll simulate with realistic data based on recent trends
+    console.log('Generating ERCOT data...');
     const hourlyPrices = this.generateRealisticERCOTData();
     
     return {
@@ -46,8 +45,7 @@ export class RegionalEnergyService {
   }
 
   private static async fetchAESOData(): Promise<RegionalEnergyData> {
-    // In a real implementation, this would fetch from AESO API
-    // For now, we'll simulate with realistic data based on recent trends
+    console.log('Generating AESO data...');
     const hourlyPrices = this.generateRealisticAESOData();
     
     return {
@@ -64,46 +62,46 @@ export class RegionalEnergyService {
     const prices: HourlyPrice[] = [];
     const now = new Date();
     
-    // Generate 8760 hours (1 year) of realistic ERCOT pricing
+    // Generate 8760 hours (1 year) of realistic ERCOT pricing in USD
     for (let i = 0; i < 8760; i++) {
       const timestamp = new Date(now.getTime() - (8760 - i) * 60 * 60 * 1000);
       const hour = timestamp.getHours();
       const month = timestamp.getMonth();
       
-      // Base price around $30/MWh (realistic average)
-      let basePrice = 30;
+      // Base price around $35/MWh (realistic ERCOT average)
+      let basePrice = 35;
       
-      // Seasonal adjustment (higher in summer)
+      // Seasonal adjustment (higher in summer due to AC load)
       if (month >= 5 && month <= 8) {
-        basePrice *= 1.6; // Summer premium
+        basePrice *= 1.8; // Summer premium
       } else if (month >= 11 || month <= 1) {
-        basePrice *= 1.2; // Winter heating
+        basePrice *= 1.3; // Winter heating
       }
       
       // Daily pattern (higher during peak hours)
-      if (hour >= 14 && hour <= 18) {
-        basePrice *= 2.2; // Peak hours
+      if (hour >= 14 && hour <= 19) {
+        basePrice *= 2.5; // Peak hours (2-7 PM)
       } else if (hour >= 7 && hour <= 13) {
-        basePrice *= 1.4; // Mid-day
-      } else if (hour >= 19 && hour <= 22) {
-        basePrice *= 1.3; // Evening
+        basePrice *= 1.3; // Morning/midday
+      } else if (hour >= 20 && hour <= 22) {
+        basePrice *= 1.2; // Evening
       } else {
-        basePrice *= 0.7; // Off-peak hours
+        basePrice *= 0.6; // Off-peak hours
       }
       
-      // Add volatility (ERCOT can spike dramatically)
+      // Add volatility with occasional spikes
       const volatility = Math.random();
-      if (volatility > 0.99) {
-        basePrice *= 20; // Extreme spike (very rare)
-      } else if (volatility > 0.95) {
+      if (volatility > 0.995) {
+        basePrice *= 25; // Extreme spike (very rare)
+      } else if (volatility > 0.98) {
         basePrice *= 8; // Major spike
-      } else if (volatility > 0.85) {
-        basePrice *= 3; // Price spike
+      } else if (volatility > 0.9) {
+        basePrice *= 2.5; // Price spike
       } else {
-        basePrice *= (0.6 + Math.random() * 0.8); // Normal variation
+        basePrice *= (0.7 + Math.random() * 0.6); // Normal variation
       }
       
-      const pricePerMWh = Math.max(basePrice, 15); // Floor price
+      const pricePerMWh = Math.max(basePrice, 10); // Floor price
       
       prices.push({
         timestamp,
@@ -112,6 +110,7 @@ export class RegionalEnergyService {
       });
     }
     
+    console.log('Generated ERCOT prices, average:', this.calculateAverage(prices).toFixed(2), 'USD/MWh');
     return prices;
   }
 
@@ -125,36 +124,36 @@ export class RegionalEnergyService {
       const hour = timestamp.getHours();
       const month = timestamp.getMonth();
       
-      // Base price around $55 CAD/MWh (realistic average for Alberta)
-      let basePrice = 55;
+      // Base price around $65 CAD/MWh (realistic AESO average)
+      let basePrice = 65;
       
       // Seasonal adjustment (higher in winter due to heating demand)
       if (month >= 10 || month <= 2) {
-        basePrice *= 1.8; // Winter premium
+        basePrice *= 2.2; // Winter premium
       } else if (month >= 5 && month <= 8) {
-        basePrice *= 1.1; // Summer moderate increase
+        basePrice *= 1.2; // Summer moderate increase
       }
       
       // Daily pattern
       if (hour >= 17 && hour <= 20) {
-        basePrice *= 1.9; // Peak hours
+        basePrice *= 2.0; // Peak hours (5-8 PM)
       } else if (hour >= 7 && hour <= 16) {
-        basePrice *= 1.4; // Business hours
+        basePrice *= 1.3; // Business hours
       } else {
-        basePrice *= 0.75; // Off-peak
+        basePrice *= 0.7; // Off-peak
       }
       
       // Add volatility (Alberta has significant price swings)
       const volatility = Math.random();
-      if (volatility > 0.98) {
-        basePrice *= 15; // Extreme spike
-      } else if (volatility > 0.92) {
-        basePrice *= 4; // Price spike
+      if (volatility > 0.99) {
+        basePrice *= 20; // Extreme spike
+      } else if (volatility > 0.95) {
+        basePrice *= 6; // Price spike
       } else {
-        basePrice *= (0.5 + Math.random() * 1.0); // Normal variation
+        basePrice *= (0.6 + Math.random() * 0.8); // Normal variation
       }
       
-      const pricePerMWh = Math.max(basePrice, 20); // Floor price in CAD
+      const pricePerMWh = Math.max(basePrice, 15); // Floor price in CAD
       
       prices.push({
         timestamp,
@@ -163,6 +162,7 @@ export class RegionalEnergyService {
       });
     }
     
+    console.log('Generated AESO prices, average:', this.calculateAverage(prices).toFixed(2), 'CAD/MWh');
     return prices;
   }
 
@@ -172,7 +172,7 @@ export class RegionalEnergyService {
 
   private static getFallbackData(region: 'ERCOT' | 'AESO'): RegionalEnergyData {
     // Fallback prices: ERCOT in USD, AESO in CAD
-    const fallbackPrice = region === 'ERCOT' ? 40 : 60; // USD vs CAD
+    const fallbackPrice = region === 'ERCOT' ? 45 : 75; // USD vs CAD
     const hourlyPrices: HourlyPrice[] = [];
     
     for (let i = 0; i < 8760; i++) {
