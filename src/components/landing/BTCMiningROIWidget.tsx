@@ -52,6 +52,13 @@ export const BTCMiningROIWidget = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Calculate profitability automatically when BTC data loads or inputs change
+  useEffect(() => {
+    if (!isLoading && btcData.price > 0) {
+      calculateProfitability();
+    }
+  }, [btcData, hashrate, energyRate, powerDraw, isLoading]);
+
   const calculateProfitability = () => {
     const hashrateValue = parseFloat(hashrate);
     const energyRateValue = parseFloat(energyRate);
@@ -179,7 +186,7 @@ export const BTCMiningROIWidget = () => {
             disabled={isLoading}
           >
             <Calculator className="w-4 h-4 mr-2" />
-            Calculate Profitability
+            Recalculate Profitability
           </Button>
         </div>
 
