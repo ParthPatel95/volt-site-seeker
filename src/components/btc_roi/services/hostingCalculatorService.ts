@@ -43,7 +43,7 @@ export class HostingCalculatorService {
     // Simulate year-long operation
     const simulationResults = this.simulateYearlyOperation(
       totalLoadKW,
-      formData.hostingFeeRate,
+      formData.hostingFeeRate, // This is always in USD
       energyData,
       formData.customElectricityCost,
       formData.expectedUptimePercent,
@@ -52,7 +52,7 @@ export class HostingCalculatorService {
 
     console.log('Simulation results:', simulationResults);
 
-    // Calculate costs and revenues
+    // Calculate costs and revenues - hosting fee rate is always in USD
     const totalHostingRevenue = simulationResults.totalKWhConsumed * formData.hostingFeeRate;
     const totalElectricityCost = simulationResults.totalElectricityCost;
     const totalOperationalCost = formData.monthlyOverhead * 12;
@@ -62,7 +62,7 @@ export class HostingCalculatorService {
     
     console.log('Financial calculations:', {
       totalKWhConsumed: simulationResults.totalKWhConsumed,
-      hostingFeeRate: formData.hostingFeeRate,
+      hostingFeeRateUSD: formData.hostingFeeRate,
       totalHostingRevenue,
       totalElectricityCost,
       averageElectricityCost: simulationResults.averageElectricityCost,
@@ -102,11 +102,11 @@ export class HostingCalculatorService {
 
     console.log('=== FINAL HOSTING ROI RESULTS ===');
     console.log('Energy Usage:', formatEnergy(results.totalEnergyUsageKWh));
-    console.log('Hosting Revenue:', formatCurrency(results.totalHostingRevenue), `(${simulationResults.totalKWhConsumed.toLocaleString()} kWh × $${formData.hostingFeeRate}/kWh)`);
-    console.log('Electricity Cost:', formatCurrency(results.totalElectricityCost), `(avg $${results.averageElectricityCost.toFixed(4)}/kWh)`);
-    console.log('Operational Cost:', formatCurrency(results.totalOperationalCost), `($${formData.monthlyOverhead}/month × 12)`);
-    console.log('Gross Profit:', formatCurrency(results.grossProfit));
-    console.log('Net Profit:', formatCurrency(results.netProfit));
+    console.log('Hosting Revenue (USD):', formatCurrency(results.totalHostingRevenue), `(${simulationResults.totalKWhConsumed.toLocaleString()} kWh × $${formData.hostingFeeRate}/kWh USD)`);
+    console.log('Electricity Cost (USD):', formatCurrency(results.totalElectricityCost), `(avg $${results.averageElectricityCost.toFixed(4)}/kWh USD)`);
+    console.log('Operational Cost (USD):', formatCurrency(results.totalOperationalCost), `($${formData.monthlyOverhead}/month × 12)`);
+    console.log('Gross Profit (USD):', formatCurrency(results.grossProfit));
+    console.log('Net Profit (USD):', formatCurrency(results.netProfit));
     console.log('ROI (12-month):', `${results.roi12Month.toFixed(1)}%`);
     console.log('Payback Period:', `${results.paybackPeriodYears.toFixed(1)} years`);
     console.log('Profit Margin:', `${results.profitMarginPercent.toFixed(1)}%`);
@@ -119,7 +119,7 @@ export class HostingCalculatorService {
 
   private static simulateYearlyOperation(
     totalLoadKW: number,
-    hostingFeeRate: number,
+    hostingFeeRateUSD: number, // Always in USD
     energyData: RegionalEnergyData | null,
     customElectricityCost: number,
     expectedUptimePercent: number,
@@ -128,8 +128,8 @@ export class HostingCalculatorService {
     console.log('=== YEARLY SIMULATION START ===');
     console.log('Simulation parameters:', {
       totalLoadKW,
-      hostingFeeRate: `$${hostingFeeRate}/kWh (what we charge clients)`,
-      customElectricityCost: `$${customElectricityCost}/kWh (fallback for Other region)`,
+      hostingFeeRateUSD: `$${hostingFeeRateUSD}/kWh USD (what we charge clients)`,
+      customElectricityCost: `$${customElectricityCost}/kWh USD (fallback for Other region)`,
       expectedUptimePercent,
       region
     });
@@ -183,7 +183,7 @@ export class HostingCalculatorService {
     const wholesaleDiscountFactor = 0.4; // 60% discount for all loads
     console.log(`Wholesale discount factor: ${wholesaleDiscountFactor} (60% discount applied universally)`);
 
-    // Convert CAD to USD for AESO (approximate rate: 1 CAD = 0.73 USD)
+    // Convert CAD to USD for AESO wholesale energy prices only (not hosting fee rates)
     const cadToUsdRate = 0.73;
 
     // Calculate target operating hours based on expected uptime
@@ -206,6 +206,7 @@ export class HostingCalculatorService {
     // Sort hours by price (lowest first) to operate during cheapest hours
     const sortedHours = energyData.hourlyPrices
       .map((hourlyPrice, index) => {
+        // Convert CAD to USD only for AESO wholesale energy prices
         let wholesalePricePerKWhUSD = hourlyPrice.pricePerKWh * wholesaleDiscountFactor;
         if (region === 'AESO') {
           wholesalePricePerKWhUSD = hourlyPrice.pricePerKWh * cadToUsdRate * wholesaleDiscountFactor;
@@ -255,7 +256,7 @@ export class HostingCalculatorService {
       averageWholesalePrice: overallAveragePrice * wholesaleDiscountFactor,
       minWholesalePrice: minPrice,
       maxWholesalePrice: maxPrice,
-      currencyNote: region === 'AESO' ? `CAD converted to USD at ${cadToUsdRate} rate with 60% wholesale discount` : `USD with 60% wholesale discount`,
+      currencyNote: region === 'AESO' ? `Wholesale energy: CAD converted to USD at ${cadToUsdRate} rate with 60% discount. Hosting fees always in USD.` : `All rates in USD with 60% wholesale discount. Hosting fees always in USD.`,
       curtailmentThreshold: 0,
       curtailmentReason: `Curtailment based on expected uptime (${expectedUptimePercent}%) - operating during cheapest ${targetOperatingHours} hours`,
       detailedRateComponents: avgDetailedRates
@@ -267,12 +268,13 @@ export class HostingCalculatorService {
       currencyNote: energyRateBreakdown.currencyNote,
       originalMinPrice: `$${(minPrice/wholesaleDiscountFactor).toFixed(4)}/kWh`,
       originalMaxPrice: `$${(maxPrice/wholesaleDiscountFactor).toFixed(4)}/kWh`,
-      discountedMinPrice: `$${minPrice.toFixed(4)}/kWh`,
-      discountedMaxPrice: `$${maxPrice.toFixed(4)}/kWh`,
+      discountedMinPrice: `$${minPrice.toFixed(4)}/kWh USD`,
+      discountedMaxPrice: `$${maxPrice.toFixed(4)}/kWh USD`,
       originalAveragePrice: `$${(overallAveragePrice).toFixed(4)}/kWh`,
-      discountedAveragePrice: `$${(overallAveragePrice * wholesaleDiscountFactor).toFixed(4)}/kWh`,
-      averageOperatingPrice: `$${averageElectricityCost.toFixed(4)}/kWh`,
-      wholesaleDiscount: '60%'
+      discountedAveragePrice: `$${(overallAveragePrice * wholesaleDiscountFactor).toFixed(4)}/kWh USD`,
+      averageOperatingPrice: `$${averageElectricityCost.toFixed(4)}/kWh USD`,
+      wholesaleDiscount: '60%',
+      hostingFeeRate: `$${hostingFeeRateUSD.toFixed(4)}/kWh USD (always USD)`
     });
     
     console.log('=== DETAILED RATE COMPONENTS (Industrial Rate Structure) ===');
@@ -292,19 +294,19 @@ export class HostingCalculatorService {
       operatingStrategy: 'Operating during cheapest hours to maximize profitability'
     });
     
-    console.log('Financial summary:', {
+    console.log('Financial summary (all in USD):', {
       totalKWhConsumed: totalKWhConsumed.toLocaleString(),
-      totalElectricityCost: `$${totalElectricityCost.toLocaleString()}`,
-      averageElectricityCost: `$${averageElectricityCost.toFixed(4)}/kWh`,
-      hostingRevenue: `$${(totalKWhConsumed * hostingFeeRate).toLocaleString()}`,
-      grossMargin: `$${((totalKWhConsumed * hostingFeeRate) - totalElectricityCost).toLocaleString()}`,
-      grossMarginPercent: `${(((totalKWhConsumed * hostingFeeRate) - totalElectricityCost) / (totalKWhConsumed * hostingFeeRate) * 100).toFixed(1)}%`
+      totalElectricityCost: `$${totalElectricityCost.toLocaleString()} USD`,
+      averageElectricityCost: `$${averageElectricityCost.toFixed(4)}/kWh USD`,
+      hostingRevenue: `$${(totalKWhConsumed * hostingFeeRateUSD).toLocaleString()} USD`,
+      grossMargin: `$${((totalKWhConsumed * hostingFeeRateUSD) - totalElectricityCost).toLocaleString()} USD`,
+      grossMarginPercent: `${(((totalKWhConsumed * hostingFeeRateUSD) - totalElectricityCost) / (totalKWhConsumed * hostingFeeRateUSD) * 100).toFixed(1)}%`
     });
     
-    console.log('=== UPTIME ANALYSIS ===');
-    console.log(`✅ Uptime target achieved: ${actualUptimePercent.toFixed(1)}% (target: ${expectedUptimePercent}%)`);
-    console.log(`🎯 Operating during cheapest ${targetOperatingHours} hours to maximize profitability`);
-    console.log(`💰 Wholesale discount: 60% off wholesale rates (applied universally)`);
+    console.log('=== CURRENCY HANDLING ===');
+    console.log(`✅ Hosting fee rate: Always USD ($${hostingFeeRateUSD}/kWh)`);
+    console.log(`✅ Energy costs: ${region === 'AESO' ? 'CAD converted to USD' : 'USD'} with 60% wholesale discount`);
+    console.log(`✅ All final calculations: USD`);
 
     return {
       totalKWhConsumed,
