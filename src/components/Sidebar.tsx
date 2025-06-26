@@ -1,31 +1,21 @@
 
 import React from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Menu, LogOut } from "lucide-react"
-import { NavLink, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Zap,
-  Brain,
-  BarChart,
-  Settings,
-  Building2,
-  Factory,
-  Database,
-  Search,
-  TrendingDown
-} from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { 
+  Home, 
+  Zap, 
+  Building2, 
+  Factory, 
+  Database, 
+  Brain,
+  Bitcoin,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  Settings
+} from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -35,191 +25,106 @@ interface SidebarProps {
   setIsOpen: (open: boolean) => void;
 }
 
-export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
+export const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed,
+  setIsCollapsed,
+  isMobile,
+  isOpen,
+  setIsOpen
+}) => {
   const location = useLocation();
-  const { signOut } = useAuth();
-  const { toast } = useToast();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error signing out",
-        description: "There was a problem signing you out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const menuItems = [
-    {
-      icon: LayoutDashboard,
-      label: 'Dashboard',
-      href: '/app',
-      active: location.pathname === '/app'
-    },
-    {
-      icon: Zap,
-      label: 'AESO Market',
-      href: '/app/aeso-market',
-      active: location.pathname === '/app/aeso-market'
-    },
-    {
-      icon: Brain,
-      label: 'Market Intelligence',
-      href: '/app/aeso-intelligence',
-      active: location.pathname === '/app/aeso-intelligence'
-    },
-    {
-      icon: BarChart,
-      label: 'Energy Rates',
-      href: '/app/energy-rates',
-      active: location.pathname === '/app/energy-rates'
-    },
-    {
-      icon: TrendingDown,
-      label: 'Industry Intelligence',
-      href: '/app/industry-intelligence',
-      active: location.pathname === '/app/industry-intelligence'
-    },
-    {
-      icon: Building2,
-      label: 'Corporate Intelligence',
-      href: '/app/corporate-intelligence',
-      active: location.pathname === '/app/corporate-intelligence'
-    },
-    {
-      icon: Search,
-      label: 'Idle Industry Scanner',
-      href: '/app/idle-industry-scanner',
-      active: location.pathname === '/app/idle-industry-scanner'
-    },
-    {
-      icon: Factory,
-      label: 'Power Infrastructure',
-      href: '/app/power-infrastructure',
-      active: location.pathname === '/app/power-infrastructure'
-    },
-    {
-      icon: Database,
-      label: 'Data Management',
-      href: '/app/data-management',
-      active: location.pathname === '/app/data-management'
-    },
-    {
-      icon: Settings,
-      label: 'Settings',
-      href: '/app/settings',
-      active: location.pathname === '/app/settings'
-    },
+  const navigationItems = [
+    { path: '/', icon: Home, label: 'Dashboard' },
+    { path: '/aeso-market', icon: Zap, label: 'AESO Market' },
+    { path: '/corporate-intelligence', icon: Building2, label: 'Corporate Intel' },
+    { path: '/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
+    { path: '/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
+    { path: '/data-management', icon: Database, label: 'Data Management' }
   ];
 
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full bg-slate-900 text-white">
+      {/* Header */}
+      <div className="p-4 border-b border-slate-700">
+        {!isCollapsed && (
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold">VoltScout</h1>
+          </div>
+        )}
+        
+        {/* Collapse button for desktop */}
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6"
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </Button>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => isMobile && setIsOpen(false)}
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                isActive 
+                  ? 'bg-orange-600 text-white' 
+                  : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-slate-700">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
+        >
+          <Settings className="w-5 h-5 mr-3" />
+          {!isCollapsed && <span>Settings</span>}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Mobile sidebar
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent className="w-full sm:w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50">
-          <SheetHeader className="mb-4">
-            <SheetTitle>Menu</SheetTitle>
-            <SheetDescription>
-              Navigate through the application
-            </SheetDescription>
-          </SheetHeader>
-          <div className="flex flex-col space-y-2 flex-1">
-            {menuItems.map((item) => (
-              <NavLink
-                key={item.label}
-                to={item.href}
-                className={cn(
-                  "flex items-center px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700",
-                  item.active ? "bg-gray-100 dark:bg-gray-700 font-medium" : "text-gray-600 dark:text-gray-400"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
-                <item.icon className="w-4 h-4 mr-2" />
-                {item.label}
-              </NavLink>
-            ))}
-          </div>
-          
-          {/* Mobile Sign Out Button */}
-          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="ghost"
-              onClick={handleSignOut}
-              className="w-full justify-start px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
+        <SheetContent side="left" className="p-0 w-72">
+          <SidebarContent />
         </SheetContent>
       </Sheet>
     );
   }
 
+  // Desktop sidebar
   return (
-    <div className={cn(
-      "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300",
-      isCollapsed ? "w-16" : "w-72"
-    )}>
-      <div className="flex flex-col h-full">
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            {!isCollapsed && (
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                VoltScout
-              </h2>
-            )}
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <Menu className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="flex-1 px-2">
-          <div className="flex flex-col space-y-1">
-            {menuItems.map((item) => (
-              <NavLink
-                key={item.label}
-                to={item.href}
-                className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors",
-                  item.active ? "bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400",
-                  isCollapsed && "justify-center"
-                )}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <item.icon className={cn("w-4 h-4", !isCollapsed && "mr-3")} />
-                {!isCollapsed && <span>{item.label}</span>}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-
-        {/* Desktop Sign Out Button */}
-        <div className="p-2 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            variant="ghost"
-            onClick={handleSignOut}
-            className={cn(
-              "w-full text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400",
-              isCollapsed ? "justify-center px-3 py-2" : "justify-start px-3 py-2"
-            )}
-            title={isCollapsed ? "Sign Out" : undefined}
-          >
-            <LogOut className={cn("w-4 h-4", !isCollapsed && "mr-3")} />
-            {!isCollapsed && <span>Sign Out</span>}
-          </Button>
-        </div>
-      </div>
+    <div 
+      className={`fixed left-0 top-0 h-full z-50 transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-72'
+      }`}
+    >
+      <SidebarContent />
     </div>
   );
-}
+};

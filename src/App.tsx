@@ -9,6 +9,7 @@ import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
 import EnergyRates from './pages/EnergyRates';
 import EnergyRatesTest from './pages/EnergyRatesTest';
+import BTCROILab from './pages/BTCROILab';
 import { AESOMarket } from './components/AESOMarket';
 import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
 
@@ -24,6 +25,7 @@ function App() {
             </div>
           } />
           <Route path="/voltscout" element={<VoltScoutAccessPage />} />
+          <Route path="/btc-roi-lab" element={<BTCROILab />} />
           <Route path="/app/*" element={<AuthWrapper><Dashboard /></AuthWrapper>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
