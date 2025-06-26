@@ -41,71 +41,71 @@ export default function Index() {
       id: 'dashboard',
       label: 'Dashboard',
       icon: Home,
-      onClick: () => navigate('/'),
-      active: location.pathname === '/'
+      onClick: () => navigate('/app'),
+      active: location.pathname === '/app'
     },
     {
       id: 'aeso-market',
       label: 'AESO',
       icon: Zap,
-      onClick: () => navigate('/aeso-market'),
-      active: location.pathname === '/aeso-market'
+      onClick: () => navigate('/app/aeso-market'),
+      active: location.pathname === '/app/aeso-market'
     },
     {
       id: 'market-intelligence',
       label: 'Market Intel',
       icon: Brain,
-      onClick: () => navigate('/market-intelligence'),
-      active: location.pathname === '/market-intelligence'
+      onClick: () => navigate('/app/market-intelligence'),
+      active: location.pathname === '/app/market-intelligence'
     },
     {
       id: 'energy-rates',
       label: 'Energy Rates',
       icon: BarChart3,
-      onClick: () => navigate('/energy-rates'),
-      active: location.pathname === '/energy-rates'
+      onClick: () => navigate('/app/energy-rates'),
+      active: location.pathname === '/app/energy-rates'
     },
     {
       id: 'industry-intelligence',
       label: 'Industry Intel',
       icon: TrendingUp,
-      onClick: () => navigate('/industry-intelligence'),
-      active: location.pathname === '/industry-intelligence'
+      onClick: () => navigate('/app/industry-intelligence'),
+      active: location.pathname === '/app/industry-intelligence'
     },
     {
       id: 'corporate',
       label: 'Corporate',
       icon: Building2,
-      onClick: () => navigate('/corporate-intelligence'),
-      active: location.pathname === '/corporate-intelligence'
+      onClick: () => navigate('/app/corporate-intelligence'),
+      active: location.pathname === '/app/corporate-intelligence'
     },
     {
       id: 'idle-scanner',
       label: 'Scanner',
       icon: Target,
-      onClick: () => navigate('/idle-industry-scanner'),
-      active: location.pathname === '/idle-industry-scanner'
+      onClick: () => navigate('/app/idle-industry-scanner'),
+      active: location.pathname === '/app/idle-industry-scanner'
     },
     {
       id: 'power',
       label: 'Power',
       icon: Factory,
-      onClick: () => navigate('/power-infrastructure'),
-      active: location.pathname === '/power-infrastructure'
+      onClick: () => navigate('/app/power-infrastructure'),
+      active: location.pathname === '/app/power-infrastructure'
     },
     {
       id: 'btc-roi',
       label: 'BTC ROI',
       icon: Bitcoin,
-      onClick: () => navigate('/btc-roi-lab'),
-      active: location.pathname === '/btc-roi-lab'
+      onClick: () => navigate('/app/btc-roi-lab'),
+      active: location.pathname === '/app/btc-roi-lab'
     },
     {
       id: 'data',
       label: 'Data',
       icon: Database,
-      onClick: () => navigate('/data-management'),
-      active: location.pathname === '/data-management'
+      onClick: () => navigate('/app/data-management'),
+      active: location.pathname === '/app/data-management'
     }
   ];
 

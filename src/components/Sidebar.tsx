@@ -41,16 +41,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
 
   const navigationItems = [
-    { path: '/', icon: Home, label: 'Dashboard' },
-    { path: '/aeso-market', icon: Zap, label: 'AESO Market' },
-    { path: '/market-intelligence', icon: Brain, label: 'Market Intelligence' },
-    { path: '/energy-rates', icon: BarChart3, label: 'Energy Rates' },
-    { path: '/industry-intelligence', icon: TrendingUp, label: 'Industry Intelligence' },
-    { path: '/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence' },
-    { path: '/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
-    { path: '/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
-    { path: '/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
-    { path: '/data-management', icon: Database, label: 'Data Management' }
+    { path: '/app', icon: Home, label: 'Dashboard' },
+    { path: '/app/aeso-market', icon: Zap, label: 'AESO Market' },
+    { path: '/app/market-intelligence', icon: Brain, label: 'Market Intelligence' },
+    { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates' },
+    { path: '/app/industry-intelligence', icon: TrendingUp, label: 'Industry Intelligence' },
+    { path: '/app/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence' },
+    { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
+    { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
+    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
+    { path: '/app/data-management', icon: Database, label: 'Data Management' }
   ];
 
   const SidebarContent = () => (
