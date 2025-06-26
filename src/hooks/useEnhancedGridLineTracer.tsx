@@ -498,7 +498,7 @@ export function useEnhancedGridLineTracer() {
         crossValidationScore: 0.88,
         utilityDatabaseMatches: 2,
         groundTruthAccuracy: 0.91,
-        qualityScore: 'A'
+        qualityGrade: 'A'
       },
       predictiveAnalytics: input.enablePredictiveAnalysis ? {
         futureGridExpansion: [
