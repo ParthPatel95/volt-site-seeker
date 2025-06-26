@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -168,8 +167,7 @@ export function useEnhancedGridLineTracer() {
   const { toast } = useToast();
   const { 
     systemMarginalPrice, 
-    operatingReserve, 
-    generationMix 
+    operatingReserve 
   } = useAESOMarketData();
   const { 
     pricing: ercotPricing, 
@@ -288,7 +286,7 @@ export function useEnhancedGridLineTracer() {
           offPeakPrice: ercotPricing.off_peak_price,
           currency: 'USD',
           demandForecast: ercotLoad?.current_demand_mw || 65000,
-          generationMix: {
+          generationMix: ercotGeneration || {
             renewable: 35,
             natural_gas: 45,
             coal: 8,

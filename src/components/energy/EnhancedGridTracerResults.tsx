@@ -110,7 +110,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-orange-600" />
               <span className="font-medium">Accuracy Grade:</span>
-              <Badge variant="outline">{results.accuracyMetrics?.qualityScore || 'A'}</Badge>
+              <Badge variant="outline">{results.accuracyMetrics?.qualityGrade || 'A'}</Badge>
             </div>
           </div>
         </CardContent>
