@@ -11,7 +11,9 @@ import {
   XCircle,
   Activity,
   Clock,
-  Cpu
+  Cpu,
+  Eye,
+  Satellite
 } from 'lucide-react';
 import { GridTracerResults as GridResults, DetectedInfrastructure } from '@/hooks/useGridLineTracer';
 import { GridTracerInput } from './GridLineTracer';
@@ -45,8 +47,47 @@ export function GridTracerResults({ results, input }: GridTracerResultsProps) {
     return `${distance.toFixed(1)} km`;
   };
 
+  const getAISourceIcon = (source?: string) => {
+    if (source?.includes('Roboflow')) return <Cpu className="h-3 w-3 text-blue-500" />;
+    if (source?.includes('OpenAI')) return <Eye className="h-3 w-3 text-purple-500" />;
+    return <Satellite className="h-3 w-3 text-gray-500" />;
+  };
+
   return (
     <div className="space-y-6">
+      {/* AI Analysis Summary */}
+      {results.analysisMetadata.roboflowDetections !== undefined && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <Cpu className="h-5 w-5" />
+              AI Analysis Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Cpu className="h-4 w-4 text-blue-600" />
+                <span className="font-medium">Roboflow Detections:</span>
+                <Badge variant="secondary">{results.analysisMetadata.roboflowDetections || 0}</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-purple-600" />
+                <span className="font-medium">OpenAI Vision:</span>
+                <Badge variant={results.analysisMetadata.openaiAnalysisAvailable ? "default" : "outline"}>
+                  {results.analysisMetadata.openaiAnalysisAvailable ? 'Active' : 'Unavailable'}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Satellite className="h-4 w-4 text-green-600" />
+                <span className="font-medium">Imagery Source:</span>
+                <Badge variant="outline">Mapbox Satellite</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -99,7 +140,7 @@ export function GridTracerResults({ results, input }: GridTracerResultsProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Confidence</p>
+                <p className="text-sm font-medium text-gray-600">AI Confidence</p>
                 <p className="text-2xl font-bold">
                   {(results.analysisMetadata.confidenceScore * 100).toFixed(0)}%
                 </p>
@@ -115,7 +156,7 @@ export function GridTracerResults({ results, input }: GridTracerResultsProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            Detected Infrastructure
+            AI-Detected Infrastructure
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -137,6 +178,15 @@ export function GridTracerResults({ results, input }: GridTracerResultsProps) {
                       <Badge variant="secondary">
                         {(item.confidence * 100).toFixed(0)}% confidence
                       </Badge>
+                      {item.properties?.source && (
+                        <Badge variant="outline" className="text-xs">
+                          {getAISourceIcon(item.properties.source)}
+                          <span className="ml-1">
+                            {item.properties.source.includes('Roboflow') ? 'Roboflow AI' : 
+                             item.properties.source.includes('OpenAI') ? 'OpenAI Vision' : 'AI Detection'}
+                          </span>
+                        </Badge>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
@@ -181,7 +231,7 @@ export function GridTracerResults({ results, input }: GridTracerResultsProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Analysis Details
+            AI Analysis Details
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -191,13 +241,13 @@ export function GridTracerResults({ results, input }: GridTracerResultsProps) {
               <ul className="space-y-1 text-gray-600">
                 <li>Center: {results.scanArea.center[1].toFixed(4)}, {results.scanArea.center[0].toFixed(4)}</li>
                 <li>Radius: {results.scanArea.radius} km</li>
-                <li>Auto Trace: {input.autoTrace ? 'Enabled' : 'Disabled'}</li>
+                <li>Enhanced AI Analysis: {input.autoTrace ? 'Enabled' : 'Disabled'}</li>
                 {input.targetSite && <li>Target Site: {input.targetSite}</li>}
               </ul>
             </div>
             
             <div>
-              <p className="font-medium mb-1">Analysis Metadata:</p>
+              <p className="font-medium mb-1">AI Analysis Metadata:</p>
               <ul className="space-y-1 text-gray-600">
                 <li>Timestamp: {new Date(results.analysisMetadata.scanTimestamp).toLocaleString()}</li>
                 <li>Imagery Source: {results.analysisMetadata.satelliteImagerySource}</li>
@@ -209,7 +259,7 @@ export function GridTracerResults({ results, input }: GridTracerResultsProps) {
           
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Analysis Confidence</span>
+              <span className="text-sm font-medium">AI Analysis Confidence</span>
               <span className="text-sm text-gray-600">
                 {(results.analysisMetadata.confidenceScore * 100).toFixed(1)}%
               </span>

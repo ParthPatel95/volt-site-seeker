@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { MapPin, Scan, Download, Eye, AlertTriangle } from 'lucide-react';
+import { MapPin, Scan, Download, Eye, AlertTriangle, Cpu, Satellite } from 'lucide-react';
 import { EnhancedMapboxMap } from '@/components/EnhancedMapboxMap';
 import { useGridLineTracer } from '@/hooks/useGridLineTracer';
 import { GridTracerResults } from './GridTracerResults';
@@ -29,6 +29,7 @@ export function GridLineTracer() {
   });
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [scanStage, setScanStage] = useState<string>('');
   const { 
     scanTransmissionLines, 
     results, 
@@ -59,21 +60,36 @@ export function GridLineTracer() {
     try {
       setIsScanning(true);
       setScanProgress(0);
+      setScanStage('Fetching satellite imagery...');
       
-      // Simulate progress updates
+      // Simulate progress updates with realistic stages
+      const stages = [
+        'Fetching satellite imagery...',
+        'Running Roboflow AI detection...',
+        'Analyzing with OpenAI Vision...',
+        'Processing grid infrastructure...',
+        'Estimating capacity levels...',
+        'Finalizing analysis...'
+      ];
+      
+      let currentStage = 0;
       const progressInterval = setInterval(() => {
-        setScanProgress(prev => Math.min(prev + 10, 90));
-      }, 500);
+        setScanProgress(prev => Math.min(prev + 15, 90));
+        if (currentStage < stages.length - 1) {
+          setScanStage(stages[++currentStage]);
+        }
+      }, 800);
 
       console.log('Starting grid line trace for:', input);
       await scanTransmissionLines(input as GridTracerInput);
       
       setScanProgress(100);
+      setScanStage('Analysis complete!');
       clearInterval(progressInterval);
       
       toast({
         title: "Grid Scan Complete",
-        description: "Transmission lines and substations have been identified"
+        description: "AI-powered transmission line analysis completed successfully"
       });
     } catch (error: any) {
       console.error('Grid scan error:', error);
@@ -85,6 +101,7 @@ export function GridLineTracer() {
     } finally {
       setIsScanning(false);
       setScanProgress(0);
+      setScanStage('');
     }
   };
 
@@ -108,13 +125,37 @@ export function GridLineTracer() {
           <CardTitle className="flex items-center gap-2">
             <Scan className="h-5 w-5" />
             Grid Line Tracer
+            <Badge variant="secondary" className="ml-2">
+              <Cpu className="h-3 w-3 mr-1" />
+              AI-Enhanced
+            </Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Trace transmission lines and identify substations using satellite analysis and AI detection models.
+            AI-powered transmission line detection using Roboflow computer vision and OpenAI analysis 
+            to identify substations, estimate capacity, and trace grid infrastructure from satellite imagery.
           </p>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* AI Integration Status */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-blue-50 rounded-lg border">
+              <div className="flex items-center gap-2 text-sm">
+                <Satellite className="h-4 w-4 text-blue-600" />
+                <span className="font-medium">Satellite Analysis</span>
+                <Badge variant="outline" className="text-xs">Mapbox</Badge>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Cpu className="h-4 w-4 text-green-600" />
+                <span className="font-medium">AI Detection</span>
+                <Badge variant="outline" className="text-xs">Roboflow</Badge>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Eye className="h-4 w-4 text-purple-600" />
+                <span className="font-medium">Vision Analysis</span>
+                <Badge variant="outline" className="text-xs">OpenAI GPT-4</Badge>
+              </div>
+            </div>
+
             {/* Input Form */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
@@ -184,26 +225,31 @@ export function GridLineTracer() {
               />
               <Label htmlFor="auto-trace" className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                Auto Trace Nearby Grid
-                <Badge variant="secondary" className="text-xs">Beta</Badge>
+                Enhanced AI Analysis
+                <Badge variant="secondary" className="text-xs">OpenAI Vision</Badge>
               </Label>
             </div>
             
             <p className="text-xs text-muted-foreground">
-              When enabled, automatically maps all nearby transmission lines and substations within the scan radius.
+              When enabled, uses advanced OpenAI Vision analysis for detailed substation identification, 
+              voltage estimation, and capacity assessment in addition to Roboflow detection.
             </p>
 
             {/* Scan Progress */}
             {isScanning && (
-              <div className="space-y-2">
+              <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Scanning Grid Infrastructure...</span>
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    <Cpu className="h-4 w-4 animate-pulse" />
+                    {scanStage}
+                  </span>
                   <span className="text-sm text-muted-foreground">{scanProgress}%</span>
                 </div>
                 <Progress value={scanProgress} className="w-full" />
-                <p className="text-xs text-muted-foreground">
-                  Analyzing satellite imagery and detecting transmission infrastructure
-                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Satellite className="h-3 w-3" />
+                  <span>Processing satellite imagery with AI detection models</span>
+                </div>
               </div>
             )}
 
@@ -215,7 +261,7 @@ export function GridLineTracer() {
                 className="flex items-center gap-2"
               >
                 <Scan className="h-4 w-4" />
-                {isScanning ? 'Scanning...' : 'Start Grid Scan'}
+                {isScanning ? 'AI Analysis in Progress...' : 'Start AI Grid Scan'}
               </Button>
               
               {results && (
@@ -225,19 +271,19 @@ export function GridLineTracer() {
                   className="flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Download Report
+                  Download AI Report
                 </Button>
               )}
             </div>
 
-            {/* Warning */}
+            {/* AI Analysis Warning */}
             <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm">
                 <p className="font-medium text-yellow-800">AI-Powered Analysis</p>
                 <p className="text-yellow-700">
-                  Results are estimates based on satellite imagery analysis. 
-                  Verify with utility companies for actual capacity and connection availability.
+                  Results combine Roboflow computer vision detection with OpenAI GPT-4 Vision analysis. 
+                  Confidence scores and capacity estimates are AI-generated and should be verified with utility companies.
                 </p>
               </div>
             </div>
@@ -249,7 +295,10 @@ export function GridLineTracer() {
       {input.latitude && input.longitude && (
         <Card>
           <CardHeader>
-            <CardTitle>Satellite View & Grid Analysis</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Satellite className="h-5 w-5" />
+              Satellite View & AI Grid Analysis
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative">
