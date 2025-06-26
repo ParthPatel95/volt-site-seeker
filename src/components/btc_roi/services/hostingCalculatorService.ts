@@ -21,7 +21,8 @@ export class HostingCalculatorService {
       formData.hostingFeeRate,
       energyData,
       electricityCostPerKWh,
-      formData.expectedUptimePercent
+      formData.expectedUptimePercent,
+      formData.region
     );
 
     // Calculate costs and revenues
@@ -66,7 +67,8 @@ export class HostingCalculatorService {
     hostingFeeRate: number,
     energyData: RegionalEnergyData | null,
     customElectricityCost: number,
-    expectedUptimePercent: number
+    expectedUptimePercent: number,
+    region: 'ERCOT' | 'AESO' | 'Other'
   ) {
     if (!energyData) {
       // Simple calculation for custom region
@@ -88,23 +90,38 @@ export class HostingCalculatorService {
     let totalElectricityCost = 0;
     let operatingHours = 0;
     let curtailedHours = 0;
+    let totalPriceSum = 0;
+
+    // Convert CAD to USD for AESO (approximate rate: 1 CAD = 0.73 USD)
+    const cadToUsdRate = 0.73;
 
     for (const hourlyPrice of energyData.hourlyPrices) {
-      // Curtailment logic: if wholesale price > hosting fee, shut down to avoid losses
-      if (hourlyPrice.pricePerKWh <= hostingFeeRate) {
+      // Convert price to USD if it's from AESO (CAD market)
+      let pricePerKWhUSD = hourlyPrice.pricePerKWh;
+      if (region === 'AESO') {
+        pricePerKWhUSD = hourlyPrice.pricePerKWh * cadToUsdRate;
+      }
+      
+      // Curtailment logic: if wholesale price > hosting fee, consider shutting down
+      // However, most hosting contracts require guaranteed uptime, so we'll be more conservative
+      // Only curtail if price is extremely high (3x hosting fee)
+      const curtailmentThreshold = hostingFeeRate * 3;
+      
+      if (pricePerKWhUSD <= curtailmentThreshold) {
         // Operate this hour
         const kWhThisHour = totalLoadKW;
         totalKWhConsumed += kWhThisHour;
-        totalElectricityCost += kWhThisHour * hourlyPrice.pricePerKWh;
+        totalElectricityCost += kWhThisHour * pricePerKWhUSD;
+        totalPriceSum += pricePerKWhUSD;
         operatingHours++;
       } else {
-        // Curtail this hour to avoid losses
+        // Curtail this hour to avoid extreme losses
         curtailedHours++;
       }
     }
 
     const actualUptimePercent = (operatingHours / 8760) * 100;
-    const averageElectricityCost = totalKWhConsumed > 0 ? totalElectricityCost / totalKWhConsumed : 0;
+    const averageElectricityCost = operatingHours > 0 ? totalPriceSum / operatingHours : 0;
 
     return {
       totalKWhConsumed,

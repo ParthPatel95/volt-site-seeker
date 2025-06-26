@@ -70,34 +70,40 @@ export class RegionalEnergyService {
       const hour = timestamp.getHours();
       const month = timestamp.getMonth();
       
-      // Base price around $36/MWh (2023 average)
-      let basePrice = 36;
+      // Base price around $30/MWh (realistic average)
+      let basePrice = 30;
       
       // Seasonal adjustment (higher in summer)
       if (month >= 5 && month <= 8) {
-        basePrice *= 1.4; // Summer premium
+        basePrice *= 1.6; // Summer premium
+      } else if (month >= 11 || month <= 1) {
+        basePrice *= 1.2; // Winter heating
       }
       
       // Daily pattern (higher during peak hours)
       if (hour >= 14 && hour <= 18) {
-        basePrice *= 1.8; // Peak hours
+        basePrice *= 2.2; // Peak hours
       } else if (hour >= 7 && hour <= 13) {
-        basePrice *= 1.3; // Mid-day
+        basePrice *= 1.4; // Mid-day
       } else if (hour >= 19 && hour <= 22) {
-        basePrice *= 1.2; // Evening
+        basePrice *= 1.3; // Evening
+      } else {
+        basePrice *= 0.7; // Off-peak hours
       }
       
       // Add volatility (ERCOT can spike dramatically)
       const volatility = Math.random();
-      if (volatility > 0.95) {
-        basePrice *= 50; // Extreme spike (rare)
+      if (volatility > 0.99) {
+        basePrice *= 20; // Extreme spike (very rare)
+      } else if (volatility > 0.95) {
+        basePrice *= 8; // Major spike
       } else if (volatility > 0.85) {
-        basePrice *= 5; // Price spike
+        basePrice *= 3; // Price spike
       } else {
-        basePrice *= (0.5 + Math.random() * 1.5); // Normal variation
+        basePrice *= (0.6 + Math.random() * 0.8); // Normal variation
       }
       
-      const pricePerMWh = Math.max(basePrice, 0);
+      const pricePerMWh = Math.max(basePrice, 15); // Floor price
       
       prices.push({
         timestamp,
@@ -113,45 +119,47 @@ export class RegionalEnergyService {
     const prices: HourlyPrice[] = [];
     const now = new Date();
     
-    // Generate 8760 hours (1 year) of realistic AESO pricing
+    // Generate 8760 hours (1 year) of realistic AESO pricing (in CAD)
     for (let i = 0; i < 8760; i++) {
       const timestamp = new Date(now.getTime() - (8760 - i) * 60 * 60 * 1000);
       const hour = timestamp.getHours();
       const month = timestamp.getMonth();
       
-      // Base price around $70/MWh (2024 stabilized level, down from 2023 highs)
-      let basePrice = 70;
+      // Base price around $55 CAD/MWh (realistic average for Alberta)
+      let basePrice = 55;
       
       // Seasonal adjustment (higher in winter due to heating demand)
       if (month >= 10 || month <= 2) {
-        basePrice *= 1.6; // Winter premium
+        basePrice *= 1.8; // Winter premium
       } else if (month >= 5 && month <= 8) {
-        basePrice *= 1.2; // Summer moderate increase
+        basePrice *= 1.1; // Summer moderate increase
       }
       
       // Daily pattern
       if (hour >= 17 && hour <= 20) {
-        basePrice *= 1.7; // Peak hours
+        basePrice *= 1.9; // Peak hours
       } else if (hour >= 7 && hour <= 16) {
-        basePrice *= 1.3; // Business hours
+        basePrice *= 1.4; // Business hours
+      } else {
+        basePrice *= 0.75; // Off-peak
       }
       
       // Add volatility (Alberta has significant price swings)
       const volatility = Math.random();
       if (volatility > 0.98) {
-        basePrice *= 20; // Extreme spike
-      } else if (volatility > 0.9) {
-        basePrice *= 3; // Price spike
+        basePrice *= 15; // Extreme spike
+      } else if (volatility > 0.92) {
+        basePrice *= 4; // Price spike
       } else {
-        basePrice *= (0.3 + Math.random() * 1.7); // Normal variation
+        basePrice *= (0.5 + Math.random() * 1.0); // Normal variation
       }
       
-      const pricePerMWh = Math.max(basePrice, 0);
+      const pricePerMWh = Math.max(basePrice, 20); // Floor price in CAD
       
       prices.push({
         timestamp,
         pricePerMWh,
-        pricePerKWh: pricePerMWh / 1000
+        pricePerKWh: pricePerMWh / 1000 // Still in CAD
       });
     }
     
@@ -163,7 +171,8 @@ export class RegionalEnergyService {
   }
 
   private static getFallbackData(region: 'ERCOT' | 'AESO'): RegionalEnergyData {
-    const fallbackPrice = region === 'ERCOT' ? 36 : 70; // USD/MWh
+    // Fallback prices: ERCOT in USD, AESO in CAD
+    const fallbackPrice = region === 'ERCOT' ? 40 : 60; // USD vs CAD
     const hourlyPrices: HourlyPrice[] = [];
     
     for (let i = 0; i < 8760; i++) {
