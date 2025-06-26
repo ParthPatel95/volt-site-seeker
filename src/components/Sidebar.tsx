@@ -14,7 +14,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  Settings
+  Settings,
+  Search,
+  BarChart3,
+  MapPin,
+  Cpu,
+  Target
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/aeso-market', icon: Zap, label: 'AESO Market' },
     { path: '/corporate-intelligence', icon: Building2, label: 'Corporate Intel' },
     { path: '/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
+    { path: '/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
     { path: '/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
     { path: '/data-management', icon: Database, label: 'Data Management' }
   ];
