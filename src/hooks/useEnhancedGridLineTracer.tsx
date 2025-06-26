@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -180,6 +181,15 @@ export function useEnhancedGridLineTracer() {
     try {
       console.log('Starting enhanced AI grid line trace analysis...', input);
       
+      // Validate input
+      if (!input.latitude || !input.longitude) {
+        throw new Error('Latitude and longitude are required');
+      }
+
+      if (Math.abs(input.latitude) > 90 || Math.abs(input.longitude) > 180) {
+        throw new Error('Invalid coordinates provided');
+      }
+      
       // Determine market based on location
       const market = determineMarket(input.latitude, input.longitude);
       await fetchLiveMarketData(market);
@@ -202,14 +212,14 @@ export function useEnhancedGridLineTracer() {
       }
 
       console.log('Enhanced AI grid line scan completed:', data);
-      const scanResults = data.results || generateEnhancedMockResults(input, market);
+      const scanResults = data?.results || generateEnhancedMockResults(input, market);
       setResults(scanResults);
       
       // Generate accuracy metrics
       const accuracy = generateAccuracyMetrics(scanResults);
       setAccuracyMetrics(accuracy);
       
-      if (data.note) {
+      if (data?.note) {
         toast({
           title: "Enhanced AI Services Info",
           description: data.note,
@@ -223,7 +233,7 @@ export function useEnhancedGridLineTracer() {
       console.error('Error in enhanced transmission line scanning:', error);
       
       // Generate enhanced mock results for development
-      const market = determineMarket(input.latitude, input.longitude);
+      const market = determineMarket(input.latitude || 51.0447, input.longitude || -114.0719);
       const mockResults = generateEnhancedMockResults(input, market);
       setResults(mockResults);
       
@@ -263,9 +273,9 @@ export function useEnhancedGridLineTracer() {
         marketData = {
           market: 'AESO',
           timestamp: new Date().toISOString(),
-          currentPrice: systemMarginalPrice.price,
-          peakPrice: systemMarginalPrice.price * 1.3,
-          offPeakPrice: systemMarginalPrice.price * 0.7,
+          currentPrice: systemMarginalPrice.price || 45.50,
+          peakPrice: (systemMarginalPrice.price || 45.50) * 1.3,
+          offPeakPrice: (systemMarginalPrice.price || 45.50) * 0.7,
           currency: 'CAD',
           demandForecast: 11500, // MW typical Alberta demand
           generationMix: {
@@ -301,13 +311,13 @@ export function useEnhancedGridLineTracer() {
         marketData = {
           market: 'ERCOT',
           timestamp: new Date().toISOString(),
-          currentPrice: ercotPricing.current_price,
-          peakPrice: ercotPricing.peak_price,
-          offPeakPrice: ercotPricing.off_peak_price,
+          currentPrice: ercotPricing.current_price || 38.75,
+          peakPrice: ercotPricing.peak_price || 55.20,
+          offPeakPrice: ercotPricing.off_peak_price || 24.15,
           currency: 'USD',
           demandForecast: ercotLoad?.current_demand_mw || 65000,
           generationMix: generationMix,
-          gridConditions: ercotPricing.market_conditions as any || 'normal'
+          gridConditions: (ercotPricing.market_conditions as any) || 'normal'
         };
       } else {
         // Fallback market data
@@ -333,12 +343,32 @@ export function useEnhancedGridLineTracer() {
       setLiveMarketData(marketData);
     } catch (error) {
       console.error('Error fetching live market data:', error);
+      
+      // Set fallback data even on error
+      const fallbackData: LiveMarketData = {
+        market,
+        timestamp: new Date().toISOString(),
+        currentPrice: market === 'AESO' ? 45.50 : 38.75,
+        peakPrice: market === 'AESO' ? 65.30 : 55.20,
+        offPeakPrice: market === 'AESO' ? 28.40 : 24.15,
+        currency: market === 'AESO' ? 'CAD' : 'USD',
+        demandForecast: market === 'AESO' ? 11500 : 65000,
+        generationMix: {
+          renewable: market === 'AESO' ? 45 : 35,
+          natural_gas: market === 'AESO' ? 35 : 45,
+          coal: market === 'AESO' ? 15 : 8,
+          nuclear: market === 'AESO' ? 0 : 10,
+          other: market === 'AESO' ? 5 : 2
+        },
+        gridConditions: 'normal'
+      };
+      setLiveMarketData(fallbackData);
     }
   };
 
   const generateEnhancedMockResults = (input: EnhancedGridTracerInput, market: 'AESO' | 'ERCOT'): EnhancedGridTracerResults => {
-    const center: [number, number] = [input.longitude, input.latitude];
-    const radius = input.scanRadius;
+    const center: [number, number] = [input.longitude || -114.0719, input.latitude || 51.0447];
+    const radius = input.scanRadius || 5;
     
     // Generate enhanced mock infrastructure with comprehensive data
     const mockInfrastructure: EnhancedDetectedInfrastructure[] = [
@@ -463,10 +493,10 @@ export function useEnhancedGridLineTracer() {
         satelliteImagerySource: 'Mapbox Satellite V12 + Google Earth Engine',
         confidenceScore: 0.92,
         roboflowDetections: 2,
-        openaiAnalysisAvailable: input.autoTrace,
-        utilityDatabaseCrossCheck: input.enableAccuracyEnhancement,
-        accuracyEnhancement: input.enableAccuracyEnhancement,
-        marketDataIncluded: input.enableMarketAnalysis
+        openaiAnalysisAvailable: input.autoTrace || false,
+        utilityDatabaseCrossCheck: input.enableAccuracyEnhancement || false,
+        accuracyEnhancement: input.enableAccuracyEnhancement || false,
+        marketDataIncluded: input.enableMarketAnalysis || false
       },
       marketAnalysis: input.enableMarketAnalysis ? {
         currentMarket: market,

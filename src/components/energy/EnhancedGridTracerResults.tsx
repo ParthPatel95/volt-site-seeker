@@ -28,6 +28,19 @@ interface EnhancedGridTracerResultsProps {
 }
 
 export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracerResultsProps) {
+  // Safeguard against undefined/null results
+  if (!results) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <div className="text-center text-gray-500">
+            <p>No results available</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'available': return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -47,12 +60,12 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
   };
 
   const formatDistance = (distance?: number) => {
-    if (!distance) return 'Unknown';
+    if (!distance || isNaN(distance)) return 'Unknown';
     return `${distance.toFixed(1)} km`;
   };
 
   const formatCurrency = (amount?: number, currency: 'CAD' | 'USD' = 'CAD') => {
-    if (!amount) return 'N/A';
+    if (!amount || isNaN(amount)) return 'N/A';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -70,6 +83,25 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
     if (risk <= 30) return 'text-green-600';
     if (risk <= 60) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const safeResults = {
+    ...results,
+    summary: results.summary || {
+      totalSubstations: 0,
+      totalTransmissionLines: 0,
+      totalTowers: 0,
+      estimatedGridHealth: 'unknown' as const,
+      totalAvailableCapacity: 0,
+      averageConnectionCost: 0
+    },
+    detectedInfrastructure: results.detectedInfrastructure || [],
+    analysisMetadata: results.analysisMetadata || {
+      scanTimestamp: new Date().toISOString(),
+      aiModelsUsed: [],
+      satelliteImagerySource: 'Unknown',
+      confidenceScore: 0
+    }
   };
 
   return (
@@ -91,20 +123,20 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center gap-2">
               <Cpu className="h-4 w-4 text-blue-600" />
               <span className="font-medium">AI Models Used:</span>
-              <Badge variant="secondary">{results.analysisMetadata?.aiModelsUsed?.length || 0}</Badge>
+              <Badge variant="secondary">{safeResults.analysisMetadata.aiModelsUsed.length}</Badge>
             </div>
             <div className="flex items-center gap-2">
               <Database className="h-4 w-4 text-green-600" />
               <span className="font-medium">Database Cross-Check:</span>
-              <Badge variant={results.analysisMetadata?.utilityDatabaseCrossCheck ? "default" : "outline"}>
-                {results.analysisMetadata?.utilityDatabaseCrossCheck ? 'Verified' : 'Unavailable'}
+              <Badge variant={safeResults.analysisMetadata.utilityDatabaseCrossCheck ? "default" : "outline"}>
+                {safeResults.analysisMetadata.utilityDatabaseCrossCheck ? 'Verified' : 'Unavailable'}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-purple-600" />
               <span className="font-medium">Live Market Data:</span>
-              <Badge variant={results.analysisMetadata?.marketDataIncluded ? "default" : "outline"}>
-                {results.analysisMetadata?.marketDataIncluded ? 'Integrated' : 'Unavailable'}
+              <Badge variant={safeResults.analysisMetadata.marketDataIncluded ? "default" : "outline"}>
+                {safeResults.analysisMetadata.marketDataIncluded ? 'Integrated' : 'Unavailable'}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
@@ -123,7 +155,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Substations</p>
-                <p className="text-2xl font-bold">{results.summary?.totalSubstations || 0}</p>
+                <p className="text-2xl font-bold">{safeResults.summary.totalSubstations}</p>
               </div>
               <Zap className="h-8 w-8 text-orange-500" />
             </div>
@@ -135,7 +167,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Available Capacity</p>
-                <p className="text-2xl font-bold">{results.summary?.totalAvailableCapacity || 0}MW</p>
+                <p className="text-2xl font-bold">{safeResults.summary.totalAvailableCapacity}MW</p>
               </div>
               <Activity className="h-8 w-8 text-blue-500" />
             </div>
@@ -147,7 +179,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Connection Cost</p>
-                <p className="text-lg font-bold">{formatCurrency(results.summary?.averageConnectionCost)}</p>
+                <p className="text-lg font-bold">{formatCurrency(safeResults.summary.averageConnectionCost)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
@@ -160,7 +192,7 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
               <div>
                 <p className="text-sm font-medium text-gray-600">AI Confidence</p>
                 <p className="text-2xl font-bold">
-                  {((results.analysisMetadata?.confidenceScore || 0) * 100).toFixed(0)}%
+                  {(safeResults.analysisMetadata.confidenceScore * 100).toFixed(0)}%
                 </p>
               </div>
               <Cpu className="h-8 w-8 text-purple-500" />
@@ -175,14 +207,14 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
                 <p className="text-sm font-medium text-gray-600">Grid Health</p>
                 <Badge 
                   className={`mt-1 ${
-                    results.summary?.estimatedGridHealth === 'good' 
+                    safeResults.summary.estimatedGridHealth === 'good' 
                       ? 'bg-green-100 text-green-800' 
-                      : results.summary?.estimatedGridHealth === 'moderate'
+                      : safeResults.summary.estimatedGridHealth === 'moderate'
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-red-100 text-red-800'
                   }`}
                 >
-                  {results.summary?.estimatedGridHealth || 'unknown'}
+                  {safeResults.summary.estimatedGridHealth}
                 </Badge>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -254,149 +286,151 @@ export function EnhancedGridTracerResults({ results, input }: EnhancedGridTracer
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {results.detectedInfrastructure?.map((item) => (
-              <div key={item.id} className="border rounded-lg p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className="capitalize">
-                        {item.type.replace('_', ' ')}
-                      </Badge>
+            {safeResults.detectedInfrastructure.length > 0 ? (
+              safeResults.detectedInfrastructure.map((item) => (
+                <div key={item.id} className="border rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="outline" className="capitalize">
+                          {item.type.replace('_', ' ')}
+                        </Badge>
+                        {item.estimatedCapacity && (
+                          <Badge className={getStatusColor(item.estimatedCapacity.status)}>
+                            {getStatusIcon(item.estimatedCapacity.status)}
+                            <span className="ml-1">{item.estimatedCapacity.status}</span>
+                          </Badge>
+                        )}
+                        {item.multiModelConfidence && (
+                          <Badge variant="secondary">
+                            {((item.multiModelConfidence.ensemble || 0) * 100).toFixed(0)}% ensemble confidence
+                          </Badge>
+                        )}
+                        {item.properties?.source && (
+                          <Badge variant="outline" className="text-xs">
+                            {getAISourceIcon(item.properties.source)}
+                            <span className="ml-1">Multi-AI Detection</span>
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Enhanced Details Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                    {/* Technical Details */}
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-gray-700">Technical Details</h4>
+                      {item.properties?.name && (
+                        <div><span className="font-medium">Name:</span> {item.properties.name}</div>
+                      )}
+                      {item.properties?.voltage && (
+                        <div><span className="font-medium">Voltage:</span> {item.properties.voltage}</div>
+                      )}
+                      {item.properties?.circuits && (
+                        <div><span className="font-medium">Circuits:</span> {item.properties.circuits}</div>
+                      )}
                       {item.estimatedCapacity && (
-                        <Badge className={getStatusColor(item.estimatedCapacity.status)}>
-                          {getStatusIcon(item.estimatedCapacity.status)}
-                          <span className="ml-1">{item.estimatedCapacity.status}</span>
-                        </Badge>
+                        <div><span className="font-medium">Capacity Tier:</span> {item.estimatedCapacity.tier}</div>
                       )}
-                      {item.multiModelConfidence && (
-                        <Badge variant="secondary">
-                          {((item.multiModelConfidence.ensemble || 0) * 100).toFixed(0)}% ensemble confidence
-                        </Badge>
-                      )}
-                      {item.properties?.source && (
-                        <Badge variant="outline" className="text-xs">
-                          {getAISourceIcon(item.properties.source)}
-                          <span className="ml-1">Multi-AI Detection</span>
-                        </Badge>
-                      )}
+                      <div><span className="font-medium">Distance:</span> {formatDistance(item.properties?.distance)}</div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Enhanced Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                  {/* Technical Details */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-gray-700">Technical Details</h4>
-                    {item.properties?.name && (
-                      <div><span className="font-medium">Name:</span> {item.properties.name}</div>
+                    {/* Market Data */}
+                    {item.marketData && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-gray-700">Market Rates</h4>
+                        {item.marketData.currentRateCAD && (
+                          <div><span className="font-medium">Current Rate:</span> {item.marketData.currentRateCAD.toFixed(2)}¢/kWh CAD</div>
+                        )}
+                        {item.marketData.currentRateUSD && (
+                          <div><span className="font-medium">Current Rate:</span> {item.marketData.currentRateUSD.toFixed(2)}¢/kWh USD</div>
+                        )}
+                        {item.marketData.demandCharge && (
+                          <div><span className="font-medium">Demand Charge:</span> ${item.marketData.demandCharge.toFixed(2)}/kW/mo</div>
+                        )}
+                        {item.properties?.estimatedConnectionCost && (
+                          <div><span className="font-medium">Connection Cost:</span> {formatCurrency(item.properties.estimatedConnectionCost)}</div>
+                        )}
+                      </div>
                     )}
-                    {item.properties?.voltage && (
-                      <div><span className="font-medium">Voltage:</span> {item.properties.voltage}</div>
-                    )}
-                    {item.properties?.circuits && (
-                      <div><span className="font-medium">Circuits:</span> {item.properties.circuits}</div>
-                    )}
-                    {item.estimatedCapacity && (
-                      <div><span className="font-medium">Capacity Tier:</span> {item.estimatedCapacity.tier}</div>
-                    )}
-                    <div><span className="font-medium">Distance:</span> {formatDistance(item.properties?.distance)}</div>
-                  </div>
 
-                  {/* Market Data */}
-                  {item.marketData && (
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-700">Market Rates</h4>
-                      {item.marketData.currentRateCAD && (
-                        <div><span className="font-medium">Current Rate:</span> {item.marketData.currentRateCAD.toFixed(2)}¢/kWh CAD</div>
-                      )}
-                      {item.marketData.currentRateUSD && (
-                        <div><span className="font-medium">Current Rate:</span> {item.marketData.currentRateUSD.toFixed(2)}¢/kWh USD</div>
-                      )}
-                      {item.marketData.demandCharge && (
-                        <div><span className="font-medium">Demand Charge:</span> ${item.marketData.demandCharge.toFixed(2)}/kW/mo</div>
-                      )}
-                      {item.properties?.estimatedConnectionCost && (
-                        <div><span className="font-medium">Connection Cost:</span> {formatCurrency(item.properties.estimatedConnectionCost)}</div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Risk Assessment */}
-                  {item.riskAssessment && (
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-700">Risk Assessment</h4>
-                      <div><span className="font-medium">Seismic Risk:</span> 
-                        <Badge variant="outline" className="ml-1 text-xs">{item.riskAssessment.seismicRisk}</Badge>
-                      </div>
-                      <div><span className="font-medium">Weather Risk:</span> 
-                        <Badge variant="outline" className="ml-1 text-xs">{item.riskAssessment.weatherRisk}</Badge>
-                      </div>
-                      <div><span className="font-medium">Regulatory Risk:</span> 
-                        <Badge variant="outline" className="ml-1 text-xs">{item.riskAssessment.regulatoryRisk}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Overall Risk:</span> 
-                        <span className={`font-bold ${getRiskColor(item.riskAssessment.overallRisk)}`}>
-                          {item.riskAssessment.overallRisk}/100
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Multi-Model Confidence Breakdown */}
-                {item.multiModelConfidence && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <h5 className="font-medium mb-2 text-blue-800">Multi-AI Model Confidence</h5>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                      <div>
-                        <div className="flex justify-between">
-                          <span>Roboflow:</span>
-                          <span className="font-medium">{((item.multiModelConfidence.roboflow || 0) * 100).toFixed(0)}%</span>
+                    {/* Risk Assessment */}
+                    {item.riskAssessment && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-gray-700">Risk Assessment</h4>
+                        <div><span className="font-medium">Seismic Risk:</span> 
+                          <Badge variant="outline" className="ml-1 text-xs">{item.riskAssessment.seismicRisk}</Badge>
                         </div>
-                        <Progress value={(item.multiModelConfidence.roboflow || 0) * 100} className="h-2 mt-1" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between">
-                          <span>OpenAI:</span>
-                          <span className="font-medium">{((item.multiModelConfidence.openai || 0) * 100).toFixed(0)}%</span>
+                        <div><span className="font-medium">Weather Risk:</span> 
+                          <Badge variant="outline" className="ml-1 text-xs">{item.riskAssessment.weatherRisk}</Badge>
                         </div>
-                        <Progress value={(item.multiModelConfidence.openai || 0) * 100} className="h-2 mt-1" />
+                        <div><span className="font-medium">Regulatory Risk:</span> 
+                          <Badge variant="outline" className="ml-1 text-xs">{item.riskAssessment.regulatoryRisk}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Overall Risk:</span> 
+                          <span className={`font-bold ${getRiskColor(item.riskAssessment.overallRisk)}`}>
+                            {item.riskAssessment.overallRisk}/100
+                          </span>
+                        </div>
                       </div>
-                      {item.multiModelConfidence.google && (
+                    )}
+                  </div>
+
+                  {/* Multi-Model Confidence Breakdown */}
+                  {item.multiModelConfidence && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <h5 className="font-medium mb-2 text-blue-800">Multi-AI Model Confidence</h5>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                         <div>
                           <div className="flex justify-between">
-                            <span>Google:</span>
-                            <span className="font-medium">{((item.multiModelConfidence.google || 0) * 100).toFixed(0)}%</span>
+                            <span>Roboflow:</span>
+                            <span className="font-medium">{((item.multiModelConfidence.roboflow || 0) * 100).toFixed(0)}%</span>
                           </div>
-                          <Progress value={(item.multiModelConfidence.google || 0) * 100} className="h-2 mt-1" />
+                          <Progress value={(item.multiModelConfidence.roboflow || 0) * 100} className="h-2 mt-1" />
                         </div>
-                      )}
-                      <div>
-                        <div className="flex justify-between">
-                          <span className="font-semibold">Ensemble:</span>
-                          <span className="font-bold">{((item.multiModelConfidence.ensemble || 0) * 100).toFixed(0)}%</span>
+                        <div>
+                          <div className="flex justify-between">
+                            <span>OpenAI:</span>
+                            <span className="font-medium">{((item.multiModelConfidence.openai || 0) * 100).toFixed(0)}%</span>
+                          </div>
+                          <Progress value={(item.multiModelConfidence.openai || 0) * 100} className="h-2 mt-1" />
                         </div>
-                        <Progress value={(item.multiModelConfidence.ensemble || 0) * 100} className="h-2 mt-1" />
+                        {item.multiModelConfidence.google && (
+                          <div>
+                            <div className="flex justify-between">
+                              <span>Google:</span>
+                              <span className="font-medium">{((item.multiModelConfidence.google || 0) * 100).toFixed(0)}%</span>
+                            </div>
+                            <Progress value={(item.multiModelConfidence.google || 0) * 100} className="h-2 mt-1" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex justify-between">
+                            <span className="font-semibold">Ensemble:</span>
+                            <span className="font-bold">{((item.multiModelConfidence.ensemble || 0) * 100).toFixed(0)}%</span>
+                          </div>
+                          <Progress value={(item.multiModelConfidence.ensemble || 0) * 100} className="h-2 mt-1" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Environmental Constraints */}
-                {item.properties?.environmentalConstraints && item.properties.environmentalConstraints.length > 0 && (
-                  <div className="mt-3 p-2 bg-yellow-50 rounded border-l-4 border-yellow-400">
-                    <p className="text-sm font-medium text-yellow-800">Environmental Considerations:</p>
-                    <ul className="text-xs text-yellow-700 mt-1">
-                      {item.properties.environmentalConstraints.map((constraint, idx) => (
-                        <li key={idx}>• {constraint}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )) || (
+                  {/* Environmental Constraints */}
+                  {item.properties?.environmentalConstraints && item.properties.environmentalConstraints.length > 0 && (
+                    <div className="mt-3 p-2 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                      <p className="text-sm font-medium text-yellow-800">Environmental Considerations:</p>
+                      <ul className="text-xs text-yellow-700 mt-1">
+                        {item.properties.environmentalConstraints.map((constraint, idx) => (
+                          <li key={idx}>• {constraint}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
               <div className="text-center py-8 text-gray-500">
                 No infrastructure detected. Try adjusting scan parameters or location.
               </div>
