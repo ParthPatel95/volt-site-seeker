@@ -1,30 +1,25 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  Home, 
+  LayoutDashboard, 
+  Activity, 
+  TrendingUp, 
+  DollarSign, 
+  Building, 
   Zap, 
-  Building2, 
-  Factory, 
   Database, 
-  Brain,
-  Bitcoin,
+  Settings,
+  X,
   ChevronLeft,
   ChevronRight,
-  Menu,
-  Settings,
   Search,
+  Calculator,
   BarChart3,
-  MapPin,
-  Cpu,
-  Target,
-  TrendingUp,
-  LogOut,
-  X
+  Scan
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -34,169 +29,108 @@ interface SidebarProps {
   setIsOpen: (open: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  isCollapsed,
-  setIsCollapsed,
-  isMobile,
-  isOpen,
-  setIsOpen
-}) => {
-  const location = useLocation();
-  const { signOut } = useAuth();
+const navItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
+  { icon: Activity, label: 'AESO Market', path: '/app/aeso-market' },
+  { icon: TrendingUp, label: 'Market Intelligence', path: '/app/market-intelligence' },
+  { icon: DollarSign, label: 'Energy Rates', path: '/app/energy-rates' },
+  { icon: Search, label: 'Industry Intelligence', path: '/app/industry-intelligence' },
+  { icon: Building, label: 'Corporate Intelligence', path: '/app/corporate-intelligence' },
+  { icon: Scan, label: 'Idle Industry Scanner', path: '/app/idle-industry-scanner' },
+  { icon: Zap, label: 'Power Infrastructure', path: '/app/power-infrastructure' },
+  { icon: Calculator, label: 'Volt Analytics', path: '/app/btc-roi-lab' },
+  { icon: Database, label: 'Data Management', path: '/app/data-management' },
+  { icon: Settings, label: 'Settings', path: '/app/settings' },
+];
 
-  const navigationItems = [
-    { path: '/app', icon: Home, label: 'Dashboard' },
-    { path: '/app/aeso-market', icon: Zap, label: 'AESO Market' },
-    { path: '/app/market-intelligence', icon: Brain, label: 'Market Intelligence' },
-    { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates' },
-    { path: '/app/industry-intelligence', icon: TrendingUp, label: 'Industry Intelligence' },
-    { path: '/app/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence' },
-    { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
-    { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
-    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
-    { path: '/app/data-management', icon: Database, label: 'Data Management' }
-  ];
-
-  const handleSignOut = async () => {
-    await signOut();
+export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-slate-900 text-white">
-      {/* Header */}
-      <div className={`p-4 border-b border-slate-700 ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
-        {/* Mobile Close Button */}
-        {isMobile && (
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5 text-white" />
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isMobile && isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={`
+        fixed left-0 top-0 z-50 h-full bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 flex flex-col
+        ${isMobile 
+          ? `w-72 ${isOpen ? 'translate-x-0' : '-translate-x-full'}` 
+          : isCollapsed 
+            ? 'w-16' 
+            : 'w-72'
+        }
+      `}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 min-h-[73px]">
+          {(!isCollapsed || isMobile) && (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">V</span>
               </div>
-              <h1 className="text-xl font-bold">VoltScout</h1>
+              <span className="font-semibold text-lg">VoltScout</span>
             </div>
+          )}
+          
+          {isMobile ? (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="p-2 h-8 w-8 text-white hover:bg-slate-800"
+              className="p-2"
             >
               <X className="w-4 h-4" />
             </Button>
-          </div>
-        )}
-
-        {/* Desktop Header */}
-        {!isMobile && (
-          <>
-            {(!isCollapsed || isMobile) && (
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-xl font-bold">VoltScout</h1>
-              </div>
-            )}
-            
-            {isCollapsed && !isMobile && (
-              <div className="flex justify-center">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-              </div>
-            )}
-            
-            {/* Collapse button for desktop */}
+          ) : (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6 z-50"
+              className="p-2"
             >
-              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
             </Button>
-          </>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Navigation */}
-      <nav className={`flex-1 p-2 space-y-1 overflow-y-auto ${isCollapsed && !isMobile ? 'px-1' : 'px-4'}`}>
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => isMobile && setIsOpen(false)}
-              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors group ${
-                isActive 
-                  ? 'bg-orange-600 text-white' 
-                  : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-              } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[48px]' : ''}`}
-              title={isCollapsed && !isMobile ? item.label : ''}
-            >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              {(!isCollapsed || isMobile) && <span className="font-medium text-sm">{item.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className={`p-2 border-t border-slate-700 space-y-1 ${isCollapsed && !isMobile ? 'px-1' : 'px-4'}`}>
-        <Link
-          to="/app/settings"
-          onClick={() => isMobile && setIsOpen(false)}
-          className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-            location.pathname === '/app/settings'
-              ? 'bg-orange-600 text-white' 
-              : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-          } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[48px]' : ''}`}
-          title={isCollapsed && !isMobile ? 'Settings' : ''}
-        >
-          <Settings className="w-5 h-5 flex-shrink-0" />
-          {(!isCollapsed || isMobile) && <span className="font-medium text-sm">Settings</span>}
-        </Link>
-        
-        <Button
-          variant="ghost"
-          onClick={handleSignOut}
-          className={`w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800 p-3 h-auto ${
-            isCollapsed && !isMobile ? 'px-2' : ''
-          } ${isMobile ? 'min-h-[48px]' : ''}`}
-          title={isCollapsed && !isMobile ? 'Sign Out' : ''}
-        >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          {(!isCollapsed || isMobile) && <span className="ml-3 text-sm">Sign Out</span>}
-        </Button>
-      </div>
-    </div>
+        {/* Navigation */}
+        <ScrollArea className="flex-1 px-3 py-4">
+          <nav className="space-y-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={handleLinkClick}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+                  } ${isCollapsed && !isMobile ? 'justify-center' : ''}`
+                }
+              >
+                <item.icon className={`w-5 h-5 flex-shrink-0 ${isCollapsed && !isMobile ? 'w-6 h-6' : ''}`} />
+                {(!isCollapsed || isMobile) && (
+                  <span className="truncate">{item.label}</span>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </ScrollArea>
+      </aside>
+    </>
   );
-
-  // Mobile sidebar
-  if (isMobile) {
-    return (
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent 
-          side="left" 
-          className="p-0 w-80 max-w-[85vw]"
-          onInteractOutside={() => setIsOpen(false)}
-        >
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  // Desktop sidebar
-  return (
-    <div 
-      className={`fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-72'
-      }`}
-    >
-      <SidebarContent />
-    </div>
-  );
-};
+}
