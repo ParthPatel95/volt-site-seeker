@@ -42,16 +42,20 @@ export function EnvironmentalDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-2 sm:px-4 lg:px-6 space-y-4 sm:space-y-6">
       <EnvironmentalHeader />
-      <EnvironmentalSearch 
-        region={region}
-        setRegion={setRegion}
-        loading={loading}
-        onSearch={handleRegionSearch}
-      />
-      <EPAAirQualityCard epaData={epaData} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="w-full">
+        <EnvironmentalSearch 
+          region={region}
+          setRegion={setRegion}
+          loading={loading}
+          onSearch={handleRegionSearch}
+        />
+      </div>
+      <div className="w-full">
+        <EPAAirQualityCard epaData={epaData} />
+      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         <NRELSolarCard solarData={solarData} />
         <NOAAWeatherCard weatherData={weatherData} />
       </div>

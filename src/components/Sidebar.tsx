@@ -21,7 +21,8 @@ import {
   Cpu,
   Target,
   TrendingUp,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -64,33 +65,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="flex flex-col h-full bg-slate-900 text-white">
       {/* Header */}
       <div className={`p-4 border-b border-slate-700 ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
-        {(!isCollapsed || isMobile) && (
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Zap className="w-5 h-5 text-white" />
+        {/* Mobile Close Button */}
+        {isMobile && (
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold">VoltScout</h1>
             </div>
-            <h1 className="text-xl font-bold">VoltScout</h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+              className="p-2 h-8 w-8 text-white hover:bg-slate-800"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         )}
-        
-        {isCollapsed && !isMobile && (
-          <div className="flex justify-center">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        )}
-        
-        {/* Collapse button for desktop */}
+
+        {/* Desktop Header */}
         {!isMobile && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6 z-50"
-          >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </Button>
+          <>
+            {(!isCollapsed || isMobile) && (
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold">VoltScout</h1>
+              </div>
+            )}
+            
+            {isCollapsed && !isMobile && (
+              <div className="flex justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            )}
+            
+            {/* Collapse button for desktop */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6 z-50"
+            >
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+          </>
         )}
       </div>
 
@@ -109,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 isActive 
                   ? 'bg-orange-600 text-white' 
                   : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-              } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}
+              } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[48px]' : ''}`}
               title={isCollapsed && !isMobile ? item.label : ''}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -128,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             location.pathname === '/app/settings'
               ? 'bg-orange-600 text-white' 
               : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-          } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}
+          } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[48px]' : ''}`}
           title={isCollapsed && !isMobile ? 'Settings' : ''}
         >
           <Settings className="w-5 h-5 flex-shrink-0" />
@@ -140,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={handleSignOut}
           className={`w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800 p-3 h-auto ${
             isCollapsed && !isMobile ? 'px-2' : ''
-          }`}
+          } ${isMobile ? 'min-h-[48px]' : ''}`}
           title={isCollapsed && !isMobile ? 'Sign Out' : ''}
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
@@ -154,7 +178,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="left" className="p-0 w-72">
+        <SheetContent 
+          side="left" 
+          className="p-0 w-80 max-w-[85vw]"
+          onInteractOutside={() => setIsOpen(false)}
+        >
           <SidebarContent />
         </SheetContent>
       </Sheet>
