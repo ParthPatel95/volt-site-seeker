@@ -6,7 +6,6 @@ import { AccessRequestForm } from './components/AccessRequestForm';
 import { VoltScoutAccessPage } from './components/VoltScoutAccessPage';
 import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
-import BTCROILab from './pages/BTCROILab';
 import Index from './pages/Index';
 
 function App() {
@@ -21,7 +20,6 @@ function App() {
             </div>
           } />
           <Route path="/voltscout" element={<VoltScoutAccessPage />} />
-          <Route path="/btc-roi-lab" element={<BTCROILab />} />
           <Route path="/app/*" element={<AuthWrapper><Index /></AuthWrapper>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
