@@ -14,6 +14,7 @@ import { AESOMarket } from '@/components/AESOMarket';
 import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
 import { BTCROIMainPage } from '@/components/btc_roi/BTCROIMainPage';
 import EnergyRates from './EnergyRates';
+import Settings from './Settings';
 
 export default function Index() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -154,6 +155,7 @@ export default function Index() {
             <Route path="power-infrastructure" element={<PowerInfrastructure />} />
             <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
             <Route path="data-management" element={<DataManagement />} />
+            <Route path="settings" element={<Settings />} />
           </Routes>
         </main>
 

@@ -20,8 +20,10 @@ import {
   MapPin,
   Cpu,
   Target,
-  TrendingUp
+  TrendingUp,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -39,6 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsOpen
 }) => {
   const location = useLocation();
+  const { signOut } = useAuth();
 
   const navigationItems = [
     { path: '/app', icon: Home, label: 'Dashboard' },
@@ -52,6 +55,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
     { path: '/app/data-management', icon: Database, label: 'Data Management' }
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-slate-900 text-white">
@@ -104,13 +111,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-700">
+      <div className="p-4 border-t border-slate-700 space-y-2">
+        <Link
+          to="/app/settings"
+          onClick={() => isMobile && setIsOpen(false)}
+          className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+            location.pathname === '/app/settings'
+              ? 'bg-orange-600 text-white' 
+              : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+          }`}
+        >
+          <Settings className="w-5 h-5 flex-shrink-0" />
+          {!isCollapsed && <span className="font-medium">Settings</span>}
+        </Link>
+        
         <Button
           variant="ghost"
+          onClick={handleSignOut}
           className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
         >
-          <Settings className="w-5 h-5 mr-3" />
-          {!isCollapsed && <span>Settings</span>}
+          <LogOut className="w-5 h-5 mr-3" />
+          {!isCollapsed && <span>Sign Out</span>}
         </Button>
       </div>
     </div>
