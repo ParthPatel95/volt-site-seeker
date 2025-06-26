@@ -44,9 +44,9 @@ export class HostingCalculatorService {
     // Simulate year-long operation
     const simulationResults = this.simulateYearlyOperation(
       totalLoadKW,
-      formData.hostingFeeRate, // What we charge clients
+      formData.hostingFeeRate,
       energyData,
-      formData.customElectricityCost, // What we pay for electricity (fallback for Other region)
+      formData.customElectricityCost,
       formData.expectedUptimePercent,
       formData.region
     );
@@ -97,7 +97,9 @@ export class HostingCalculatorService {
       profitMarginPercent,
       averageUptimePercent: simulationResults.actualUptimePercent,
       curtailedHours: simulationResults.curtailedHours,
-      averageElectricityCost: simulationResults.averageElectricityCost
+      averageElectricityCost: simulationResults.averageElectricityCost,
+      // Add detailed breakdown for UI
+      energyRateBreakdown: simulationResults.energyRateBreakdown
     };
 
     console.log('=== FINAL HOSTING ROI RESULTS ===');
@@ -119,9 +121,9 @@ export class HostingCalculatorService {
 
   private static simulateYearlyOperation(
     totalLoadKW: number,
-    hostingFeeRate: number, // What we charge clients
+    hostingFeeRate: number,
     energyData: RegionalEnergyData | null,
-    customElectricityCost: number, // Fallback rate for Other region
+    customElectricityCost: number,
     expectedUptimePercent: number,
     region: 'ERCOT' | 'AESO' | 'Other'
   ) {
@@ -135,7 +137,7 @@ export class HostingCalculatorService {
     });
 
     if (!energyData) {
-      // Simple calculation for custom region - use the custom electricity cost
+      // Simple calculation for custom region
       const hoursPerYear = 8760 * (expectedUptimePercent / 100);
       const totalKWhConsumed = totalLoadKW * hoursPerYear;
       const totalElectricityCost = totalKWhConsumed * customElectricityCost;
@@ -153,7 +155,16 @@ export class HostingCalculatorService {
         totalElectricityCost,
         actualUptimePercent: expectedUptimePercent,
         curtailedHours: 8760 - hoursPerYear,
-        averageElectricityCost: customElectricityCost
+        averageElectricityCost: customElectricityCost,
+        energyRateBreakdown: {
+          region: 'Other',
+          totalHours: 8760,
+          operatingHours: hoursPerYear,
+          curtailedHours: 8760 - hoursPerYear,
+          averageWholesalePrice: customElectricityCost,
+          currencyNote: 'USD (Custom Rate)',
+          curtailmentReason: 'Fixed uptime percentage applied'
+        }
       };
     }
 
@@ -169,12 +180,31 @@ export class HostingCalculatorService {
     const cadToUsdRate = 0.73;
 
     console.log(`Processing ${energyData.hourlyPrices.length} hourly price points for ${region}`);
-    console.log(`Curtailment threshold: wholesale price > $${hostingFeeRate}/kWh (hosting fee)`);
+    
+    // NEW CURTAILMENT LOGIC: Only curtail when we lose money on the entire operation
+    // Calculate our break-even electricity price per kWh
+    const breakEvenElectricityPrice = hostingFeeRate; // Simplified - curtail only when wholesale > hosting fee
+    console.log(`Curtailment threshold: wholesale price > $${breakEvenElectricityPrice.toFixed(4)}/kWh`);
 
     let curtailmentCount = 0;
     let priceSum = 0;
     let minPrice = Infinity;
     let maxPrice = 0;
+    let pricesAboveThreshold = 0;
+
+    // Track detailed energy rate breakdown
+    const energyRateBreakdown = {
+      region: `${region} (${region === 'AESO' ? 'CAD converted to USD' : 'USD'})`,
+      totalHours: energyData.hourlyPrices.length,
+      operatingHours: 0,
+      curtailedHours: 0,
+      averageWholesalePrice: 0,
+      minWholesalePrice: 0,
+      maxWholesalePrice: 0,
+      currencyNote: region === 'AESO' ? `CAD converted to USD at ${cadToUsdRate} rate` : 'USD',
+      curtailmentThreshold: breakEvenElectricityPrice,
+      curtailmentReason: 'Wholesale electricity price exceeds hosting fee rate'
+    };
 
     for (const hourlyPrice of energyData.hourlyPrices) {
       // Convert price to USD if it's from AESO (CAD market)
@@ -187,12 +217,15 @@ export class HostingCalculatorService {
       minPrice = Math.min(minPrice, wholesalePricePerKWhUSD);
       maxPrice = Math.max(maxPrice, wholesalePricePerKWhUSD);
       
-      // Only curtail if wholesale price exceeds our hosting fee rate
-      // (i.e., we would lose money on electricity costs alone)
-      const shouldCurtail = wholesalePricePerKWhUSD > hostingFeeRate;
+      if (wholesalePricePerKWhUSD > breakEvenElectricityPrice) {
+        pricesAboveThreshold++;
+      }
+      
+      // FIXED CURTAILMENT LOGIC: Only curtail if wholesale price exceeds break-even
+      const shouldCurtail = wholesalePricePerKWhUSD > breakEvenElectricityPrice;
       
       if (!shouldCurtail) {
-        // Operate this hour at wholesale market rates (what we actually pay for electricity)
+        // Operate this hour at wholesale market rates
         const kWhThisHour = totalLoadKW;
         totalKWhConsumed += kWhThisHour;
         totalElectricityCost += kWhThisHour * wholesalePricePerKWhUSD;
@@ -206,24 +239,37 @@ export class HostingCalculatorService {
       }
     }
 
+    // Update energy rate breakdown
+    energyRateBreakdown.operatingHours = operatingHours;
+    energyRateBreakdown.curtailedHours = curtailedHours;
+    energyRateBreakdown.averageWholesalePrice = priceSum / energyData.hourlyPrices.length;
+    energyRateBreakdown.minWholesalePrice = minPrice;
+    energyRateBreakdown.maxWholesalePrice = maxPrice;
+
     const actualUptimePercent = (operatingHours / 8760) * 100;
     const averageElectricityCost = priceCount > 0 ? totalPriceSum / priceCount : 0;
     const overallAveragePrice = priceSum / energyData.hourlyPrices.length;
 
-    console.log('=== REGIONAL SIMULATION RESULTS ===');
+    console.log('=== DETAILED ENERGY RATE BREAKDOWN ===');
     console.log('Price analysis:', {
-      region: `${region} (${region === 'AESO' ? 'CAD converted to USD' : 'USD'})`,
+      region: energyRateBreakdown.region,
+      currencyNote: energyRateBreakdown.currencyNote,
       minPrice: `$${minPrice.toFixed(4)}/kWh`,
       maxPrice: `$${maxPrice.toFixed(4)}/kWh`,
       overallAveragePrice: `$${overallAveragePrice.toFixed(4)}/kWh`,
-      curtailmentThreshold: `$${hostingFeeRate}/kWh`
+      averageOperatingPrice: `$${averageElectricityCost.toFixed(4)}/kWh`,
+      curtailmentThreshold: `$${breakEvenElectricityPrice}/kWh`,
+      hoursAboveThreshold: pricesAboveThreshold.toLocaleString(),
+      percentAboveThreshold: `${(pricesAboveThreshold / 8760 * 100).toFixed(1)}%`
     });
     console.log('Operation summary:', {
       totalHours: 8760,
       operatingHours: operatingHours.toLocaleString(),
       curtailedHours: curtailedHours.toLocaleString(),
       curtailmentRate: `${(curtailmentCount / 8760 * 100).toFixed(1)}%`,
-      actualUptimePercent: `${actualUptimePercent.toFixed(1)}%`
+      actualUptimePercent: `${actualUptimePercent.toFixed(1)}%`,
+      expectedUptimePercent: `${expectedUptimePercent}%`,
+      uptimeDifference: `${(actualUptimePercent - expectedUptimePercent).toFixed(1)}%`
     });
     console.log('Financial summary:', {
       totalKWhConsumed: totalKWhConsumed.toLocaleString(),
@@ -231,12 +277,20 @@ export class HostingCalculatorService {
       averageElectricityCost: `$${averageElectricityCost.toFixed(4)}/kWh`
     });
 
+    console.log('=== UPTIME ANALYSIS ===');
+    if (actualUptimePercent < expectedUptimePercent * 0.9) {
+      console.log(`⚠️  WARNING: Actual uptime (${actualUptimePercent.toFixed(1)}%) is significantly below expected (${expectedUptimePercent}%)`);
+      console.log(`   This is due to high wholesale electricity prices in ${region}`);
+      console.log(`   Consider: 1) Raising hosting fee rate, 2) Different region, 3) Energy storage/hedging`);
+    }
+
     return {
       totalKWhConsumed,
       totalElectricityCost,
       actualUptimePercent,
       curtailedHours,
-      averageElectricityCost
+      averageElectricityCost,
+      energyRateBreakdown
     };
   }
 }

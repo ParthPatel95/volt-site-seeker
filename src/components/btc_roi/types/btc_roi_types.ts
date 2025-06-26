@@ -1,4 +1,3 @@
-
 export interface BTCNetworkData {
   price: number;
   difficulty: number;
@@ -67,6 +66,20 @@ export interface HostingROIResults {
   averageUptimePercent: number;
   curtailedHours: number;
   averageElectricityCost: number; // per kWh
+  energyRateBreakdown?: EnergyRateBreakdown;
+}
+
+export interface EnergyRateBreakdown {
+  region: string;
+  totalHours: number;
+  operatingHours: number;
+  curtailedHours: number;
+  averageWholesalePrice: number;
+  minWholesalePrice: number;
+  maxWholesalePrice: number;
+  currencyNote: string;
+  curtailmentThreshold: number;
+  curtailmentReason: string;
 }
 
 export interface RegionalEnergyData {
