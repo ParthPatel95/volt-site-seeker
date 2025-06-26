@@ -1,21 +1,22 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bitcoin, Calculator, TrendingUp, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Bitcoin, Calculator, TrendingUp, Zap, Hash } from 'lucide-react';
 
 export const BTCMiningROIWidget = () => {
   const [animatedHashrate, setAnimatedHashrate] = useState(0);
   const [animatedRevenue, setAnimatedRevenue] = useState(0);
   const [animatedROI, setAnimatedROI] = useState(0);
+  const [animatedBTCPrice, setAnimatedBTCPrice] = useState(0);
+  const [animatedDifficulty, setAnimatedDifficulty] = useState(0);
 
   // Sample calculation values
   const hashrate = 200; // TH/s
   const btcPrice = 45000; // USD
   const dailyRevenue = 8.50; // USD
   const yearlyROI = 125; // %
+  const difficulty = 68.5; // T (trillions)
 
   // Animate numbers
   useEffect(() => {
@@ -31,6 +32,8 @@ export const BTCMiningROIWidget = () => {
       setAnimatedHashrate(hashrate * easeOut);
       setAnimatedRevenue(dailyRevenue * easeOut);
       setAnimatedROI(yearlyROI * easeOut);
+      setAnimatedBTCPrice(btcPrice * easeOut);
+      setAnimatedDifficulty(difficulty * easeOut);
       
       currentStep++;
       if (currentStep > steps) {
@@ -52,6 +55,35 @@ export const BTCMiningROIWidget = () => {
         <p className="text-slate-300 text-sm">Calculate mining and hosting profitability with real-time data</p>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Live Bitcoin Data */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-orange-500/30">
+            <div className="flex items-center space-x-2 mb-2">
+              <Bitcoin className="w-4 h-4 text-orange-500" />
+              <span className="text-slate-300 text-sm">BTC Price</span>
+            </div>
+            <div className="text-2xl font-bold text-orange-500">
+              ${Math.round(animatedBTCPrice).toLocaleString()}
+            </div>
+            <div className="text-xs text-slate-400 mt-1">
+              Live Market Price
+            </div>
+          </div>
+          
+          <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-purple-500/30">
+            <div className="flex items-center space-x-2 mb-2">
+              <Hash className="w-4 h-4 text-purple-500" />
+              <span className="text-slate-300 text-sm">Difficulty</span>
+            </div>
+            <div className="text-2xl font-bold text-purple-500">
+              {animatedDifficulty.toFixed(1)}T
+            </div>
+            <div className="text-xs text-slate-400 mt-1">
+              Network Difficulty
+            </div>
+          </div>
+        </div>
+
         {/* Mining Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-slate-800/30 rounded-lg p-4 hover:bg-slate-800/50 transition-colors duration-200 border border-slate-700/30 hover:border-orange-500/30">
@@ -76,7 +108,7 @@ export const BTCMiningROIWidget = () => {
               ${animatedRevenue.toFixed(2)}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              BTC @ ${btcPrice.toLocaleString()}
+              BTC @ ${Math.round(animatedBTCPrice).toLocaleString()}
             </div>
           </div>
         </div>
@@ -110,13 +142,6 @@ export const BTCMiningROIWidget = () => {
             <span>ASIC Catalog & Comparison</span>
           </div>
         </div>
-
-        {/* CTA Button */}
-        <Link to="/btc-roi-lab" className="block">
-          <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0 transition-all duration-200">
-            Launch BTC Mining ROI Lab
-          </Button>
-        </Link>
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
           * Real-time calculations using live Bitcoin network data and regional energy prices
