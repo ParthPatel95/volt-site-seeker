@@ -63,13 +63,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-slate-900 text-white">
       {/* Header */}
-      <div className="p-4 border-b border-slate-700">
-        {!isCollapsed && (
+      <div className={`p-4 border-b border-slate-700 ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
+        {(!isCollapsed || isMobile) && (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
               <Zap className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-xl font-bold">VoltScout</h1>
+          </div>
+        )}
+        
+        {isCollapsed && !isMobile && (
+          <div className="flex justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
           </div>
         )}
         
@@ -79,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6"
+            className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6 z-50"
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </Button>
@@ -87,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className={`flex-1 p-2 space-y-1 overflow-y-auto ${isCollapsed && !isMobile ? 'px-1' : 'px-4'}`}>
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -97,21 +105,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.path}
               to={item.path}
               onClick={() => isMobile && setIsOpen(false)}
-              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors group ${
                 isActive 
                   ? 'bg-orange-600 text-white' 
                   : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-              }`}
+              } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}
+              title={isCollapsed && !isMobile ? item.label : ''}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
-              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              {(!isCollapsed || isMobile) && <span className="font-medium text-sm">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-700 space-y-2">
+      <div className={`p-2 border-t border-slate-700 space-y-1 ${isCollapsed && !isMobile ? 'px-1' : 'px-4'}`}>
         <Link
           to="/app/settings"
           onClick={() => isMobile && setIsOpen(false)}
@@ -119,19 +128,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             location.pathname === '/app/settings'
               ? 'bg-orange-600 text-white' 
               : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-          }`}
+          } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}
+          title={isCollapsed && !isMobile ? 'Settings' : ''}
         >
           <Settings className="w-5 h-5 flex-shrink-0" />
-          {!isCollapsed && <span className="font-medium">Settings</span>}
+          {(!isCollapsed || isMobile) && <span className="font-medium text-sm">Settings</span>}
         </Link>
         
         <Button
           variant="ghost"
           onClick={handleSignOut}
-          className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
+          className={`w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800 p-3 h-auto ${
+            isCollapsed && !isMobile ? 'px-2' : ''
+          }`}
+          title={isCollapsed && !isMobile ? 'Sign Out' : ''}
         >
-          <LogOut className="w-5 h-5 mr-3" />
-          {!isCollapsed && <span>Sign Out</span>}
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {(!isCollapsed || isMobile) && <span className="ml-3 text-sm">Sign Out</span>}
         </Button>
       </div>
     </div>
@@ -151,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Desktop sidebar
   return (
     <div 
-      className={`fixed left-0 top-0 h-full z-50 transition-all duration-300 ${
+      className={`fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
         isCollapsed ? 'w-16' : 'w-72'
       }`}
     >

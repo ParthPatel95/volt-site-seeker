@@ -16,39 +16,45 @@ export default function Settings() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage your account settings, access requests, and platform preferences</p>
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-6xl">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+        <p className="text-muted-foreground mt-2 text-sm sm:text-base">Manage your account settings, access requests, and platform preferences</p>
       </div>
 
-      <Tabs defaultValue="access-requests" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="access-requests" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Access Requests
-          </TabsTrigger>
-          <TabsTrigger value="account" className="flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Account
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="w-4 h-4" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Security
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            Appearance
-          </TabsTrigger>
-          <TabsTrigger value="signout" className="flex items-center gap-2">
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="access-requests" className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 min-w-[300px] sm:min-w-0 h-auto">
+            <TabsTrigger value="access-requests" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline sm:inline">Access</span>
+              <span className="xs:hidden sm:hidden">Req</span>
+            </TabsTrigger>
+            <TabsTrigger value="account" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <User className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Account</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Notifications</span>
+              <span className="sm:hidden">Notif</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Appearance</span>
+              <span className="sm:hidden">Theme</span>
+            </TabsTrigger>
+            <TabsTrigger value="signout" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+              <span className="sm:hidden">Exit</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="access-requests">
           <AccessRequestsSettings />
@@ -57,26 +63,26 @@ export default function Settings() {
         <TabsContent value="account">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <User className="w-4 h-4 sm:w-5 sm:h-5" />
                 Account Information
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Manage your account information and preferences
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Email</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <p className="font-medium text-sm sm:text-base">Email</p>
+                  <p className="text-sm text-muted-foreground break-all">{user?.email}</p>
                 </div>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">User ID</p>
-                  <p className="text-sm text-muted-foreground font-mono">{user?.id}</p>
+                  <p className="font-medium text-sm sm:text-base">User ID</p>
+                  <p className="text-sm text-muted-foreground font-mono break-all">{user?.id}</p>
                 </div>
               </div>
             </CardContent>
@@ -86,11 +92,11 @@ export default function Settings() {
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                 Notifications
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Configure your notification preferences
               </CardDescription>
             </CardHeader>
@@ -105,11 +111,11 @@ export default function Settings() {
         <TabsContent value="security">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5" />
                 Security
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Manage your security settings and sessions
               </CardDescription>
             </CardHeader>
@@ -124,11 +130,11 @@ export default function Settings() {
         <TabsContent value="appearance">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
                 Appearance
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Customize the look and feel of the application
               </CardDescription>
             </CardHeader>
@@ -143,8 +149,8 @@ export default function Settings() {
         <TabsContent value="signout">
           <Card>
             <CardHeader>
-              <CardTitle className="text-destructive">Sign Out</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-destructive text-lg sm:text-xl">Sign Out</CardTitle>
+              <CardDescription className="text-sm">
                 Sign out of your VoltScout account
               </CardDescription>
             </CardHeader>
@@ -152,7 +158,7 @@ export default function Settings() {
               <Button 
                 variant="destructive" 
                 onClick={handleSignOut}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out

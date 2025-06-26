@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
@@ -47,24 +47,24 @@ export default function Index() {
       
       <div className={`flex-1 flex flex-col transition-all duration-300 ${
         isMobile 
-          ? 'ml-0' 
+          ? 'ml-0 w-full' 
           : isCollapsed 
             ? 'ml-16' 
             : 'ml-72'
       }`}>
         {/* Mobile Header */}
         {isMobile && (
-          <header className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+          <header className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 shadow-sm min-h-[60px]">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(true)}
-              className="p-2"
+              className="p-2 h-10 w-10"
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <h1 className="text-lg font-semibold">VoltScout</h1>
-            <div className="w-9" />
+            <h1 className="text-lg font-semibold text-center flex-1">VoltScout</h1>
+            <div className="w-10" />
           </header>
         )}
         
