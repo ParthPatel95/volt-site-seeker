@@ -6,12 +6,13 @@ import { BTCROILiveStatsCard } from './BTCROILiveStatsCard';
 import { BTCROIMiningModeSelector } from './BTCROIMiningModeSelector';
 import { BTCROIInputForm } from './BTCROIInputForm';
 import { BTCROIOutputTable } from './BTCROIOutputTable';
+import { BTCROIHostingOutputTable } from './BTCROIHostingOutputTable';
 import { BTCROISensitivityChart } from './BTCROISensitivityChart';
 import { BTCROIASICCatalog } from './BTCROIASICCatalog';
 import { BTCROIProfitabilityHeatmap } from './BTCROIProfitabilityHeatmap';
 import { BTCROILineChart } from './BTCROILineChart';
 import { useBTCROICalculator } from './hooks/useBTCROICalculator';
-import { Bitcoin, Calculator, TrendingUp, Grid3X3 } from 'lucide-react';
+import { Bitcoin, Calculator, TrendingUp, Grid3X3, Building2 } from 'lucide-react';
 
 export const BTCROIMainPage = () => {
   const [miningMode, setMiningMode] = useState<'hosting' | 'self'>('hosting');
@@ -19,10 +20,20 @@ export const BTCROIMainPage = () => {
     networkData, 
     formData, 
     setFormData, 
-    roiResults, 
-    calculateROI,
+    roiResults,
+    hostingResults,
+    calculateMiningROI,
+    calculateHostingROI,
     isLoading 
   } = useBTCROICalculator();
+
+  const handleCalculate = () => {
+    if (miningMode === 'hosting') {
+      calculateHostingROI();
+    } else {
+      calculateMiningROI();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 p-2 sm:p-4 md:p-6">
@@ -35,7 +46,7 @@ export const BTCROIMainPage = () => {
             <Calculator className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-orange-500" />
           </div>
           <p className="text-gray-600 text-xs sm:text-sm md:text-lg px-2 sm:px-4">
-            Live Bitcoin mining profitability analyzer with real-time network data
+            Live Bitcoin mining profitability analyzer with real-time network data and hosting profitability tools
           </p>
         </div>
 
@@ -49,8 +60,8 @@ export const BTCROIMainPage = () => {
           <div className="overflow-x-auto">
             <TabsList className="grid w-full grid-cols-4 min-w-[300px] h-auto p-1">
               <TabsTrigger value="calculator" className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3">
-                <Calculator className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>Calc</span>
+                {miningMode === 'hosting' ? <Building2 className="w-3 h-3 sm:w-4 sm:h-4" /> : <Calculator className="w-3 h-3 sm:w-4 sm:h-4" />}
+                <span>{miningMode === 'hosting' ? 'Host' : 'Mine'}</span>
               </TabsTrigger>
               <TabsTrigger value="sensitivity" className="flex flex-col sm:flex-row items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-3">
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -78,12 +89,16 @@ export const BTCROIMainPage = () => {
                   mode={miningMode}
                   formData={formData}
                   onFormDataChange={setFormData}
-                  onCalculate={calculateROI}
+                  onCalculate={handleCalculate}
                   isLoading={isLoading}
                 />
               </div>
               <div className="order-1 lg:order-2">
-                <BTCROIOutputTable roiResults={roiResults} />
+                {miningMode === 'hosting' ? (
+                  <BTCROIHostingOutputTable hostingResults={hostingResults} />
+                ) : (
+                  <BTCROIOutputTable roiResults={roiResults} />
+                )}
               </div>
             </div>
           </TabsContent>
@@ -106,7 +121,8 @@ export const BTCROIMainPage = () => {
                 asicModel: asic.model,
                 hashrate: asic.hashrate,
                 powerDraw: asic.powerDraw,
-                hardwareCost: asic.price
+                hardwareCost: asic.price,
+                totalLoadKW: miningMode === 'hosting' ? (asic.powerDraw * prev.units) / 1000 : prev.totalLoadKW
               }));
             }} />
           </TabsContent>

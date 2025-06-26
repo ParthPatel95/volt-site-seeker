@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { BTCNetworkData, BTCROIFormData, BTCROIResults } from '../types/btc_roi_types';
+import { BTCNetworkData, BTCROIFormData, BTCROIResults, HostingROIResults } from '../types/btc_roi_types';
+import { HostingCalculatorService } from '../services/hostingCalculatorService';
 
 export const useBTCROICalculator = () => {
   const [networkData, setNetworkData] = useState<BTCNetworkData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [roiResults, setROIResults] = useState<BTCROIResults | null>(null);
+  const [hostingResults, setHostingResults] = useState<HostingROIResults | null>(null);
   
   const [formData, setFormData] = useState<BTCROIFormData>({
     asicModel: '',
@@ -20,7 +22,17 @@ export const useBTCROICalculator = () => {
     coolingOverhead: 10, // 10%
     efficiencyOverride: 100, // 100%
     resaleValue: 20, // 20%
-    maintenancePercent: 2 // 2%
+    maintenancePercent: 2, // 2%
+    
+    // New hosting-specific fields
+    hostingFeeRate: 0.08, // $0.08 per kWh charged to clients
+    region: 'ERCOT',
+    customElectricityCost: 0.05, // $0.05 per kWh for Other region
+    totalLoadKW: 300, // 300 kW total facility load (100 miners × 3kW)
+    infrastructureCost: 200000, // $200k initial investment
+    monthlyOverhead: 5000, // $5k monthly overhead
+    powerOverheadPercent: 5, // 5% power overhead for cooling
+    expectedUptimePercent: 95 // 95% expected uptime
   });
 
   // Fetch live Bitcoin network data
@@ -58,8 +70,8 @@ export const useBTCROICalculator = () => {
     }
   };
 
-  // Calculate ROI based on form data and network data
-  const calculateROI = () => {
+  // Calculate traditional mining ROI
+  const calculateMiningROI = () => {
     if (!networkData) return;
     
     setIsLoading(true);
@@ -134,6 +146,20 @@ export const useBTCROICalculator = () => {
     }
   };
 
+  // Calculate hosting ROI
+  const calculateHostingROI = async () => {
+    setIsLoading(true);
+    
+    try {
+      const results = await HostingCalculatorService.calculateHostingROI(formData);
+      setHostingResults(results);
+    } catch (error) {
+      console.error('Error calculating hosting ROI:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch network data on component mount and every 60 seconds
   useEffect(() => {
     fetchNetworkData();
@@ -146,7 +172,9 @@ export const useBTCROICalculator = () => {
     formData,
     setFormData,
     roiResults,
-    calculateROI,
+    hostingResults,
+    calculateMiningROI,
+    calculateHostingROI,
     isLoading
   };
 };
