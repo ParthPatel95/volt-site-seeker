@@ -37,7 +37,15 @@ export const LiveDataPreview = () => {
     { name: "Alberta Industrial Complex", mw: 125, score: 94, status: "active" },
     { name: "Ontario Manufacturing Hub", mw: 89, score: 87, status: "monitoring" },
     { name: "Texas Data Center Site", mw: 156, score: 91, status: "active" },
-    { name: "Quebec Mining Facility", mw: 203, score: 89, status: "active" }
+    { name: "Quebec Mining Facility", mw: 203, score: 89, status: "active" },
+    { name: "Saskatchewan Power Plant", mw: 175, score: 92, status: "active" },
+    { name: "British Columbia Hydro Site", mw: 98, score: 85, status: "monitoring" },
+    { name: "Manitoba Industrial Zone", mw: 142, score: 88, status: "active" },
+    { name: "Nova Scotia Wind Farm", mw: 67, score: 83, status: "monitoring" },
+    { name: "New Brunswick Grid Connection", mw: 134, score: 90, status: "active" },
+    { name: "Oklahoma Energy Hub", mw: 189, score: 93, status: "active" },
+    { name: "North Dakota Transmission", mw: 78, score: 86, status: "monitoring" },
+    { name: "Wyoming Power Corridor", mw: 212, score: 91, status: "active" }
   ];
 
   return (
@@ -98,7 +106,7 @@ export const LiveDataPreview = () => {
             <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">+{liveData.recentOpportunities} this week</Badge>
           </div>
           
-          <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
             {recentSites.map((site, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-slate-800/20 rounded-lg hover:bg-slate-800/40 transition-colors duration-200 group/item border border-slate-700/20 hover:border-slate-600/30">
                 <div className="flex-1 min-w-0">
