@@ -17,17 +17,12 @@ import EnergyRates from './EnergyRates';
 import Settings from './Settings';
 
 export default function Index() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (mobile) {
-        setIsCollapsed(true);
-      }
     };
 
     checkMobile();
@@ -37,28 +32,15 @@ export default function Index() {
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar 
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-        isMobile={isMobile}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-      />
+      <Sidebar />
       
-      <div className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${
-        isMobile 
-          ? 'ml-0 w-full' 
-          : isCollapsed 
-            ? 'ml-16' 
-            : 'ml-72'
-      }`}>
+      <div className="flex-1 flex flex-col transition-all duration-300 min-w-0">
         {/* Mobile Header */}
         {isMobile && (
           <header className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm min-h-[60px]">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsOpen(true)}
               className="p-2 h-10 w-10 flex-shrink-0"
             >
               <Menu className="w-5 h-5" />
