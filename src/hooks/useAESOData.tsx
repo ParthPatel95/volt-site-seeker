@@ -32,7 +32,14 @@ export interface AESOGenerationMix {
   timestamp: string;
 }
 
-export type ConnectionStatus = 'connected' | 'fallback' | 'disconnected';
+export type ConnectionStatus = 'connected' | 'fallback' | 'disconnected' | 'error';
+
+export interface AESODataStatus {
+  isLive: boolean;
+  lastUpdate: string | null;
+  errorMessage: string | null;
+  retryCount: number;
+}
 
 export function useAESOData() {
   const [pricing, setPricing] = useState<AESOPricing | null>(null);
@@ -40,13 +47,19 @@ export function useAESOData() {
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  const [dataStatus, setDataStatus] = useState<AESODataStatus>({
+    isLive: false,
+    lastUpdate: null,
+    errorMessage: null,
+    retryCount: 0
+  });
 
   const fetchData = async () => {
     setLoading(true);
     console.log('Starting AESO data fetch...');
     
     try {
-      // Fetch pricing data
+      // Fetch pricing data with enhanced error handling
       const pricingResponse = await supabase.functions.invoke('aeso-data-integration', {
         body: { action: 'fetch_current_prices' }
       });
@@ -54,7 +67,16 @@ export function useAESOData() {
       if (pricingResponse.data?.success && pricingResponse.data?.data) {
         console.log('Pricing data updated:', pricingResponse.data.data);
         setPricing(pricingResponse.data.data);
-        setConnectionStatus(pricingResponse.data.source === 'aeso_api' ? 'connected' : 'fallback');
+        
+        const isLive = pricingResponse.data.source === 'aeso_api';
+        setConnectionStatus(isLive ? 'connected' : 'fallback');
+        
+        setDataStatus({
+          isLive,
+          lastUpdate: pricingResponse.data.lastSuccessfulCall || new Date().toISOString(),
+          errorMessage: pricingResponse.data.error || null,
+          retryCount: isLive ? 0 : dataStatus.retryCount + 1
+        });
       }
 
       // Fetch load data
@@ -79,7 +101,13 @@ export function useAESOData() {
 
     } catch (error) {
       console.error('Error fetching AESO data:', error);
-      setConnectionStatus('fallback');
+      setConnectionStatus('error');
+      setDataStatus(prev => ({
+        ...prev,
+        isLive: false,
+        errorMessage: 'Unable to fetch AESO data',
+        retryCount: prev.retryCount + 1
+      }));
     } finally {
       setLoading(false);
     }
@@ -104,6 +132,7 @@ export function useAESOData() {
     generationMix,
     loading,
     connectionStatus,
+    dataStatus,
     refetch
   };
 }

@@ -15,7 +15,9 @@ import {
   MapPin,
   DollarSign,
   Wifi,
-  WifiOff
+  WifiOff,
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -27,6 +29,7 @@ export function AESODashboard() {
     generationMix, 
     loading, 
     connectionStatus,
+    dataStatus,
     refetch 
   } = useAESOData();
 
@@ -46,19 +49,29 @@ export function AESODashboard() {
         return {
           icon: <Wifi className="w-4 h-4 text-green-500" />,
           text: 'Live AESO Data',
-          color: 'text-green-600'
+          color: 'text-green-600',
+          badge: 'default'
         };
       case 'fallback':
         return {
-          icon: <Activity className="w-4 h-4 text-blue-500" />,
-          text: 'Market Data',
-          color: 'text-blue-600'
+          icon: <Clock className="w-4 h-4 text-blue-500" />,
+          text: dataStatus.errorMessage || 'Live pricing temporarily unavailable',
+          color: 'text-blue-600',
+          badge: 'secondary'
+        };
+      case 'error':
+        return {
+          icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
+          text: dataStatus.errorMessage || 'Connection Error',
+          color: 'text-red-600',
+          badge: 'destructive'
         };
       default:
         return {
           icon: <WifiOff className="w-4 h-4 text-gray-500" />,
           text: 'Connecting...',
-          color: 'text-gray-600'
+          color: 'text-gray-600',
+          badge: 'outline'
         };
     }
   };
@@ -69,6 +82,16 @@ export function AESODashboard() {
       cad: `CA$${cadPrice.toFixed(2)}`,
       usd: `$${usdPrice.toFixed(2)} USD`
     };
+  };
+
+  const formatLastUpdate = () => {
+    if (!dataStatus.lastUpdate) return '';
+    const updateTime = new Date(dataStatus.lastUpdate);
+    return `Updated: ${updateTime.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })}`;
   };
 
   const statusInfo = getConnectionStatusInfo();
@@ -83,12 +106,22 @@ export function AESODashboard() {
             AESO Live Data (Alberta)
             <div className="ml-3 flex items-center space-x-2">
               {statusInfo.icon}
-              <span className={`text-sm ${statusInfo.color}`}>
-                {statusInfo.text}
-              </span>
+              <Badge variant={statusInfo.badge as any} className="text-xs">
+                {dataStatus.isLive ? 'LIVE' : 'FALLBACK'}
+              </Badge>
             </div>
           </h2>
-          <p className="text-muted-foreground">Real-time Alberta grid operations and pricing</p>
+          <div className="space-y-1">
+            <p className="text-muted-foreground">Real-time Alberta grid operations and pricing</p>
+            {!dataStatus.isLive && (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className={statusInfo.color}>{statusInfo.text}</span>
+                {dataStatus.lastUpdate && (
+                  <span className="text-xs">• {formatLastUpdate()}</span>
+                )}
+              </p>
+            )}
+          </div>
         </div>
         <Button 
           onClick={refetch}
@@ -103,12 +136,19 @@ export function AESODashboard() {
       {/* Real-time Pricing */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Zap className="w-5 h-5 mr-2 text-yellow-600" />
-            Real-Time Pricing
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-yellow-600" />
+              Real-Time Pool Price
+              {dataStatus.isLive && (
+                <Badge variant="outline" className="ml-2 text-green-600 border-green-600">
+                  ✅ LIVE
+                </Badge>
+              )}
+            </div>
             {pricing && (
-              <Badge variant="outline" className="ml-auto">
-                Updated: {new Date(pricing.timestamp).toLocaleTimeString()}
+              <Badge variant="outline" className="text-xs">
+                {formatLastUpdate()}
               </Badge>
             )}
           </CardTitle>
@@ -162,6 +202,18 @@ export function AESODashboard() {
                     <div className="text-muted-foreground">
                       Updated: {new Date(exchangeRate.lastUpdated).toLocaleTimeString()}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Status Message for Fallback Data */}
+              {!dataStatus.isLive && (
+                <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <span className="font-medium text-yellow-800 dark:text-yellow-200">
+                      Displaying last known rate - Live pricing temporarily unavailable
+                    </span>
                   </div>
                 </div>
               )}

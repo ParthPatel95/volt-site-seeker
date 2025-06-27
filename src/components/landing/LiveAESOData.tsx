@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Zap, MapPin, TrendingUp, Wind } from 'lucide-react';
+import { Activity, Zap, MapPin, TrendingUp, Wind, Clock, Wifi } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 
 export const LiveAESOData = () => {
-  const { pricing, loadData, generationMix, loading, connectionStatus } = useAESOData();
+  const { pricing, loadData, generationMix, loading, connectionStatus, dataStatus } = useAESOData();
   const [isAnimating, setIsAnimating] = useState(false);
 
   // Animate when data updates
@@ -17,6 +17,16 @@ export const LiveAESOData = () => {
     }
   }, [pricing, loadData, generationMix]);
 
+  const formatLastUpdate = () => {
+    if (!dataStatus.lastUpdate) return '';
+    const updateTime = new Date(dataStatus.lastUpdate);
+    return updateTime.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
+  };
+
   return (
     <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-neon-green/30 transition-all duration-300 group">
       <CardHeader className="pb-4">
@@ -26,21 +36,40 @@ export const LiveAESOData = () => {
             <CardTitle className="text-white text-xl">AESO Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-            <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">
-              Live
-            </Badge>
+            {dataStatus.isLive ? (
+              <>
+                <Wifi className="w-3 h-3 text-neon-green" />
+                <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">
+                  Live
+                </Badge>
+              </>
+            ) : (
+              <>
+                <Clock className="w-3 h-3 text-blue-400" />
+                <Badge className="bg-blue-400/20 text-blue-400 text-xs border-blue-400/30">
+                  Cached
+                </Badge>
+              </>
+            )}
           </div>
         </div>
-        <p className="text-slate-300 text-sm">Real-time Alberta electricity market data</p>
+        <div className="space-y-1">
+          <p className="text-slate-300 text-sm">Real-time Alberta electricity market data</p>
+          {!dataStatus.isLive && dataStatus.errorMessage && (
+            <p className="text-xs text-blue-400">
+              {dataStatus.errorMessage} • Last update: {formatLastUpdate()}
+            </p>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Metrics Grid - Changed to 2x2 layout */}
+        {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <Zap className="w-4 h-4 text-electric-blue flex-shrink-0" />
               <span className="text-xs text-slate-400">Pool Price</span>
+              {dataStatus.isLive && <div className="w-1 h-1 bg-neon-green rounded-full animate-pulse ml-auto"></div>}
             </div>
             <div className="text-lg font-bold text-electric-blue break-words">
               {pricing?.current_price ? `$${pricing.current_price.toFixed(2)}/MWh` : 'Loading...'}
@@ -106,7 +135,8 @@ export const LiveAESOData = () => {
         </div>
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
-          * Alberta Electric System Operator real-time data. Updates every 5 minutes.
+          * Alberta Electric System Operator {dataStatus.isLive ? 'real-time' : 'cached'} data. 
+          {dataStatus.isLive ? ' Updates every minute.' : ` Last updated: ${formatLastUpdate()}`}
         </div>
       </CardContent>
     </Card>
