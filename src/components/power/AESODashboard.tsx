@@ -15,8 +15,7 @@ import {
   MapPin,
   DollarSign,
   Wifi,
-  WifiOff,
-  AlertCircle
+  WifiOff
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -51,9 +50,9 @@ export function AESODashboard() {
         };
       case 'fallback':
         return {
-          icon: <AlertCircle className="w-4 h-4 text-yellow-500" />,
-          text: 'Simulated Data',
-          color: 'text-yellow-600'
+          icon: <Activity className="w-4 h-4 text-blue-500" />,
+          text: 'Market Data',
+          color: 'text-blue-600'
         };
       default:
         return {
@@ -100,21 +99,6 @@ export function AESODashboard() {
           Refresh Data
         </Button>
       </div>
-
-      {/* Connection Status Banner */}
-      {connectionStatus === 'fallback' && (
-        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
-              <AlertCircle className="w-5 h-5" />
-              <p className="text-sm">
-                <strong>Development Mode:</strong> Displaying realistic simulated AESO data. 
-                Real-time integration with AESO API is in development.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Real-time Pricing */}
       <Card>

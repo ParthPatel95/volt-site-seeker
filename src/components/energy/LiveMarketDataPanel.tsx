@@ -8,7 +8,6 @@ import {
   Zap, 
   Activity, 
   Clock,
-  AlertTriangle,
   CheckCircle,
   Battery,
   Wind,
@@ -42,8 +41,8 @@ export function LiveMarketDataPanel({
   const getStatusIcon = (conditions: string) => {
     switch (conditions) {
       case 'normal': return <CheckCircle className="h-4 w-4" />;
-      case 'alert': return <AlertTriangle className="h-4 w-4" />;
-      case 'emergency': return <AlertTriangle className="h-4 w-4" />;
+      case 'alert': return <Activity className="h-4 w-4" />;
+      case 'emergency': return <Activity className="h-4 w-4" />;
       default: return <Activity className="h-4 w-4" />;
     }
   };
