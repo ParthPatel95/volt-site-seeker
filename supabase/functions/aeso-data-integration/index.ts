@@ -27,23 +27,22 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     url.searchParams.append(key, value);
   });
 
-  // Get the AESO API key from environment - check for AESO_API_KEY first
-  const aesoApiKey = Deno.env.get('AESO_API_KEY');
+  // Get the AESO API key - try both possible environment variable names
+  const aesoApiKey = Deno.env.get('AESO_API_KEY') || Deno.env.get('AESO_SUB_KEY');
   
   console.log('🔍 Environment variables check:');
-  console.log('AESO_API_KEY present:', !!aesoApiKey);
-  console.log('Available env vars:', Object.keys(Deno.env.toObject()).filter(key => key.includes('AESO')));
+  console.log('AESO_API_KEY present:', !!Deno.env.get('AESO_API_KEY'));
+  console.log('AESO_SUB_KEY present:', !!Deno.env.get('AESO_SUB_KEY'));
+  console.log('Using key:', aesoApiKey ? `${aesoApiKey.substring(0, 8)}...${aesoApiKey.substring(aesoApiKey.length - 4)}` : 'NONE');
   
   if (!aesoApiKey) {
-    console.error('🚨 CRITICAL: AESO_API_KEY not found in environment variables');
+    console.error('🚨 CRITICAL: No AESO API key found in environment variables');
     throw new Error('MISSING_API_KEY');
   }
 
-  console.log(`🔑 Using AESO API key: ${aesoApiKey.substring(0, 8)}...${aesoApiKey.substring(aesoApiKey.length - 4)}`);
-
-  // Use correct AESO API header format (X-API-Key as per AESO documentation)
+  // AESO API Gateway expects Ocp-Apim-Subscription-Key header (not X-API-Key)
   const headers: Record<string, string> = {
-    'X-API-Key': aesoApiKey,
+    'Ocp-Apim-Subscription-Key': aesoApiKey,
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-AESO-Client/1.0',
     'Content-Type': 'application/json'
@@ -65,14 +64,13 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     clearTimeout(timeoutId);
 
     console.log(`📊 AESO API Response status: ${response.status}`);
-    console.log(`📊 Response headers:`, Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`❌ AESO API HTTP error ${response.status}:`, errorText);
       
       if (response.status === 401) {
-        console.error('🔐 Authentication failed - API key may be invalid or expired');
+        console.error('🔐 Authentication failed - check API key and subscription');
         throw new Error('INVALID_API_KEY');
       } else if (response.status === 403) {
         console.error('🚫 Access forbidden - check API key permissions');
@@ -80,7 +78,7 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
       } else if (response.status >= 500) {
         throw new Error('SERVER_ERROR');
       } else if (response.status >= 400) {
-        console.error('⚠️ Bad request - check API parameters or format');
+        console.error('⚠️ Bad request - check API parameters');
         throw new Error('BAD_REQUEST');
       } else {
         throw new Error(`HTTP_ERROR_${response.status}`);
@@ -144,7 +142,7 @@ const fetchPoolPrice = async (config: AESOConfig) => {
     throw new Error('Invalid pool price data received');
   }
 
-  // Calculate statistics from all available prices
+  // Calculate statistics from available prices
   const allPrices = data.map(p => parseFloat(p.pool_price)).filter(p => !isNaN(p));
   const avgPrice = allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length;
   const maxPrice = Math.max(...allPrices);
@@ -227,7 +225,7 @@ const getErrorMessage = (error: Error) => {
     return 'Access forbidden - AESO API key may not have required permissions';
   }
   if (error.message === 'MISSING_API_KEY') {
-    return 'AESO_API_KEY not configured in environment variables';
+    return 'AESO API key not configured in environment variables';
   }
   if (error.message === 'BAD_REQUEST') {
     return 'Invalid request to AESO API - check parameters';
@@ -266,7 +264,6 @@ serve(async (req) => {
         case 'fetch_load_forecast':
         case 'fetch_generation_mix':
           // These endpoints require different API endpoints or enhanced subscription
-          // Generate realistic fallback data based on Alberta grid characteristics
           result = generateRealisticFallbackData(action);
           dataSource = 'fallback';
           errorMessage = 'Live data requires enhanced AESO subscription – displaying simulated data';

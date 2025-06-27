@@ -3,14 +3,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Zap, MapPin, TrendingUp, Wind, Clock, Wifi, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Activity, Zap, MapPin, TrendingUp, Wind, Clock, Wifi, AlertTriangle, RotateCcw, CheckCircle } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 
 export const LiveAESOData = () => {
   const { pricing, loadData, generationMix, loading, connectionStatus, dataStatus, refetch } = useAESOData();
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Animate when data updates
   useEffect(() => {
     if (pricing || loadData || generationMix) {
       setIsAnimating(true);
@@ -48,9 +47,9 @@ export const LiveAESOData = () => {
     if (dataStatus.isLive) {
       return (
         <div className="flex items-center space-x-2">
-          <Wifi className="w-3 h-3 text-neon-green" />
+          <CheckCircle className="w-3 h-3 text-neon-green" />
           <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">
-            Live
+            Live Data
           </Badge>
         </div>
       );
@@ -68,7 +67,7 @@ export const LiveAESOData = () => {
               ? 'bg-warm-orange/20 text-warm-orange border-warm-orange/30' 
               : 'bg-blue-400/20 text-blue-400 border-blue-400/30'
           }`}>
-            {isStale ? '⚠️ Fallback Mode Active' : 'Fallback'}
+            {isStale ? 'Stale Data' : 'Fallback Mode'}
           </Badge>
           {dataStatus.fallbackSince && (
             <span className="text-xs text-slate-400">
@@ -92,17 +91,20 @@ export const LiveAESOData = () => {
         </div>
         <div className="space-y-1">
           <p className="text-slate-300 text-sm">Real-time Alberta electricity market data</p>
+          
           {dataStatus.errorMessage && (
-            <p className="text-xs text-blue-400">
+            <div className="p-2 bg-blue-400/10 border border-blue-400/20 rounded text-xs text-blue-400">
               {dataStatus.errorMessage}
-            </p>
+            </div>
           )}
+          
           {dataStatus.lastUpdate && (
             <p className="text-xs text-slate-400">
-              Source: AESO.ca – Updated {formatLastUpdate()}
+              {dataStatus.isLive ? 'Live from' : 'Cached from'} AESO.ca – Updated {formatLastUpdate()}
             </p>
           )}
-          {dataStatus.isStale && (
+          
+          {(dataStatus.isStale || connectionStatus === 'error') && (
             <div className="flex items-center space-x-2 mt-2">
               <Button 
                 onClick={refetch} 
@@ -111,7 +113,7 @@ export const LiveAESOData = () => {
                 className="h-6 text-xs border-warm-orange/30 text-warm-orange hover:bg-warm-orange/10"
               >
                 <RotateCcw className="w-3 h-3 mr-1" />
-                Retry Live Connection
+                Retry Connection
               </Button>
             </div>
           )}
@@ -126,7 +128,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Pool Price</span>
               {dataStatus.isLive && <div className="w-1 h-1 bg-neon-green rounded-full animate-pulse ml-auto"></div>}
             </div>
-            <div className="text-lg font-bold text-electric-blue break-words">
+            <div className="text-lg font-bold text-electric-blue">
               {pricing?.current_price ? `$${pricing.current_price.toFixed(2)}/MWh` : 'Loading...'}
             </div>
             <div className="text-xs text-slate-400 mt-1">
@@ -139,7 +141,7 @@ export const LiveAESOData = () => {
               <TrendingUp className="w-4 h-4 text-electric-yellow flex-shrink-0" />
               <span className="text-xs text-slate-400">Demand</span>
             </div>
-            <div className="text-lg font-bold text-electric-yellow break-words">
+            <div className="text-lg font-bold text-electric-yellow">
               {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : 'Loading...'} GW
             </div>
           </div>
@@ -149,7 +151,7 @@ export const LiveAESOData = () => {
               <Wind className="w-4 h-4 text-neon-green flex-shrink-0" />
               <span className="text-xs text-slate-400">Wind Power</span>
             </div>
-            <div className="text-lg font-bold text-neon-green break-words">
+            <div className="text-lg font-bold text-neon-green">
               {generationMix?.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : 'Loading...'} GW
             </div>
           </div>
@@ -159,7 +161,7 @@ export const LiveAESOData = () => {
               <MapPin className="w-4 h-4 text-warm-orange flex-shrink-0" />
               <span className="text-xs text-slate-400">Renewables</span>
             </div>
-            <div className="text-lg font-bold text-warm-orange break-words">
+            <div className="text-lg font-bold text-warm-orange">
               {generationMix?.renewable_percentage ? generationMix.renewable_percentage.toFixed(1) : 'Loading...'}%
             </div>
           </div>
@@ -169,7 +171,11 @@ export const LiveAESOData = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold text-slate-200">Market Status</h4>
-            <Badge className={`bg-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/20 text-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'} text-xs border-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/30`}>
+            <Badge className={`${
+              pricing?.market_conditions === 'high_demand' 
+                ? 'bg-warm-orange/20 text-warm-orange border-warm-orange/30' 
+                : 'bg-neon-green/20 text-neon-green border-neon-green/30'
+            } text-xs`}>
               {pricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'LOADING'}
             </Badge>
           </div>
@@ -178,13 +184,13 @@ export const LiveAESOData = () => {
             <div className="text-sm text-slate-300 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">System Load:</span>
-                <span className="text-electric-blue font-semibold break-words">
+                <span className="text-electric-blue font-semibold">
                   {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : 'Loading...'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Peak Forecast:</span>
-                <span className="text-electric-yellow font-semibold break-words">
+                <span className="text-electric-yellow font-semibold">
                   {loadData?.peak_forecast_mw ? `${(loadData.peak_forecast_mw / 1000).toFixed(1)} GW` : 'Loading...'}
                 </span>
               </div>
@@ -193,7 +199,7 @@ export const LiveAESOData = () => {
         </div>
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
-          * Alberta Electric System Operator {dataStatus.isLive ? 'real-time' : 'cached'} data. 
+          * Alberta Electric System Operator {dataStatus.isLive ? 'live' : 'cached'} data. 
           {dataStatus.isLive ? ' Updates every 2 minutes.' : ` Last updated: ${formatLastUpdate()}`}
         </div>
       </CardContent>

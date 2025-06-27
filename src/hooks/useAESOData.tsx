@@ -56,18 +56,12 @@ export function useAESOData() {
     fallbackSince: null
   });
 
-  // Cache management for fallback data
-  const [cachedData, setCachedData] = useState<{
-    pricing?: AESOPricing;
-    timestamp?: string;
-  }>({});
-
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch with correct headers...');
+    console.log('🔌 Starting AESO data fetch...');
     
     try {
-      // Fetch pricing data with enhanced error handling
+      // Fetch pricing data
       const pricingResponse = await supabase.functions.invoke('aeso-data-integration', {
         body: { action: 'fetch_current_prices' }
       });
@@ -86,25 +80,17 @@ export function useAESOData() {
         const isLive = pricingResponse.data.source === 'aeso_api';
         setConnectionStatus(isLive ? 'connected' : 'fallback');
         
-        // Cache successful data
         if (isLive) {
-          setCachedData({
-            pricing: pricingResponse.data.data,
-            timestamp: pricingResponse.data.timestamp
-          });
-          console.log('🟢 AESO API is now LIVE - real pool price data retrieved!');
+          console.log('🟢 AESO API is LIVE - real pool price data retrieved!');
           console.log(`💰 Current Alberta Pool Price: $${pricingResponse.data.data.current_price}/MWh (CAD)`);
         } else {
           console.log('⚠️ Using fallback data - API authentication or connection failed');
-          console.warn('🔧 Check AESO API key configuration and validity');
         }
         
-        // Format timestamp for display
         const lastUpdateTime = pricingResponse.data.lastSuccessfulCall || 
                              pricingResponse.data.timestamp || 
                              new Date().toISOString();
         
-        // Track fallback mode duration
         const currentFallbackSince = !isLive && dataStatus.fallbackSince === null 
           ? new Date().toISOString() 
           : (isLive ? null : dataStatus.fallbackSince);
@@ -145,37 +131,23 @@ export function useAESOData() {
       console.error('💥 Error fetching AESO data:', error);
       setConnectionStatus('error');
       
-      // Use cached data if available
-      if (cachedData.pricing) {
-        console.log('🗄️ Using cached AESO data due to fetch error');
-        setPricing(cachedData.pricing);
-        setDataStatus(prev => ({
-          ...prev,
-          isLive: false,
-          errorMessage: 'AESO API temporarily unavailable – showing cached data',
-          retryCount: prev.retryCount + 1,
-          fallbackSince: prev.fallbackSince || new Date().toISOString()
-        }));
-      } else {
-        setDataStatus(prev => ({
-          ...prev,
-          isLive: false,
-          errorMessage: 'AESO API key may be invalid or expired - check configuration',
-          retryCount: prev.retryCount + 1,
-          fallbackSince: prev.fallbackSince || new Date().toISOString()
-        }));
-      }
+      setDataStatus(prev => ({
+        ...prev,
+        isLive: false,
+        errorMessage: 'Unable to connect to AESO API - check configuration',
+        retryCount: prev.retryCount + 1,
+        fallbackSince: prev.fallbackSince || new Date().toISOString()
+      }));
     } finally {
       setLoading(false);
     }
   };
 
   const refetch = () => {
-    console.log('🔄 Force refreshing AESO data with correct authentication...');
+    console.log('🔄 Force refreshing AESO data...');
     fetchData();
   };
 
-  // Check if fallback mode has been active for more than 1 hour
   const isFallbackStale = () => {
     if (!dataStatus.fallbackSince) return false;
     const fallbackStart = new Date(dataStatus.fallbackSince);
@@ -185,12 +157,8 @@ export function useAESOData() {
   };
 
   useEffect(() => {
-    // Immediate fetch on mount
     fetchData();
-    
-    // Set up polling for live data updates every 2 minutes
-    const interval = setInterval(fetchData, 120000);
-    
+    const interval = setInterval(fetchData, 120000); // Poll every 2 minutes
     return () => clearInterval(interval);
   }, []);
 
