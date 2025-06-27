@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -31,19 +30,22 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
   const aesoApiKey = Deno.env.get('AESO_API_KEY');
   
   if (!aesoApiKey) {
-    console.error('CRITICAL: AESO_API_KEY not found in environment variables');
+    console.error('🚨 CRITICAL: AESO_API_KEY not found in environment variables');
+    console.error('Available env vars:', Object.keys(Deno.env.toObject()));
     throw new Error('API_KEY_MISSING');
   }
 
-  // Use the correct header format that AESO expects
+  console.log(`🔑 Using AESO API key: ${aesoApiKey.substring(0, 8)}...${aesoApiKey.substring(aesoApiKey.length - 4)}`);
+
+  // Use X-API-Key header as specified in requirements
   const headers: Record<string, string> = {
     'X-API-Key': aesoApiKey,
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-API-Client/1.0'
   };
 
-  console.log(`AESO API Request to: ${url.toString()}`);
-  console.log('Request headers configured with X-API-Key');
+  console.log(`🌐 AESO API Request to: ${url.toString()}`);
+  console.log('📋 Request headers configured with X-API-Key');
 
   try {
     const controller = new AbortController();
@@ -57,19 +59,19 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
 
     clearTimeout(timeoutId);
 
-    console.log(`AESO API Response status: ${response.status}`);
+    console.log(`📊 AESO API Response status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`AESO API HTTP error ${response.status}: ${errorText}`);
+      console.error(`❌ AESO API HTTP error ${response.status}: ${errorText}`);
       
       if (response.status >= 500) {
         throw new Error('SERVER_ERROR');
       } else if (response.status === 401 || response.status === 403) {
-        console.error('Authentication failed - check AESO API key validity');
+        console.error('🔐 Authentication failed - API key or permissions issue');
         throw new Error('API_KEY_ERROR');
       } else if (response.status >= 400) {
-        console.error('Bad request - check API parameters or format');
+        console.error('⚠️ Bad request - check API parameters or format');
         throw new Error('BAD_REQUEST');
       } else {
         throw new Error(`HTTP_ERROR_${response.status}`);
@@ -81,7 +83,7 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     
     return data;
   } catch (error) {
-    console.error(`AESO API call failed (attempt ${retryCount + 1}):`, error);
+    console.error(`💥 AESO API call failed (attempt ${retryCount + 1}):`, error);
     
     if (error.message === 'API_KEY_ERROR' || error.message === 'API_KEY_MISSING' || error.message === 'BAD_REQUEST') {
       throw error; // Don't retry auth or bad request errors

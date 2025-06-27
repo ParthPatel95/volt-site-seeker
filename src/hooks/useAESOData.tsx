@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -62,7 +61,7 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch with corrected X-API-Key header...');
+    console.log('🔌 Starting AESO data fetch with X-API-Key header...');
     
     try {
       // Fetch pricing data with enhanced error handling
@@ -90,6 +89,9 @@ export function useAESOData() {
             pricing: pricingResponse.data.data,
             timestamp: pricingResponse.data.timestamp
           });
+          console.log('🟢 AESO API is now LIVE with X-API-Key - real pool price data!');
+        } else {
+          console.log('🔄 Using fallback data - API temporarily unavailable');
         }
         
         // Format timestamp for display
@@ -103,12 +105,6 @@ export function useAESOData() {
           errorMessage: pricingResponse.data.error || null,
           retryCount: isLive ? 0 : dataStatus.retryCount + 1
         });
-        
-        if (isLive) {
-          console.log('🟢 AESO API is now LIVE with X-API-Key - real pool price data!');
-        } else {
-          console.log('🔄 Using fallback data - API temporarily unavailable');
-        }
       } else {
         console.error('❌ Invalid response structure from AESO function');
         throw new Error('Invalid response from AESO function');
