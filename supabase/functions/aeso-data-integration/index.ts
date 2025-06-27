@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -26,30 +27,30 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     url.searchParams.append(key, value);
   });
 
-  // Get the AESO API key from environment - try both possible names
-  const aesoApiKey = Deno.env.get('AESO_API_KEY') || Deno.env.get('AESO_SUB_KEY');
+  // Get the AESO API key from environment - check for AESO_API_KEY first
+  const aesoApiKey = Deno.env.get('AESO_API_KEY');
   
   console.log('🔍 Environment variables check:');
+  console.log('AESO_API_KEY present:', !!aesoApiKey);
   console.log('Available env vars:', Object.keys(Deno.env.toObject()).filter(key => key.includes('AESO')));
   
   if (!aesoApiKey) {
-    console.error('🚨 CRITICAL: No AESO API key found in environment variables');
-    console.error('Checked for: AESO_API_KEY, AESO_SUB_KEY');
-    throw new Error('API_KEY_MISSING');
+    console.error('🚨 CRITICAL: AESO_API_KEY not found in environment variables');
+    throw new Error('MISSING_API_KEY');
   }
 
   console.log(`🔑 Using AESO API key: ${aesoApiKey.substring(0, 8)}...${aesoApiKey.substring(aesoApiKey.length - 4)}`);
 
-  // Try X-API-Key first (most common format)
+  // Use correct AESO API header format (X-API-Key as per AESO documentation)
   const headers: Record<string, string> = {
     'X-API-Key': aesoApiKey,
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-API-Client/1.0',
+    'User-Agent': 'VoltScout-AESO-Client/1.0',
     'Content-Type': 'application/json'
   };
 
   console.log(`🌐 AESO API Request to: ${url.toString()}`);
-  console.log('📋 Using X-API-Key header format');
+  console.log('📋 Headers:', Object.keys(headers).join(', '));
 
   try {
     const controller = new AbortController();
@@ -64,41 +65,20 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     clearTimeout(timeoutId);
 
     console.log(`📊 AESO API Response status: ${response.status}`);
+    console.log(`📊 Response headers:`, Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ AESO API HTTP error ${response.status}: ${errorText}`);
+      console.error(`❌ AESO API HTTP error ${response.status}:`, errorText);
       
-      // Try alternative header format if first attempt fails with auth error
-      if (response.status === 401 && retryCount === 0) {
-        console.log('🔄 Trying Ocp-Apim-Subscription-Key header format...');
-        
-        const altHeaders = {
-          'Ocp-Apim-Subscription-Key': aesoApiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'VoltScout-API-Client/1.0',
-          'Content-Type': 'application/json'
-        };
-        
-        const altResponse = await fetch(url.toString(), {
-          method: 'GET',
-          headers: altHeaders,
-          signal: controller.signal
-        });
-        
-        if (altResponse.ok) {
-          console.log('✅ Success with Ocp-Apim-Subscription-Key header');
-          return await altResponse.json();
-        } else {
-          const altErrorText = await altResponse.text();
-          console.error(`❌ Ocp-Apim-Subscription-Key also failed ${altResponse.status}: ${altErrorText}`);
-        }
-      }
-      
-      if (response.status >= 500) {
+      if (response.status === 401) {
+        console.error('🔐 Authentication failed - API key may be invalid or expired');
+        throw new Error('INVALID_API_KEY');
+      } else if (response.status === 403) {
+        console.error('🚫 Access forbidden - check API key permissions');
+        throw new Error('ACCESS_FORBIDDEN');
+      } else if (response.status >= 500) {
         throw new Error('SERVER_ERROR');
-      } else if (response.status === 401 || response.status === 403) {
-        throw new Error('API_KEY_ERROR');
       } else if (response.status >= 400) {
         console.error('⚠️ Bad request - check API parameters or format');
         throw new Error('BAD_REQUEST');
@@ -114,7 +94,7 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
   } catch (error) {
     console.error(`💥 AESO API call failed (attempt ${retryCount + 1}):`, error);
     
-    if (error.message === 'API_KEY_ERROR' || error.message === 'API_KEY_MISSING' || error.message === 'BAD_REQUEST') {
+    if (error.message === 'INVALID_API_KEY' || error.message === 'ACCESS_FORBIDDEN' || error.message === 'MISSING_API_KEY' || error.message === 'BAD_REQUEST') {
       throw error; // Don't retry auth or bad request errors
     }
     
@@ -170,7 +150,7 @@ const fetchPoolPrice = async (config: AESOConfig) => {
   const maxPrice = Math.max(...allPrices);
   const minPrice = Math.min(...allPrices);
   
-  console.log(`💰 Current AESO pool price: $${poolPriceMWh}/MWh`);
+  console.log(`💰 Current AESO pool price: $${poolPriceMWh}/MWh (CAD)`);
   
   return {
     current_price: poolPriceMWh,
@@ -240,11 +220,14 @@ const generateRealisticFallbackData = (action: string) => {
 };
 
 const getErrorMessage = (error: Error) => {
-  if (error.message === 'API_KEY_ERROR') {
-    return 'AESO API authentication failed - check API key configuration';
+  if (error.message === 'INVALID_API_KEY') {
+    return 'AESO API key is invalid or expired - please check your subscription';
   }
-  if (error.message === 'API_KEY_MISSING') {
-    return 'AESO API key not configured in Supabase secrets';
+  if (error.message === 'ACCESS_FORBIDDEN') {
+    return 'Access forbidden - AESO API key may not have required permissions';
+  }
+  if (error.message === 'MISSING_API_KEY') {
+    return 'AESO_API_KEY not configured in environment variables';
   }
   if (error.message === 'BAD_REQUEST') {
     return 'Invalid request to AESO API - check parameters';

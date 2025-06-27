@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -38,6 +39,7 @@ export interface AESODataStatus {
   lastUpdate: string | null;
   errorMessage: string | null;
   retryCount: number;
+  fallbackSince: string | null;
 }
 
 export function useAESOData() {
@@ -50,7 +52,8 @@ export function useAESOData() {
     isLive: false,
     lastUpdate: null,
     errorMessage: null,
-    retryCount: 0
+    retryCount: 0,
+    fallbackSince: null
   });
 
   // Cache management for fallback data
@@ -61,7 +64,7 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch - testing header formats...');
+    console.log('🔌 Starting AESO data fetch with correct headers...');
     
     try {
       // Fetch pricing data with enhanced error handling
@@ -90,10 +93,10 @@ export function useAESOData() {
             timestamp: pricingResponse.data.timestamp
           });
           console.log('🟢 AESO API is now LIVE - real pool price data retrieved!');
-          console.log('📈 Current Alberta Pool Price:', `$${pricingResponse.data.data.current_price}/MWh`);
+          console.log(`💰 Current Alberta Pool Price: $${pricingResponse.data.data.current_price}/MWh (CAD)`);
         } else {
-          console.log('🔄 Using fallback data - API authentication failed');
-          console.warn('⚠️ Check AESO API key configuration in Supabase secrets');
+          console.log('⚠️ Using fallback data - API authentication or connection failed');
+          console.warn('🔧 Check AESO API key configuration and validity');
         }
         
         // Format timestamp for display
@@ -101,11 +104,17 @@ export function useAESOData() {
                              pricingResponse.data.timestamp || 
                              new Date().toISOString();
         
+        // Track fallback mode duration
+        const currentFallbackSince = !isLive && dataStatus.fallbackSince === null 
+          ? new Date().toISOString() 
+          : (isLive ? null : dataStatus.fallbackSince);
+        
         setDataStatus({
           isLive,
           lastUpdate: lastUpdateTime,
           errorMessage: pricingResponse.data.error || null,
-          retryCount: isLive ? 0 : dataStatus.retryCount + 1
+          retryCount: isLive ? 0 : dataStatus.retryCount + 1,
+          fallbackSince: currentFallbackSince
         });
       } else {
         console.error('❌ Invalid response structure from AESO function');
@@ -143,15 +152,17 @@ export function useAESOData() {
         setDataStatus(prev => ({
           ...prev,
           isLive: false,
-          errorMessage: 'AESO data temporarily unavailable – showing cached value',
-          retryCount: prev.retryCount + 1
+          errorMessage: 'AESO API temporarily unavailable – showing cached data',
+          retryCount: prev.retryCount + 1,
+          fallbackSince: prev.fallbackSince || new Date().toISOString()
         }));
       } else {
         setDataStatus(prev => ({
           ...prev,
           isLive: false,
-          errorMessage: 'Check AESO API configuration - authentication failed',
-          retryCount: prev.retryCount + 1
+          errorMessage: 'AESO API key may be invalid or expired - check configuration',
+          retryCount: prev.retryCount + 1,
+          fallbackSince: prev.fallbackSince || new Date().toISOString()
         }));
       }
     } finally {
@@ -160,8 +171,17 @@ export function useAESOData() {
   };
 
   const refetch = () => {
-    console.log('🔄 Force refreshing AESO data - testing both header formats...');
+    console.log('🔄 Force refreshing AESO data with correct authentication...');
     fetchData();
+  };
+
+  // Check if fallback mode has been active for more than 1 hour
+  const isFallbackStale = () => {
+    if (!dataStatus.fallbackSince) return false;
+    const fallbackStart = new Date(dataStatus.fallbackSince);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - fallbackStart.getTime()) / (1000 * 60 * 60);
+    return hoursDiff > 1;
   };
 
   useEffect(() => {
@@ -180,7 +200,10 @@ export function useAESOData() {
     generationMix,
     loading,
     connectionStatus,
-    dataStatus,
+    dataStatus: {
+      ...dataStatus,
+      isStale: isFallbackStale()
+    },
     refetch
   };
 }

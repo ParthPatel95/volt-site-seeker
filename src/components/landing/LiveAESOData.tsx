@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Zap, MapPin, TrendingUp, Wind, Clock, Wifi } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Activity, Zap, MapPin, TrendingUp, Wind, Clock, Wifi, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 
 export const LiveAESOData = () => {
-  const { pricing, loadData, generationMix, loading, connectionStatus, dataStatus } = useAESOData();
+  const { pricing, loadData, generationMix, loading, connectionStatus, dataStatus, refetch } = useAESOData();
   const [isAnimating, setIsAnimating] = useState(false);
 
   // Animate when data updates
@@ -29,6 +30,56 @@ export const LiveAESOData = () => {
     return updateTime.toLocaleTimeString('en-US', timeOptions);
   };
 
+  const getFallbackDuration = () => {
+    if (!dataStatus.fallbackSince) return '';
+    const fallbackStart = new Date(dataStatus.fallbackSince);
+    const now = new Date();
+    const minutesDiff = Math.floor((now.getTime() - fallbackStart.getTime()) / (1000 * 60));
+    
+    if (minutesDiff < 60) {
+      return `${minutesDiff}m`;
+    } else {
+      const hoursDiff = Math.floor(minutesDiff / 60);
+      return `${hoursDiff}h ${minutesDiff % 60}m`;
+    }
+  };
+
+  const getStatusBadge = () => {
+    if (dataStatus.isLive) {
+      return (
+        <div className="flex items-center space-x-2">
+          <Wifi className="w-3 h-3 text-neon-green" />
+          <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">
+            Live
+          </Badge>
+        </div>
+      );
+    } else {
+      const isStale = dataStatus.isStale;
+      return (
+        <div className="flex items-center space-x-2">
+          {isStale ? (
+            <AlertTriangle className="w-3 h-3 text-warm-orange" />
+          ) : (
+            <Clock className="w-3 h-3 text-blue-400" />
+          )}
+          <Badge className={`text-xs ${
+            isStale 
+              ? 'bg-warm-orange/20 text-warm-orange border-warm-orange/30' 
+              : 'bg-blue-400/20 text-blue-400 border-blue-400/30'
+          }`}>
+            {isStale ? '⚠️ Fallback Mode Active' : 'Fallback'}
+          </Badge>
+          {dataStatus.fallbackSince && (
+            <span className="text-xs text-slate-400">
+              ({getFallbackDuration()})
+            </span>
+          )}
+        </div>
+      );
+    }
+  };
+
   return (
     <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-neon-green/30 transition-all duration-300 group">
       <CardHeader className="pb-4">
@@ -37,23 +88,7 @@ export const LiveAESOData = () => {
             <Activity className="w-6 h-6 text-neon-green group-hover:scale-110 transition-transform duration-300" />
             <CardTitle className="text-white text-xl">AESO Live Data</CardTitle>
           </div>
-          <div className="flex items-center space-x-2">
-            {dataStatus.isLive ? (
-              <>
-                <Wifi className="w-3 h-3 text-neon-green" />
-                <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">
-                  Live
-                </Badge>
-              </>
-            ) : (
-              <>
-                <Clock className="w-3 h-3 text-blue-400" />
-                <Badge className="bg-blue-400/20 text-blue-400 text-xs border-blue-400/30">
-                  Fallback
-                </Badge>
-              </>
-            )}
-          </div>
+          {getStatusBadge()}
         </div>
         <div className="space-y-1">
           <p className="text-slate-300 text-sm">Real-time Alberta electricity market data</p>
@@ -66,6 +101,19 @@ export const LiveAESOData = () => {
             <p className="text-xs text-slate-400">
               Source: AESO.ca – Updated {formatLastUpdate()}
             </p>
+          )}
+          {dataStatus.isStale && (
+            <div className="flex items-center space-x-2 mt-2">
+              <Button 
+                onClick={refetch} 
+                size="sm" 
+                variant="outline" 
+                className="h-6 text-xs border-warm-orange/30 text-warm-orange hover:bg-warm-orange/10"
+              >
+                <RotateCcw className="w-3 h-3 mr-1" />
+                Retry Live Connection
+              </Button>
+            </div>
           )}
         </div>
       </CardHeader>
@@ -80,6 +128,9 @@ export const LiveAESOData = () => {
             </div>
             <div className="text-lg font-bold text-electric-blue break-words">
               {pricing?.current_price ? `$${pricing.current_price.toFixed(2)}/MWh` : 'Loading...'}
+            </div>
+            <div className="text-xs text-slate-400 mt-1">
+              CAD {pricing?.cents_per_kwh ? `(${pricing.cents_per_kwh.toFixed(1)}¢/kWh)` : ''}
             </div>
           </div>
           
