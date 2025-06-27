@@ -130,5 +130,3 @@ export function AESOKeySetup() {
     </div>
   );
 }
-</CardContent>
-</Card>
