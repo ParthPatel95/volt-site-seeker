@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
-// AESO Public API - only pool price is available without subscription
+// AESO Public API - requires subscription key for access
 const AESO_PUBLIC_API_URL = 'https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice';
 
 interface AESOConfig {
@@ -27,10 +27,21 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     url.searchParams.append(key, value);
   });
 
-  const headers = {
+  // Get the AESO subscription key from environment
+  const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
+  
+  const headers: Record<string, string> = {
     'accept': 'application/json',
     'User-Agent': 'VoltScout-API-Client/1.0'
   };
+
+  // Add subscription key if available
+  if (aesoSubKey) {
+    headers['Ocp-Apim-Subscription-Key'] = aesoSubKey;
+    console.log('AESO API Request with subscription key included');
+  } else {
+    console.log('Warning: AESO_SUB_KEY not found in environment variables');
+  }
 
   console.log(`AESO Public API Request to: ${url.toString()}`);
 
