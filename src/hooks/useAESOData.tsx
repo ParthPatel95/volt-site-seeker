@@ -54,9 +54,15 @@ export function useAESOData() {
     retryCount: 0
   });
 
+  // Cache management for fallback data
+  const [cachedData, setCachedData] = useState<{
+    pricing?: AESOPricing;
+    timestamp?: string;
+  }>({});
+
   const fetchData = async () => {
     setLoading(true);
-    console.log('Starting AESO data fetch with new API key...');
+    console.log('🔌 Starting AESO data fetch with corrected API implementation...');
     
     try {
       // Fetch pricing data with enhanced error handling
@@ -64,7 +70,7 @@ export function useAESOData() {
         body: { action: 'fetch_current_prices' }
       });
       
-      console.log('AESO Pricing Response:', pricingResponse);
+      console.log('📊 AESO Pricing Response:', pricingResponse);
       
       if (pricingResponse.data?.success && pricingResponse.data?.data) {
         console.log('✅ AESO Pricing data updated:', pricingResponse.data.data);
@@ -73,15 +79,25 @@ export function useAESOData() {
         const isLive = pricingResponse.data.source === 'aeso_api';
         setConnectionStatus(isLive ? 'connected' : 'fallback');
         
+        // Cache successful data
+        if (isLive) {
+          setCachedData({
+            pricing: pricingResponse.data.data,
+            timestamp: pricingResponse.data.timestamp
+          });
+        }
+        
         setDataStatus({
           isLive,
-          lastUpdate: pricingResponse.data.lastSuccessfulCall || new Date().toISOString(),
+          lastUpdate: pricingResponse.data.lastSuccessfulCall || cachedData.timestamp || new Date().toISOString(),
           errorMessage: pricingResponse.data.error || null,
           retryCount: isLive ? 0 : dataStatus.retryCount + 1
         });
         
         if (isLive) {
-          console.log('🟢 AESO API is now LIVE with real data!');
+          console.log('🟢 AESO API is now LIVE with real pool price data!');
+        } else {
+          console.log('🔄 Using fallback data - API temporarily unavailable');
         }
       }
 
@@ -91,7 +107,7 @@ export function useAESOData() {
       });
       
       if (loadResponse.data?.success && loadResponse.data?.data) {
-        console.log('Load data updated:', loadResponse.data.data);
+        console.log('📈 Load data updated:', loadResponse.data.data);
         setLoadData(loadResponse.data.data);
       }
 
@@ -101,26 +117,39 @@ export function useAESOData() {
       });
       
       if (generationResponse.data?.success && generationResponse.data?.data) {
-        console.log('Generation data updated:', generationResponse.data.data);
+        console.log('⚡ Generation data updated:', generationResponse.data.data);
         setGenerationMix(generationResponse.data.data);
       }
 
     } catch (error) {
-      console.error('Error fetching AESO data:', error);
+      console.error('💥 Error fetching AESO data:', error);
       setConnectionStatus('error');
-      setDataStatus(prev => ({
-        ...prev,
-        isLive: false,
-        errorMessage: 'Unable to fetch AESO data',
-        retryCount: prev.retryCount + 1
-      }));
+      
+      // Use cached data if available
+      if (cachedData.pricing) {
+        console.log('🗄️ Using cached AESO data due to fetch error');
+        setPricing(cachedData.pricing);
+        setDataStatus(prev => ({
+          ...prev,
+          isLive: false,
+          errorMessage: 'AESO pool price currently unavailable – showing last known rate',
+          retryCount: prev.retryCount + 1
+        }));
+      } else {
+        setDataStatus(prev => ({
+          ...prev,
+          isLive: false,
+          errorMessage: 'Unable to fetch AESO data - no cached data available',
+          retryCount: prev.retryCount + 1
+        }));
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const refetch = () => {
-    console.log('🔄 Force refreshing AESO data...');
+    console.log('🔄 Force refreshing AESO data with corrected API...');
     fetchData();
   };
 

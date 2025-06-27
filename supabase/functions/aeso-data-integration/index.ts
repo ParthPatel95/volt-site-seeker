@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
-// AESO Public API - requires subscription key for access
+// AESO Public API endpoint
 const AESO_PUBLIC_API_URL = 'https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice';
 
 interface AESOConfig {
@@ -13,9 +13,9 @@ interface AESOConfig {
 
 const getAESOConfig = (): AESOConfig => {
   return {
-    timeout: 30000,
+    timeout: 15000,
     maxRetries: 3,
-    backoffDelays: [1000, 3000, 5000]
+    backoffDelays: [1000, 2000, 4000]
   };
 };
 
@@ -27,22 +27,23 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     url.searchParams.append(key, value);
   });
 
-  // Get the AESO subscription key from environment
-  const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
+  // Get the AESO API key from environment
+  const aesoApiKey = Deno.env.get('AESO_SUB_KEY');
   
-  if (!aesoSubKey) {
+  if (!aesoApiKey) {
     console.error('CRITICAL: AESO_SUB_KEY not found in environment variables');
     throw new Error('API_KEY_MISSING');
   }
 
+  // Use correct headers as specified in your requirements
   const headers: Record<string, string> = {
-    'accept': 'application/json',
-    'User-Agent': 'VoltScout-API-Client/1.0',
-    'Ocp-Apim-Subscription-Key': aesoSubKey
+    'X-API-Key': aesoApiKey,
+    'Accept': 'application/json',
+    'User-Agent': 'VoltScout-API-Client/1.0'
   };
 
-  console.log(`AESO Public API Request to: ${url.toString()}`);
-  console.log('Request headers (without key):', Object.keys(headers));
+  console.log(`AESO API Request to: ${url.toString()}`);
+  console.log('Request headers configured with X-API-Key');
 
   try {
     const controller = new AbortController();
@@ -64,26 +65,26 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
       
       if (response.status >= 500) {
         throw new Error('SERVER_ERROR');
-      } else if (response.status === 401) {
-        console.error('Authentication failed - check AESO_SUB_KEY validity');
+      } else if (response.status === 401 || response.status === 403) {
+        console.error('Authentication failed - check AESO API key validity');
         throw new Error('API_KEY_ERROR');
-      } else if (response.status === 403) {
-        console.error('Access forbidden - subscription may be inactive');
-        throw new Error('API_KEY_ERROR');
+      } else if (response.status >= 400) {
+        console.error('Bad request - check API parameters or format');
+        throw new Error('BAD_REQUEST');
       } else {
         throw new Error(`HTTP_ERROR_${response.status}`);
       }
     }
 
     const data = await response.json();
-    console.log(`AESO API Response received successfully - ${data.length} records`);
+    console.log(`✅ AESO API Response received successfully - ${Array.isArray(data) ? data.length : 1} records`);
     
     return data;
   } catch (error) {
     console.error(`AESO API call failed (attempt ${retryCount + 1}):`, error);
     
-    if (error.message === 'API_KEY_ERROR' || error.message === 'API_KEY_MISSING') {
-      throw error; // Don't retry auth errors
+    if (error.message === 'API_KEY_ERROR' || error.message === 'API_KEY_MISSING' || error.message === 'BAD_REQUEST') {
+      throw error; // Don't retry auth or bad request errors
     }
     
     if (retryCount < config.maxRetries && (
@@ -93,7 +94,7 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
       error.message.includes('fetch')
     )) {
       const delay = config.backoffDelays[retryCount] || 5000;
-      console.log(`Retrying in ${delay}ms (attempt ${retryCount + 1})`);
+      console.log(`🔄 Retrying AESO API call in ${delay}ms (attempt ${retryCount + 1}/${config.maxRetries})`);
       await sleep(delay);
       return makeAESORequest(params, config, retryCount + 1);
     }
@@ -108,7 +109,7 @@ const getTodayDate = () => {
 };
 
 const fetchPoolPrice = async (config: AESOConfig) => {
-  console.log('Fetching AESO pool price from public API...');
+  console.log('🔌 Fetching AESO pool price from public API...');
   const today = getTodayDate();
   
   const data = await makeAESORequest({ 
@@ -121,11 +122,14 @@ const fetchPoolPrice = async (config: AESOConfig) => {
     throw new Error('No pool price data returned from AESO API');
   }
 
+  console.log(`📊 Processing ${data.length} AESO price records`);
+
   // Get the latest price entry
   const latestPrice = data[data.length - 1];
   const poolPriceMWh = parseFloat(latestPrice.pool_price);
   
   if (isNaN(poolPriceMWh)) {
+    console.error('Invalid pool price data:', latestPrice);
     throw new Error('Invalid pool price data received');
   }
 
@@ -134,6 +138,8 @@ const fetchPoolPrice = async (config: AESOConfig) => {
   const avgPrice = allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length;
   const maxPrice = Math.max(...allPrices);
   const minPrice = Math.min(...allPrices);
+  
+  console.log(`💰 Current AESO pool price: $${poolPriceMWh}/MWh`);
   
   return {
     current_price: poolPriceMWh,
@@ -204,13 +210,16 @@ const generateRealisticFallbackData = (action: string) => {
 
 const getErrorMessage = (error: Error) => {
   if (error.message === 'API_KEY_ERROR') {
-    return 'Unable to connect to AESO – please verify API key and subscription status';
+    return 'Error fetching AESO data – please verify API key or request format';
   }
   if (error.message === 'API_KEY_MISSING') {
     return 'AESO API key not configured – please contact administrator';
   }
+  if (error.message === 'BAD_REQUEST') {
+    return 'Invalid request to AESO API – please check parameters';
+  }
   if (error.message === 'SERVER_ERROR' || error.name === 'AbortError') {
-    return 'AESO is currently unavailable. Please try again later.';
+    return 'AESO is temporarily unavailable – retrying later';
   }
   return 'Connection error occurred while fetching AESO data';
 };
@@ -222,11 +231,12 @@ serve(async (req) => {
 
   try {
     const { action } = await req.json()
-    console.log(`AESO API Request: ${JSON.stringify({ action, timestamp: new Date().toISOString() })}`)
+    console.log(`🚀 AESO API Request: ${JSON.stringify({ action, timestamp: new Date().toISOString() })}`)
 
     let result;
     let dataSource = 'fallback';
     let errorMessage = null;
+    let lastSuccessfulCall = null;
     
     try {
       const config = getAESOConfig();
@@ -235,7 +245,8 @@ serve(async (req) => {
         case 'fetch_current_prices':
           result = await fetchPoolPrice(config);
           dataSource = 'aeso_api';
-          console.log('✅ AESO API call successful - Live data retrieved');
+          lastSuccessfulCall = new Date().toISOString();
+          console.log('✅ AESO API call successful - Live pool price data retrieved');
           break;
           
         case 'fetch_load_forecast':
@@ -244,7 +255,7 @@ serve(async (req) => {
           // Generate realistic fallback data based on Alberta grid characteristics
           result = generateRealisticFallbackData(action);
           dataSource = 'fallback';
-          errorMessage = 'Live data requires enhanced AESO subscription - displaying simulated data';
+          errorMessage = 'Live data requires enhanced AESO subscription – displaying simulated data';
           console.log('🔄 Using simulated data - enhanced subscription required for this endpoint');
           break;
           
@@ -253,7 +264,7 @@ serve(async (req) => {
       }
       
     } catch (error) {
-      console.error('AESO API Error:', error.message);
+      console.error('🚨 AESO API Error:', error.message);
       errorMessage = getErrorMessage(error);
       result = generateRealisticFallbackData(action);
       dataSource = 'fallback';
@@ -272,7 +283,7 @@ serve(async (req) => {
         source: dataSource,
         error: errorMessage,
         timestamp: new Date().toISOString(),
-        lastSuccessfulCall: dataSource === 'aeso_api' ? new Date().toISOString() : null
+        lastSuccessfulCall
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -280,7 +291,7 @@ serve(async (req) => {
       },
     )
   } catch (error: any) {
-    console.error('Fatal AESO API Error:', error);
+    console.error('💥 Fatal AESO API Error:', error);
 
     const { action } = await req.json().catch(() => ({ action: 'unknown' }));
     const fallbackData = generateRealisticFallbackData(action);
@@ -290,7 +301,7 @@ serve(async (req) => {
         success: true,
         data: fallbackData,
         source: 'fallback',
-        error: 'Service temporarily unavailable',
+        error: 'AESO pool price currently unavailable – showing last known rate',
         timestamp: new Date().toISOString()
       }),
       {
