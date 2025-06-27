@@ -56,7 +56,7 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('Starting AESO data fetch...');
+    console.log('Starting AESO data fetch with new API key...');
     
     try {
       // Fetch pricing data with enhanced error handling
@@ -64,8 +64,10 @@ export function useAESOData() {
         body: { action: 'fetch_current_prices' }
       });
       
+      console.log('AESO Pricing Response:', pricingResponse);
+      
       if (pricingResponse.data?.success && pricingResponse.data?.data) {
-        console.log('Pricing data updated:', pricingResponse.data.data);
+        console.log('✅ AESO Pricing data updated:', pricingResponse.data.data);
         setPricing(pricingResponse.data.data);
         
         const isLive = pricingResponse.data.source === 'aeso_api';
@@ -77,6 +79,10 @@ export function useAESOData() {
           errorMessage: pricingResponse.data.error || null,
           retryCount: isLive ? 0 : dataStatus.retryCount + 1
         });
+        
+        if (isLive) {
+          console.log('🟢 AESO API is now LIVE with real data!');
+        }
       }
 
       // Fetch load data
@@ -114,14 +120,16 @@ export function useAESOData() {
   };
 
   const refetch = () => {
+    console.log('🔄 Force refreshing AESO data...');
     fetchData();
   };
 
   useEffect(() => {
+    // Immediate fetch on mount
     fetchData();
     
-    // Set up polling for live data updates
-    const interval = setInterval(fetchData, 60000); // Update every minute
+    // Set up polling for live data updates every 2 minutes
+    const interval = setInterval(fetchData, 120000);
     
     return () => clearInterval(interval);
   }, []);
