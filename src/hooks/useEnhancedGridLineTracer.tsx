@@ -230,12 +230,6 @@ export function useEnhancedGridLineTracer() {
       const accuracy = generateAccuracyMetrics(mockResults);
       setAccuracyMetrics(accuracy);
       
-      toast({
-        title: "Using Enhanced Simulated Data",
-        description: "Enhanced AI services with live market data simulation - comprehensive analysis available",
-        variant: "default"
-      });
-      
       return mockResults;
     } finally {
       setLoading(false);
@@ -562,7 +556,7 @@ export function useEnhancedGridLineTracer() {
           multiAIDetection: true,
           liveMarketIntegration: input.enableMarketAnalysis,
           accuracyEnhancement: input.enableAccuracyEnhancement,
-          predictiveAnalytics: input.enablePredictiveAnalysis,
+          predictiveAnalysis: input.enablePredictiveAnalysis,
           comprehensiveRiskAssessment: true
         },
         generatedAt: new Date().toISOString(),
