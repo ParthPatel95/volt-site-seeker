@@ -30,20 +30,19 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
   // Get the AESO subscription key from environment
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
   
-  const headers: Record<string, string> = {
-    'accept': 'application/json',
-    'User-Agent': 'VoltScout-API-Client/1.0'
-  };
-
-  // Add subscription key if available
-  if (aesoSubKey) {
-    headers['Ocp-Apim-Subscription-Key'] = aesoSubKey;
-    console.log('AESO API Request with subscription key included');
-  } else {
-    console.log('Warning: AESO_SUB_KEY not found in environment variables');
+  if (!aesoSubKey) {
+    console.error('CRITICAL: AESO_SUB_KEY not found in environment variables');
+    throw new Error('API_KEY_MISSING');
   }
 
+  const headers: Record<string, string> = {
+    'accept': 'application/json',
+    'User-Agent': 'VoltScout-API-Client/1.0',
+    'Ocp-Apim-Subscription-Key': aesoSubKey
+  };
+
   console.log(`AESO Public API Request to: ${url.toString()}`);
+  console.log('Request headers (without key):', Object.keys(headers));
 
   try {
     const controller = new AbortController();
@@ -65,7 +64,11 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
       
       if (response.status >= 500) {
         throw new Error('SERVER_ERROR');
-      } else if (response.status === 401 || response.status === 403) {
+      } else if (response.status === 401) {
+        console.error('Authentication failed - check AESO_SUB_KEY validity');
+        throw new Error('API_KEY_ERROR');
+      } else if (response.status === 403) {
+        console.error('Access forbidden - subscription may be inactive');
         throw new Error('API_KEY_ERROR');
       } else {
         throw new Error(`HTTP_ERROR_${response.status}`);
@@ -73,13 +76,13 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     }
 
     const data = await response.json();
-    console.log(`AESO API Response received successfully`);
+    console.log(`AESO API Response received successfully - ${data.length} records`);
     
     return data;
   } catch (error) {
     console.error(`AESO API call failed (attempt ${retryCount + 1}):`, error);
     
-    if (error.message === 'API_KEY_ERROR') {
+    if (error.message === 'API_KEY_ERROR' || error.message === 'API_KEY_MISSING') {
       throw error; // Don't retry auth errors
     }
     
@@ -201,7 +204,10 @@ const generateRealisticFallbackData = (action: string) => {
 
 const getErrorMessage = (error: Error) => {
   if (error.message === 'API_KEY_ERROR') {
-    return 'Unable to connect to AESO – please verify API key';
+    return 'Unable to connect to AESO – please verify API key and subscription status';
+  }
+  if (error.message === 'API_KEY_MISSING') {
+    return 'AESO API key not configured – please contact administrator';
   }
   if (error.message === 'SERVER_ERROR' || error.name === 'AbortError') {
     return 'AESO is currently unavailable. Please try again later.';
@@ -234,12 +240,12 @@ serve(async (req) => {
           
         case 'fetch_load_forecast':
         case 'fetch_generation_mix':
-          // These endpoints are not available in the public API
-          // Generate realistic fallback data
+          // These endpoints require different API endpoints or enhanced subscription
+          // Generate realistic fallback data based on Alberta grid characteristics
           result = generateRealisticFallbackData(action);
           dataSource = 'fallback';
-          errorMessage = 'Live data requires AESO subscription - displaying simulated data';
-          console.log('🔄 Using simulated data - subscription required for this endpoint');
+          errorMessage = 'Live data requires enhanced AESO subscription - displaying simulated data';
+          console.log('🔄 Using simulated data - enhanced subscription required for this endpoint');
           break;
           
         default:
@@ -252,7 +258,7 @@ serve(async (req) => {
       result = generateRealisticFallbackData(action);
       dataSource = 'fallback';
       
-      console.log('🔄 Falling back to simulated data due to API unavailability');
+      console.log('🔄 Falling back to simulated data due to API error');
     }
 
     if (!result) {
