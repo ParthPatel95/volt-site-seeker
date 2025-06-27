@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -58,10 +57,10 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch...');
+    console.log('🔌 Starting AESO data fetch with enhanced API...');
     
     try {
-      // Fetch pricing data
+      // Use legacy method calls for backward compatibility
       const pricingResponse = await supabase.functions.invoke('aeso-data-integration', {
         body: { action: 'fetch_current_prices' }
       });
@@ -87,10 +86,7 @@ export function useAESOData() {
           console.log('⚠️ Using fallback data - API authentication or connection failed');
         }
         
-        const lastUpdateTime = pricingResponse.data.lastSuccessfulCall || 
-                             pricingResponse.data.timestamp || 
-                             new Date().toISOString();
-        
+        const lastUpdateTime = pricingResponse.data.timestamp || new Date().toISOString();
         const currentFallbackSince = !isLive && dataStatus.fallbackSince === null 
           ? new Date().toISOString() 
           : (isLive ? null : dataStatus.fallbackSince);
