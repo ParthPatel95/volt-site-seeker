@@ -30,19 +30,6 @@ export function LiveMarketDataPanel({
   customerClass, 
   powerRequirement 
 }: LiveMarketDataPanelProps) {
-  // Safeguard against undefined/null data
-  if (!marketData) {
-    return (
-      <Card className="border-gray-200">
-        <CardContent className="p-4">
-          <div className="text-center text-gray-500">
-            <p>Loading market data...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const getStatusColor = (conditions: string) => {
     switch (conditions) {
       case 'normal': return 'text-green-600 bg-green-100';
@@ -62,19 +49,17 @@ export function LiveMarketDataPanel({
   };
 
   const formatPrice = (price: number | undefined, currency: string = 'CAD') => {
-    if (price === undefined || price === null || isNaN(price)) return 'N/A';
+    if (price === undefined || price === null) return 'N/A';
     return `${price.toFixed(2)}¢/kWh ${currency}`;
   };
 
   const formatDemand = (demand: number | undefined) => {
-    if (demand === undefined || demand === null || isNaN(demand)) return 'N/A MW';
+    if (demand === undefined || demand === null) return 'N/A MW';
     return `${demand.toLocaleString()} MW`;
   };
 
   const calculateMonthlyCost = () => {
-    if (!marketData.currentPrice || !powerRequirement || isNaN(marketData.currentPrice) || isNaN(powerRequirement)) {
-      return 'N/A';
-    }
+    if (!marketData.currentPrice || !powerRequirement) return 'N/A';
     
     const hoursPerMonth = 730;
     const loadFactor = 0.80;
@@ -100,20 +85,12 @@ export function LiveMarketDataPanel({
     }
   };
 
-  const safeGenerationMix = marketData.generationMix || {
-    renewable: 0,
-    natural_gas: 0,
-    coal: 0,
-    nuclear: 0,
-    other: 0
-  };
-
   return (
     <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-green-50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-blue-800">
           <TrendingUp className="h-5 w-5" />
-          Live Market Data - {marketData.market || 'Unknown Market'}
+          Live Market Data - {marketData.market}
           <Badge variant="secondary" className="ml-2">
             <Clock className="h-3 w-3 mr-1" />
             Real-time
@@ -132,7 +109,7 @@ export function LiveMarketDataPanel({
               <span className="font-medium">Grid Status:</span>
             </div>
             <Badge className={getStatusColor(marketData.gridConditions)}>
-              {(marketData.gridConditions || 'unknown').toUpperCase()}
+              {marketData.gridConditions?.toUpperCase() || 'UNKNOWN'}
             </Badge>
           </div>
 
@@ -210,21 +187,18 @@ export function LiveMarketDataPanel({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Object.entries(safeGenerationMix).map(([type, percentage]) => {
-                  const safePercentage = typeof percentage === 'number' && !isNaN(percentage) ? percentage : 0;
-                  return (
-                    <div key={type} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          {getGenerationIcon(type)}
-                          <span className="capitalize">{type.replace('_', ' ')}</span>
-                        </div>
-                        <span className="font-medium">{safePercentage}%</span>
+                {marketData.generationMix && Object.entries(marketData.generationMix).map(([type, percentage]) => (
+                  <div key={type} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        {getGenerationIcon(type)}
+                        <span className="capitalize">{type.replace('_', ' ')}</span>
                       </div>
-                      <Progress value={safePercentage} className="h-2" />
+                      <span className="font-medium">{percentage}%</span>
                     </div>
-                  );
-                })}
+                    <Progress value={percentage} className="h-2" />
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -255,7 +229,7 @@ export function LiveMarketDataPanel({
 
           {/* Market Timestamp */}
           <div className="text-center text-xs text-gray-500">
-            Last updated: {marketData.timestamp ? new Date(marketData.timestamp).toLocaleString() : 'Unknown'}
+            Last updated: {new Date(marketData.timestamp).toLocaleString()}
           </div>
         </div>
       </CardContent>
