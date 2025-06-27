@@ -22,21 +22,35 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
   const url = new URL(AESO_PUBLIC_API_URL);
   Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
 
+  // Get both primary and secondary keys
   const aesoApiKey = Deno.env.get('AESO_API_KEY');
+  const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
+
+  console.log('🔍 Environment variables check:');
+  console.log('AESO_API_KEY present:', !!aesoApiKey);
+  console.log('AESO_SUB_KEY present:', !!aesoSubKey);
 
   if (!aesoApiKey) {
     console.error('❌ AESO_API_KEY not found in environment');
     throw new Error('MISSING_API_KEY');
   }
 
+  if (!aesoSubKey) {
+    console.error('❌ AESO_SUB_KEY not found in environment');
+    throw new Error('MISSING_SUB_KEY');
+  }
+
+  // Use the subscription key as the primary authentication header
   const headers = {
-    'Ocp-Apim-Subscription-Key': aesoApiKey,
+    'Ocp-Apim-Subscription-Key': aesoSubKey,
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-AESO-Client/1.0'
+    'User-Agent': 'VoltScout-AESO-Client/1.0',
+    'Content-Type': 'application/json'
   };
 
-  console.log(`🌐 AESO API Request to: ${url.toString()}`);
-  console.log(`🔑 Using API key: ${aesoApiKey.substring(0, 8)}...${aesoApiKey.substring(aesoApiKey.length - 4)}`);
+  console.log(`Using key: ${aesoSubKey.substring(0, 8)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`);
+  console.log('🌐 AESO API Request to:', url.toString());
+  console.log('📋 Headers:', Object.keys(headers).join(', '));
 
   try {
     const controller = new AbortController();
@@ -50,13 +64,16 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
 
     clearTimeout(timeoutId);
 
-    console.log(`📊 AESO API Response status: ${response.status}`);
+    console.log('📊 AESO API Response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ HTTP ${response.status}: ${errorText}`);
+      console.error(`❌ AESO API HTTP error ${response.status}:`, errorText);
 
-      if (response.status === 401) throw new Error('INVALID_API_KEY');
+      if (response.status === 401) {
+        console.error('🔐 Authentication failed - check API key and subscription');
+        throw new Error('INVALID_API_KEY');
+      }
       if (response.status === 403) throw new Error('ACCESS_FORBIDDEN');
       if (response.status >= 500) throw new Error('SERVER_ERROR');
       throw new Error(`HTTP_ERROR_${response.status}`);
@@ -66,11 +83,11 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     console.log(`✅ Successfully received ${Array.isArray(data) ? data.length : 1} records`);
     return data;
   } catch (error) {
-    console.error(`💥 Error (attempt ${retryCount + 1}):`, error);
-    if (['INVALID_API_KEY', 'ACCESS_FORBIDDEN', 'MISSING_API_KEY'].includes(error.message)) throw error;
+    console.error(`💥 AESO API call failed (attempt ${retryCount + 1}):`, error);
+    if (['INVALID_API_KEY', 'ACCESS_FORBIDDEN', 'MISSING_API_KEY', 'MISSING_SUB_KEY'].includes(error.message)) throw error;
     if (retryCount < config.maxRetries) {
       console.log(`🔄 Retrying in ${config.backoffDelays[retryCount]}ms...`);
-      await sleep(config.blackoffDelays[retryCount] || 5000);
+      await sleep(config.backoffDelays[retryCount] || 5000);
       return makeAESORequest(params, config, retryCount + 1);
     }
     throw error;
@@ -78,7 +95,7 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
 };
 
 const fetchPoolPrice = async (config: AESOConfig) => {
-  console.log('🔌 Fetching AESO pool price...');
+  console.log('🔌 Fetching AESO pool price from public API...');
   const today = new Date().toISOString().split('T')[0];
   const data = await makeAESORequest({ startDate: today, endDate: today }, config);
 
@@ -163,7 +180,7 @@ serve(async (req) => {
 
   try {
     const { action } = await req.json();
-    console.log(`🚀 AESO API Request: ${action} at ${new Date().toISOString()}`);
+    console.log(`🚀 AESO API Request: ${JSON.stringify({ action, timestamp: new Date().toISOString() })}`);
     
     const config = getAESOConfig();
     let result;
@@ -182,7 +199,7 @@ serve(async (req) => {
         case 'fetch_generation_mix':
           result = generateFallbackData(action);
           errorMessage = 'Live data requires enhanced AESO subscription – displaying simulated data';
-          console.log('🔄 Using simulated data - enhanced subscription required');
+          console.log('🔄 Using simulated data - enhanced subscription required for this endpoint');
           break;
           
         default:
@@ -193,7 +210,10 @@ serve(async (req) => {
       result = generateFallbackData(action);
       errorMessage = error.message === 'INVALID_API_KEY' 
         ? 'AESO API key is invalid or expired - please check your subscription'
+        : error.message === 'MISSING_SUB_KEY'
+        ? 'AESO subscription key is missing - please add AESO_SUB_KEY'
         : 'AESO API temporarily unavailable – showing cached value';
+      console.log('🔄 Falling back to simulated data due to API error');
     }
 
     return new Response(JSON.stringify({
