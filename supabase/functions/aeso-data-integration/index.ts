@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
-// AESO Public API - no subscription key required for pool price
+// AESO Public API - only pool price is available without subscription
 const AESO_PUBLIC_API_URL = 'https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice';
 
 interface AESOConfig {
@@ -48,18 +48,17 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
 
     console.log(`AESO API Response status: ${response.status}`);
 
-    if (response.status === 401 || response.status === 403) {
-      throw new Error('API_KEY_ERROR');
-    }
-
-    if (response.status >= 500) {
-      throw new Error('SERVER_ERROR');
-    }
-
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`AESO API HTTP error ${response.status}: ${errorText}`);
-      throw new Error(`HTTP_ERROR_${response.status}`);
+      
+      if (response.status >= 500) {
+        throw new Error('SERVER_ERROR');
+      } else if (response.status === 401 || response.status === 403) {
+        throw new Error('API_KEY_ERROR');
+      } else {
+        throw new Error(`HTTP_ERROR_${response.status}`);
+      }
     }
 
     const data = await response.json();
@@ -221,12 +220,17 @@ serve(async (req) => {
           dataSource = 'aeso_api';
           console.log('✅ AESO API call successful - Live data retrieved');
           break;
+          
         case 'fetch_load_forecast':
         case 'fetch_generation_mix':
-          // These endpoints require subscription - use fallback for now
+          // These endpoints are not available in the public API
+          // Generate realistic fallback data
           result = generateRealisticFallbackData(action);
           dataSource = 'fallback';
+          errorMessage = 'Live data requires AESO subscription - displaying simulated data';
+          console.log('🔄 Using simulated data - subscription required for this endpoint');
           break;
+          
         default:
           throw new Error(`Unknown action: ${action}`);
       }
@@ -237,9 +241,7 @@ serve(async (req) => {
       result = generateRealisticFallbackData(action);
       dataSource = 'fallback';
       
-      if (dataSource === 'fallback') {
-        console.log('🔄 Falling back to simulated data due to API unavailability');
-      }
+      console.log('🔄 Falling back to simulated data due to API unavailability');
     }
 
     if (!result) {
