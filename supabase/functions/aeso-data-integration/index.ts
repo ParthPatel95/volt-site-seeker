@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -39,7 +40,6 @@ const callAESO = async (
   config: AESOConfig, 
   retryCount = 0
 ): Promise<any> => {
-  // Get API endpoint path
   const endpointPath = AESO_ENDPOINTS[endpoint as keyof typeof AESO_ENDPOINTS];
   if (!endpointPath) {
     throw new Error(`Unsupported AESO endpoint: ${endpoint}`);
@@ -64,9 +64,9 @@ const callAESO = async (
   const primaryKey = aesoSubKey || aesoApiKey;
   const maskedKey = primaryKey ? `${primaryKey.substring(0, 8)}...${primaryKey.substring(primaryKey.length - 4)}` : 'NONE';
 
-  // Updated headers for AESO API
+  // Updated headers - try Azure API Management format first
   const headers = {
-    'X-API-Key': primaryKey!,
+    'Ocp-Apim-Subscription-Key': primaryKey!,
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-AESO-Client/4.0',
     'Content-Type': 'application/json'
