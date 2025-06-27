@@ -225,29 +225,30 @@ serve(async (req) => {
     let result;
     let dataSource = 'fallback';
     let errorMessage = null;
+    let targetEndpoint = endpoint;
 
-    // Legacy support for existing actions
+    // Legacy support for existing actions - convert to new endpoint format
     if (action === 'fetch_current_prices') {
-      endpoint = 'pool-price';
+      targetEndpoint = 'pool-price';
       params.startDate = params.startDate || new Date().toISOString().split('T')[0];
       params.endDate = params.endDate || params.startDate;
     } else if (action === 'fetch_load_forecast') {
-      endpoint = 'load-forecast';
+      targetEndpoint = 'load-forecast';
     } else if (action === 'fetch_generation_mix') {
-      endpoint = 'generation';
+      targetEndpoint = 'generation';
     }
 
     // Rate limiting
     await sleep(config.rateLimitDelay);
 
     try {
-      const response = await callAESO(endpoint, params, config);
+      const response = await callAESO(targetEndpoint, params, config);
       result = response.data;
       dataSource = 'aeso_api';
-      console.log(`✅ AESO API call successful for ${endpoint} - Live data retrieved`);
+      console.log(`✅ AESO API call successful for ${targetEndpoint} - Live data retrieved`);
       
       // Process pool price data for legacy compatibility
-      if (endpoint === 'pool-price' && Array.isArray(result) && result.length > 0) {
+      if (targetEndpoint === 'pool-price' && Array.isArray(result) && result.length > 0) {
         const latest = result[result.length - 1];
         const price = parseFloat(latest.pool_price);
         const allPrices = result.map(p => parseFloat(p.pool_price)).filter(p => !isNaN(p));
@@ -264,8 +265,8 @@ serve(async (req) => {
       }
       
     } catch (error) {
-      console.error(`🚨 AESO API Error for ${endpoint}:`, error.message);
-      result = generateFallbackData(endpoint, params);
+      console.error(`🚨 AESO API Error for ${targetEndpoint}:`, error.message);
+      result = generateFallbackData(targetEndpoint, params);
       
       errorMessage = error.message === 'INVALID_API_KEY' 
         ? 'AESO API key is invalid or expired - please check your subscription'
@@ -273,16 +274,16 @@ serve(async (req) => {
         ? 'AESO API keys are missing - please configure both AESO_API_KEY and AESO_SUB_KEY'
         : error.message === 'RATE_LIMIT_EXCEEDED'
         ? 'AESO API rate limit exceeded - please try again later'
-        : `AESO API temporarily unavailable (${endpoint}) – showing simulated data`;
+        : `AESO API temporarily unavailable (${targetEndpoint}) – showing simulated data`;
       
-      console.log(`🔄 Falling back to simulated data for ${endpoint}`);
+      console.log(`🔄 Falling back to simulated data for ${targetEndpoint}`);
     }
 
     return new Response(JSON.stringify({
       success: true,
       data: result,
       source: dataSource,
-      endpoint: endpoint,
+      endpoint: targetEndpoint,
       error: errorMessage,
       timestamp: new Date().toISOString()
     }), {
