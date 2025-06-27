@@ -1,78 +1,29 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { 
-  LayoutDashboard, 
+  Home, 
   Zap, 
-  MapPin, 
   Building2, 
-  Database,
-  Settings,
-  TrendingUp,
-  Search,
-  Grid3X3,
-  Factory,
+  Factory, 
+  Database, 
+  Brain,
   Bitcoin,
-  Activity,
+  ChevronLeft,
+  ChevronRight,
   Menu,
+  Settings,
+  Search,
+  BarChart3,
+  MapPin,
+  Cpu,
+  Target,
+  TrendingUp,
+  LogOut,
   X
 } from 'lucide-react';
-
-const navigationItems = [
-  {
-    title: 'Dashboard',
-    href: '/app/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'AESO Market',
-    href: '/app/aeso-market',
-    icon: Zap,
-  },
-  {
-    title: 'ERCOT Market',
-    href: '/app/ercot-market',
-    icon: Activity,
-  },
-  {
-    title: 'Power Infrastructure',
-    href: '/app/power-infrastructure',
-    icon: MapPin,
-  },
-  {
-    title: 'Enhanced Grid Tracer',
-    href: '/app/enhanced-grid-tracer',
-    icon: Grid3X3,
-  },
-  {
-    title: 'Corporate Intelligence',
-    href: '/app/corporate-intelligence',
-    icon: Building2,
-  },
-  {
-    title: 'Multi-Source Scraper',
-    href: '/app/multi-source-scraper',
-    icon: Database,
-  },
-  {
-    title: 'Industry Intelligence',
-    href: '/app/industry-intelligence',
-    icon: Factory,
-  },
-  {
-    title: 'BTC ROI Calculator',
-    href: '/app/btc-roi',
-    icon: Bitcoin,
-  },
-  {
-    title: 'Settings',
-    href: '/app/settings',
-    icon: Settings,
-  },
-];
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -82,122 +33,169 @@ interface SidebarProps {
   setIsOpen: (open: boolean) => void;
 }
 
-export function Sidebar({ isCollapsed, setIsCollapsed, isMobile, isOpen, setIsOpen }: SidebarProps) {
+export const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed,
+  setIsCollapsed,
+  isMobile,
+  isOpen,
+  setIsOpen
+}) => {
   const location = useLocation();
+  const { signOut } = useAuth();
 
-  if (isMobile) {
-    return (
-      <>
-        {/* Mobile Overlay */}
-        {isOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-            onClick={() => setIsOpen(false)}
-          />
-        )}
-        
-        {/* Mobile Sidebar */}
-        <div className={cn(
-          "fixed left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 z-50 transform transition-transform duration-300 md:hidden",
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
-          <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-            <div className="flex items-center">
-              <TrendingUp className="h-6 w-6 mr-2" />
-              <h2 className="text-lg font-semibold tracking-tight">VoltScout</h2>
+  const navigationItems = [
+    { path: '/app', icon: Home, label: 'Dashboard' },
+    { path: '/app/aeso-market', icon: Zap, label: 'AESO Market' },
+    { path: '/app/market-intelligence', icon: Brain, label: 'Market Intelligence' },
+    { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates' },
+    { path: '/app/industry-intelligence', icon: TrendingUp, label: 'Industry Intelligence' },
+    { path: '/app/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence' },
+    { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
+    { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
+    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'Volt Analytics' },
+    { path: '/app/data-management', icon: Database, label: 'Data Management' }
+  ];
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full bg-slate-900 text-white">
+      {/* Header */}
+      <div className={`p-4 border-b border-slate-700 ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
+        {/* Mobile Close Button */}
+        {isMobile && (
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold">VoltScout</h1>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="p-2 h-8 w-8"
+              className="p-2 h-8 w-8 text-white hover:bg-slate-800"
             >
               <X className="w-4 h-4" />
             </Button>
           </div>
-          
-          <ScrollArea className="h-[calc(100vh-80px)]">
-            <div className="space-y-1 p-3">
-              {navigationItems.map((item) => (
-                <Button
-                  key={item.href}
-                  variant={location.pathname === item.href ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start",
-                    location.pathname === item.href && "bg-muted font-medium"
-                  )}
-                  asChild
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Link to={item.href}>
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.title}
-                  </Link>
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-      </>
-    );
-  }
+        )}
 
-  return (
-    <div className={cn(
-      "fixed left-0 top-0 h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 z-30",
-      isCollapsed ? "w-16" : "w-72"
-    )}>
-      <div className="space-y-4 py-4">
-        <div className="px-3 py-2">
-          <div className="flex items-center mb-2">
-            <TrendingUp className="h-6 w-6 mr-2" />
-            {!isCollapsed && (
-              <h2 className="text-lg font-semibold tracking-tight">VoltScout</h2>
+        {/* Desktop Header */}
+        {!isMobile && (
+          <>
+            {(!isCollapsed || isMobile) && (
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold">VoltScout</h1>
+              </div>
             )}
-          </div>
-          {!isCollapsed && (
-            <p className="text-xs text-muted-foreground">
-              Power Infrastructure Intelligence
-            </p>
-          )}
-        </div>
-        
-        <div className="px-3">
-          <div className="flex justify-end mb-2">
+            
+            {isCollapsed && !isMobile && (
+              <div className="flex justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            )}
+            
+            {/* Collapse button for desktop */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 h-8 w-8"
+              className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6 z-50"
             >
-              <Menu className="w-4 h-4" />
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </Button>
-          </div>
+          </>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className={`flex-1 p-2 space-y-1 overflow-y-auto ${isCollapsed && !isMobile ? 'px-1' : 'px-4'}`}>
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
           
-          <ScrollArea className="h-[calc(100vh-8rem)]">
-            <div className="space-y-1">
-              {navigationItems.map((item) => (
-                <Button
-                  key={item.href}
-                  variant={location.pathname === item.href ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start",
-                    location.pathname === item.href && "bg-muted font-medium",
-                    isCollapsed && "px-2"
-                  )}
-                  asChild
-                  title={isCollapsed ? item.title : undefined}
-                >
-                  <Link to={item.href}>
-                    <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-                    {!isCollapsed && item.title}
-                  </Link>
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => isMobile && setIsOpen(false)}
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors group ${
+                isActive 
+                  ? 'bg-orange-600 text-white' 
+                  : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+              } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[48px]' : ''}`}
+              title={isCollapsed && !isMobile ? item.label : ''}
+            >
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {(!isCollapsed || isMobile) && <span className="font-medium text-sm">{item.label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className={`p-2 border-t border-slate-700 space-y-1 ${isCollapsed && !isMobile ? 'px-1' : 'px-4'}`}>
+        <Link
+          to="/app/settings"
+          onClick={() => isMobile && setIsOpen(false)}
+          className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+            location.pathname === '/app/settings'
+              ? 'bg-orange-600 text-white' 
+              : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+          } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[48px]' : ''}`}
+          title={isCollapsed && !isMobile ? 'Settings' : ''}
+        >
+          <Settings className="w-5 h-5 flex-shrink-0" />
+          {(!isCollapsed || isMobile) && <span className="font-medium text-sm">Settings</span>}
+        </Link>
+        
+        <Button
+          variant="ghost"
+          onClick={handleSignOut}
+          className={`w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800 p-3 h-auto ${
+            isCollapsed && !isMobile ? 'px-2' : ''
+          } ${isMobile ? 'min-h-[48px]' : ''}`}
+          title={isCollapsed && !isMobile ? 'Sign Out' : ''}
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {(!isCollapsed || isMobile) && <span className="ml-3 text-sm">Sign Out</span>}
+        </Button>
       </div>
     </div>
   );
-}
+
+  // Mobile sidebar
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent 
+          side="left" 
+          className="p-0 w-80 max-w-[85vw]"
+          onInteractOutside={() => setIsOpen(false)}
+        >
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop sidebar
+  return (
+    <div 
+      className={`fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-72'
+      }`}
+    >
+      <SidebarContent />
+    </div>
+  );
+};
