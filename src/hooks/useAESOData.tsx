@@ -62,7 +62,7 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch with corrected API implementation...');
+    console.log('🔌 Starting AESO data fetch with corrected Ocp-Apim-Subscription-Key header...');
     
     try {
       // Fetch pricing data with enhanced error handling
@@ -71,6 +71,11 @@ export function useAESOData() {
       });
       
       console.log('📊 AESO Pricing Response:', pricingResponse);
+      
+      if (pricingResponse.error) {
+        console.error('❌ Supabase function error:', pricingResponse.error);
+        throw new Error(`Function error: ${pricingResponse.error.message}`);
+      }
       
       if (pricingResponse.data?.success && pricingResponse.data?.data) {
         console.log('✅ AESO Pricing data updated:', pricingResponse.data.data);
@@ -95,10 +100,13 @@ export function useAESOData() {
         });
         
         if (isLive) {
-          console.log('🟢 AESO API is now LIVE with real pool price data!');
+          console.log('🟢 AESO API is now LIVE with corrected header - real pool price data!');
         } else {
           console.log('🔄 Using fallback data - API temporarily unavailable');
         }
+      } else {
+        console.error('❌ Invalid response structure from AESO function');
+        throw new Error('Invalid response from AESO function');
       }
 
       // Fetch load data
@@ -139,7 +147,7 @@ export function useAESOData() {
         setDataStatus(prev => ({
           ...prev,
           isLive: false,
-          errorMessage: 'Unable to fetch AESO data - no cached data available',
+          errorMessage: 'Unable to fetch AESO data - API authentication may be required',
           retryCount: prev.retryCount + 1
         }));
       }
@@ -149,7 +157,7 @@ export function useAESOData() {
   };
 
   const refetch = () => {
-    console.log('🔄 Force refreshing AESO data with corrected API...');
+    console.log('🔄 Force refreshing AESO data with corrected API headers...');
     fetchData();
   };
 
