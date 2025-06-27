@@ -62,7 +62,7 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch with corrected Ocp-Apim-Subscription-Key header...');
+    console.log('🔌 Starting AESO data fetch with corrected X-API-Key header...');
     
     try {
       // Fetch pricing data with enhanced error handling
@@ -92,15 +92,20 @@ export function useAESOData() {
           });
         }
         
+        // Format timestamp for display
+        const lastUpdateTime = pricingResponse.data.lastSuccessfulCall || 
+                             pricingResponse.data.timestamp || 
+                             new Date().toISOString();
+        
         setDataStatus({
           isLive,
-          lastUpdate: pricingResponse.data.lastSuccessfulCall || cachedData.timestamp || new Date().toISOString(),
+          lastUpdate: lastUpdateTime,
           errorMessage: pricingResponse.data.error || null,
           retryCount: isLive ? 0 : dataStatus.retryCount + 1
         });
         
         if (isLive) {
-          console.log('🟢 AESO API is now LIVE with corrected header - real pool price data!');
+          console.log('🟢 AESO API is now LIVE with X-API-Key - real pool price data!');
         } else {
           console.log('🔄 Using fallback data - API temporarily unavailable');
         }
@@ -140,14 +145,14 @@ export function useAESOData() {
         setDataStatus(prev => ({
           ...prev,
           isLive: false,
-          errorMessage: 'AESO pool price currently unavailable – showing last known rate',
+          errorMessage: 'AESO data temporarily unavailable – showing cached value',
           retryCount: prev.retryCount + 1
         }));
       } else {
         setDataStatus(prev => ({
           ...prev,
           isLive: false,
-          errorMessage: 'Unable to fetch AESO data - API authentication may be required',
+          errorMessage: 'Invalid AESO API request or key. Please verify access.',
           retryCount: prev.retryCount + 1
         }));
       }
@@ -157,7 +162,7 @@ export function useAESOData() {
   };
 
   const refetch = () => {
-    console.log('🔄 Force refreshing AESO data with corrected API headers...');
+    console.log('🔄 Force refreshing AESO data with X-API-Key header...');
     fetchData();
   };
 

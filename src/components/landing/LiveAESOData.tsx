@@ -20,11 +20,13 @@ export const LiveAESOData = () => {
   const formatLastUpdate = () => {
     if (!dataStatus.lastUpdate) return '';
     const updateTime = new Date(dataStatus.lastUpdate);
-    return updateTime.toLocaleTimeString('en-US', {
+    const timeOptions: Intl.DateTimeFormatOptions = {
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'America/Edmonton',
       timeZoneName: 'short'
-    });
+    };
+    return updateTime.toLocaleTimeString('en-US', timeOptions);
   };
 
   return (
@@ -47,7 +49,7 @@ export const LiveAESOData = () => {
               <>
                 <Clock className="w-3 h-3 text-blue-400" />
                 <Badge className="bg-blue-400/20 text-blue-400 text-xs border-blue-400/30">
-                  Cached
+                  Fallback
                 </Badge>
               </>
             )}
@@ -55,9 +57,14 @@ export const LiveAESOData = () => {
         </div>
         <div className="space-y-1">
           <p className="text-slate-300 text-sm">Real-time Alberta electricity market data</p>
-          {!dataStatus.isLive && dataStatus.errorMessage && (
+          {dataStatus.errorMessage && (
             <p className="text-xs text-blue-400">
-              {dataStatus.errorMessage} • Last update: {formatLastUpdate()}
+              {dataStatus.errorMessage}
+            </p>
+          )}
+          {dataStatus.lastUpdate && (
+            <p className="text-xs text-slate-400">
+              Source: AESO.ca – Updated {formatLastUpdate()}
             </p>
           )}
         </div>
@@ -136,7 +143,7 @@ export const LiveAESOData = () => {
 
         <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
           * Alberta Electric System Operator {dataStatus.isLive ? 'real-time' : 'cached'} data. 
-          {dataStatus.isLive ? ' Updates every minute.' : ` Last updated: ${formatLastUpdate()}`}
+          {dataStatus.isLive ? ' Updates every 2 minutes.' : ` Last updated: ${formatLastUpdate()}`}
         </div>
       </CardContent>
     </Card>

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -27,22 +28,22 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
   });
 
   // Get the AESO API key from environment
-  const aesoApiKey = Deno.env.get('AESO_SUB_KEY');
+  const aesoApiKey = Deno.env.get('AESO_API_KEY');
   
   if (!aesoApiKey) {
-    console.error('CRITICAL: AESO_SUB_KEY not found in environment variables');
+    console.error('CRITICAL: AESO_API_KEY not found in environment variables');
     throw new Error('API_KEY_MISSING');
   }
 
   // Use the correct header format that AESO expects
   const headers: Record<string, string> = {
-    'Ocp-Apim-Subscription-Key': aesoApiKey,
+    'X-API-Key': aesoApiKey,
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-API-Client/1.0'
   };
 
   console.log(`AESO API Request to: ${url.toString()}`);
-  console.log('Request headers configured with Ocp-Apim-Subscription-Key');
+  console.log('Request headers configured with X-API-Key');
 
   try {
     const controller = new AbortController();
@@ -209,7 +210,7 @@ const generateRealisticFallbackData = (action: string) => {
 
 const getErrorMessage = (error: Error) => {
   if (error.message === 'API_KEY_ERROR') {
-    return 'Error fetching AESO data – please verify API key or request format';
+    return 'Invalid AESO API request or key. Please verify access.';
   }
   if (error.message === 'API_KEY_MISSING') {
     return 'AESO API key not configured – please contact administrator';
@@ -218,7 +219,7 @@ const getErrorMessage = (error: Error) => {
     return 'Invalid request to AESO API – please check parameters';
   }
   if (error.message === 'SERVER_ERROR' || error.name === 'AbortError') {
-    return 'AESO is temporarily unavailable – retrying later';
+    return 'AESO data temporarily unavailable – showing cached value';
   }
   return 'Connection error occurred while fetching AESO data';
 };
@@ -300,7 +301,7 @@ serve(async (req) => {
         success: true,
         data: fallbackData,
         source: 'fallback',
-        error: 'AESO pool price currently unavailable – showing last known rate',
+        error: 'AESO data temporarily unavailable – showing cached value',
         timestamp: new Date().toISOString()
       }),
       {
