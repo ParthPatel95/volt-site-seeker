@@ -61,7 +61,7 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch with X-API-Key header...');
+    console.log('🔌 Starting AESO data fetch - testing header formats...');
     
     try {
       // Fetch pricing data with enhanced error handling
@@ -89,9 +89,11 @@ export function useAESOData() {
             pricing: pricingResponse.data.data,
             timestamp: pricingResponse.data.timestamp
           });
-          console.log('🟢 AESO API is now LIVE with X-API-Key - real pool price data!');
+          console.log('🟢 AESO API is now LIVE - real pool price data retrieved!');
+          console.log('📈 Current Alberta Pool Price:', `$${pricingResponse.data.data.current_price}/MWh`);
         } else {
-          console.log('🔄 Using fallback data - API temporarily unavailable');
+          console.log('🔄 Using fallback data - API authentication failed');
+          console.warn('⚠️ Check AESO API key configuration in Supabase secrets');
         }
         
         // Format timestamp for display
@@ -148,7 +150,7 @@ export function useAESOData() {
         setDataStatus(prev => ({
           ...prev,
           isLive: false,
-          errorMessage: 'Invalid AESO API request or key. Please verify access.',
+          errorMessage: 'Check AESO API configuration - authentication failed',
           retryCount: prev.retryCount + 1
         }));
       }
@@ -158,7 +160,7 @@ export function useAESOData() {
   };
 
   const refetch = () => {
-    console.log('🔄 Force refreshing AESO data with X-API-Key header...');
+    console.log('🔄 Force refreshing AESO data - testing both header formats...');
     fetchData();
   };
 

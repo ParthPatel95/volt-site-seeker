@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -37,15 +38,16 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
 
   console.log(`🔑 Using AESO API key: ${aesoApiKey.substring(0, 8)}...${aesoApiKey.substring(aesoApiKey.length - 4)}`);
 
-  // Use X-API-Key header as specified in requirements
+  // Try both header formats - AESO might use Azure API Management which expects Ocp-Apim-Subscription-Key
   const headers: Record<string, string> = {
-    'X-API-Key': aesoApiKey,
+    'Ocp-Apim-Subscription-Key': aesoApiKey, // Primary header for Azure APIM
+    'X-API-Key': aesoApiKey, // Backup header
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-API-Client/1.0'
   };
 
   console.log(`🌐 AESO API Request to: ${url.toString()}`);
-  console.log('📋 Request headers configured with X-API-Key');
+  console.log('📋 Request headers configured with both Ocp-Apim-Subscription-Key and X-API-Key');
 
   try {
     const controller = new AbortController();
@@ -68,7 +70,32 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
       if (response.status >= 500) {
         throw new Error('SERVER_ERROR');
       } else if (response.status === 401 || response.status === 403) {
-        console.error('🔐 Authentication failed - API key or permissions issue');
+        console.error('🔐 Authentication failed - trying alternative header format');
+        
+        // If first attempt fails, try with only X-API-Key header
+        if (retryCount === 0) {
+          console.log('🔄 Retrying with X-API-Key header only...');
+          const altHeaders = {
+            'X-API-Key': aesoApiKey,
+            'Accept': 'application/json',
+            'User-Agent': 'VoltScout-API-Client/1.0'
+          };
+          
+          const altResponse = await fetch(url.toString(), {
+            method: 'GET',
+            headers: altHeaders,
+            signal: controller.signal
+          });
+          
+          if (altResponse.ok) {
+            console.log('✅ Success with X-API-Key header');
+            return await altResponse.json();
+          } else {
+            const altErrorText = await altResponse.text();
+            console.error(`❌ X-API-Key also failed ${altResponse.status}: ${altErrorText}`);
+          }
+        }
+        
         throw new Error('API_KEY_ERROR');
       } else if (response.status >= 400) {
         console.error('⚠️ Bad request - check API parameters or format');
