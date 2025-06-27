@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -35,15 +34,15 @@ const makeAESORequest = async (params: Record<string, string>, config: AESOConfi
     throw new Error('API_KEY_MISSING');
   }
 
-  // Use correct headers as specified in your requirements
+  // Use the correct header format that AESO expects
   const headers: Record<string, string> = {
-    'X-API-Key': aesoApiKey,
+    'Ocp-Apim-Subscription-Key': aesoApiKey,
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-API-Client/1.0'
   };
 
   console.log(`AESO API Request to: ${url.toString()}`);
-  console.log('Request headers configured with X-API-Key');
+  console.log('Request headers configured with Ocp-Apim-Subscription-Key');
 
   try {
     const controller = new AbortController();
