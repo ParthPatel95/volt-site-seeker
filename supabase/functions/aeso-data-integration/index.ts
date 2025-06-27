@@ -2,19 +2,19 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
 // AESO API Configuration
-const AESO_BASE_URL = 'https://apimgw.aeso.ca/public';
+const AESO_BASE_URL = 'https://api.aeso.ca';
 
-// Supported AESO API endpoints with correct paths
+// Updated AESO API endpoints with correct paths
 const AESO_ENDPOINTS = {
-  'pool-price': '/poolprice-api/v1.1/price/poolPrice',
-  'system-margins': '/system-margins-api/v1.1/margins',
-  'generation': '/generation-api/v1.0/generation/actual', // Changed from v2.0 to v1.0
-  'load-forecast': '/loadforecast-api/v1.1/forecast/loadForecast',
-  'intertie-flows': '/intertie-api/v1.1/flows',
-  'outages': '/outage-api/v1.0/outages', // Changed from v2.0 to v1.0
-  'supply-adequacy': '/supply-adequacy-api/v1.0/adequacy',
-  'ancillary-services': '/ancillary-services-api/v1.0/services',
-  'grid-status': '/grid-status-api/v1.0/status'
+  'pool-price': '/web/api/price/poolPrice',
+  'system-margins': '/web/api/margins',
+  'generation': '/web/api/generation/actual',
+  'load-forecast': '/web/api/forecast/loadForecast',
+  'intertie-flows': '/web/api/intertie/flows',
+  'outages': '/web/api/outage/current',
+  'supply-adequacy': '/web/api/adequacy',
+  'ancillary-services': '/web/api/ancillary/services',
+  'grid-status': '/web/api/grid/status'
 };
 
 interface AESOConfig {
@@ -25,7 +25,7 @@ interface AESOConfig {
 }
 
 const getAESOConfig = (): AESOConfig => ({
-  timeout: 30000, // Increased timeout
+  timeout: 30000,
   maxRetries: 3,
   backoffDelays: [1000, 2000, 4000],
   rateLimitDelay: 500
@@ -48,29 +48,28 @@ const callAESO = async (
   const url = new URL(`${AESO_BASE_URL}${endpointPath}`);
   Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
 
-  // Get API keys - prioritize subscription key as primary
-  const subscriptionKey = Deno.env.get('AESO_SUB_KEY');
-  const primaryKey = Deno.env.get('AESO_API_KEY');
+  // Get API keys
+  const aesoApiKey = Deno.env.get('AESO_API_KEY');
+  const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
 
   console.log('🔍 AESO API Environment Check:');
-  console.log('Subscription Key present:', !!subscriptionKey);
-  console.log('Primary Key present:', !!primaryKey);
+  console.log('AESO_API_KEY present:', !!aesoApiKey);
+  console.log('AESO_SUB_KEY present:', !!aesoSubKey);
 
-  if (!subscriptionKey && !primaryKey) {
+  if (!aesoApiKey && !aesoSubKey) {
     throw new Error('MISSING_API_KEYS');
   }
 
-  // Use subscription key first, then primary key as fallback
-  const apiKey = subscriptionKey || primaryKey;
-  const maskedKey = apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}` : 'NONE';
+  // Use the subscription key as primary, API key as fallback
+  const primaryKey = aesoSubKey || aesoApiKey;
+  const maskedKey = primaryKey ? `${primaryKey.substring(0, 8)}...${primaryKey.substring(primaryKey.length - 4)}` : 'NONE';
 
-  // Updated headers based on AESO documentation
+  // Updated headers for AESO API
   const headers = {
-    'Ocp-Apim-Subscription-Key': apiKey!,
+    'X-API-Key': primaryKey!,
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-AESO-Client/3.0',
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache'
+    'User-Agent': 'VoltScout-AESO-Client/4.0',
+    'Content-Type': 'application/json'
   };
 
   console.log(`🌐 AESO API Request: ${endpoint}`);
