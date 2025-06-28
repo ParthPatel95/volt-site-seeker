@@ -29,11 +29,11 @@ interface AESOConfig {
 }
 
 const getAESOConfig = (): AESOConfig => ({
-  timeout: 60000, // Increased to 60 seconds for problematic endpoints
-  maxRetries: 3, // Increased retries for better reliability
-  backoffDelays: [1000, 3000, 8000], // Progressive backoff
-  rateLimitDelay: 200, // Minimal delay for better performance
-  connectionTimeout: 45000 // Connection-specific timeout
+  timeout: 30000, // Reduced timeout to match working Pool Price pattern
+  maxRetries: 2, // Reduced retries to match working Pool Price pattern
+  backoffDelays: [1000, 2000], // Simplified backoff pattern
+  rateLimitDelay: 100, // Minimal delay like Pool Price
+  connectionTimeout: 25000 // Shorter connection timeout
 });
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -96,17 +96,12 @@ const callAESO = async (
 
   const maskedKey = `${aesoSubKey.substring(0, 4)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`;
 
-  // Enhanced headers with DNS prefetching and connection management
+  // Simplified headers matching successful Pool Price pattern
   const headers = {
     'X-API-Key': aesoSubKey,
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-AESO-Client/1.2',
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store',
-    'Connection': 'close',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'DNT': '1',
-    'Upgrade-Insecure-Requests': '1'
+    'User-Agent': 'VoltScout-AESO-Client/1.3',
+    'Cache-Control': 'no-cache'
   };
 
   console.log(`🌐 AESO API Gateway Request: ${endpoint} (attempt ${retryCount + 1})`);
@@ -120,29 +115,16 @@ const callAESO = async (
       controller.abort();
     }, config.timeout);
 
-    console.log(`🚀 Making enhanced fetch request to AESO API Gateway: ${url.toString()}`);
+    console.log(`🚀 Making simplified fetch request to AESO API Gateway: ${url.toString()}`);
     
-    // Enhanced fetch with better error handling and connection management
+    // Simplified fetch matching Pool Price success pattern
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers,
-      signal: controller.signal,
-      // Enhanced fetch options for better connectivity
-      keepalive: false,
-      referrerPolicy: 'no-referrer'
+      signal: controller.signal
     }).catch((fetchError) => {
       console.error(`🔌 Network connection error for ${endpoint}:`, fetchError);
-      // More specific error categorization
-      if (fetchError.name === 'AbortError') {
-        throw new Error(`TIMEOUT_ERROR: Request timeout after ${config.timeout}ms`);
-      }
-      if (fetchError.message.includes('network')) {
-        throw new Error(`NETWORK_ERROR: ${fetchError.message}`);
-      }
-      if (fetchError.message.includes('DNS')) {
-        throw new Error(`DNS_ERROR: ${fetchError.message}`);
-      }
-      throw new Error(`CONNECTION_ERROR: ${fetchError.message}`);
+      throw new Error(`NETWORK_CONNECTION_ERROR: ${fetchError.message}`);
     });
 
     clearTimeout(timeoutId);
@@ -200,24 +182,18 @@ const callAESO = async (
       throw error;
     }
     
-    // Enhanced retry logic with different strategies per endpoint
+    // Simplified retry logic matching Pool Price success pattern
     if (retryCount < config.maxRetries) {
-      const shouldRetry = errorMessage.includes('CONNECTION_ERROR') ||
-                         errorMessage.includes('NETWORK_ERROR') ||
-                         errorMessage.includes('DNS_ERROR') ||
-                         errorMessage.includes('TIMEOUT_ERROR') ||
+      const shouldRetry = errorMessage.includes('NETWORK_CONNECTION_ERROR') ||
                          errorMessage.includes('JSON_PARSE_ERROR') ||
                          errorMessage.includes('AESO_SERVER_ERROR') ||
                          errorMessage === 'The operation was aborted';
 
       if (shouldRetry) {
-        const delay = config.backoffDelays[retryCount] || 10000;
+        const delay = config.backoffDelays[retryCount] || 2000;
         console.log(`🔄 Retrying ${endpoint} in ${delay}ms due to: ${errorMessage}`);
         
-        // Add jitter to prevent thundering herd
-        const jitteredDelay = delay + Math.random() * 1000;
-        await sleep(jitteredDelay);
-        
+        await sleep(delay);
         return callAESO(endpoint, params, config, retryCount + 1);
       }
     }
@@ -395,7 +371,7 @@ serve(async (req) => {
       targetEndpoint = 'generation';
     }
 
-    // Minimal rate limiting for better performance
+    // Minimal rate limiting like Pool Price success pattern
     await sleep(config.rateLimitDelay);
 
     console.log(`🎯 Attempting to call AESO API Gateway endpoint: ${targetEndpoint} with params:`, params);
@@ -421,10 +397,8 @@ serve(async (req) => {
         ? `AESO API Gateway endpoint not found (${targetEndpoint}) - endpoint may not be available in your subscription`
         : error.message === 'BAD_REQUEST_PARAMETERS'
         ? `Invalid parameters for AESO API Gateway endpoint (${targetEndpoint}) - please check the required parameters`
-        : error.message.includes('CONNECTION_ERROR') || error.message.includes('NETWORK_ERROR') || error.message.includes('DNS_ERROR')
-        ? `AESO API Gateway connectivity issue (${targetEndpoint}) – enhanced retry logic failed after multiple attempts`
-        : error.message.includes('TIMEOUT_ERROR')
-        ? `AESO API Gateway timeout (${targetEndpoint}) – server response too slow, using fallback data`
+        : error.message.includes('NETWORK_CONNECTION_ERROR')
+        ? `AESO API Gateway connectivity issue (${targetEndpoint}) – simplified retry logic failed after multiple attempts`
         : `AESO API Gateway temporarily unavailable (${targetEndpoint}) – showing simulated data: ${error.message}`;
       
       console.log(`🔄 Falling back to simulated data for ${targetEndpoint}`);
