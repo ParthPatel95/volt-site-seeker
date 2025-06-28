@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -63,9 +62,9 @@ const callAESO = async (
 
   const maskedKey = `${aesoSubKey.substring(0, 4)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`;
 
-  // Headers according to AESO API Gateway documentation - ONLY use Ocp-Apim-Subscription-Key
+  // Headers according to AESO API Gateway Swagger documentation - Use API-KEY header
   const headers = {
-    'Ocp-Apim-Subscription-Key': aesoSubKey,
+    'API-KEY': aesoSubKey,
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-AESO-Client/1.0',
     'Content-Type': 'application/json',
@@ -108,8 +107,8 @@ const callAESO = async (
       }
 
       if (response.status === 401) {
-        console.error('🚨 AUTHENTICATION FAILED - Check subscription key!');
-        throw new Error('INVALID_SUBSCRIPTION_KEY');
+        console.error('🚨 AUTHENTICATION FAILED - Check API key!');
+        throw new Error('INVALID_API_KEY');
       }
       if (response.status === 403) {
         throw new Error('ACCESS_FORBIDDEN');
@@ -159,7 +158,7 @@ const callAESO = async (
     console.error(`💥 AESO API Gateway call failed for ${endpoint} (attempt ${retryCount + 1}):`, errorMessage);
     
     // Don't retry certain errors
-    if (['INVALID_SUBSCRIPTION_KEY', 'ACCESS_FORBIDDEN', 'MISSING_AESO_SUB_KEY', 'ENDPOINT_NOT_FOUND'].includes(errorMessage)) {
+    if (['INVALID_API_KEY', 'ACCESS_FORBIDDEN', 'MISSING_AESO_SUB_KEY', 'ENDPOINT_NOT_FOUND'].includes(errorMessage)) {
       console.error('🚨 Non-retryable error - stopping retries');
       throw error;
     }
@@ -289,23 +288,30 @@ serve(async (req) => {
       console.log(`✅ AESO API Gateway call successful for ${targetEndpoint} - LIVE DATA RETRIEVED!`);
       console.log(`📊 Data source confirmed: ${dataSource}`);
       
-      // Process pool price data for legacy compatibility
-      if (targetEndpoint === 'pool-price' && Array.isArray(result) && result.length > 0) {
-        const latest = result[result.length - 1];
-        const price = parseFloat(latest.pool_price || latest.price || 0);
-        const allPrices = result.map(p => parseFloat(p.pool_price || p.price || 0)).filter(p => !isNaN(p));
+      // Process pool price data according to official API response structure
+      if (targetEndpoint === 'pool-price' && result && result['Pool Price Report'] && Array.isArray(result['Pool Price Report'])) {
+        const poolPriceData = result['Pool Price Report'];
+        console.log(`📊 Processing ${poolPriceData.length} pool price records from AESO API`);
+        
+        if (poolPriceData.length > 0) {
+          const latest = poolPriceData[poolPriceData.length - 1];
+          const allPrices = poolPriceData.map(p => parseFloat(p.pool_price || 0)).filter(p => !isNaN(p));
+          const currentPrice = parseFloat(latest.pool_price || 0);
 
-        if (price > 0) {
-          result = {
-            current_price: price,
-            average_price: allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length,
-            peak_price: Math.max(...allPrices),
-            off_peak_price: Math.min(...allPrices),
-            timestamp: latest.begin_datetime_mpt || latest.timestamp || new Date().toISOString(),
-            cents_per_kwh: price / 10,
-            market_conditions: price > 60 ? 'high_demand' : 'normal'
-          };
-          console.log(`💰 Processed LIVE pool price data: $${price}/MWh from AESO API Gateway`);
+          if (currentPrice > 0) {
+            result = {
+              current_price: currentPrice,
+              average_price: allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length,
+              peak_price: Math.max(...allPrices),
+              off_peak_price: Math.min(...allPrices),
+              timestamp: latest.begin_datetime_mpt || latest.begin_datetime_utc || new Date().toISOString(),
+              cents_per_kwh: currentPrice / 10,
+              market_conditions: currentPrice > 60 ? 'high_demand' : 'normal',
+              rolling_30day_avg: parseFloat(latest.rolling_30day_avg || 0),
+              forecast_price: parseFloat(latest.forecast_pool_price || 0)
+            };
+            console.log(`💰 Processed LIVE pool price data: $${currentPrice}/MWh from AESO API Gateway`);
+          }
         }
       }
       
@@ -313,10 +319,10 @@ serve(async (req) => {
       console.error(`🚨 AESO API Gateway Error for ${targetEndpoint}:`, error.message);
       result = generateFallbackData(targetEndpoint, params);
       
-      errorMessage = error.message === 'INVALID_SUBSCRIPTION_KEY' 
-        ? 'AESO subscription key is invalid or expired - please check your AESO_SUB_KEY in Supabase secrets'
+      errorMessage = error.message === 'INVALID_API_KEY' 
+        ? 'AESO API key is invalid or expired - please check your AESO_SUB_KEY or AESO_API_KEY in Supabase secrets'
         : error.message === 'MISSING_AESO_SUB_KEY'
-        ? 'AESO subscription key is missing - please configure AESO_SUB_KEY in Supabase secrets'
+        ? 'AESO API key is missing - please configure AESO_SUB_KEY or AESO_API_KEY in Supabase secrets'
         : error.message === 'RATE_LIMIT_EXCEEDED'
         ? 'AESO API Gateway rate limit exceeded - please try again later'
         : error.message === 'ENDPOINT_NOT_FOUND'
