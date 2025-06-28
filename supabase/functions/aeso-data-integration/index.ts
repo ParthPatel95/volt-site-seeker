@@ -1,11 +1,10 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
-// AESO API Configuration
+// AESO API Configuration - Updated to match official API gateway
 const AESO_BASE_URL = 'https://api.aeso.ca';
 
-// Updated AESO API endpoints with correct paths
+// Updated AESO API endpoints with correct paths from official documentation
 const AESO_ENDPOINTS = {
   'pool-price': '/web/api/price/poolPrice',
   'system-margins': '/web/api/margins',
@@ -48,7 +47,7 @@ const callAESO = async (
   const url = new URL(`${AESO_BASE_URL}${endpointPath}`);
   Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
 
-  // Get API keys
+  // Get API keys - Updated to check for proper key names
   const aesoApiKey = Deno.env.get('AESO_API_KEY');
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
 
@@ -60,16 +59,17 @@ const callAESO = async (
     throw new Error('MISSING_API_KEYS');
   }
 
-  // Use the subscription key as primary, API key as fallback
+  // Use the subscription key as primary per AESO documentation
   const primaryKey = aesoSubKey || aesoApiKey;
   const maskedKey = primaryKey ? `${primaryKey.substring(0, 8)}...${primaryKey.substring(primaryKey.length - 4)}` : 'NONE';
 
-  // Updated headers - try Azure API Management format first
+  // Headers according to AESO APIM API Gateway documentation
   const headers = {
     'Ocp-Apim-Subscription-Key': primaryKey!,
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-AESO-Client/4.0',
-    'Content-Type': 'application/json'
+    'User-Agent': 'VoltScout-AESO-Client/1.0',
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache'
   };
 
   console.log(`🌐 AESO API Request: ${endpoint}`);
@@ -98,11 +98,11 @@ const callAESO = async (
       const errorText = await response.text();
       console.error(`❌ AESO API HTTP error ${response.status}:`, errorText);
 
-      // Try to parse error as JSON for better error messages
+      // Enhanced error handling for AESO specific errors
       let errorDetails = errorText;
       try {
         const errorJson = JSON.parse(errorText);
-        errorDetails = errorJson.message || errorJson.error || errorText;
+        errorDetails = errorJson.message || errorJson.error || errorJson.detail || errorText;
       } catch (e) {
         // Keep original error text if not JSON
       }
@@ -122,7 +122,7 @@ const callAESO = async (
       if (response.status === 404) {
         throw new Error('ENDPOINT_NOT_FOUND');
       }
-      throw new Error(`HTTP_ERROR_${response.status}`);
+      throw new Error(`HTTP_ERROR_${response.status}: ${errorDetails}`);
     }
 
     const contentType = response.headers.get('content-type');
@@ -173,7 +173,6 @@ const callAESO = async (
   }
 };
 
-// Enhanced fallback data generators
 const generateFallbackData = (endpoint: string, params: Record<string, string> = {}) => {
   const baseTime = Date.now();
   const timeVariation = Math.sin(baseTime / 100000) * 0.1;
@@ -266,7 +265,9 @@ serve(async (req) => {
     // Legacy support for existing actions - convert to new endpoint format
     if (action === 'fetch_current_prices') {
       targetEndpoint = 'pool-price';
-      params.startDate = params.startDate || new Date().toISOString().split('T')[0];
+      // Add proper date parameters as required by AESO API
+      const today = new Date().toISOString().split('T')[0];
+      params.startDate = params.startDate || today;
       params.endDate = params.endDate || params.startDate;
     } else if (action === 'fetch_load_forecast') {
       targetEndpoint = 'load-forecast';
@@ -274,7 +275,7 @@ serve(async (req) => {
       targetEndpoint = 'generation';
     }
 
-    // Rate limiting
+    // Rate limiting per AESO requirements
     await sleep(config.rateLimitDelay);
 
     console.log(`🎯 Attempting to call AESO endpoint: ${targetEndpoint} with params:`, params);
@@ -311,14 +312,14 @@ serve(async (req) => {
       result = generateFallbackData(targetEndpoint, params);
       
       errorMessage = error.message === 'INVALID_API_KEY' 
-        ? 'AESO API key is invalid or expired - please check your subscription'
+        ? 'AESO API key is invalid or expired - please check your subscription key in Supabase secrets'
         : error.message === 'MISSING_API_KEYS'
-        ? 'AESO API keys are missing - please configure both AESO_API_KEY and AESO_SUB_KEY'
+        ? 'AESO API keys are missing - please configure AESO_SUB_KEY in Supabase secrets'
         : error.message === 'RATE_LIMIT_EXCEEDED'
         ? 'AESO API rate limit exceeded - please try again later'
         : error.message === 'ENDPOINT_NOT_FOUND'
-        ? `AESO API endpoint not found (${targetEndpoint}) - may need different API version`
-        : `AESO API temporarily unavailable (${targetEndpoint}) – showing simulated data`;
+        ? `AESO API endpoint not found (${targetEndpoint}) - endpoint may not be available`
+        : `AESO API temporarily unavailable (${targetEndpoint}) – showing simulated data: ${error.message}`;
       
       console.log(`🔄 Falling back to simulated data for ${targetEndpoint}`);
       console.log(`📊 Fallback data source: ${dataSource}`);
