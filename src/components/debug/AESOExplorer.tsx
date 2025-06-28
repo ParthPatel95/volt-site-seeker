@@ -11,15 +11,15 @@ import { Activity, Database, RefreshCw, Zap } from 'lucide-react';
 import { aesoAPI, AESOResponse } from '@/services/aesoAPI';
 
 const AESO_ENDPOINTS = [
-  { value: 'pool-price', label: 'Pool Price', description: 'Current electricity pool prices' },
-  { value: 'load-forecast', label: 'Load Forecast', description: 'System load forecasts' },
-  { value: 'generation', label: 'Generation', description: 'Current generation mix' },
-  { value: 'system-margins', label: 'System Margins', description: 'Operating reserves and margins' },
-  { value: 'intertie-flows', label: 'Intertie Flows', description: 'Inter-regional power flows' },
-  { value: 'outages', label: 'Outages', description: 'Current system outages' },
-  { value: 'supply-adequacy', label: 'Supply Adequacy', description: 'Supply adequacy metrics' },
-  { value: 'ancillary-services', label: 'Ancillary Services', description: 'Ancillary services data' },
-  { value: 'grid-status', label: 'Grid Status', description: 'Overall grid status' }
+  { value: 'pool-price', label: 'Pool Price', description: 'Live electricity pool prices from AESO API Gateway' },
+  { value: 'load-forecast', label: 'Load Forecast', description: 'System load forecasts from AESO API Gateway' },
+  { value: 'generation', label: 'Generation', description: 'Current generation mix from AESO API Gateway' },
+  { value: 'system-margins', label: 'System Margins', description: 'Operating reserves and margins from AESO API Gateway' },
+  { value: 'intertie-flows', label: 'Intertie Flows', description: 'Inter-regional power flows from AESO API Gateway' },
+  { value: 'outages', label: 'Outages', description: 'Current system outages from AESO API Gateway' },
+  { value: 'supply-adequacy', label: 'Supply Adequacy', description: 'Supply adequacy metrics from AESO API Gateway' },
+  { value: 'ancillary-services', label: 'Ancillary Services', description: 'Ancillary services data from AESO API Gateway' },
+  { value: 'grid-status', label: 'Grid Status', description: 'Overall grid status from AESO API Gateway' }
 ];
 
 export function AESOExplorer() {
@@ -86,10 +86,10 @@ export function AESOExplorer() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Zap className="w-6 h-6 text-blue-600" />
-            <span>AESO API Explorer</span>
+            <span>AESO API Gateway Explorer</span>
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Test and debug all AESO API endpoints with live data and fallback handling
+            Test and debug all AESO API Gateway endpoints with live data and fallback handling
           </p>
         </CardHeader>
         <CardContent className="space-y-4">

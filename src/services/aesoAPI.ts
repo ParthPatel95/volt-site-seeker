@@ -59,7 +59,7 @@ export interface AESOIntertieFlows {
 export class AESOAPIService {
   private static instance: AESOAPIService;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
-  private readonly CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+  private readonly CACHE_TTL = 90 * 1000; // 90 seconds cache for live data
 
   static getInstance(): AESOAPIService {
     if (!AESOAPIService.instance) {
@@ -83,14 +83,14 @@ export class AESOAPIService {
     const cacheKey = this.getCacheKey(endpoint, params);
     const cached = this.cache.get(cacheKey);
 
-    // Return cached data if valid
-    if (cached && this.isCacheValid(cached)) {
-      console.log(`📋 Using cached data for ${endpoint}`);
+    // Return cached data if valid and it's live data
+    if (cached && this.isCacheValid(cached) && cached.data?.source === 'aeso_api') {
+      console.log(`📋 Using cached LIVE AESO data for ${endpoint}`);
       return cached.data;
     }
 
     try {
-      console.log(`🌐 Calling AESO API: ${endpoint}`, params);
+      console.log(`🌐 Calling AESO API Gateway: ${endpoint}`, params);
       
       const response = await supabase.functions.invoke('aeso-data-integration', {
         body: { endpoint, params }
@@ -103,19 +103,22 @@ export class AESOAPIService {
 
       const result = response.data as AESOResponse<T>;
       
-      // Cache the response
-      this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
+      // Cache the response (prioritize live data)
+      if (result.source === 'aeso_api') {
+        this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
+        console.log(`✅ LIVE AESO data cached for ${endpoint}`);
+      }
       
-      console.log(`✅ AESO API call successful: ${endpoint}`, result.source);
+      console.log(`✅ AESO API Gateway call successful: ${endpoint}`, result.source);
       return result;
 
     } catch (error) {
-      console.error(`💥 AESO API call failed for ${endpoint}:`, error);
+      console.error(`💥 AESO API Gateway call failed for ${endpoint}:`, error);
       throw error;
     }
   }
 
-  // Pool Price API
+  // Pool Price API - Updated for API Gateway
   async getPoolPrice(startDate?: string, endDate?: string): Promise<AESOResponse<AESOPoolPrice>> {
     const today = new Date().toISOString().split('T')[0];
     return this.callAESOEndpoint<AESOPoolPrice>('pool-price', {
@@ -182,7 +185,7 @@ export class AESOAPIService {
   // Utility methods
   clearCache(): void {
     this.cache.clear();
-    console.log('🗑️ AESO API cache cleared');
+    console.log('🗑️ AESO API Gateway cache cleared');
   }
 
   getCacheStats(): { size: number; entries: string[] } {
@@ -199,9 +202,9 @@ export class AESOAPIService {
   getDataSourceLabel(response: AESOResponse): string {
     switch (response.source) {
       case 'aeso_api':
-        return 'Live AESO Data';
+        return 'Live AESO API Gateway';
       case 'fallback':
-        return 'Simulated Data';
+        return 'Simulated Data (API Issue)';
       case 'emergency_fallback':
         return 'Emergency Fallback';
       default:

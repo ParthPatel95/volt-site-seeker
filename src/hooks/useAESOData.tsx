@@ -57,7 +57,7 @@ export function useAESOData() {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔌 Starting AESO data fetch with enhanced API...');
+    console.log('🔌 Starting AESO API Gateway data fetch...');
     
     try {
       // Use legacy method calls for backward compatibility
@@ -65,7 +65,7 @@ export function useAESOData() {
         body: { action: 'fetch_current_prices' }
       });
       
-      console.log('📊 AESO Pricing Response:', pricingResponse);
+      console.log('📊 AESO API Gateway Pricing Response:', pricingResponse);
       
       if (pricingResponse.error) {
         console.error('❌ Supabase function error:', pricingResponse.error);
@@ -73,17 +73,17 @@ export function useAESOData() {
       }
       
       if (pricingResponse.data?.success && pricingResponse.data?.data) {
-        console.log('✅ AESO Pricing data updated:', pricingResponse.data.data);
+        console.log('✅ AESO pricing data updated:', pricingResponse.data.data);
         setPricing(pricingResponse.data.data);
         
         const isLive = pricingResponse.data.source === 'aeso_api';
         setConnectionStatus(isLive ? 'connected' : 'fallback');
         
         if (isLive) {
-          console.log('🟢 AESO API is LIVE - real pool price data retrieved!');
+          console.log('🟢 AESO API Gateway is LIVE - real pool price data retrieved!');
           console.log(`💰 Current Alberta Pool Price: $${pricingResponse.data.data.current_price}/MWh (CAD)`);
         } else {
-          console.log('⚠️ Using fallback data - API authentication or connection failed');
+          console.log('⚠️ Using fallback data - API Gateway authentication or connection failed');
         }
         
         const lastUpdateTime = pricingResponse.data.timestamp || new Date().toISOString();
@@ -99,8 +99,8 @@ export function useAESOData() {
           fallbackSince: currentFallbackSince
         });
       } else {
-        console.error('❌ Invalid response structure from AESO function');
-        throw new Error('Invalid response from AESO function');
+        console.error('❌ Invalid response structure from AESO API Gateway function');
+        throw new Error('Invalid response from AESO API Gateway function');
       }
 
       // Fetch load data
@@ -124,13 +124,13 @@ export function useAESOData() {
       }
 
     } catch (error) {
-      console.error('💥 Error fetching AESO data:', error);
+      console.error('💥 Error fetching AESO API Gateway data:', error);
       setConnectionStatus('error');
       
       setDataStatus(prev => ({
         ...prev,
         isLive: false,
-        errorMessage: 'Unable to connect to AESO API - check configuration',
+        errorMessage: 'Unable to connect to AESO API Gateway - check AESO_SUB_KEY configuration',
         retryCount: prev.retryCount + 1,
         fallbackSince: prev.fallbackSince || new Date().toISOString()
       }));
