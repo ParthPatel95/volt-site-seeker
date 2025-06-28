@@ -29,11 +29,11 @@ interface AESOConfig {
 }
 
 const getAESOConfig = (): AESOConfig => ({
-  timeout: 45000, // Increased timeout to 45 seconds
-  maxRetries: 2, // Reduced retries to avoid excessive wait times
-  backoffDelays: [2000, 5000], // Adjusted backoff delays
-  rateLimitDelay: 500, // Reduced rate limit delay
-  connectionTimeout: 30000 // New connection-specific timeout
+  timeout: 60000, // Increased to 60 seconds for problematic endpoints
+  maxRetries: 3, // Increased retries for better reliability
+  backoffDelays: [1000, 3000, 8000], // Progressive backoff
+  rateLimitDelay: 200, // Minimal delay for better performance
+  connectionTimeout: 45000 // Connection-specific timeout
 });
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -96,15 +96,17 @@ const callAESO = async (
 
   const maskedKey = `${aesoSubKey.substring(0, 4)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`;
 
-  // Enhanced headers with better connection handling
+  // Enhanced headers with DNS prefetching and connection management
   const headers = {
     'X-API-Key': aesoSubKey,
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-AESO-Client/1.1',
+    'User-Agent': 'VoltScout-AESO-Client/1.2',
     'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache',
-    'Connection': 'close', // Force connection close to avoid connection reuse issues
-    'Accept-Encoding': 'gzip, deflate' // Explicit encoding support
+    'Cache-Control': 'no-cache, no-store',
+    'Connection': 'close',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'DNT': '1',
+    'Upgrade-Insecure-Requests': '1'
   };
 
   console.log(`🌐 AESO API Gateway Request: ${endpoint} (attempt ${retryCount + 1})`);
@@ -118,18 +120,29 @@ const callAESO = async (
       controller.abort();
     }, config.timeout);
 
-    console.log(`🚀 Making fetch request to AESO API Gateway: ${url.toString()}`);
+    console.log(`🚀 Making enhanced fetch request to AESO API Gateway: ${url.toString()}`);
     
-    // Enhanced fetch with better error handling
+    // Enhanced fetch with better error handling and connection management
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers,
       signal: controller.signal,
-      // Add keepalive to prevent connection drops
-      keepalive: false
+      // Enhanced fetch options for better connectivity
+      keepalive: false,
+      referrerPolicy: 'no-referrer'
     }).catch((fetchError) => {
-      console.error(`🔌 Network connection error for ${endpoint}:`, fetchError.message);
-      throw new Error(`NETWORK_CONNECTION_ERROR: ${fetchError.message}`);
+      console.error(`🔌 Network connection error for ${endpoint}:`, fetchError);
+      // More specific error categorization
+      if (fetchError.name === 'AbortError') {
+        throw new Error(`TIMEOUT_ERROR: Request timeout after ${config.timeout}ms`);
+      }
+      if (fetchError.message.includes('network')) {
+        throw new Error(`NETWORK_ERROR: ${fetchError.message}`);
+      }
+      if (fetchError.message.includes('DNS')) {
+        throw new Error(`DNS_ERROR: ${fetchError.message}`);
+      }
+      throw new Error(`CONNECTION_ERROR: ${fetchError.message}`);
     });
 
     clearTimeout(timeoutId);
@@ -187,19 +200,29 @@ const callAESO = async (
       throw error;
     }
     
-    // Retry network and timeout errors
-    if (retryCount < config.maxRetries && (
-      errorMessage.includes('NETWORK_CONNECTION_ERROR') ||
-      errorMessage.includes('JSON_PARSE_ERROR') ||
-      errorMessage.includes('AESO_SERVER_ERROR') ||
-      errorMessage === 'The operation was aborted'
-    )) {
-      const delay = config.backoffDelays[retryCount] || 8000;
-      console.log(`🔄 Retrying ${endpoint} in ${delay}ms due to: ${errorMessage}`);
-      await sleep(delay);
-      return callAESO(endpoint, params, config, retryCount + 1);
+    // Enhanced retry logic with different strategies per endpoint
+    if (retryCount < config.maxRetries) {
+      const shouldRetry = errorMessage.includes('CONNECTION_ERROR') ||
+                         errorMessage.includes('NETWORK_ERROR') ||
+                         errorMessage.includes('DNS_ERROR') ||
+                         errorMessage.includes('TIMEOUT_ERROR') ||
+                         errorMessage.includes('JSON_PARSE_ERROR') ||
+                         errorMessage.includes('AESO_SERVER_ERROR') ||
+                         errorMessage === 'The operation was aborted';
+
+      if (shouldRetry) {
+        const delay = config.backoffDelays[retryCount] || 10000;
+        console.log(`🔄 Retrying ${endpoint} in ${delay}ms due to: ${errorMessage}`);
+        
+        // Add jitter to prevent thundering herd
+        const jitteredDelay = delay + Math.random() * 1000;
+        await sleep(jitteredDelay);
+        
+        return callAESO(endpoint, params, config, retryCount + 1);
+      }
     }
     
+    console.error(`🚫 Max retries exceeded for ${endpoint}, giving up after ${retryCount + 1} attempts`);
     throw error;
   }
 };
@@ -372,7 +395,7 @@ serve(async (req) => {
       targetEndpoint = 'generation';
     }
 
-    // Reduced rate limiting for better performance
+    // Minimal rate limiting for better performance
     await sleep(config.rateLimitDelay);
 
     console.log(`🎯 Attempting to call AESO API Gateway endpoint: ${targetEndpoint} with params:`, params);
@@ -398,8 +421,10 @@ serve(async (req) => {
         ? `AESO API Gateway endpoint not found (${targetEndpoint}) - endpoint may not be available in your subscription`
         : error.message === 'BAD_REQUEST_PARAMETERS'
         ? `Invalid parameters for AESO API Gateway endpoint (${targetEndpoint}) - please check the required parameters`
-        : error.message.includes('NETWORK_CONNECTION_ERROR')
-        ? `AESO API Gateway network connectivity issue (${targetEndpoint}) – connection to api.aeso.ca failed`
+        : error.message.includes('CONNECTION_ERROR') || error.message.includes('NETWORK_ERROR') || error.message.includes('DNS_ERROR')
+        ? `AESO API Gateway connectivity issue (${targetEndpoint}) – enhanced retry logic failed after multiple attempts`
+        : error.message.includes('TIMEOUT_ERROR')
+        ? `AESO API Gateway timeout (${targetEndpoint}) – server response too slow, using fallback data`
         : `AESO API Gateway temporarily unavailable (${targetEndpoint}) – showing simulated data: ${error.message}`;
       
       console.log(`🔄 Falling back to simulated data for ${targetEndpoint}`);
