@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -47,17 +48,20 @@ const callAESO = async (
   const url = new URL(`${AESO_BASE_URL}${endpointPath}`);
   Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
 
-  // Get AESO subscription key - only use AESO_SUB_KEY as per official documentation
-  const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
+  // Get AESO subscription key - check both possible environment variable names
+  const aesoSubKey = Deno.env.get('AESO_SUB_KEY') || Deno.env.get('AESO_API_KEY');
 
   console.log('🔍 AESO API Gateway Environment Check:');
-  console.log('AESO_SUB_KEY present:', !!aesoSubKey);
+  console.log('AESO_SUB_KEY present:', !!Deno.env.get('AESO_SUB_KEY'));
+  console.log('AESO_API_KEY present:', !!Deno.env.get('AESO_API_KEY'));
+  console.log('Using key from:', Deno.env.get('AESO_SUB_KEY') ? 'AESO_SUB_KEY' : 'AESO_API_KEY');
 
   if (!aesoSubKey) {
+    console.error('❌ No AESO subscription key found in environment variables');
     throw new Error('MISSING_AESO_SUB_KEY');
   }
 
-  const maskedKey = `${aesoSubKey.substring(0, 8)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`;
+  const maskedKey = `${aesoSubKey.substring(0, 4)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`;
 
   // Headers according to AESO API Gateway documentation - ONLY use Ocp-Apim-Subscription-Key
   const headers = {
@@ -71,7 +75,7 @@ const callAESO = async (
   console.log(`🌐 AESO API Gateway Request: ${endpoint}`);
   console.log(`📋 URL: ${url.toString()}`);
   console.log(`🔑 Using subscription key: ${maskedKey}`);
-  console.log(`📤 Headers:`, Object.keys(headers));
+  console.log(`📤 Request headers:`, Object.keys(headers));
 
   try {
     const controller = new AbortController();
@@ -104,6 +108,7 @@ const callAESO = async (
       }
 
       if (response.status === 401) {
+        console.error('🚨 AUTHENTICATION FAILED - Check subscription key!');
         throw new Error('INVALID_SUBSCRIPTION_KEY');
       }
       if (response.status === 403) {
@@ -155,6 +160,7 @@ const callAESO = async (
     
     // Don't retry certain errors
     if (['INVALID_SUBSCRIPTION_KEY', 'ACCESS_FORBIDDEN', 'MISSING_AESO_SUB_KEY', 'ENDPOINT_NOT_FOUND'].includes(errorMessage)) {
+      console.error('🚨 Non-retryable error - stopping retries');
       throw error;
     }
     
@@ -317,7 +323,7 @@ serve(async (req) => {
         ? `AESO API Gateway endpoint not found (${targetEndpoint}) - endpoint may not be available`
         : `AESO API Gateway temporarily unavailable (${targetEndpoint}) – showing simulated data due to transient network issue: ${error.message}`;
       
-      console.log(`🔄 Falling back to simulated data for ${targetEndpoint} due to transient issue`);
+      console.log(`🔄 Falling back to simulated data for ${targetEndpoint} due to issue: ${error.message}`);
       console.log(`📊 Fallback data source: ${dataSource}`);
     }
 
