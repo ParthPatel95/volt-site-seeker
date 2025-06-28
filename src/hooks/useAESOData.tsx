@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { aesoAPI } from '@/services/aesoAPI';
 
 export interface AESOPricing {
   current_price: number;
@@ -60,33 +60,26 @@ export function useAESOData() {
     console.log('🔌 Starting AESO API Gateway data fetch...');
     
     try {
-      // Use legacy method calls for backward compatibility
-      const pricingResponse = await supabase.functions.invoke('aeso-data-integration', {
-        body: { action: 'fetch_current_prices' }
-      });
+      // Use updated service methods
+      const pricingResponse = await aesoAPI.fetchCurrentPrices();
       
       console.log('📊 AESO API Gateway Pricing Response:', pricingResponse);
       
-      if (pricingResponse.error) {
-        console.error('❌ Supabase function error:', pricingResponse.error);
-        throw new Error(`Function error: ${pricingResponse.error.message}`);
-      }
-      
-      if (pricingResponse.data?.success && pricingResponse.data?.data) {
-        console.log('✅ AESO pricing data updated:', pricingResponse.data.data);
-        setPricing(pricingResponse.data.data);
+      if (pricingResponse?.success && pricingResponse?.data) {
+        console.log('✅ AESO pricing data updated:', pricingResponse.data);
+        setPricing(pricingResponse.data);
         
-        const isLive = pricingResponse.data.source === 'aeso_api';
+        const isLive = pricingResponse.source === 'aeso_api';
         setConnectionStatus(isLive ? 'connected' : 'fallback');
         
         if (isLive) {
           console.log('🟢 AESO API Gateway is LIVE - real pool price data retrieved!');
-          console.log(`💰 Current Alberta Pool Price: $${pricingResponse.data.data.current_price}/MWh (CAD)`);
+          console.log(`💰 Current Alberta Pool Price: $${pricingResponse.data.current_price}/MWh (CAD)`);
         } else {
           console.log('⚠️ Using fallback data - API Gateway authentication or connection failed');
         }
         
-        const lastUpdateTime = pricingResponse.data.timestamp || new Date().toISOString();
+        const lastUpdateTime = pricingResponse.timestamp || new Date().toISOString();
         const currentFallbackSince = !isLive && dataStatus.fallbackSince === null 
           ? new Date().toISOString() 
           : (isLive ? null : dataStatus.fallbackSince);
@@ -94,33 +87,29 @@ export function useAESOData() {
         setDataStatus({
           isLive,
           lastUpdate: lastUpdateTime,
-          errorMessage: pricingResponse.data.error || null,
+          errorMessage: pricingResponse.error || null,
           retryCount: isLive ? 0 : dataStatus.retryCount + 1,
           fallbackSince: currentFallbackSince
         });
       } else {
-        console.error('❌ Invalid response structure from AESO API Gateway function');
-        throw new Error('Invalid response from AESO API Gateway function');
+        console.error('❌ Invalid response structure from AESO API Gateway');
+        throw new Error('Invalid response from AESO API Gateway');
       }
 
       // Fetch load data
-      const loadResponse = await supabase.functions.invoke('aeso-data-integration', {
-        body: { action: 'fetch_load_forecast' }
-      });
+      const loadResponse = await aesoAPI.fetchLoadForecast();
       
-      if (loadResponse.data?.success && loadResponse.data?.data) {
-        console.log('📈 Load data updated:', loadResponse.data.data);
-        setLoadData(loadResponse.data.data);
+      if (loadResponse?.success && loadResponse?.data) {
+        console.log('📈 Load data updated:', loadResponse.data);
+        setLoadData(loadResponse.data);
       }
 
       // Fetch generation mix
-      const generationResponse = await supabase.functions.invoke('aeso-data-integration', {
-        body: { action: 'fetch_generation_mix' }
-      });
+      const generationResponse = await aesoAPI.fetchGenerationMix();
       
-      if (generationResponse.data?.success && generationResponse.data?.data) {
-        console.log('⚡ Generation data updated:', generationResponse.data.data);
-        setGenerationMix(generationResponse.data.data);
+      if (generationResponse?.success && generationResponse?.data) {
+        console.log('⚡ Generation data updated:', generationResponse.data);
+        setGenerationMix(generationResponse.data);
       }
 
     } catch (error) {

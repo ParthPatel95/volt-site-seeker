@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AESOResponse<T = any> {
@@ -163,22 +162,28 @@ export class AESOAPIService {
     return this.callAESOEndpoint<T>(endpoint, params);
   }
 
-  // Legacy compatibility methods
+  // Legacy compatibility methods - Updated to use new endpoints
   async fetchCurrentPrices(): Promise<AESOResponse<AESOPoolPrice>> {
+    const today = new Date().toISOString().split('T')[0];
     return this.callAESOEndpoint<AESOPoolPrice>('pool-price', {
-      action: 'fetch_current_prices'
+      startDate: today,
+      endDate: today
     });
   }
 
   async fetchLoadForecast(): Promise<AESOResponse<AESOLoadForecast>> {
+    const today = new Date().toISOString().split('T')[0];
     return this.callAESOEndpoint<AESOLoadForecast>('load-forecast', {
-      action: 'fetch_load_forecast'
+      startDate: today,
+      endDate: today
     });
   }
 
   async fetchGenerationMix(): Promise<AESOResponse<AESOGeneration>> {
+    const today = new Date().toISOString().split('T')[0];
     return this.callAESOEndpoint<AESOGeneration>('generation', {
-      action: 'fetch_generation_mix'
+      startDate: today,
+      endDate: today
     });
   }
 
