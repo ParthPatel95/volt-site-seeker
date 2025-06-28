@@ -11,15 +11,18 @@ import { Activity, Database, RefreshCw, Zap } from 'lucide-react';
 import { aesoAPI, AESOResponse } from '@/services/aesoAPI';
 
 const AESO_ENDPOINTS = [
-  { value: 'pool-price', label: 'Pool Price', description: 'Live electricity pool prices from AESO API Gateway' },
-  { value: 'load-forecast', label: 'Load Forecast', description: 'System load forecasts from AESO API Gateway' },
-  { value: 'generation', label: 'Generation', description: 'Current generation mix from AESO API Gateway' },
-  { value: 'system-margins', label: 'System Margins', description: 'Operating reserves and margins from AESO API Gateway' },
-  { value: 'intertie-flows', label: 'Intertie Flows', description: 'Inter-regional power flows from AESO API Gateway' },
-  { value: 'outages', label: 'Outages', description: 'Current system outages from AESO API Gateway' },
-  { value: 'supply-adequacy', label: 'Supply Adequacy', description: 'Supply adequacy metrics from AESO API Gateway' },
-  { value: 'ancillary-services', label: 'Ancillary Services', description: 'Ancillary services data from AESO API Gateway' },
-  { value: 'grid-status', label: 'Grid Status', description: 'Overall grid status from AESO API Gateway' }
+  { value: 'pool-price', label: 'Pool Price', description: 'Real-time electricity pool prices ($/MWh)' },
+  { value: 'system-marginal-price', label: 'System Marginal Price', description: 'System marginal pricing data' },
+  { value: 'load-forecast', label: 'Load Forecast', description: 'System load forecasts and demand data' },
+  { value: 'generation', label: 'Generation', description: 'Current generation mix by fuel type' },
+  { value: 'generation-forecast', label: 'Generation Forecast', description: 'Forecasted generation by fuel type' },
+  { value: 'intertie-flows', label: 'Intertie Flows', description: 'Inter-regional power flows (BC, SK, MT)' },
+  { value: 'system-margins', label: 'System Margins', description: 'Operating reserves and system margins' },
+  { value: 'outages', label: 'Outages', description: 'Current generation and transmission outages' },
+  { value: 'supply-adequacy', label: 'Supply Adequacy', description: 'Supply adequacy assessments' },
+  { value: 'ancillary-services', label: 'Ancillary Services', description: 'Ancillary services market data' },
+  { value: 'merit-order', label: 'Merit Order', description: 'Generation merit order stack' },
+  { value: 'grid-status', label: 'Grid Status', description: 'Overall Alberta grid operational status' }
 ];
 
 export function AESOExplorer() {
@@ -39,7 +42,8 @@ export function AESOExplorer() {
       let params: Record<string, string> = {};
       
       // Add date parameters for endpoints that support them
-      if (['pool-price', 'load-forecast', 'generation'].includes(selectedEndpoint)) {
+      const dateEndpoints = ['pool-price', 'system-marginal-price', 'load-forecast', 'generation', 'generation-forecast', 'intertie-flows'];
+      if (dateEndpoints.includes(selectedEndpoint)) {
         params.startDate = startDate;
         params.endDate = endDate;
       }
@@ -89,7 +93,7 @@ export function AESOExplorer() {
             <span>AESO API Gateway Explorer</span>
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Test and debug all AESO API Gateway endpoints with live data and fallback handling
+            Test and debug all AESO API Gateway endpoints with live Alberta electricity market data
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -113,7 +117,7 @@ export function AESOExplorer() {
               </Select>
             </div>
 
-            {['pool-price', 'load-forecast', 'generation'].includes(selectedEndpoint) && (
+            {['pool-price', 'system-marginal-price', 'load-forecast', 'generation', 'generation-forecast', 'intertie-flows'].includes(selectedEndpoint) && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date</Label>
@@ -154,7 +158,7 @@ export function AESOExplorer() {
               ) : (
                 <Activity className="w-4 h-4 mr-2" />
               )}
-              Fetch Data
+              Fetch Live Data
             </Button>
             <Button variant="outline" onClick={clearCache}>
               <Database className="w-4 h-4 mr-2" />
@@ -202,6 +206,7 @@ export function AESOExplorer() {
               <div>Endpoint: {response.endpoint}</div>
               <div>Source: {response.source}</div>
               <div>Timestamp: {response.timestamp}</div>
+              <div>Live Data: {response.source === 'aeso_api' ? '✅ Yes' : '❌ No (Fallback)'}</div>
             </div>
           </CardContent>
         </Card>

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AESOResponse<T = any> {
@@ -17,6 +18,8 @@ export interface AESOPoolPrice {
   timestamp: string;
   market_conditions: string;
   cents_per_kwh: number;
+  rolling_30day_avg?: number;
+  forecast_price?: number;
 }
 
 export interface AESOLoadForecast {
@@ -55,6 +58,19 @@ export interface AESOIntertieFlows {
   timestamp: string;
 }
 
+export interface AESOSystemMarginalPrice {
+  smp_price: number;
+  timestamp: string;
+  forecast_smp: number;
+}
+
+export interface AESOOutages {
+  total_outages: number;
+  generation_outages_mw: number;
+  transmission_outages: number;
+  timestamp: string;
+}
+
 export class AESOAPIService {
   private static instance: AESOAPIService;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
@@ -82,7 +98,6 @@ export class AESOAPIService {
     const cacheKey = this.getCacheKey(endpoint, params);
     const cached = this.cache.get(cacheKey);
 
-    // Return cached data if valid and it's live data
     if (cached && this.isCacheValid(cached) && cached.data?.source === 'aeso_api') {
       console.log(`📋 Using cached LIVE AESO data for ${endpoint}`);
       return cached.data;
@@ -102,7 +117,6 @@ export class AESOAPIService {
 
       const result = response.data as AESOResponse<T>;
       
-      // Cache the response (prioritize live data)
       if (result.source === 'aeso_api') {
         this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
         console.log(`✅ LIVE AESO data cached for ${endpoint}`);
@@ -117,10 +131,19 @@ export class AESOAPIService {
     }
   }
 
-  // Pool Price API - Updated for API Gateway
+  // Pool Price API
   async getPoolPrice(startDate?: string, endDate?: string): Promise<AESOResponse<AESOPoolPrice>> {
     const today = new Date().toISOString().split('T')[0];
     return this.callAESOEndpoint<AESOPoolPrice>('pool-price', {
+      startDate: startDate || today,
+      endDate: endDate || startDate || today
+    });
+  }
+
+  // System Marginal Price API
+  async getSystemMarginalPrice(startDate?: string, endDate?: string): Promise<AESOResponse<AESOSystemMarginalPrice>> {
+    const today = new Date().toISOString().split('T')[0];
+    return this.callAESOEndpoint<AESOSystemMarginalPrice>('system-marginal-price', {
       startDate: startDate || today,
       endDate: endDate || startDate || today
     });
@@ -144,14 +167,52 @@ export class AESOAPIService {
     });
   }
 
+  // Generation Forecast API
+  async getGenerationForecast(startDate?: string, endDate?: string): Promise<AESOResponse<AESOGeneration>> {
+    const today = new Date().toISOString().split('T')[0];
+    return this.callAESOEndpoint<AESOGeneration>('generation-forecast', {
+      startDate: startDate || today,
+      endDate: endDate || startDate || today
+    });
+  }
+
+  // Intertie Flows API
+  async getIntertieFlows(startDate?: string, endDate?: string): Promise<AESOResponse<AESOIntertieFlows>> {
+    const today = new Date().toISOString().split('T')[0];
+    return this.callAESOEndpoint<AESOIntertieFlows>('intertie-flows', {
+      startDate: startDate || today,
+      endDate: endDate || startDate || today
+    });
+  }
+
   // System Margins API
   async getSystemMargins(): Promise<AESOResponse<AESOSystemMargins>> {
     return this.callAESOEndpoint<AESOSystemMargins>('system-margins');
   }
 
-  // Intertie Flows API
-  async getIntertieFlows(): Promise<AESOResponse<AESOIntertieFlows>> {
-    return this.callAESOEndpoint<AESOIntertieFlows>('intertie-flows');
+  // Outages API
+  async getOutages(): Promise<AESOResponse<AESOOutages>> {
+    return this.callAESOEndpoint<AESOOutages>('outages');
+  }
+
+  // Supply Adequacy API
+  async getSupplyAdequacy(): Promise<AESOResponse<any>> {
+    return this.callAESOEndpoint('supply-adequacy');
+  }
+
+  // Ancillary Services API
+  async getAncillaryServices(): Promise<AESOResponse<any>> {
+    return this.callAESOEndpoint('ancillary-services');
+  }
+
+  // Merit Order API
+  async getMeritOrder(): Promise<AESOResponse<any>> {
+    return this.callAESOEndpoint('merit-order');
+  }
+
+  // Grid Status API
+  async getGridStatus(): Promise<AESOResponse<any>> {
+    return this.callAESOEndpoint('grid-status');
   }
 
   // Generic endpoint caller for new endpoints
@@ -162,29 +223,17 @@ export class AESOAPIService {
     return this.callAESOEndpoint<T>(endpoint, params);
   }
 
-  // Legacy compatibility methods - Updated to use new endpoints
+  // Legacy compatibility methods
   async fetchCurrentPrices(): Promise<AESOResponse<AESOPoolPrice>> {
-    const today = new Date().toISOString().split('T')[0];
-    return this.callAESOEndpoint<AESOPoolPrice>('pool-price', {
-      startDate: today,
-      endDate: today
-    });
+    return this.getPoolPrice();
   }
 
   async fetchLoadForecast(): Promise<AESOResponse<AESOLoadForecast>> {
-    const today = new Date().toISOString().split('T')[0];
-    return this.callAESOEndpoint<AESOLoadForecast>('load-forecast', {
-      startDate: today,
-      endDate: today
-    });
+    return this.getLoadForecast();
   }
 
   async fetchGenerationMix(): Promise<AESOResponse<AESOGeneration>> {
-    const today = new Date().toISOString().split('T')[0];
-    return this.callAESOEndpoint<AESOGeneration>('generation', {
-      startDate: today,
-      endDate: today
-    });
+    return this.getGeneration();
   }
 
   // Utility methods
