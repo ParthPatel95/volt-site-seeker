@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -26,13 +25,15 @@ interface AESOConfig {
   maxRetries: number;
   backoffDelays: number[];
   rateLimitDelay: number;
+  connectionTimeout: number;
 }
 
 const getAESOConfig = (): AESOConfig => ({
-  timeout: 30000,
-  maxRetries: 3,
-  backoffDelays: [1000, 2000, 4000],
-  rateLimitDelay: 1000
+  timeout: 45000, // Increased timeout to 45 seconds
+  maxRetries: 2, // Reduced retries to avoid excessive wait times
+  backoffDelays: [2000, 5000], // Adjusted backoff delays
+  rateLimitDelay: 500, // Reduced rate limit delay
+  connectionTimeout: 30000 // New connection-specific timeout
 });
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -95,29 +96,40 @@ const callAESO = async (
 
   const maskedKey = `${aesoSubKey.substring(0, 4)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`;
 
-  // Headers according to AESO API Gateway Swagger documentation
+  // Enhanced headers with better connection handling
   const headers = {
     'X-API-Key': aesoSubKey,
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-AESO-Client/1.0',
+    'User-Agent': 'VoltScout-AESO-Client/1.1',
     'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache'
+    'Cache-Control': 'no-cache',
+    'Connection': 'close', // Force connection close to avoid connection reuse issues
+    'Accept-Encoding': 'gzip, deflate' // Explicit encoding support
   };
 
-  console.log(`🌐 AESO API Gateway Request: ${endpoint}`);
+  console.log(`🌐 AESO API Gateway Request: ${endpoint} (attempt ${retryCount + 1})`);
   console.log(`📋 URL: ${url.toString()}`);
   console.log(`🔑 Using subscription key: ${maskedKey}`);
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+    const timeoutId = setTimeout(() => {
+      console.log(`⏰ Request timeout after ${config.timeout}ms for ${endpoint}`);
+      controller.abort();
+    }, config.timeout);
 
     console.log(`🚀 Making fetch request to AESO API Gateway: ${url.toString()}`);
     
+    // Enhanced fetch with better error handling
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers,
-      signal: controller.signal
+      signal: controller.signal,
+      // Add keepalive to prevent connection drops
+      keepalive: false
+    }).catch((fetchError) => {
+      console.error(`🔌 Network connection error for ${endpoint}:`, fetchError.message);
+      throw new Error(`NETWORK_CONNECTION_ERROR: ${fetchError.message}`);
     });
 
     clearTimeout(timeoutId);
@@ -125,7 +137,7 @@ const callAESO = async (
     console.log(`📊 AESO API Gateway Response: ${response.status} ${response.statusText} for ${endpoint}`);
 
     if (!response.ok) {
-      const errorText = await response.text();
+      const errorText = await response.text().catch(() => 'Unable to read error response');
       console.error(`❌ AESO API Gateway HTTP error ${response.status}:`, errorText);
 
       if (response.status === 401) {
@@ -150,7 +162,11 @@ const callAESO = async (
       throw new Error(`AESO_HTTP_ERROR_${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json().catch((jsonError) => {
+      console.error(`📄 JSON parsing error for ${endpoint}:`, jsonError.message);
+      throw new Error(`JSON_PARSE_ERROR: ${jsonError.message}`);
+    });
+    
     console.log(`✅ Successfully received LIVE AESO data for ${endpoint}`);
     console.log(`📋 Sample data:`, JSON.stringify(data).substring(0, 300));
     
@@ -171,9 +187,15 @@ const callAESO = async (
       throw error;
     }
     
-    if (retryCount < config.maxRetries) {
-      const delay = config.backoffDelays[retryCount] || 5000;
-      console.log(`🔄 Retrying ${endpoint} in ${delay}ms...`);
+    // Retry network and timeout errors
+    if (retryCount < config.maxRetries && (
+      errorMessage.includes('NETWORK_CONNECTION_ERROR') ||
+      errorMessage.includes('JSON_PARSE_ERROR') ||
+      errorMessage.includes('AESO_SERVER_ERROR') ||
+      errorMessage === 'The operation was aborted'
+    )) {
+      const delay = config.backoffDelays[retryCount] || 8000;
+      console.log(`🔄 Retrying ${endpoint} in ${delay}ms due to: ${errorMessage}`);
       await sleep(delay);
       return callAESO(endpoint, params, config, retryCount + 1);
     }
@@ -350,7 +372,7 @@ serve(async (req) => {
       targetEndpoint = 'generation';
     }
 
-    // Rate limiting per AESO API Gateway requirements
+    // Reduced rate limiting for better performance
     await sleep(config.rateLimitDelay);
 
     console.log(`🎯 Attempting to call AESO API Gateway endpoint: ${targetEndpoint} with params:`, params);
@@ -376,6 +398,8 @@ serve(async (req) => {
         ? `AESO API Gateway endpoint not found (${targetEndpoint}) - endpoint may not be available in your subscription`
         : error.message === 'BAD_REQUEST_PARAMETERS'
         ? `Invalid parameters for AESO API Gateway endpoint (${targetEndpoint}) - please check the required parameters`
+        : error.message.includes('NETWORK_CONNECTION_ERROR')
+        ? `AESO API Gateway network connectivity issue (${targetEndpoint}) – connection to api.aeso.ca failed`
         : `AESO API Gateway temporarily unavailable (${targetEndpoint}) – showing simulated data: ${error.message}`;
       
       console.log(`🔄 Falling back to simulated data for ${targetEndpoint}`);
