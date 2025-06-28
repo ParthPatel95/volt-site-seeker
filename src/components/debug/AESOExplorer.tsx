@@ -7,32 +7,35 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Activity, Database, RefreshCw, Zap } from 'lucide-react';
+import { Activity, Database, RefreshCw, Zap, AlertTriangle } from 'lucide-react';
 import { aesoAPI, AESOResponse } from '@/services/aesoAPI';
 
 const AESO_ENDPOINTS = [
-  { value: 'pool-price', label: 'Pool Price', description: 'Real-time electricity pool prices ($/MWh)' },
-  { value: 'system-marginal-price', label: 'System Marginal Price', description: 'System marginal pricing data' },
-  { value: 'load-forecast', label: 'Load Forecast', description: 'System load forecasts and demand data' },
-  { value: 'generation', label: 'Generation', description: 'Current generation mix by fuel type' },
-  { value: 'generation-forecast', label: 'Generation Forecast', description: 'Forecasted generation by fuel type' },
-  { value: 'intertie-flows', label: 'Intertie Flows', description: 'Inter-regional power flows (BC, SK, MT)' },
-  { value: 'system-margins', label: 'System Margins', description: 'Operating reserves and system margins' },
-  { value: 'outages', label: 'Outages', description: 'Current generation and transmission outages' },
-  { value: 'supply-adequacy', label: 'Supply Adequacy', description: 'Supply adequacy assessments' },
-  { value: 'ancillary-services', label: 'Ancillary Services', description: 'Ancillary services market data' },
-  { value: 'merit-order', label: 'Merit Order', description: 'Generation merit order stack' },
-  { value: 'grid-status', label: 'Grid Status', description: 'Overall Alberta grid operational status' }
+  { value: 'pool-price', label: 'Pool Price', description: 'Real-time electricity pool prices ($/MWh)', requiresDate: true },
+  { value: 'system-marginal-price', label: 'System Marginal Price', description: 'System marginal pricing data', requiresDate: true },
+  { value: 'load-forecast', label: 'Load Forecast', description: 'System load forecasts and demand data', requiresDate: true, hasDataType: true },
+  { value: 'generation', label: 'Generation', description: 'Current generation mix by fuel type', requiresDate: true },
+  { value: 'generation-forecast', label: 'Generation Forecast', description: 'Forecasted generation by fuel type', requiresDate: true },
+  { value: 'intertie-flows', label: 'Intertie Flows', description: 'Inter-regional power flows (BC, SK, MT)', requiresDate: true },
+  { value: 'system-margins', label: 'System Margins', description: 'Operating reserves and system margins', requiresDate: false },
+  { value: 'outages', label: 'Outages', description: 'Current generation and transmission outages', requiresDate: true },
+  { value: 'supply-adequacy', label: 'Supply Adequacy', description: 'Supply adequacy assessments', requiresDate: false },
+  { value: 'ancillary-services', label: 'Ancillary Services', description: 'Ancillary services market data', requiresDate: false },
+  { value: 'merit-order', label: 'Merit Order', description: 'Generation merit order stack', requiresDate: false },
+  { value: 'grid-status', label: 'Grid Status', description: 'Overall Alberta grid operational status', requiresDate: false }
 ];
 
 export function AESOExplorer() {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>('pool-price');
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [dataType, setDataType] = useState<string>('forecast');
   const [customParams, setCustomParams] = useState<string>('{}');
   const [response, setResponse] = useState<AESOResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedEndpointInfo = AESO_ENDPOINTS.find(e => e.value === selectedEndpoint);
 
   const handleFetchData = async () => {
     setLoading(true);
@@ -42,10 +45,15 @@ export function AESOExplorer() {
       let params: Record<string, string> = {};
       
       // Add date parameters for endpoints that support them
-      const dateEndpoints = ['pool-price', 'system-marginal-price', 'load-forecast', 'generation', 'generation-forecast', 'intertie-flows'];
-      if (dateEndpoints.includes(selectedEndpoint)) {
+      if (selectedEndpointInfo?.requiresDate) {
         params.startDate = startDate;
         params.endDate = endDate;
+      }
+
+      // Add dataType for load-forecast
+      if (selectedEndpoint === 'load-forecast') {
+        params.dataType = dataType;
+        params.responseFormat = 'json';
       }
       
       // Parse custom parameters
@@ -117,7 +125,7 @@ export function AESOExplorer() {
               </Select>
             </div>
 
-            {['pool-price', 'system-marginal-price', 'load-forecast', 'generation', 'generation-forecast', 'intertie-flows'].includes(selectedEndpoint) && (
+            {selectedEndpointInfo?.requiresDate && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date</Label>
@@ -140,6 +148,21 @@ export function AESOExplorer() {
               </>
             )}
 
+            {selectedEndpoint === 'load-forecast' && (
+              <div className="space-y-2">
+                <Label htmlFor="dataType">Data Type</Label>
+                <Select value={dataType} onValueChange={setDataType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select data type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="forecast">Forecast</SelectItem>
+                    <SelectItem value="actual">Actual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="customParams">Custom Parameters (JSON)</Label>
               <Input
@@ -150,6 +173,16 @@ export function AESOExplorer() {
               />
             </div>
           </div>
+
+          {selectedEndpoint === 'load-forecast' && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Load Forecast Parameters:</strong> This endpoint supports both 'forecast' and 'actual' data types. 
+                The API uses the official AESO Load Outage and Forecast API with updated endpoint and parameters.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="flex space-x-2">
             <Button onClick={handleFetchData} disabled={loading}>

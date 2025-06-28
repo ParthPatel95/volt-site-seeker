@@ -3,18 +3,18 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
 // AESO API Gateway Configuration - Updated to official API Gateway endpoints
-const AESO_BASE_URL = 'https://apimgw.aeso.ca';
+const AESO_BASE_URL = 'https://api.aeso.ca';
 
 // Official AESO API Gateway endpoints from developer documentation
 const AESO_ENDPOINTS = {
   'pool-price': '/public/poolprice-api/v1.1/price/poolPrice',
   'system-marginal-price': '/public/smp-api/v1/price/smp',
-  'load-forecast': '/public/forecast-api/v1/forecast/load',
+  'load-forecast': '/public/loadoutageforecast-api/v1/loadForecast',
   'generation': '/public/generation-api/v1/generation/actual',
   'generation-forecast': '/public/forecast-api/v1/forecast/generation',
   'intertie-flows': '/public/intertie-api/v1/intertie/flows',
   'system-margins': '/public/margins-api/v1/margins',
-  'outages': '/public/outage-api/v1/outage/current',
+  'outages': '/public/loadoutageforecast-api/v1/outages',
   'supply-adequacy': '/public/adequacy-api/v1/adequacy',
   'ancillary-services': '/public/ancillary-api/v1/ancillary/services',
   'merit-order': '/public/merit-order-api/v1/merit-order',
@@ -37,6 +37,28 @@ const getAESOConfig = (): AESOConfig => ({
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const buildLoadForecastParams = (params: Record<string, string>) => {
+  const urlParams = new URLSearchParams();
+  
+  // Required parameters for Load Forecast API
+  if (params.startDate) {
+    urlParams.append('startDate', params.startDate);
+  }
+  if (params.endDate) {
+    urlParams.append('endDate', params.endDate);
+  }
+  
+  // Optional parameters
+  if (params.dataType) {
+    urlParams.append('dataType', params.dataType); // Options: forecast, actual
+  }
+  if (params.responseFormat) {
+    urlParams.append('responseFormat', params.responseFormat); // Options: json, csv, xml
+  }
+  
+  return urlParams;
+};
+
 const callAESO = async (
   endpoint: string, 
   params: Record<string, string> = {}, 
@@ -49,7 +71,15 @@ const callAESO = async (
   }
 
   const url = new URL(`${AESO_BASE_URL}${endpointPath}`);
-  Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+  
+  // Handle special parameter building for load-forecast
+  if (endpoint === 'load-forecast') {
+    const loadParams = buildLoadForecastParams(params);
+    loadParams.forEach((value, key) => url.searchParams.append(key, value));
+  } else {
+    // Default parameter handling for other endpoints
+    Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+  }
 
   // Get AESO subscription key
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY') || Deno.env.get('AESO_API_KEY');
@@ -67,7 +97,7 @@ const callAESO = async (
 
   // Headers according to AESO API Gateway Swagger documentation
   const headers = {
-    'API-KEY': aesoSubKey,
+    'X-API-Key': aesoSubKey,
     'Accept': 'application/json',
     'User-Agent': 'VoltScout-AESO-Client/1.0',
     'Content-Type': 'application/json',
@@ -114,6 +144,9 @@ const callAESO = async (
       if (response.status === 404) {
         throw new Error('ENDPOINT_NOT_FOUND');
       }
+      if (response.status === 400) {
+        throw new Error('BAD_REQUEST_PARAMETERS');
+      }
       throw new Error(`AESO_HTTP_ERROR_${response.status}`);
     }
 
@@ -133,7 +166,7 @@ const callAESO = async (
     console.error(`💥 AESO API Gateway call failed for ${endpoint} (attempt ${retryCount + 1}):`, errorMessage);
     
     // Don't retry certain errors
-    if (['INVALID_API_KEY', 'ACCESS_FORBIDDEN', 'MISSING_AESO_SUB_KEY', 'ENDPOINT_NOT_FOUND'].includes(errorMessage)) {
+    if (['INVALID_API_KEY', 'ACCESS_FORBIDDEN', 'MISSING_AESO_SUB_KEY', 'ENDPOINT_NOT_FOUND', 'BAD_REQUEST_PARAMETERS'].includes(errorMessage)) {
       console.error('🚨 Non-retryable error - stopping retries');
       throw error;
     }
@@ -239,40 +272,43 @@ const processAESOResponse = (endpoint: string, rawData: any) => {
       return generateFallbackData(endpoint);
 
     case 'load-forecast':
-      // Process load forecast data structure
-      if (rawData['Load Forecast Report'] && Array.isArray(rawData['Load Forecast Report'])) {
-        const loadData = rawData['Load Forecast Report'];
-        if (loadData.length > 0) {
+      // Process load forecast data structure from the new API
+      if (rawData['return'] && rawData['return']['Load Forecast']) {
+        const loadData = rawData['return']['Load Forecast'];
+        console.log(`📊 Processing load forecast data from AESO API`);
+        
+        if (Array.isArray(loadData) && loadData.length > 0) {
           const latest = loadData[loadData.length - 1];
+          const allLoads = loadData.map(d => parseFloat(d.forecast_pool_demand || d.alberta_internal_load || 0));
+          
           return {
-            current_demand_mw: parseFloat(latest.alberta_internal_load || 0),
-            peak_forecast_mw: Math.max(...loadData.map(d => parseFloat(d.alberta_internal_load || 0))),
-            forecast_date: latest.begin_datetime_mpt || new Date().toISOString(),
-            capacity_margin: 15.2,
+            current_demand_mw: parseFloat(latest.forecast_pool_demand || latest.alberta_internal_load || 0),
+            peak_forecast_mw: Math.max(...allLoads.filter(l => !isNaN(l))),
+            forecast_date: latest.begin_datetime_mpt || latest.begin_datetime_utc || new Date().toISOString(),
+            capacity_margin: 15.2, // Default values - would need additional API call for actual values
             reserve_margin: 18.7
           };
         }
       }
       return generateFallbackData(endpoint);
 
-    case 'generation':
-      // Process generation data structure
-      if (rawData['Generation Report'] && Array.isArray(rawData['Generation Report'])) {
-        const genData = rawData['Generation Report'];
-        if (genData.length > 0) {
-          const latest = genData[genData.length - 1];
-          const totalGen = parseFloat(latest.total_generation || 0);
+    case 'outages':
+      // Process outages data structure
+      if (rawData['return'] && rawData['return']['Outages']) {
+        const outageData = rawData['return']['Outages'];
+        console.log(`📊 Processing outage data from AESO API`);
+        
+        if (Array.isArray(outageData)) {
+          const totalOutages = outageData.length;
+          const generationOutages = outageData.filter(o => o.outage_type === 'Generation').length;
+          const transmissionOutages = outageData.filter(o => o.outage_type === 'Transmission').length;
           
           return {
-            natural_gas_mw: parseFloat(latest.natural_gas || 0),
-            wind_mw: parseFloat(latest.wind || 0),
-            solar_mw: parseFloat(latest.solar || 0),
-            hydro_mw: parseFloat(latest.hydro || 0),
-            coal_mw: parseFloat(latest.coal || 0),
-            other_mw: parseFloat(latest.other || 0),
-            total_generation_mw: totalGen,
-            renewable_percentage: ((parseFloat(latest.wind || 0) + parseFloat(latest.hydro || 0) + parseFloat(latest.solar || 0)) / totalGen) * 100,
-            timestamp: latest.begin_datetime_mpt || new Date().toISOString()
+            total_outages: totalOutages,
+            generation_outages: generationOutages,
+            transmission_outages: transmissionOutages,
+            timestamp: new Date().toISOString(),
+            outage_details: outageData.slice(0, 10) // Include first 10 outages for reference
           };
         }
       }
@@ -304,6 +340,12 @@ serve(async (req) => {
       params.endDate = params.endDate || params.startDate;
     } else if (action === 'fetch_load_forecast') {
       targetEndpoint = 'load-forecast';
+      // Set default parameters for load forecast
+      const today = new Date().toISOString().split('T')[0];
+      params.startDate = params.startDate || today;
+      params.endDate = params.endDate || today;
+      params.dataType = params.dataType || 'forecast';
+      params.responseFormat = params.responseFormat || 'json';
     } else if (action === 'fetch_generation_mix') {
       targetEndpoint = 'generation';
     }
@@ -332,6 +374,8 @@ serve(async (req) => {
         ? 'AESO API Gateway rate limit exceeded - please try again later'
         : error.message === 'ENDPOINT_NOT_FOUND'
         ? `AESO API Gateway endpoint not found (${targetEndpoint}) - endpoint may not be available in your subscription`
+        : error.message === 'BAD_REQUEST_PARAMETERS'
+        ? `Invalid parameters for AESO API Gateway endpoint (${targetEndpoint}) - please check the required parameters`
         : `AESO API Gateway temporarily unavailable (${targetEndpoint}) – showing simulated data: ${error.message}`;
       
       console.log(`🔄 Falling back to simulated data for ${targetEndpoint}`);

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AESOResponse<T = any> {
@@ -149,12 +148,14 @@ export class AESOAPIService {
     });
   }
 
-  // Load Forecast API
-  async getLoadForecast(startDate?: string, endDate?: string): Promise<AESOResponse<AESOLoadForecast>> {
+  // Load Forecast API - Updated with proper parameters
+  async getLoadForecast(startDate?: string, endDate?: string, dataType?: 'forecast' | 'actual'): Promise<AESOResponse<AESOLoadForecast>> {
     const today = new Date().toISOString().split('T')[0];
     return this.callAESOEndpoint<AESOLoadForecast>('load-forecast', {
       startDate: startDate || today,
-      endDate: endDate || startDate || today
+      endDate: endDate || startDate || today,
+      dataType: dataType || 'forecast',
+      responseFormat: 'json'
     });
   }
 
@@ -190,9 +191,13 @@ export class AESOAPIService {
     return this.callAESOEndpoint<AESOSystemMargins>('system-margins');
   }
 
-  // Outages API
-  async getOutages(): Promise<AESOResponse<AESOOutages>> {
-    return this.callAESOEndpoint<AESOOutages>('outages');
+  // Outages API - Updated to use the correct endpoint
+  async getOutages(startDate?: string, endDate?: string): Promise<AESOResponse<AESOOutages>> {
+    const today = new Date().toISOString().split('T')[0];
+    return this.callAESOEndpoint<AESOOutages>('outages', {
+      startDate: startDate || today,
+      endDate: endDate || startDate || today
+    });
   }
 
   // Supply Adequacy API
@@ -223,7 +228,7 @@ export class AESOAPIService {
     return this.callAESOEndpoint<T>(endpoint, params);
   }
 
-  // Legacy compatibility methods
+  // Legacy compatibility methods - Updated to use proper parameters
   async fetchCurrentPrices(): Promise<AESOResponse<AESOPoolPrice>> {
     return this.getPoolPrice();
   }
