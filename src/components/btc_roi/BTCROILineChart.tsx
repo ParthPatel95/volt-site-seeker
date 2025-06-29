@@ -26,15 +26,44 @@ export const BTCROILineChart: React.FC<BTCROILineChartProps> = ({ roiResults }) 
 
       data.push({
         month,
-        cumulativeProfit: cumulativeProfit - roiResults.totalInvestment, // Net after investment
+        cumulativeProfit: cumulativeProfit - roiResults.totalInvestment,
         cumulativeBTC,
         breakEvenLine: 0,
-        investment: month === 0 ? -roiResults.totalInvestment : -roiResults.totalInvestment
+        investment: month === 0 ? -roiResults.totalInvestment : -roiResults.totalInvestment,
+        netPosition: cumulativeProfit - roiResults.totalInvestment
       });
     }
 
     return data;
   }, [roiResults]);
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border rounded shadow-lg">
+          <p className="font-medium">{`Month ${label}`}</p>
+          {payload.map((entry: any, index: number) => {
+            if (entry.dataKey === 'cumulativeProfit') {
+              return (
+                <p key={index} style={{ color: entry.color }}>
+                  Net Position: ${entry.value.toLocaleString()}
+                </p>
+              );
+            }
+            if (entry.dataKey === 'cumulativeBTC') {
+              return (
+                <p key={index} style={{ color: entry.color }}>
+                  Total BTC: {entry.value.toFixed(4)}
+                </p>
+              );
+            }
+            return null;
+          })}
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (!roiResults) {
     return (
@@ -66,25 +95,19 @@ export const BTCROILineChart: React.FC<BTCROILineChartProps> = ({ roiResults }) 
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="month" 
                 label={{ value: 'Month', position: 'insideBottom', offset: -10 }}
+                tick={{ fontSize: 12 }}
               />
               <YAxis 
                 label={{ value: 'USD ($)', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(value) => `$${value.toLocaleString()}`}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                tick={{ fontSize: 12 }}
               />
-              <Tooltip 
-                formatter={(value: number, name: string) => {
-                  if (name === 'cumulativeBTC') {
-                    return [`${value.toFixed(4)} BTC`, 'Cumulative BTC Mined'];
-                  }
-                  return [`$${value.toLocaleString()}`, name];
-                }}
-                labelFormatter={(month) => `Month ${month}`}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
               
               {/* Break-even line */}
@@ -95,6 +118,7 @@ export const BTCROILineChart: React.FC<BTCROILineChartProps> = ({ roiResults }) 
                 strokeDasharray="5 5"
                 dot={false}
                 name="Break-even Line"
+                strokeWidth={2}
               />
               
               {/* Cumulative profit line */}
@@ -115,6 +139,7 @@ export const BTCROILineChart: React.FC<BTCROILineChartProps> = ({ roiResults }) 
                 strokeWidth={2}
                 dot={false}
                 name="Initial Investment"
+                strokeDasharray="8 4"
               />
             </LineChart>
           </ResponsiveContainer>
@@ -139,6 +164,17 @@ export const BTCROILineChart: React.FC<BTCROILineChartProps> = ({ roiResults }) 
               {((roiResults.yearlyNetProfit * 1.5 / roiResults.totalInvestment) * 100).toFixed(1)}%
             </div>
             <div className="text-sm text-gray-600">18-Month ROI</div>
+          </div>
+        </div>
+
+        {/* Timeline Insights */}
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <h4 className="font-medium mb-2">Timeline Analysis:</h4>
+          <div className="text-sm space-y-1 text-gray-600">
+            <p>• Initial investment: ${roiResults.totalInvestment.toLocaleString()}</p>
+            <p>• Monthly net profit: ${roiResults.monthlyNetProfit.toLocaleString()}</p>
+            <p>• Break-even occurs at month {Math.ceil(roiResults.breakEvenDays / 30)}</p>
+            <p>• 18-month projected profit: ${(roiResults.yearlyNetProfit * 1.5).toLocaleString()}</p>
           </div>
         </div>
       </CardContent>

@@ -22,7 +22,7 @@ export const BTCROISensitivityChart: React.FC<BTCROISensitivityChartProps> = ({
         scenario: 'Best Case',
         btcPriceChange: 20,
         difficultyChange: -10,
-        dailyProfit: roiResults.dailyNetProfit * 1.35, // Estimated impact
+        dailyProfit: roiResults.dailyNetProfit * 1.35,
         monthlyProfit: roiResults.monthlyNetProfit * 1.35,
         yearlyProfit: roiResults.yearlyNetProfit * 1.35,
         roi12Month: roiResults.roi12Month * 1.35
@@ -40,7 +40,7 @@ export const BTCROISensitivityChart: React.FC<BTCROISensitivityChartProps> = ({
         scenario: 'Worst Case',
         btcPriceChange: -20,
         difficultyChange: 20,
-        dailyProfit: roiResults.dailyNetProfit * 0.45, // Estimated impact
+        dailyProfit: roiResults.dailyNetProfit * 0.45,
         monthlyProfit: roiResults.monthlyNetProfit * 0.45,
         yearlyProfit: roiResults.yearlyNetProfit * 0.45,
         roi12Month: roiResults.roi12Month * 0.45
@@ -50,7 +50,26 @@ export const BTCROISensitivityChart: React.FC<BTCROISensitivityChartProps> = ({
     return scenarios;
   }, [roiResults, networkData]);
 
-  if (!roiResults) {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border rounded shadow-lg">
+          <p className="font-medium">{`${label}`}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }}>
+              {entry.dataKey === 'monthlyProfit' 
+                ? `Monthly Profit: $${entry.value.toLocaleString()}`
+                : `12-Month ROI: ${entry.value.toFixed(1)}%`
+              }
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  if (!roiResults || !networkData) {
     return (
       <Card>
         <CardHeader>
@@ -108,29 +127,43 @@ export const BTCROISensitivityChart: React.FC<BTCROISensitivityChartProps> = ({
           {/* Chart */}
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sensitivityData}>
+              <BarChart data={sensitivityData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="scenario" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value: number, name: string) => [
-                    name === 'roi12Month' ? `${value.toFixed(1)}%` : `$${value.toLocaleString()}`,
-                    name === 'roi12Month' ? '12-Month ROI' : 'Monthly Profit'
-                  ]}
+                <XAxis 
+                  dataKey="scenario" 
+                  tick={{ fontSize: 12 }}
                 />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => `${value}`}
+                />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Bar 
                   dataKey="monthlyProfit" 
                   fill="#3b82f6" 
                   name="Monthly Profit ($)"
+                  radius={[2, 2, 0, 0]}
                 />
                 <Bar 
                   dataKey="roi12Month" 
                   fill="#10b981" 
                   name="12-Month ROI (%)"
+                  radius={[2, 2, 0, 0]}
                 />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Key Insights */}
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 className="font-medium mb-2">Key Insights:</h4>
+            <ul className="text-sm space-y-1 text-gray-600">
+              <li>• Best case assumes +20% BTC price and -10% difficulty adjustment</li>
+              <li>• Worst case assumes -20% BTC price and +20% difficulty adjustment</li>
+              <li>• Sensitivity analysis helps understand risk/reward scenarios</li>
+              <li>• Consider diversification strategies based on sensitivity ranges</li>
+            </ul>
           </div>
         </div>
       </CardContent>

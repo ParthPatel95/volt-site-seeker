@@ -1,5 +1,4 @@
 
-
 import { useState, useEffect } from 'react';
 import { BTCNetworkData, BTCROIFormData, BTCROIResults, HostingROIResults } from '../types/btc_roi_types';
 import { HostingCalculatorService } from '../services/hostingCalculatorService';
@@ -196,4 +195,3 @@ export const useBTCROICalculator = () => {
     isLoading
   };
 };
-
