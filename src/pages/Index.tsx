@@ -50,26 +50,26 @@ export default function Index() {
           ? 'ml-0 w-full' 
           : isCollapsed 
             ? 'ml-16' 
-            : 'ml-72'
+            : 'ml-64 sm:ml-72'
       }`}>
         {/* Mobile Header */}
         {isMobile && (
-          <header className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm min-h-[60px]">
+          <header className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm min-h-[56px] sm:min-h-[64px] safe-area-pt">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(true)}
-              className="p-2 h-10 w-10 flex-shrink-0"
+              className="p-2 h-10 w-10 flex-shrink-0 touch-target"
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <h1 className="text-lg font-semibold text-center flex-1 px-2 truncate">VoltScout</h1>
+            <h1 className="text-base sm:text-lg font-semibold text-center flex-1 px-2 truncate">VoltScout</h1>
             <div className="w-10 flex-shrink-0" />
           </header>
         )}
         
-        <main className="flex-1 overflow-auto w-full">
-          <div className="w-full h-full">
+        <main className="flex-1 overflow-auto w-full safe-area-pb">
+          <div className="w-full h-full min-h-0">
             <Routes>
               <Route index element={<Dashboard />} />
               <Route path="aeso-market" element={<AESOMarket />} />

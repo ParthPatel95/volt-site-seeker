@@ -75,19 +75,19 @@ export function EnergyRateEstimator() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            Energy Rate Estimator
+        <CardHeader className="pb-4 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Calculator className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            <span className="truncate">Energy Rate Estimator</span>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             Calculate fully-burdened electricity costs for the past 12 months including market price, 
             transmission & distribution, riders, surcharges, and taxes.
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <EnergyRateInputForm
             input={input}
             onInputChange={setInput}
