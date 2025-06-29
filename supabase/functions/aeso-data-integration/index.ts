@@ -1,8 +1,17 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders } from '../_shared/cors.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const AESO_BASE_URL = 'https://api.aeso.ca/report/v1.1';
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Try alternate API gateway if main one fails
+const AESO_BASE_URLS = [
+  'https://api.aeso.ca/report/v1.1',
+  'https://apimgw.aeso.ca/public/poolprice-api/v1.1'
+];
 
 interface AESOConfig {
   subscriptionKey: string;
@@ -20,7 +29,7 @@ const getAESOConfig = (): AESOConfig => {
   
   return {
     subscriptionKey,
-    timeout: 30000, // Increased timeout
+    timeout: 30000,
     maxRetries: 3,
     backoffDelays: [1000, 3000, 5000]
   };
@@ -28,19 +37,30 @@ const getAESOConfig = (): AESOConfig => {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const makeAESORequest = async (endpoint: string, params: Record<string, string>, config: AESOConfig, retryCount = 0): Promise<any> => {
-  const url = new URL(`${AESO_BASE_URL}${endpoint}`);
+const makeAESORequest = async (
+  endpoint: string, 
+  params: Record<string, string>, 
+  config: AESOConfig, 
+  retryCount = 0,
+  baseUrlIndex = 0
+): Promise<any> => {
+  const baseUrl = AESO_BASE_URLS[baseUrlIndex] || AESO_BASE_URLS[0];
+  const url = new URL(`${baseUrl}${endpoint}`);
+  
+  // Add contentType=application/json for JSON response
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.append(key, value);
   });
+  url.searchParams.append('contentType', 'application/json');
 
   const headers = {
     'accept': 'application/json',
-    'Ocp-Apim-Subscription-Key': config.subscriptionKey,
-    'User-Agent': 'VoltScout-API-Client/1.0'
+    'X-API-Key': config.subscriptionKey, // Updated header name
+    'User-Agent': 'VoltScout-API-Client/1.0',
+    'Content-Type': 'application/json'
   };
 
-  console.log(`AESO API Request to: ${url.toString()}`);
+  console.log(`AESO API Request to: ${url.toString()} (attempt ${retryCount + 1}, base URL ${baseUrlIndex + 1})`);
 
   try {
     const controller = new AbortController();
@@ -54,33 +74,49 @@ const makeAESORequest = async (endpoint: string, params: Record<string, string>,
 
     clearTimeout(timeoutId);
 
-    console.log(`AESO API Response status: ${response.status}`);
+    console.log(`AESO API Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`AESO API HTTP error ${response.status}: ${errorText}`);
       
+      // Try alternate base URL if available
+      if (baseUrlIndex < AESO_BASE_URLS.length - 1) {
+        console.log(`Trying alternate AESO base URL...`);
+        return makeAESORequest(endpoint, params, config, retryCount, baseUrlIndex + 1);
+      }
+      
       if (response.status === 429 && retryCount < config.maxRetries) {
         const delay = config.backoffDelays[retryCount] || 5000;
         console.log(`Rate limited, retrying in ${delay}ms (attempt ${retryCount + 1})`);
         await sleep(delay);
-        return makeAESORequest(endpoint, params, config, retryCount + 1);
+        return makeAESORequest(endpoint, params, config, retryCount + 1, 0);
       }
       throw new Error(`HTTP error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log(`AESO API Response received successfully`);
+    console.log(`AESO API Response received successfully from ${baseUrl}`);
     
     return data;
   } catch (error) {
-    console.error(`AESO API call failed (attempt ${retryCount + 1}):`, error);
+    console.error(`AESO API call failed (attempt ${retryCount + 1}, base URL ${baseUrlIndex + 1}):`, {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    
+    // Try alternate base URL if available and not already tried
+    if (baseUrlIndex < AESO_BASE_URLS.length - 1) {
+      console.log(`Network error, trying alternate AESO base URL...`);
+      return makeAESORequest(endpoint, params, config, retryCount, baseUrlIndex + 1);
+    }
     
     if (retryCount < config.maxRetries && (error.name === 'AbortError' || error.message.includes('network') || error.message.includes('fetch'))) {
       const delay = config.backoffDelays[retryCount] || 5000;
       console.log(`Network error, retrying in ${delay}ms (attempt ${retryCount + 1})`);
       await sleep(delay);
-      return makeAESORequest(endpoint, params, config, retryCount + 1);
+      return makeAESORequest(endpoint, params, config, retryCount + 1, 0);
     }
     
     throw error;
@@ -96,7 +132,7 @@ const fetchPoolPrice = async (config: AESOConfig) => {
   console.log('Fetching AESO pool price...');
   const today = getTodayDate();
   
-  const data = await makeAESORequest('/poolprice', { startDate: today, endDate: today }, config);
+  const data = await makeAESORequest('/price/poolPrice', { startDate: today, endDate: today }, config);
   
   // Parse the actual AESO response structure
   const poolPriceInfo = data?.return?.PoolPriceReport?.PoolPriceInfo;
@@ -133,7 +169,7 @@ const fetchSystemLoad = async (config: AESOConfig) => {
   console.log('Fetching AESO system load...');
   const today = getTodayDate();
   
-  const data = await makeAESORequest('/actual-system-load', { startDate: today, endDate: today }, config);
+  const data = await makeAESORequest('/load/actualSystemLoad', { startDate: today, endDate: today }, config);
   
   // Parse the actual AESO response structure
   const systemLoadInfo = data?.return?.ActualSystemLoadReport?.ActualSystemLoad;
@@ -169,18 +205,18 @@ const fetchGenerationMix = async (config: AESOConfig) => {
   // Try actual generation first, fallback to forecast
   let data;
   try {
-    data = await makeAESORequest('/actual-generation', { startDate: today, endDate: today }, config);
+    data = await makeAESORequest('/generation/actualGeneration', { startDate: today, endDate: today }, config);
   } catch (error) {
     console.log('Actual generation not available, trying forecast...');
-    data = await makeAESORequest('/forecast-fuel-mix', { startDate: today, endDate: today }, config);
+    data = await makeAESORequest('/generation/forecastGeneration', { startDate: today, endDate: today }, config);
   }
   
   // Parse generation data (structure may vary between actual and forecast)
   let generationData;
   if (data?.return?.ActualGenerationReport?.ActualGenerationInfo) {
     generationData = data.return.ActualGenerationReport.ActualGenerationInfo;
-  } else if (data?.return?.ForecastFuelMixReport?.ForecastFuelMixInfo) {
-    generationData = data.return.ForecastFuelMixReport.ForecastFuelMixInfo;
+  } else if (data?.return?.ForecastGenerationReport?.ForecastGenerationInfo) {
+    generationData = data.return.ForecastGenerationReport.ForecastGenerationInfo;
   } else {
     throw new Error('No generation mix data returned from AESO API');
   }
@@ -322,7 +358,7 @@ serve(async (req) => {
       console.log('AESO API call successful, data source:', dataSource);
     } catch (error) {
       console.error('AESO API Error:', error.message);
-      console.log('Falling back to realistic simulated data...');
+      console.log('AESO API unreachable, using fallback data...');
       result = generateRealisticFallbackData(action);
       dataSource = 'fallback';
     }

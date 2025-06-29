@@ -13,6 +13,9 @@ interface ERCOTResponse {
   error?: string;
 }
 
+// Cache for ERCOT market ID to avoid repeated lookups
+let ercotMarketId: string | null = null;
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,12 +28,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Get ERCOT market ID if not cached
+    if (!ercotMarketId) {
+      console.log('Looking up ERCOT market ID...');
+      const { data: marketData, error: marketError } = await supabase
+        .from('energy_markets')
+        .select('id')
+        .eq('market_code', 'ERCOT')
+        .single();
+      
+      if (marketError) {
+        console.error('Error fetching ERCOT market ID:', marketError);
+        // Fallback: try to find by name if code doesn't work
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('energy_markets')
+          .select('id')
+          .ilike('market_name', '%ercot%')
+          .single();
+        
+        if (fallbackError) {
+          console.error('Could not find ERCOT market in database:', fallbackError);
+          throw new Error('ERCOT market not found in database');
+        }
+        ercotMarketId = fallbackData.id;
+      } else {
+        ercotMarketId = marketData.id;
+      }
+      console.log('ERCOT market ID:', ercotMarketId);
+    }
+
     const { action, market_type = 'RT' } = await req.json()
     console.log('ERCOT API Request:', { action, market_type })
 
     switch (action) {
       case 'fetch_current_prices':
-        return await fetchCurrentPrices(supabase, market_type)
+        return await fetchCurrentPrices(supabase, market_type, ercotMarketId)
       
       case 'fetch_load_forecast':
         return await fetchLoadForecast(supabase)
@@ -59,22 +91,27 @@ serve(async (req) => {
   }
 })
 
-async function fetchCurrentPrices(supabase: any, marketType: string) {
+async function fetchCurrentPrices(supabase: any, marketType: string, marketId: string) {
   try {
-    // ERCOT Real-Time Settlement Point Prices API
-    const ercotUrl = `https://www.ercot.com/api/1/services/read/dashboards/todays-outlook`
+    // ERCOT Real-Time Settlement Point Prices API - Fixed URL with .json suffix
+    const ercotUrl = `https://www.ercot.com/api/1/services/read/dashboards/todays-outlook.json`
     
     console.log('Fetching ERCOT prices from:', ercotUrl)
     
     const response = await fetch(ercotUrl, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'VoltScout-Platform/1.0'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       }
     })
 
+    console.log(`ERCOT API Response status: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-      console.log('ERCOT API response not OK, using fallback data')
+      const errorText = await response.text();
+      console.log(`ERCOT API response not OK: ${response.status} - ${errorText}`);
+      console.log('Using fallback data for ERCOT');
+      
       // Fallback to realistic market data
       const fallbackData = {
         current_price: 42.50 + Math.random() * 20 - 10, // $32.50 - $52.50 range
@@ -86,12 +123,12 @@ async function fetchCurrentPrices(supabase: any, marketType: string) {
         market_conditions: 'normal'
       }
       
-      await storePriceData(supabase, fallbackData)
+      await storePriceData(supabase, fallbackData, marketId)
       return createSuccessResponse(fallbackData)
     }
 
     const ercotData = await response.json()
-    console.log('ERCOT API Response received')
+    console.log('ERCOT API Response received successfully')
 
     // Process ERCOT data structure
     const processedData = {
@@ -104,8 +141,8 @@ async function fetchCurrentPrices(supabase: any, marketType: string) {
       market_conditions: extractMarketConditions(ercotData)
     }
 
-    // Store in database
-    await storePriceData(supabase, processedData)
+    // Store in database with proper UUID
+    await storePriceData(supabase, processedData, marketId)
     
     return createSuccessResponse(processedData)
     
@@ -123,20 +160,20 @@ async function fetchCurrentPrices(supabase: any, marketType: string) {
       market_conditions: 'normal'
     }
     
-    await storePriceData(supabase, fallbackData)
+    await storePriceData(supabase, fallbackData, marketId)
     return createSuccessResponse(fallbackData)
   }
 }
 
 async function fetchLoadForecast(supabase: any) {
   try {
-    // ERCOT Load Forecast API
-    const ercotLoadUrl = 'https://www.ercot.com/api/1/services/read/dashboards/current-system-demand'
+    // ERCOT Load Forecast API - Fixed URL with .json suffix
+    const ercotLoadUrl = 'https://www.ercot.com/api/1/services/read/dashboards/current-system-demand.json'
     
     const response = await fetch(ercotLoadUrl, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'VoltScout-Platform/1.0'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       }
     })
 
@@ -150,8 +187,11 @@ async function fetchLoadForecast(supabase: any) {
 
     if (response.ok) {
       const ercotData = await response.json()
+      console.log('ERCOT Load API Response received successfully')
       // Extract actual load data from ERCOT response
       forecastData.current_demand_mw = extractCurrentDemand(ercotData)
+    } else {
+      console.log(`ERCOT Load API response: ${response.status} ${response.statusText}`)
     }
 
     return createSuccessResponse(forecastData)
@@ -255,13 +295,15 @@ function extractCurrentDemand(data: any): number {
   return 50000 + Math.random() * 20000 // 50-70 GW range
 }
 
-async function storePriceData(supabase: any, priceData: any) {
+async function storePriceData(supabase: any, priceData: any, marketId: string) {
   try {
-    // Store current rates in energy_rates table
+    console.log('Storing price data with market ID:', marketId);
+    
+    // Store current rates in energy_rates table with proper UUID
     const { error } = await supabase
       .from('energy_rates')
       .insert({
-        market_id: 'ercot-system',
+        market_id: marketId, // Now using proper UUID
         rate_type: 'real_time',
         price_per_mwh: priceData.current_price,
         node_name: priceData.load_zone || 'ERCOT_SYSTEM',
@@ -270,6 +312,8 @@ async function storePriceData(supabase: any, priceData: any) {
 
     if (error) {
       console.error('Error storing price data:', error)
+    } else {
+      console.log('Price data stored successfully')
     }
   } catch (error) {
     console.error('Database storage error:', error)
