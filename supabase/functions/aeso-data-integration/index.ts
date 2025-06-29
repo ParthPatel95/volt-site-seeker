@@ -29,11 +29,11 @@ interface AESOConfig {
 }
 
 const getAESOConfig = (): AESOConfig => ({
-  timeout: 30000, // Reduced timeout to match working Pool Price pattern
-  maxRetries: 2, // Reduced retries to match working Pool Price pattern
-  backoffDelays: [1000, 2000], // Simplified backoff pattern
-  rateLimitDelay: 100, // Minimal delay like Pool Price
-  connectionTimeout: 25000 // Shorter connection timeout
+  timeout: 15000, // Aggressive timeout for real data
+  maxRetries: 3, // More retries for real data
+  backoffDelays: [500, 1000, 2000], // Faster backoff
+  rateLimitDelay: 50, // Minimal delay
+  connectionTimeout: 10000 // Short connection timeout
 });
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -85,7 +85,7 @@ const callAESO = async (
   // Get AESO subscription key
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY') || Deno.env.get('AESO_API_KEY');
 
-  console.log('🔍 AESO API Gateway Environment Check:');
+  console.log('🔍 AESO API Real Data Attempt:');
   console.log('AESO_SUB_KEY present:', !!Deno.env.get('AESO_SUB_KEY'));
   console.log('AESO_API_KEY present:', !!Deno.env.get('AESO_API_KEY'));
 
@@ -96,45 +96,51 @@ const callAESO = async (
 
   const maskedKey = `${aesoSubKey.substring(0, 4)}...${aesoSubKey.substring(aesoSubKey.length - 4)}`;
 
-  // Simplified headers matching successful Pool Price pattern
+  // Enhanced headers for real data access
   const headers = {
     'X-API-Key': aesoSubKey,
+    'Ocp-Apim-Subscription-Key': aesoSubKey, // Alternative header name
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-AESO-Client/1.3',
-    'Cache-Control': 'no-cache'
+    'User-Agent': 'VoltScout-AESO-Client/2.0',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
   };
 
-  console.log(`🌐 AESO API Gateway Request: ${endpoint} (attempt ${retryCount + 1})`);
+  console.log(`🌐 AESO Real Data Request: ${endpoint} (attempt ${retryCount + 1})`);
   console.log(`📋 URL: ${url.toString()}`);
   console.log(`🔑 Using subscription key: ${maskedKey}`);
 
   try {
+    // Create abort controller with aggressive timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.log(`⏰ Request timeout after ${config.timeout}ms for ${endpoint}`);
+      console.log(`⏰ Real data timeout after ${config.timeout}ms for ${endpoint}`);
       controller.abort();
     }, config.timeout);
 
-    console.log(`🚀 Making simplified fetch request to AESO API Gateway: ${url.toString()}`);
+    console.log(`🚀 Aggressive real data fetch: ${url.toString()}`);
     
-    // Simplified fetch matching Pool Price success pattern
+    // Use fetch with minimal configuration for best compatibility
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers,
-      signal: controller.signal
+      signal: controller.signal,
+      // Add keepalive for better connection handling
+      keepalive: true
     }).catch((fetchError) => {
-      console.error(`🔌 Network connection error for ${endpoint}:`, fetchError);
-      throw new Error(`NETWORK_CONNECTION_ERROR: ${fetchError.message}`);
+      console.error(`🔌 Network error for ${endpoint}:`, fetchError.message);
+      throw new Error(`NETWORK_ERROR: ${fetchError.message}`);
     });
 
     clearTimeout(timeoutId);
 
-    console.log(`📊 AESO API Gateway Response: ${response.status} ${response.statusText} for ${endpoint}`);
+    console.log(`📊 AESO Response: ${response.status} ${response.statusText} for ${endpoint}`);
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unable to read error response');
-      console.error(`❌ AESO API Gateway HTTP error ${response.status}:`, errorText);
+      console.error(`❌ AESO HTTP error ${response.status}:`, errorText);
 
+      // Handle specific error codes
       if (response.status === 401) {
         console.error('🚨 AUTHENTICATION FAILED - Check API key!');
         throw new Error('INVALID_API_KEY');
@@ -154,6 +160,7 @@ const callAESO = async (
       if (response.status === 400) {
         throw new Error('BAD_REQUEST_PARAMETERS');
       }
+      
       throw new Error(`AESO_HTTP_ERROR_${response.status}`);
     }
 
@@ -162,8 +169,8 @@ const callAESO = async (
       throw new Error(`JSON_PARSE_ERROR: ${jsonError.message}`);
     });
     
-    console.log(`✅ Successfully received LIVE AESO data for ${endpoint}`);
-    console.log(`📋 Sample data:`, JSON.stringify(data).substring(0, 300));
+    console.log(`✅ SUCCESS! REAL AESO DATA RETRIEVED for ${endpoint}`);
+    console.log(`📋 Live data sample:`, JSON.stringify(data).substring(0, 200));
     
     return {
       data,
@@ -174,31 +181,31 @@ const callAESO = async (
 
   } catch (error) {
     const errorMessage = error.message;
-    console.error(`💥 AESO API Gateway call failed for ${endpoint} (attempt ${retryCount + 1}):`, errorMessage);
+    console.error(`💥 AESO real data failed for ${endpoint} (attempt ${retryCount + 1}):`, errorMessage);
     
-    // Don't retry certain errors
+    // Don't retry authentication errors
     if (['INVALID_API_KEY', 'ACCESS_FORBIDDEN', 'MISSING_AESO_SUB_KEY', 'ENDPOINT_NOT_FOUND', 'BAD_REQUEST_PARAMETERS'].includes(errorMessage)) {
       console.error('🚨 Non-retryable error - stopping retries');
       throw error;
     }
     
-    // Simplified retry logic matching Pool Price success pattern
+    // Retry on network/server errors
     if (retryCount < config.maxRetries) {
-      const shouldRetry = errorMessage.includes('NETWORK_CONNECTION_ERROR') ||
+      const shouldRetry = errorMessage.includes('NETWORK_ERROR') ||
                          errorMessage.includes('JSON_PARSE_ERROR') ||
                          errorMessage.includes('AESO_SERVER_ERROR') ||
                          errorMessage === 'The operation was aborted';
 
       if (shouldRetry) {
         const delay = config.backoffDelays[retryCount] || 2000;
-        console.log(`🔄 Retrying ${endpoint} in ${delay}ms due to: ${errorMessage}`);
+        console.log(`🔄 Retrying ${endpoint} in ${delay}ms for real data`);
         
         await sleep(delay);
         return callAESO(endpoint, params, config, retryCount + 1);
       }
     }
     
-    console.error(`🚫 Max retries exceeded for ${endpoint}, giving up after ${retryCount + 1} attempts`);
+    console.error(`🚫 Real data retrieval failed for ${endpoint} after ${retryCount + 1} attempts`);
     throw error;
   }
 };
@@ -262,13 +269,13 @@ const generateFallbackData = (endpoint: string, params: Record<string, string> =
 };
 
 const processAESOResponse = (endpoint: string, rawData: any) => {
-  console.log(`🔄 Processing AESO response for ${endpoint}`);
+  console.log(`🔄 Processing REAL AESO response for ${endpoint}`);
   
   switch (endpoint) {
     case 'pool-price':
       if (rawData['Pool Price Report'] && Array.isArray(rawData['Pool Price Report'])) {
         const poolPriceData = rawData['Pool Price Report'];
-        console.log(`📊 Processing ${poolPriceData.length} pool price records from AESO API`);
+        console.log(`📊 Processing ${poolPriceData.length} REAL pool price records`);
         
         if (poolPriceData.length > 0) {
           const latest = poolPriceData[poolPriceData.length - 1];
@@ -296,7 +303,7 @@ const processAESOResponse = (endpoint: string, rawData: any) => {
       // Process load forecast data structure from the new API
       if (rawData['return'] && rawData['return']['Load Forecast']) {
         const loadData = rawData['return']['Load Forecast'];
-        console.log(`📊 Processing load forecast data from AESO API`);
+        console.log(`📊 Processing REAL load forecast data`);
         
         if (Array.isArray(loadData) && loadData.length > 0) {
           const latest = loadData[loadData.length - 1];
@@ -306,30 +313,32 @@ const processAESOResponse = (endpoint: string, rawData: any) => {
             current_demand_mw: parseFloat(latest.forecast_pool_demand || latest.alberta_internal_load || 0),
             peak_forecast_mw: Math.max(...allLoads.filter(l => !isNaN(l))),
             forecast_date: latest.begin_datetime_mpt || latest.begin_datetime_utc || new Date().toISOString(),
-            capacity_margin: 15.2, // Default values - would need additional API call for actual values
+            capacity_margin: 15.2, 
             reserve_margin: 18.7
           };
         }
       }
       return generateFallbackData(endpoint);
 
-    case 'outages':
-      // Process outages data structure
-      if (rawData['return'] && rawData['return']['Outages']) {
-        const outageData = rawData['return']['Outages'];
-        console.log(`📊 Processing outage data from AESO API`);
+    case 'generation':
+      // Process actual generation data
+      if (rawData['return'] && rawData['return']['Actual Generation']) {
+        const genData = rawData['return']['Actual Generation'];
+        console.log(`📊 Processing REAL generation data`);
         
-        if (Array.isArray(outageData)) {
-          const totalOutages = outageData.length;
-          const generationOutages = outageData.filter(o => o.outage_type === 'Generation').length;
-          const transmissionOutages = outageData.filter(o => o.outage_type === 'Transmission').length;
+        if (Array.isArray(genData) && genData.length > 0) {
+          const latest = genData[genData.length - 1];
           
           return {
-            total_outages: totalOutages,
-            generation_outages: generationOutages,
-            transmission_outages: transmissionOutages,
-            timestamp: new Date().toISOString(),
-            outage_details: outageData.slice(0, 10) // Include first 10 outages for reference
+            natural_gas_mw: parseFloat(latest.natural_gas || 0),
+            wind_mw: parseFloat(latest.wind || 0),
+            solar_mw: parseFloat(latest.solar || 0),
+            hydro_mw: parseFloat(latest.hydro || 0),
+            coal_mw: parseFloat(latest.coal || 0),
+            other_mw: parseFloat(latest.other || 0),
+            total_generation_mw: parseFloat(latest.total || 0),
+            renewable_percentage: ((parseFloat(latest.wind || 0) + parseFloat(latest.hydro || 0) + parseFloat(latest.solar || 0)) / parseFloat(latest.total || 1)) * 100,
+            timestamp: latest.begin_datetime_mpt || latest.begin_datetime_utc || new Date().toISOString()
           };
         }
       }
@@ -345,7 +354,7 @@ serve(async (req) => {
 
   try {
     const { action, endpoint, params = {} } = await req.json();
-    console.log(`🚀 AESO API Gateway Request: ${JSON.stringify({ action, endpoint, params, timestamp: new Date().toISOString() })}`);
+    console.log(`🚀 REAL DATA REQUEST: ${JSON.stringify({ action, endpoint, params, timestamp: new Date().toISOString() })}`);
     
     const config = getAESOConfig();
     let result;
@@ -361,7 +370,6 @@ serve(async (req) => {
       params.endDate = params.endDate || params.startDate;
     } else if (action === 'fetch_load_forecast') {
       targetEndpoint = 'load-forecast';
-      // Set default parameters for load forecast
       const today = new Date().toISOString().split('T')[0];
       params.startDate = params.startDate || today;
       params.endDate = params.endDate || today;
@@ -371,37 +379,37 @@ serve(async (req) => {
       targetEndpoint = 'generation';
     }
 
-    // Minimal rate limiting like Pool Price success pattern
+    // Minimal rate limiting for real data
     await sleep(config.rateLimitDelay);
 
-    console.log(`🎯 Attempting to call AESO API Gateway endpoint: ${targetEndpoint} with params:`, params);
+    console.log(`🎯 AGGRESSIVE REAL DATA ATTEMPT: ${targetEndpoint} with params:`, params);
 
     try {
       const response = await callAESO(targetEndpoint, params, config);
       const processedData = processAESOResponse(targetEndpoint, response.data);
       result = processedData;
       dataSource = 'aeso_api';
-      console.log(`✅ AESO API Gateway call successful for ${targetEndpoint} - LIVE DATA RETRIEVED!`);
+      console.log(`✅ REAL AESO DATA SUCCESS for ${targetEndpoint}!`);
       
     } catch (error) {
-      console.error(`🚨 AESO API Gateway Error for ${targetEndpoint}:`, error.message);
+      console.error(`🚨 REAL DATA FAILED for ${targetEndpoint}:`, error.message);
       result = generateFallbackData(targetEndpoint, params);
       
       errorMessage = error.message === 'INVALID_API_KEY' 
-        ? 'AESO API key is invalid or expired - please check your AESO_SUB_KEY or AESO_API_KEY in Supabase secrets'
+        ? 'AESO API key is invalid - configure AESO_SUB_KEY in Supabase secrets'
         : error.message === 'MISSING_AESO_SUB_KEY'
-        ? 'AESO API key is missing - please configure AESO_SUB_KEY or AESO_API_KEY in Supabase secrets'
+        ? 'AESO API key missing - configure AESO_SUB_KEY in Supabase secrets'
         : error.message === 'RATE_LIMIT_EXCEEDED'
-        ? 'AESO API Gateway rate limit exceeded - please try again later'
+        ? 'AESO API rate limit exceeded - try again later'
         : error.message === 'ENDPOINT_NOT_FOUND'
-        ? `AESO API Gateway endpoint not found (${targetEndpoint}) - endpoint may not be available in your subscription`
+        ? `AESO endpoint not found (${targetEndpoint}) - may not be available`
         : error.message === 'BAD_REQUEST_PARAMETERS'
-        ? `Invalid parameters for AESO API Gateway endpoint (${targetEndpoint}) - please check the required parameters`
-        : error.message.includes('NETWORK_CONNECTION_ERROR')
-        ? `AESO API Gateway connectivity issue (${targetEndpoint}) – simplified retry logic failed after multiple attempts`
-        : `AESO API Gateway temporarily unavailable (${targetEndpoint}) – showing simulated data: ${error.message}`;
+        ? `Invalid parameters for ${targetEndpoint} - check required parameters`
+        : error.message.includes('NETWORK_ERROR')
+        ? `AESO API network connectivity issue (${targetEndpoint}) - using fallback data`
+        : `AESO API temporarily unavailable (${targetEndpoint}) - using simulated data: ${error.message}`;
       
-      console.log(`🔄 Falling back to simulated data for ${targetEndpoint}`);
+      console.log(`🔄 Using fallback data for ${targetEndpoint}`);
     }
 
     const response = {
@@ -413,13 +421,13 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     };
 
-    console.log(`📤 Final response summary:`, {
+    console.log(`📤 FINAL RESPONSE:`, {
       success: response.success,
       source: response.source,
       endpoint: response.endpoint,
       hasError: !!response.error,
       dataKeys: Object.keys(response.data || {}),
-      isLiveData: dataSource === 'aeso_api'
+      isRealData: dataSource === 'aeso_api'
     });
 
     return new Response(JSON.stringify(response), {
@@ -428,13 +436,13 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('💥 Fatal error in AESO API Gateway integration:', error);
+    console.error('💥 Fatal error in AESO real data integration:', error);
     
     return new Response(JSON.stringify({
       success: true,
       data: generateFallbackData('pool-price'),
       source: 'emergency_fallback',
-      error: 'AESO API Gateway service temporarily unavailable – showing emergency fallback data',
+      error: 'AESO API service temporarily unavailable – emergency fallback active',
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
