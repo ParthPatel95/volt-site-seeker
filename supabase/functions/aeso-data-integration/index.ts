@@ -54,8 +54,8 @@ const makeAESORequest = async (
   url.searchParams.append('contentType', 'application/json');
 
   const headers = {
-    'accept': 'application/json',
-    'X-API-Key': config.subscriptionKey, // Updated header name
+    'Accept': 'application/json',
+    'Ocp-Apim-Subscription-Key': config.subscriptionKey,
     'User-Agent': 'VoltScout-API-Client/1.0',
     'Content-Type': 'application/json'
   };
