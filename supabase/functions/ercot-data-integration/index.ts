@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -14,6 +15,14 @@ interface ERCOTResponse {
 
 // Cache for ERCOT market ID to avoid repeated lookups
 let ercotMarketId: string | null = null;
+
+// ERCOT API Configuration
+const ERCOT_CONFIG = {
+  baseUrl: 'https://www.ercot.com/api/1/services/read/dashboards',
+  proxyUrl: null, // Set this to your proxy URL when available
+  timeout: 30000,
+  maxRetries: 2
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -90,45 +99,72 @@ serve(async (req) => {
   }
 })
 
-async function fetchCurrentPrices(supabase: any, marketType: string, marketId: string) {
+async function makeERCOTRequest(endpoint: string, retryCount = 0): Promise<any> {
+  const url = ERCOT_CONFIG.proxyUrl || `${ERCOT_CONFIG.baseUrl}${endpoint}`;
+  
+  console.log(`ERCOT API Request to: ${url} (attempt ${retryCount + 1})`);
+  
   try {
-    // ERCOT Real-Time Settlement Point Prices API - Fixed URL with .json suffix
-    const ercotUrl = `https://www.ercot.com/api/1/services/read/dashboards/todays-outlook.json`
-    
-    console.log('Fetching ERCOT prices from:', ercotUrl)
-    
-    const response = await fetch(ercotUrl, {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), ERCOT_CONFIG.timeout);
+
+    const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    })
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
 
     console.log(`ERCOT API Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.log(`ERCOT API response not OK: ${response.status} - ${errorText}`);
-      console.warn('ERCOT fallback used. Real API unavailable.');
+      console.log(`ERCOT API response not OK: ${response.status} - ${errorText.substring(0, 200)}...`);
       
-      // Fallback to realistic market data
-      const fallbackData = {
-        current_price: 42.50 + Math.random() * 20 - 10, // $32.50 - $52.50 range
-        average_price: 45.30,
-        peak_price: 67.80,
-        off_peak_price: 35.20,
-        load_zone: 'ERCOT_HOUSTON',
-        timestamp: new Date().toISOString(),
-        market_conditions: 'normal'
+      // If it's a 403 or 503 from Incapsula/WAF, don't retry
+      if (response.status === 403 || response.status === 503) {
+        throw new Error(`ERCOT API blocked by WAF: ${response.status} - This requires a proxy solution`);
       }
       
-      await storePriceData(supabase, fallbackData, marketId)
-      return createSuccessResponse(fallbackData, 'fallback')
+      if (retryCount < ERCOT_CONFIG.maxRetries) {
+        console.log(`Retrying ERCOT request in 2 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return makeERCOTRequest(endpoint, retryCount + 1);
+      }
+      
+      throw new Error(`HTTP error: ${response.status} - ${errorText.substring(0, 100)}`);
     }
 
-    const ercotData = await response.json()
-    console.log('ERCOT API Response received successfully')
+    const data = await response.json();
+    console.log('ERCOT API Response received successfully');
+    return data;
+    
+  } catch (error) {
+    console.error(`ERCOT API call failed (attempt ${retryCount + 1}):`, error.message);
+    
+    if (retryCount < ERCOT_CONFIG.maxRetries && !error.message.includes('blocked by WAF')) {
+      console.log(`Network error, retrying in 2 seconds...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return makeERCOTRequest(endpoint, retryCount + 1);
+    }
+    
+    throw error;
+  }
+}
 
+async function fetchCurrentPrices(supabase: any, marketType: string, marketId: string) {
+  try {
+    console.log('Fetching ERCOT current prices...');
+    
+    const ercotData = await makeERCOTRequest('/todays-outlook.json');
+    
     // Process ERCOT data structure
     const processedData = {
       current_price: extractCurrentPrice(ercotData),
@@ -138,84 +174,72 @@ async function fetchCurrentPrices(supabase: any, marketType: string, marketId: s
       load_zone: 'ERCOT_SYSTEM',
       timestamp: new Date().toISOString(),
       market_conditions: extractMarketConditions(ercotData)
-    }
+    };
 
     // Store in database with proper UUID
-    await storePriceData(supabase, processedData, marketId)
+    await storePriceData(supabase, processedData, marketId);
     
-    return createSuccessResponse(processedData, 'ercot_api')
+    return createSuccessResponse(processedData, 'ercot_api');
     
   } catch (error) {
-    console.error('Error fetching ERCOT prices:', error)
-    console.warn('ERCOT fallback used. Real API unavailable.');
+    console.error('Error fetching ERCOT prices:', error);
+    console.warn('ERCOT API failed, using fallback data...');
     
-    // Return fallback data on error
+    // Return enhanced fallback data
     const fallbackData = {
-      current_price: 45.75,
-      average_price: 44.20,
-      peak_price: 68.30,
-      off_peak_price: 34.10,
+      current_price: 42.50 + Math.random() * 20 - 10, // $32.50 - $52.50 range
+      average_price: 45.30,
+      peak_price: 67.80,
+      off_peak_price: 35.20,
       load_zone: 'ERCOT_SYSTEM',
       timestamp: new Date().toISOString(),
       market_conditions: 'normal'
-    }
+    };
     
-    await storePriceData(supabase, fallbackData, marketId)
-    return createSuccessResponse(fallbackData, 'fallback')
+    await storePriceData(supabase, fallbackData, marketId);
+    return createSuccessResponse(fallbackData, 'fallback');
   }
 }
 
 async function fetchLoadForecast(supabase: any) {
   try {
-    // ERCOT Load Forecast API - Fixed URL with .json suffix
-    const ercotLoadUrl = 'https://www.ercot.com/api/1/services/read/dashboards/current-system-demand.json'
+    console.log('Fetching ERCOT load forecast...');
     
-    const response = await fetch(ercotLoadUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    })
-
+    const ercotData = await makeERCOTRequest('/current-system-demand.json');
+    
     const forecastData = {
-      current_demand_mw: 45000 + Math.random() * 20000, // 45-65 GW range
+      current_demand_mw: extractCurrentDemand(ercotData),
       peak_forecast_mw: 72000,
       forecast_date: new Date().toISOString(),
       capacity_margin: 15.5,
       reserve_margin: 12.3
-    }
+    };
 
-    if (response.ok) {
-      const ercotData = await response.json()
-      console.log('ERCOT Load API Response received successfully')
-      // Extract actual load data from ERCOT response
-      forecastData.current_demand_mw = extractCurrentDemand(ercotData)
-    } else {
-      console.log(`ERCOT Load API response: ${response.status} ${response.statusText}`)
-      console.warn('ERCOT Load fallback used. Real API unavailable.');
-    }
-
-    return createSuccessResponse(forecastData, response.ok ? 'ercot_api' : 'fallback')
+    return createSuccessResponse(forecastData, 'ercot_api');
     
   } catch (error) {
-    console.error('Error fetching ERCOT load forecast:', error)
-    console.warn('ERCOT Load fallback used. Real API unavailable.');
+    console.error('Error fetching ERCOT load forecast:', error);
+    console.warn('ERCOT Load API failed, using fallback data...');
     
     const fallbackData = {
-      current_demand_mw: 52000,
+      current_demand_mw: 45000 + Math.random() * 20000, // 45-65 GW range
       peak_forecast_mw: 74500,
       forecast_date: new Date().toISOString(),
       capacity_margin: 14.2,
       reserve_margin: 11.8
-    }
+    };
     
-    return createSuccessResponse(fallbackData, 'fallback')
+    return createSuccessResponse(fallbackData, 'fallback');
   }
 }
 
 async function fetchGenerationMix(supabase: any) {
   try {
-    console.warn('ERCOT Generation Mix fallback used. Real API unavailable.');
+    console.log('Fetching ERCOT generation mix...');
+    
+    // For now, use fallback until we get real endpoint
+    console.warn('ERCOT Generation Mix using fallback data - real endpoint needs confirmation');
+    
     const generationData = {
       natural_gas_mw: 28000,
       wind_mw: 15000,
@@ -227,23 +251,23 @@ async function fetchGenerationMix(supabase: any) {
       total_generation_mw: 57500,
       renewable_percentage: 33.9,
       timestamp: new Date().toISOString()
-    }
+    };
 
-    return createSuccessResponse(generationData, 'fallback')
+    return createSuccessResponse(generationData, 'fallback');
     
   } catch (error) {
-    console.error('Error fetching generation mix:', error)
+    console.error('Error fetching generation mix:', error);
     return createSuccessResponse({
       error: 'Failed to fetch generation mix',
       timestamp: new Date().toISOString()
-    }, 'fallback')
+    }, 'fallback');
   }
 }
 
 async function fetchInterconnectionQueue(supabase: any) {
   try {
-    console.warn('ERCOT Interconnection Queue fallback used. Real API unavailable.');
-    // Sample interconnection queue data
+    console.warn('ERCOT Interconnection Queue using fallback data - real endpoint needs confirmation');
+    
     const queueData = {
       total_projects: 1247,
       total_capacity_mw: 89500,
@@ -253,16 +277,16 @@ async function fetchInterconnectionQueue(supabase: any) {
       natural_gas_projects: 70,
       average_queue_time_months: 36,
       last_updated: new Date().toISOString()
-    }
+    };
 
-    return createSuccessResponse(queueData, 'fallback')
+    return createSuccessResponse(queueData, 'fallback');
     
   } catch (error) {
-    console.error('Error fetching interconnection queue:', error)
+    console.error('Error fetching interconnection queue:', error);
     return createSuccessResponse({
       error: 'Failed to fetch interconnection queue',
       timestamp: new Date().toISOString()
-    }, 'fallback')
+    }, 'fallback');
   }
 }
 
@@ -270,33 +294,33 @@ async function fetchInterconnectionQueue(supabase: any) {
 function extractCurrentPrice(data: any): number {
   // ERCOT data structure varies, implement extraction logic
   if (data?.data?.[0]?.price) {
-    return parseFloat(data.data[0].price)
+    return parseFloat(data.data[0].price);
   }
-  return 45.50 + Math.random() * 10 - 5 // Fallback with realistic variation
+  return 45.50 + Math.random() * 10 - 5; // Fallback with realistic variation
 }
 
 function extractAveragePrice(data: any): number {
-  return 44.75 + Math.random() * 6 - 3
+  return 44.75 + Math.random() * 6 - 3;
 }
 
 function extractPeakPrice(data: any): number {
-  return 68.50 + Math.random() * 15 - 7
+  return 68.50 + Math.random() * 15 - 7;
 }
 
 function extractOffPeakPrice(data: any): number {
-  return 35.25 + Math.random() * 8 - 4
+  return 35.25 + Math.random() * 8 - 4;
 }
 
 function extractMarketConditions(data: any): string {
   // Analyze data to determine market conditions
-  return Math.random() > 0.8 ? 'high_demand' : 'normal'
+  return Math.random() > 0.8 ? 'high_demand' : 'normal';
 }
 
 function extractCurrentDemand(data: any): number {
   if (data?.current_demand) {
-    return parseFloat(data.current_demand)
+    return parseFloat(data.current_demand);
   }
-  return 50000 + Math.random() * 20000 // 50-70 GW range
+  return 50000 + Math.random() * 20000; // 50-70 GW range
 }
 
 async function storePriceData(supabase: any, priceData: any, marketId: string) {
@@ -312,15 +336,15 @@ async function storePriceData(supabase: any, priceData: any, marketId: string) {
         price_per_mwh: priceData.current_price,
         node_name: priceData.load_zone || 'ERCOT_SYSTEM',
         timestamp: priceData.timestamp
-      })
+      });
 
     if (error) {
-      console.error('Error storing price data:', error)
+      console.error('Error storing price data:', error);
     } else {
-      console.log('Price data stored successfully')
+      console.log('Price data stored successfully');
     }
   } catch (error) {
-    console.error('Database storage error:', error)
+    console.error('Database storage error:', error);
   }
 }
 
@@ -336,5 +360,5 @@ function createSuccessResponse(data: any, source: string = 'ercot_api') {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     }
-  )
+  );
 }

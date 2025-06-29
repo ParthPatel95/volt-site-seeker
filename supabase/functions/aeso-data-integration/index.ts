@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -6,11 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Try alternate API gateway if main one fails
-const AESO_BASE_URLS = [
-  'https://api.aeso.ca/report/v1.1',
-  'https://apimgw.aeso.ca/public/poolprice-api/v1.1'
-];
+// Fixed AESO API configuration
+const AESO_BASE_URL = 'https://api.aeso.ca/report/v1.1';
 
 interface AESOConfig {
   subscriptionKey: string;
@@ -21,7 +19,10 @@ interface AESOConfig {
 
 const getAESOConfig = (): AESOConfig => {
   const subscriptionKey = Deno.env.get('AESO_SUB_KEY');
-  console.log("AESO_SUB_KEY:", subscriptionKey ? `Present (${subscriptionKey.substring(0, 8)}...)` : 'UNDEFINED');
+  console.log("AESO_SUB_KEY Present:", !!subscriptionKey);
+  if (subscriptionKey) {
+    console.log("AESO_SUB_KEY Value:", subscriptionKey.substring(0, 8) + "...");
+  }
   
   if (!subscriptionKey) {
     console.warn('AESO_SUB_KEY environment variable not found, using fallback data');
@@ -31,8 +32,8 @@ const getAESOConfig = (): AESOConfig => {
   return {
     subscriptionKey,
     timeout: 30000,
-    maxRetries: 3,
-    backoffDelays: [1000, 3000, 5000]
+    maxRetries: 2,
+    backoffDelays: [1000, 3000]
   };
 };
 
@@ -42,24 +43,23 @@ const makeAESORequest = async (
   endpoint: string, 
   params: Record<string, string>, 
   config: AESOConfig, 
-  retryCount = 0,
-  baseUrlIndex = 0
+  retryCount = 0
 ): Promise<any> => {
-  const baseUrl = AESO_BASE_URLS[baseUrlIndex] || AESO_BASE_URLS[0];
-  const url = new URL(`${baseUrl}${endpoint}`);
+  const url = new URL(`${AESO_BASE_URL}${endpoint}`);
   
-  // Add only necessary parameters - removed contentType=application/json
+  // Add only necessary parameters - NO contentType parameter
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.append(key, value);
   });
 
+  // Fixed headers exactly as specified
   const headers = {
     'Accept': 'application/json',
     'Ocp-Apim-Subscription-Key': config.subscriptionKey,
-    'User-Agent': 'VoltScout-API-Client/1.0'
+    'User-Agent': 'VoltScout-EdgeClient/1.0'
   };
 
-  console.log(`AESO API Request to: ${url.toString()} (attempt ${retryCount + 1}, base URL ${baseUrlIndex + 1})`);
+  console.log(`AESO API Request to: ${url.toString()} (attempt ${retryCount + 1})`);
   console.log(`Headers:`, JSON.stringify(headers, null, 2));
 
   try {
@@ -80,43 +80,31 @@ const makeAESORequest = async (
       const errorText = await response.text();
       console.error(`AESO API HTTP error ${response.status}: ${errorText}`);
       
-      // Try alternate base URL if available
-      if (baseUrlIndex < AESO_BASE_URLS.length - 1) {
-        console.log(`Trying alternate AESO base URL...`);
-        return makeAESORequest(endpoint, params, config, retryCount, baseUrlIndex + 1);
-      }
-      
       if (response.status === 429 && retryCount < config.maxRetries) {
         const delay = config.backoffDelays[retryCount] || 5000;
         console.log(`Rate limited, retrying in ${delay}ms (attempt ${retryCount + 1})`);
         await sleep(delay);
-        return makeAESORequest(endpoint, params, config, retryCount + 1, 0);
+        return makeAESORequest(endpoint, params, config, retryCount + 1);
       }
       throw new Error(`HTTP error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log(`AESO API Response received successfully from ${baseUrl}`);
+    console.log(`AESO API Response received successfully from ${AESO_BASE_URL}`);
     
     return data;
   } catch (error) {
-    console.error(`AESO API call failed (attempt ${retryCount + 1}, base URL ${baseUrlIndex + 1}):`, {
+    console.error(`AESO API call failed (attempt ${retryCount + 1}):`, {
       message: error.message,
       name: error.name,
       stack: error.stack
     });
     
-    // Try alternate base URL if available and not already tried
-    if (baseUrlIndex < AESO_BASE_URLS.length - 1) {
-      console.log(`Network error, trying alternate AESO base URL...`);
-      return makeAESORequest(endpoint, params, config, retryCount, baseUrlIndex + 1);
-    }
-    
     if (retryCount < config.maxRetries && (error.name === 'AbortError' || error.message.includes('network') || error.message.includes('fetch'))) {
       const delay = config.backoffDelays[retryCount] || 5000;
       console.log(`Network error, retrying in ${delay}ms (attempt ${retryCount + 1})`);
       await sleep(delay);
-      return makeAESORequest(endpoint, params, config, retryCount + 1, 0);
+      return makeAESORequest(endpoint, params, config, retryCount + 1);
     }
     
     throw error;
@@ -336,7 +324,7 @@ serve(async (req) => {
     
     try {
       const config = getAESOConfig();
-      console.log('AESO Subscription Key available:', !!config.subscriptionKey);
+      console.log('AESO API Key Configuration Valid:', !!config.subscriptionKey);
 
       switch (action) {
         case 'fetch_current_prices':
