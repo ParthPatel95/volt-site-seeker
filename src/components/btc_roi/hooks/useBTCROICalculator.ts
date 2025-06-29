@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { BTCNetworkData, BTCROIFormData, BTCROIResults, HostingROIResults } from '../types/btc_roi_types';
-import { hostingCalculatorService } from '../services/hostingCalculatorService';
+import { HostingCalculatorService } from '../services/hostingCalculatorService';
 import { useStoredCalculationsDB } from './useStoredCalculationsDB';
 
 // Mock network data service - in production this would be real API calls
@@ -154,7 +153,7 @@ export const useBTCROICalculator = () => {
 
     setIsLoading(true);
     try {
-      const results = hostingCalculatorService.calculateHostingROI(formData, networkData);
+      const results = HostingCalculatorService.calculateHostingROI(formData, networkData);
       setHostingResults(results);
       setRoiResults(null);
     } catch (error) {

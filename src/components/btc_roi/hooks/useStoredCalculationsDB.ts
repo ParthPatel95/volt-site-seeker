@@ -51,12 +51,12 @@ export const useStoredCalculationsDB = (): UseStoredCalculationsDBReturn => {
         id: calc.id,
         siteName: calc.site_name,
         calculationType: calc.calculation_type as 'hosting' | 'self',
-        formData: calc.form_data as BTCROIFormData,
+        formData: calc.form_data as unknown as BTCROIFormData,
         networkData: {
-          ...calc.network_data as BTCNetworkData,
+          ...(calc.network_data as unknown as BTCNetworkData),
           lastUpdate: new Date((calc.network_data as any).lastUpdate)
         },
-        results: calc.results as HostingROIResults | BTCROIResults,
+        results: calc.results as unknown as HostingROIResults | BTCROIResults,
         timestamp: new Date(calc.created_at)
       }));
 
@@ -99,9 +99,10 @@ export const useStoredCalculationsDB = (): UseStoredCalculationsDBReturn => {
         .insert({
           site_name: finalSiteName,
           calculation_type: calculationType,
-          form_data: formData,
-          network_data: networkData,
-          results: results
+          form_data: formData as any,
+          network_data: networkData as any,
+          results: results as any,
+          user_id: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
         .single();
@@ -120,12 +121,12 @@ export const useStoredCalculationsDB = (): UseStoredCalculationsDBReturn => {
         id: data.id,
         siteName: data.site_name,
         calculationType: data.calculation_type as 'hosting' | 'self',
-        formData: data.form_data as BTCROIFormData,
+        formData: data.form_data as unknown as BTCROIFormData,
         networkData: {
-          ...data.network_data as BTCNetworkData,
+          ...(data.network_data as unknown as BTCNetworkData),
           lastUpdate: new Date((data.network_data as any).lastUpdate)
         },
-        results: data.results as HostingROIResults | BTCROIResults,
+        results: data.results as unknown as HostingROIResults | BTCROIResults,
         timestamp: new Date(data.created_at)
       };
 
