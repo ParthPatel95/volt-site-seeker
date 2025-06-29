@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
-import { aesoAPI } from '@/services/aesoAPI';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AESOPricing {
   current_price: number;
@@ -31,119 +33,185 @@ export interface AESOGenerationMix {
   timestamp: string;
 }
 
-export type ConnectionStatus = 'connected' | 'fallback' | 'disconnected' | 'error';
+const isValidNumber = (value: any): value is number => {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+};
 
-export interface AESODataStatus {
-  isLive: boolean;
-  lastUpdate: string | null;
-  errorMessage: string | null;
-  retryCount: number;
-  fallbackSince: string | null;
-}
+const validatePricingData = (data: any): AESOPricing | null => {
+  if (!data) return null;
+  
+  const pricing = {
+    current_price: isValidNumber(data.current_price) ? data.current_price : 0,
+    average_price: isValidNumber(data.average_price) ? data.average_price : 0,
+    peak_price: isValidNumber(data.peak_price) ? data.peak_price : 0,
+    off_peak_price: isValidNumber(data.off_peak_price) ? data.off_peak_price : 0,
+    timestamp: data.timestamp || new Date().toISOString(),
+    market_conditions: data.market_conditions || 'normal',
+    cents_per_kwh: isValidNumber(data.cents_per_kwh) ? data.cents_per_kwh : 0
+  };
+  
+  // Ensure at least current_price is valid
+  return pricing.current_price > 0 ? pricing : null;
+};
+
+const validateLoadData = (data: any): AESOLoadData | null => {
+  if (!data) return null;
+  
+  const loadData = {
+    current_demand_mw: isValidNumber(data.current_demand_mw) ? data.current_demand_mw : 0,
+    peak_forecast_mw: isValidNumber(data.peak_forecast_mw) ? data.peak_forecast_mw : 0,
+    forecast_date: data.forecast_date || new Date().toISOString(),
+    capacity_margin: isValidNumber(data.capacity_margin) ? data.capacity_margin : 0,
+    reserve_margin: isValidNumber(data.reserve_margin) ? data.reserve_margin : 0
+  };
+  
+  // Ensure at least current_demand_mw is valid
+  return loadData.current_demand_mw > 0 ? loadData : null;
+};
+
+const validateGenerationData = (data: any): AESOGenerationMix | null => {
+  if (!data) return null;
+  
+  const genData = {
+    natural_gas_mw: isValidNumber(data.natural_gas_mw) ? data.natural_gas_mw : 0,
+    wind_mw: isValidNumber(data.wind_mw) ? data.wind_mw : 0,
+    solar_mw: isValidNumber(data.solar_mw) ? data.solar_mw : 0,
+    hydro_mw: isValidNumber(data.hydro_mw) ? data.hydro_mw : 0,
+    coal_mw: isValidNumber(data.coal_mw) ? data.coal_mw : 0,
+    other_mw: isValidNumber(data.other_mw) ? data.other_mw : 0,
+    total_generation_mw: isValidNumber(data.total_generation_mw) ? data.total_generation_mw : 0,
+    renewable_percentage: isValidNumber(data.renewable_percentage) ? data.renewable_percentage : 0,
+    timestamp: data.timestamp || new Date().toISOString()
+  };
+  
+  // Ensure total generation is valid
+  return genData.total_generation_mw > 0 ? genData : null;
+};
 
 export function useAESOData() {
   const [pricing, setPricing] = useState<AESOPricing | null>(null);
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
-  const [dataStatus, setDataStatus] = useState<AESODataStatus>({
-    isLive: false,
-    lastUpdate: null,
-    errorMessage: null,
-    retryCount: 0,
-    fallbackSince: null
-  });
+  const [loading, setLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback'>('connecting');
+  const [lastFetchTime, setLastFetchTime] = useState<string>('');
+  const [hasShownFallbackNotice, setHasShownFallbackNotice] = useState(false);
+  const { toast } = useToast();
 
-  const fetchData = async () => {
+  const fetchAESOData = async (dataType: string) => {
     setLoading(true);
-    console.log('🔌 Starting AESO API Gateway data fetch...');
-    
     try {
-      // Use updated service methods
-      const pricingResponse = await aesoAPI.fetchCurrentPrices();
+      console.log('Fetching AESO data:', dataType);
       
-      console.log('📊 AESO API Gateway Pricing Response:', pricingResponse);
+      const { data, error } = await supabase.functions.invoke('aeso-data-integration', {
+        body: { action: dataType }
+      });
+
+      if (error) {
+        console.error('AESO API error:', error);
+        throw error;
+      }
+
+      console.log('AESO data received:', data);
       
-      if (pricingResponse?.success && pricingResponse?.data) {
-        console.log('✅ AESO pricing data updated:', pricingResponse.data);
-        setPricing(pricingResponse.data);
+      // Validate the response structure
+      if (!data || data.success === false) {
+        throw new Error(data?.error || 'Failed to fetch AESO data');
+      }
+
+      // Validate that we have actual data
+      if (!data.data) {
+        throw new Error('No data returned from AESO API');
+      }
+
+      // Update connection status based on data source
+      if (data.source === 'aeso_api') {
+        setConnectionStatus('connected');
+        setHasShownFallbackNotice(false);
+        setLastFetchTime(data.timestamp);
         
-        const isLive = pricingResponse.source === 'aeso_api';
-        setConnectionStatus(isLive ? 'connected' : 'fallback');
-        
-        if (isLive) {
-          console.log('🟢 AESO API Gateway is LIVE - real pool price data retrieved!');
-          console.log(`💰 Current Alberta Pool Price: $${pricingResponse.data.current_price}/MWh (CAD)`);
-        } else {
-          console.log('⚠️ Using fallback data - API Gateway authentication or connection failed');
+        if (connectionStatus !== 'connected') {
+          toast({
+            title: "AESO API Connected",
+            description: "Now receiving live market data from AESO",
+            variant: "default"
+          });
         }
-        
-        const lastUpdateTime = pricingResponse.timestamp || new Date().toISOString();
-        const currentFallbackSince = !isLive && dataStatus.fallbackSince === null 
-          ? new Date().toISOString() 
-          : (isLive ? null : dataStatus.fallbackSince);
-        
-        setDataStatus({
-          isLive,
-          lastUpdate: lastUpdateTime,
-          errorMessage: pricingResponse.error || null,
-          retryCount: isLive ? 0 : dataStatus.retryCount + 1,
-          fallbackSince: currentFallbackSince
-        });
-      } else {
-        console.error('❌ Invalid response structure from AESO API Gateway');
-        throw new Error('Invalid response from AESO API Gateway');
+      } else if (data.source === 'fallback') {
+        setConnectionStatus('fallback');
+        if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
+          setHasShownFallbackNotice(true);
+          toast({
+            title: "Using Simulated Data",
+            description: "AESO API unavailable, showing realistic test data",
+            variant: "default"
+          });
+        }
       }
-
-      // Fetch load data
-      const loadResponse = await aesoAPI.fetchLoadForecast();
       
-      if (loadResponse?.success && loadResponse?.data) {
-        console.log('📈 Load data updated:', loadResponse.data);
-        setLoadData(loadResponse.data);
-      }
+      return data.data;
 
-      // Fetch generation mix
-      const generationResponse = await aesoAPI.fetchGenerationMix();
-      
-      if (generationResponse?.success && generationResponse?.data) {
-        console.log('⚡ Generation data updated:', generationResponse.data);
-        setGenerationMix(generationResponse.data);
-      }
-
-    } catch (error) {
-      console.error('💥 Error fetching AESO API Gateway data:', error);
-      setConnectionStatus('error');
-      
-      setDataStatus(prev => ({
-        ...prev,
-        isLive: false,
-        errorMessage: 'Unable to connect to AESO API Gateway - check AESO_SUB_KEY configuration',
-        retryCount: prev.retryCount + 1,
-        fallbackSince: prev.fallbackSince || new Date().toISOString()
-      }));
+    } catch (error: any) {
+      console.error('Error fetching AESO data:', error);
+      setConnectionStatus('fallback');
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const refetch = () => {
-    console.log('🔄 Force refreshing AESO data...');
-    fetchData();
+  const getCurrentPrices = async () => {
+    const data = await fetchAESOData('fetch_current_prices');
+    const validatedData = validatePricingData(data);
+    if (validatedData) {
+      setPricing(validatedData);
+      console.log('Pricing data updated:', validatedData);
+    } else {
+      console.warn('Invalid pricing data received, skipping update');
+    }
+    return validatedData;
   };
 
-  const isFallbackStale = () => {
-    if (!dataStatus.fallbackSince) return false;
-    const fallbackStart = new Date(dataStatus.fallbackSince);
-    const now = new Date();
-    const hoursDiff = (now.getTime() - fallbackStart.getTime()) / (1000 * 60 * 60);
-    return hoursDiff > 1;
+  const getLoadForecast = async () => {
+    const data = await fetchAESOData('fetch_load_forecast');
+    const validatedData = validateLoadData(data);
+    if (validatedData) {
+      setLoadData(validatedData);
+      console.log('Load data updated:', validatedData);
+    } else {
+      console.warn('Invalid load data received, skipping update');
+    }
+    return validatedData;
   };
 
+  const getGenerationMix = async () => {
+    const data = await fetchAESOData('fetch_generation_mix');
+    const validatedData = validateGenerationData(data);
+    if (validatedData) {
+      setGenerationMix(validatedData);
+      console.log('Generation data updated:', validatedData);
+    } else {
+      console.warn('Invalid generation data received, skipping update');
+    }
+    return validatedData;
+  };
+
+  // Auto-fetch data on component mount
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 120000); // Poll every 2 minutes
+    const fetchAllData = async () => {
+      console.log('Starting AESO data fetch...');
+      await Promise.all([
+        getCurrentPrices(),
+        getLoadForecast(),
+        getGenerationMix()
+      ]);
+    };
+
+    fetchAllData();
+    
+    // Set up interval to refresh data every 5 minutes
+    const interval = setInterval(fetchAllData, 5 * 60 * 1000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -153,10 +221,14 @@ export function useAESOData() {
     generationMix,
     loading,
     connectionStatus,
-    dataStatus: {
-      ...dataStatus,
-      isStale: isFallbackStale()
-    },
-    refetch
+    lastFetchTime,
+    getCurrentPrices,
+    getLoadForecast,
+    getGenerationMix,
+    refetch: () => {
+      getCurrentPrices();
+      getLoadForecast();
+      getGenerationMix();
+    }
   };
 }

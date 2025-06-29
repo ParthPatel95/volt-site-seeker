@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -49,7 +50,7 @@ export const BTCROIMainPage = () => {
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-4 flex-wrap">
             <Bitcoin className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-500 flex-shrink-0" />
             <h1 className="text-xl sm:text-2xl md:text-4xl font-bold text-gray-800 break-words text-center">
-              Volt Analytics
+              BTC Mining ROI Lab
             </h1>
             <Calculator className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-orange-500 flex-shrink-0" />
           </div>
