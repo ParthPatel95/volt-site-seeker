@@ -179,6 +179,42 @@ export type Database = {
         }
         Relationships: []
       }
+      btc_roi_calculations: {
+        Row: {
+          calculation_type: string
+          created_at: string
+          form_data: Json
+          id: string
+          network_data: Json
+          results: Json
+          site_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calculation_type: string
+          created_at?: string
+          form_data: Json
+          id?: string
+          network_data: Json
+          results: Json
+          site_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calculation_type?: string
+          created_at?: string
+          form_data?: Json
+          id?: string
+          network_data?: Json
+          results?: Json
+          site_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       city_power_analysis: {
         Row: {
           analysis_date: string

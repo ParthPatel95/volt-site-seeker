@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { StoredCalculation, HostingROIResults, BTCROIResults } from './types/btc_roi_types';
-import { useStoredCalculations } from './hooks/useStoredCalculations';
+import { useStoredCalculationsDB } from './hooks/useStoredCalculationsDB';
 
 interface BTCROIStoredCalculationsProps {
   currentCalculationType: 'hosting' | 'self';
@@ -35,7 +34,7 @@ export const BTCROIStoredCalculations: React.FC<BTCROIStoredCalculationsProps> =
   currentResults,
   onSaveCalculation
 }) => {
-  const { storedCalculations, deleteCalculation, clearAllCalculations } = useStoredCalculations();
+  const { storedCalculations, deleteCalculation, clearAllCalculations, loading } = useStoredCalculationsDB();
   const [siteName, setSiteName] = useState('');
   const [selectedCalculation, setSelectedCalculation] = useState<StoredCalculation | null>(null);
 
@@ -247,6 +246,19 @@ export const BTCROIStoredCalculations: React.FC<BTCROIStoredCalculationsProps> =
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="flex justify-center items-center space-x-2">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span>Loading calculations...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
