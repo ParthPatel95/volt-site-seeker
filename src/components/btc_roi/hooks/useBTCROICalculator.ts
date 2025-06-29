@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { BTCNetworkData, BTCROIFormData, BTCROIResults, HostingROIResults } from '../types/btc_roi_types';
 import { HostingCalculatorService } from '../services/hostingCalculatorService';
@@ -148,12 +149,12 @@ export const useBTCROICalculator = () => {
     }
   };
 
-  const calculateHostingROI = () => {
+  const calculateHostingROI = async () => {
     if (!networkData) return;
 
     setIsLoading(true);
     try {
-      const results = HostingCalculatorService.calculateHostingROI(formData, networkData);
+      const results = await HostingCalculatorService.calculateHostingROI(formData, networkData);
       setHostingResults(results);
       setRoiResults(null);
     } catch (error) {
