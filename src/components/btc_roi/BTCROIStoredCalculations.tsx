@@ -228,9 +228,9 @@ export const BTCROIStoredCalculations: React.FC<BTCROIStoredCalculationsProps> =
                       {isHosting ? (
                         <>
                           <TableRow>
-                            <TableCell className="text-xs font-medium">Total Investment</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as HostingROIResults).totalInvestment)}</TableCell>
-                            <TableCell className="text-xs text-right">Hardware + Infrastructure</TableCell>
+                            <TableCell className="text-xs font-medium">Infrastructure Investment</TableCell>
+                            <TableCell className="text-xs text-right">{formatCurrency(calc.formData.infrastructureCost)}</TableCell>
+                            <TableCell className="text-xs text-right">Initial CapEx</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell className="text-xs font-medium">Annual Revenue</TableCell>
@@ -320,8 +320,8 @@ export const BTCROIStoredCalculations: React.FC<BTCROIStoredCalculationsProps> =
                         <div className="text-xs text-purple-600">Profit Margin</div>
                       </div>
                       <div className="text-center p-3 bg-orange-50 rounded-lg">
-                        <div className="text-lg font-bold text-orange-700">{formatCurrency((calc.results as HostingROIResults).breakEvenPoint)}</div>
-                        <div className="text-xs text-orange-600">Break Even</div>
+                        <div className="text-lg font-bold text-orange-700">{formatCurrency(calc.formData.infrastructureCost)}</div>
+                        <div className="text-xs text-orange-600">Investment</div>
                       </div>
                     </>
                   ) : (
