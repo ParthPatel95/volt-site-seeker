@@ -109,7 +109,7 @@ async function fetchCurrentPrices(supabase: any, marketType: string, marketId: s
     if (!response.ok) {
       const errorText = await response.text();
       console.log(`ERCOT API response not OK: ${response.status} - ${errorText}`);
-      console.log('Using fallback data for ERCOT');
+      console.warn('ERCOT fallback used. Real API unavailable.');
       
       // Fallback to realistic market data
       const fallbackData = {
@@ -123,7 +123,7 @@ async function fetchCurrentPrices(supabase: any, marketType: string, marketId: s
       }
       
       await storePriceData(supabase, fallbackData, marketId)
-      return createSuccessResponse(fallbackData)
+      return createSuccessResponse(fallbackData, 'fallback')
     }
 
     const ercotData = await response.json()
@@ -143,10 +143,11 @@ async function fetchCurrentPrices(supabase: any, marketType: string, marketId: s
     // Store in database with proper UUID
     await storePriceData(supabase, processedData, marketId)
     
-    return createSuccessResponse(processedData)
+    return createSuccessResponse(processedData, 'ercot_api')
     
   } catch (error) {
     console.error('Error fetching ERCOT prices:', error)
+    console.warn('ERCOT fallback used. Real API unavailable.');
     
     // Return fallback data on error
     const fallbackData = {
@@ -160,7 +161,7 @@ async function fetchCurrentPrices(supabase: any, marketType: string, marketId: s
     }
     
     await storePriceData(supabase, fallbackData, marketId)
-    return createSuccessResponse(fallbackData)
+    return createSuccessResponse(fallbackData, 'fallback')
   }
 }
 
@@ -191,12 +192,14 @@ async function fetchLoadForecast(supabase: any) {
       forecastData.current_demand_mw = extractCurrentDemand(ercotData)
     } else {
       console.log(`ERCOT Load API response: ${response.status} ${response.statusText}`)
+      console.warn('ERCOT Load fallback used. Real API unavailable.');
     }
 
-    return createSuccessResponse(forecastData)
+    return createSuccessResponse(forecastData, response.ok ? 'ercot_api' : 'fallback')
     
   } catch (error) {
     console.error('Error fetching ERCOT load forecast:', error)
+    console.warn('ERCOT Load fallback used. Real API unavailable.');
     
     const fallbackData = {
       current_demand_mw: 52000,
@@ -206,12 +209,13 @@ async function fetchLoadForecast(supabase: any) {
       reserve_margin: 11.8
     }
     
-    return createSuccessResponse(fallbackData)
+    return createSuccessResponse(fallbackData, 'fallback')
   }
 }
 
 async function fetchGenerationMix(supabase: any) {
   try {
+    console.warn('ERCOT Generation Mix fallback used. Real API unavailable.');
     const generationData = {
       natural_gas_mw: 28000,
       wind_mw: 15000,
@@ -225,19 +229,20 @@ async function fetchGenerationMix(supabase: any) {
       timestamp: new Date().toISOString()
     }
 
-    return createSuccessResponse(generationData)
+    return createSuccessResponse(generationData, 'fallback')
     
   } catch (error) {
     console.error('Error fetching generation mix:', error)
     return createSuccessResponse({
       error: 'Failed to fetch generation mix',
       timestamp: new Date().toISOString()
-    })
+    }, 'fallback')
   }
 }
 
 async function fetchInterconnectionQueue(supabase: any) {
   try {
+    console.warn('ERCOT Interconnection Queue fallback used. Real API unavailable.');
     // Sample interconnection queue data
     const queueData = {
       total_projects: 1247,
@@ -250,14 +255,14 @@ async function fetchInterconnectionQueue(supabase: any) {
       last_updated: new Date().toISOString()
     }
 
-    return createSuccessResponse(queueData)
+    return createSuccessResponse(queueData, 'fallback')
     
   } catch (error) {
     console.error('Error fetching interconnection queue:', error)
     return createSuccessResponse({
       error: 'Failed to fetch interconnection queue',
       timestamp: new Date().toISOString()
-    })
+    }, 'fallback')
   }
 }
 
@@ -319,12 +324,12 @@ async function storePriceData(supabase: any, priceData: any, marketId: string) {
   }
 }
 
-function createSuccessResponse(data: any) {
+function createSuccessResponse(data: any, source: string = 'ercot_api') {
   return new Response(
     JSON.stringify({ 
       success: true, 
       data: data,
-      source: 'ercot_api',
+      source: source,
       timestamp: new Date().toISOString()
     }),
     { 

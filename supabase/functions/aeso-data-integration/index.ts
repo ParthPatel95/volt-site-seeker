@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -22,6 +21,8 @@ interface AESOConfig {
 
 const getAESOConfig = (): AESOConfig => {
   const subscriptionKey = Deno.env.get('AESO_SUB_KEY');
+  console.log("AESO_SUB_KEY:", subscriptionKey ? `Present (${subscriptionKey.substring(0, 8)}...)` : 'UNDEFINED');
+  
   if (!subscriptionKey) {
     console.warn('AESO_SUB_KEY environment variable not found, using fallback data');
     throw new Error('AESO_SUB_KEY environment variable is required');
@@ -47,20 +48,19 @@ const makeAESORequest = async (
   const baseUrl = AESO_BASE_URLS[baseUrlIndex] || AESO_BASE_URLS[0];
   const url = new URL(`${baseUrl}${endpoint}`);
   
-  // Add contentType=application/json for JSON response
+  // Add only necessary parameters - removed contentType=application/json
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.append(key, value);
   });
-  url.searchParams.append('contentType', 'application/json');
 
   const headers = {
     'Accept': 'application/json',
     'Ocp-Apim-Subscription-Key': config.subscriptionKey,
-    'User-Agent': 'VoltScout-API-Client/1.0',
-    'Content-Type': 'application/json'
+    'User-Agent': 'VoltScout-API-Client/1.0'
   };
 
   console.log(`AESO API Request to: ${url.toString()} (attempt ${retryCount + 1}, base URL ${baseUrlIndex + 1})`);
+  console.log(`Headers:`, JSON.stringify(headers, null, 2));
 
   try {
     const controller = new AbortController();
@@ -358,7 +358,7 @@ serve(async (req) => {
       console.log('AESO API call successful, data source:', dataSource);
     } catch (error) {
       console.error('AESO API Error:', error.message);
-      console.log('AESO API unreachable, using fallback data...');
+      console.warn('AESO API unreachable, using fallback data...');
       result = generateRealisticFallbackData(action);
       dataSource = 'fallback';
     }
