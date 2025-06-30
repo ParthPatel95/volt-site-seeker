@@ -5,10 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// AESO API configuration with correct base URLs
+// Corrected AESO API endpoints based on official documentation
 const AESO_ENDPOINTS = {
   primary: 'https://ets.aeso.ca/ets_web/ip/Market',
-  secondary: 'https://www.aeso.ca/api/market',
+  secondary: 'https://www.aeso.ca/market/market-and-system-reporting',
   legacy: 'https://ets.aeso.ca/ets_web/ip'
 };
 
@@ -29,9 +29,9 @@ const getAESOConfig = (): AESOConfig => {
   
   return {
     apiKey,
-    timeout: 15000,
+    timeout: 10000, // Reduced timeout for faster fallback
     maxRetries: 1,
-    backoffDelays: [2000]
+    backoffDelays: [1000] // Shorter delay
   };
 };
 
@@ -47,6 +47,8 @@ const isDеnoNetworkError = (error: any): boolean => {
     errorMessage.includes('TLS') ||
     errorMessage.includes('SSL') ||
     errorMessage.includes('network unreachable') ||
+    errorMessage.includes('ConnectTimeoutError') ||
+    errorMessage.includes('invalid peer certificate') ||
     error.name === 'TypeError' && errorMessage.includes('url')
   );
 };
@@ -57,24 +59,45 @@ const makeAESORequest = async (
   config: AESOConfig, 
   retryCount = 0
 ): Promise<any> => {
-  const baseUrls = [AESO_ENDPOINTS.primary, AESO_ENDPOINTS.secondary, AESO_ENDPOINTS.legacy];
+  // Corrected endpoint paths for AESO API
+  const endpoints = [
+    {
+      baseUrl: 'https://ets.aeso.ca/ets_web/ip/Market',
+      authHeader: 'X-API-Key'
+    },
+    {
+      baseUrl: 'https://api.aeso.ca/report/v1.1',
+      authHeader: 'X-API-Key'
+    },
+    {
+      baseUrl: 'https://ets.aeso.ca/ets_web/ip',
+      authHeader: 'Authorization',
+      authPrefix: 'Bearer '
+    }
+  ];
   
-  for (const baseUrl of baseUrls) {
-    const url = new URL(`${baseUrl}${endpoint}`);
+  for (const endpointConfig of endpoints) {
+    const url = new URL(`${endpointConfig.baseUrl}${endpoint}`);
     
     // Add parameters
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value);
     });
 
-    // Use correct headers for AESO API
+    // Use correct headers for each endpoint
     const headers: Record<string, string> = {
       'Accept': 'application/json',
-      'X-API-Key': config.apiKey,
       'User-Agent': 'VoltScout-API-Client/1.0',
       'Cache-Control': 'no-cache',
       'Connection': 'close'
     };
+
+    // Set the appropriate auth header
+    if (endpointConfig.authHeader === 'Authorization') {
+      headers['Authorization'] = `${endpointConfig.authPrefix || ''}${config.apiKey}`;
+    } else {
+      headers[endpointConfig.authHeader] = config.apiKey;
+    }
 
     console.log(`🌐 AESO API Request to: ${url.toString()} (attempt ${retryCount + 1})`);
     console.log(`📋 Headers:`, JSON.stringify(headers, null, 2));
@@ -110,11 +133,11 @@ const makeAESORequest = async (
       }
 
       const data = await response.json();
-      console.log(`✅ AESO API Response received successfully from ${baseUrl}:`, JSON.stringify(data, null, 2));
+      console.log(`✅ AESO API Response received successfully from ${endpointConfig.baseUrl}:`, JSON.stringify(data, null, 2));
       
       return data;
     } catch (error) {
-      console.error(`❌ AESO API call failed on ${baseUrl} (attempt ${retryCount + 1}):`, {
+      console.error(`❌ AESO API call failed on ${endpointConfig.baseUrl} (attempt ${retryCount + 1}):`, {
         message: error.message,
         name: error.name,
         stack: error.stack
@@ -128,7 +151,7 @@ const makeAESORequest = async (
       
       // For other errors, retry with backoff on same endpoint
       if (retryCount < config.maxRetries) {
-        const delay = config.backoffDelays[retryCount] || 3000;
+        const delay = config.backoffDelays[retryCount] || 2000;
         console.log(`⏳ Retrying AESO API call in ${delay}ms (attempt ${retryCount + 1})`);
         await sleep(delay);
         return makeAESORequest(endpoint, params, config, retryCount + 1);
@@ -150,7 +173,7 @@ const fetchPoolPrice = async (config: AESOConfig) => {
   const today = getTodayDate();
   
   try {
-    // Try the correct AESO endpoint path
+    // Use the correct AESO pool price endpoint
     const data = await makeAESORequest('/Reports/CSDReportServlet', { 
       contentType: 'json',
       reportName: 'CurrentSupplyDemandReport'
