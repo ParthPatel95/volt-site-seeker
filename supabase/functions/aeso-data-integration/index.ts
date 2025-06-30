@@ -6,7 +6,7 @@ const corsHeaders = {
 }
 
 // Correct AESO API configuration based on official documentation
-const AESO_BASE_URL = 'https://api.aeso.ca/report/v1.1';
+const AESO_BASE_URL = 'https://apimgw.aeso.ca/public/reports-api/v1';
 
 interface AESOConfig {
   subscriptionKey: string;
@@ -116,7 +116,7 @@ const fetchPoolPrice = async (config: AESOConfig) => {
   console.log('Fetching AESO pool price...');
   const today = getTodayDate();
   
-  // Using correct endpoint from documentation
+  // Using correct endpoint from documentation: /price/poolPrice
   const data = await makeAESORequest('/price/poolPrice', { 
     startDate: today, 
     endDate: today 
@@ -157,7 +157,7 @@ const fetchSystemLoad = async (config: AESOConfig) => {
   console.log('Fetching AESO system load...');
   const today = getTodayDate();
   
-  // Using correct endpoint from documentation
+  // Using correct endpoint from documentation: /load/systemDemand
   const data = await makeAESORequest('/load/systemDemand', { 
     startDate: today,
     endDate: today 
@@ -191,7 +191,7 @@ const fetchGenerationMix = async (config: AESOConfig) => {
   console.log('Fetching AESO generation mix...');
   const today = getTodayDate();
   
-  // Using correct endpoint from documentation
+  // Using correct endpoint from documentation: /generation/assets
   const data = await makeAESORequest('/generation/assets', { 
     startDate: today,
     endDate: today 
@@ -242,7 +242,7 @@ const fetchGenerationMix = async (config: AESOConfig) => {
   };
 };
 
-const generateRealisticFallbackData = (action: string) => {
+function generateRealisticFallbackData(action: string) {
   const baseTime = Date.now();
   const timeVariation = Math.sin(baseTime / 100000) * 0.1;
   const randomVariation = (Math.random() - 0.5) * 0.2;
@@ -314,7 +314,8 @@ serve(async (req) => {
       const config = getAESOConfig();
       console.log('AESO API Configuration:', {
         hasKey: !!config.subscriptionKey,
-        keyPreview: config.subscriptionKey.substring(0, 8) + "..."
+        keyPreview: config.subscriptionKey.substring(0, 8) + "...",
+        baseUrl: AESO_BASE_URL
       });
 
       switch (action) {
