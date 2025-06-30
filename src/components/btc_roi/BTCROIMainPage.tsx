@@ -14,7 +14,7 @@ import { BTCROIProfitabilityHeatmap } from './BTCROIProfitabilityHeatmap';
 import { BTCROILineChart } from './BTCROILineChart';
 import { BTCROIStoredCalculations } from './BTCROIStoredCalculations';
 import { useBTCROICalculator } from './hooks/useBTCROICalculator';
-import { Bitcoin, Calculator, TrendingUp, Grid3X3, Building2, BarChart3 } from 'lucide-react';
+import { Bitcoin, Calculator, TrendingUp, Grid3X3, Building2, BarChart3, Zap } from 'lucide-react';
 
 export const BTCROIMainPage = () => {
   const [miningMode, setMiningMode] = useState<'hosting' | 'self'>('hosting');
@@ -43,100 +43,98 @@ export const BTCROIMainPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 p-2 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
-        {/* Header */}
-        <div className="text-center mb-3 sm:mb-4 md:mb-6 lg:mb-8 px-2">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3 md:mb-4 flex-wrap">
-            <Bitcoin className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-orange-500 flex-shrink-0" />
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 break-words text-center leading-tight">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-amber-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Enhanced Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 bg-orange-100 rounded-full">
+              <Bitcoin className="w-8 h-8 text-orange-600" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
               BTC Mining ROI Lab
             </h1>
-            <Calculator className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-orange-500 flex-shrink-0" />
+            <div className="p-3 bg-blue-100 rounded-full">
+              <Calculator className="w-8 h-8 text-blue-600" />
+            </div>
           </div>
-          <p className="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg px-2 sm:px-4 max-w-4xl mx-auto leading-relaxed">
-            Live Bitcoin mining profitability analyzer with real-time network data and hosting profitability tools
+          <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+            Professional Bitcoin mining profitability calculator with real-time market data and comprehensive analytics
           </p>
         </div>
 
-        {/* Live Network Stats */}
-        <div className="px-0 sm:px-0">
-          <BTCROILiveStatsCard networkData={networkData} />
+        {/* Live Network Stats - More Prominent */}
+        <BTCROILiveStatsCard networkData={networkData} />
+
+        {/* Mining Mode Selector - More Prominent */}
+        <div className="max-w-2xl mx-auto">
+          <BTCROIMiningModeSelector 
+            mode={miningMode} 
+            onModeChange={setMiningMode} 
+          />
         </div>
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="calculator" className="space-y-3 sm:space-y-4 md:space-y-6">
-          <div className="w-full overflow-x-auto pb-2">
-            <TabsList className="grid w-full grid-cols-5 min-w-[400px] h-auto p-1 gap-0.5">
+        {/* Main Calculator Section */}
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          {/* Input Form - Takes 2 columns */}
+          <div className="xl:col-span-2">
+            <BTCROIInputForm
+              mode={miningMode}
+              formData={formData}
+              onFormDataChange={setFormData}
+              onCalculate={handleCalculate}
+              isLoading={isLoading}
+            />
+          </div>
+
+          {/* Results - Takes 3 columns */}
+          <div className="xl:col-span-3">
+            {miningMode === 'hosting' ? (
+              <BTCROIHostingOutputTable hostingResults={hostingResults} />
+            ) : (
+              <BTCROIOutputTable roiResults={roiResults} />
+            )}
+          </div>
+        </div>
+
+        {/* Advanced Analytics Tabs */}
+        <Tabs defaultValue="analytics" className="space-y-6">
+          <div className="flex justify-center">
+            <TabsList className="grid w-full max-w-2xl grid-cols-4 h-12">
               <TabsTrigger 
-                value="calculator" 
-                className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2 md:px-3 min-w-0 h-auto"
+                value="analytics" 
+                className="flex items-center gap-2 text-sm font-medium"
               >
-                {miningMode === 'hosting' ? 
-                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> : 
-                  <Calculator className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                }
-                <span className="truncate text-[10px] sm:text-xs">{miningMode === 'hosting' ? 'Host' : 'Mine'}</span>
+                <BarChart3 className="w-4 h-4" />
+                Analytics
               </TabsTrigger>
               <TabsTrigger 
-                value="analysis" 
-                className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2 md:px-3 min-w-0 h-auto"
+                value="charts" 
+                className="flex items-center gap-2 text-sm font-medium"
               >
-                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate text-[10px] sm:text-xs">Analysis</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="sensitivity" 
-                className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2 md:px-3 min-w-0 h-auto"
-              >
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate text-[10px] sm:text-xs">Charts</span>
+                <TrendingUp className="w-4 h-4" />
+                Charts
               </TabsTrigger>
               <TabsTrigger 
                 value="catalog" 
-                className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2 md:px-3 min-w-0 h-auto"
+                className="flex items-center gap-2 text-sm font-medium"
               >
-                <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate text-[10px] sm:text-xs">ASICs</span>
+                <Zap className="w-4 h-4" />
+                Hardware
               </TabsTrigger>
               <TabsTrigger 
                 value="heatmap" 
-                className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2 md:px-3 min-w-0 h-auto"
+                className="flex items-center gap-2 text-sm font-medium"
               >
-                <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate text-[10px] sm:text-xs">Heat</span>
+                <Grid3X3 className="w-4 h-4" />
+                Scenarios
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="calculator" className="space-y-3 sm:space-y-4 md:space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-              <div className="space-y-3 sm:space-y-4 md:space-y-6 order-2 lg:order-1">
-                <BTCROIMiningModeSelector 
-                  mode={miningMode} 
-                  onModeChange={setMiningMode} 
-                />
-                <BTCROIInputForm
-                  mode={miningMode}
-                  formData={formData}
-                  onFormDataChange={setFormData}
-                  onCalculate={handleCalculate}
-                  isLoading={isLoading}
-                />
-              </div>
-              <div className="order-1 lg:order-2 min-w-0">
-                {miningMode === 'hosting' ? (
-                  <BTCROIHostingOutputTable hostingResults={hostingResults} />
-                ) : (
-                  <BTCROIOutputTable roiResults={roiResults} />
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="analysis" className="space-y-3 sm:space-y-4 md:space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              <div className="xl:col-span-2 space-y-3 sm:space-y-4 md:space-y-6">
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2 space-y-6">
                 {/* Enhanced Analytics for Hosting */}
                 {miningMode === 'hosting' && hostingResults && (
                   <BTCROIHostingAnalytics hostingResults={hostingResults} />
@@ -150,64 +148,67 @@ export const BTCROIMainPage = () => {
                 />
               </div>
               
-              <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                {/* Quick Stats or Summary */}
+              <div className="space-y-6">
+                {/* Quick Summary Card */}
                 {(miningMode === 'hosting' ? hostingResults : roiResults) && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Current Results Summary</CardTitle>
+                  <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg text-green-800 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5" />
+                        Quick Summary
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       {miningMode === 'hosting' && hostingResults ? (
-                        <div className="space-y-2 sm:space-y-3 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">Net Annual Profit:</span>
-                            <span className="font-bold text-green-600 text-xs sm:text-sm">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">Annual Profit:</span>
+                            <span className="font-bold text-lg text-green-600">
                               ${hostingResults.netProfit.toLocaleString()}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">ROI (12 months):</span>
-                            <span className="font-bold text-xs sm:text-sm">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">12-Month ROI:</span>
+                            <span className="font-bold text-lg text-blue-600">
                               {hostingResults.roi12Month.toFixed(1)}%
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">Profit Margin:</span>
-                            <span className="font-bold text-xs sm:text-sm">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">Profit Margin:</span>
+                            <span className="font-bold text-lg text-purple-600">
                               {hostingResults.profitMarginPercent.toFixed(1)}%
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">Payback Period:</span>
-                            <span className="font-bold text-xs sm:text-sm">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">Payback Period:</span>
+                            <span className="font-bold text-lg text-orange-600">
                               {hostingResults.paybackPeriodYears.toFixed(1)} years
                             </span>
                           </div>
                         </div>
                       ) : roiResults && (
-                        <div className="space-y-2 sm:space-y-3 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">Daily Net Profit:</span>
-                            <span className="font-bold text-green-600 text-xs sm:text-sm">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">Daily Profit:</span>
+                            <span className="font-bold text-lg text-green-600">
                               ${roiResults.dailyNetProfit.toLocaleString()}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">Monthly Net Profit:</span>
-                            <span className="font-bold text-xs sm:text-sm">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">Monthly Profit:</span>
+                            <span className="font-bold text-lg text-blue-600">
                               ${roiResults.monthlyNetProfit.toLocaleString()}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">ROI (12 months):</span>
-                            <span className="font-bold text-xs sm:text-sm">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">12-Month ROI:</span>
+                            <span className="font-bold text-lg text-purple-600">
                               {roiResults.roi12Month.toFixed(1)}%
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs sm:text-sm">Break Even:</span>
-                            <span className="font-bold text-xs sm:text-sm">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
+                            <span className="text-sm font-medium text-gray-700">Break Even:</span>
+                            <span className="font-bold text-lg text-orange-600">
                               {roiResults.breakEvenDays.toFixed(0)} days
                             </span>
                           </div>
@@ -220,36 +221,78 @@ export const BTCROIMainPage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="sensitivity" className="min-w-0">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-              <div className="order-2 xl:order-1 min-w-0">
-                <BTCROISensitivityChart roiResults={roiResults} networkData={networkData} />
-              </div>
-              <div className="order-1 xl:order-2 min-w-0">
-                <BTCROILineChart roiResults={roiResults} />
-              </div>
+          <TabsContent value="charts">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Sensitivity Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BTCROISensitivityChart roiResults={roiResults} networkData={networkData} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Performance Trends
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BTCROILineChart roiResults={roiResults} />
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="catalog" className="min-w-0">
-            <BTCROIASICCatalog onSelectASIC={(asic) => {
-              setFormData(prev => ({
-                ...prev,
-                asicModel: asic.model,
-                hashrate: asic.hashrate,
-                powerDraw: asic.powerDraw,
-                hardwareCost: asic.price,
-                totalLoadKW: miningMode === 'hosting' ? (asic.powerDraw * prev.units) / 1000 : prev.totalLoadKW
-              }));
-            }} />
+          <TabsContent value="catalog">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  ASIC Hardware Catalog
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Select mining hardware and automatically populate your calculator with specifications
+                </p>
+              </CardHeader>
+              <CardContent>
+                <BTCROIASICCatalog onSelectASIC={(asic) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    asicModel: asic.model,
+                    hashrate: asic.hashrate,
+                    powerDraw: asic.powerDraw,
+                    hardwareCost: asic.price,
+                    totalLoadKW: miningMode === 'hosting' ? (asic.powerDraw * prev.units) / 1000 : prev.totalLoadKW
+                  }));
+                }} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="heatmap" className="min-w-0">
-            <BTCROIProfitabilityHeatmap 
-              formData={formData} 
-              networkData={networkData}
-              mode={miningMode}
-            />
+          <TabsContent value="heatmap">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Grid3X3 className="w-5 h-5" />
+                  Profitability Scenarios
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Explore how different BTC prices and electricity costs affect your profitability
+                </p>
+              </CardHeader>
+              <CardContent>
+                <BTCROIProfitabilityHeatmap 
+                  formData={formData} 
+                  networkData={networkData}
+                  mode={miningMode}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
