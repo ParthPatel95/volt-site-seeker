@@ -209,7 +209,7 @@ export const BTCROIMainPage = () => {
                   {currentResults && networkData && (
                     <BTCROIAdvancedAnalytics
                       data={{
-                        btcPrice: networkData.currentPrice || 0,
+                        btcPrice: networkData.price || 0,
                         hashRate: formData.hashrate || 0,
                         difficulty: networkData.difficulty || 0,
                         powerCost: formData.powerRate || 0,
@@ -311,7 +311,7 @@ export const BTCROIMainPage = () => {
 
             <TabsContent value="alerts">
               <BTCROIAlertsSystem
-                currentBTCPrice={networkData?.currentPrice || 0}
+                currentBTCPrice={networkData?.price || 0}
                 currentProfitability={
                   miningMode === 'hosting' 
                     ? hostingResults?.profitMarginPercent || 0
