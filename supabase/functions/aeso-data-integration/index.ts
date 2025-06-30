@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -6,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// AESO API configuration
-const AESO_BASE_URL = 'https://api.aeso.ca/report/v1.1';
+// Updated AESO API configuration with correct base URL
+const AESO_BASE_URL = 'https://apimgw.aeso.ca/public';
 
 interface AESOConfig {
   subscriptionKey: string;
@@ -26,9 +25,9 @@ const getAESOConfig = (): AESOConfig => {
   
   return {
     subscriptionKey,
-    timeout: 15000, // Reduced timeout
-    maxRetries: 1,  // Reduced retries
-    backoffDelays: [2000] // Shorter backoff
+    timeout: 30000,
+    maxRetries: 2,
+    backoffDelays: [1000, 3000]
   };
 };
 
@@ -47,10 +46,11 @@ const makeAESORequest = async (
     url.searchParams.append(key, value);
   });
 
-  // Simplified headers based on AESO API documentation
+  // Headers for the new AESO API
   const headers: Record<string, string> = {
     'Accept': 'application/json',
-    'Ocp-Apim-Subscription-Key': config.subscriptionKey,
+    'X-API-Key': config.subscriptionKey,
+    'User-Agent': 'VoltScout-EdgeClient/1.0',
     'Cache-Control': 'no-cache'
   };
 
@@ -76,7 +76,7 @@ const makeAESORequest = async (
       
       // Rate limiting - apply backoff
       if (response.status === 429 && retryCount < config.maxRetries) {
-        const delay = config.backoffDelays[retryCount] || 3000;
+        const delay = config.backoffDelays[retryCount] || 5000;
         console.log(`Rate limited, retrying in ${delay}ms (attempt ${retryCount + 1})`);
         await sleep(delay);
         return makeAESORequest(endpoint, params, config, retryCount + 1);
@@ -97,7 +97,7 @@ const makeAESORequest = async (
     
     // Retry logic for network errors only
     if (retryCount < config.maxRetries && error.name !== 'AbortError') {
-      const delay = config.backoffDelays[retryCount] || 3000;
+      const delay = config.backoffDelays[retryCount] || 5000;
       console.log(`Retrying AESO API call in ${delay}ms (attempt ${retryCount + 1})`);
       await sleep(delay);
       return makeAESORequest(endpoint, params, config, retryCount + 1);
@@ -116,24 +116,24 @@ const fetchPoolPrice = async (config: AESOConfig) => {
   console.log('Fetching AESO pool price...');
   const today = getTodayDate();
   
-  const data = await makeAESORequest('/price/poolPrice', { startDate: today, endDate: today }, config);
+  const data = await makeAESORequest('/reports-api/v1/price/poolPrice', { startDate: today, endDate: today }, config);
   
-  // Parse the actual AESO response structure
-  const poolPriceInfo = data?.return?.PoolPriceReport?.PoolPriceInfo;
+  // Parse the AESO response structure
+  const poolPriceInfo = data?.return?.PoolPriceReport?.PoolPriceInfo || data?.data || data;
   if (!poolPriceInfo || !Array.isArray(poolPriceInfo) || poolPriceInfo.length === 0) {
     throw new Error('No pool price data returned from AESO API');
   }
 
   // Get the latest price entry
   const latestPrice = poolPriceInfo[poolPriceInfo.length - 1];
-  const poolPriceMWh = parseFloat(latestPrice.pool_price);
+  const poolPriceMWh = parseFloat(latestPrice.pool_price || latestPrice.price);
   
   if (isNaN(poolPriceMWh)) {
     throw new Error('Invalid pool price data received');
   }
 
   // Calculate statistics from all available prices
-  const allPrices = poolPriceInfo.map(p => parseFloat(p.pool_price)).filter(p => !isNaN(p));
+  const allPrices = poolPriceInfo.map(p => parseFloat(p.pool_price || p.price)).filter(p => !isNaN(p));
   const avgPrice = allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length;
   const maxPrice = Math.max(...allPrices);
   const minPrice = Math.min(...allPrices);
@@ -143,7 +143,7 @@ const fetchPoolPrice = async (config: AESOConfig) => {
     average_price: avgPrice,
     peak_price: maxPrice,
     off_peak_price: minPrice,
-    timestamp: latestPrice.begin_timestamp || new Date().toISOString(),
+    timestamp: latestPrice.begin_timestamp || latestPrice.timestamp || new Date().toISOString(),
     market_conditions: poolPriceMWh > 60 ? 'high_demand' : 'normal',
     cents_per_kwh: poolPriceMWh / 10
   };
@@ -153,27 +153,27 @@ const fetchSystemLoad = async (config: AESOConfig) => {
   console.log('Fetching AESO system load...');
   const today = getTodayDate();
   
-  const data = await makeAESORequest('/load/actualSystemLoad', { startDate: today, endDate: today }, config);
+  const data = await makeAESORequest('/actualforecast-api/v1/load/albertaInternalLoad', { startDate: today }, config);
   
-  const systemLoadInfo = data?.return?.ActualSystemLoadReport?.ActualSystemLoad;
-  if (!systemLoadInfo || !Array.isArray(systemLoadInfo) || systemLoadInfo.length === 0) {
+  const loadData = data?.return?.ActualForecastReport?.ActualForecastInfo || data?.data || data;
+  if (!loadData || !Array.isArray(loadData) || loadData.length === 0) {
     throw new Error('No system load data returned from AESO API');
   }
 
-  const latestLoad = systemLoadInfo[systemLoadInfo.length - 1];
-  const currentLoadMW = parseFloat(latestLoad.avg_system_load);
+  const latestLoad = loadData[loadData.length - 1];
+  const currentLoadMW = parseFloat(latestLoad.alberta_internal_load || latestLoad.load || latestLoad.value);
   
   if (isNaN(currentLoadMW)) {
     throw new Error('Invalid system load data received');
   }
 
-  const allLoads = systemLoadInfo.map(l => parseFloat(l.avg_system_load)).filter(l => !isNaN(l));
+  const allLoads = loadData.map(l => parseFloat(l.alberta_internal_load || l.load || l.value)).filter(l => !isNaN(l));
   const peakLoad = Math.max(...allLoads);
   
   return {
     current_demand_mw: currentLoadMW,
     peak_forecast_mw: peakLoad * 1.05,
-    forecast_date: latestLoad.begin_timestamp || new Date().toISOString(),
+    forecast_date: latestLoad.begin_datetime_mpt || latestLoad.timestamp || new Date().toISOString(),
     capacity_margin: 15.2,
     reserve_margin: 18.7
   };
@@ -185,28 +185,20 @@ const fetchGenerationMix = async (config: AESOConfig) => {
   
   let data;
   try {
-    data = await makeAESORequest('/generation/actualGeneration', { startDate: today, endDate: today }, config);
+    data = await makeAESORequest('/actualforecast-api/v1/generation/summary', { startDate: today }, config);
   } catch (error) {
-    console.log('Actual generation not available, trying forecast...');
-    data = await makeAESORequest('/generation/forecastGeneration', { startDate: today, endDate: today }, config);
+    console.log('Generation summary not available, trying detailed endpoint...');
+    data = await makeAESORequest('/actualforecast-api/v1/generation/actual', { startDate: today }, config);
   }
   
-  let generationData;
-  if (data?.return?.ActualGenerationReport?.ActualGenerationInfo) {
-    generationData = data.return.ActualGenerationReport.ActualGenerationInfo;
-  } else if (data?.return?.ForecastGenerationReport?.ForecastGenerationInfo) {
-    generationData = data.return.ForecastGenerationReport.ForecastGenerationInfo;
-  } else {
+  const generationData = data?.return?.ActualForecastReport?.ActualForecastInfo || data?.data || data;
+  if (!generationData || !Array.isArray(generationData) || generationData.length === 0) {
     throw new Error('No generation mix data returned from AESO API');
   }
 
-  if (!Array.isArray(generationData) || generationData.length === 0) {
-    throw new Error('Invalid generation mix data structure');
-  }
-
   const mixByFuel = generationData.reduce((acc, item) => {
-    const fuelType = (item.fuel_type || item.fuel).toLowerCase();
-    const generation = parseFloat(item.actual_generation_mw || item.forecast_generation_mw || 0);
+    const fuelType = (item.fuel_type || item.fuel || item.asset_class).toLowerCase();
+    const generation = parseFloat(item.actual_mw || item.forecast_mw || item.value || 0);
     
     if (!isNaN(generation)) {
       acc[fuelType] = (acc[fuelType] || 0) + generation;
