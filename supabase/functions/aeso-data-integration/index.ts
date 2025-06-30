@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -6,35 +7,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// AESO API configuration with proxy support
+// AESO API configuration
 const AESO_BASE_URL = 'https://api.aeso.ca/report/v1.1';
-const AESO_PROXY_URL = 'https://aeso-proxy.voltscout.workers.dev'; // Proxy service for auth issues
 
 interface AESOConfig {
   subscriptionKey: string;
   timeout: number;
   maxRetries: number;
   backoffDelays: number[];
-  useProxy: boolean;
 }
 
 const getAESOConfig = (): AESOConfig => {
   const subscriptionKey = Deno.env.get('AESO_SUB_KEY');
   console.log("AESO_SUB_KEY Present:", !!subscriptionKey);
-  if (subscriptionKey) {
-    console.log("AESO_SUB_KEY Value:", subscriptionKey.substring(0, 8) + "...");
-  }
   
   if (!subscriptionKey) {
-    console.warn('AESO_SUB_KEY environment variable not found, using proxy mode');
+    throw new Error('AESO_SUB_KEY environment variable is required');
   }
   
   return {
-    subscriptionKey: subscriptionKey || '',
+    subscriptionKey,
     timeout: 30000,
     maxRetries: 2,
-    backoffDelays: [1000, 3000],
-    useProxy: !subscriptionKey || subscriptionKey.length < 10 // Use proxy if no valid key
+    backoffDelays: [1000, 3000]
   };
 };
 
@@ -46,96 +41,70 @@ const makeAESORequest = async (
   config: AESOConfig, 
   retryCount = 0
 ): Promise<any> => {
-  // Try proxy first if configured, then direct API
-  const urls = config.useProxy 
-    ? [`${AESO_PROXY_URL}${endpoint}`, `${AESO_BASE_URL}${endpoint}`]
-    : [`${AESO_BASE_URL}${endpoint}`];
+  const url = new URL(`${AESO_BASE_URL}${endpoint}`);
   
-  for (const baseUrl of urls) {
-    const url = new URL(baseUrl);
-    
-    // Add parameters
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, value);
+  // Add parameters
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.append(key, value);
+  });
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+    'User-Agent': 'VoltScout-EdgeClient/1.0',
+    'Ocp-Apim-Subscription-Key': config.subscriptionKey
+  };
+
+  console.log(`AESO API Request to: ${url.toString()} (attempt ${retryCount + 1})`);
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers,
+      signal: controller.signal
     });
 
-    const isProxy = baseUrl.includes('proxy');
-    const headers: Record<string, string> = {
-      'Accept': 'application/json',
-      'User-Agent': 'VoltScout-EdgeClient/1.0'
-    };
+    clearTimeout(timeoutId);
 
-    // Add subscription key for direct API calls
-    if (!isProxy && config.subscriptionKey) {
-      headers['Ocp-Apim-Subscription-Key'] = config.subscriptionKey;
-    } else if (isProxy) {
-      // For proxy, pass the key in a custom header
-      headers['X-AESO-Sub-Key'] = config.subscriptionKey;
-    }
+    console.log(`AESO API Response status: ${response.status} ${response.statusText}`);
 
-    console.log(`AESO API Request to: ${url.toString()} (${isProxy ? 'via proxy' : 'direct'}) (attempt ${retryCount + 1})`);
-    console.log(`Headers:`, JSON.stringify(headers, null, 2));
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), config.timeout);
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers,
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      console.log(`AESO API Response status: ${response.status} ${response.statusText}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`AESO API HTTP error ${response.status} from ${baseUrl}: ${errorText}`);
-        
-        // If this is a 401/403 from direct API, try proxy next
-        if (!isProxy && (response.status === 401 || response.status === 403)) {
-          console.log('Direct API authentication failed, trying proxy...');
-          continue;
-        }
-        
-        // Rate limiting - apply backoff
-        if (response.status === 429 && retryCount < config.maxRetries) {
-          const delay = config.backoffDelays[retryCount] || 5000;
-          console.log(`Rate limited, retrying in ${delay}ms (attempt ${retryCount + 1})`);
-          await sleep(delay);
-          return makeAESORequest(endpoint, params, config, retryCount + 1);
-        }
-        
-        // Try next URL
-        continue;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`AESO API HTTP error ${response.status}: ${errorText}`);
+      
+      // Rate limiting - apply backoff
+      if (response.status === 429 && retryCount < config.maxRetries) {
+        const delay = config.backoffDelays[retryCount] || 5000;
+        console.log(`Rate limited, retrying in ${delay}ms (attempt ${retryCount + 1})`);
+        await sleep(delay);
+        return makeAESORequest(endpoint, params, config, retryCount + 1);
       }
-
-      const data = await response.json();
-      console.log(`AESO API Response received successfully from ${baseUrl}`);
       
-      return data;
-    } catch (error) {
-      console.error(`AESO API call failed from ${baseUrl} (attempt ${retryCount + 1}):`, {
-        message: error.message,
-        name: error.name
-      });
-      
-      // Try next URL
-      continue;
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log(`AESO API Response received successfully`);
+    
+    return data;
+  } catch (error) {
+    console.error(`AESO API call failed (attempt ${retryCount + 1}):`, {
+      message: error.message,
+      name: error.name
+    });
+    
+    // Retry logic
+    if (retryCount < config.maxRetries) {
+      const delay = config.backoffDelays[retryCount] || 5000;
+      console.log(`Retrying AESO API call in ${delay}ms (attempt ${retryCount + 1})`);
+      await sleep(delay);
+      return makeAESORequest(endpoint, params, config, retryCount + 1);
+    }
+    
+    throw error;
   }
-  
-  // If all URLs failed and we have retries left
-  if (retryCount < config.maxRetries) {
-    const delay = config.backoffDelays[retryCount] || 5000;
-    console.log(`All AESO URLs failed, retrying in ${delay}ms (attempt ${retryCount + 1})`);
-    await sleep(delay);
-    return makeAESORequest(endpoint, params, config, retryCount + 1);
-  }
-  
-  throw new Error('All AESO API endpoints failed after retries');
 };
 
 const getTodayDate = () => {
@@ -346,7 +315,7 @@ serve(async (req) => {
       const config = getAESOConfig();
       console.log('AESO API Configuration:', {
         hasKey: !!config.subscriptionKey,
-        useProxy: config.useProxy
+        keyPreview: config.subscriptionKey.substring(0, 8) + "..."
       });
 
       switch (action) {
