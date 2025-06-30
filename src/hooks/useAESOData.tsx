@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +10,13 @@ export interface AESOPricing {
   timestamp: string;
   market_conditions: string;
   cents_per_kwh: number;
+  qa_metadata?: {
+    endpoint_used: string;
+    response_time_ms: number;
+    data_quality: 'fresh' | 'moderate' | 'stale' | 'simulated' | 'unknown';
+    validation_passed: boolean;
+    raw_data_sample?: any;
+  };
 }
 
 export interface AESOLoadData {
@@ -19,6 +25,13 @@ export interface AESOLoadData {
   forecast_date: string;
   capacity_margin: number;
   reserve_margin: number;
+  qa_metadata?: {
+    endpoint_used: string;
+    response_time_ms: number;
+    data_quality: 'fresh' | 'moderate' | 'stale' | 'simulated' | 'unknown';
+    validation_passed: boolean;
+    raw_data_sample?: any;
+  };
 }
 
 export interface AESOGenerationMix {
@@ -31,6 +44,13 @@ export interface AESOGenerationMix {
   total_generation_mw: number;
   renewable_percentage: number;
   timestamp: string;
+  qa_metadata?: {
+    endpoint_used: string;
+    response_time_ms: number;
+    data_quality: 'fresh' | 'moderate' | 'stale' | 'simulated' | 'unknown';
+    validation_passed: boolean;
+    raw_data_sample?: any;
+  };
 }
 
 const isValidNumber = (value: any): value is number => {
@@ -101,18 +121,18 @@ export function useAESOData() {
   const fetchAESOData = async (dataType: string) => {
     setLoading(true);
     try {
-      console.log('Fetching AESO data:', dataType);
+      console.log('🔄 Fetching AESO data:', dataType);
       
       const { data, error } = await supabase.functions.invoke('aeso-data-integration', {
         body: { action: dataType }
       });
 
       if (error) {
-        console.error('AESO API error:', error);
+        console.error('❌ AESO API error:', error);
         throw error;
       }
 
-      console.log('AESO data received:', data);
+      console.log('📨 AESO data received:', data);
       
       // Validate the response structure
       if (!data || data.success === false) {
@@ -124,25 +144,25 @@ export function useAESOData() {
         throw new Error('No data returned from AESO API');
       }
 
-      // Update connection status based on data source
-      if (data.source === 'aeso_api') {
+      // Update connection status based on data source and QA status
+      if (data.source === 'aeso_api' && data.qa_status === 'success') {
         setConnectionStatus('connected');
         setHasShownFallbackNotice(false);
         setLastFetchTime(data.timestamp);
         
         if (connectionStatus !== 'connected') {
           toast({
-            title: "AESO API Connected",
+            title: "✅ AESO API Connected",
             description: "Now receiving live market data from AESO",
             variant: "default"
           });
         }
-      } else if (data.source === 'fallback') {
+      } else if (data.source === 'fallback' || data.qa_status?.includes('fallback')) {
         setConnectionStatus('fallback');
         if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
           setHasShownFallbackNotice(true);
           toast({
-            title: "Using Simulated Data",
+            title: "⚠️ Using Simulated Data",
             description: "AESO API unavailable, showing realistic test data",
             variant: "default"
           });
@@ -152,7 +172,7 @@ export function useAESOData() {
       return data.data;
 
     } catch (error: any) {
-      console.error('Error fetching AESO data:', error);
+      console.error('❌ Error fetching AESO data:', error);
       setConnectionStatus('fallback');
       return null;
     } finally {
@@ -199,7 +219,7 @@ export function useAESOData() {
   // Auto-fetch data on component mount
   useEffect(() => {
     const fetchAllData = async () => {
-      console.log('Starting AESO data fetch...');
+      console.log('🚀 Starting AESO data fetch...');
       await Promise.all([
         getCurrentPrices(),
         getLoadForecast(),

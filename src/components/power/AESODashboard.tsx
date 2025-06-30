@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { QAStatusIndicator } from '@/components/QAStatusIndicator';
 
 export function AESODashboard() {
   const { 
@@ -100,6 +101,16 @@ export function AESODashboard() {
           Refresh Data
         </Button>
       </div>
+
+      {/* QA Status Indicators */}
+      {pricing && (
+        <QAStatusIndicator 
+          source={connectionStatus === 'connected' ? 'aeso_api' : 'fallback'}
+          qaMetrics={pricing.qa_metadata}
+          qaStatus={connectionStatus === 'connected' ? 'success' : 'fallback'}
+          timestamp={pricing.timestamp}
+        />
+      )}
 
       {/* Connection Status Banner */}
       {connectionStatus === 'fallback' && (
