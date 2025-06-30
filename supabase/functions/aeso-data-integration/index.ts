@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -6,11 +5,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// AESO API configuration with multiple endpoint strategies
+// AESO API configuration with correct base URLs
 const AESO_ENDPOINTS = {
-  primary: 'https://api.aeso.ca/v1',
-  legacy: 'https://ets.aeso.ca/ets_web/ip',
-  public: 'https://www.aeso.ca/api'
+  primary: 'https://ets.aeso.ca/ets_web/ip/Market',
+  secondary: 'https://www.aeso.ca/api/market',
+  legacy: 'https://ets.aeso.ca/ets_web/ip'
 };
 
 interface AESOConfig {
@@ -30,9 +29,9 @@ const getAESOConfig = (): AESOConfig => {
   
   return {
     apiKey,
-    timeout: 15000, // Reduced timeout for faster fallback
-    maxRetries: 1, // Reduced retries for faster fallback
-    backoffDelays: [2000] // Shorter backoff
+    timeout: 15000,
+    maxRetries: 1,
+    backoffDelays: [2000]
   };
 };
 
@@ -58,7 +57,7 @@ const makeAESORequest = async (
   config: AESOConfig, 
   retryCount = 0
 ): Promise<any> => {
-  const baseUrls = [AESO_ENDPOINTS.primary, AESO_ENDPOINTS.legacy];
+  const baseUrls = [AESO_ENDPOINTS.primary, AESO_ENDPOINTS.secondary, AESO_ENDPOINTS.legacy];
   
   for (const baseUrl of baseUrls) {
     const url = new URL(`${baseUrl}${endpoint}`);
@@ -68,16 +67,10 @@ const makeAESORequest = async (
       url.searchParams.append(key, value);
     });
 
-    // Try different header configurations for different endpoints
-    const headers: Record<string, string> = baseUrl === AESO_ENDPOINTS.primary ? {
+    // Use correct headers for AESO API
+    const headers: Record<string, string> = {
       'Accept': 'application/json',
-      'Ocp-Apim-Subscription-Key': config.apiKey,
-      'User-Agent': 'VoltScout-API-Client/1.0',
-      'Cache-Control': 'no-cache',
-      'Connection': 'close' // Force connection close to avoid keep-alive issues
-    } : {
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
+      'X-API-Key': config.apiKey,
       'User-Agent': 'VoltScout-API-Client/1.0',
       'Cache-Control': 'no-cache',
       'Connection': 'close'
@@ -90,14 +83,12 @@ const makeAESORequest = async (
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), config.timeout);
 
-      // Enhanced fetch configuration for Deno networking issues
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers,
         signal: controller.signal,
-        // Add additional options to handle Deno networking
         redirect: 'follow',
-        keepalive: false // Disable keep-alive for better compatibility
+        keepalive: false
       });
 
       clearTimeout(timeoutId);
@@ -159,9 +150,10 @@ const fetchPoolPrice = async (config: AESOConfig) => {
   const today = getTodayDate();
   
   try {
-    const data = await makeAESORequest('/market/reports/pool-price', { 
-      startDate: today, 
-      endDate: today 
+    // Try the correct AESO endpoint path
+    const data = await makeAESORequest('/Reports/CSDReportServlet', { 
+      contentType: 'json',
+      reportName: 'CurrentSupplyDemandReport'
     }, config);
     
     // Parse the AESO response structure
@@ -192,7 +184,7 @@ const fetchPoolPrice = async (config: AESOConfig) => {
       market_conditions: poolPriceMWh > 60 ? 'high_demand' : 'normal',
       cents_per_kwh: poolPriceMWh / 10,
       qa_metadata: {
-        endpoint_used: '/market/reports/pool-price',
+        endpoint_used: '/Reports/CSDReportServlet',
         response_time_ms: Date.now() - performance.now(),
         data_quality: 'fresh',
         validation_passed: true,
@@ -210,9 +202,10 @@ const fetchSystemLoad = async (config: AESOConfig) => {
   const today = getTodayDate();
   
   try {
-    const data = await makeAESORequest('/market/reports/current-supply-demand', { 
-      startDate: today,
-      endDate: today 
+    // Use the correct AESO endpoint
+    const data = await makeAESORequest('/Reports/CSDReportServlet', { 
+      contentType: 'json',
+      reportName: 'CurrentSupplyDemandReport'
     }, config);
     
     if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
@@ -236,7 +229,7 @@ const fetchSystemLoad = async (config: AESOConfig) => {
       capacity_margin: 15.2,
       reserve_margin: 18.7,
       qa_metadata: {
-        endpoint_used: '/market/reports/current-supply-demand',
+        endpoint_used: '/Reports/CSDReportServlet',
         response_time_ms: Date.now() - performance.now(),
         data_quality: 'fresh',
         validation_passed: true,
@@ -254,9 +247,10 @@ const fetchGenerationMix = async (config: AESOConfig) => {
   const today = getTodayDate();
   
   try {
-    const data = await makeAESORequest('/market/reports/current-supply-demand', { 
-      startDate: today,
-      endDate: today 
+    // Use the correct AESO endpoint
+    const data = await makeAESORequest('/Reports/CSDReportServlet', { 
+      contentType: 'json',
+      reportName: 'CurrentSupplyDemandReport'
     }, config);
     
     if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
@@ -293,7 +287,7 @@ const fetchGenerationMix = async (config: AESOConfig) => {
       renewable_percentage: renewablePercentage,
       timestamp: latestData.begin_datetime_mpt || new Date().toISOString(),
       qa_metadata: {
-        endpoint_used: '/market/reports/current-supply-demand',
+        endpoint_used: '/Reports/CSDReportServlet',
         response_time_ms: Date.now() - performance.now(),
         data_quality: 'fresh',
         validation_passed: true,
@@ -405,7 +399,7 @@ serve(async (req) => {
         hasKey: !!config.apiKey,
         keyPreview: config.apiKey.substring(0, 8) + "...",
         primaryEndpoint: AESO_ENDPOINTS.primary,
-        legacyEndpoint: AESO_ENDPOINTS.legacy
+        secondaryEndpoint: AESO_ENDPOINTS.secondary
       });
 
       const startTime = performance.now();
@@ -470,7 +464,7 @@ serve(async (req) => {
         timestamp: new Date().toISOString(),
         network_info: {
           deno_runtime: true,
-          endpoints_tried: [AESO_ENDPOINTS.primary, AESO_ENDPOINTS.legacy],
+          endpoints_tried: [AESO_ENDPOINTS.primary, AESO_ENDPOINTS.secondary, AESO_ENDPOINTS.legacy],
           fallback_reason: dataSource === 'fallback' ? 'network_connectivity_issue' : null
         }
       }),
