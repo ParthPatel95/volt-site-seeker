@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,9 +26,9 @@ const getAESOConfig = (): AESOConfig => {
   
   return {
     subscriptionKey,
-    timeout: 30000,
-    maxRetries: 2,
-    backoffDelays: [1000, 3000]
+    timeout: 15000, // Reduced timeout
+    maxRetries: 1,  // Reduced retries
+    backoffDelays: [2000] // Shorter backoff
   };
 };
 
@@ -48,10 +47,11 @@ const makeAESORequest = async (
     url.searchParams.append(key, value);
   });
 
+  // Simplified headers based on AESO API documentation
   const headers: Record<string, string> = {
     'Accept': 'application/json',
-    'User-Agent': 'VoltScout-EdgeClient/1.0',
-    'Ocp-Apim-Subscription-Key': config.subscriptionKey
+    'Ocp-Apim-Subscription-Key': config.subscriptionKey,
+    'Cache-Control': 'no-cache'
   };
 
   console.log(`AESO API Request to: ${url.toString()} (attempt ${retryCount + 1})`);
@@ -76,7 +76,7 @@ const makeAESORequest = async (
       
       // Rate limiting - apply backoff
       if (response.status === 429 && retryCount < config.maxRetries) {
-        const delay = config.backoffDelays[retryCount] || 5000;
+        const delay = config.backoffDelays[retryCount] || 3000;
         console.log(`Rate limited, retrying in ${delay}ms (attempt ${retryCount + 1})`);
         await sleep(delay);
         return makeAESORequest(endpoint, params, config, retryCount + 1);
@@ -86,7 +86,7 @@ const makeAESORequest = async (
     }
 
     const data = await response.json();
-    console.log(`AESO API Response received successfully`);
+    console.log(`AESO API Response received successfully`, data);
     
     return data;
   } catch (error) {
@@ -95,9 +95,9 @@ const makeAESORequest = async (
       name: error.name
     });
     
-    // Retry logic
-    if (retryCount < config.maxRetries) {
-      const delay = config.backoffDelays[retryCount] || 5000;
+    // Retry logic for network errors only
+    if (retryCount < config.maxRetries && error.name !== 'AbortError') {
+      const delay = config.backoffDelays[retryCount] || 3000;
       console.log(`Retrying AESO API call in ${delay}ms (attempt ${retryCount + 1})`);
       await sleep(delay);
       return makeAESORequest(endpoint, params, config, retryCount + 1);
