@@ -6,8 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Correct AESO API configuration based on official developer documentation
-const AESO_BASE_URL = 'https://api.aeso.ca/v1';
+// AESO API configuration with multiple endpoint strategies
+const AESO_ENDPOINTS = {
+  primary: 'https://api.aeso.ca/v1',
+  legacy: 'https://ets.aeso.ca/ets_web/ip',
+  public: 'https://www.aeso.ca/api'
+};
 
 interface AESOConfig {
   apiKey: string;
@@ -18,7 +22,7 @@ interface AESOConfig {
 
 const getAESOConfig = (): AESOConfig => {
   const apiKey = Deno.env.get('AESO_API_KEY');
-  console.log("AESO_API_KEY Present:", !!apiKey);
+  console.log("🔑 AESO_API_KEY Present:", !!apiKey);
   
   if (!apiKey) {
     throw new Error('AESO_API_KEY environment variable is required');
@@ -26,13 +30,27 @@ const getAESOConfig = (): AESOConfig => {
   
   return {
     apiKey,
-    timeout: 30000,
-    maxRetries: 2,
-    backoffDelays: [1000, 3000]
+    timeout: 15000, // Reduced timeout for faster fallback
+    maxRetries: 1, // Reduced retries for faster fallback
+    backoffDelays: [2000] // Shorter backoff
   };
 };
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Enhanced error detection for Deno network issues
+const isDеnoNetworkError = (error: any): boolean => {
+  const errorMessage = error.message || '';
+  return (
+    errorMessage.includes('error sending request') ||
+    errorMessage.includes('connection refused') ||
+    errorMessage.includes('timeout') ||
+    errorMessage.includes('TLS') ||
+    errorMessage.includes('SSL') ||
+    errorMessage.includes('network unreachable') ||
+    error.name === 'TypeError' && errorMessage.includes('url')
+  );
+};
 
 const makeAESORequest = async (
   endpoint: string, 
@@ -40,75 +58,95 @@ const makeAESORequest = async (
   config: AESOConfig, 
   retryCount = 0
 ): Promise<any> => {
-  const url = new URL(`${AESO_BASE_URL}${endpoint}`);
+  const baseUrls = [AESO_ENDPOINTS.primary, AESO_ENDPOINTS.legacy];
   
-  // Add parameters
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.append(key, value);
-  });
-
-  // Correct headers based on AESO developer documentation
-  const headers: Record<string, string> = {
-    'Accept': 'application/json',
-    'Ocp-Apim-Subscription-Key': config.apiKey,
-    'User-Agent': 'VoltScout-API-Client/1.0',
-    'Cache-Control': 'no-cache'
-  };
-
-  console.log(`AESO API Request to: ${url.toString()} (attempt ${retryCount + 1})`);
-  console.log(`Headers:`, JSON.stringify(headers, null, 2));
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
-
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers,
-      signal: controller.signal
+  for (const baseUrl of baseUrls) {
+    const url = new URL(`${baseUrl}${endpoint}`);
+    
+    // Add parameters
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.append(key, value);
     });
 
-    clearTimeout(timeoutId);
+    // Try different header configurations for different endpoints
+    const headers: Record<string, string> = baseUrl === AESO_ENDPOINTS.primary ? {
+      'Accept': 'application/json',
+      'Ocp-Apim-Subscription-Key': config.apiKey,
+      'User-Agent': 'VoltScout-API-Client/1.0',
+      'Cache-Control': 'no-cache',
+      'Connection': 'close' // Force connection close to avoid keep-alive issues
+    } : {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+      'User-Agent': 'VoltScout-API-Client/1.0',
+      'Cache-Control': 'no-cache',
+      'Connection': 'close'
+    };
 
-    console.log(`AESO API Response status: ${response.status} ${response.statusText}`);
-    console.log(`Response headers:`, JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
+    console.log(`🌐 AESO API Request to: ${url.toString()} (attempt ${retryCount + 1})`);
+    console.log(`📋 Headers:`, JSON.stringify(headers, null, 2));
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`AESO API HTTP error ${response.status}: ${errorText}`);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+
+      // Enhanced fetch configuration for Deno networking issues
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+        // Add additional options to handle Deno networking
+        redirect: 'follow',
+        keepalive: false // Disable keep-alive for better compatibility
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log(`📡 AESO API Response status: ${response.status} ${response.statusText}`);
+      console.log(`📋 Response headers:`, JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ AESO API HTTP error ${response.status}: ${errorText}`);
+        
+        // Don't retry on authentication errors
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(`Authentication failed: HTTP ${response.status}: ${errorText}`);
+        }
+        
+        // Continue to next endpoint for other errors
+        continue;
+      }
+
+      const data = await response.json();
+      console.log(`✅ AESO API Response received successfully from ${baseUrl}:`, JSON.stringify(data, null, 2));
       
-      // Rate limiting - apply backoff
-      if (response.status === 429 && retryCount < config.maxRetries) {
-        const delay = config.backoffDelays[retryCount] || 5000;
-        console.log(`Rate limited, retrying in ${delay}ms (attempt ${retryCount + 1})`);
+      return data;
+    } catch (error) {
+      console.error(`❌ AESO API call failed on ${baseUrl} (attempt ${retryCount + 1}):`, {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+      
+      // If this is a Deno network error, try next endpoint immediately
+      if (isDеnoNetworkError(error)) {
+        console.warn(`🔄 Deno network error detected, trying next endpoint...`);
+        continue;
+      }
+      
+      // For other errors, retry with backoff on same endpoint
+      if (retryCount < config.maxRetries) {
+        const delay = config.backoffDelays[retryCount] || 3000;
+        console.log(`⏳ Retrying AESO API call in ${delay}ms (attempt ${retryCount + 1})`);
         await sleep(delay);
         return makeAESORequest(endpoint, params, config, retryCount + 1);
       }
-      
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
-
-    const data = await response.json();
-    console.log(`AESO API Response received successfully:`, JSON.stringify(data, null, 2));
-    
-    return data;
-  } catch (error) {
-    console.error(`AESO API call failed (attempt ${retryCount + 1}):`, {
-      message: error.message,
-      name: error.name,
-      stack: error.stack
-    });
-    
-    // Retry logic for network errors only
-    if (retryCount < config.maxRetries && error.name !== 'AbortError') {
-      const delay = config.backoffDelays[retryCount] || 5000;
-      console.log(`Retrying AESO API call in ${delay}ms (attempt ${retryCount + 1})`);
-      await sleep(delay);
-      return makeAESORequest(endpoint, params, config, retryCount + 1);
-    }
-    
-    throw error;
   }
+  
+  // If all endpoints failed, throw the last error
+  throw new Error('All AESO API endpoints failed - likely network connectivity or IP blocking issue');
 };
 
 const getTodayDate = () => {
@@ -117,149 +155,164 @@ const getTodayDate = () => {
 };
 
 const fetchPoolPrice = async (config: AESOConfig) => {
-  console.log('Fetching AESO pool price...');
+  console.log('💰 Fetching AESO pool price...');
   const today = getTodayDate();
   
-  // Using correct endpoint from developer documentation
-  const data = await makeAESORequest('/market/reports/pool-price', { 
-    startDate: today, 
-    endDate: today 
-  }, config);
-  
-  // Parse the AESO response structure
-  if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-    throw new Error('No pool price data returned from AESO API');
-  }
-
-  // Get the latest price entry
-  const latestPrice = data.data[data.data.length - 1];
-  const poolPriceMWh = parseFloat(latestPrice.pool_price);
-  
-  if (isNaN(poolPriceMWh)) {
-    throw new Error('Invalid pool price data received');
-  }
-
-  // Calculate statistics from all available prices
-  const allPrices = data.data.map(p => parseFloat(p.pool_price)).filter(p => !isNaN(p));
-  const avgPrice = allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length;
-  const maxPrice = Math.max(...allPrices);
-  const minPrice = Math.min(...allPrices);
-  
-  return {
-    current_price: poolPriceMWh,
-    average_price: avgPrice,
-    peak_price: maxPrice,
-    off_peak_price: minPrice,
-    timestamp: latestPrice.begin_datetime_mpt || new Date().toISOString(),
-    market_conditions: poolPriceMWh > 60 ? 'high_demand' : 'normal',
-    cents_per_kwh: poolPriceMWh / 10,
-    qa_metadata: {
-      endpoint_used: '/market/reports/pool-price',
-      response_time_ms: Date.now() - performance.now(),
-      data_quality: 'fresh',
-      validation_passed: true,
-      raw_data_sample: latestPrice
+  try {
+    const data = await makeAESORequest('/market/reports/pool-price', { 
+      startDate: today, 
+      endDate: today 
+    }, config);
+    
+    // Parse the AESO response structure
+    if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+      throw new Error('No pool price data returned from AESO API');
     }
-  };
+
+    // Get the latest price entry
+    const latestPrice = data.data[data.data.length - 1];
+    const poolPriceMWh = parseFloat(latestPrice.pool_price);
+    
+    if (isNaN(poolPriceMWh)) {
+      throw new Error('Invalid pool price data received');
+    }
+
+    // Calculate statistics from all available prices
+    const allPrices = data.data.map((p: any) => parseFloat(p.pool_price)).filter((p: number) => !isNaN(p));
+    const avgPrice = allPrices.reduce((sum: number, p: number) => sum + p, 0) / allPrices.length;
+    const maxPrice = Math.max(...allPrices);
+    const minPrice = Math.min(...allPrices);
+    
+    return {
+      current_price: poolPriceMWh,
+      average_price: avgPrice,
+      peak_price: maxPrice,
+      off_peak_price: minPrice,
+      timestamp: latestPrice.begin_datetime_mpt || new Date().toISOString(),
+      market_conditions: poolPriceMWh > 60 ? 'high_demand' : 'normal',
+      cents_per_kwh: poolPriceMWh / 10,
+      qa_metadata: {
+        endpoint_used: '/market/reports/pool-price',
+        response_time_ms: Date.now() - performance.now(),
+        data_quality: 'fresh',
+        validation_passed: true,
+        raw_data_sample: latestPrice
+      }
+    };
+  } catch (error) {
+    console.error(`💥 Pool price fetch failed:`, error);
+    throw error;
+  }
 };
 
 const fetchSystemLoad = async (config: AESOConfig) => {
-  console.log('Fetching AESO system load...');
+  console.log('⚡ Fetching AESO system load...');
   const today = getTodayDate();
   
-  // Using correct endpoint from developer documentation
-  const data = await makeAESORequest('/market/reports/current-supply-demand', { 
-    startDate: today,
-    endDate: today 
-  }, config);
-  
-  if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-    throw new Error('No system load data returned from AESO API');
-  }
-
-  const latestLoad = data.data[data.data.length - 1];
-  const currentLoadMW = parseFloat(latestLoad.alberta_internal_load);
-  
-  if (isNaN(currentLoadMW)) {
-    throw new Error('Invalid system load data received');
-  }
-
-  const allLoads = data.data.map(l => parseFloat(l.alberta_internal_load)).filter(l => !isNaN(l));
-  const peakLoad = Math.max(...allLoads);
-  
-  return {
-    current_demand_mw: currentLoadMW,
-    peak_forecast_mw: peakLoad * 1.05,
-    forecast_date: latestLoad.begin_datetime_mpt || new Date().toISOString(),
-    capacity_margin: 15.2,
-    reserve_margin: 18.7,
-    qa_metadata: {
-      endpoint_used: '/market/reports/current-supply-demand',
-      response_time_ms: Date.now() - performance.now(),
-      data_quality: 'fresh',
-      validation_passed: true,
-      raw_data_sample: latestLoad
+  try {
+    const data = await makeAESORequest('/market/reports/current-supply-demand', { 
+      startDate: today,
+      endDate: today 
+    }, config);
+    
+    if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+      throw new Error('No system load data returned from AESO API');
     }
-  };
+
+    const latestLoad = data.data[data.data.length - 1];
+    const currentLoadMW = parseFloat(latestLoad.alberta_internal_load);
+    
+    if (isNaN(currentLoadMW)) {
+      throw new Error('Invalid system load data received');
+    }
+
+    const allLoads = data.data.map((l: any) => parseFloat(l.alberta_internal_load)).filter((l: number) => !isNaN(l));
+    const peakLoad = Math.max(...allLoads);
+    
+    return {
+      current_demand_mw: currentLoadMW,
+      peak_forecast_mw: peakLoad * 1.05,
+      forecast_date: latestLoad.begin_datetime_mpt || new Date().toISOString(),
+      capacity_margin: 15.2,
+      reserve_margin: 18.7,
+      qa_metadata: {
+        endpoint_used: '/market/reports/current-supply-demand',
+        response_time_ms: Date.now() - performance.now(),
+        data_quality: 'fresh',
+        validation_passed: true,
+        raw_data_sample: latestLoad
+      }
+    };
+  } catch (error) {
+    console.error(`💥 System load fetch failed:`, error);
+    throw error;
+  }
 };
 
 const fetchGenerationMix = async (config: AESOConfig) => {
-  console.log('Fetching AESO generation mix...');
+  console.log('🏭 Fetching AESO generation mix...');
   const today = getTodayDate();
   
-  // Using correct endpoint from developer documentation
-  const data = await makeAESORequest('/market/reports/current-supply-demand', { 
-    startDate: today,
-    endDate: today 
-  }, config);
-  
-  if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-    throw new Error('No generation mix data returned from AESO API');
-  }
-
-  const latestData = data.data[data.data.length - 1];
-  
-  // Extract generation by fuel type from the API response
-  const naturalGas = parseFloat(latestData.gas_generation || 0);
-  const wind = parseFloat(latestData.wind_generation || 0);
-  const solar = parseFloat(latestData.solar_generation || 0);
-  const hydro = parseFloat(latestData.hydro_generation || 0);
-  const coal = parseFloat(latestData.coal_generation || 0);
-  const other = parseFloat(latestData.other_generation || 0);
-  
-  const totalGeneration = naturalGas + wind + solar + hydro + coal + other;
-  
-  if (totalGeneration === 0) {
-    throw new Error('No valid generation data found');
-  }
-  
-  const renewableGeneration = wind + solar + hydro;
-  const renewablePercentage = (renewableGeneration / totalGeneration) * 100;
-
-  return {
-    natural_gas_mw: naturalGas,
-    wind_mw: wind,
-    solar_mw: solar,
-    hydro_mw: hydro,
-    coal_mw: coal,
-    other_mw: other,
-    total_generation_mw: totalGeneration,
-    renewable_percentage: renewablePercentage,
-    timestamp: latestData.begin_datetime_mpt || new Date().toISOString(),
-    qa_metadata: {
-      endpoint_used: '/market/reports/current-supply-demand',
-      response_time_ms: Date.now() - performance.now(),
-      data_quality: 'fresh',
-      validation_passed: true,
-      raw_data_sample: latestData
+  try {
+    const data = await makeAESORequest('/market/reports/current-supply-demand', { 
+      startDate: today,
+      endDate: today 
+    }, config);
+    
+    if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+      throw new Error('No generation mix data returned from AESO API');
     }
-  };
+
+    const latestData = data.data[data.data.length - 1];
+    
+    // Extract generation by fuel type from the API response
+    const naturalGas = parseFloat(latestData.gas_generation || 0);
+    const wind = parseFloat(latestData.wind_generation || 0);
+    const solar = parseFloat(latestData.solar_generation || 0);
+    const hydro = parseFloat(latestData.hydro_generation || 0);
+    const coal = parseFloat(latestData.coal_generation || 0);
+    const other = parseFloat(latestData.other_generation || 0);
+    
+    const totalGeneration = naturalGas + wind + solar + hydro + coal + other;
+    
+    if (totalGeneration === 0) {
+      throw new Error('No valid generation data found');
+    }
+    
+    const renewableGeneration = wind + solar + hydro;
+    const renewablePercentage = (renewableGeneration / totalGeneration) * 100;
+
+    return {
+      natural_gas_mw: naturalGas,
+      wind_mw: wind,
+      solar_mw: solar,
+      hydro_mw: hydro,
+      coal_mw: coal,
+      other_mw: other,
+      total_generation_mw: totalGeneration,
+      renewable_percentage: renewablePercentage,
+      timestamp: latestData.begin_datetime_mpt || new Date().toISOString(),
+      qa_metadata: {
+        endpoint_used: '/market/reports/current-supply-demand',
+        response_time_ms: Date.now() - performance.now(),
+        data_quality: 'fresh',
+        validation_passed: true,
+        raw_data_sample: latestData
+      }
+    };
+  } catch (error) {
+    console.error(`💥 Generation mix fetch failed:`, error);
+    throw error;
+  }
 };
 
+// Enhanced fallback data generator with better realism
 function generateRealisticFallbackData(action: string) {
   const baseTime = Date.now();
   const timeVariation = Math.sin(baseTime / 100000) * 0.1;
   const randomVariation = (Math.random() - 0.5) * 0.2;
+  
+  console.log(`🎭 Generating realistic fallback data for: ${action}`);
   
   switch (action) {
     case 'fetch_current_prices':
@@ -273,10 +326,11 @@ function generateRealisticFallbackData(action: string) {
         market_conditions: basePrice > 60 ? 'high_demand' : 'normal',
         cents_per_kwh: Math.max(2, Math.round((basePrice / 10) * 100) / 100),
         qa_metadata: {
-          endpoint_used: 'fallback_generator',
+          endpoint_used: 'enhanced_fallback_generator',
           response_time_ms: 50,
           data_quality: 'simulated',
-          validation_passed: false
+          validation_passed: false,
+          network_issue: 'deno_connectivity_failure'
         }
       };
       
@@ -289,10 +343,11 @@ function generateRealisticFallbackData(action: string) {
         capacity_margin: 15.2 + (timeVariation * 3),
         reserve_margin: 18.7 + (timeVariation * 2),
         qa_metadata: {
-          endpoint_used: 'fallback_generator',
+          endpoint_used: 'enhanced_fallback_generator',
           response_time_ms: 50,
           data_quality: 'simulated',
-          validation_passed: false
+          validation_passed: false,
+          network_issue: 'deno_connectivity_failure'
         }
       };
       
@@ -318,17 +373,18 @@ function generateRealisticFallbackData(action: string) {
         renewable_percentage: Math.round(renewablePercentage * 10) / 10,
         timestamp: new Date().toISOString(),
         qa_metadata: {
-          endpoint_used: 'fallback_generator',
+          endpoint_used: 'enhanced_fallback_generator',
           response_time_ms: 50,
           data_quality: 'simulated',
-          validation_passed: false
+          validation_passed: false,
+          network_issue: 'deno_connectivity_failure'
         }
       };
       
     default:
       return null;
   }
-};
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -337,18 +393,19 @@ serve(async (req) => {
 
   try {
     const { action } = await req.json()
-    console.log(`AESO API Request: ${JSON.stringify({ action, timestamp: new Date().toISOString() })}`)
+    console.log(`🚀 AESO API Request: ${JSON.stringify({ action, timestamp: new Date().toISOString() })}`)
 
     let result;
     let dataSource = 'fallback';
-    let qaStatus = 'failed';
+    let qaStatus = 'network_failure';
     
     try {
       const config = getAESOConfig();
-      console.log('AESO API Configuration:', {
+      console.log('⚙️ AESO API Configuration:', {
         hasKey: !!config.apiKey,
         keyPreview: config.apiKey.substring(0, 8) + "...",
-        baseUrl: AESO_BASE_URL
+        primaryEndpoint: AESO_ENDPOINTS.primary,
+        legacyEndpoint: AESO_ENDPOINTS.legacy
       });
 
       const startTime = performance.now();
@@ -379,17 +436,29 @@ serve(async (req) => {
       }
       
       console.log('✅ AESO API call successful, data source:', dataSource);
-      console.log('✅ QA Status:', qaStatus);
+      console.log('🔍 QA Status:', qaStatus);
     } catch (error) {
       console.error('❌ AESO API Error:', error.message);
-      console.warn('❌ AESO API unreachable, using enhanced fallback data...');
+      
+      // Enhanced error categorization
+      if (isDеnoNetworkError(error)) {
+        console.warn('🌐 Deno network connectivity issue detected - likely IP blocking or TLS handshake failure');
+        qaStatus = 'deno_network_failure';
+      } else if (error.message.includes('Authentication')) {
+        console.warn('🔐 Authentication issue detected');
+        qaStatus = 'auth_failure';
+      } else {
+        console.warn('🔧 General API failure');
+        qaStatus = 'api_failure';
+      }
+      
+      console.warn('🎭 Using enhanced fallback data with realistic patterns...');
       result = generateRealisticFallbackData(action);
       dataSource = 'fallback';
-      qaStatus = 'fallback';
     }
 
     if (!result) {
-      throw new Error('No data available');
+      throw new Error('No data available from any source');
     }
 
     return new Response(
@@ -398,7 +467,12 @@ serve(async (req) => {
         data: result,
         source: dataSource,
         qa_status: qaStatus,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        network_info: {
+          deno_runtime: true,
+          endpoints_tried: [AESO_ENDPOINTS.primary, AESO_ENDPOINTS.legacy],
+          fallback_reason: dataSource === 'fallback' ? 'network_connectivity_issue' : null
+        }
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -406,7 +480,7 @@ serve(async (req) => {
       },
     )
   } catch (error: any) {
-    console.error('❌ Fatal AESO API Error:', error);
+    console.error('💥 Fatal AESO API Error:', error);
 
     const { action } = await req.json().catch(() => ({ action: 'unknown' }));
     const fallbackData = generateRealisticFallbackData(action);
@@ -416,9 +490,14 @@ serve(async (req) => {
         success: true,
         data: fallbackData,
         source: 'fallback',
-        qa_status: 'error_fallback',
+        qa_status: 'fatal_error_fallback',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        network_info: {
+          deno_runtime: true,
+          fatal_error: true,
+          fallback_activated: true
+        }
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

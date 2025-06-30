@@ -16,6 +16,7 @@ export interface AESOPricing {
     data_quality: 'fresh' | 'moderate' | 'stale' | 'simulated' | 'unknown';
     validation_passed: boolean;
     raw_data_sample?: any;
+    network_issue?: string;
   };
 }
 
@@ -31,6 +32,7 @@ export interface AESOLoadData {
     data_quality: 'fresh' | 'moderate' | 'stale' | 'simulated' | 'unknown';
     validation_passed: boolean;
     raw_data_sample?: any;
+    network_issue?: string;
   };
 }
 
@@ -50,6 +52,7 @@ export interface AESOGenerationMix {
     data_quality: 'fresh' | 'moderate' | 'stale' | 'simulated' | 'unknown';
     validation_passed: boolean;
     raw_data_sample?: any;
+    network_issue?: string;
   };
 }
 
@@ -113,9 +116,10 @@ export function useAESOData() {
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback' | 'network_issue'>('connecting');
   const [lastFetchTime, setLastFetchTime] = useState<string>('');
-  const [hasShownFallbackNotice, setHasShownFallbackNotice] = useState(false);
+  const [hasShownNetworkNotice, setHasShownNetworkNotice] = useState(false);
+  const [networkInfo, setNetworkInfo] = useState<any>(null);
   const { toast } = useToast();
 
   const fetchAESOData = async (dataType: string) => {
@@ -144,10 +148,13 @@ export function useAESOData() {
         throw new Error('No data returned from AESO API');
       }
 
-      // Update connection status based on data source and QA status
+      // Store network info for QA display
+      setNetworkInfo(data.network_info);
+
+      // Enhanced connection status logic
       if (data.source === 'aeso_api' && data.qa_status === 'success') {
         setConnectionStatus('connected');
-        setHasShownFallbackNotice(false);
+        setHasShownNetworkNotice(false);
         setLastFetchTime(data.timestamp);
         
         if (connectionStatus !== 'connected') {
@@ -157,10 +164,20 @@ export function useAESOData() {
             variant: "default"
           });
         }
-      } else if (data.source === 'fallback' || data.qa_status?.includes('fallback')) {
+      } else if (data.qa_status?.includes('network') || data.qa_status?.includes('deno')) {
+        setConnectionStatus('network_issue');
+        if (connectionStatus !== 'network_issue' && !hasShownNetworkNotice) {
+          setHasShownNetworkNotice(true);
+          toast({
+            title: "🌐 Network Connectivity Issue",
+            description: "AESO API unreachable - likely IP blocking or TLS issue. Using simulated data.",
+            variant: "default"
+          });
+        }
+      } else if (data.source === 'fallback') {
         setConnectionStatus('fallback');
-        if (connectionStatus !== 'fallback' && !hasShownFallbackNotice) {
-          setHasShownFallbackNotice(true);
+        if (connectionStatus !== 'fallback' && !hasShownNetworkNotice) {
+          setHasShownNetworkNotice(true);
           toast({
             title: "⚠️ Using Simulated Data",
             description: "AESO API unavailable, showing realistic test data",
@@ -173,7 +190,7 @@ export function useAESOData() {
 
     } catch (error: any) {
       console.error('❌ Error fetching AESO data:', error);
-      setConnectionStatus('fallback');
+      setConnectionStatus('network_issue');
       return null;
     } finally {
       setLoading(false);
@@ -242,6 +259,7 @@ export function useAESOData() {
     loading,
     connectionStatus,
     lastFetchTime,
+    networkInfo,
     getCurrentPrices,
     getLoadForecast,
     getGenerationMix,
