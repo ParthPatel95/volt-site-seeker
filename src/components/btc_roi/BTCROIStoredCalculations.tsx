@@ -2,31 +2,25 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Save, 
   History, 
   Trash2, 
-  Eye, 
-  Calendar, 
-  TrendingUp, 
-  DollarSign,
-  Zap,
-  Building2,
   Calculator,
-  AlertTriangle,
-  Settings,
-  BarChart3,
-  PieChart
+  Building2,
+  Zap,
+  Filter,
+  SortAsc,
+  Search
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StoredCalculation, HostingROIResults, BTCROIResults } from './types/btc_roi_types';
 import { useStoredCalculationsDB } from './hooks/useStoredCalculationsDB';
+import { BTCROICalculationCard } from './stored_calculations/BTCROICalculationCard';
+import { BTCROICalculationDetailView } from './stored_calculations/BTCROICalculationDetailView';
+import { BTCROICalculationSaveForm } from './stored_calculations/BTCROICalculationSaveForm';
 
 interface BTCROIStoredCalculationsProps {
   currentCalculationType: 'hosting' | 'self';
@@ -40,557 +34,36 @@ export const BTCROIStoredCalculations: React.FC<BTCROIStoredCalculationsProps> =
   onSaveCalculation
 }) => {
   const { storedCalculations, deleteCalculation, clearAllCalculations, loading } = useStoredCalculationsDB();
-  const [siteName, setSiteName] = useState('');
   const [selectedCalculation, setSelectedCalculation] = useState<StoredCalculation | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'hosting' | 'self'>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'profit'>('date');
 
-  const formatCurrency = (amount: number) => `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const formatPercent = (percent: number) => `${percent.toFixed(1)}%`;
-  const formatNumber = (num: number) => num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  const handleSave = () => {
-    onSaveCalculation(siteName.trim() || undefined);
-    setSiteName('');
-  };
-
-  const renderResultsSummary = (calc: StoredCalculation) => {
-    const isHosting = calc.calculationType === 'hosting';
-    const results = calc.results as HostingROIResults | BTCROIResults;
-
-    if (isHosting) {
-      const hostingResults = results as HostingROIResults;
-      return (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div className="text-center p-2 bg-green-50 rounded">
-            <div className="font-bold text-green-700">{formatCurrency(hostingResults.netProfit)}</div>
-            <div className="text-green-600">Net Profit</div>
-          </div>
-          <div className="text-center p-2 bg-blue-50 rounded">
-            <div className="font-bold text-blue-700">{formatPercent(hostingResults.roi12Month)}</div>
-            <div className="text-blue-600">12M ROI</div>
-          </div>
-          <div className="text-center p-2 bg-purple-50 rounded">
-            <div className="font-bold text-purple-700">{formatPercent(hostingResults.profitMarginPercent)}</div>
-            <div className="text-purple-600">Margin</div>
-          </div>
-          <div className="text-center p-2 bg-orange-50 rounded">
-            <div className="font-bold text-orange-700">{hostingResults.paybackPeriodYears.toFixed(1)}y</div>
-            <div className="text-orange-600">Payback</div>
-          </div>
-        </div>
-      );
-    } else {
-      const miningResults = results as BTCROIResults;
-      return (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div className="text-center p-2 bg-green-50 rounded">
-            <div className="font-bold text-green-700">{formatCurrency(miningResults.dailyNetProfit)}</div>
-            <div className="text-green-600">Daily Profit</div>
-          </div>
-          <div className="text-center p-2 bg-blue-50 rounded">
-            <div className="font-bold text-blue-700">{formatPercent(miningResults.roi12Month)}</div>
-            <div className="text-blue-600">12M ROI</div>
-          </div>
-          <div className="text-center p-2 bg-purple-50 rounded">
-            <div className="font-bold text-purple-700">{miningResults.breakEvenDays.toFixed(0)} days</div>
-            <div className="text-purple-600">Break Even</div>
-          </div>
-          <div className="text-center p-2 bg-orange-50 rounded">
-            <div className="font-bold text-orange-700">{formatCurrency(miningResults.totalInvestment)}</div>
-            <div className="text-orange-600">Investment</div>
-          </div>
-        </div>
-      );
-    }
-  };
-
-  const renderDetailedView = (calc: StoredCalculation) => {
-    const isHosting = calc.calculationType === 'hosting';
-    
-    return (
-      <div className="space-y-4 max-h-[80vh] overflow-y-auto">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="financial">Financial</TabsTrigger>
-            <TabsTrigger value="technical">Technical</TabsTrigger>
-            <TabsTrigger value="config">Config</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-4">
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Calculation Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Date:</span>
-                    <span>{calc.timestamp.toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Time:</span>
-                    <span>{calc.timestamp.toLocaleTimeString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Type:</span>
-                    <Badge variant={isHosting ? "default" : "secondary"}>
-                      {isHosting ? 'Hosting' : 'Self Mining'}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Region:</span>
-                    <span>{calc.formData.region}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>ASIC Model:</span>
-                    <span>{calc.formData.asicModel}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Units:</span>
-                    <span>{calc.formData.units.toLocaleString()}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    Network Data
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>BTC Price:</span>
-                    <span>{formatCurrency(calc.networkData.price)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Difficulty:</span>
-                    <span>{(calc.networkData.difficulty / 1e12).toFixed(2)}T</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Block Reward:</span>
-                    <span>{calc.networkData.blockReward} BTC</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Network Hashrate:</span>
-                    <span>{(calc.networkData.hashrate / 1e18).toFixed(0)} EH/s</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Avg Block Time:</span>
-                    <span>{calc.networkData.avgBlockTime} min</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Next Halving:</span>
-                    <span>{calc.networkData.nextHalvingDays} days</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Results Summary */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Results Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {renderResultsSummary(calc)}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="financial" className="space-y-4">
-            {/* Detailed Financial Breakdown */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">
-                  {isHosting ? 'Hosting Financial Analysis' : 'Mining Financial Analysis'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs">Metric</TableHead>
-                        <TableHead className="text-xs text-right">Value</TableHead>
-                        <TableHead className="text-xs text-right">Details</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isHosting ? (
-                        <>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Infrastructure Investment</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency(calc.formData.infrastructureCost)}</TableCell>
-                            <TableCell className="text-xs text-right">Initial CapEx</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Annual Revenue</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as HostingROIResults).totalHostingRevenue)}</TableCell>
-                            <TableCell className="text-xs text-right">Client hosting fees</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Energy Costs</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as HostingROIResults).totalElectricityCost)}</TableCell>
-                            <TableCell className="text-xs text-right">{formatNumber((calc.results as HostingROIResults).totalEnergyUsageKWh)} kWh</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Operational Costs</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as HostingROIResults).totalOperationalCost)}</TableCell>
-                            <TableCell className="text-xs text-right">Maintenance + Overhead</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Annual Taxes</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as HostingROIResults).taxAnalysis.totalAnnualTaxes)}</TableCell>
-                            <TableCell className="text-xs text-right">Income + Property</TableCell>
-                          </TableRow>
-                          <TableRow className="border-t-2">
-                            <TableCell className="text-xs font-bold">Net Annual Profit</TableCell>
-                            <TableCell className="text-xs text-right font-bold text-green-600">{formatCurrency((calc.results as HostingROIResults).netProfit)}</TableCell>
-                            <TableCell className="text-xs text-right">{formatPercent((calc.results as HostingROIResults).profitMarginPercent)} margin</TableCell>
-                          </TableRow>
-                        </>
-                      ) : (
-                        <>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Hardware Investment</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as BTCROIResults).totalInvestment)}</TableCell>
-                            <TableCell className="text-xs text-right">{calc.formData.units} units × {formatCurrency(calc.formData.hardwareCost)}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Daily BTC Mined</TableCell>
-                            <TableCell className="text-xs text-right">{(calc.results as BTCROIResults).dailyBTCMined.toFixed(6)} BTC</TableCell>
-                            <TableCell className="text-xs text-right">{formatNumber(calc.formData.hashrate)} TH/s total</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Daily Revenue</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as BTCROIResults).dailyRevenue)}</TableCell>
-                            <TableCell className="text-xs text-right">@ {formatCurrency(calc.networkData.price)} BTC</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Daily Power Cost</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as BTCROIResults).dailyPowerCost)}</TableCell>
-                            <TableCell className="text-xs text-right">{formatNumber((calc.formData.powerDraw * calc.formData.units) / 1000)} kW</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs font-medium">Pool Fees</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as BTCROIResults).dailyPoolFees)}</TableCell>
-                            <TableCell className="text-xs text-right">{formatPercent(calc.formData.poolFee)} of revenue</TableCell>
-                          </TableRow>
-                          <TableRow className="border-t-2">
-                            <TableCell className="text-xs font-bold">Daily Net Profit</TableCell>
-                            <TableCell className="text-xs text-right font-bold text-green-600">{formatCurrency((calc.results as BTCROIResults).dailyNetProfit)}</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency((calc.results as BTCROIResults).monthlyNetProfit)} monthly</TableCell>
-                          </TableRow>
-                        </>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* ROI Analysis */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">ROI Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {isHosting ? (
-                    <>
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-lg font-bold text-blue-700">{formatPercent((calc.results as HostingROIResults).roi12Month)}</div>
-                        <div className="text-xs text-blue-600">12-Month ROI</div>
-                      </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-lg font-bold text-green-700">{(calc.results as HostingROIResults).paybackPeriodYears.toFixed(1)}</div>
-                        <div className="text-xs text-green-600">Payback Years</div>
-                      </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-lg font-bold text-purple-700">{formatPercent((calc.results as HostingROIResults).profitMarginPercent)}</div>
-                        <div className="text-xs text-purple-600">Profit Margin</div>
-                      </div>
-                      <div className="text-center p-3 bg-orange-50 rounded-lg">
-                        <div className="text-lg font-bold text-orange-700">{formatCurrency(calc.formData.infrastructureCost)}</div>
-                        <div className="text-xs text-orange-600">Investment</div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-lg font-bold text-blue-700">{formatPercent((calc.results as BTCROIResults).roi12Month)}</div>
-                        <div className="text-xs text-blue-600">12-Month ROI</div>
-                      </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-lg font-bold text-green-700">{(calc.results as BTCROIResults).breakEvenDays.toFixed(0)}</div>
-                        <div className="text-xs text-green-600">Break Even Days</div>
-                      </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-lg font-bold text-purple-700">{formatCurrency((calc.results as BTCROIResults).yearlyNetProfit)}</div>
-                        <div className="text-xs text-purple-600">Annual Profit</div>
-                      </div>
-                      <div className="text-center p-3 bg-orange-50 rounded-lg">
-                        <div className="text-lg font-bold text-orange-700">{((calc.results as BTCROIResults).yearlyNetProfit / (calc.results as BTCROIResults).totalInvestment * 100).toFixed(1)}%</div>
-                        <div className="text-xs text-orange-600">Annual Return</div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="technical" className="space-y-4">
-            {/* Technical Specifications */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Settings className="w-4 h-4" />
-                    Hardware Specs
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>ASIC Model:</span>
-                    <span>{calc.formData.asicModel}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Hashrate per Unit:</span>
-                    <span>{calc.formData.hashrate} TH/s</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Power Draw per Unit:</span>
-                    <span>{calc.formData.powerDraw} W</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Units:</span>
-                    <span>{calc.formData.units.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Hashrate:</span>
-                    <span>{(calc.formData.hashrate * calc.formData.units).toLocaleString()} TH/s</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Power Draw:</span>
-                    <span>{((calc.formData.powerDraw * calc.formData.units) / 1000).toFixed(2)} kW</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Efficiency:</span>
-                    <span>{(calc.formData.powerDraw / calc.formData.hashrate).toFixed(2)} W/TH</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Zap className="w-4 h-4" />
-                    Power & Costs
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Power Rate:</span>
-                    <span>${calc.formData.powerRate.toFixed(4)}/kWh</span>
-                  </div>
-                  {calc.formData.useManualEnergyCosts && (
-                    <>
-                      <div className="flex justify-between">
-                        <span>Energy Rate:</span>
-                        <span>${calc.formData.manualEnergyRate?.toFixed(4)}/kWh</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Transmission:</span>
-                        <span>${calc.formData.manualTransmissionRate?.toFixed(4)}/kWh</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Distribution:</span>
-                        <span>${calc.formData.manualDistributionRate?.toFixed(4)}/kWh</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-between">
-                    <span>Pool Fee:</span>
-                    <span>{calc.formData.poolFee}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Cooling Overhead:</span>
-                    <span>{calc.formData.coolingOverhead}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Hardware Cost/Unit:</span>
-                    <span>{formatCurrency(calc.formData.hardwareCost)}</span>
-                  </div>
-                  {isHosting && (
-                    <>
-                      <div className="flex justify-between">
-                        <span>Hosting Fee Rate:</span>
-                        <span>${calc.formData.hostingFeeRate.toFixed(4)}/kWh</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Infrastructure Cost:</span>
-                        <span>{formatCurrency(calc.formData.infrastructureCost)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Monthly Overhead:</span>
-                        <span>{formatCurrency(calc.formData.monthlyOverhead)}</span>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Efficiency Metrics */}
-            {isHosting && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Hosting Efficiency</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <div className="text-lg font-bold text-blue-700">{calc.formData.expectedUptimePercent}%</div>
-                      <div className="text-xs text-blue-600">Expected Uptime</div>
-                    </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <div className="text-lg font-bold text-green-700">{formatNumber((calc.results as HostingROIResults).totalEnergyUsageKWh / 8760)}</div>
-                      <div className="text-xs text-green-600">Avg kW Usage</div>
-                    </div>
-                    <div className="text-center p-3 bg-purple-50 rounded-lg">
-                      <div className="text-lg font-bold text-purple-700">{calc.formData.powerOverheadPercent}%</div>
-                      <div className="text-xs text-purple-600">Power Overhead</div>
-                    </div>
-                    <div className="text-center p-3 bg-orange-50 rounded-lg">
-                      <div className="text-lg font-bold text-orange-700">{calc.formData.maintenancePercent}%</div>
-                      <div className="text-xs text-orange-600">Maintenance</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="config" className="space-y-4">
-            {/* Configuration Details */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Complete Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs">Parameter</TableHead>
-                        <TableHead className="text-xs text-right">Value</TableHead>
-                        <TableHead className="text-xs">Category</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell className="text-xs">ASIC Model</TableCell>
-                        <TableCell className="text-xs text-right">{calc.formData.asicModel}</TableCell>
-                        <TableCell className="text-xs text-gray-500">Hardware</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-xs">Units</TableCell>
-                        <TableCell className="text-xs text-right">{calc.formData.units}</TableCell>
-                        <TableCell className="text-xs text-gray-500">Hardware</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-xs">Region</TableCell>
-                        <TableCell className="text-xs text-right">{calc.formData.region}</TableCell>
-                        <TableCell className="text-xs text-gray-500">Location</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-xs">Power Rate</TableCell>
-                        <TableCell className="text-xs text-right">${calc.formData.powerRate}/kWh</TableCell>
-                        <TableCell className="text-xs text-gray-500">Energy</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-xs">Pool Fee</TableCell>
-                        <TableCell className="text-xs text-right">{calc.formData.poolFee}%</TableCell>
-                        <TableCell className="text-xs text-gray-500">Mining</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-xs">Efficiency Override</TableCell>
-                        <TableCell className="text-xs text-right">{calc.formData.efficiencyOverride}%</TableCell>
-                        <TableCell className="text-xs text-gray-500">Performance</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-xs">Resale Value</TableCell>
-                        <TableCell className="text-xs text-right">{calc.formData.resaleValue}%</TableCell>
-                        <TableCell className="text-xs text-gray-500">Financial</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-xs">Maintenance</TableCell>
-                        <TableCell className="text-xs text-right">{calc.formData.maintenancePercent}%</TableCell>
-                        <TableCell className="text-xs text-gray-500">Operational</TableCell>
-                      </TableRow>
-                      {isHosting && (
-                        <>
-                          <TableRow>
-                            <TableCell className="text-xs">Hosting Fee Rate</TableCell>
-                            <TableCell className="text-xs text-right">${calc.formData.hostingFeeRate}/kWh</TableCell>
-                            <TableCell className="text-xs text-gray-500">Hosting</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs">Infrastructure Cost</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency(calc.formData.infrastructureCost)}</TableCell>
-                            <TableCell className="text-xs text-gray-500">Hosting</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs">Monthly Overhead</TableCell>
-                            <TableCell className="text-xs text-right">{formatCurrency(calc.formData.monthlyOverhead)}</TableCell>
-                            <TableCell className="text-xs text-gray-500">Hosting</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs">Expected Uptime</TableCell>
-                            <TableCell className="text-xs text-right">{calc.formData.expectedUptimePercent}%</TableCell>
-                            <TableCell className="text-xs text-gray-500">Hosting</TableCell>
-                          </TableRow>
-                        </>
-                      )}
-                      {calc.formData.useManualEnergyCosts && (
-                        <>
-                          <TableRow>
-                            <TableCell className="text-xs">Manual Energy Rate</TableCell>
-                            <TableCell className="text-xs text-right">${calc.formData.manualEnergyRate}/kWh</TableCell>
-                            <TableCell className="text-xs text-gray-500">Manual Energy</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs">Transmission Rate</TableCell>
-                            <TableCell className="text-xs text-right">${calc.formData.manualTransmissionRate}/kWh</TableCell>
-                            <TableCell className="text-xs text-gray-500">Manual Energy</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-xs">Distribution Rate</TableCell>
-                            <TableCell className="text-xs text-right">${calc.formData.manualDistributionRate}/kWh</TableCell>
-                            <TableCell className="text-xs text-gray-500">Manual Energy</TableCell>
-                          </TableRow>
-                        </>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    );
-  };
+  // Filter and sort calculations
+  const filteredCalculations = storedCalculations
+    .filter(calc => {
+      const matchesSearch = calc.siteName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           calc.formData.asicModel.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = filterType === 'all' || calc.calculationType === filterType;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.siteName.localeCompare(b.siteName);
+        case 'profit':
+          const aProfit = a.calculationType === 'hosting' 
+            ? (a.results as HostingROIResults).netProfit
+            : (a.results as BTCROIResults).yearlyNetProfit;
+          const bProfit = b.calculationType === 'hosting' 
+            ? (b.results as HostingROIResults).netProfit
+            : (b.results as BTCROIResults).yearlyNetProfit;
+          return bProfit - aProfit;
+        case 'date':
+        default:
+          return b.timestamp.getTime() - a.timestamp.getTime();
+      }
+    });
 
   if (loading) {
     return (
@@ -606,57 +79,130 @@ export const BTCROIStoredCalculations: React.FC<BTCROIStoredCalculationsProps> =
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <History className="w-5 h-5" />
+    <Card className="shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <History className="w-6 h-6 text-blue-600" />
           Stored Calculations
+          <span className="text-sm font-normal text-gray-600 ml-2">
+            ({filteredCalculations.length} of {storedCalculations.length})
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-6 space-y-6">
         {/* Save Current Calculation */}
-        {currentResults && (
-          <div className="space-y-3 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Save className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-blue-800">Save Current Calculation</span>
+        <BTCROICalculationSaveForm 
+          onSave={onSaveCalculation}
+          isVisible={!!currentResults}
+        />
+
+        {/* Search and Filter Controls */}
+        {storedCalculations.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search by site name or ASIC model..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterType} onValueChange={(value: 'all' | 'hosting' | 'self') => setFilterType(value)}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="hosting">Hosting Only</SelectItem>
+                  <SelectItem value="self">Self Mining Only</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={(value: 'date' | 'name' | 'profit') => setSortBy(value)}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SortAsc className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Sort by Date</SelectItem>
+                  <SelectItem value="name">Sort by Name</SelectItem>
+                  <SelectItem value="profit">Sort by Profit</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="siteName" className="text-sm">Site Name (Optional)</Label>
-              <Input
-                id="siteName"
-                value={siteName}
-                onChange={(e) => setSiteName(e.target.value)}
-                placeholder="Leave blank for auto-generated name"
-                className="text-sm"
-              />
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-lg font-bold text-blue-700">{storedCalculations.length}</div>
+                <div className="text-xs text-blue-600">Total Calculations</div>
+              </div>
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-lg font-bold text-green-700">
+                  {storedCalculations.filter(c => c.calculationType === 'hosting').length}
+                </div>
+                <div className="text-xs text-green-600">Hosting Scenarios</div>
+              </div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-lg font-bold text-orange-700">
+                  {storedCalculations.filter(c => c.calculationType === 'self').length}
+                </div>
+                <div className="text-xs text-orange-600">Self Mining</div>
+              </div>
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="text-lg font-bold text-purple-700">
+                  {new Set(storedCalculations.map(c => c.formData.asicModel)).size}
+                </div>
+                <div className="text-xs text-purple-600">ASIC Models</div>
+              </div>
             </div>
-            <Button onClick={handleSave} size="sm" className="w-full sm:w-auto">
-              <Save className="w-4 h-4 mr-2" />
-              Save Calculation
-            </Button>
           </div>
         )}
 
-        {/* Stored Calculations List */}
-        {storedCalculations.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Calculator className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="text-sm">No saved calculations yet</p>
-            <p className="text-xs mt-1">Run a calculation above and save it to view history</p>
+        {/* Calculations List */}
+        {filteredCalculations.length === 0 ? (
+          <div className="text-center py-12">
+            <Calculator className="w-16 h-16 mx-auto mb-4 opacity-30" />
+            {storedCalculations.length === 0 ? (
+              <>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">No saved calculations yet</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Run a calculation above and save it to build your calculation history
+                </p>
+                <div className="flex items-center justify-center gap-4 text-xs text-gray-400">
+                  <div className="flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
+                    Hosting Analysis
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Zap className="w-3 h-3" />
+                    Self Mining
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">No calculations match your search</h3>
+                <p className="text-sm text-gray-500">
+                  Try adjusting your search terms or filters
+                </p>
+              </>
+            )}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <span className="text-sm font-medium">
-                {storedCalculations.length} Saved Calculation{storedCalculations.length !== 1 ? 's' : ''}
+              <span className="text-sm font-medium text-gray-700">
+                Showing {filteredCalculations.length} calculation{filteredCalculations.length !== 1 ? 's' : ''}
               </span>
               {storedCalculations.length > 0 && (
                 <Button
                   onClick={clearAllCalculations}
                   variant="outline"
                   size="sm"
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Clear All
@@ -664,72 +210,43 @@ export const BTCROIStoredCalculations: React.FC<BTCROIStoredCalculationsProps> =
               )}
             </div>
 
-            <ScrollArea className="h-96">
-              <div className="space-y-3">
-                {storedCalculations.map((calc) => (
-                  <Card key={calc.id} className="relative">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            {calc.calculationType === 'hosting' ? (
-                              <Building2 className="w-4 h-4 text-blue-500" />
-                            ) : (
-                              <Zap className="w-4 h-4 text-orange-500" />
-                            )}
-                            <span className="font-medium text-sm">{calc.siteName}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
-                              {calc.timestamp.toLocaleDateString()}
-                            </span>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setSelectedCalculation(calc)}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle className="flex items-center gap-2">
-                                    {calc.calculationType === 'hosting' ? (
-                                      <Building2 className="w-5 h-5" />
-                                    ) : (
-                                      <Zap className="w-5 h-5" />
-                                    )}
-                                    {calc.siteName}
-                                  </DialogTitle>
-                                  <DialogDescription>
-                                    Detailed analysis for {calc.calculationType === 'hosting' ? 'hosting' : 'self-mining'} calculation from {calc.timestamp.toLocaleDateString()}
-                                  </DialogDescription>
-                                </DialogHeader>
-                                {renderDetailedView(calc)}
-                              </DialogContent>
-                            </Dialog>
-                            <Button
-                              onClick={() => deleteCalculation(calc.id)}
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {renderResultsSummary(calc)}
-                      </div>
-                    </CardContent>
-                  </Card>
+            <ScrollArea className="h-[600px] pr-4">
+              <div className="space-y-4">
+                {filteredCalculations.map((calculation) => (
+                  <div key={calculation.id}>
+                    <BTCROICalculationCard
+                      calculation={calculation}
+                      onView={setSelectedCalculation}
+                      onDelete={deleteCalculation}
+                    />
+                  </div>
                 ))}
               </div>
             </ScrollArea>
           </div>
         )}
+
+        {/* Detail View Dialog */}
+        <Dialog open={!!selectedCalculation} onOpenChange={() => setSelectedCalculation(null)}>
+          <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {selectedCalculation?.calculationType === 'hosting' ? (
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <Zap className="w-5 h-5 text-orange-600" />
+                )}
+                {selectedCalculation?.siteName}
+              </DialogTitle>
+              <DialogDescription>
+                Detailed analysis for {selectedCalculation?.calculationType === 'hosting' ? 'hosting' : 'self-mining'} calculation from {selectedCalculation?.timestamp.toLocaleDateString()}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedCalculation && (
+              <BTCROICalculationDetailView calculation={selectedCalculation} />
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

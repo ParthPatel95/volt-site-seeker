@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -78,42 +77,42 @@ export const BTCROIMainPage = () => {
         />
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-amber-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-amber-50 p-2 sm:p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {/* Enhanced Header with Quick Actions */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="p-3 bg-orange-100 rounded-full">
-                <Bitcoin className="w-8 h-8 text-orange-600" />
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-4">
+              <div className="p-2 sm:p-3 bg-orange-100 rounded-full">
+                <Bitcoin className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600" />
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
                 BTC Mining ROI Lab
               </h1>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Calculator className="w-8 h-8 text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                <Calculator className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
               </div>
             </div>
-            <p className="text-gray-600 text-lg max-w-3xl mx-auto mb-4">
+            <p className="text-gray-600 text-sm sm:text-base lg:text-lg max-w-3xl mx-auto mb-4 px-4">
               Professional Bitcoin mining profitability calculator with real-time market data and comprehensive analytics
             </p>
             
             {/* Quick Action Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowOnboarding(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-xs sm:text-sm"
               >
-                <HelpCircle className="w-4 h-4" />
+                <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                 Take Tour
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-xs sm:text-sm"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
                 What's New
               </Button>
             </div>
@@ -131,7 +130,7 @@ export const BTCROIMainPage = () => {
           </div>
 
           {/* Main Calculator Section */}
-          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 sm:gap-6">
             {/* Input Form - Takes 2 columns */}
             <div className="xl:col-span-2">
               <BTCROIInputForm
@@ -154,57 +153,63 @@ export const BTCROIMainPage = () => {
           </div>
 
           {/* Advanced Features Tabs */}
-          <Tabs defaultValue="analytics" className="space-y-6">
+          <Tabs defaultValue="analytics" className="space-y-4 sm:space-y-6">
             <div className="flex justify-center">
-              <TabsList className="grid w-full max-w-4xl grid-cols-3 md:grid-cols-6 h-12">
+              <TabsList className="grid w-full max-w-6xl grid-cols-3 sm:grid-cols-6 h-10 sm:h-12 text-xs sm:text-sm">
                 <TabsTrigger 
                   value="analytics" 
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex items-center gap-1 sm:gap-2 font-medium p-1 sm:p-2"
                 >
-                  <BarChart3 className="w-4 h-4" />
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Analytics</span>
+                  <span className="sm:hidden">Charts</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="alerts" 
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex items-center gap-1 sm:gap-2 font-medium p-1 sm:p-2"
                 >
-                  <Bell className="w-4 h-4" />
+                  <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Alerts</span>
+                  <span className="sm:hidden">Bell</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="reports" 
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex items-center gap-1 sm:gap-2 font-medium p-1 sm:p-2"
                 >
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Reports</span>
+                  <span className="sm:hidden">Files</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="charts" 
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex items-center gap-1 sm:gap-2 font-medium p-1 sm:p-2"
                 >
-                  <TrendingUp className="w-4 h-4" />
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Charts</span>
+                  <span className="sm:hidden">Trend</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="catalog" 
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex items-center gap-1 sm:gap-2 font-medium p-1 sm:p-2"
                 >
-                  <Zap className="w-4 h-4" />
+                  <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Hardware</span>
+                  <span className="sm:hidden">HW</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="scenarios" 
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex items-center gap-1 sm:gap-2 font-medium p-1 sm:p-2"
                 >
-                  <Grid3X3 className="w-4 h-4" />
+                  <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Scenarios</span>
+                  <span className="sm:hidden">Grid</span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <TabsContent value="analytics" className="space-y-6">
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div className="xl:col-span-2 space-y-6">
+            <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div className="xl:col-span-2 space-y-4 sm:space-y-6">
                   {/* Advanced Analytics */}
                   {currentResults && networkData && (
                     <BTCROIAdvancedAnalytics
@@ -236,67 +241,67 @@ export const BTCROIMainPage = () => {
                   />
                 </div>
                 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Quick Summary Card */}
                   {currentResults && (
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg text-green-800 flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5" />
+                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-lg">
+                      <CardHeader className="pb-3 sm:pb-4">
+                        <CardTitle className="text-base sm:text-lg text-green-800 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
                           Quick Summary
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         {miningMode === 'hosting' && hostingResults ? (
-                          <div className="space-y-4">
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">Annual Profit:</span>
-                              <span className="font-bold text-lg text-green-600">
+                          <div className="space-y-3 sm:space-y-4">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">Annual Profit:</span>
+                              <span className="font-bold text-sm sm:text-lg text-green-600">
                                 ${hostingResults.netProfit.toLocaleString()}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">12-Month ROI:</span>
-                              <span className="font-bold text-lg text-blue-600">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">12-Month ROI:</span>
+                              <span className="font-bold text-sm sm:text-lg text-blue-600">
                                 {hostingResults.roi12Month.toFixed(1)}%
                               </span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">Profit Margin:</span>
-                              <span className="font-bold text-lg text-purple-600">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">Profit Margin:</span>
+                              <span className="font-bold text-sm sm:text-lg text-purple-600">
                                 {hostingResults.profitMarginPercent.toFixed(1)}%
                               </span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">Payback Period:</span>
-                              <span className="font-bold text-lg text-orange-600">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">Payback Period:</span>
+                              <span className="font-bold text-sm sm:text-lg text-orange-600">
                                 {hostingResults.paybackPeriodYears.toFixed(1)} years
                               </span>
                             </div>
                           </div>
                         ) : roiResults && (
-                          <div className="space-y-4">
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">Daily Profit:</span>
-                              <span className="font-bold text-lg text-green-600">
+                          <div className="space-y-3 sm:space-y-4">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">Daily Profit:</span>
+                              <span className="font-bold text-sm sm:text-lg text-green-600">
                                 ${roiResults.dailyNetProfit.toLocaleString()}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">Monthly Profit:</span>
-                              <span className="font-bold text-lg text-blue-600">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">Monthly Profit:</span>
+                              <span className="font-bold text-sm sm:text-lg text-blue-600">
                                 ${roiResults.monthlyNetProfit.toLocaleString()}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">12-Month ROI:</span>
-                              <span className="font-bold text-lg text-purple-600">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">12-Month ROI:</span>
+                              <span className="font-bold text-sm sm:text-lg text-purple-600">
                                 {roiResults.roi12Month.toFixed(1)}%
                               </span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                              <span className="text-sm font-medium text-gray-700">Break Even:</span>
-                              <span className="font-bold text-lg text-orange-600">
+                            <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">Break Even:</span>
+                              <span className="font-bold text-sm sm:text-lg text-orange-600">
                                 {roiResults.breakEvenDays.toFixed(0)} days
                               </span>
                             </div>
