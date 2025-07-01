@@ -16,7 +16,7 @@ import {
   Target,
   Activity
 } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart as RechartsPieChart, Cell, BarChart, Bar, LineChart, Line } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart as RechartsPieChart, Cell, BarChart, Bar, LineChart, Line, Pie } from 'recharts';
 import { StoredCalculation, HostingROIResults, BTCROIResults } from '../types/btc_roi_types';
 
 interface BTCROICalculationDetailViewProps {
