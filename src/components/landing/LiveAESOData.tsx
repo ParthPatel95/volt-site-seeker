@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +33,6 @@ export const LiveAESOData = () => {
         <p className="text-slate-300 text-sm">Alberta Electricity System Operator</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
@@ -77,7 +75,6 @@ export const LiveAESOData = () => {
           </div>
         </div>
 
-        {/* Generation Mix */}
         {generationMix && (
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-slate-200">Generation Mix</h4>
