@@ -1,267 +1,175 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
-import { 
-  Plus, 
-  MessageSquare, 
-  FileText, 
-  TrendingUp,
-  Eye,
-  Heart,
-  DollarSign,
-  Users,
-  Bell
-} from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Plus, MessageSquare, User, Search, TrendingUp } from 'lucide-react';
 
 export const VoltMarketDashboard: React.FC = () => {
   const { profile } = useVoltMarketAuth();
 
-  const stats = {
-    listings: 0,
-    messages: 0,
-    views: 0,
-    lois: 0,
-    ndas: 0,
-    saved: 0
-  };
-
-  const recentActivity = [
-    {
-      type: 'message',
-      title: 'New message from John Smith',
-      time: '2 hours ago',
-      icon: MessageSquare
-    },
-    {
-      type: 'view',
-      title: 'Your listing "150MW Data Center" was viewed',
-      time: '4 hours ago',
-      icon: Eye
-    },
-    {
-      type: 'loi',
-      title: 'LOI received for "Texas Facility"',
-      time: '1 day ago',
-      icon: FileText
-    }
-  ];
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900">Loading dashboard...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {profile?.company_name || 'User'}!
+            Welcome back{profile.company_name ? `, ${profile.company_name}` : ''}!
           </h1>
-          <div className="flex items-center gap-2">
-            <Badge variant={profile?.role === 'seller' ? 'default' : 'secondary'}>
-              {profile?.role === 'seller' ? 'Seller' : 'Buyer'}
-            </Badge>
-            {profile?.seller_type && (
-              <Badge variant="outline" className="capitalize">
-                {profile.seller_type.replace('_', ' ')}
-              </Badge>
-            )}
-            {profile?.is_id_verified && (
-              <Badge variant="outline" className="text-green-600 border-green-600">
-                Verified
-              </Badge>
-            )}
-          </div>
+          <p className="text-gray-600">
+            Your VoltMarket {profile.role} dashboard
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {profile?.role === 'seller' ? (
-            <>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Active Listings</p>
-                      <p className="text-3xl font-bold">{stats.listings}</p>
-                    </div>
-                    <Plus className="w-8 h-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Views</p>
-                      <p className="text-3xl font-bold">{stats.views}</p>
-                    </div>
-                    <Eye className="w-8 h-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">LOIs Received</p>
-                      <p className="text-3xl font-bold">{stats.lois}</p>
-                    </div>
-                    <FileText className="w-8 h-8 text-orange-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">NDA Requests</p>
-                      <p className="text-3xl font-bold">{stats.ndas}</p>
-                    </div>
-                    <Users className="w-8 h-8 text-purple-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Saved Listings</p>
-                      <p className="text-3xl font-bold">{stats.saved}</p>
-                    </div>
-                    <Heart className="w-8 h-8 text-red-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">LOIs Submitted</p>
-                      <p className="text-3xl font-bold">{stats.lois}</p>
-                    </div>
-                    <FileText className="w-8 h-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">DD Accessed</p>
-                      <p className="text-3xl font-bold">{stats.ndas}</p>
-                    </div>
-                    <Users className="w-8 h-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Messages</p>
-                      <p className="text-3xl font-bold">{stats.messages}</p>
-                    </div>
-                    <MessageSquare className="w-8 h-8 text-orange-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
+              <Search className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">
+                listings currently active
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Messages</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">
+                unread messages
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">
+                this month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Verification</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {profile.is_id_verified && profile.is_email_verified ? '✓' : '!'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {profile.is_id_verified && profile.is_email_verified ? 'Fully verified' : 'Needs verification'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Quick Actions */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {profile?.role === 'seller' && (
-                  <Link to="/voltmarket/create-listing">
-                    <Button className="w-full justify-start">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create New Listing
-                    </Button>
-                  </Link>
-                )}
-                
-                <Link to="/voltmarket/messages">
-                  <Button variant="outline" className="w-full justify-start">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    View Messages
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Link to="/voltmarket/listings">
+                <Button variant="outline" className="w-full justify-start">
+                  <Search className="mr-2 h-4 w-4" />
+                  Browse Listings
+                </Button>
+              </Link>
+              
+              {profile.role === 'seller' && (
+                <Link to="/voltmarket/create-listing">
+                  <Button className="w-full justify-start">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create New Listing
                   </Button>
                 </Link>
-                
-                <Link to="/voltmarket/listings">
-                  <Button variant="outline" className="w-full justify-start">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Browse Listings
-                  </Button>
-                </Link>
-                
-                <Link to="/voltmarket/profile">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Users className="w-4 h-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+              
+              <Link to="/voltmarket/messages">
+                <Button variant="outline" className="w-full justify-start">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  View Messages
+                </Button>
+              </Link>
+              
+              <Link to="/voltmarket/profile">
+                <Button variant="outline" className="w-full justify-start">
+                  <User className="mr-2 h-4 w-4" />
+                  Edit Profile
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
 
-          {/* Recent Activity */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="w-5 h-5" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {recentActivity.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No recent activity</p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      {profile?.role === 'seller' 
-                        ? 'Create your first listing to get started!'
-                        : 'Start browsing listings to see activity here.'
-                      }
+          <Card>
+            <CardHeader>
+              <CardTitle>Getting Started</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {!profile.is_email_verified && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h3 className="font-medium text-yellow-800">Verify Your Email</h3>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Check your email and click the verification link to complete your account setup.
                     </p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                          <activity.icon className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
-                            {activity.title}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {activity.time}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                )}
+                
+                {!profile.company_name && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 className="font-medium text-blue-800">Complete Your Profile</h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Add your company information to build trust with other users.
+                    </p>
+                    <Link to="/voltmarket/profile">
+                      <Button size="sm" className="mt-2">
+                        Complete Profile
+                      </Button>
+                    </Link>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+                
+                {profile.role === 'seller' && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 className="font-medium text-green-800">Create Your First Listing</h3>
+                    <p className="text-sm text-green-700 mt-1">
+                      Start selling by creating your first listing on VoltMarket.
+                    </p>
+                    <Link to="/voltmarket/create-listing">
+                      <Button size="sm" className="mt-2">
+                        Create Listing
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

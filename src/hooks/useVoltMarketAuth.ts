@@ -30,16 +30,21 @@ export const useVoltMarketAuth = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           // Fetch user profile
-          const { data: profileData } = await supabase
+          const { data: profileData, error } = await supabase
             .from('voltmarket_profiles')
             .select('*')
             .eq('user_id', session.user.id)
             .single();
+          
+          if (error) {
+            console.log('Profile fetch error:', error);
+          }
           
           setProfile(profileData);
         } else {
@@ -61,7 +66,10 @@ export const useVoltMarketAuth = () => {
           .select('*')
           .eq('user_id', session.user.id)
           .single()
-          .then(({ data: profileData }) => {
+          .then(({ data: profileData, error }) => {
+            if (error) {
+              console.log('Initial profile fetch error:', error);
+            }
             setProfile(profileData);
             setLoading(false);
           });
@@ -79,34 +87,56 @@ export const useVoltMarketAuth = () => {
     company_name?: string;
     phone_number?: string;
   }) => {
-    const redirectUrl = `${window.location.origin}/voltmarket`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
+    try {
+      console.log('Starting signup process...');
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/voltmarket`
+        }
+      });
+
+      if (error) {
+        console.error('Signup error:', error);
+        return { error };
       }
-    });
+      
+      console.log('User created:', data.user?.id);
 
-    if (error) return { error };
-    
-    if (data.user) {
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('voltmarket_profiles')
-        .insert({
-          user_id: data.user.id,
-          role: userData.role,
-          seller_type: userData.seller_type,
-          company_name: userData.company_name,
-          phone_number: userData.phone_number,
-        });
+      if (data.user && !data.session) {
+        // User needs to confirm email
+        return { data, error: null };
+      }
 
-      if (profileError) return { error: profileError };
+      if (data.user && data.session) {
+        // User is immediately signed in, create profile
+        console.log('Creating profile for user:', data.user.id);
+        
+        const { error: profileError } = await supabase
+          .from('voltmarket_profiles')
+          .insert({
+            user_id: data.user.id,
+            role: userData.role,
+            seller_type: userData.seller_type,
+            company_name: userData.company_name,
+            phone_number: userData.phone_number,
+          });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          return { error: profileError };
+        }
+        
+        console.log('Profile created successfully');
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      console.error('Unexpected signup error:', err);
+      return { error: err as Error };
     }
-
-    return { data, error: null };
   };
 
   const signIn = async (email: string, password: string) => {

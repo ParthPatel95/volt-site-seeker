@@ -72,6 +72,7 @@ export const VoltMarketAuth: React.FC = () => {
     setLoading(true);
     setError('');
 
+    // Validation
     if (signUpData.password !== signUpData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -84,23 +85,45 @@ export const VoltMarketAuth: React.FC = () => {
       return;
     }
 
+    if (signUpData.role === 'seller' && !signUpData.seller_type) {
+      setError('Please select a seller type');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await signUp(signUpData.email, signUpData.password, {
+      const { data, error } = await signUp(signUpData.email, signUpData.password, {
         role: signUpData.role,
         seller_type: signUpData.seller_type,
-        company_name: signUpData.company_name || undefined,
-        phone_number: signUpData.phone_number || undefined,
+        company_name: signUpData.company_name.trim() || undefined,
+        phone_number: signUpData.phone_number.trim() || undefined,
       });
 
       if (error) {
         setError(error.message);
+      } else if (data?.user && !data?.session) {
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account before signing in.",
+        });
+        // Reset form
+        setSignUpData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          role: 'buyer',
+          seller_type: undefined,
+          company_name: '',
+          phone_number: ''
+        });
       } else {
         toast({
           title: "Account created!",
-          description: "Please check your email to verify your account.",
+          description: "Welcome to VoltMarket!",
         });
       }
     } catch (err) {
+      console.error('Signup error:', err);
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -206,6 +229,7 @@ export const VoltMarketAuth: React.FC = () => {
                       value={signUpData.password}
                       onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
                       required
+                      minLength={6}
                     />
                   </div>
                   
@@ -240,12 +264,13 @@ export const VoltMarketAuth: React.FC = () => {
 
                   {signUpData.role === 'seller' && (
                     <div className="space-y-2">
-                      <Label htmlFor="seller-type">Seller Type</Label>
+                      <Label htmlFor="seller-type">Seller Type *</Label>
                       <Select
                         value={signUpData.seller_type}
                         onValueChange={(value: 'site_owner' | 'broker' | 'realtor' | 'equipment_vendor') => 
                           setSignUpData(prev => ({ ...prev, seller_type: value }))
                         }
+                        required
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select seller type" />

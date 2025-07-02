@@ -1,15 +1,77 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
-import { User, Building, Phone, Globe, Linkedin } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { User, Building, Phone, Globe, Linkedin, CheckCircle, AlertCircle } from 'lucide-react';
 
 export const VoltMarketProfile: React.FC = () => {
   const { profile, updateProfile } = useVoltMarketAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    company_name: profile?.company_name || '',
+    phone_number: profile?.phone_number || '',
+    bio: profile?.bio || '',
+    website: profile?.website || '',
+    linkedin_url: profile?.linkedin_url || ''
+  });
+
+  // Update form data when profile loads
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({
+        company_name: profile.company_name || '',
+        phone_number: profile.phone_number || '',
+        bio: profile.bio || '',
+        website: profile.website || '',
+        linkedin_url: profile.linkedin_url || ''
+      });
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const { error } = await updateProfile(formData);
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update profile. Please try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully!",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900">Loading profile...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -34,7 +96,8 @@ export const VoltMarketProfile: React.FC = () => {
                     <Label htmlFor="company-name">Company Name</Label>
                     <Input
                       id="company-name"
-                      value={profile?.company_name || ''}
+                      value={formData.company_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
                       placeholder="Enter company name"
                     />
                   </div>
@@ -42,7 +105,8 @@ export const VoltMarketProfile: React.FC = () => {
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input
                       id="phone"
-                      value={profile?.phone_number || ''}
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
                       placeholder="Enter phone number"
                     />
                   </div>
@@ -52,7 +116,8 @@ export const VoltMarketProfile: React.FC = () => {
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea
                     id="bio"
-                    value={profile?.bio || ''}
+                    value={formData.bio}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                     placeholder="Tell us about your company and experience..."
                     rows={4}
                   />
@@ -63,7 +128,8 @@ export const VoltMarketProfile: React.FC = () => {
                     <Label htmlFor="website">Website</Label>
                     <Input
                       id="website"
-                      value={profile?.website || ''}
+                      value={formData.website}
+                      onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
                       placeholder="https://yourcompany.com"
                     />
                   </div>
@@ -71,13 +137,16 @@ export const VoltMarketProfile: React.FC = () => {
                     <Label htmlFor="linkedin">LinkedIn</Label>
                     <Input
                       id="linkedin"
-                      value={profile?.linkedin_url || ''}
+                      value={formData.linkedin_url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, linkedin_url: e.target.value }))}
                       placeholder="https://linkedin.com/company/..."
                     />
                   </div>
                 </div>
 
-                <Button>Save Changes</Button>
+                <Button onClick={handleSave} disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -89,18 +158,46 @@ export const VoltMarketProfile: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Email Verified</span>
-                  <span className={`text-sm ${profile?.is_email_verified ? 'text-green-600' : 'text-red-600'}`}>
-                    {profile?.is_email_verified ? 'Verified' : 'Not Verified'}
-                  </span>
+                  <span className="text-sm">Account Type</span>
+                  <span className="text-sm font-medium capitalize">{profile.role}</span>
                 </div>
+                
+                {profile.seller_type && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Seller Type</span>
+                    <span className="text-sm font-medium capitalize">{profile.seller_type.replace('_', ' ')}</span>
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Email Verified</span>
+                  <div className="flex items-center gap-1">
+                    {profile.is_email_verified ? (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-red-600" />
+                    )}
+                    <span className={`text-sm ${profile.is_email_verified ? 'text-green-600' : 'text-red-600'}`}>
+                      {profile.is_email_verified ? 'Verified' : 'Not Verified'}
+                    </span>
+                  </div>
+                </div>
+                
                 <div className="flex items-center justify-between">
                   <span className="text-sm">ID Verified</span>
-                  <span className={`text-sm ${profile?.is_id_verified ? 'text-green-600' : 'text-red-600'}`}>
-                    {profile?.is_id_verified ? 'Verified' : 'Not Verified'}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {profile.is_id_verified ? (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-red-600" />
+                    )}
+                    <span className={`text-sm ${profile.is_id_verified ? 'text-green-600' : 'text-red-600'}`}>
+                      {profile.is_id_verified ? 'Verified' : 'Not Verified'}
+                    </span>
+                  </div>
                 </div>
-                {!profile?.is_id_verified && (
+                
+                {!profile.is_id_verified && (
                   <Button variant="outline" size="sm" className="w-full">
                     Verify Identity
                   </Button>
