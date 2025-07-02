@@ -69,7 +69,10 @@ export const BTCROISensitivityChart: React.FC<BTCROISensitivityChartProps> = ({
     return null;
   };
 
-  if (!roiResults || !networkData) {
+  // Show chart if we have data, even if it's minimal
+  const hasData = roiResults && networkData;
+  
+  if (!hasData) {
     return (
       <Card>
         <CardHeader>
@@ -81,7 +84,7 @@ export const BTCROISensitivityChart: React.FC<BTCROISensitivityChartProps> = ({
         <CardContent>
           <div className="text-center py-12">
             <AlertTriangle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Calculate ROI to see sensitivity analysis</p>
+            <p className="text-gray-500">Configure parameters and calculate to see sensitivity analysis</p>
           </div>
         </CardContent>
       </Card>

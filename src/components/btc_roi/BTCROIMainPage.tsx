@@ -355,7 +355,10 @@ export const BTCROIMainPage = () => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <BTCROISensitivityChart roiResults={roiResults} networkData={networkData} />
+                        <BTCROISensitivityChart 
+                          roiResults={miningMode === 'self' ? roiResults : null} 
+                          networkData={networkData} 
+                        />
                       </CardContent>
                     </Card>
 
@@ -367,7 +370,7 @@ export const BTCROIMainPage = () => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <BTCROILineChart roiResults={roiResults} />
+                        <BTCROILineChart roiResults={miningMode === 'self' ? roiResults : null} />
                       </CardContent>
                     </Card>
                   </div>

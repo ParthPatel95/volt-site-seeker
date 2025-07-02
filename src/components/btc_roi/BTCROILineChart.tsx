@@ -65,19 +65,22 @@ export const BTCROILineChart: React.FC<BTCROILineChartProps> = ({ roiResults }) 
     return null;
   };
 
-  if (!roiResults) {
+  // Show chart if we have data
+  const hasData = roiResults && roiResults.totalInvestment > 0;
+
+  if (!hasData) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            ROI Timeline Chart
+            Performance Trends
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12">
             <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Calculate ROI to see timeline projection</p>
+            <p className="text-gray-500">Configure parameters and calculate to see performance trends</p>
           </div>
         </CardContent>
       </Card>
