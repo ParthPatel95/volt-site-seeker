@@ -6,7 +6,7 @@ import { Zap, TrendingUp, Activity, DollarSign } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 
 export const LiveERCOTData = () => {
-  const { pricingData, loadData } = useERCOTData();
+  const { pricing, loadData } = useERCOTData();
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export const LiveERCOTData = () => {
               <span className="text-xs text-slate-400">Current Price</span>
             </div>
             <div className="text-lg font-bold text-electric-blue">
-              ${pricingData?.current_price?.toFixed(2) || '0.00'}/MWh
+              ${pricing?.current_price?.toFixed(2) || '0.00'}/MWh
             </div>
           </div>
           
@@ -52,7 +52,7 @@ export const LiveERCOTData = () => {
               <span className="text-xs text-slate-400">Average Price</span>
             </div>
             <div className="text-lg font-bold text-electric-yellow">
-              ${pricingData?.average_price?.toFixed(2) || '0.00'}/MWh
+              ${pricing?.average_price?.toFixed(2) || '0.00'}/MWh
             </div>
           </div>
           
@@ -78,29 +78,29 @@ export const LiveERCOTData = () => {
         </div>
 
         {/* Market Conditions */}
-        {pricingData && (
+        {pricing && (
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-slate-200">Market Conditions</h4>
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-300">Status</span>
               <Badge 
                 className={`text-xs ${
-                  pricingData.market_conditions === 'high_demand' 
+                  pricing.market_conditions === 'high_demand' 
                     ? 'bg-warm-orange/20 text-warm-orange border-warm-orange/30'
                     : 'bg-neon-green/20 text-neon-green border-neon-green/30'
                 }`}
               >
-                {pricingData.market_conditions === 'high_demand' ? 'High Demand' : 'Normal'}
+                {pricing.market_conditions === 'high_demand' ? 'High Demand' : 'Normal'}
               </Badge>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Peak Price</span>
-                <span className="text-sm font-medium text-slate-200">${pricingData.peak_price?.toFixed(2)}/MWh</span>
+                <span className="text-sm font-medium text-slate-200">${pricing.peak_price?.toFixed(2)}/MWh</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Off-Peak Price</span>
-                <span className="text-sm font-medium text-slate-200">${pricingData.off_peak_price?.toFixed(2)}/MWh</span>
+                <span className="text-sm font-medium text-slate-200">${pricing.off_peak_price?.toFixed(2)}/MWh</span>
               </div>
             </div>
           </div>

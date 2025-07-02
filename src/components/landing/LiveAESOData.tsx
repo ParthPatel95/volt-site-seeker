@@ -6,7 +6,7 @@ import { TrendingUp, Zap, Activity, DollarSign } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 
 export const LiveAESOData = () => {
-  const { pricingData, generationData, loadData } = useAESOData();
+  const { pricing, generationMix, loadData } = useAESOData();
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Current Price</span>
             </div>
             <div className="text-lg font-bold text-electric-blue">
-              ${pricingData?.current_price?.toFixed(2) || '0.00'}/MWh
+              ${pricing?.current_price?.toFixed(2) || '0.00'}/MWh
             </div>
           </div>
           
@@ -52,7 +52,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Total Generation</span>
             </div>
             <div className="text-lg font-bold text-electric-yellow">
-              {generationData?.total_generation_mw?.toLocaleString() || '0'} MW
+              {generationMix?.total_generation_mw?.toLocaleString() || '0'} MW
             </div>
           </div>
           
@@ -62,7 +62,7 @@ export const LiveAESOData = () => {
               <span className="text-xs text-slate-400">Renewables</span>
             </div>
             <div className="text-lg font-bold text-neon-green">
-              {generationData?.renewable_percentage?.toFixed(1) || '0.0'}%
+              {generationMix?.renewable_percentage?.toFixed(1) || '0.0'}%
             </div>
           </div>
           
@@ -78,25 +78,25 @@ export const LiveAESOData = () => {
         </div>
 
         {/* Generation Mix */}
-        {generationData && (
+        {generationMix && (
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-slate-200">Generation Mix</h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Natural Gas</span>
-                <span className="text-sm font-medium text-slate-200">{generationData.natural_gas_mw} MW</span>
+                <span className="text-sm font-medium text-slate-200">{generationMix.natural_gas_mw} MW</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Wind</span>
-                <span className="text-sm font-medium text-neon-green">{generationData.wind_mw} MW</span>
+                <span className="text-sm font-medium text-neon-green">{generationMix.wind_mw} MW</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Hydro</span>
-                <span className="text-sm font-medium text-electric-blue">{generationData.hydro_mw} MW</span>
+                <span className="text-sm font-medium text-electric-blue">{generationMix.hydro_mw} MW</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Solar</span>
-                <span className="text-sm font-medium text-electric-yellow">{generationData.solar_mw} MW</span>
+                <span className="text-sm font-medium text-electric-yellow">{generationMix.solar_mw} MW</span>
               </div>
             </div>
           </div>
