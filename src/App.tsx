@@ -18,7 +18,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/app" element={<VoltScout />} />
+          <Route path="/app/*" element={<VoltScout />} />
           <Route path="/voltmarket/*" element={<VoltMarket />} />
         </Routes>
       </BrowserRouter>

@@ -64,17 +64,17 @@ const VoltScout = () => {
           
           <div className="flex-1 overflow-auto">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/aeso-market" element={<AESOMarket />} />
-              <Route path="/market-intelligence" element={<AESOMarketIntelligence />} />
-              <Route path="/energy-rates" element={<EnergyRateIntelligence />} />
-              <Route path="/industry-intelligence" element={<IndustryIntelligence />} />
-              <Route path="/corporate-intelligence" element={<CorporateIntelligence />} />
-              <Route path="/idle-industry-scanner" element={<IdleIndustryScanner />} />
-              <Route path="/power-infrastructure" element={<PowerInfrastructure />} />
-              <Route path="/btc-roi-lab" element={<BTCROIMainPage />} />
-              <Route path="/data-management" element={<DataManagement />} />
-              <Route path="/settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Settings page coming soon...</p></div>} />
+              <Route index element={<Dashboard />} />
+              <Route path="aeso-market" element={<AESOMarket />} />
+              <Route path="market-intelligence" element={<AESOMarketIntelligence />} />
+              <Route path="energy-rates" element={<EnergyRateIntelligence />} />
+              <Route path="industry-intelligence" element={<IndustryIntelligence />} />
+              <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
+              <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
+              <Route path="power-infrastructure" element={<PowerInfrastructure />} />
+              <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
+              <Route path="data-management" element={<DataManagement />} />
+              <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Settings page coming soon...</p></div>} />
               {/* Redirect any unknown paths to dashboard */}
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Routes>
