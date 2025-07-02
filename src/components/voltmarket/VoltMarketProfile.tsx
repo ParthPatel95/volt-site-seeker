@@ -16,8 +16,16 @@ export const VoltMarketProfile: React.FC = () => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   
-  const [formData, setFormData] = useState({
-    role: profile?.role || 'buyer',
+  const [formData, setFormData] = useState<{
+    role: 'buyer' | 'seller' | 'admin';
+    seller_type: string;
+    company_name: string;
+    phone_number: string;
+    bio: string;
+    website: string;
+    linkedin_url: string;
+  }>({
+    role: (profile?.role as 'buyer' | 'seller' | 'admin') || 'buyer',
     seller_type: profile?.seller_type || '',
     company_name: profile?.company_name || '',
     phone_number: profile?.phone_number || '',
@@ -30,7 +38,7 @@ export const VoltMarketProfile: React.FC = () => {
   React.useEffect(() => {
     if (profile) {
       setFormData({
-        role: profile.role,
+        role: profile.role as 'buyer' | 'seller' | 'admin',
         seller_type: profile.seller_type || '',
         company_name: profile.company_name || '',
         phone_number: profile.phone_number || '',
@@ -174,7 +182,7 @@ export const VoltMarketProfile: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="role">Account Type</Label>
-                    <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
+                    <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value as 'buyer' | 'seller' | 'admin' }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
