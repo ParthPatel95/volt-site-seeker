@@ -7,12 +7,16 @@ interface AESOPricing {
   peak_price: number;
   off_peak_price: number;
   market_conditions: string;
+  timestamp: string;
+  qa_metadata?: any;
 }
 
 interface AESOLoadData {
   current_demand_mw: number;
   peak_forecast_mw: number;
   reserve_margin: number;
+  capacity_margin: number;
+  forecast_date: string;
 }
 
 interface AESOGenerationMix {
@@ -21,7 +25,10 @@ interface AESOGenerationMix {
   wind_mw: number;
   hydro_mw: number;
   solar_mw: number;
+  coal_mw: number;
+  other_mw: number;
   renewable_percentage: number;
+  timestamp: string;
 }
 
 export const useAESOData = () => {
@@ -29,6 +36,7 @@ export const useAESOData = () => {
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connectionStatus] = useState<'connected' | 'fallback'>('fallback');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,13 +47,20 @@ export const useAESOData = () => {
           average_price: 42.31,
           peak_price: 89.45,
           off_peak_price: 28.92,
-          market_conditions: 'normal'
+          market_conditions: 'normal',
+          timestamp: new Date().toISOString(),
+          qa_metadata: {
+            source: 'simulated',
+            confidence: 0.9
+          }
         };
 
         const mockLoadData: AESOLoadData = {
           current_demand_mw: 8450,
           peak_forecast_mw: 11200,
-          reserve_margin: 18.5
+          reserve_margin: 18.5,
+          capacity_margin: 15.2,
+          forecast_date: new Date().toISOString()
         };
 
         const mockGenerationMix: AESOGenerationMix = {
@@ -54,7 +69,10 @@ export const useAESOData = () => {
           wind_mw: 2730,
           hydro_mw: 1365,
           solar_mw: 455,
-          renewable_percentage: 54.2
+          coal_mw: 820,
+          other_mw: 180,
+          renewable_percentage: 54.2,
+          timestamp: new Date().toISOString()
         };
 
         setPricing(mockPricing);
@@ -83,6 +101,7 @@ export const useAESOData = () => {
     loadData,
     generationMix,
     loading,
+    connectionStatus,
     refetch
   };
 };
