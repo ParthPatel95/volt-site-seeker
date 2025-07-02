@@ -95,37 +95,38 @@ export const BTCROIMainPage = () => {
         />
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-2 sm:p-4">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {/* Modern Header */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="p-3 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-lg">
-                <Bitcoin className="w-8 h-8 text-white" />
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl sm:rounded-2xl shadow-lg">
+                <Bitcoin className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent break-words">
                 BTC Mining ROI Lab
               </h1>
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl shadow-lg">
-                <Calculator className="w-8 h-8 text-white" />
+              <div className="p-2 sm:p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl sm:rounded-2xl shadow-lg">
+                <Calculator className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
+            <p className="text-gray-600 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto mb-4 sm:mb-6 px-2">
               Professional Bitcoin mining profitability calculator with real-time data and advanced analytics
             </p>
             
             {/* Quick Actions */}
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowOnboarding(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-xs sm:text-sm"
               >
-                <HelpCircle className="w-4 h-4" />
-                Tutorial
+                <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Tutorial</span>
+                <span className="sm:hidden">Help</span>
               </Button>
-              <Badge variant="secondary" className="px-3 py-1">
+              <Badge variant="secondary" className="px-2 sm:px-3 py-1 text-xs">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Live Data
               </Badge>
@@ -136,15 +137,15 @@ export const BTCROIMainPage = () => {
           <BTCROILiveStatsCard networkData={networkData} />
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
             {/* Left Sidebar - Controls */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="xl:col-span-1 space-y-4 sm:space-y-6">
               {/* Mining Mode Selector */}
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Target className="w-5 h-5 text-blue-600" />
-                    Analysis Mode
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2 break-words">
+                    <Target className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                    <span>Analysis Mode</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -157,10 +158,10 @@ export const BTCROIMainPage = () => {
 
               {/* Input Form */}
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Calculator className="w-5 h-5 text-green-600" />
-                    Configuration
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2 break-words">
+                    <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                    <span>Configuration</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -177,51 +178,51 @@ export const BTCROIMainPage = () => {
               {/* Quick Results */}
               {currentResults && (
                 <Card className="shadow-lg border-0 bg-gradient-to-br from-green-50 to-emerald-50">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-lg flex items-center gap-2 text-green-800">
-                      <TrendingUp className="w-5 h-5" />
-                      Quick Summary
+                  <CardHeader className="pb-3 sm:pb-4">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-green-800 break-words">
+                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                      <span>Quick Summary</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {miningMode === 'hosting' && hostingResults ? (
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                          <span className="text-sm font-medium text-gray-700">Annual Profit:</span>
-                          <span className="font-bold text-lg text-green-600">
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 break-words">Annual Profit:</span>
+                          <span className="font-bold text-sm sm:text-lg text-green-600 ml-2 break-words">
                             ${hostingResults.netProfit.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                          <span className="text-sm font-medium text-gray-700">12-Month ROI:</span>
-                          <span className="font-bold text-lg text-blue-600">
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 break-words">12-Month ROI:</span>
+                          <span className="font-bold text-sm sm:text-lg text-blue-600 ml-2 break-words">
                             {hostingResults.roi12Month.toFixed(1)}%
                           </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                          <span className="text-sm font-medium text-gray-700">Profit Margin:</span>
-                          <span className="font-bold text-lg text-purple-600">
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 break-words">Profit Margin:</span>
+                          <span className="font-bold text-sm sm:text-lg text-purple-600 ml-2 break-words">
                             {hostingResults.profitMarginPercent.toFixed(1)}%
                           </span>
                         </div>
                       </div>
                     ) : roiResults && (
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                          <span className="text-sm font-medium text-gray-700">Daily Profit:</span>
-                          <span className="font-bold text-lg text-green-600">
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 break-words">Daily Profit:</span>
+                          <span className="font-bold text-sm sm:text-lg text-green-600 ml-2 break-words">
                             ${roiResults.dailyNetProfit.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                          <span className="text-sm font-medium text-gray-700">Monthly Profit:</span>
-                          <span className="font-bold text-lg text-blue-600">
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 break-words">Monthly Profit:</span>
+                          <span className="font-bold text-sm sm:text-lg text-blue-600 ml-2 break-words">
                             ${roiResults.monthlyNetProfit.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-green-200">
-                          <span className="text-sm font-medium text-gray-700">12-Month ROI:</span>
-                          <span className="font-bold text-lg text-purple-600">
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white rounded-lg border border-green-200">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 break-words">12-Month ROI:</span>
+                          <span className="font-bold text-sm sm:text-lg text-purple-600 ml-2 break-words">
                             {roiResults.roi12Month.toFixed(1)}%
                           </span>
                         </div>
@@ -233,64 +234,72 @@ export const BTCROIMainPage = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="lg:col-span-3">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <div className="flex justify-center">
-                  <TabsList className="grid w-full max-w-4xl grid-cols-6 h-12">
+            <div className="xl:col-span-3">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+                <div className="flex justify-center overflow-x-auto">
+                  <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full max-w-4xl h-auto sm:h-12 gap-1 p-1">
                     <TabsTrigger 
                       value="calculator" 
-                      className="flex items-center gap-2 font-medium"
+                      className="flex items-center gap-1 sm:gap-2 font-medium text-xs sm:text-sm px-2 py-2"
                     >
-                      <Calculator className="w-4 h-4" />
-                      Results
+                      <Calculator className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Results</span>
+                      <span className="sm:hidden">Calc</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="analytics" 
-                      className="flex items-center gap-2 font-medium"
+                      className="flex items-center gap-1 sm:gap-2 font-medium text-xs sm:text-sm px-2 py-2"
                     >
-                      <BarChart3 className="w-4 h-4" />
-                      Analytics
+                      <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Analytics</span>
+                      <span className="sm:hidden">Chart</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="scenarios" 
-                      className="flex items-center gap-2 font-medium"
+                      className="flex items-center gap-1 sm:gap-2 font-medium text-xs sm:text-sm px-2 py-2"
                     >
-                      <Grid3X3 className="w-4 h-4" />
-                      Scenarios
+                      <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Scenarios</span>
+                      <span className="sm:hidden">Scene</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="hardware" 
-                      className="flex items-center gap-2 font-medium"
+                      className="flex items-center gap-1 sm:gap-2 font-medium text-xs sm:text-sm px-2 py-2"
                     >
-                      <Zap className="w-4 h-4" />
-                      Hardware
+                      <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Hardware</span>
+                      <span className="sm:hidden">HW</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="alerts" 
-                      className="flex items-center gap-2 font-medium"
+                      className="flex items-center gap-1 sm:gap-2 font-medium text-xs sm:text-sm px-2 py-2"
                     >
-                      <Bell className="w-4 h-4" />
-                      Alerts
+                      <Bell className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Alerts</span>
+                      <span className="sm:hidden">Alert</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="reports" 
-                      className="flex items-center gap-2 font-medium"
+                      className="flex items-center gap-1 sm:gap-2 font-medium text-xs sm:text-sm px-2 py-2"
                     >
-                      <FileText className="w-4 h-4" />
-                      Reports
+                      <FileText className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Reports</span>
+                      <span className="sm:hidden">Report</span>
                     </TabsTrigger>
                   </TabsList>
                 </div>
 
-                <TabsContent value="calculator" className="space-y-6">
+                <TabsContent value="calculator" className="space-y-4 sm:space-y-6">
                   <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-green-600" />
-                        {miningMode === 'hosting' ? 'Hosting Business Analysis' : 'Mining Profitability Analysis'}
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                        <span>
+                          {miningMode === 'hosting' ? 'Hosting Business Analysis' : 'Mining Profitability Analysis'}
+                        </span>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="overflow-x-auto">
                       {miningMode === 'hosting' ? (
                         <BTCROIHostingOutputTable hostingResults={hostingResults} />
                       ) : (
@@ -303,9 +312,9 @@ export const BTCROIMainPage = () => {
                   {miningMode === 'hosting' && hostingResults && (
                     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Activity className="w-5 h-5 text-blue-600" />
-                          Hosting Analytics
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                          <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                          <span>Hosting Analytics</span>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -317,9 +326,9 @@ export const BTCROIMainPage = () => {
                   {/* Stored Calculations */}
                   <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-purple-600" />
-                        Saved Calculations
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
+                        <span>Saved Calculations</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -332,13 +341,13 @@ export const BTCROIMainPage = () => {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="analytics" className="space-y-6">
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5 text-blue-600" />
-                          Sensitivity Analysis
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                          <span>Sensitivity Analysis</span>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -348,9 +357,9 @@ export const BTCROIMainPage = () => {
 
                     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <BarChart3 className="w-5 h-5 text-green-600" />
-                          Performance Trends
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                          <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                          <span>Performance Trends</span>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -363,9 +372,9 @@ export const BTCROIMainPage = () => {
                   {currentResults && networkData && (
                     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Activity className="w-5 h-5 text-purple-600" />
-                          Advanced Analytics
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                          <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
+                          <span>Advanced Analytics</span>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -391,11 +400,11 @@ export const BTCROIMainPage = () => {
                 <TabsContent value="scenarios">
                   <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Grid3X3 className="w-5 h-5 text-orange-600" />
-                        Profitability Scenarios
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                        <Grid3X3 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0" />
+                        <span>Profitability Scenarios</span>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                         Explore how different BTC prices and electricity costs affect your profitability
                       </p>
                     </CardHeader>
@@ -412,11 +421,11 @@ export const BTCROIMainPage = () => {
                 <TabsContent value="hardware">
                   <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-yellow-600" />
-                        ASIC Hardware Catalog
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0" />
+                        <span>ASIC Hardware Catalog</span>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                         Select mining hardware and automatically populate your calculator
                       </p>
                     </CardHeader>
@@ -438,11 +447,11 @@ export const BTCROIMainPage = () => {
                 <TabsContent value="alerts">
                   <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Bell className="w-5 h-5 text-red-600" />
-                        Smart Alerts System
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                        <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+                        <span>Smart Alerts System</span>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                         Set up intelligent alerts for price changes, profitability thresholds, and market conditions
                       </p>
                     </CardHeader>
@@ -463,11 +472,11 @@ export const BTCROIMainPage = () => {
                 <TabsContent value="reports">
                   <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-indigo-600" />
-                        Professional Reports
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
+                        <span>Professional Reports</span>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                         Generate professional reports for investors, stakeholders, and tax purposes
                       </p>
                     </CardHeader>
