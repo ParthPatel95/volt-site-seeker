@@ -19,6 +19,8 @@ interface Listing {
   location: string;
   listing_type: ListingType;
   asking_price: number;
+  lease_rate: number;
+  power_rate_per_kw: number;
   power_capacity_mw: number;
   created_at: string;
   status: string;
@@ -72,11 +74,13 @@ export const VoltMarketListings: React.FC = () => {
     }
 
     if (filters.minPrice) {
-      query = query.gte('asking_price', parseFloat(filters.minPrice));
+      const minPrice = parseFloat(filters.minPrice);
+      query = query.or(`asking_price.gte.${minPrice},lease_rate.gte.${minPrice},power_rate_per_kw.gte.${minPrice}`);
     }
 
     if (filters.maxPrice) {
-      query = query.lte('asking_price', parseFloat(filters.maxPrice));
+      const maxPrice = parseFloat(filters.maxPrice);
+      query = query.or(`asking_price.lte.${maxPrice},lease_rate.lte.${maxPrice},power_rate_per_kw.lte.${maxPrice}`);
     }
 
     if (filters.minPower) {
@@ -107,9 +111,9 @@ export const VoltMarketListings: React.FC = () => {
     
     // Update URL params
     const newParams = new URLSearchParams(searchParams);
-    if (value) {
+    if (value && key !== 'search') {
       newParams.set(key, value);
-    } else {
+    } else if (!value) {
       newParams.delete(key);
     }
     setSearchParams(newParams);
