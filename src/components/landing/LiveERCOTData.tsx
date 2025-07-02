@@ -2,27 +2,28 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Zap, MapPin, TrendingUp, Sun } from 'lucide-react';
+import { Zap, TrendingUp, Activity, DollarSign } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 
 export const LiveERCOTData = () => {
-  const { pricing, loadData, generationMix, loading } = useERCOTData();
+  const { pricingData, loadData } = useERCOTData();
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Animate when data updates
   useEffect(() => {
-    if (pricing || loadData || generationMix) {
+    const interval = setInterval(() => {
       setIsAnimating(true);
       setTimeout(() => setIsAnimating(false), 500);
-    }
-  }, [pricing, loadData, generationMix]);
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-electric-blue/30 transition-all duration-300 group">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Activity className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
+            <Zap className="w-6 h-6 text-electric-blue group-hover:scale-110 transition-transform duration-300" />
             <CardTitle className="text-white text-xl">ERCOT Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
@@ -30,92 +31,80 @@ export const LiveERCOTData = () => {
             <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">Live</Badge>
           </div>
         </div>
-        <p className="text-slate-300 text-sm">Real-time Texas grid operations and pricing</p>
+        <p className="text-slate-300 text-sm">Electric Reliability Council of Texas</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Metrics Grid - Changed to 2x2 layout */}
+        {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-blue/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <Zap className="w-4 h-4 text-electric-blue flex-shrink-0" />
-              <span className="text-xs text-slate-400">RT Price</span>
+              <DollarSign className="w-4 h-4 text-electric-blue flex-shrink-0" />
+              <span className="text-xs text-slate-400">Current Price</span>
             </div>
-            <div className="text-lg font-bold text-electric-blue break-words">
-              ${pricing?.current_price?.toFixed(2) || '42.50'}/MWh
+            <div className="text-lg font-bold text-electric-blue">
+              ${pricingData?.current_price?.toFixed(2) || '0.00'}/MWh
             </div>
           </div>
           
           <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-electric-yellow/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-4 h-4 text-electric-yellow flex-shrink-0" />
-              <span className="text-xs text-slate-400">Load</span>
+              <span className="text-xs text-slate-400">Average Price</span>
             </div>
-            <div className="text-lg font-bold text-electric-yellow break-words">
-              {loadData ? (loadData.current_demand_mw / 1000).toFixed(1) : '52.0'} GW
+            <div className="text-lg font-bold text-electric-yellow">
+              ${pricingData?.average_price?.toFixed(2) || '0.00'}/MWh
             </div>
           </div>
           
           <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-neon-green/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <Sun className="w-4 h-4 text-neon-green flex-shrink-0" />
-              <span className="text-xs text-slate-400">Solar</span>
+              <Activity className="w-4 h-4 text-neon-green flex-shrink-0" />
+              <span className="text-xs text-slate-400">Current Demand</span>
             </div>
-            <div className="text-lg font-bold text-neon-green break-words">
-              {generationMix ? (generationMix.solar_mw / 1000).toFixed(1) : '4.5'} GW
+            <div className="text-lg font-bold text-neon-green">
+              {loadData?.current_demand_mw?.toLocaleString() || '0'} MW
             </div>
           </div>
           
           <div className={`bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30 ${isAnimating ? 'scale-105 bg-slate-800/50 border-warm-orange/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <MapPin className="w-4 h-4 text-warm-orange flex-shrink-0" />
-              <span className="text-xs text-slate-400">Renewables</span>
+              <Zap className="w-4 h-4 text-warm-orange flex-shrink-0" />
+              <span className="text-xs text-slate-400">Peak Forecast</span>
             </div>
-            <div className="text-lg font-bold text-warm-orange break-words">
-              {generationMix?.renewable_percentage?.toFixed(1) || '33.9'}%
-            </div>
-          </div>
-        </div>
-
-        {/* Generation Mix Summary */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-slate-200">Generation Mix</h4>
-            <Badge className={`bg-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/20 text-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'} text-xs border-${pricing?.market_conditions === 'high_demand' ? 'warm-orange' : 'neon-green'}/30`}>
-              {pricing?.market_conditions?.replace('_', ' ').toUpperCase() || 'NORMAL'}
-            </Badge>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
-              <span className="text-slate-400">Natural Gas:</span>
-              <span className="text-electric-blue font-semibold break-words">
-                {generationMix ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '28.0'} GW
-              </span>
-            </div>
-            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
-              <span className="text-slate-400">Wind:</span>
-              <span className="text-neon-green font-semibold break-words">
-                {generationMix ? (generationMix.wind_mw / 1000).toFixed(1) : '15.0'} GW
-              </span>
-            </div>
-            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
-              <span className="text-slate-400">Nuclear:</span>
-              <span className="text-electric-yellow font-semibold break-words">
-                {generationMix ? (generationMix.nuclear_mw / 1000).toFixed(1) : '5.0'} GW
-              </span>
-            </div>
-            <div className="flex justify-between p-2 bg-slate-800/20 rounded border border-slate-700/20">
-              <span className="text-slate-400">Coal:</span>
-              <span className="text-warm-orange font-semibold break-words">
-                {generationMix ? (generationMix.coal_mw / 1000).toFixed(1) : '3.5'} GW
-              </span>
+            <div className="text-lg font-bold text-warm-orange">
+              {loadData?.peak_forecast_mw?.toLocaleString() || '0'} MW
             </div>
           </div>
         </div>
 
-        <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
-          * Electric Reliability Council of Texas real-time data. Updates every 5 minutes.
-        </div>
+        {/* Market Conditions */}
+        {pricingData && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-slate-200">Market Conditions</h4>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-300">Status</span>
+              <Badge 
+                className={`text-xs ${
+                  pricingData.market_conditions === 'high_demand' 
+                    ? 'bg-warm-orange/20 text-warm-orange border-warm-orange/30'
+                    : 'bg-neon-green/20 text-neon-green border-neon-green/30'
+                }`}
+              >
+                {pricingData.market_conditions === 'high_demand' ? 'High Demand' : 'Normal'}
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-300">Peak Price</span>
+                <span className="text-sm font-medium text-slate-200">${pricingData.peak_price?.toFixed(2)}/MWh</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-300">Off-Peak Price</span>
+                <span className="text-sm font-medium text-slate-200">${pricingData.off_peak_price?.toFixed(2)}/MWh</span>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
