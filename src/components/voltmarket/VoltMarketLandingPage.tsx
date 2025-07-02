@@ -205,7 +205,7 @@ export const VoltMarketLandingPage: React.FC = () => {
                         Equipment
                       </Badge>
                     </CardContent>
-                  </div>
+                  </Card>
                 </div>
               </div>
             </div>
