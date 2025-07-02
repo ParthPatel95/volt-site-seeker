@@ -4,16 +4,60 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { Link } from 'react-router-dom';
-import { Plus, MessageSquare, User, Search, TrendingUp } from 'lucide-react';
+import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle } from 'lucide-react';
 
 export const VoltMarketDashboard: React.FC = () => {
-  const { profile } = useVoltMarketAuth();
+  const { profile, user, loading, createProfile } = useVoltMarketAuth();
+
+  const handleCreateProfile = async () => {
+    if (!user) return;
+    
+    // Create a basic buyer profile if none exists
+    await createProfile(user.id, { role: 'buyer' });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900">Loading dashboard...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Please sign in to access your dashboard</h2>
+          <Link to="/voltmarket/auth">
+            <Button>Sign In</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!profile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Loading dashboard...</h2>
+        <div className="max-w-md mx-auto text-center">
+          <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Profile Setup Required</h2>
+          <p className="text-gray-600 mb-6">
+            It looks like your profile wasn't created properly. Let's set that up now.
+          </p>
+          <Button onClick={handleCreateProfile} className="mb-4">
+            Create Profile
+          </Button>
+          <div className="text-sm text-gray-500">
+            Or go to{' '}
+            <Link to="/voltmarket/profile" className="text-blue-600 hover:underline">
+              Profile Settings
+            </Link>
+          </div>
         </div>
       </div>
     );

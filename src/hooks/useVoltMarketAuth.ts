@@ -26,6 +26,59 @@ export const useVoltMarketAuth = () => {
   const [profile, setProfile] = useState<VoltMarketProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data: profileData, error } = await supabase
+        .from('voltmarket_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.log('Profile fetch error:', error);
+        return null;
+      }
+      
+      return profileData;
+    } catch (err) {
+      console.log('Unexpected error fetching profile:', err);
+      return null;
+    }
+  };
+
+  const createProfile = async (userId: string, userData: {
+    role: 'buyer' | 'seller';
+    seller_type?: 'site_owner' | 'broker' | 'realtor' | 'equipment_vendor';
+    company_name?: string;
+    phone_number?: string;
+  }) => {
+    try {
+      const { data, error } = await supabase
+        .from('voltmarket_profiles')
+        .insert({
+          user_id: userId,
+          role: userData.role,
+          seller_type: userData.seller_type,
+          company_name: userData.company_name,
+          phone_number: userData.phone_number,
+          is_id_verified: false,
+          is_email_verified: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Profile creation error:', error);
+        return { error };
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      console.error('Unexpected profile creation error:', err);
+      return { error: err as Error };
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -36,16 +89,7 @@ export const useVoltMarketAuth = () => {
         
         if (session?.user) {
           // Fetch user profile
-          const { data: profileData, error } = await supabase
-            .from('voltmarket_profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single();
-          
-          if (error) {
-            console.log('Profile fetch error:', error);
-          }
-          
+          const profileData = await fetchProfile(session.user.id);
           setProfile(profileData);
         } else {
           setProfile(null);
@@ -56,26 +100,16 @@ export const useVoltMarketAuth = () => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        supabase
-          .from('voltmarket_profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single()
-          .then(({ data: profileData, error }) => {
-            if (error) {
-              console.log('Initial profile fetch error:', error);
-            }
-            setProfile(profileData);
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
       }
+      
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -105,31 +139,18 @@ export const useVoltMarketAuth = () => {
       
       console.log('User created:', data.user?.id);
 
-      if (data.user && !data.session) {
-        // User needs to confirm email
-        return { data, error: null };
-      }
-
       if (data.user && data.session) {
         // User is immediately signed in, create profile
         console.log('Creating profile for user:', data.user.id);
         
-        const { error: profileError } = await supabase
-          .from('voltmarket_profiles')
-          .insert({
-            user_id: data.user.id,
-            role: userData.role,
-            seller_type: userData.seller_type,
-            company_name: userData.company_name,
-            phone_number: userData.phone_number,
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          return { error: profileError };
+        const profileResult = await createProfile(data.user.id, userData);
+        
+        if (profileResult.error) {
+          return { error: profileResult.error };
         }
         
         console.log('Profile created successfully');
+        setProfile(profileResult.data);
       }
 
       return { data, error: null };
@@ -178,5 +199,6 @@ export const useVoltMarketAuth = () => {
     signIn,
     signOut,
     updateProfile,
+    createProfile,
   };
 };
