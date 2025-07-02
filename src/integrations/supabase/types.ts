@@ -2055,6 +2055,552 @@ export type Database = {
           },
         ]
       }
+      voltmarket_documents: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          document_type: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          is_private: boolean | null
+          listing_id: string
+          uploader_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          is_private?: boolean | null
+          listing_id: string
+          uploader_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          is_private?: boolean | null
+          listing_id?: string
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_documents_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_documents_uploader_id_fkey"
+            columns: ["uploader_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_listing_images: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          id: string
+          image_url: string
+          listing_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          image_url: string
+          listing_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          listing_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_listing_images_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_listings: {
+        Row: {
+          asking_price: number | null
+          available_power_mw: number | null
+          brand: string | null
+          cooling_type: string | null
+          created_at: string | null
+          description: string | null
+          equipment_condition:
+            | Database["public"]["Enums"]["voltmarket_equipment_condition"]
+            | null
+          equipment_type:
+            | Database["public"]["Enums"]["voltmarket_equipment_type"]
+            | null
+          facility_tier: string | null
+          hosting_types: string[] | null
+          id: string
+          is_featured: boolean | null
+          is_location_confidential: boolean | null
+          latitude: number | null
+          lease_rate: number | null
+          listing_type: Database["public"]["Enums"]["voltmarket_listing_type"]
+          location: string
+          longitude: number | null
+          manufacture_year: number | null
+          minimum_commitment_months: number | null
+          model: string | null
+          power_capacity_mw: number | null
+          power_rate_per_kw: number | null
+          property_type:
+            | Database["public"]["Enums"]["voltmarket_property_type"]
+            | null
+          quantity: number | null
+          seller_id: string
+          shipping_terms: string | null
+          specs: Json | null
+          square_footage: number | null
+          status:
+            | Database["public"]["Enums"]["voltmarket_listing_status"]
+            | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          asking_price?: number | null
+          available_power_mw?: number | null
+          brand?: string | null
+          cooling_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          equipment_condition?:
+            | Database["public"]["Enums"]["voltmarket_equipment_condition"]
+            | null
+          equipment_type?:
+            | Database["public"]["Enums"]["voltmarket_equipment_type"]
+            | null
+          facility_tier?: string | null
+          hosting_types?: string[] | null
+          id?: string
+          is_featured?: boolean | null
+          is_location_confidential?: boolean | null
+          latitude?: number | null
+          lease_rate?: number | null
+          listing_type: Database["public"]["Enums"]["voltmarket_listing_type"]
+          location: string
+          longitude?: number | null
+          manufacture_year?: number | null
+          minimum_commitment_months?: number | null
+          model?: string | null
+          power_capacity_mw?: number | null
+          power_rate_per_kw?: number | null
+          property_type?:
+            | Database["public"]["Enums"]["voltmarket_property_type"]
+            | null
+          quantity?: number | null
+          seller_id: string
+          shipping_terms?: string | null
+          specs?: Json | null
+          square_footage?: number | null
+          status?:
+            | Database["public"]["Enums"]["voltmarket_listing_status"]
+            | null
+          title: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          asking_price?: number | null
+          available_power_mw?: number | null
+          brand?: string | null
+          cooling_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          equipment_condition?:
+            | Database["public"]["Enums"]["voltmarket_equipment_condition"]
+            | null
+          equipment_type?:
+            | Database["public"]["Enums"]["voltmarket_equipment_type"]
+            | null
+          facility_tier?: string | null
+          hosting_types?: string[] | null
+          id?: string
+          is_featured?: boolean | null
+          is_location_confidential?: boolean | null
+          latitude?: number | null
+          lease_rate?: number | null
+          listing_type?: Database["public"]["Enums"]["voltmarket_listing_type"]
+          location?: string
+          longitude?: number | null
+          manufacture_year?: number | null
+          minimum_commitment_months?: number | null
+          model?: string | null
+          power_capacity_mw?: number | null
+          power_rate_per_kw?: number | null
+          property_type?:
+            | Database["public"]["Enums"]["voltmarket_property_type"]
+            | null
+          quantity?: number | null
+          seller_id?: string
+          shipping_terms?: string | null
+          specs?: Json | null
+          square_footage?: number | null
+          status?:
+            | Database["public"]["Enums"]["voltmarket_listing_status"]
+            | null
+          title?: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_listings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_lois: {
+        Row: {
+          buyer_id: string
+          conditions: string | null
+          custom_loi_url: string | null
+          deposit_amount: number | null
+          id: string
+          listing_id: string
+          offered_price: number | null
+          responded_at: string | null
+          seller_id: string
+          status: Database["public"]["Enums"]["voltmarket_loi_status"] | null
+          submitted_at: string | null
+          timeline_days: number | null
+        }
+        Insert: {
+          buyer_id: string
+          conditions?: string | null
+          custom_loi_url?: string | null
+          deposit_amount?: number | null
+          id?: string
+          listing_id: string
+          offered_price?: number | null
+          responded_at?: string | null
+          seller_id: string
+          status?: Database["public"]["Enums"]["voltmarket_loi_status"] | null
+          submitted_at?: string | null
+          timeline_days?: number | null
+        }
+        Update: {
+          buyer_id?: string
+          conditions?: string | null
+          custom_loi_url?: string | null
+          deposit_amount?: number | null
+          id?: string
+          listing_id?: string
+          offered_price?: number | null
+          responded_at?: string | null
+          seller_id?: string
+          status?: Database["public"]["Enums"]["voltmarket_loi_status"] | null
+          submitted_at?: string | null
+          timeline_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_lois_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_lois_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_lois_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          listing_id: string
+          message: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          listing_id: string
+          message: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          listing_id?: string
+          message?: string
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_messages_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_nda_requests: {
+        Row: {
+          approved_at: string | null
+          created_at: string | null
+          id: string
+          listing_id: string
+          nda_document_url: string | null
+          requester_id: string
+          seller_id: string
+          signed_at: string | null
+          status: Database["public"]["Enums"]["voltmarket_nda_status"] | null
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string | null
+          id?: string
+          listing_id: string
+          nda_document_url?: string | null
+          requester_id: string
+          seller_id: string
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["voltmarket_nda_status"] | null
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string | null
+          id?: string
+          listing_id?: string
+          nda_document_url?: string | null
+          requester_id?: string
+          seller_id?: string
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["voltmarket_nda_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_nda_requests_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_nda_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_nda_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_notifications: {
+        Row: {
+          created_at: string | null
+          email_sent: boolean | null
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_profiles: {
+        Row: {
+          bio: string | null
+          company_name: string | null
+          created_at: string | null
+          id: string
+          is_email_verified: boolean | null
+          is_id_verified: boolean | null
+          linkedin_url: string | null
+          phone_number: string | null
+          profile_image_url: string | null
+          role: Database["public"]["Enums"]["voltmarket_user_role"]
+          seller_type:
+            | Database["public"]["Enums"]["voltmarket_seller_type"]
+            | null
+          updated_at: string | null
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_email_verified?: boolean | null
+          is_id_verified?: boolean | null
+          linkedin_url?: string | null
+          phone_number?: string | null
+          profile_image_url?: string | null
+          role: Database["public"]["Enums"]["voltmarket_user_role"]
+          seller_type?:
+            | Database["public"]["Enums"]["voltmarket_seller_type"]
+            | null
+          updated_at?: string | null
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_email_verified?: boolean | null
+          is_id_verified?: boolean | null
+          linkedin_url?: string | null
+          phone_number?: string | null
+          profile_image_url?: string | null
+          role?: Database["public"]["Enums"]["voltmarket_user_role"]
+          seller_type?:
+            | Database["public"]["Enums"]["voltmarket_seller_type"]
+            | null
+          updated_at?: string | null
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      voltmarket_watchlist: {
+        Row: {
+          created_at: string | null
+          id: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_watchlist_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_watchlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2094,6 +2640,41 @@ export type Database = {
         | "flex_space"
         | "other"
       user_role: "admin" | "analyst" | "viewer"
+      voltmarket_equipment_condition: "new" | "used" | "refurbished"
+      voltmarket_equipment_type:
+        | "asic"
+        | "gpu"
+        | "cooling"
+        | "generator"
+        | "ups"
+        | "transformer"
+        | "other"
+      voltmarket_listing_status:
+        | "active"
+        | "under_loi"
+        | "sold"
+        | "leased"
+        | "inactive"
+      voltmarket_listing_type:
+        | "site_sale"
+        | "site_lease"
+        | "hosting"
+        | "equipment"
+      voltmarket_loi_status: "pending" | "accepted" | "rejected" | "withdrawn"
+      voltmarket_nda_status: "pending" | "approved" | "rejected"
+      voltmarket_property_type:
+        | "data_center"
+        | "industrial"
+        | "warehouse"
+        | "land"
+        | "office"
+        | "other"
+      voltmarket_seller_type:
+        | "site_owner"
+        | "broker"
+        | "realtor"
+        | "equipment_vendor"
+      voltmarket_user_role: "buyer" | "seller" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2232,6 +2813,46 @@ export const Constants = {
         "other",
       ],
       user_role: ["admin", "analyst", "viewer"],
+      voltmarket_equipment_condition: ["new", "used", "refurbished"],
+      voltmarket_equipment_type: [
+        "asic",
+        "gpu",
+        "cooling",
+        "generator",
+        "ups",
+        "transformer",
+        "other",
+      ],
+      voltmarket_listing_status: [
+        "active",
+        "under_loi",
+        "sold",
+        "leased",
+        "inactive",
+      ],
+      voltmarket_listing_type: [
+        "site_sale",
+        "site_lease",
+        "hosting",
+        "equipment",
+      ],
+      voltmarket_loi_status: ["pending", "accepted", "rejected", "withdrawn"],
+      voltmarket_nda_status: ["pending", "approved", "rejected"],
+      voltmarket_property_type: [
+        "data_center",
+        "industrial",
+        "warehouse",
+        "land",
+        "office",
+        "other",
+      ],
+      voltmarket_seller_type: [
+        "site_owner",
+        "broker",
+        "realtor",
+        "equipment_vendor",
+      ],
+      voltmarket_user_role: ["buyer", "seller", "admin"],
     },
   },
 } as const

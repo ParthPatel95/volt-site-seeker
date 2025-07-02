@@ -1,31 +1,31 @@
 
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthWrapper } from './components/AuthWrapper';
-import { AccessRequestForm } from './components/AccessRequestForm';
-import { VoltScoutAccessPage } from './components/VoltScoutAccessPage';
-import Landing from './pages/Landing';
-import NotFound from './pages/NotFound';
-import Index from './pages/Index';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { navItems } from "./nav-items";
+import { VoltMarket } from "./pages/VoltMarket";
+import Index from "./pages/Index";
 
-function App() {
-  return (
-    <Router>
-      <div className="min-h-screen bg-background">
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/request-access" element={
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/30 p-4">
-              <AccessRequestForm />
-            </div>
-          } />
-          <Route path="/voltscout" element={<VoltScoutAccessPage />} />
-          <Route path="/app/*" element={<AuthWrapper><Index /></AuthWrapper>} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/voltmarket/*" element={<VoltMarket />} />
+          {navItems.map(({ to, page }) => (
+            <Route key={to} path={to} element={page} />
+          ))}
         </Routes>
-      </div>
-    </Router>
-  );
-}
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
