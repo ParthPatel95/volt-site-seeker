@@ -10,12 +10,14 @@ import { VoltMarketListingCard } from './VoltMarketListingCard';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, Filter, MapPin, Zap, Building2, Server } from 'lucide-react';
 
+type ListingType = 'site_sale' | 'site_lease' | 'hosting' | 'equipment';
+
 interface Listing {
   id: string;
   title: string;
   description: string;
   location: string;
-  listing_type: 'site_sale' | 'site_lease' | 'hosting' | 'equipment';
+  listing_type: ListingType;
   asking_price: number;
   power_capacity_mw: number;
   created_at: string;
@@ -58,7 +60,7 @@ export const VoltMarketListings: React.FC = () => {
 
     // Apply filters
     if (filters.type !== 'all') {
-      query = query.eq('listing_type', filters.type);
+      query = query.eq('listing_type', filters.type as ListingType);
     }
 
     if (filters.search) {

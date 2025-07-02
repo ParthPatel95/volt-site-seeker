@@ -119,7 +119,10 @@ export const VoltMarketListingCard: React.FC<ListingCardProps> = ({ listing }) =
               {formatListingType(listing.listing_type)}
             </Badge>
             {listing.voltmarket_profiles?.is_id_verified && (
-              <Shield className="w-4 h-4 text-green-500" title="Verified Seller" />
+              <div className="flex items-center">
+                <Shield className="w-4 h-4 text-green-500" />
+                <span className="sr-only">Verified Seller</span>
+              </div>
             )}
           </div>
           <Button variant="ghost" size="sm">
