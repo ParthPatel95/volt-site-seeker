@@ -183,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent 
           side="left" 
-          className="p-0 w-72 sm:w-80 max-w-[85vw]"
+          className="p-0 w-72 sm:w-80 max-w-[85vw] z-50"
           onInteractOutside={() => setIsOpen(false)}
         >
           <SidebarContent />
