@@ -21,7 +21,17 @@ export const LandingNavigation = () => {
         </div>
       </div>
       
-      <div className="flex items-center flex-shrink-0">
+      <div className="flex items-center space-x-2 flex-shrink-0">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => navigate('/voltmarket')}
+          className="border-none hover:opacity-90 text-white text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target"
+          style={{ backgroundColor: '#6366f1' }}
+        >
+          <span className="hidden sm:inline">Launch </span>VoltMarket
+        </Button>
+        
         <Button 
           variant="outline" 
           size="sm"
