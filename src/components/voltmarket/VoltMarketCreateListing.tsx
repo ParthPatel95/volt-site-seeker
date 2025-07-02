@@ -70,9 +70,10 @@ export const VoltMarketCreateListing: React.FC = () => {
     setLoading(true);
     
     try {
-      const listingData = {
+      // Prepare the listing data with proper type casting
+      const listingData: any = {
         seller_id: profile.id,
-        listing_type: formData.listing_type as any,
+        listing_type: formData.listing_type,
         title: formData.title,
         description: formData.description || null,
         location: formData.location,
@@ -96,7 +97,7 @@ export const VoltMarketCreateListing: React.FC = () => {
         specs: Object.keys(formData.specs).length > 0 ? formData.specs : null,
         is_location_confidential: formData.is_location_confidential,
         shipping_terms: formData.shipping_terms || null,
-        status: 'active'
+        status: 'active' as const
       };
 
       const { data, error } = await supabase
@@ -339,18 +340,16 @@ export const VoltMarketCreateListing: React.FC = () => {
                 </div>
 
                 {formData.listing_type === 'equipment' && (
-                  <>
-                    <div>
-                      <Label htmlFor="quantity">Quantity</Label>
-                      <Input
-                        id="quantity"
-                        value={formData.quantity}
-                        onChange={(e) => updateFormData('quantity', e.target.value)}
-                        placeholder="Enter quantity"
-                        type="number"
-                      />
-                    </div>
-                  </>
+                  <div>
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      value={formData.quantity}
+                      onChange={(e) => updateFormData('quantity', e.target.value)}
+                      placeholder="Enter quantity"
+                      type="number"
+                    />
+                  </div>
                 )}
               </div>
 
@@ -382,10 +381,8 @@ export const VoltMarketCreateListing: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="like_new">Like New</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                        <SelectItem value="fair">Fair</SelectItem>
-                        <SelectItem value="for_parts">For Parts</SelectItem>
+                        <SelectItem value="used">Used</SelectItem>
+                        <SelectItem value="refurbished">Refurbished</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
