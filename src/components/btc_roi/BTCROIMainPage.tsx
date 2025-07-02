@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BTCROILiveStatsCard } from './BTCROILiveStatsCard';
 import { BTCROIMiningModeSelector } from './BTCROIMiningModeSelector';
-import { BTCROIInputForm } from './BTCROIInputForm';
+import { BTCROIConfigCard } from './BTCROIConfigCard';
+import { BTCROIInputModal } from './BTCROIInputModal';
 import { BTCROIOutputTable } from './BTCROIOutputTable';
 import { BTCROIHostingOutputTable } from './BTCROIHostingOutputTable';
 import { BTCROIHostingAnalytics } from './BTCROIHostingAnalytics';
@@ -39,6 +39,7 @@ import {
 export const BTCROIMainPage = () => {
   const [miningMode, setMiningMode] = useState<'hosting' | 'self'>('hosting');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [activeTab, setActiveTab] = useState('calculator');
   
   const { 
@@ -83,6 +84,15 @@ export const BTCROIMainPage = () => {
     saveCurrentCalculation(miningMode, siteName);
   };
 
+  // Check if configuration has been set up
+  const hasConfiguration = () => {
+    if (miningMode === 'hosting') {
+      return formData.totalLoadKW > 0 && formData.hostingFeeRate > 0;
+    } else {
+      return formData.hashrate > 0 && formData.powerDraw > 0 && formData.powerRate > 0;
+    }
+  };
+
   const currentResults = miningMode === 'hosting' ? hostingResults : roiResults;
 
   return (
@@ -94,6 +104,17 @@ export const BTCROIMainPage = () => {
           onSkip={handleOnboardingSkip}
         />
       )}
+
+      {/* Configuration Modal */}
+      <BTCROIInputModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        mode={miningMode}
+        formData={formData}
+        onFormDataChange={setFormData}
+        onCalculate={handleCalculate}
+        isLoading={isLoading}
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-2 sm:p-4 lg:p-6">
         <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -157,24 +178,12 @@ export const BTCROIMainPage = () => {
                 </CardContent>
               </Card>
 
-              {/* Input Form */}
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-sm sm:text-base lg:text-lg flex items-center gap-2">
-                    <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
-                    <span className="truncate">Configuration</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <BTCROIInputForm
-                    mode={miningMode}
-                    formData={formData}
-                    onFormDataChange={setFormData}
-                    onCalculate={handleCalculate}
-                    isLoading={isLoading}
-                  />
-                </CardContent>
-              </Card>
+              {/* Configuration Card */}
+              <BTCROIConfigCard
+                mode={miningMode}
+                onOpenConfig={() => setShowConfigModal(true)}
+                hasConfiguration={hasConfiguration()}
+              />
 
               {/* Quick Results */}
               {currentResults && (
