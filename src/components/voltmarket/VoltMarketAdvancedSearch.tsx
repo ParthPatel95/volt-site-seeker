@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -121,6 +120,8 @@ export const VoltMarketAdvancedSearch: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                
+                
                 {/* Keyword Search */}
                 <div>
                   <Label htmlFor="keyword">Keyword</Label>

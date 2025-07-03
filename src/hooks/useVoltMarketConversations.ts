@@ -5,7 +5,7 @@ import { useVoltMarketAuth } from './useVoltMarketAuth';
 
 interface Message {
   id: string;
-  conversation_id: string;
+  listing_id: string;
   sender_id: string;
   recipient_id: string;
   message: string;
@@ -43,36 +43,50 @@ export const useVoltMarketConversations = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch conversations with related data
+      const { data: conversationData, error: convError } = await supabase
         .from('voltmarket_conversations')
         .select(`
           *,
           listing:voltmarket_listings(title, price),
-          messages:voltmarket_messages(*),
           buyer:voltmarket_profiles!buyer_id(company_name, profile_image_url),
           seller:voltmarket_profiles!seller_id(company_name, profile_image_url)
         `)
         .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
         .order('last_message_at', { ascending: false });
 
-      if (error) throw error;
+      if (convError) throw convError;
 
-      const formattedConversations = data?.map(conv => {
-        const otherParty = conv.buyer_id === profile.id ? conv.seller : conv.buyer;
-        const messages = conv.messages || [];
-        const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-        const unreadCount = messages.filter(m => m.recipient_id === profile.id && !m.is_read).length;
+      // Fetch messages for each conversation
+      const conversationsWithMessages = await Promise.all(
+        (conversationData || []).map(async (conv) => {
+          const { data: messages, error: msgError } = await supabase
+            .from('voltmarket_messages')
+            .select('*')
+            .eq('listing_id', conv.listing_id)
+            .or(`sender_id.eq.${profile.id},recipient_id.eq.${profile.id}`)
+            .order('created_at', { ascending: true });
 
-        return {
-          ...conv,
-          other_party: otherParty,
-          messages,
-          last_message: lastMessage,
-          unread_count: unreadCount
-        };
-      }) || [];
+          if (msgError) {
+            console.error('Error fetching messages:', msgError);
+          }
 
-      setConversations(formattedConversations);
+          const otherParty = conv.buyer_id === profile.id ? conv.seller : conv.buyer;
+          const messageList = messages || [];
+          const lastMessage = messageList.length > 0 ? messageList[messageList.length - 1] : null;
+          const unreadCount = messageList.filter(m => m.recipient_id === profile.id && !m.is_read).length;
+
+          return {
+            ...conv,
+            other_party: otherParty || { company_name: 'Unknown', profile_image_url: null },
+            messages: messageList,
+            last_message: lastMessage,
+            unread_count: unreadCount
+          } as Conversation;
+        })
+      );
+
+      setConversations(conversationsWithMessages);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
@@ -80,48 +94,65 @@ export const useVoltMarketConversations = () => {
     }
   };
 
-  const sendMessage = async (listingId: string, recipientId: string, message: string) => {
-    if (!profile) return;
+  const createConversation = async (listingId: string, recipientId: string) => {
+    if (!profile) throw new Error('Must be logged in');
 
     try {
-      // First, find or create conversation
-      let { data: conversation } = await supabase
+      // Check if conversation already exists
+      const { data: existingConv } = await supabase
         .from('voltmarket_conversations')
         .select('id')
         .eq('listing_id', listingId)
         .or(`and(buyer_id.eq.${profile.id},seller_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},seller_id.eq.${profile.id})`)
         .single();
 
-      if (!conversation) {
-        const { data: newConv } = await supabase
-          .from('voltmarket_conversations')
-          .insert({
-            listing_id: listingId,
-            buyer_id: profile.id,
-            seller_id: recipientId
-          })
-          .select('id')
-          .single();
-        conversation = newConv;
+      if (existingConv) {
+        return existingConv.id;
       }
 
-      if (conversation) {
-        await supabase
-          .from('voltmarket_messages')
-          .insert({
-            conversation_id: conversation.id,
-            sender_id: profile.id,
-            recipient_id: recipientId,
-            message
-          });
+      // Create new conversation
+      const { data: newConv, error } = await supabase
+        .from('voltmarket_conversations')
+        .insert({
+          listing_id: listingId,
+          buyer_id: profile.id,
+          seller_id: recipientId
+        })
+        .select('id')
+        .single();
 
-        await supabase
-          .from('voltmarket_conversations')
-          .update({ last_message_at: new Date().toISOString() })
-          .eq('id', conversation.id);
+      if (error) throw error;
+      
+      await fetchConversations();
+      return newConv.id;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
+    }
+  };
 
-        fetchConversations();
-      }
+  const sendMessage = async (listingId: string, recipientId: string, message: string) => {
+    if (!profile) return;
+
+    try {
+      // Insert message directly using listing_id
+      await supabase
+        .from('voltmarket_messages')
+        .insert({
+          listing_id: listingId,
+          sender_id: profile.id,
+          recipient_id: recipientId,
+          message
+        });
+
+      // Update conversation last_message_at
+      await supabase
+        .from('voltmarket_conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('listing_id', listingId)
+        .or(`and(buyer_id.eq.${profile.id},seller_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},seller_id.eq.${profile.id})`);
+
+      fetchConversations();
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -133,6 +164,8 @@ export const useVoltMarketConversations = () => {
         .from('voltmarket_messages')
         .update({ is_read: true })
         .eq('id', messageId);
+      
+      fetchConversations();
     } catch (error) {
       console.error('Error marking message as read:', error);
     }
@@ -145,6 +178,7 @@ export const useVoltMarketConversations = () => {
   return {
     conversations,
     loading,
+    createConversation,
     sendMessage,
     markAsRead,
     fetchConversations
