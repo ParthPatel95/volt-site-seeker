@@ -19,7 +19,7 @@ export const VoltMarketCreateListing: React.FC = () => {
     title: '',
     description: '',
     location: '',
-    listing_type: 'site_sale',
+    listing_type: 'site_sale' as 'site_sale' | 'site_lease' | 'hosting' | 'equipment',
     asking_price: 0,
     lease_rate: 0,
     power_rate_per_kw: 0,
@@ -30,7 +30,7 @@ export const VoltMarketCreateListing: React.FC = () => {
     cooling_type: '',
     brand: '',
     model: '',
-    equipment_condition: 'new',
+    equipment_condition: 'new' as 'new' | 'used' | 'refurbished',
     quantity: 1
   });
 
@@ -58,7 +58,7 @@ export const VoltMarketCreateListing: React.FC = () => {
         .insert({
           ...formData,
           seller_id: profile.id,
-          status: 'active'
+          status: 'active' as const
         });
 
       if (error) throw error;
@@ -126,7 +126,7 @@ export const VoltMarketCreateListing: React.FC = () => {
 
                 <div>
                   <Label htmlFor="listing_type">Listing Type *</Label>
-                  <Select value={formData.listing_type} onValueChange={(value) => 
+                  <Select value={formData.listing_type} onValueChange={(value: 'site_sale' | 'site_lease' | 'hosting' | 'equipment') => 
                     setFormData(prev => ({ ...prev, listing_type: value }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -322,16 +322,14 @@ export const VoltMarketCreateListing: React.FC = () => {
 
                       <div>
                         <Label htmlFor="equipment_condition">Condition</Label>
-                        <Select value={formData.equipment_condition} onValueChange={(value) => 
+                        <Select value={formData.equipment_condition} onValueChange={(value: 'new' | 'used' | 'refurbished') => 
                           setFormData(prev => ({ ...prev, equipment_condition: value }))}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="new">New</SelectItem>
-                            <SelectItem value="used_excellent">Used - Excellent</SelectItem>
-                            <SelectItem value="used_good">Used - Good</SelectItem>
-                            <SelectItem value="used_fair">Used - Fair</SelectItem>
+                            <SelectItem value="used">Used</SelectItem>
                             <SelectItem value="refurbished">Refurbished</SelectItem>
                           </SelectContent>
                         </Select>
