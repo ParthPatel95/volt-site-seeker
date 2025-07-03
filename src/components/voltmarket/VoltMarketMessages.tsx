@@ -47,7 +47,7 @@ export const VoltMarketMessages: React.FC = () => {
   };
 
   const filteredConversations = conversations.filter(conv =>
-    conv.participant.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.other_party.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.listing.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -123,13 +123,13 @@ export const VoltMarketMessages: React.FC = () => {
                         <div className="flex items-start gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarFallback className="bg-blue-100 text-blue-600">
-                              {getInitials(conversation.participant.company_name || 'Unknown')}
+                              {getInitials(conversation.other_party.company_name || 'Unknown')}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <h3 className="text-sm font-medium text-gray-900 truncate">
-                                {conversation.participant.company_name || 'Unknown Company'}
+                                {conversation.other_party.company_name || 'Unknown Company'}
                               </h3>
                               {conversation.unread_count > 0 && (
                                 <Badge variant="default" className="text-xs">
@@ -148,7 +148,7 @@ export const VoltMarketMessages: React.FC = () => {
                             )}
                             <div className="flex items-center text-xs text-gray-400 mt-1">
                               <Clock className="w-3 h-3 mr-1" />
-                              {formatTimeAgo(conversation.last_message?.created_at || conversation.created_at)}
+                              {formatTimeAgo(conversation.last_message?.created_at || conversation.last_message_at)}
                             </div>
                           </div>
                         </div>
@@ -170,7 +170,7 @@ export const VoltMarketMessages: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg">
-                          {selectedConversation.participant.company_name || 'Unknown Company'}
+                          {selectedConversation.other_party.company_name || 'Unknown Company'}
                         </CardTitle>
                         <p className="text-sm text-gray-600 flex items-center">
                           <Building2 className="w-4 h-4 mr-1" />

@@ -53,7 +53,8 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
 
   const fetchDocuments = async () => {
     try {
-      const { data, error } = await supabase
+      // Use any type to bypass TypeScript error until types are regenerated
+      const { data, error } = await (supabase as any)
         .from('voltmarket_due_diligence_documents')
         .select('*')
         .eq('listing_id', listingId)

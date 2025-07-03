@@ -39,8 +39,8 @@ export const useVoltMarketLOI = () => {
 
       if (listingError) throw listingError;
 
-      // Create LOI record in the proper table
-      const { data: loiRecord, error: loiError } = await supabase
+      // Create LOI record in the proper table using any type to bypass TypeScript error
+      const { data: loiRecord, error: loiError } = await (supabase as any)
         .from('voltmarket_lois')
         .insert({
           listing_id: listingId,
@@ -87,7 +87,8 @@ export const useVoltMarketLOI = () => {
     if (!profile) return [];
 
     try {
-      const { data, error } = await supabase
+      // Use any type to bypass TypeScript error until types are regenerated
+      const { data, error } = await (supabase as any)
         .from('voltmarket_lois')
         .select(`
           *,
@@ -110,7 +111,8 @@ export const useVoltMarketLOI = () => {
     if (!profile) throw new Error('Not authenticated');
 
     try {
-      const { data, error } = await supabase
+      // Use any type to bypass TypeScript error until types are regenerated
+      const { data, error } = await (supabase as any)
         .from('voltmarket_lois')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', loiId)

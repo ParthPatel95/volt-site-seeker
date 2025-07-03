@@ -26,11 +26,14 @@ interface Conversation {
   other_party: {
     company_name: string;
   };
+  unread_count: number;
+  last_message?: Message;
 }
 
 export const useVoltMarketConversations = () => {
   const { profile } = useVoltMarketAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedMessages, setSelectedMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchConversations = async () => {
@@ -60,6 +63,14 @@ export const useVoltMarketConversations = () => {
         const conversationKey = `${message.listing_id}-${otherPartyId}`;
         
         if (!conversationMap.has(conversationKey)) {
+          const otherParty = message.sender_id === profile.id ? message.recipient : message.sender;
+          const unreadCount = messages.filter(m => 
+            m.recipient_id === profile.id && 
+            !m.is_read && 
+            m.listing_id === message.listing_id &&
+            (m.sender_id === otherPartyId || m.recipient_id === otherPartyId)
+          ).length;
+
           conversationMap.set(conversationKey, {
             id: conversationKey,
             listing_id: message.listing_id,
@@ -68,11 +79,20 @@ export const useVoltMarketConversations = () => {
             last_message_at: message.created_at,
             listing: message.listing,
             messages: [],
-            other_party: message.sender_id === profile.id ? message.recipient : message.sender
+            other_party: otherParty,
+            unread_count: unreadCount,
+            last_message: message
           });
         }
         
         conversationMap.get(conversationKey).messages.push(message);
+        
+        // Update last message if this one is newer
+        const conversation = conversationMap.get(conversationKey);
+        if (new Date(message.created_at) > new Date(conversation.last_message_at)) {
+          conversation.last_message_at = message.created_at;
+          conversation.last_message = message;
+        }
       });
 
       setConversations(Array.from(conversationMap.values()));
@@ -80,6 +100,15 @@ export const useVoltMarketConversations = () => {
       console.error('Error fetching conversations:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMessages = async (conversationId: string) => {
+    const conversation = conversations.find(c => c.id === conversationId);
+    if (conversation) {
+      setSelectedMessages(conversation.messages.sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ));
     }
   };
 
@@ -124,14 +153,19 @@ export const useVoltMarketConversations = () => {
     }
   };
 
-  const sendMessage = async (listingId: string, recipientId: string, message: string) => {
+  const sendMessage = async (conversationId: string, message: string) => {
     if (!profile) return null;
+
+    const conversation = conversations.find(c => c.id === conversationId);
+    if (!conversation) return null;
+
+    const recipientId = conversation.other_party === conversation.buyer_id ? conversation.seller_id : conversation.buyer_id;
 
     try {
       const { data, error } = await supabase
         .from('voltmarket_messages')
         .insert({
-          listing_id: listingId,
+          listing_id: conversation.listing_id,
           sender_id: profile.id,
           recipient_id: recipientId,
           message,
@@ -143,10 +177,32 @@ export const useVoltMarketConversations = () => {
       if (error) throw error;
 
       await fetchConversations();
+      await fetchMessages(conversationId);
       return data;
     } catch (error) {
       console.error('Error sending message:', error);
       return null;
+    }
+  };
+
+  const markMessagesAsRead = async (conversationId: string) => {
+    if (!profile) return;
+
+    const conversation = conversations.find(c => c.id === conversationId);
+    if (!conversation) return;
+
+    try {
+      const { error } = await supabase
+        .from('voltmarket_messages')
+        .update({ is_read: true })
+        .eq('listing_id', conversation.listing_id)
+        .eq('recipient_id', profile.id)
+        .eq('is_read', false);
+
+      if (error) throw error;
+      await fetchConversations();
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
     }
   };
 
@@ -173,10 +229,13 @@ export const useVoltMarketConversations = () => {
 
   return {
     conversations,
+    messages: selectedMessages,
     loading,
     fetchConversations,
+    fetchMessages,
     createConversation,
     sendMessage,
+    markMessagesAsRead,
     markAsRead
   };
 };

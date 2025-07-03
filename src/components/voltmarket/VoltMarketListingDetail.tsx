@@ -130,7 +130,8 @@ export const VoltMarketListingDetail: React.FC = () => {
     if (!profile || !id) return;
 
     try {
-      const { data, error } = await supabase
+      // Use any type to bypass TypeScript error until types are regenerated
+      const { data, error } = await (supabase as any)
         .from('voltmarket_nda_signatures')
         .select('id')
         .eq('user_id', profile.id)
@@ -172,7 +173,8 @@ export const VoltMarketListingDetail: React.FC = () => {
     if (!profile || !listing) return;
 
     try {
-      const { error } = await supabase
+      // Use any type to bypass TypeScript error until types are regenerated
+      const { error } = await (supabase as any)
         .from('voltmarket_nda_signatures')
         .insert({
           user_id: profile.id,
