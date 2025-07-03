@@ -33,7 +33,6 @@ interface Conversation {
 export const useVoltMarketConversations = () => {
   const { profile } = useVoltMarketAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedMessages, setSelectedMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchConversations = async () => {
@@ -103,15 +102,6 @@ export const useVoltMarketConversations = () => {
     }
   };
 
-  const fetchMessages = async (conversationId: string) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (conversation) {
-      setSelectedMessages(conversation.messages.sort((a, b) => 
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      ));
-    }
-  };
-
   const createConversation = async (listingId: string, recipientId: string) => {
     if (!profile) return null;
 
@@ -153,19 +143,14 @@ export const useVoltMarketConversations = () => {
     }
   };
 
-  const sendMessage = async (conversationId: string, message: string) => {
+  const sendMessage = async (listingId: string, recipientId: string, message: string) => {
     if (!profile) return null;
-
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return null;
-
-    const recipientId = conversation.other_party === conversation.buyer_id ? conversation.seller_id : conversation.buyer_id;
 
     try {
       const { data, error } = await supabase
         .from('voltmarket_messages')
         .insert({
-          listing_id: conversation.listing_id,
+          listing_id: listingId,
           sender_id: profile.id,
           recipient_id: recipientId,
           message,
@@ -177,32 +162,10 @@ export const useVoltMarketConversations = () => {
       if (error) throw error;
 
       await fetchConversations();
-      await fetchMessages(conversationId);
       return data;
     } catch (error) {
       console.error('Error sending message:', error);
       return null;
-    }
-  };
-
-  const markMessagesAsRead = async (conversationId: string) => {
-    if (!profile) return;
-
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return;
-
-    try {
-      const { error } = await supabase
-        .from('voltmarket_messages')
-        .update({ is_read: true })
-        .eq('listing_id', conversation.listing_id)
-        .eq('recipient_id', profile.id)
-        .eq('is_read', false);
-
-      if (error) throw error;
-      await fetchConversations();
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
     }
   };
 
@@ -229,13 +192,10 @@ export const useVoltMarketConversations = () => {
 
   return {
     conversations,
-    messages: selectedMessages,
     loading,
     fetchConversations,
-    fetchMessages,
     createConversation,
     sendMessage,
-    markMessagesAsRead,
     markAsRead
   };
 };
