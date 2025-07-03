@@ -11,6 +11,7 @@ import { VoltMarketProfile } from '@/components/voltmarket/VoltMarketProfile';
 import { VoltMarketCreateListing } from '@/components/voltmarket/VoltMarketCreateListing';
 import { VoltMarketListingDetail } from '@/components/voltmarket/VoltMarketListingDetail';
 import { VoltMarketMessages } from '@/components/voltmarket/VoltMarketMessages';
+import { VoltMarketWatchlist } from '@/components/voltmarket/VoltMarketWatchlist';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 
 export const VoltMarket = () => {
@@ -65,6 +66,11 @@ export const VoltMarket = () => {
       <Route path="/messages" element={
         <VoltMarketLayout>
           {user ? <VoltMarketMessages /> : <VoltMarketAuth />}
+        </VoltMarketLayout>
+      } />
+      <Route path="/watchlist" element={
+        <VoltMarketLayout>
+          {user ? <VoltMarketWatchlist /> : <VoltMarketAuth />}
         </VoltMarketLayout>
       } />
     </Routes>
