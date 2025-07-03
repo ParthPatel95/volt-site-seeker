@@ -2,6 +2,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { VoltMarketLayout } from '@/components/voltmarket/VoltMarketLayout';
+import { VoltMarketLandingPage } from '@/components/voltmarket/VoltMarketLandingPage';
 import { VoltMarketHome } from '@/components/voltmarket/VoltMarketHome';
 import { VoltMarketAuth } from '@/components/voltmarket/VoltMarketAuth';
 import { VoltMarketListings } from '@/components/voltmarket/VoltMarketListings';
@@ -24,17 +25,48 @@ export const VoltMarket = () => {
   }
 
   return (
-    <VoltMarketLayout>
-      <Routes>
-        <Route path="/" element={<VoltMarketHome />} />
-        <Route path="/auth" element={<VoltMarketAuth />} />
-        <Route path="/listings" element={<VoltMarketListings />} />
-        <Route path="/listings/:id" element={<VoltMarketListingDetail />} />
-        <Route path="/dashboard" element={user ? <VoltMarketDashboard /> : <VoltMarketAuth />} />
-        <Route path="/profile" element={user ? <VoltMarketProfile /> : <VoltMarketAuth />} />
-        <Route path="/create-listing" element={user ? <VoltMarketCreateListing /> : <VoltMarketAuth />} />
-        <Route path="/messages" element={user ? <VoltMarketMessages /> : <VoltMarketAuth />} />
-      </Routes>
-    </VoltMarketLayout>
+    <Routes>
+      <Route path="/" element={<VoltMarketLandingPage />} />
+      <Route path="/home" element={
+        <VoltMarketLayout>
+          <VoltMarketHome />
+        </VoltMarketLayout>
+      } />
+      <Route path="/auth" element={
+        <VoltMarketLayout>
+          <VoltMarketAuth />
+        </VoltMarketLayout>
+      } />
+      <Route path="/listings" element={
+        <VoltMarketLayout>
+          <VoltMarketListings />
+        </VoltMarketLayout>
+      } />
+      <Route path="/listings/:id" element={
+        <VoltMarketLayout>
+          <VoltMarketListingDetail />
+        </VoltMarketLayout>
+      } />
+      <Route path="/dashboard" element={
+        <VoltMarketLayout>
+          {user ? <VoltMarketDashboard /> : <VoltMarketAuth />}
+        </VoltMarketLayout>
+      } />
+      <Route path="/profile" element={
+        <VoltMarketLayout>
+          {user ? <VoltMarketProfile /> : <VoltMarketAuth />}
+        </VoltMarketLayout>
+      } />
+      <Route path="/create-listing" element={
+        <VoltMarketLayout>
+          {user ? <VoltMarketCreateListing /> : <VoltMarketAuth />}
+        </VoltMarketLayout>
+      } />
+      <Route path="/messages" element={
+        <VoltMarketLayout>
+          {user ? <VoltMarketMessages /> : <VoltMarketAuth />}
+        </VoltMarketLayout>
+      } />
+    </Routes>
   );
 };
