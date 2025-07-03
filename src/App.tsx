@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
-import VoltMarket from "./pages/VoltMarket";
+import { VoltMarket } from "./pages/VoltMarket";
 import VoltMarketLanding from "./pages/VoltMarketLanding";
 
 const queryClient = new QueryClient();
