@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,16 +16,20 @@ import {
   FileCheck,
   Lock
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface DueDiligenceDocument {
   id: string;
   name: string;
   type: 'financial' | 'technical' | 'legal' | 'environmental' | 'regulatory';
-  size: string;
-  lastUpdated: string;
-  requiresNDA: boolean;
-  isAvailable: boolean;
+  file_size: string;
   description: string;
+  requires_nda: boolean;
+  file_url?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface VoltMarketDueDiligenceProps {
@@ -42,70 +46,37 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
   onRequestAccess
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [documents, setDocuments] = useState<DueDiligenceDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { profile } = useVoltMarketAuth();
+  const { toast } = useToast();
 
-  // Mock documents - in real implementation, these would come from the database
-  const documents: DueDiligenceDocument[] = [
-    {
-      id: '1',
-      name: 'Financial Statements (Last 3 Years)',
-      type: 'financial',
-      size: '2.5 MB',
-      lastUpdated: '2024-01-15',
-      requiresNDA: true,
-      isAvailable: hasSignedNDA,
-      description: 'Audited financial statements including P&L, balance sheet, and cash flow'
-    },
-    {
-      id: '2',
-      name: 'Power Infrastructure Assessment',
-      type: 'technical',
-      size: '15.8 MB',
-      lastUpdated: '2024-01-10',
-      requiresNDA: true,
-      isAvailable: hasSignedNDA,
-      description: 'Detailed technical assessment of power infrastructure and capacity'
-    },
-    {
-      id: '3',
-      name: 'Environmental Impact Study',
-      type: 'environmental',
-      size: '8.2 MB',
-      lastUpdated: '2023-12-20',
-      requiresNDA: true,
-      isAvailable: hasSignedNDA,
-      description: 'Environmental assessment and compliance documentation'
-    },
-    {
-      id: '4',
-      name: 'Utility Interconnection Agreement',
-      type: 'legal',
-      size: '1.2 MB',
-      lastUpdated: '2024-01-05',
-      requiresNDA: true,
-      isAvailable: hasSignedNDA,
-      description: 'Executed utility interconnection agreements and amendments'
-    },
-    {
-      id: '5',
-      name: 'Property Survey & Title Report',
-      type: 'legal',
-      size: '3.7 MB',
-      lastUpdated: '2024-01-08',
-      requiresNDA: false,
-      isAvailable: true,
-      description: 'Property survey, title report, and zoning information'
-    },
-    {
-      id: '6',
-      name: 'Regulatory Permits & Licenses',
-      type: 'regulatory',
-      size: '4.1 MB',
-      lastUpdated: '2024-01-12',
-      requiresNDA: true,
-      isAvailable: hasSignedNDA,
-      description: 'All applicable permits, licenses, and regulatory approvals'
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('voltmarket_due_diligence_documents')
+        .select('*')
+        .eq('listing_id', listingId)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load due diligence documents.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [listingId]);
 
   const categories = [
     { value: 'all', label: 'All Documents', icon: FileText },
@@ -132,10 +103,30 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
   };
 
   const getStatusIcon = (doc: DueDiligenceDocument) => {
-    if (!doc.requiresNDA) return <CheckCircle className="w-4 h-4 text-green-500" />;
-    if (doc.isAvailable) return <CheckCircle className="w-4 h-4 text-green-500" />;
+    if (!doc.requires_nda) return <CheckCircle className="w-4 h-4 text-green-500" />;
+    if (hasSignedNDA) return <CheckCircle className="w-4 h-4 text-green-500" />;
     return <Lock className="w-4 h-4 text-gray-400" />;
   };
+
+  const handleDownload = (doc: DueDiligenceDocument) => {
+    if (doc.file_url) {
+      window.open(doc.file_url, '_blank');
+    } else {
+      toast({
+        title: "Document Unavailable",
+        description: "This document is not yet available for download.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -209,7 +200,7 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
                       <Badge className={getTypeColor(doc.type)}>
                         {doc.type}
                       </Badge>
-                      {doc.requiresNDA && (
+                      {doc.requires_nda && (
                         <Badge variant="outline" className="text-xs">
                           <Lock className="w-3 h-3 mr-1" />
                           NDA Required
@@ -220,20 +211,20 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
                     <p className="text-sm text-gray-600 mb-2">{doc.description}</p>
                     
                     <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>Size: {doc.size}</span>
-                      <span>Updated: {new Date(doc.lastUpdated).toLocaleDateString()}</span>
+                      <span>Size: {doc.file_size}</span>
+                      <span>Updated: {new Date(doc.updated_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {doc.isAvailable ? (
+                  {(!doc.requires_nda || hasSignedNDA) ? (
                     <>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
                         <Eye className="w-4 h-4 mr-1" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
                         <Download className="w-4 h-4 mr-1" />
                         Download
                       </Button>
@@ -243,7 +234,7 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
                       variant="outline" 
                       size="sm" 
                       onClick={() => onRequestAccess(doc.id)}
-                      disabled={doc.requiresNDA && !hasSignedNDA}
+                      disabled={doc.requires_nda && !hasSignedNDA}
                     >
                       <Clock className="w-4 h-4 mr-1" />
                       Request Access

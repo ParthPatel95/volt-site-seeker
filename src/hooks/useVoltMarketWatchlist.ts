@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from './useVoltMarketAuth';
 
-export interface WatchlistItem {
+interface WatchlistItem {
   id: string;
   user_id: string;
   listing_id: string;
@@ -18,84 +18,76 @@ export interface WatchlistItem {
 }
 
 export const useVoltMarketWatchlist = () => {
-  const { user } = useVoltMarketAuth();
+  const { profile } = useVoltMarketAuth();
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchWatchlist = async () => {
-    if (!user) return;
+    if (!profile) return;
 
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('voltmarket_watchlist')
         .select(`
           *,
-          listing:voltmarket_listings(id, title, location, asking_price, status)
+          listing:voltmarket_listings(
+            id,
+            title,
+            location,
+            asking_price,
+            status
+          )
         `)
+        .eq('user_id', profile.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching watchlist:', error);
-        return;
-      }
-
+      if (error) throw error;
       setWatchlist(data || []);
     } catch (error) {
-      console.error('Error in fetchWatchlist:', error);
+      console.error('Error fetching watchlist:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const addToWatchlist = async (listingId: string) => {
-    if (!user) return false;
+    if (!profile) return false;
 
     try {
       const { error } = await supabase
         .from('voltmarket_watchlist')
         .insert({
-          user_id: user.id,
+          user_id: profile.id,
           listing_id: listingId
         });
 
-      if (error) {
-        console.error('Error adding to watchlist:', error);
-        return false;
-      }
-
+      if (error) throw error;
       await fetchWatchlist();
       return true;
     } catch (error) {
-      console.error('Error in addToWatchlist:', error);
+      console.error('Error adding to watchlist:', error);
       return false;
     }
   };
 
   const removeFromWatchlist = async (listingId: string) => {
-    if (!user) return false;
+    if (!profile) return false;
 
     try {
       const { error } = await supabase
         .from('voltmarket_watchlist')
         .delete()
-        .eq('user_id', user.id)
+        .eq('user_id', profile.id)
         .eq('listing_id', listingId);
 
-      if (error) {
-        console.error('Error removing from watchlist:', error);
-        return false;
-      }
-
+      if (error) throw error;
       await fetchWatchlist();
       return true;
     } catch (error) {
-      console.error('Error in removeFromWatchlist:', error);
+      console.error('Error removing from watchlist:', error);
       return false;
     }
-  };
-
-  const isInWatchlist = (listingId: string) => {
-    return watchlist.some(item => item.listing_id === listingId);
   };
 
   const toggleWatchlist = async (listingId: string) => {
@@ -106,19 +98,23 @@ export const useVoltMarketWatchlist = () => {
     }
   };
 
+  const isInWatchlist = (listingId: string) => {
+    return watchlist.some(item => item.listing_id === listingId);
+  };
+
   useEffect(() => {
-    if (user) {
+    if (profile) {
       fetchWatchlist();
     }
-  }, [user]);
+  }, [profile]);
 
   return {
     watchlist,
     loading,
     addToWatchlist,
     removeFromWatchlist,
-    isInWatchlist,
     toggleWatchlist,
-    refreshWatchlist: fetchWatchlist
+    isInWatchlist,
+    fetchWatchlist
   };
 };

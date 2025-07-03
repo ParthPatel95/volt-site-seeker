@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,47 +24,137 @@ import { VoltMarketWatchlistButton } from './VoltMarketWatchlistButton';
 import { VoltMarketLOIModal } from './VoltMarketLOIModal';
 import { VoltMarketDueDiligence } from './VoltMarketDueDiligence';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
+import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  asking_price: number;
+  power_capacity_mw: number;
+  square_footage: number;
+  listing_type: string;
+  property_type: string;
+  status: string;
+  created_at: string;
+  views_count: number;
+  seller: {
+    id: string;
+    company_name: string;
+    is_verified: boolean;
+  };
+  specifications: Record<string, string>;
+}
 
 export const VoltMarketListingDetail: React.FC = () => {
   const { id } = useParams();
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isLOIModalOpen, setIsLOIModalOpen] = useState(false);
   const [hasSignedNDA, setHasSignedNDA] = useState(false);
   const { submitLOI, loading: loiLoading } = useVoltMarketLOI();
+  const { profile } = useVoltMarketAuth();
   const { toast } = useToast();
 
-  // Mock listing data - in a real app, this would be fetched from the API
-  const listing = {
-    id: id,
-    title: "150MW Data Center Site - Dallas, Texas",
-    description: "Prime data center development opportunity in Dallas, Texas. This 50-acre site offers excellent connectivity, reliable power infrastructure, and strategic location for enterprise data center operations. The site features redundant utility feeds, fiber connectivity, and is zoned for industrial use.",
-    location: "Dallas, TX",
-    asking_price: 45000000,
-    power_capacity_mw: 150,
-    square_footage: 2000000,
-    listing_type: "site_sale",
-    property_type: "data_center",
-    created_at: "2024-01-15T10:00:00Z",
-    seller: {
-      id: "seller-123",
-      company_name: "Texas Power Development",
-      is_verified: true,
-      avatar: null
-    },
-    specifications: {
-      voltage: "138kV",
-      utility: "Oncor Electric",
-      cooling: "N/A",
-      tier: "Tier III Ready",
-      fiber: "Multiple Carriers Available"
-    },
-    images: [],
-    views_count: 1247
+  const fetchListing = async () => {
+    if (!id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('voltmarket_listings')
+        .select(`
+          *,
+          seller:voltmarket_profiles!seller_id(
+            id,
+            company_name,
+            is_id_verified
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      // Transform the data to match our interface
+      const transformedListing: Listing = {
+        id: data.id,
+        title: data.title,
+        description: data.description || '',
+        location: data.location,
+        asking_price: data.asking_price || 0,
+        power_capacity_mw: data.power_capacity_mw || 0,
+        square_footage: data.square_footage || 0,
+        listing_type: data.listing_type,
+        property_type: data.property_type || 'data_center',
+        status: data.status,
+        created_at: data.created_at,
+        views_count: data.views_count || 0,
+        seller: {
+          id: data.seller.id,
+          company_name: data.seller.company_name || 'Unknown Company',
+          is_verified: data.seller.is_id_verified || false
+        },
+        specifications: {
+          voltage: '138kV',
+          utility: 'Local Utility',
+          cooling: data.cooling_type || 'N/A',
+          tier: data.facility_tier || 'Tier III Ready',
+          fiber: 'Multiple Carriers Available'
+        }
+      };
+
+      setListing(transformedListing);
+
+      // Increment view count
+      await supabase
+        .from('voltmarket_listings')
+        .update({ views_count: (data.views_count || 0) + 1 })
+        .eq('id', id);
+
+    } catch (error) {
+      console.error('Error fetching listing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load listing details.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleLOISubmit = async (loiData: any) => {
+  const checkNDAStatus = async () => {
+    if (!profile || !id) return;
+
     try {
-      await submitLOI(listing.id!, loiData);
+      const { data, error } = await supabase
+        .from('voltmarket_nda_signatures')
+        .select('id')
+        .eq('user_id', profile.id)
+        .eq('listing_id', id)
+        .maybeSingle();
+
+      if (!error && data) {
+        setHasSignedNDA(true);
+      }
+    } catch (error) {
+      console.error('Error checking NDA status:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchListing();
+    checkNDAStatus();
+  }, [id, profile]);
+
+  const handleLOISubmit = async (loiData: any) => {
+    if (!listing) return;
+    
+    try {
+      await submitLOI(listing.id, loiData);
       toast({
         title: "LOI Submitted Successfully",
         description: "Your Letter of Intent has been sent to the seller."
@@ -78,13 +168,33 @@ export const VoltMarketListingDetail: React.FC = () => {
     }
   };
 
-  const handleSignNDA = () => {
-    // In a real implementation, this would handle the NDA signing process
-    setHasSignedNDA(true);
-    toast({
-      title: "NDA Signed",
-      description: "You now have access to confidential due diligence documents."
-    });
+  const handleSignNDA = async () => {
+    if (!profile || !listing) return;
+
+    try {
+      const { error } = await supabase
+        .from('voltmarket_nda_signatures')
+        .insert({
+          user_id: profile.id,
+          listing_id: listing.id,
+          ip_address: 'unknown' // In a real app, you'd capture the actual IP
+        });
+
+      if (error) throw error;
+
+      setHasSignedNDA(true);
+      toast({
+        title: "NDA Signed",
+        description: "You now have access to confidential due diligence documents."
+      });
+    } catch (error) {
+      console.error('Error signing NDA:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign NDA. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRequestDocumentAccess = (documentId: string) => {
@@ -93,6 +203,31 @@ export const VoltMarketListingDetail: React.FC = () => {
       description: "Your request for document access has been sent to the seller."
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!listing) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Listing Not Found</h1>
+            <p className="text-gray-600">The listing you're looking for doesn't exist or has been removed.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -123,7 +258,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>Listed 2 weeks ago</span>
+                        <span>Listed {new Date(listing.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Eye className="w-4 h-4" />
@@ -132,7 +267,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <VoltMarketWatchlistButton listingId={listing.id!} />
+                    <VoltMarketWatchlistButton listingId={listing.id} />
                     <Badge variant="secondary" className="capitalize">
                       {listing.listing_type.replace('_', ' ')}
                     </Badge>
@@ -190,7 +325,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                   
                   <TabsContent value="due-diligence" className="mt-6">
                     <VoltMarketDueDiligence
-                      listingId={listing.id!}
+                      listingId={listing.id}
                       hasSignedNDA={hasSignedNDA}
                       onSignNDA={handleSignNDA}
                       onRequestAccess={handleRequestDocumentAccess}
@@ -223,7 +358,9 @@ export const VoltMarketListingDetail: React.FC = () => {
                         <Shield className="w-4 h-4 text-green-500" />
                       )}
                     </div>
-                    <div className="text-sm text-gray-600">Verified Seller</div>
+                    <div className="text-sm text-gray-600">
+                      {listing.seller.is_verified ? 'Verified Seller' : 'Seller'}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -236,7 +373,7 @@ export const VoltMarketListingDetail: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <VoltMarketContactButton
-                  listingId={listing.id!}
+                  listingId={listing.id}
                   sellerId={listing.seller.id}
                   className="w-full"
                 />
@@ -256,7 +393,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                     Save for later
                   </div>
                   <VoltMarketWatchlistButton 
-                    listingId={listing.id!}
+                    listingId={listing.id}
                     size="sm"
                     variant="outline"
                   />
@@ -285,7 +422,7 @@ export const VoltMarketListingDetail: React.FC = () => {
       <VoltMarketLOIModal
         isOpen={isLOIModalOpen}
         onClose={() => setIsLOIModalOpen(false)}
-        listingId={listing.id!}
+        listingId={listing.id}
         listingTitle={listing.title}
         askingPrice={listing.asking_price}
         onSubmit={handleLOISubmit}
