@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +7,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { VoltMarketImageUpload } from './VoltMarketImageUpload';
+import { VoltMarketDocumentUpload } from './VoltMarketDocumentUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Building2, Zap } from 'lucide-react';
+import { Plus, Building2, Zap, Camera, FileText } from 'lucide-react';
 
 export const VoltMarketCreateListing: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -53,15 +56,35 @@ export const VoltMarketCreateListing: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
+      // First create the listing
+      const { data: listing, error: listingError } = await supabase
         .from('voltmarket_listings')
         .insert({
           ...formData,
           seller_id: profile.id,
           status: 'active' as const
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (listingError) throw listingError;
+
+      // Then save images to the listing_images table
+      if (images.length > 0) {
+        const imageInserts = images.map((imageUrl, index) => ({
+          listing_id: listing.id,
+          image_url: imageUrl,
+          sort_order: index
+        }));
+
+        const { error: imageError } = await supabase
+          .from('voltmarket_listing_images')
+          .insert(imageInserts);
+
+        if (imageError) {
+          console.error('Error saving images:', imageError);
+        }
+      }
 
       toast({
         title: "Listing Created",
@@ -174,7 +197,42 @@ export const VoltMarketCreateListing: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Pricing */}
+            {/* Images Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Camera className="w-5 h-5" />
+                  Photos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <VoltMarketImageUpload
+                  existingImages={images}
+                  onImagesChange={setImages}
+                  maxImages={20}
+                  bucket="listing-images"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Documents Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Documents
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <VoltMarketDocumentUpload
+                  existingDocuments={documents}
+                  onDocumentsChange={setDocuments}
+                  maxDocuments={10}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Pricing & Specifications */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
