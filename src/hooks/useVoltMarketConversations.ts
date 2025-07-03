@@ -5,7 +5,7 @@ import { useVoltMarketAuth } from './useVoltMarketAuth';
 
 interface Message {
   id: string;
-  listing_id: string;
+  conversation_id: string;
   sender_id: string;
   recipient_id: string;
   message: string;
@@ -18,16 +18,19 @@ interface Conversation {
   listing_id: string;
   buyer_id: string;
   seller_id: string;
+  created_at: string;
   last_message_at: string;
   listing: {
     title: string;
+    price: number;
   };
-  messages: Message[];
   other_party: {
     company_name: string;
+    profile_image_url?: string;
   };
-  unread_count: number;
+  messages: Message[];
   last_message?: Message;
+  unread_count: number;
 }
 
 export const useVoltMarketConversations = () => {
@@ -40,61 +43,36 @@ export const useVoltMarketConversations = () => {
 
     setLoading(true);
     try {
-      // Get all messages where user is sender or recipient
-      const { data: messages, error: messagesError } = await supabase
-        .from('voltmarket_messages')
+      const { data, error } = await supabase
+        .from('voltmarket_conversations')
         .select(`
           *,
-          listing:voltmarket_listings(title),
-          sender:voltmarket_profiles!sender_id(company_name),
-          recipient:voltmarket_profiles!recipient_id(company_name)
+          listing:voltmarket_listings(title, price),
+          messages:voltmarket_messages(*),
+          buyer:voltmarket_profiles!buyer_id(company_name, profile_image_url),
+          seller:voltmarket_profiles!seller_id(company_name, profile_image_url)
         `)
-        .or(`sender_id.eq.${profile.id},recipient_id.eq.${profile.id}`)
-        .order('created_at', { ascending: false });
+        .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
+        .order('last_message_at', { ascending: false });
 
-      if (messagesError) throw messagesError;
+      if (error) throw error;
 
-      // Group messages by listing and participants
-      const conversationMap = new Map();
-      
-      messages?.forEach((message: any) => {
-        const otherPartyId = message.sender_id === profile.id ? message.recipient_id : message.sender_id;
-        const conversationKey = `${message.listing_id}-${otherPartyId}`;
-        
-        if (!conversationMap.has(conversationKey)) {
-          const otherParty = message.sender_id === profile.id ? message.recipient : message.sender;
-          const unreadCount = messages.filter(m => 
-            m.recipient_id === profile.id && 
-            !m.is_read && 
-            m.listing_id === message.listing_id &&
-            (m.sender_id === otherPartyId || m.recipient_id === otherPartyId)
-          ).length;
+      const formattedConversations = data?.map(conv => {
+        const otherParty = conv.buyer_id === profile.id ? conv.seller : conv.buyer;
+        const messages = conv.messages || [];
+        const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+        const unreadCount = messages.filter(m => m.recipient_id === profile.id && !m.is_read).length;
 
-          conversationMap.set(conversationKey, {
-            id: conversationKey,
-            listing_id: message.listing_id,
-            buyer_id: message.sender_id === profile.id ? profile.id : otherPartyId,
-            seller_id: message.recipient_id === profile.id ? profile.id : otherPartyId,
-            last_message_at: message.created_at,
-            listing: message.listing,
-            messages: [],
-            other_party: otherParty,
-            unread_count: unreadCount,
-            last_message: message
-          });
-        }
-        
-        conversationMap.get(conversationKey).messages.push(message);
-        
-        // Update last message if this one is newer
-        const conversation = conversationMap.get(conversationKey);
-        if (new Date(message.created_at) > new Date(conversation.last_message_at)) {
-          conversation.last_message_at = message.created_at;
-          conversation.last_message = message;
-        }
-      });
+        return {
+          ...conv,
+          other_party: otherParty,
+          messages,
+          last_message: lastMessage,
+          unread_count: unreadCount
+        };
+      }) || [];
 
-      setConversations(Array.from(conversationMap.values()));
+      setConversations(formattedConversations);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
@@ -102,100 +80,73 @@ export const useVoltMarketConversations = () => {
     }
   };
 
-  const createConversation = async (listingId: string, recipientId: string) => {
-    if (!profile) return null;
+  const sendMessage = async (listingId: string, recipientId: string, message: string) => {
+    if (!profile) return;
 
     try {
-      // Check if conversation already exists
-      const { data: existingMessage } = await supabase
-        .from('voltmarket_messages')
+      // First, find or create conversation
+      let { data: conversation } = await supabase
+        .from('voltmarket_conversations')
         .select('id')
         .eq('listing_id', listingId)
-        .or(`and(sender_id.eq.${profile.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${profile.id})`)
-        .limit(1)
-        .maybeSingle();
+        .or(`and(buyer_id.eq.${profile.id},seller_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},seller_id.eq.${profile.id})`)
+        .single();
 
-      if (existingMessage) {
-        await fetchConversations();
-        return existingMessage;
+      if (!conversation) {
+        const { data: newConv } = await supabase
+          .from('voltmarket_conversations')
+          .insert({
+            listing_id: listingId,
+            buyer_id: profile.id,
+            seller_id: recipientId
+          })
+          .select('id')
+          .single();
+        conversation = newConv;
       }
 
-      // Create initial message
-      const { data, error } = await supabase
-        .from('voltmarket_messages')
-        .insert({
-          listing_id: listingId,
-          sender_id: profile.id,
-          recipient_id: recipientId,
-          message: "Hello! I'm interested in your listing.",
-          is_read: false
-        })
-        .select()
-        .single();
+      if (conversation) {
+        await supabase
+          .from('voltmarket_messages')
+          .insert({
+            conversation_id: conversation.id,
+            sender_id: profile.id,
+            recipient_id: recipientId,
+            message
+          });
 
-      if (error) throw error;
+        await supabase
+          .from('voltmarket_conversations')
+          .update({ last_message_at: new Date().toISOString() })
+          .eq('id', conversation.id);
 
-      await fetchConversations();
-      return data;
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      return null;
-    }
-  };
-
-  const sendMessage = async (listingId: string, recipientId: string, message: string) => {
-    if (!profile) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from('voltmarket_messages')
-        .insert({
-          listing_id: listingId,
-          sender_id: profile.id,
-          recipient_id: recipientId,
-          message,
-          is_read: false
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await fetchConversations();
-      return data;
+        fetchConversations();
+      }
     } catch (error) {
       console.error('Error sending message:', error);
-      return null;
     }
   };
 
   const markAsRead = async (messageId: string) => {
     try {
-      const { error } = await supabase
+      await supabase
         .from('voltmarket_messages')
         .update({ is_read: true })
-        .eq('id', messageId)
-        .eq('recipient_id', profile?.id);
-
-      if (error) throw error;
-      await fetchConversations();
+        .eq('id', messageId);
     } catch (error) {
       console.error('Error marking message as read:', error);
     }
   };
 
   useEffect(() => {
-    if (profile) {
-      fetchConversations();
-    }
+    fetchConversations();
   }, [profile]);
 
   return {
     conversations,
     loading,
-    fetchConversations,
-    createConversation,
     sendMessage,
-    markAsRead
+    markAsRead,
+    fetchConversations
   };
 };

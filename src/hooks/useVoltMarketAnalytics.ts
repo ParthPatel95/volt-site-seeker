@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useVoltMarketAuth } from './useVoltMarketAuth';
 
 interface AnalyticsData {
   total_listings: number;
@@ -14,16 +15,20 @@ interface AnalyticsData {
 }
 
 export const useVoltMarketAnalytics = () => {
+  const { profile } = useVoltMarketAuth();
   const [loading, setLoading] = useState(false);
 
   const trackUserActivity = async (activityType: string, activityData?: any) => {
+    if (!profile) return;
+    
     try {
       await supabase
         .from('voltmarket_user_activity')
         .insert({
+          user_id: profile.id,
           activity_type: activityType,
           activity_data: activityData,
-          ip_address: null, // Would need to get from request in real implementation
+          ip_address: null,
           user_agent: navigator.userAgent
         });
     } catch (error) {
@@ -95,7 +100,7 @@ export const useVoltMarketAnalytics = () => {
         total_users: totalUsers || 0,
         verified_users: verifiedUsers || 0,
         total_transactions: totalTransactions || 0,
-        revenue_trends: [], // Would need more complex queries for trends
+        revenue_trends: [],
         popular_locations: popularLocations,
         listing_categories: listingCategories
       };
