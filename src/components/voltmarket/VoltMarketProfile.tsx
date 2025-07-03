@@ -37,7 +37,7 @@ export const VoltMarketProfile: React.FC = () => {
         bio: profile.bio || '',
         website: profile.website || '',
         linkedin_url: profile.linkedin_url || '',
-        role: profile.role,
+        role: profile.role === 'admin' ? 'buyer' : profile.role, // Convert admin to buyer as fallback
         seller_type: profile.seller_type || 'site_owner'
       });
     }
