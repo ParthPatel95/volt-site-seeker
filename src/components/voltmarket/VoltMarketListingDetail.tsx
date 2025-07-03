@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MapPin, 
   Zap, 
@@ -14,11 +15,23 @@ import {
   FileText,
   Shield,
   Calendar,
-  User
+  User,
+  Eye,
+  Info
 } from 'lucide-react';
+import { VoltMarketContactButton } from './VoltMarketContactButton';
+import { VoltMarketWatchlistButton } from './VoltMarketWatchlistButton';
+import { VoltMarketLOIModal } from './VoltMarketLOIModal';
+import { VoltMarketDueDiligence } from './VoltMarketDueDiligence';
+import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
+import { useToast } from '@/hooks/use-toast';
 
 export const VoltMarketListingDetail: React.FC = () => {
   const { id } = useParams();
+  const [isLOIModalOpen, setIsLOIModalOpen] = useState(false);
+  const [hasSignedNDA, setHasSignedNDA] = useState(false);
+  const { submitLOI, loading: loiLoading } = useVoltMarketLOI();
+  const { toast } = useToast();
 
   // Mock listing data - in a real app, this would be fetched from the API
   const listing = {
@@ -33,6 +46,7 @@ export const VoltMarketListingDetail: React.FC = () => {
     property_type: "data_center",
     created_at: "2024-01-15T10:00:00Z",
     seller: {
+      id: "seller-123",
       company_name: "Texas Power Development",
       is_verified: true,
       avatar: null
@@ -44,7 +58,40 @@ export const VoltMarketListingDetail: React.FC = () => {
       tier: "Tier III Ready",
       fiber: "Multiple Carriers Available"
     },
-    images: []
+    images: [],
+    views_count: 1247
+  };
+
+  const handleLOISubmit = async (loiData: any) => {
+    try {
+      await submitLOI(listing.id!, loiData);
+      toast({
+        title: "LOI Submitted Successfully",
+        description: "Your Letter of Intent has been sent to the seller."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit LOI. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSignNDA = () => {
+    // In a real implementation, this would handle the NDA signing process
+    setHasSignedNDA(true);
+    toast({
+      title: "NDA Signed",
+      description: "You now have access to confidential due diligence documents."
+    });
+  };
+
+  const handleRequestDocumentAccess = (documentId: string) => {
+    toast({
+      title: "Access Requested",
+      description: "Your request for document access has been sent to the seller."
+    });
   };
 
   return (
@@ -78,12 +125,14 @@ export const VoltMarketListingDetail: React.FC = () => {
                         <Calendar className="w-4 h-4" />
                         <span>Listed 2 weeks ago</span>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-4 h-4" />
+                        <span>{listing.views_count} views</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Heart className="w-4 h-4" />
-                    </Button>
+                    <VoltMarketWatchlistButton listingId={listing.id!} />
                     <Badge variant="secondary" className="capitalize">
                       {listing.listing_type.replace('_', ' ')}
                     </Badge>
@@ -115,46 +164,39 @@ export const VoltMarketListingDetail: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="prose max-w-none">
-                  <h3 className="text-lg font-semibold mb-3">Description</h3>
-                  <p className="text-gray-700 leading-relaxed">{listing.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Specifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Specifications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(listing.specifications).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium capitalize">{key.replace('_', ' ')}:</span>
-                      <span className="text-gray-600">{value}</span>
+                <Tabs defaultValue="description" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="description">Description</TabsTrigger>
+                    <TabsTrigger value="specifications">Specifications</TabsTrigger>
+                    <TabsTrigger value="due-diligence">Due Diligence</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="description" className="mt-6">
+                    <div className="prose max-w-none">
+                      <p className="text-gray-700 leading-relaxed">{listing.description}</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Due Diligence Documents */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Due Diligence Documents
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">
-                    Access detailed documentation and reports by signing an NDA
-                  </p>
-                  <Button>Request NDA Access</Button>
-                </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="specifications" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(listing.specifications).map(([key, value]) => (
+                        <div key={key} className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="font-medium capitalize">{key.replace('_', ' ')}:</span>
+                          <span className="text-gray-600">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="due-diligence" className="mt-6">
+                    <VoltMarketDueDiligence
+                      listingId={listing.id!}
+                      hasSignedNDA={hasSignedNDA}
+                      onSignNDA={handleSignNDA}
+                      onRequestAccess={handleRequestDocumentAccess}
+                    />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
@@ -184,16 +226,6 @@ export const VoltMarketListingDetail: React.FC = () => {
                     <div className="text-sm text-gray-600">Verified Seller</div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Button className="w-full">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Contact Seller
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Submit LOI
-                  </Button>
-                </div>
               </CardContent>
             </Card>
 
@@ -203,18 +235,32 @@ export const VoltMarketListingDetail: React.FC = () => {
                 <CardTitle>Interested?</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full" size="lg">
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Start Conversation
-                </Button>
-                <Button variant="outline" className="w-full">
+                <VoltMarketContactButton
+                  listingId={listing.id!}
+                  sellerId={listing.seller.id}
+                  className="w-full"
+                />
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setIsLOIModalOpen(true)}
+                >
                   <FileText className="w-4 h-4 mr-2" />
                   Submit Letter of Intent
                 </Button>
-                <Button variant="outline" className="w-full">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Save to Watchlist
-                </Button>
+                
+                <div className="pt-2 border-t">
+                  <div className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    Save for later
+                  </div>
+                  <VoltMarketWatchlistButton 
+                    listingId={listing.id!}
+                    size="sm"
+                    variant="outline"
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -234,6 +280,16 @@ export const VoltMarketListingDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* LOI Modal */}
+      <VoltMarketLOIModal
+        isOpen={isLOIModalOpen}
+        onClose={() => setIsLOIModalOpen(false)}
+        listingId={listing.id!}
+        listingTitle={listing.title}
+        askingPrice={listing.asking_price}
+        onSubmit={handleLOISubmit}
+      />
     </div>
   );
 };
