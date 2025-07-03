@@ -8,26 +8,25 @@ import { useToast } from '@/hooks/use-toast';
 
 interface VoltMarketWatchlistButtonProps {
   listingId: string;
-  size?: 'sm' | 'default' | 'lg';
+  size?: 'default' | 'sm' | 'lg';
   variant?: 'default' | 'outline' | 'ghost';
 }
 
 export const VoltMarketWatchlistButton: React.FC<VoltMarketWatchlistButtonProps> = ({
   listingId,
   size = 'default',
-  variant = 'ghost'
+  variant = 'default'
 }) => {
-  const { user } = useVoltMarketAuth();
+  const { profile } = useVoltMarketAuth();
   const { isInWatchlist, toggleWatchlist } = useVoltMarketWatchlist();
   const { toast } = useToast();
 
-  const handleToggle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!user) {
+  const isWatched = isInWatchlist(listingId);
+
+  const handleToggle = async () => {
+    if (!profile) {
       toast({
-        title: "Sign in required",
+        title: "Authentication Required",
         description: "Please sign in to save listings to your watchlist.",
         variant: "destructive"
       });
@@ -36,32 +35,24 @@ export const VoltMarketWatchlistButton: React.FC<VoltMarketWatchlistButtonProps>
 
     const success = await toggleWatchlist(listingId);
     if (success) {
-      const isNowInWatchlist = isInWatchlist(listingId);
       toast({
-        title: isNowInWatchlist ? "Added to watchlist" : "Removed from watchlist",
-        description: isNowInWatchlist 
-          ? "This listing has been saved to your watchlist."
-          : "This listing has been removed from your watchlist."
-      });
-    } else {
-      toast({
-        title: "Error",
-        description: "Failed to update watchlist. Please try again.",
-        variant: "destructive"
+        title: isWatched ? "Removed from Watchlist" : "Added to Watchlist",
+        description: isWatched 
+          ? "This listing has been removed from your watchlist."
+          : "This listing has been added to your watchlist."
       });
     }
   };
 
-  const inWatchlist = isInWatchlist(listingId);
-
   return (
-    <Button
-      variant={variant}
+    <Button 
+      onClick={handleToggle} 
       size={size}
-      onClick={handleToggle}
-      className={`${inWatchlist ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-500'} transition-colors`}
+      variant={variant}
+      className={isWatched ? 'text-red-600' : ''}
     >
-      <Heart className={`w-4 h-4 ${inWatchlist ? 'fill-current' : ''}`} />
+      <Heart className={`w-4 h-4 mr-2 ${isWatched ? 'fill-current' : ''}`} />
+      {isWatched ? 'Saved' : 'Save'}
     </Button>
   );
 };
