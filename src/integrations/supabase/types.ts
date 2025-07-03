@@ -2055,6 +2055,82 @@ export type Database = {
           },
         ]
       }
+      voltmarket_analytics: {
+        Row: {
+          created_at: string | null
+          date_recorded: string | null
+          id: string
+          metric_type: string
+          metric_value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          date_recorded?: string | null
+          id?: string
+          metric_type: string
+          metric_value: Json
+        }
+        Update: {
+          created_at?: string | null
+          date_recorded?: string | null
+          id?: string
+          metric_type?: string
+          metric_value?: Json
+        }
+        Relationships: []
+      }
+      voltmarket_conversations: {
+        Row: {
+          buyer_id: string
+          created_at: string | null
+          id: string
+          last_message_at: string | null
+          listing_id: string
+          seller_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          listing_id: string
+          seller_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          listing_id?: string
+          seller_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_conversations_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_conversations_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_conversations_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltmarket_documents: {
         Row: {
           created_at: string | null
@@ -2111,6 +2187,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      voltmarket_email_templates: {
+        Row: {
+          created_at: string | null
+          html_content: string
+          id: string
+          subject: string
+          template_type: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          html_content: string
+          id?: string
+          subject: string
+          template_type: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          html_content?: string
+          id?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: []
       }
       voltmarket_listing_images: {
         Row: {
@@ -2564,6 +2670,261 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      voltmarket_reviews: {
+        Row: {
+          created_at: string | null
+          id: string
+          listing_id: string
+          rating: number
+          review_text: string | null
+          reviewed_user_id: string
+          reviewer_id: string
+          transaction_verified: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          listing_id: string
+          rating: number
+          review_text?: string | null
+          reviewed_user_id: string
+          reviewer_id: string
+          transaction_verified?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          listing_id?: string
+          rating?: number
+          review_text?: string | null
+          reviewed_user_id?: string
+          reviewer_id?: string
+          transaction_verified?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_reviews_reviewed_user_id_fkey"
+            columns: ["reviewed_user_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_saved_searches: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_enabled: boolean | null
+          search_criteria: Json
+          search_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_enabled?: boolean | null
+          search_criteria: Json
+          search_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_enabled?: boolean | null
+          search_criteria?: Json
+          search_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_saved_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_transactions: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          listing_id: string
+          payment_method: string | null
+          seller_id: string
+          status: string | null
+          stripe_payment_intent_id: string | null
+          transaction_fee: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          listing_id: string
+          payment_method?: string | null
+          seller_id: string
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          transaction_fee?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          listing_id?: string
+          payment_method?: string | null
+          seller_id?: string
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          transaction_fee?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_transactions_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_transactions_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_transactions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_user_activity: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_user_activity_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_verifications: {
+        Row: {
+          created_at: string | null
+          document_url: string
+          id: string
+          rejection_reason: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          verification_type: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_url: string
+          id?: string
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          verification_type: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_url?: string
+          id?: string
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verification_type?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_verifications_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       voltmarket_watchlist: {
         Row: {
