@@ -2188,6 +2188,51 @@ export type Database = {
           },
         ]
       }
+      voltmarket_due_diligence_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          document_url: string
+          file_size: number | null
+          id: string
+          is_confidential: boolean | null
+          listing_id: string
+          requires_nda: boolean | null
+          sort_order: number | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type: string
+          document_url: string
+          file_size?: number | null
+          id?: string
+          is_confidential?: boolean | null
+          listing_id: string
+          requires_nda?: boolean | null
+          sort_order?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          document_url?: string
+          file_size?: number | null
+          id?: string
+          is_confidential?: boolean | null
+          listing_id?: string
+          requires_nda?: boolean | null
+          sort_order?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       voltmarket_email_templates: {
         Row: {
           created_at: string | null
