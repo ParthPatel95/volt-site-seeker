@@ -41,6 +41,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data: profileData, error } = await supabase
         .from('voltmarket_profiles')
         .select('*')
@@ -52,6 +53,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         return null;
       }
       
+      console.log('Profile fetched successfully:', profileData);
       return profileData;
     } catch (err) {
       console.log('Unexpected error fetching profile:', err);
