@@ -39,7 +39,8 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${file.name}`;
-      const filePath = listingId ? `${listingId}/${fileName}` : fileName;
+      // Use temp folder for new listings without ID yet
+      const filePath = listingId ? `${listingId}/${fileName}` : `temp/${fileName}`;
 
       const { error } = await supabase.storage
         .from('documents')
