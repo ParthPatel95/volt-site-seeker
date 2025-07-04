@@ -61,7 +61,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Wattbyte brand colors
+				'electric-blue': 'hsl(var(--watt-primary))',
+				'electric-purple': 'hsl(var(--watt-secondary))',
+				'electric-yellow': 'hsl(var(--watt-accent))',
+				'neon-green': 'hsl(var(--watt-success))',
+				'bright-cyan': 'hsl(var(--watt-primary))',
+				'watt-primary': 'hsl(var(--watt-primary))',
+				'watt-secondary': 'hsl(var(--watt-secondary))',
+				'watt-accent': 'hsl(var(--watt-accent))',
+				'watt-success': 'hsl(var(--watt-success))',
+				'watt-dark': 'hsl(var(--watt-dark))',
+				'watt-light': 'hsl(var(--watt-light))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
