@@ -48,7 +48,7 @@ export const useVoltMarketConversations = () => {
         .from('voltmarket_conversations')
         .select(`
           *,
-          listing:voltmarket_listings(title, asking_price),
+          listing:voltmarket_listings!fk_conversations_listing(title, asking_price),
           buyer:voltmarket_profiles!buyer_id(company_name, profile_image_url),
           seller:voltmarket_profiles!seller_id(company_name, profile_image_url)
         `)
