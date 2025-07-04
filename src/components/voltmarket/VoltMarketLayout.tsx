@@ -30,6 +30,10 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
   const { messages } = useVoltMarketRealtime();
   const navigate = useNavigate();
 
+  const getInitials = (name: string) => {
+    return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || 'U';
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/voltmarket');
@@ -39,58 +43,62 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
   const unreadCount = messages.filter(m => !m.is_read && m.recipient_id === profile?.id).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Enhanced Navigation Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Elegant Navigation Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-blue-100/50 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+            {/* Logo & Brand */}
             <div className="flex items-center">
               <Link to="/voltmarket/home" className="flex items-center gap-3 group">
-                <div className="p-2 bg-white/10 rounded-lg group-hover:bg-white/20 transition-colors">
+                <div className="p-2 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl group-hover:from-blue-700 group-hover:to-blue-800 transition-all duration-300 shadow-lg">
                   <Zap className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xl font-bold text-white">VoltMarket</span>
-                  <span className="text-xs text-blue-100 -mt-1">Energy Infrastructure Marketplace</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+                    VoltMarket
+                  </span>
+                  <span className="text-xs text-slate-500 -mt-1">Energy Infrastructure Marketplace</span>
                 </div>
               </Link>
             </div>
 
+            {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-1">
               <Link 
                 to="/voltmarket/home" 
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200 font-medium"
               >
                 <Home className="w-4 h-4" />
-                <span className="font-medium">Home</span>
+                <span>Home</span>
               </Link>
               
               <Link 
                 to="/voltmarket/listings" 
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200 font-medium"
               >
                 <Search className="w-4 h-4" />
-                <span className="font-medium">Browse</span>
+                <span>Browse</span>
               </Link>
               
               <Link 
                 to="/voltmarket/search" 
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200 font-medium"
               >
                 <SlidersHorizontal className="w-4 h-4" />
-                <span className="font-medium">Advanced Search</span>
+                <span>Advanced Search</span>
               </Link>
               
               {user && (
                 <>
                   <Link 
                     to="/voltmarket/messages-enhanced" 
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200 relative"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200 font-medium relative"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    <span className="font-medium">Messages</span>
+                    <span>Messages</span>
                     {unreadCount > 0 && (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 text-xs min-w-[1.2rem] h-5 bg-red-500 text-white border-2 border-blue-600">
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 text-xs min-w-[1.2rem] h-5 bg-red-500 text-white border-2 border-white">
                         {unreadCount}
                       </Badge>
                     )}
@@ -98,79 +106,124 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
                   
                   <Link 
                     to="/voltmarket/watchlist" 
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-200"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200 font-medium"
                   >
                     <Heart className="w-4 h-4" />
-                    <span className="font-medium">Watchlist</span>
+                    <span>Watchlist</span>
                   </Link>
-                  
-                  {profile?.role === 'seller' && (
-                    <Link 
-                      to="/voltmarket/create-listing" 
-                      className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white font-medium transition-all duration-200 ml-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Create Listing</span>
-                    </Link>
-                  )}
                 </>
               )}
             </nav>
 
+            {/* Right Side Actions */}
             <div className="flex items-center gap-3">
               {user ? (
-                <div className="flex items-center gap-2">
-                  <Link to="/voltmarket/analytics">
-                    <Button variant="ghost" size="sm" className="text-blue-100 hover:text-white hover:bg-white/10">
-                      <BarChart3 className="w-4 h-4 mr-2" />
-                      Analytics
-                    </Button>
-                  </Link>
-                  
-                  <Link to="/voltmarket/verification">
-                    <Button variant="ghost" size="sm" className="text-blue-100 hover:text-white hover:bg-white/10">
-                      <Shield className="w-4 h-4 mr-2" />
-                      {profile?.is_id_verified ? (
-                        <Badge variant="secondary" className="bg-green-500 text-white text-xs">
-                          Verified
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-orange-200 border-orange-200 text-xs">
-                          Verify Now
-                        </Badge>
-                      )}
-                    </Button>
-                  </Link>
-                  
-                  <Link to="/voltmarket/dashboard">
-                    <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                      Dashboard
-                    </Button>
-                  </Link>
-                  
-                  <div className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg">
-                    <User className="w-4 h-4 text-white" />
-                    <span className="text-white text-sm font-medium">
-                      {profile?.company_name || 'Profile'}
-                    </span>
-                    {profile?.is_id_verified && (
-                      <Shield className="w-3 h-3 text-green-400" />
-                    )}
+                <div className="flex items-center gap-3">
+                  {/* Quick Actions */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <Link to="/voltmarket/analytics">
+                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-700 hover:bg-blue-50">
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        Analytics
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/voltmarket/verification">
+                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-700 hover:bg-blue-50">
+                        <Shield className="w-4 h-4 mr-2" />
+                        {profile?.is_id_verified ? (
+                          <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                            Verified
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-amber-600 border-amber-200 text-xs">
+                            Verify ID
+                          </Badge>
+                        )}
+                      </Button>
+                    </Link>
                   </div>
+
+                  {/* Create Listing Button */}
+                  {profile?.role === 'seller' && (
+                    <Link to="/voltmarket/create-listing">
+                      <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Listing
+                      </Button>
+                    </Link>
+                  )}
                   
-                  <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-blue-100 hover:text-white hover:bg-white/10">
-                    <LogOut className="w-4 h-4" />
-                  </Button>
+                  {/* User Profile Dropdown */}
+                  <div className="relative group">
+                    <button className="flex items-center gap-3 p-2 rounded-xl hover:bg-blue-50 transition-all duration-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                          {getInitials(profile?.company_name || 'User')}
+                        </div>
+                        <div className="hidden sm:block text-left">
+                          <div className="text-sm font-medium text-slate-900">
+                            {profile?.company_name || 'Profile'}
+                          </div>
+                          <div className="text-xs text-slate-500 flex items-center gap-1">
+                            <span className="capitalize">{profile?.role}</span>
+                            {profile?.is_id_verified && (
+                              <Shield className="w-3 h-3 text-green-500" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="p-3 border-b border-slate-100">
+                        <div className="font-medium text-slate-900">{profile?.company_name || 'User'}</div>
+                        <div className="text-sm text-slate-500">{user.email}</div>
+                      </div>
+                      <div className="p-1">
+                        <Link 
+                          to="/voltmarket/dashboard"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                          <User className="w-4 h-4" />
+                          Dashboard
+                        </Link>
+                        <Link 
+                          to="/voltmarket/profile"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Profile Settings
+                        </Link>
+                        <Link 
+                          to="/voltmarket/verification"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                          <Shield className="w-4 h-4" />
+                          Verification
+                        </Link>
+                        <hr className="my-1" />
+                        <button 
+                          onClick={handleSignOut}
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors w-full text-left"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
                   <Link to="/voltmarket/auth">
-                    <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                    <Button variant="ghost" className="text-slate-600 hover:text-blue-700 hover:bg-blue-50">
                       Sign In
                     </Button>
                   </Link>
                   <Link to="/voltmarket/auth">
-                    <Button className="bg-white text-blue-600 hover:bg-blue-50 font-medium">
+                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg">
                       Get Started
                     </Button>
                   </Link>
@@ -181,33 +234,35 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
         </div>
 
         {/* Mobile Navigation */}
-        <div className="lg:hidden bg-blue-700/50 border-t border-blue-500/20">
-          <div className="max-w-7xl mx-auto px-4 py-2">
-            <div className="flex items-center justify-center space-x-6 overflow-x-auto">
-              <Link to="/voltmarket/home" className="flex flex-col items-center gap-1 min-w-0 text-blue-100 hover:text-white">
-                <Home className="w-4 h-4" />
-                <span className="text-xs">Home</span>
+        <div className="lg:hidden bg-white/90 backdrop-blur-sm border-t border-blue-100/50">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-around">
+              <Link to="/voltmarket/home" className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-700 transition-colors">
+                <Home className="w-5 h-5" />
+                <span className="text-xs font-medium">Home</span>
               </Link>
-              <Link to="/voltmarket/listings" className="flex flex-col items-center gap-1 min-w-0 text-blue-100 hover:text-white">
-                <Search className="w-4 h-4" />
-                <span className="text-xs">Browse</span>
+              <Link to="/voltmarket/listings" className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-700 transition-colors">
+                <Search className="w-5 h-5" />
+                <span className="text-xs font-medium">Browse</span>
               </Link>
               {user && (
                 <>
-                  <Link to="/voltmarket/messages-enhanced" className="flex flex-col items-center gap-1 min-w-0 text-blue-100 hover:text-white relative">
-                    <MessageSquare className="w-4 h-4" />
-                    <span className="text-xs">Messages</span>
+                  <Link to="/voltmarket/messages-enhanced" className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-700 transition-colors relative">
+                    <MessageSquare className="w-5 h-5" />
+                    <span className="text-xs font-medium">Messages</span>
                     {unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs"></div>
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                        {unreadCount}
+                      </div>
                     )}
                   </Link>
-                  <Link to="/voltmarket/watchlist" className="flex flex-col items-center gap-1 min-w-0 text-blue-100 hover:text-white">
-                    <Heart className="w-4 h-4" />
-                    <span className="text-xs">Watchlist</span>
+                  <Link to="/voltmarket/watchlist" className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-700 transition-colors">
+                    <Heart className="w-5 h-5" />
+                    <span className="text-xs font-medium">Watchlist</span>
                   </Link>
-                  <Link to="/voltmarket/dashboard" className="flex flex-col items-center gap-1 min-w-0 text-blue-100 hover:text-white">
-                    <User className="w-4 h-4" />
-                    <span className="text-xs">Profile</span>
+                  <Link to="/voltmarket/dashboard" className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-700 transition-colors">
+                    <User className="w-5 h-5" />
+                    <span className="text-xs font-medium">Profile</span>
                   </Link>
                 </>
               )}
