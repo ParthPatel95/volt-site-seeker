@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import { VoltMarket } from "./pages/VoltMarket";
-import VoltMarketLanding from "./pages/VoltMarketLanding";
 import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
@@ -23,7 +22,6 @@ const App = () => (
             <Route key={to} path={to} element={page} />
           ))}
           <Route path="/voltmarket/*" element={<VoltMarket />} />
-          <Route path="/voltmarket-landing" element={<VoltMarketLanding />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
