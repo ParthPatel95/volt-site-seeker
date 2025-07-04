@@ -55,14 +55,12 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
 
   const fetchDocuments = async () => {
     try {
-      console.log('Fetching documents for listing:', listingId);
       const { data, error } = await supabase
         .from('voltmarket_documents')
         .select('*')
         .eq('listing_id', listingId)
         .order('created_at', { ascending: true });
 
-      console.log('Documents query result:', { data, error });
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
