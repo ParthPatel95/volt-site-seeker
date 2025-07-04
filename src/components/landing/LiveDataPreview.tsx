@@ -133,7 +133,7 @@ export const LiveDataPreview = () => {
           </div>
         </div>
 
-        <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
+        <div className="text-xs text-slate-300 pt-3 border-t border-slate-700/30">
           * Data refreshes every 8 seconds. Platform access required for detailed analytics.
         </div>
       </CardContent>

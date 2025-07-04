@@ -119,7 +119,7 @@ export const InteractiveInvestmentCalculator = () => {
           </div>
         </div>
 
-        <div className="text-xs text-slate-500 pt-3 border-t border-slate-700/30">
+        <div className="text-xs text-slate-300 pt-3 border-t border-slate-700/30">
           * Projections based on 2.0-2.5x target MOIC. Past performance does not guarantee future results.
         </div>
       </CardContent>
