@@ -6,10 +6,10 @@ interface VoltMarketListing {
   id: string;
   title: string;
   description: string;
-  price: number;
+  asking_price: number;
   location: string;
   listing_type: string;
-  capacity_mw: number;
+  power_capacity_mw: number;
   status: string;
   seller_id: string;
   created_at: string;
@@ -60,19 +60,19 @@ export const useVoltMarketListings = () => {
       }
 
       if (criteria.minPrice) {
-        query = query.gte('price', criteria.minPrice);
+        query = query.gte('asking_price', criteria.minPrice);
       }
 
       if (criteria.maxPrice) {
-        query = query.lte('price', criteria.maxPrice);
+        query = query.lte('asking_price', criteria.maxPrice);
       }
 
       if (criteria.minCapacity) {
-        query = query.gte('capacity_mw', criteria.minCapacity);
+        query = query.gte('power_capacity_mw', criteria.minCapacity);
       }
 
       if (criteria.maxCapacity) {
-        query = query.lte('capacity_mw', criteria.maxCapacity);
+        query = query.lte('power_capacity_mw', criteria.maxCapacity);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });

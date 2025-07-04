@@ -22,7 +22,7 @@ interface Conversation {
   last_message_at: string;
   listing: {
     title: string;
-    price: number;
+    asking_price: number;
   };
   other_party: {
     company_name: string;
@@ -48,7 +48,7 @@ export const useVoltMarketConversations = () => {
         .from('voltmarket_conversations')
         .select(`
           *,
-          listing:voltmarket_listings(title, price),
+          listing:voltmarket_listings(title, asking_price),
           buyer:voltmarket_profiles!buyer_id(company_name, profile_image_url),
           seller:voltmarket_profiles!seller_id(company_name, profile_image_url)
         `)
