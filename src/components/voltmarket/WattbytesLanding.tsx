@@ -66,8 +66,6 @@ export const WattbytesLanding: React.FC = () => {
   const dailyProfit = calculateDailyProfit();
   const monthlyProfit = dailyProfit * 30;
 
-  console.log('WattByte colors should be loaded');
-  
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* WattByte Landing Page */}
@@ -76,21 +74,21 @@ export const WattbytesLanding: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(var(--watt-accent)), hsl(var(--watt-secondary)))' }}>
+             <div className="w-10 h-10 bg-watt-gradient rounded-lg flex items-center justify-center">
                <Zap className="w-6 h-6 text-white" />
              </div>
              <div>
                <h1 className="text-xl font-bold flex items-center">
                  <span className="text-white">Watt</span>
-                 <span style={{ color: 'hsl(var(--watt-accent))' }}>B</span>
+                 <span className="text-watt-accent">B</span>
                  <span className="text-white">yte</span>
                </h1>
-               <p className="text-xs -mt-1" style={{ color: 'hsl(var(--watt-success))' }}>Infrastructure Fund</p>
+               <p className="text-xs text-watt-success -mt-1">Infrastructure Fund</p>
                </div>
             </div>
             
             <Link to="/app">
-           <Button className="font-medium px-6 text-white" style={{ background: 'hsl(var(--watt-accent))' }}>
+           <Button className="bg-watt-accent hover:bg-watt-accent/90 text-black font-medium px-6">
              Launch VoltScout
            </Button>
             </Link>
@@ -120,22 +118,22 @@ export const WattbytesLanding: React.FC = () => {
           {/* Main Headline */}
           <h1 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
             <span className="text-white">Turning </span>
-            <span style={{ color: 'hsl(var(--watt-primary))' }}>Power</span>
+            <span className="text-watt-primary">Power</span>
             <br />
             <span className="text-white">into </span>
-            <span style={{ color: 'hsl(var(--watt-success))' }}>Profit</span>
+            <span className="text-watt-success">Profit</span>
           </h1>
 
           <p className="text-xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
             Next-generation infrastructure fund acquiring power-rich land across North America for{' '}
-            <span style={{ color: 'hsl(var(--watt-primary))' }}>AI</span>, <span style={{ color: 'hsl(var(--watt-accent))' }}>HPC</span>, and{' '}
-            <span style={{ color: 'hsl(var(--watt-success))' }}>crypto data centers</span>, backed by{' '}
-            <span style={{ color: 'hsl(var(--watt-primary))' }}>675MW+</span> of deal experience.
+            <span className="text-watt-primary">AI</span>, <span className="text-watt-accent">HPC</span>, and{' '}
+            <span className="text-watt-success">crypto data centers</span>, backed by{' '}
+            <span className="text-watt-primary">675MW+</span> of deal experience.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button className="text-white px-8 py-3 text-lg font-medium" style={{ background: 'hsl(var(--watt-primary))' }}>
+            <Button className="bg-watt-primary hover:bg-watt-primary/90 text-white px-8 py-3 text-lg font-medium">
               Request Platform Access
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
