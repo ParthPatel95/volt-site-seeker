@@ -11,7 +11,7 @@ export const ProblemSolutionSection = () => {
             Turning Power Constraints Into 
             <span className="text-electric-yellow"> Profit Opportunities</span>
           </h2>
-          <p className="text-lg md:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-200 max-w-4xl mx-auto leading-relaxed">
             The data center industry faces <span className="text-electric-yellow font-semibold">critical bottlenecks</span> in scaling 
             to meet explosive AI demand. Power constraints are the 
             <span className="text-neon-green font-semibold"> #1 limiting factor</span> across North America.
@@ -45,7 +45,7 @@ export const ProblemSolutionSection = () => {
                 ].map((challenge, index) => (
                   <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-red-500/5 transition-colors">
                     <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-gray-300 text-sm leading-relaxed">{challenge}</p>
+                    <p className="text-slate-200 text-sm leading-relaxed">{challenge}</p>
                   </div>
                 ))}
               </div>
@@ -82,7 +82,7 @@ export const ProblemSolutionSection = () => {
                 ].map((solution, index) => (
                   <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-neon-green/5 transition-colors">
                     <div className="w-2 h-2 bg-neon-green rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-gray-300 text-sm leading-relaxed">{solution}</p>
+                    <p className="text-slate-200 text-sm leading-relaxed">{solution}</p>
                   </div>
                 ))}
               </div>

@@ -79,15 +79,15 @@ export const FundGrowthPlanSection = () => {
                   <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={fundData} margin={{ top: 10, right: 15, left: 10, bottom: 15 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
                         <XAxis 
                           dataKey="fund" 
-                          stroke="#9CA3AF"
+                          stroke="#cbd5e1"
                           fontSize={10}
                           tickMargin={5}
                         />
                         <YAxis 
-                          stroke="#9CA3AF"
+                          stroke="#cbd5e1"
                           fontSize={10}
                           tickMargin={5}
                           width={30}

@@ -82,10 +82,10 @@ export const MarketOpportunitySection = () => {
                 <ChartContainer config={chartConfig} className="h-[180px] sm:h-[220px] md:h-[280px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={aiGrowthData} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
                       <XAxis 
                         dataKey="year" 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         fontSize={10}
                         tick={{ fontSize: 10 }}
                         interval={0}
@@ -94,7 +94,7 @@ export const MarketOpportunitySection = () => {
                         height={35}
                       />
                       <YAxis 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         fontSize={10}
                         tick={{ fontSize: 10 }}
                         width={30}
@@ -148,10 +148,10 @@ export const MarketOpportunitySection = () => {
                       layout="vertical" 
                       margin={{ top: 10, right: 15, left: 60, bottom: 10 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
                       <XAxis 
                         type="number" 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         fontSize={10}
                         tick={{ fontSize: 10 }}
                         domain={[0, 'dataMax + 2']}
@@ -159,7 +159,7 @@ export const MarketOpportunitySection = () => {
                       <YAxis 
                         dataKey="region" 
                         type="category" 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         width={55}
                         fontSize={10}
                         tick={{ fontSize: 10 }}
@@ -204,10 +204,10 @@ export const MarketOpportunitySection = () => {
                 <ChartContainer config={chartConfig} className="h-[180px] sm:h-[220px] md:h-[280px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={bitcoinMiningReturns} margin={{ top: 10, right: 10, left: 10, bottom: 35 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
                       <XAxis 
                         dataKey="hashrate" 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         fontSize={10}
                         tick={{ fontSize: 10 }}
                         interval={0}
@@ -216,7 +216,7 @@ export const MarketOpportunitySection = () => {
                         height={40}
                       />
                       <YAxis 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         fontSize={10}
                         tick={{ fontSize: 10 }}
                         width={35}
@@ -257,10 +257,10 @@ export const MarketOpportunitySection = () => {
                 <ChartContainer config={chartConfig} className="h-[180px] sm:h-[220px] md:h-[280px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={aiHpcDemandGrowth} margin={{ top: 10, right: 10, left: 10, bottom: 35 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
                       <XAxis 
                         dataKey="quarter" 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         fontSize={10}
                         tick={{ fontSize: 10 }}
                         interval={0}
@@ -269,7 +269,7 @@ export const MarketOpportunitySection = () => {
                         height={40}
                       />
                       <YAxis 
-                        stroke="#9CA3AF" 
+                        stroke="#cbd5e1" 
                         fontSize={10}
                         tick={{ fontSize: 10 }}
                         width={30}
