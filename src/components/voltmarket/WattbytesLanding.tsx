@@ -73,23 +73,23 @@ export const WattbytesLanding: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold flex items-center">
-                  <span className="text-white">Watt</span>
-                  <span className="text-orange-400">B</span>
-                  <span className="text-white">yte</span>
-                </h1>
-                <p className="text-xs text-green-400 -mt-1">Infrastructure Fund</p>
+            <div className="w-10 h-10 bg-gradient-to-br from-watt-accent to-orange-500 rounded-lg flex items-center justify-center">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold flex items-center">
+                <span className="text-white">Watt</span>
+                <span className="text-watt-accent">B</span>
+                <span className="text-white">yte</span>
+              </h1>
+              <p className="text-xs text-watt-success -mt-1">Infrastructure Fund</p>
               </div>
             </div>
             
             <Link to="/app">
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6">
-                Launch VoltScout
-              </Button>
+          <Button className="bg-watt-accent hover:bg-watt-accent/90 text-watt-dark font-medium px-6">
+            Launch VoltScout
+          </Button>
             </Link>
           </div>
         </div>
@@ -100,15 +100,15 @@ export const WattbytesLanding: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Fund Stats Badges */}
           <div className="flex flex-wrap justify-center gap-4 mb-12">
-            <Badge variant="outline" className="border-teal-400/30 text-teal-400 bg-teal-400/10 px-4 py-2">
+            <Badge variant="outline" className="border-watt-primary/30 text-watt-primary bg-watt-primary/10 px-4 py-2">
               <Zap className="w-4 h-4 mr-2" />
               Fund I • $25M Target
             </Badge>
-            <Badge variant="outline" className="border-emerald-400/30 text-emerald-400 bg-emerald-400/10 px-4 py-2">
+            <Badge variant="outline" className="border-watt-success/30 text-watt-success bg-watt-success/10 px-4 py-2">
               <TrendingUp className="w-4 h-4 mr-2" />
               2.0-2.5x MOIC
             </Badge>
-            <Badge variant="outline" className="border-amber-400/30 text-amber-400 bg-amber-400/10 px-4 py-2">
+            <Badge variant="outline" className="border-watt-accent/30 text-watt-accent bg-watt-accent/10 px-4 py-2">
               <Activity className="w-4 h-4 mr-2" />
               675MW+ Experience
             </Badge>
@@ -117,22 +117,22 @@ export const WattbytesLanding: React.FC = () => {
           {/* Main Headline */}
           <h1 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
             <span className="text-white">Turning </span>
-            <span className="text-teal-400">Power</span>
+            <span className="text-watt-primary">Power</span>
             <br />
             <span className="text-white">into </span>
-            <span className="text-emerald-400">Profit</span>
+            <span className="text-watt-success">Profit</span>
           </h1>
 
           <p className="text-xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
             Next-generation infrastructure fund acquiring power-rich land across North America for{' '}
-            <span className="text-teal-400">AI</span>, <span className="text-amber-400">HPC</span>, and{' '}
-            <span className="text-emerald-400">crypto data centers</span>, backed by{' '}
-            <span className="text-teal-400">675MW+</span> of deal experience.
+            <span className="text-watt-primary">AI</span>, <span className="text-watt-accent">HPC</span>, and{' '}
+            <span className="text-watt-success">crypto data centers</span>, backed by{' '}
+            <span className="text-watt-primary">675MW+</span> of deal experience.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 text-lg font-medium">
+            <Button className="bg-watt-primary hover:bg-watt-primary/90 text-white px-8 py-3 text-lg font-medium">
               Request Platform Access
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
@@ -156,11 +156,11 @@ export const WattbytesLanding: React.FC = () => {
             <Card className="bg-slate-800 border-slate-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold text-amber-400 flex items-center">
+                  <h3 className="text-xl font-semibold text-watt-accent flex items-center">
                     <Bitcoin className="w-5 h-5 mr-2" />
                     BTC Mining ROI Lab
                   </h3>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Live</Badge>
+                  <Badge className="bg-watt-success/20 text-watt-success border-watt-success/30">Live</Badge>
                 </div>
                 
                 <p className="text-gray-400 mb-6">Calculate mining profitability with real-time data</p>
@@ -169,7 +169,7 @@ export const WattbytesLanding: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-300">BTC Price</span>
-                      <div className="text-2xl font-bold text-amber-400">
+                      <div className="text-2xl font-bold text-watt-accent">
                         ${liveData.btcPrice.toLocaleString()}
                       </div>
                       <span className="text-xs text-gray-400">Live Market Price</span>
@@ -217,13 +217,13 @@ export const WattbytesLanding: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-300">Daily Profit</span>
-                      <div className="text-xl font-bold text-emerald-400">
+                      <div className="text-xl font-bold text-watt-success">
                         ${dailyProfit.toFixed(2)}
                       </div>
                     </div>
                     <div>
                       <span className="text-gray-300">Monthly Profit</span>
-                      <div className="text-xl font-bold text-emerald-400">
+                      <div className="text-xl font-bold text-watt-success">
                         ${monthlyProfit.toFixed(0)}
                       </div>
                     </div>
@@ -239,11 +239,11 @@ export const WattbytesLanding: React.FC = () => {
             <Card className="bg-slate-800 border-slate-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold text-emerald-400 flex items-center">
+                  <h3 className="text-xl font-semibold text-watt-success flex items-center">
                     <Activity className="w-5 h-5 mr-2" />
                     Live Market Data
                   </h3>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Live</Badge>
+                  <Badge className="bg-watt-success/20 text-watt-success border-watt-success/30">Live</Badge>
                 </div>
                 
                 <p className="text-gray-400 mb-6">Real-time intelligence from VoltScout platform</p>
@@ -251,32 +251,32 @@ export const WattbytesLanding: React.FC = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-slate-700/50 rounded-lg p-4">
-                    <div className="flex items-center text-teal-400 mb-2">
+                    <div className="flex items-center text-watt-primary mb-2">
                       <Eye className="w-4 h-4 mr-2" />
                       <span className="text-sm text-gray-300">Active Sites</span>
                     </div>
-                    <div className="text-2xl font-bold text-teal-400">{liveData.activeSites}</div>
+                    <div className="text-2xl font-bold text-watt-primary">{liveData.activeSites}</div>
                   </div>
                   <div className="bg-slate-700/50 rounded-lg p-4">
-                    <div className="flex items-center text-amber-400 mb-2">
+                    <div className="flex items-center text-watt-accent mb-2">
                       <Zap className="w-4 h-4 mr-2" />
                       <span className="text-sm text-gray-300">Total MW</span>
                     </div>
-                    <div className="text-2xl font-bold text-amber-400">{liveData.totalMW.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-watt-accent">{liveData.totalMW.toLocaleString()}</div>
                   </div>
                   <div className="bg-slate-700/50 rounded-lg p-4">
-                    <div className="flex items-center text-emerald-400 mb-2">
+                    <div className="flex items-center text-watt-success mb-2">
                       <TrendingUp className="w-4 h-4 mr-2" />
                       <span className="text-sm text-gray-300">Avg VoltScore</span>
                     </div>
-                    <div className="text-2xl font-bold text-emerald-400">{Math.round(liveData.avgVoltScore)}</div>
+                    <div className="text-2xl font-bold text-watt-success">{Math.round(liveData.avgVoltScore)}</div>
                   </div>
                   <div className="bg-slate-700/50 rounded-lg p-4">
-                    <div className="flex items-center text-amber-400 mb-2">
+                    <div className="flex items-center text-watt-accent mb-2">
                       <MapPin className="w-4 h-4 mr-2" />
                       <span className="text-sm text-gray-300">$/MWh</span>
                     </div>
-                    <div className="text-2xl font-bold text-amber-400">${liveData.pricePerMWh.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-watt-accent">${liveData.pricePerMWh.toFixed(2)}</div>
                   </div>
                 </div>
 
@@ -284,7 +284,7 @@ export const WattbytesLanding: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-semibold text-white">Recent Opportunities</h4>
-                    <Badge variant="outline" className="border-teal-400/30 text-teal-400 text-xs">
+                    <Badge variant="outline" className="border-watt-primary/30 text-watt-primary text-xs">
                       +15 this week
                     </Badge>
                   </div>
@@ -299,8 +299,8 @@ export const WattbytesLanding: React.FC = () => {
                         <Badge 
                           className={
                             opp.status === 'active' 
-                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
-                              : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                              ? 'bg-watt-success/20 text-watt-success border-watt-success/30' 
+                              : 'bg-watt-accent/20 text-watt-accent border-watt-accent/30'
                           }
                         >
                           {opp.status}
