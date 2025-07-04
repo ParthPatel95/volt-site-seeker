@@ -49,7 +49,7 @@ interface ListingDetail {
     company_name: string;
     is_id_verified: boolean;
     bio?: string;
-  };
+  } | null;
 }
 
 export const VoltMarketListingDetail: React.FC = () => {
@@ -193,7 +193,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                 <Badge variant="secondary">
                   {getListingTypeLabel(listing.listing_type)}
                 </Badge>
-                {listing.voltmarket_profiles.is_id_verified && (
+                {listing.voltmarket_profiles?.is_id_verified && (
                   <Badge variant="outline" className="text-green-600">
                     Verified Seller
                   </Badge>
@@ -405,15 +405,15 @@ export const VoltMarketListingDetail: React.FC = () => {
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <h3 className="font-semibold text-lg">{listing.voltmarket_profiles.company_name}</h3>
-                        {listing.voltmarket_profiles.is_id_verified && (
+                        <h3 className="font-semibold text-lg">{listing.voltmarket_profiles?.company_name || 'Unknown Seller'}</h3>
+                        {listing.voltmarket_profiles?.is_id_verified && (
                           <Badge variant="outline" className="text-green-600 mt-1">
                             <Shield className="w-3 h-3 mr-1" />
                             Verified
                           </Badge>
                         )}
                       </div>
-                      {listing.voltmarket_profiles.bio && (
+                      {listing.voltmarket_profiles?.bio && (
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2">About</h4>
                           <p className="text-gray-700">{listing.voltmarket_profiles.bio}</p>
