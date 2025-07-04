@@ -22,17 +22,16 @@ import { useToast } from '@/hooks/use-toast';
 
 interface DueDiligenceDocument {
   id: string;
-  document_name: string;
+  file_name: string;
   document_type: string;
-  document_url: string;
+  file_url: string;
   file_size: number | null;
-  is_confidential: boolean;
-  requires_nda: boolean;
-  sort_order: number;
-  uploaded_by: string | null;
+  is_private: boolean;
   listing_id: string;
+  uploader_id: string;
   created_at: string;
-  updated_at: string;
+  file_type: string | null;
+  description: string | null;
 }
 
 interface VoltMarketDueDiligenceProps {
@@ -57,10 +56,9 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
   const fetchDocuments = async () => {
     try {
       const { data, error } = await supabase
-        .from('voltmarket_due_diligence_documents')
+        .from('voltmarket_documents')
         .select('*')
         .eq('listing_id', listingId)
-        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -106,14 +104,14 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
   };
 
   const getStatusIcon = (doc: DueDiligenceDocument) => {
-    if (!doc.requires_nda) return <CheckCircle className="w-4 h-4 text-green-500" />;
+    if (!doc.is_private) return <CheckCircle className="w-4 h-4 text-green-500" />;
     if (hasSignedNDA) return <CheckCircle className="w-4 h-4 text-green-500" />;
     return <Lock className="w-4 h-4 text-gray-400" />;
   };
 
   const handleDownload = (doc: DueDiligenceDocument) => {
-    if (doc.document_url) {
-      window.open(doc.document_url, '_blank');
+    if (doc.file_url) {
+      window.open(doc.file_url, '_blank');
     } else {
       toast({
         title: "Document Unavailable",
@@ -197,51 +195,58 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
                     <FileText className="w-5 h-5 text-gray-400" />
                   </div>
                   
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{doc.document_name}</h4>
-                      <Badge className={getTypeColor(doc.document_type)}>
-                        {doc.document_type}
-                      </Badge>
-                      {doc.requires_nda && (
-                        <Badge variant="outline" className="text-xs">
-                          <Lock className="w-3 h-3 mr-1" />
-                          NDA Required
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>Size: {doc.file_size ? `${(doc.file_size / 1024 / 1024).toFixed(2)} MB` : 'Unknown'}</span>
-                      <span>Updated: {new Date(doc.updated_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
+                   <div className="flex-1">
+                     <div className="flex items-center gap-2 mb-1">
+                       <h4 className="font-medium">{doc.file_name}</h4>
+                       {doc.document_type && (
+                         <Badge className={getTypeColor(doc.document_type)}>
+                           {doc.document_type}
+                         </Badge>
+                       )}
+                       {doc.is_private && (
+                         <Badge variant="outline" className="text-xs">
+                           <Lock className="w-3 h-3 mr-1" />
+                           Private
+                         </Badge>
+                       )}
+                     </div>
+                     
+                     {doc.description && (
+                       <p className="text-sm text-gray-600 mb-2">{doc.description}</p>
+                     )}
+                     
+                     <div className="flex items-center gap-4 text-xs text-gray-500">
+                       <span>Size: {doc.file_size ? `${(doc.file_size / 1024 / 1024).toFixed(2)} MB` : 'Unknown'}</span>
+                       <span>Type: {doc.file_type || 'Unknown'}</span>
+                       <span>Uploaded: {new Date(doc.created_at).toLocaleDateString()}</span>
+                     </div>
+                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {(!doc.requires_nda || hasSignedNDA) ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
-                        <Download className="w-4 h-4 mr-1" />
-                        Download
-                      </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => onRequestAccess(doc.id)}
-                      disabled={doc.requires_nda && !hasSignedNDA}
-                    >
-                      <Clock className="w-4 h-4 mr-1" />
-                      Request Access
-                    </Button>
-                  )}
-                </div>
+                 <div className="flex items-center gap-2">
+                   {(!doc.is_private || hasSignedNDA) ? (
+                     <>
+                       <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
+                         <Eye className="w-4 h-4 mr-1" />
+                         View
+                       </Button>
+                       <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
+                         <Download className="w-4 h-4 mr-1" />
+                         Download
+                       </Button>
+                     </>
+                   ) : (
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       onClick={() => onRequestAccess(doc.id)}
+                       disabled={doc.is_private && !hasSignedNDA}
+                     >
+                       <Clock className="w-4 h-4 mr-1" />
+                       Request Access
+                     </Button>
+                   )}
+                 </div>
               </div>
             ))}
           </div>
