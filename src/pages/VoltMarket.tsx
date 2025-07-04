@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { VoltMarketLayout } from '@/components/voltmarket/VoltMarketLayout';
-import { WattbytesLanding } from '@/components/voltmarket/WattbytesLanding';
+import { VoltMarketHomepage } from '@/components/voltmarket/VoltMarketHomepage';
 import { WattbytesAuth } from '@/components/voltmarket/WattbytesAuth';
 import { VoltMarketListings } from '@/components/voltmarket/VoltMarketListings';
 import { VoltMarketDashboard } from '@/components/voltmarket/VoltMarketDashboard';
@@ -31,8 +31,8 @@ export const VoltMarket = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<WattbytesLanding />} />
-      <Route path="/home" element={<WattbytesLanding />} />
+      <Route path="/" element={<VoltMarketHomepage />} />
+      <Route path="/home" element={<VoltMarketHomepage />} />
       <Route path="/auth" element={<WattbytesAuth />} />
       <Route path="/listings" element={
         <VoltMarketLayout>
