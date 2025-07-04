@@ -114,23 +114,23 @@ export const VoltMarketHomepage: React.FC = () => {
             {/* Live BTC Price Ticker */}
             {btcData && (
               <div className="mb-12">
-                <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200/50 max-w-5xl mx-auto shadow-lg hover:shadow-xl transition-all duration-300">
+                <Card className="bg-gradient-to-r from-watt-primary/5 to-watt-secondary/5 border-watt-primary/20 max-w-5xl mx-auto shadow-watt-glow hover:shadow-2xl transition-all duration-300">
                   <CardContent className="p-6">
                     <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
                       <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3">
-                          <div className="p-3 bg-orange-100 rounded-2xl">
-                            <Bitcoin className="w-8 h-8 text-orange-600" />
+                          <div className="p-3 bg-watt-primary/10 rounded-2xl">
+                            <Bitcoin className="w-8 h-8 text-watt-primary" />
                           </div>
                           <div>
                             <div className="text-sm font-medium text-gray-600">Bitcoin Price</div>
-                            <div className="text-3xl font-bold text-orange-600">
+                            <div className="text-3xl font-bold text-watt-primary">
                               ${btcData.price.toLocaleString()}
                             </div>
                           </div>
                         </div>
-                        <Badge className="bg-green-100 text-green-700 border-green-200">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                        <Badge className="bg-watt-success/10 text-watt-success border-watt-success/20">
+                          <div className="w-2 h-2 bg-watt-success rounded-full mr-2 animate-pulse"></div>
                           Live
                         </Badge>
                       </div>
@@ -141,14 +141,14 @@ export const VoltMarketHomepage: React.FC = () => {
                             <Hash className="w-4 h-4" />
                             <span>Network Difficulty</span>
                           </div>
-                          <div className="text-2xl font-bold text-purple-600">{btcData.difficulty}T</div>
+                          <div className="text-2xl font-bold text-watt-secondary">{btcData.difficulty}T</div>
                         </div>
                         <div className="text-center">
                           <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                             <Activity className="w-4 h-4" />
                             <span>Hashrate</span>
                           </div>
-                          <div className="text-2xl font-bold text-blue-600">{btcData.hashrate}</div>
+                          <div className="text-2xl font-bold text-watt-accent">{btcData.hashrate}</div>
                         </div>
                       </div>
                     </div>
@@ -163,16 +163,15 @@ export const VoltMarketHomepage: React.FC = () => {
                 Global Energy Infrastructure Marketplace
               </Badge>
 
-              <div className="space-y-6">
-                <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                  <span className="text-gray-900">Trade Power</span>
-                  <br />
-                  <span className="bg-watt-gradient bg-clip-text text-transparent">
+              <div className="space-y-6 relative z-10">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+                  <span className="text-gray-900 block">Trade Power</span>
+                  <span className="bg-watt-gradient bg-clip-text text-transparent block mt-2">
                     Infrastructure
                   </span>
                 </h1>
 
-                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+                <p className="text-lg md:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
                   The world's premier marketplace for energy assets. Discover, evaluate, and invest in 
                   power infrastructure from data centers to renewable facilities.
                 </p>
@@ -240,16 +239,16 @@ export const VoltMarketHomepage: React.FC = () => {
       </section>
 
       {/* BTC Mining ROI Widget Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <section className="py-20 bg-gradient-to-br from-watt-light/30 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge className="mb-6 bg-orange-100 text-orange-700 border-orange-200">
+            <Badge className="mb-6 bg-watt-primary/10 text-watt-primary border-watt-primary/20">
               <Bitcoin className="w-4 h-4 mr-2" />
               Mining Analytics
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Real-Time Mining
-              <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent block">
+              <span className="bg-watt-gradient bg-clip-text text-transparent block">
                 Profitability
               </span>
             </h2>
@@ -259,7 +258,9 @@ export const VoltMarketHomepage: React.FC = () => {
           </div>
           
           <div className="max-w-5xl mx-auto">
-            <BTCMiningROIWidget />
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-watt-glow border border-watt-primary/10">
+              <BTCMiningROIWidget />
+            </div>
           </div>
         </div>
       </section>
