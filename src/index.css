@@ -46,13 +46,15 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Custom logo-inspired colors */
-    --electric-blue: 184 82% 45%;
-    --bright-cyan: 184 95% 60%;
-    --electric-yellow: 45 93% 58%;
-    --warm-orange: 30 100% 60%;
-    --neon-green: 142 84% 55%;
-    --dark-slate: 222 84% 5%;
+    /* Wattbytes brand colors */
+    --watt-primary: 220 100% 50%;        /* Electric Blue #0066FF */
+    --watt-secondary: 280 100% 60%;      /* Electric Purple #9933FF */
+    --watt-accent: 45 100% 50%;          /* Energy Yellow #FFCC00 */
+    --watt-success: 140 100% 40%;        /* Green #00CC66 */
+    --watt-dark: 220 30% 10%;            /* Dark Navy #1A1F2E */
+    --watt-light: 220 50% 95%;           /* Light Blue #F0F4FF */
+    --watt-gradient: linear-gradient(135deg, hsl(var(--watt-primary)), hsl(var(--watt-secondary)));
+    --watt-glow: 0 0 20px hsl(var(--watt-primary) / 0.3);
   }
 
   .dark {
@@ -105,58 +107,101 @@
   }
 }
 
-/* Custom utility classes for logo colors */
+/* Wattbytes brand utility classes */
 @layer utilities {
-  .text-electric-blue {
-    color: hsl(var(--electric-blue));
+  .text-watt-primary {
+    color: hsl(var(--watt-primary));
   }
   
-  .text-bright-cyan {
-    color: hsl(var(--bright-cyan));
+  .text-watt-secondary {
+    color: hsl(var(--watt-secondary));
   }
   
-  .text-electric-yellow {
-    color: hsl(var(--electric-yellow));
+  .text-watt-accent {
+    color: hsl(var(--watt-accent));
   }
   
-  .text-warm-orange {
-    color: hsl(var(--warm-orange));
+  .bg-watt-primary {
+    background-color: hsl(var(--watt-primary));
   }
   
-  .text-neon-green {
-    color: hsl(var(--neon-green));
+  .bg-watt-secondary {
+    background-color: hsl(var(--watt-secondary));
   }
   
-  .bg-electric-blue {
-    background-color: hsl(var(--electric-blue));
+  .bg-watt-accent {
+    background-color: hsl(var(--watt-accent));
   }
   
-  .bg-bright-cyan {
-    background-color: hsl(var(--bright-cyan));
+  .bg-watt-gradient {
+    background: var(--watt-gradient);
   }
   
-  .bg-electric-yellow {
-    background-color: hsl(var(--electric-yellow));
+  .border-watt-primary {
+    border-color: hsl(var(--watt-primary));
   }
   
-  .bg-warm-orange {
-    background-color: hsl(var(--warm-orange));
+  .shadow-watt-glow {
+    box-shadow: var(--watt-glow);
   }
-  
-  .bg-neon-green {
-    background-color: hsl(var(--neon-green));
+
+  /* Enhanced animations for modern UX */
+  .animate-fade-up {
+    animation: fadeUp 0.8s ease-out forwards;
   }
-  
-  .border-electric-blue {
-    border-color: hsl(var(--electric-blue));
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.6s ease-out forwards;
   }
-  
-  .border-electric-yellow {
-    border-color: hsl(var(--electric-yellow));
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.6s ease-out forwards;
   }
-  
-  .border-neon-green {
-    border-color: hsl(var(--neon-green));
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 20px hsl(var(--watt-primary) / 0.3);
+    }
+    to {
+      box-shadow: 0 0 30px hsl(var(--watt-primary) / 0.6), 0 0 40px hsl(var(--watt-secondary) / 0.3);
+    }
   }
 }
 

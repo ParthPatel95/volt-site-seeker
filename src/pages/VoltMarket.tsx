@@ -1,8 +1,8 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { VoltMarketLayout } from '@/components/voltmarket/VoltMarketLayout';
-import { VoltMarketLanding } from '@/components/voltmarket/VoltMarketLanding';
-import { VoltMarketAuth } from '@/components/voltmarket/VoltMarketAuth';
+import { WattbytesLanding } from '@/components/voltmarket/WattbytesLanding';
+import { WattbytesAuth } from '@/components/voltmarket/WattbytesAuth';
 import { VoltMarketListings } from '@/components/voltmarket/VoltMarketListings';
 import { VoltMarketDashboard } from '@/components/voltmarket/VoltMarketDashboard';
 import { VoltMarketProfile } from '@/components/voltmarket/VoltMarketProfile';
@@ -31,13 +31,9 @@ export const VoltMarket = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<VoltMarketLanding />} />
-      <Route path="/home" element={<VoltMarketLanding />} />
-      <Route path="/auth" element={
-        <VoltMarketLayout>
-          <VoltMarketAuth />
-        </VoltMarketLayout>
-      } />
+      <Route path="/" element={<WattbytesLanding />} />
+      <Route path="/home" element={<WattbytesLanding />} />
+      <Route path="/auth" element={<WattbytesAuth />} />
       <Route path="/listings" element={
         <VoltMarketLayout>
           <VoltMarketListings />
@@ -55,47 +51,47 @@ export const VoltMarket = () => {
       } />
       <Route path="/dashboard" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketDashboard /> : <VoltMarketAuth />}
+          {user ? <VoltMarketDashboard /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/analytics" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketAnalyticsDashboard /> : <VoltMarketAuth />}
+          {user ? <VoltMarketAnalyticsDashboard /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/profile" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketProfile /> : <VoltMarketAuth />}
+          {user ? <VoltMarketProfile /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/verification" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketVerificationCenter /> : <VoltMarketAuth />}
+          {user ? <VoltMarketVerificationCenter /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/create-listing" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketCreateListing /> : <VoltMarketAuth />}
+          {user ? <VoltMarketCreateListing /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/messages" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketMessages /> : <VoltMarketAuth />}
+          {user ? <VoltMarketMessages /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/messages-enhanced" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketEnhancedMessages /> : <VoltMarketAuth />}
+          {user ? <VoltMarketEnhancedMessages /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/notifications" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketNotificationCenter /> : <VoltMarketAuth />}
+          {user ? <VoltMarketNotificationCenter /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/watchlist" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketWatchlist /> : <VoltMarketAuth />}
+          {user ? <VoltMarketWatchlist /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/qa-test" element={
