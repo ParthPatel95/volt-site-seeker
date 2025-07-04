@@ -25,7 +25,7 @@ interface Listing {
   voltmarket_profiles: {
     company_name: string;
     is_id_verified: boolean;
-  };
+  } | null;
 }
 
 export const VoltMarketListings: React.FC = () => {
