@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { BTCMiningROIWidget } from '@/components/landing/BTCMiningROIWidget';
 import { 
-  Battery, 
   Building2, 
   Users, 
   TrendingUp, 
@@ -22,7 +21,10 @@ import {
   Hash,
   Eye,
   Sparkles,
-  BarChart3
+  BarChart3,
+  Target,
+  Bolt,
+  Factory
 } from 'lucide-react';
 
 interface BTCData {
@@ -101,43 +103,52 @@ export const VoltMarketHomepage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-blue-50/30 to-background">
       {/* Hero Section */}
-      <section className="relative pt-20 pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-watt-primary/5 via-watt-secondary/5 to-transparent" />
+      <section className="relative pt-12 pb-20 overflow-hidden">
+        <div className="absolute inset-0 bg-watt-gradient opacity-5" />
+        <div className="absolute inset-0 bg-grid-black/[0.02] bg-[size:60px_60px]" />
+        
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             {/* Live BTC Price Ticker */}
             {btcData && (
-              <div className="mb-8">
-                <Card className="bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border-orange-200 max-w-4xl mx-auto">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <Bitcoin className="w-6 h-6 text-orange-500" />
-                          <span className="font-semibold text-gray-900">BTC Price</span>
+              <div className="mb-12">
+                <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200/50 max-w-5xl mx-auto shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-orange-100 rounded-2xl">
+                            <Bitcoin className="w-8 h-8 text-orange-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-600">Bitcoin Price</div>
+                            <div className="text-3xl font-bold text-orange-600">
+                              ${btcData.price.toLocaleString()}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-2xl font-bold text-orange-600">
-                          ${btcData.price.toLocaleString()}
-                        </div>
-                        <Badge className="bg-green-100 text-green-700">Live</Badge>
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                          Live
+                        </Badge>
                       </div>
                       
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-8">
                         <div className="text-center">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                             <Hash className="w-4 h-4" />
-                            <span>Difficulty</span>
+                            <span>Network Difficulty</span>
                           </div>
-                          <div className="font-semibold text-gray-900">{btcData.difficulty}T</div>
+                          <div className="text-2xl font-bold text-purple-600">{btcData.difficulty}T</div>
                         </div>
                         <div className="text-center">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                             <Activity className="w-4 h-4" />
                             <span>Hashrate</span>
                           </div>
-                          <div className="font-semibold text-gray-900">{btcData.hashrate}</div>
+                          <div className="text-2xl font-bold text-blue-600">{btcData.hashrate}</div>
                         </div>
                       </div>
                     </div>
@@ -146,142 +157,175 @@ export const VoltMarketHomepage: React.FC = () => {
               </div>
             )}
 
-            <Badge className="mb-6 bg-watt-primary/10 text-watt-primary border-watt-primary/20 hover:bg-watt-primary/20 transition-all duration-300">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Power Infrastructure Marketplace
-            </Badge>
+            <div className="space-y-8">
+              <Badge className="bg-watt-primary/10 text-watt-primary border-watt-primary/20 hover:bg-watt-primary/20 transition-all duration-300 px-4 py-2">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Global Energy Infrastructure Marketplace
+              </Badge>
 
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              <span className="text-gray-900">Power Your</span>
-              <br />
-              <span className="bg-watt-gradient bg-clip-text text-transparent">
-                Energy Empire
-              </span>
-            </h1>
+              <div className="space-y-6">
+                <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+                  <span className="text-gray-900">Trade Power</span>
+                  <br />
+                  <span className="bg-watt-gradient bg-clip-text text-transparent">
+                    Infrastructure
+                  </span>
+                </h1>
 
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
-              Buy, sell, and invest in power infrastructure assets. From data centers to mining facilities, 
-              discover opportunities across North America's energy landscape.
-            </p>
-
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-12">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  placeholder="Search power assets, locations, or energy projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-2xl focus:border-watt-primary transition-all duration-300"
-                />
-                {searchQuery && (
-                  <Button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-watt-gradient hover:opacity-90">
-                    Search
-                  </Button>
-                )}
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+                  The world's premier marketplace for energy assets. Discover, evaluate, and invest in 
+                  power infrastructure from data centers to renewable facilities.
+                </p>
               </div>
-            </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link to="/voltmarket/listings">
-                <Button size="lg" className="group bg-watt-gradient hover:opacity-90 text-white font-semibold px-8 py-4 text-lg shadow-watt-glow hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-                  Browse Listings
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/voltmarket/create-listing">
-                <Button size="lg" variant="outline" className="border-2 border-watt-primary text-watt-primary hover:bg-watt-primary hover:text-white font-semibold px-8 py-4 text-lg transition-all duration-300">
-                  List Your Asset
-                  <Building2 className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Market Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-              {marketStats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={index} className="text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-gray-200/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <Icon className={`w-8 h-8 ${stat.color} mx-auto mb-3`} />
-                    <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                    <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
+              {/* Enhanced Search Bar */}
+              <div className="max-w-3xl mx-auto">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-watt-gradient rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                  <div className="relative bg-white rounded-2xl border-2 border-gray-200 hover:border-watt-primary/30 transition-all duration-300 shadow-lg">
+                    <div className="flex items-center p-2">
+                      <Search className="ml-4 text-gray-400 w-6 h-6" />
+                      <Input
+                        placeholder="Search power assets, locations, mining facilities..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="flex-1 border-0 text-lg px-4 py-4 focus:ring-0 bg-transparent"
+                      />
+                      {searchQuery && (
+                        <Button className="mr-2 bg-watt-gradient hover:opacity-90 text-white px-6 py-3 rounded-xl">
+                          Search
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                );
-              })}
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/voltmarket/listings">
+                  <Button size="lg" className="group bg-watt-gradient hover:opacity-90 text-white font-semibold px-10 py-4 text-lg shadow-watt-glow hover:shadow-2xl transition-all duration-300 transform hover:scale-105 rounded-2xl">
+                    Explore Marketplace
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link to="/voltmarket/create-listing">
+                  <Button size="lg" variant="outline" className="border-2 border-watt-primary text-watt-primary hover:bg-watt-primary hover:text-white font-semibold px-10 py-4 text-lg transition-all duration-300 rounded-2xl">
+                    List Your Asset
+                    <Building2 className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Market Stats */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto pt-8">
+                {marketStats.map((stat, index) => {
+                  const Icon = stat.icon;
+                  return (
+                    <Card key={index} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-gray-200/50">
+                      <CardContent className="p-6 text-center">
+                        <div className={`w-12 h-12 ${stat.color} bg-opacity-10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                          <Icon className={`w-6 h-6 ${stat.color}`} />
+                        </div>
+                        <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
+                        <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* BTC Mining ROI Widget Section */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Mining Profitability Calculator
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-orange-100 text-orange-700 border-orange-200">
+              <Bitcoin className="w-4 h-4 mr-2" />
+              Mining Analytics
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Real-Time Mining
+              <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent block">
+                Profitability
+              </span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Calculate real-time Bitcoin mining returns with live market data and energy costs
+              Calculate Bitcoin mining returns with live market data, energy costs, and difficulty adjustments
             </p>
           </div>
           
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <BTCMiningROIWidget />
           </div>
         </div>
       </section>
 
       {/* Featured Listings */}
-      <section className="py-16 bg-gradient-to-r from-gray-50 to-blue-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-watt-secondary/10 text-watt-secondary border-watt-secondary/20">
-              <Eye className="w-4 h-4 mr-2" />
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-watt-secondary/10 text-watt-secondary border-watt-secondary/20">
+              <Target className="w-4 h-4 mr-2" />
               Featured Opportunities
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Premium Power Assets
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Premium Power
+              <span className="bg-watt-gradient bg-clip-text text-transparent block">
+                Infrastructure
+              </span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover high-value energy infrastructure opportunities curated by our team
+              Hand-selected energy infrastructure opportunities from our expert team
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {featuredListings.map((listing, index) => (
-              <Card key={listing.id} className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer">
-                <CardHeader className="pb-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge className={`${listing.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+              <Card key={listing.id} className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg">
+                <div className="absolute inset-0 bg-watt-gradient opacity-0 group-hover:opacity-5 transition-opacity rounded-lg"></div>
+                <CardHeader className="relative pb-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <Badge className={`${listing.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'} border`}>
+                      <div className={`w-2 h-2 ${listing.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full mr-2 animate-pulse`}></div>
                       {listing.status}
                     </Badge>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-watt-primary">{listing.price}</div>
+                      <div className="text-3xl font-bold text-watt-primary">{listing.price}</div>
+                      <div className="text-sm text-gray-500">Total Value</div>
                     </div>
                   </div>
-                  <CardTitle className="text-xl group-hover:text-watt-primary transition-colors">
+                  <CardTitle className="text-xl group-hover:text-watt-primary transition-colors leading-tight">
                     {listing.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{listing.location}</span>
+                <CardContent className="relative">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <div className="p-2 bg-blue-50 rounded-lg">
+                        <MapPin className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span className="font-medium">{listing.location}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Zap className="w-4 h-4" />
-                      <span>{listing.capacity} Capacity</span>
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <div className="p-2 bg-yellow-50 rounded-lg">
+                        <Bolt className="w-4 h-4 text-yellow-600" />
+                      </div>
+                      <span className="font-medium">{listing.capacity} Capacity</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Building2 className="w-4 h-4" />
-                      <span>{listing.type}</span>
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <div className="p-2 bg-purple-50 rounded-lg">
+                        <Factory className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <span className="font-medium">{listing.type} Asset</span>
                     </div>
                   </div>
-                  <Button className="w-full mt-6 bg-watt-gradient hover:opacity-90 text-white group-hover:scale-105 transition-transform">
+                  <Button className="w-full mt-6 bg-watt-gradient hover:opacity-90 text-white group-hover:scale-105 transition-all duration-300 py-3 rounded-xl font-semibold">
                     View Details
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </CardContent>
               </Card>
@@ -290,77 +334,102 @@ export const VoltMarketHomepage: React.FC = () => {
         </div>
       </section>
 
-      {/* Quick Stats Dashboard */}
-      <section className="py-16 bg-white">
+      {/* Market Intelligence Dashboard */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Market Intelligence
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-blue-100 text-blue-700 border-blue-200">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Live Market Data
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Market
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
+                Intelligence
+              </span>
             </h2>
-            <p className="text-xl text-gray-600">
-              Real-time insights from North America's power infrastructure market
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Real-time insights from the global power infrastructure marketplace
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="w-6 h-6 text-blue-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-blue-50/30 border-0 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <BarChart3 className="w-8 h-8 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-2">$43.72/MWh</div>
-              <div className="text-gray-600">Avg. Power Price</div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">$43.72/MWh</div>
+              <div className="text-gray-600 font-medium">Average Power Price</div>
+              <div className="text-sm text-blue-600 mt-2">↗ +2.1% today</div>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-green-50/30 border-0 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <TrendingUp className="w-8 h-8 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-2">+15.3%</div>
-              <div className="text-gray-600">Price Growth YoY</div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">+15.3%</div>
+              <div className="text-gray-600 font-medium">Price Growth YoY</div>
+              <div className="text-sm text-green-600 mt-2">Strong upward trend</div>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="w-6 h-6 text-purple-600" />
+            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-purple-50/30 border-0 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <Globe className="w-8 h-8 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-2">847</div>
-              <div className="text-gray-600">Active Regions</div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">847</div>
+              <div className="text-gray-600 font-medium">Active Markets</div>
+              <div className="text-sm text-purple-600 mt-2">Global coverage</div>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-6 h-6 text-orange-600" />
+            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-orange-50/30 border-0 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <Shield className="w-8 h-8 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-2">99.7%</div>
-              <div className="text-gray-600">Transaction Security</div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">99.7%</div>
+              <div className="text-gray-600 font-medium">Security Rating</div>
+              <div className="text-sm text-orange-600 mt-2">Enterprise-grade</div>
             </Card>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-watt-gradient relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:30px_30px]" />
-        <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Power Your Investment Portfolio?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-            Join the future of energy infrastructure investing with VoltMarket
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/voltmarket/auth">
-              <Button size="lg" className="bg-white text-watt-primary hover:bg-gray-100 font-semibold px-8 py-4 text-lg transition-all duration-300 transform hover:scale-105 shadow-xl group">
-                Get Started Today
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link to="/voltmarket/listings">
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-watt-primary font-semibold px-8 py-4 text-lg transition-all duration-300">
-                Explore Assets
-              </Button>
-            </Link>
+      <section className="py-24 bg-watt-gradient relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:40px_40px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+        
+        <div className="relative max-w-5xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <div className="space-y-8">
+            <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm px-4 py-2">
+              <Zap className="w-4 h-4 mr-2" />
+              Join the Revolution
+            </Badge>
+            
+            <h2 className="text-5xl md:text-6xl font-bold text-white leading-tight">
+              Ready to Transform
+              <span className="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                Your Portfolio?
+              </span>
+            </h2>
+            
+            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
+              Join thousands of investors discovering the future of energy infrastructure
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-6 justify-center pt-8">
+              <Link to="/voltmarket/auth">
+                <Button size="lg" className="group bg-white text-watt-primary hover:bg-gray-100 font-bold px-10 py-4 text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl rounded-2xl">
+                  Start Investing Today
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link to="/voltmarket/listings">
+                <Button size="lg" variant="outline" className="border-2 border-white/50 text-white hover:bg-white/10 backdrop-blur-sm font-bold px-10 py-4 text-lg transition-all duration-300 rounded-2xl">
+                  Explore Marketplace
+                  <Eye className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

@@ -31,8 +31,16 @@ export const VoltMarket = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<VoltMarketHomepage />} />
-      <Route path="/home" element={<VoltMarketHomepage />} />
+      <Route path="/" element={
+        <VoltMarketLayout>
+          <VoltMarketHomepage />
+        </VoltMarketLayout>
+      } />
+      <Route path="/home" element={
+        <VoltMarketLayout>
+          <VoltMarketHomepage />
+        </VoltMarketLayout>
+      } />
       <Route path="/auth" element={<WattbytesAuth />} />
       <Route path="/listings" element={
         <VoltMarketLayout>
