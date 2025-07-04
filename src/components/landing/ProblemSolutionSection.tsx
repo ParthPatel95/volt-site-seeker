@@ -104,7 +104,7 @@ export const ProblemSolutionSection = () => {
               <h3 className="text-3xl font-bold text-white">The Result</h3>
             </div>
             
-            <p className="text-lg text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg text-slate-200 mb-8 max-w-4xl mx-auto leading-relaxed">
               By solving these critical industry pain points, WattByte creates{' '}
               <span className="text-electric-yellow font-bold">significant value</span>{' '}
               for data center operators and investors seeking exposure to{' '}
@@ -115,15 +115,15 @@ export const ProblemSolutionSection = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="text-4xl font-bold text-electric-blue mb-2">675MW+</div>
-                <div className="text-gray-400 font-medium">Deal Experience</div>
+                <div className="text-slate-300 font-medium">Deal Experience</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-electric-yellow mb-2">2.0-2.5x</div>
-                <div className="text-gray-400 font-medium">Target MOIC</div>
+                <div className="text-slate-300 font-medium">Target MOIC</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-neon-green mb-2">$25M</div>
-                <div className="text-gray-400 font-medium">Fund I Target</div>
+                <div className="text-slate-300 font-medium">Fund I Target</div>
               </div>
             </div>
           </div>
