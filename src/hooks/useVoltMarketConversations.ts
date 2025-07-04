@@ -78,6 +78,7 @@ export const useVoltMarketConversations = () => {
 
           return {
             ...conv,
+            listing: conv.listing || { title: 'Unknown Listing', asking_price: 0 },
             other_party: otherParty || { company_name: 'Unknown', profile_image_url: null },
             messages: messageList,
             last_message: lastMessage,

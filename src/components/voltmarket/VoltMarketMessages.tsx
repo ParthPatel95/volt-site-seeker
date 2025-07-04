@@ -62,8 +62,8 @@ export const VoltMarketMessages: React.FC = () => {
   };
 
   const filteredConversations = conversations.filter(conv =>
-    conv.other_party.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.listing.title.toLowerCase().includes(searchQuery.toLowerCase())
+    conv.other_party?.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.listing?.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const formatTimeAgo = (dateString: string) => {

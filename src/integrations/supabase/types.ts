@@ -2109,6 +2109,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_conversations_buyer"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_conversations_listing"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_conversations_seller"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "voltmarket_conversations_buyer_id_fkey"
             columns: ["buyer_id"]
             isOneToOne: false
@@ -2534,6 +2555,27 @@ export type Database = {
           sender_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_messages_listing"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_messages_recipient"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_messages_sender"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "voltmarket_messages_listing_id_fkey"
             columns: ["listing_id"]
