@@ -111,37 +111,46 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
           const profileData = await fetchProfile(session.user.id);
           if (mounted) {
             setProfile(profileData);
+            setLoading(false); // Set loading to false after profile is fetched
           }
         } else {
           if (mounted) {
             setProfile(null);
+            setLoading(false); // Set loading to false even if no user
+          }
+        }
+      }
+    );
+
+    // Check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        console.log('Initial session check:', session?.user?.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const profileData = await fetchProfile(session.user.id);
+          if (mounted) {
+            setProfile(profileData);
           }
         }
         
         if (mounted) {
           setLoading(false);
         }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
         if (mounted) {
-          setProfile(profileData);
+          setLoading(false);
         }
       }
-      
-      if (mounted) {
-        setLoading(false);
-      }
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       mounted = false;
