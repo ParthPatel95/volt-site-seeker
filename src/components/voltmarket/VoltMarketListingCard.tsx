@@ -33,7 +33,7 @@ interface Listing {
   voltmarket_profiles: {
     company_name: string;
     is_id_verified: boolean;
-  };
+  } | null;
 }
 
 interface VoltMarketListingCardProps {
@@ -156,7 +156,7 @@ export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ li
             <MapPin className="w-4 h-4 mr-1" />
             <span className="text-sm">{listing.location}</span>
           </div>
-          {listing.voltmarket_profiles.is_id_verified && (
+          {listing.voltmarket_profiles?.is_id_verified && (
             <Badge variant="outline" className="text-green-600">
               <Shield className="w-3 h-3 mr-1" />
               Verified
