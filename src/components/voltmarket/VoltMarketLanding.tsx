@@ -28,7 +28,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 
-export const VoltMarketEnhancedLanding: React.FC = () => {
+export const VoltMarketLanding: React.FC = () => {
   const [countUpStats, setCountUpStats] = useState({
     capacity: 0,
     listings: 0,
@@ -40,6 +40,7 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
   const [isVisible, setIsVisible] = useState({
     hero: false,
     features: false,
+    listings: false,
     benefits: false,
     testimonials: false
   });
@@ -120,6 +121,39 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
     }
   ];
 
+  const featuredListings = [
+    {
+      id: '1',
+      title: '50MW Data Center Site - Texas',
+      location: 'Dallas, TX',
+      price: '$15M',
+      type: 'Site for Sale',
+      capacity: '50MW',
+      status: 'Available',
+      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400'
+    },
+    {
+      id: '2',
+      title: 'Industrial Hosting Facility',
+      location: 'Phoenix, AZ',
+      price: '$0.05/kWh',
+      type: 'Hosting',
+      capacity: '25MW',
+      status: 'Available',
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400'
+    },
+    {
+      id: '3',
+      title: 'Antminer S19 Pro Equipment',
+      location: 'Multiple Locations',
+      price: '$2,500',
+      type: 'Equipment',
+      capacity: '110TH/s',
+      status: 'In Stock',
+      image: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400'
+    }
+  ];
+
   const benefits = [
     "List sites for sale or lease",
     "Find hosting opportunities", 
@@ -169,6 +203,33 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
     { action: "New listing", location: "Texas", time: "2 min ago", type: "success" },
     { action: "Deal closed", location: "California", time: "5 min ago", type: "info" },
     { action: "User verified", location: "New York", time: "8 min ago", type: "success" },
+  ];
+
+  const quickActions = [
+    {
+      icon: Search,
+      title: "Find Sites",
+      description: "Browse available sites for sale or lease across multiple markets.",
+      link: "/voltmarket/listings?type=site",
+      buttonText: "Browse Sites",
+      color: "from-blue-500 to-blue-600"
+    },
+    {
+      icon: Zap,
+      title: "Hosting Solutions",
+      description: "Find hosting facilities with available power capacity.",
+      link: "/voltmarket/listings?type=hosting",
+      buttonText: "Find Hosting",
+      color: "from-purple-500 to-purple-600"
+    },
+    {
+      icon: Building2,
+      title: "Equipment",
+      description: "Browse mining equipment and infrastructure hardware.",
+      link: "/voltmarket/listings?type=equipment",
+      buttonText: "Shop Equipment",
+      color: "from-green-500 to-green-600"
+    }
   ];
 
   return (
@@ -233,7 +294,7 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link to="/voltmarket/home">
+              <Link to="/voltmarket/listings">
                 <Button size="lg" className="group bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold px-8 py-4 text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-3xl">
                   Explore Marketplace
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -330,8 +391,103 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
         </div>
       </div>
 
+      {/* Featured Listings Section */}
+      <div className="py-24 bg-gradient-to-r from-gray-50 to-blue-50" data-section="listings">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`transition-all duration-1000 ${isVisible.listings ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <div className="flex items-center justify-between mb-12">
+              <div>
+                <Badge className="mb-4 bg-green-100 text-green-600 hover:bg-green-200">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Live Marketplace
+                </Badge>
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Listings</h2>
+                <p className="text-xl text-gray-600">Discover premium opportunities in energy infrastructure</p>
+              </div>
+              <Link to="/voltmarket/listings">
+                <Button variant="outline" className="hover:bg-blue-50">
+                  View All Listings
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredListings.map((listing, index) => (
+                <Card key={listing.id} className={`group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-0 shadow-lg overflow-hidden ${isVisible.listings ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: `${index * 0.2}s` }}>
+                  <div className="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 rounded-t-lg overflow-hidden">
+                    {listing.image ? (
+                      <img src={listing.image} alt={listing.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Building2 className="w-12 h-12 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">{listing.title}</CardTitle>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700">{listing.type}</Badge>
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      <span className="text-sm">{listing.location}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center text-green-600 font-semibold">
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        {listing.price}
+                      </div>
+                      <div className="flex items-center text-blue-600">
+                        <Zap className="w-4 h-4 mr-1" />
+                        <span className="text-sm">{listing.capacity}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Badge variant={listing.status === 'Available' ? 'default' : 'secondary'} className="bg-green-100 text-green-700">
+                        {listing.status}
+                      </Badge>
+                      <Link to={`/voltmarket/listings/${listing.id}`}>
+                        <Button size="sm" className="group-hover:scale-105 transition-transform">View Details</Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+              {quickActions.map((action, index) => {
+                const Icon = action.icon;
+                return (
+                  <Card key={index} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-3">
+                        <div className={`p-2 bg-gradient-to-br ${action.color} rounded-lg`}>
+                          <Icon className="w-5 h-5 text-white" />
+                        </div>
+                        {action.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 mb-4">{action.description}</p>
+                      <Link to={action.link}>
+                        <Button className="w-full group-hover:scale-105 transition-transform">{action.buttonText}</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Enhanced Benefits Section */}
-      <div className="py-24 bg-gradient-to-r from-gray-50 to-blue-50" data-section="benefits">
+      <div className="py-24 bg-white" data-section="benefits">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center transition-all duration-1000 ${isVisible.benefits ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             <div>
@@ -386,7 +542,7 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
                         Try Calculator
                       </Button>
                     </Link>
-                    <Link to="/voltmarket/home">
+                    <Link to="/voltmarket/listings">
                       <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-blue-600 py-3 transition-all duration-300">
                         Browse Marketplace
                       </Button>
@@ -400,7 +556,7 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
       </div>
 
       {/* Enhanced Testimonials Section */}
-      <div className="py-24 bg-white" data-section="testimonials">
+      <div className="py-24 bg-gradient-to-r from-gray-50 to-blue-50" data-section="testimonials">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-16 transition-all duration-1000 ${isVisible.testimonials ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <Badge className="mb-4 bg-yellow-100 text-yellow-600 hover:bg-yellow-200">
@@ -480,7 +636,7 @@ export const VoltMarketEnhancedLanding: React.FC = () => {
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/voltmarket/home">
+              <Link to="/voltmarket/listings">
                 <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg transition-all duration-300">
                   Explore Platform
                 </Button>
