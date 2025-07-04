@@ -9,6 +9,7 @@ import { VoltMarketContactButton } from './VoltMarketContactButton';
 import { VoltMarketWatchlistButton } from './VoltMarketWatchlistButton';
 import { VoltMarketLOIModal } from './VoltMarketLOIModal';
 import { VoltMarketDueDiligence } from './VoltMarketDueDiligence';
+import { VoltMarketListingImageGallery } from './VoltMarketListingImageGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
@@ -220,17 +221,102 @@ export const VoltMarketListingDetail: React.FC = () => {
                 <TabsTrigger value="seller">Seller</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Description</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 whitespace-pre-line">
-                      {listing.description || 'No description provided.'}
-                    </p>
-                  </CardContent>
-                </Card>
+              <TabsContent value="overview" className="space-y-6">
+                {/* Image Gallery */}
+                <VoltMarketListingImageGallery listingId={listing.id} />
+                
+                {/* Description and Key Details */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Description</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 whitespace-pre-line">
+                        {listing.description || 'No description provided.'}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Key Specifications</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {listing.power_capacity_mw > 0 && (
+                          <div className="flex items-center justify-between py-2 border-b">
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-blue-600" />
+                              <span className="font-medium">Power Capacity</span>
+                            </div>
+                            <span className="text-lg font-semibold text-blue-600">{listing.power_capacity_mw}MW</span>
+                          </div>
+                        )}
+                        {listing.square_footage && (
+                          <div className="flex items-center justify-between py-2 border-b">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-green-600" />
+                              <span className="font-medium">Square Footage</span>
+                            </div>
+                            <span className="text-lg font-semibold">{listing.square_footage.toLocaleString()} sq ft</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between py-2 border-b">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-red-600" />
+                            <span className="font-medium">Location</span>
+                          </div>
+                          <span className="text-lg font-semibold">{listing.location}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                            <span className="font-medium">Price</span>
+                          </div>
+                          <span className="text-lg font-semibold text-green-600">{getPriceDisplay()}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Additional Details */}
+                {(listing.facility_tier || listing.cooling_type || listing.brand || listing.model) && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Additional Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {listing.facility_tier && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Facility Tier</label>
+                            <p className="text-lg font-semibold">{listing.facility_tier}</p>
+                          </div>
+                        )}
+                        {listing.cooling_type && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Cooling Type</label>
+                            <p className="text-lg font-semibold">{listing.cooling_type}</p>
+                          </div>
+                        )}
+                        {listing.brand && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Brand</label>
+                            <p className="text-lg font-semibold">{listing.brand}</p>
+                          </div>
+                        )}
+                        {listing.model && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Model</label>
+                            <p className="text-lg font-semibold">{listing.model}</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="details">
