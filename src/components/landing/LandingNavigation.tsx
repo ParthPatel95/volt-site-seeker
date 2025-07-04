@@ -14,10 +14,10 @@ export const LandingNavigation = () => {
         <div className="min-w-0">
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center">
             <span className="truncate">Watt</span>
-            <Bitcoin className="inline w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 -mx-0.5 flex-shrink-0 text-watt-accent" />
+            <Bitcoin className="inline w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 -mx-0.5 flex-shrink-0" style={{ color: '#f7af14' }} />
             <span className="truncate">yte</span>
           </h1>
-          <p className="text-xs sm:text-sm truncate text-watt-accent">Infrastructure Fund</p>
+          <p className="text-xs sm:text-sm truncate" style={{ color: '#00ff88' }}>Infrastructure Fund</p>
         </div>
       </div>
       
@@ -26,7 +26,8 @@ export const LandingNavigation = () => {
           variant="outline" 
           size="sm"
           onClick={() => navigate('/voltmarket')}
-          className="bg-watt-secondary hover:opacity-90 text-white text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target border-none"
+          className="border-none hover:opacity-90 text-white text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target"
+          style={{ backgroundColor: '#6366f1' }}
         >
           <span className="hidden sm:inline">Launch </span>VoltMarket
         </Button>
@@ -35,7 +36,8 @@ export const LandingNavigation = () => {
           variant="outline" 
           size="sm"
           onClick={() => navigate('/app')}
-          className="bg-watt-accent hover:opacity-90 text-white text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target border-none"
+          className="border-none hover:opacity-90 text-white text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target"
+          style={{ backgroundColor: '#f7af14' }}
         >
           <span className="hidden sm:inline">Launch </span>VoltScout
         </Button>

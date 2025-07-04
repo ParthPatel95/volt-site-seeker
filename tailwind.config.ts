@@ -61,14 +61,6 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				},
-				watt: {
-					primary: 'hsl(var(--watt-primary))',
-					secondary: 'hsl(var(--watt-secondary))',
-					accent: 'hsl(var(--watt-accent))',
-					success: 'hsl(var(--watt-success))',
-					dark: 'hsl(var(--watt-dark))',
-					light: 'hsl(var(--watt-light))'
 				}
 			},
 			borderRadius: {

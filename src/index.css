@@ -121,10 +121,6 @@
     color: hsl(var(--watt-accent));
   }
   
-  .text-watt-success {
-    color: hsl(var(--watt-success));
-  }
-  
   .bg-watt-primary {
     background-color: hsl(var(--watt-primary));
   }
@@ -137,28 +133,12 @@
     background-color: hsl(var(--watt-accent));
   }
   
-  .bg-watt-success {
-    background-color: hsl(var(--watt-success));
-  }
-  
   .bg-watt-gradient {
     background: var(--watt-gradient);
   }
   
   .border-watt-primary {
     border-color: hsl(var(--watt-primary));
-  }
-  
-  .border-watt-secondary {
-    border-color: hsl(var(--watt-secondary));
-  }
-  
-  .border-watt-accent {
-    border-color: hsl(var(--watt-accent));
-  }
-  
-  .border-watt-success {
-    border-color: hsl(var(--watt-success));
   }
   
   .shadow-watt-glow {
