@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { VoltMarketAuthProvider, useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketRealtime } from '@/hooks/useVoltMarketRealtime';
 import { 
   Home, 
@@ -25,7 +25,7 @@ interface VoltMarketLayoutProps {
   children: React.ReactNode;
 }
 
-export const VoltMarketLayout: React.FC<VoltMarketLayoutProps> = ({ children }) => {
+const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) => {
   const { user, profile, signOut } = useVoltMarketAuth();
   const { messages } = useVoltMarketRealtime();
   const navigate = useNavigate();
@@ -240,5 +240,15 @@ export const VoltMarketLayout: React.FC<VoltMarketLayoutProps> = ({ children }) 
         </div>
       </footer>
     </div>
+  );
+};
+
+export const VoltMarketLayout: React.FC<VoltMarketLayoutProps> = ({ children }) => {
+  return (
+    <VoltMarketAuthProvider>
+      <VoltMarketLayoutContent>
+        {children}
+      </VoltMarketLayoutContent>
+    </VoltMarketAuthProvider>
   );
 };
