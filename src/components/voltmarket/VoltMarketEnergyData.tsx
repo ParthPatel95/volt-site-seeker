@@ -246,30 +246,6 @@ export const VoltMarketEnergyData = () => {
           </div>
         </div>
 
-        {/* Quick Market Insights */}
-        <div className="space-y-3 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-semibold text-gray-900">Market Insights</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600">Price Spread (AB-TX)</span>
-              <span className="text-xs font-medium text-watt-primary">
-                ${((aesoPricing?.current_price || 45.30) - (ercotPricing?.current_price || 38.75)).toFixed(2)}/MWh
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600">Demand Ratio (TX/AB)</span>
-              <span className="text-xs font-medium text-gray-900">
-                {(((ercotLoad?.current_demand_mw || 68234) / (aesoLoad?.current_demand_mw || 10892))).toFixed(1)}x
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600">Combined Capacity</span>
-              <span className="text-xs font-medium text-watt-success">
-                {((ercotLoad?.current_demand_mw || 68234) + (aesoLoad?.current_demand_mw || 10892)).toLocaleString()} MW
-              </span>
-            </div>
-          </div>
-        </div>
 
         <div className="text-xs text-gray-500 pt-3 border-t border-gray-200">
           * Data refreshes every 10 seconds. Prices in USD/MWh.
