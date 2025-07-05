@@ -70,12 +70,12 @@ export const VoltMarket = () => {
       } />
       <Route path="/profile" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketProfile /> : <WattbytesAuth />}
+          {user && !loading ? <VoltMarketProfile /> : (!loading ? <WattbytesAuth /> : <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>)}
         </VoltMarketLayout>
       } />
       <Route path="/verification" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketVerificationCenter /> : <WattbytesAuth />}
+          {user && !loading ? <VoltMarketVerificationCenter /> : (!loading ? <WattbytesAuth /> : <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>)}
         </VoltMarketLayout>
       } />
       <Route path="/create-listing" element={
