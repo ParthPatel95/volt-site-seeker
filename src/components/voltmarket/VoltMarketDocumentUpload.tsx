@@ -1,18 +1,24 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileText, Download, X } from 'lucide-react';
 
 interface Document {
+  id?: string;
   name: string;
   url: string;
   size: number;
   type: string;
+  document_type: string;
   uploadedAt: string;
+  description?: string;
 }
 
 interface VoltMarketDocumentUploadProps {
@@ -23,6 +29,14 @@ interface VoltMarketDocumentUploadProps {
   allowedTypes?: string[];
 }
 
+const DOCUMENT_TYPES = [
+  { value: 'financial', label: 'Financial' },
+  { value: 'technical', label: 'Technical' },
+  { value: 'legal', label: 'Legal' },
+  { value: 'environmental', label: 'Environmental' },
+  { value: 'regulatory', label: 'Regulatory' }
+];
+
 export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> = ({
   listingId,
   existingDocuments = [],
@@ -32,41 +46,113 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
 }) => {
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<Document[]>(existingDocuments);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
+  const [documentDescription, setDocumentDescription] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { profile } = useVoltMarketAuth();
   const { toast } = useToast();
 
   const uploadDocument = async (file: File): Promise<Document | null> => {
+    if (!selectedDocumentType) {
+      toast({
+        title: "Document type required",
+        description: "Please select a document type before uploading",
+        variant: "destructive"
+      });
+      return null;
+    }
+
+    if (!profile?.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload documents",
+        variant: "destructive"
+      });
+      return null;
+    }
+
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${file.name}`;
-      // Use temp folder for new listings without ID yet
-      const filePath = listingId ? `${listingId}/${fileName}` : `temp/${fileName}`;
+      // Use user folder for temp uploads, listing folder when listing exists
+      const filePath = listingId ? `${listingId}/${fileName}` : `temp/${profile.id}/${fileName}`;
 
-      const { error } = await supabase.storage
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file);
 
-      if (error) throw error;
+      if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
+      // Get public URL
+      const { data: urlData } = supabase.storage
         .from('documents')
         .getPublicUrl(filePath);
 
-      return {
+      const documentData = {
         name: file.name,
-        url: data.publicUrl,
+        url: urlData.publicUrl,
         size: file.size,
         type: file.type,
-        uploadedAt: new Date().toISOString()
+        document_type: selectedDocumentType,
+        uploadedAt: new Date().toISOString(),
+        description: documentDescription || undefined
       };
+
+      // Save to database if listing exists
+      if (listingId) {
+        const { data: dbData, error: dbError } = await supabase
+          .from('voltmarket_documents')
+          .insert({
+            listing_id: listingId,
+            uploader_id: profile.id,
+            file_name: file.name,
+            file_url: urlData.publicUrl,
+            file_type: file.type,
+            file_size: file.size,
+            document_type: selectedDocumentType,
+            description: documentDescription || null,
+            is_private: true
+          })
+          .select()
+          .single();
+
+        if (dbError) {
+          console.error('Database save error:', dbError);
+          // Clean up uploaded file
+          await supabase.storage.from('documents').remove([filePath]);
+          throw dbError;
+        }
+
+        return {
+          ...documentData,
+          id: dbData.id
+        };
+      }
+
+      return documentData;
     } catch (error) {
       console.error('Error uploading document:', error);
+      toast({
+        title: "Upload failed", 
+        description: "Failed to upload document. Please try again.",
+        variant: "destructive"
+      });
       return null;
     }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    
+    if (!selectedDocumentType) {
+      toast({
+        title: "Document type required",
+        description: "Please select a document type before uploading",
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (files.length + documents.length > maxDocuments) {
       toast({
@@ -88,6 +174,10 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       setDocuments(newDocuments);
       onDocumentsChange(newDocuments);
 
+      // Reset form
+      setSelectedDocumentType('');
+      setDocumentDescription('');
+
       toast({
         title: "Documents uploaded",
         description: `${validDocs.length} document(s) uploaded successfully`
@@ -108,9 +198,20 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
 
   const removeDocument = async (document: Document, index: number) => {
     try {
+      // Remove from database if it has an ID
+      if (document.id && listingId) {
+        const { error: dbError } = await supabase
+          .from('voltmarket_documents')
+          .delete()
+          .eq('id', document.id);
+
+        if (dbError) throw dbError;
+      }
+
+      // Remove from storage
       const urlParts = document.url.split('/');
       const fileName = urlParts[urlParts.length - 1];
-      const filePath = listingId ? `${listingId}/${fileName}` : fileName;
+      const filePath = listingId ? `${listingId}/${fileName}` : `temp/${profile?.id}/${fileName}`;
 
       await supabase.storage
         .from('documents')
@@ -125,6 +226,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
         description: "Document deleted successfully"
       });
     } catch (error) {
+      console.error('Error removing document:', error);
       toast({
         title: "Delete failed",
         description: "Failed to delete document",
@@ -145,16 +247,59 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Documents ({documents.length}/{maxDocuments})</h3>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading || documents.length >= maxDocuments}
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          {uploading ? 'Uploading...' : 'Add Documents'}
-        </Button>
       </div>
+
+      {/* Document Upload Form */}
+      <Card className="border-dashed border-2">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="document-type">Document Type *</Label>
+                <Select value={selectedDocumentType} onValueChange={setSelectedDocumentType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select document type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DOCUMENT_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="document-description">Description (Optional)</Label>
+                <Input
+                  id="document-description"
+                  type="text"
+                  value={documentDescription}
+                  onChange={(e) => setDocumentDescription(e.target.value)}
+                  placeholder="Brief description of the document"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || documents.length >= maxDocuments || !selectedDocumentType}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {uploading ? 'Uploading...' : 'Select Files'}
+              </Button>
+              
+              <p className="text-sm text-gray-500">
+                Supported formats: {allowedTypes.join(', ')}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <input
         ref={fileInputRef}
@@ -166,25 +311,11 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       />
 
       {documents.length === 0 ? (
-        <Card className="border-dashed border-2">
-          <CardContent className="py-12">
-            <div className="text-center">
-              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-2">No documents uploaded yet</p>
-              <p className="text-sm text-gray-400 mb-4">
-                Supported formats: {allowedTypes.join(', ')}
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                Click to upload documents
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="text-center py-8 text-gray-500">
+          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p>No documents uploaded yet</p>
+          <p className="text-sm">Select a document type and upload files above</p>
+        </div>
       ) : (
         <div className="space-y-2">
           {documents.map((document, index) => (
@@ -197,7 +328,12 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
                       <p className="font-medium">{document.name}</p>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <span>{formatFileSize(document.size)}</span>
-                        <Badge variant="outline">{document.type}</Badge>
+                        <Badge variant="outline">
+                          {DOCUMENT_TYPES.find(t => t.value === document.document_type)?.label || document.document_type}
+                        </Badge>
+                        {document.description && (
+                          <span className="text-xs">• {document.description}</span>
+                        )}
                       </div>
                     </div>
                   </div>
