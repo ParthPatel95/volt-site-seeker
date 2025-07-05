@@ -44,6 +44,10 @@ export const VoltMarketCreateListing: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Form submission started');
+    console.log('Profile:', profile);
+    console.log('Form data:', formData);
+    
     if (!profile) {
       toast({
         title: "Authentication Required",
@@ -53,9 +57,25 @@ export const VoltMarketCreateListing: React.FC = () => {
       return;
     }
 
+    // Validate required fields
+    if (!formData.title || !formData.location || !formData.listing_type) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      console.log('Creating listing with data:', {
+        ...formData,
+        seller_id: profile.id,
+        status: 'active'
+      });
+
       // First create the listing
       const { data: listing, error: listingError } = await supabase
         .from('voltmarket_listings')
@@ -67,10 +87,16 @@ export const VoltMarketCreateListing: React.FC = () => {
         .select()
         .single();
 
-      if (listingError) throw listingError;
+      console.log('Listing creation result:', { listing, listingError });
+
+      if (listingError) {
+        console.error('Listing error details:', listingError);
+        throw listingError;
+      }
 
       // Then save images to the listing_images table
       if (images.length > 0) {
+        console.log('Saving images:', images);
         const imageInserts = images.map((imageUrl, index) => ({
           listing_id: listing.id,
           image_url: imageUrl,
@@ -86,6 +112,7 @@ export const VoltMarketCreateListing: React.FC = () => {
         }
       }
 
+      console.log('Listing created successfully');
       toast({
         title: "Listing Created",
         description: "Your listing has been published successfully"
@@ -96,10 +123,11 @@ export const VoltMarketCreateListing: React.FC = () => {
       console.error('Error creating listing:', error);
       toast({
         title: "Error",
-        description: "Failed to create listing. Please try again.",
+        description: `Failed to create listing: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
+      console.log('Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
