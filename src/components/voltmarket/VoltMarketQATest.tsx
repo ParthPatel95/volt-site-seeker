@@ -11,6 +11,7 @@ import { useVoltMarketReviews } from '@/hooks/useVoltMarketReviews';
 import { useVoltMarketVerification } from '@/hooks/useVoltMarketVerification';
 import { useVoltMarketAnalytics } from '@/hooks/useVoltMarketAnalytics';
 import { useVoltMarketSavedSearches } from '@/hooks/useVoltMarketSavedSearches';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   CheckCircle, 
   XCircle, 
@@ -127,10 +128,15 @@ export const VoltMarketQATest: React.FC = () => {
 
   // Individual test functions
   const testAuthentication = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'User not authenticated' };
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'No active user session found' };
+      }
+      return { status: 'passed', message: 'User session active and valid' };
+    } catch (error) {
+      return { status: 'failed', message: 'Authentication system error' };
     }
-    return { status: 'passed', message: 'User authentication working correctly' };
   };
 
   const testProfileAccess = async (): Promise<Omit<TestResult, 'name' | 'category'>> =>  {
@@ -143,20 +149,25 @@ export const VoltMarketQATest: React.FC = () => {
   const testRealtimeConnection = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
     // Test real-time connection by checking if hooks are initialized
     try {
-      if (onlineUsers.size >= 0) {
-        return { status: 'passed', message: 'Real-time connection established' };
+      // Check if onlineUsers is a Set and has size property
+      if (onlineUsers && typeof onlineUsers.size === 'number') {
+        return { status: 'passed', message: `Real-time connection established (${onlineUsers.size} users)` };
       }
-      return { status: 'failed', message: 'Real-time connection failed' };
+      return { status: 'failed', message: 'Real-time connection not properly initialized' };
     } catch (error) {
       return { status: 'failed', message: 'Real-time system error' };
     }
   };
 
   const testOnlineUsers = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (onlineUsers.size >= 0) {
-      return { status: 'passed', message: `Tracking ${onlineUsers.size} online users` };
+    try {
+      if (onlineUsers && typeof onlineUsers.size === 'number') {
+        return { status: 'passed', message: `Tracking ${onlineUsers.size} online users` };
+      }
+      return { status: 'failed', message: 'Online users tracking not initialized' };
+    } catch (error) {
+      return { status: 'failed', message: 'Online users tracking failed' };
     }
-    return { status: 'failed', message: 'Online users tracking failed' };
   };
 
   const testReviewSystem = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
@@ -242,16 +253,15 @@ export const VoltMarketQATest: React.FC = () => {
   // New VoltMarket-specific tests
   const testListingAccess = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
     try {
-      const response = await fetch('/api/supabase/rest/v1/voltmarket_listings?select=*&limit=1', {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE'
-        }
-      });
-      if (response.ok) {
-        return { status: 'passed', message: 'Listing data accessible via API' };
+      const { data, error } = await supabase
+        .from('voltmarket_listings')
+        .select('*')
+        .limit(1);
+      
+      if (error) {
+        return { status: 'failed', message: `Listing access error: ${error.message}` };
       }
-      return { status: 'failed', message: 'Failed to access listing data' };
+      return { status: 'passed', message: `Listing data accessible (${data?.length || 0} records found)` };
     } catch (error) {
       return { status: 'failed', message: 'Listing access test failed' };
     }
@@ -290,17 +300,19 @@ export const VoltMarketQATest: React.FC = () => {
 
   const testSampleData = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
     try {
-      const response = await fetch('/api/supabase/rest/v1/voltmarket_listings?select=count', {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE'
-        }
-      });
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return { status: 'passed', message: `Found ${data.length} sample listings in database` };
+      const { data, error, count } = await supabase
+        .from('voltmarket_listings')
+        .select('*', { count: 'exact' });
+      
+      if (error) {
+        return { status: 'failed', message: `Sample data error: ${error.message}` };
       }
-      return { status: 'passed', message: 'Sample listings table accessible but may be empty' };
+      
+      const listingCount = count || data?.length || 0;
+      if (listingCount > 0) {
+        return { status: 'passed', message: `Found ${listingCount} sample listings in database` };
+      }
+      return { status: 'passed', message: 'Sample listings table accessible but empty' };
     } catch (error) {
       return { status: 'failed', message: 'Failed to check sample listings data' };
     }

@@ -18,7 +18,8 @@ import {
   Settings,
   LogOut,
   Plus,
-  Menu
+  Menu,
+  TestTube
 } from 'lucide-react';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 
@@ -88,18 +89,24 @@ export const VoltMarketHeader: React.FC = () => {
             
             {user ? (
               <>
-                <Link to="/voltmarket/create-listing">
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-1" />
-                    List
-                  </Button>
-                </Link>
-                
-                <Link to="/voltmarket/messages">
-                  <Button variant="ghost" size="sm">
-                    <MessageSquare className="w-4 h-4" />
-                  </Button>
-                </Link>
+              <Link to="/voltmarket/create-listing">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-1" />
+                  List
+                </Button>
+              </Link>
+              
+              <Link to="/voltmarket/messages">
+                <Button variant="ghost" size="sm">
+                  <MessageSquare className="w-4 h-4" />
+                </Button>
+              </Link>
+
+              <Link to="/voltmarket/qa-test">
+                <Button variant="outline" size="sm" title="QA Testing">
+                  <TestTube className="w-4 h-4" />
+                </Button>
+              </Link>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -192,6 +199,12 @@ export const VoltMarketHeader: React.FC = () => {
                   </Link>
                   <Link to="/voltmarket/profile" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">Profile</Button>
+                  </Link>
+                  <Link to="/voltmarket/qa-test" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <TestTube className="w-4 h-4 mr-2" />
+                      QA Test
+                    </Button>
                   </Link>
                   <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
