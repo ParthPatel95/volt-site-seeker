@@ -166,7 +166,7 @@ export const VoltMarketHomepage: React.FC = () => {
               <div className="space-y-6 relative z-10">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
                   <span className="text-gray-900 block">Trade Power</span>
-                  <span className="bg-watt-gradient bg-clip-text text-transparent block mt-2">
+                  <span className="text-watt-primary block mt-2">
                     Infrastructure
                   </span>
                 </h1>
@@ -248,7 +248,7 @@ export const VoltMarketHomepage: React.FC = () => {
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Real-Time Mining
-              <span className="bg-watt-gradient bg-clip-text text-transparent block">
+              <span className="text-watt-secondary block">
                 Profitability
               </span>
             </h2>
@@ -275,7 +275,7 @@ export const VoltMarketHomepage: React.FC = () => {
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Premium Power
-              <span className="bg-watt-gradient bg-clip-text text-transparent block">
+              <span className="text-watt-accent block">
                 Infrastructure
               </span>
             </h2>
@@ -345,7 +345,7 @@ export const VoltMarketHomepage: React.FC = () => {
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Market
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
+              <span className="text-blue-600 block">
                 Intelligence
               </span>
             </h2>
