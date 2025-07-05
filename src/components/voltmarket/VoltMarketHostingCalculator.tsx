@@ -99,7 +99,7 @@ export const VoltMarketHostingCalculator = () => {
   }, [btcPrice, calculationMode, hashrate, powerDraw, hostingRate, energyRate, initialInvestment]);
 
   return (
-    <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-blue-50/50 border-0 shadow-lg">
+    <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-blue-50/50 border-0 shadow-lg min-h-[800px]">
       <div className="absolute inset-0 bg-gradient-to-br from-watt-primary/5 to-watt-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
       
       <CardHeader className="relative pb-4">
