@@ -168,11 +168,16 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
     try {
       console.log('Starting signup process...');
       
+      // Sign up user with Supabase auth (disable email confirmation for now)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/voltmarket`
+          emailRedirectTo: `${window.location.origin}/voltmarket/dashboard`,
+          data: {
+            role: userData.role,
+            company_name: userData.company_name
+          }
         }
       });
 
@@ -183,8 +188,8 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
       
       console.log('User created:', data.user?.id);
 
-      if (data.user && data.session) {
-        // User is immediately signed in, create profile
+      if (data.user) {
+        // Create profile
         console.log('Creating profile for user:', data.user.id);
         
         const profileResult = await createProfile(data.user.id, userData);
@@ -195,6 +200,31 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         
         console.log('Profile created successfully');
         setProfile(profileResult.data);
+
+        // Send custom verification email
+        try {
+          const response = await fetch(`https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/send-verification-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE`,
+            },
+            body: JSON.stringify({
+              email: data.user.email,
+              user_id: data.user.id,
+              is_resend: false
+            }),
+          });
+
+          if (!response.ok) {
+            console.error('Failed to send verification email');
+          } else {
+            console.log('Verification email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Error sending verification email:', emailError);
+          // Don't fail signup if email sending fails
+        }
       }
 
       return { data, error: null };
@@ -258,17 +288,32 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const resendEmailVerification = async () => {
-    if (!user?.email) return { error: new Error('No user email found') };
+    if (!user?.email || !user?.id) return { error: new Error('No user found') };
 
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/voltmarket`
+    try {
+      const response = await fetch(`https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/send-verification-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE`,
+        },
+        body: JSON.stringify({
+          email: user.email,
+          user_id: user.id,
+          is_resend: true
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return { error: new Error(errorData.error || 'Failed to send verification email') };
       }
-    });
 
-    return { error };
+      return { error: null };
+    } catch (err) {
+      console.error('Error resending verification email:', err);
+      return { error: err as Error };
+    }
   };
 
   const value = {

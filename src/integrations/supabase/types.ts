@@ -2284,6 +2284,36 @@ export type Database = {
         }
         Relationships: []
       }
+      voltmarket_email_verification_tokens: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       voltmarket_listing_images: {
         Row: {
           caption: string | null
@@ -3057,6 +3087,10 @@ export type Database = {
       bulk_delete_verified_sites: {
         Args: { site_ids: string[] }
         Returns: number
+      }
+      clean_expired_verification_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       restore_verified_site: {
         Args: { site_id: string }

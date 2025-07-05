@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useToast } from '@/hooks/use-toast';
+import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { Link } from 'react-router-dom';
 import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff, Mail } from 'lucide-react';
 
@@ -178,6 +179,9 @@ export const VoltMarketDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Email Verification Banner */}
+        <EmailVerificationBanner variant="banner" />
+        
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back{profile.company_name ? `, ${profile.company_name}` : ''}!
