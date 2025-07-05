@@ -7,6 +7,7 @@ import { VoltMarketListings } from '@/components/voltmarket/VoltMarketListings';
 import { VoltMarketDashboard } from '@/components/voltmarket/VoltMarketDashboard';
 import { VoltMarketProfile } from '@/components/voltmarket/VoltMarketProfile';
 import { VoltMarketCreateListing } from '@/components/voltmarket/VoltMarketCreateListing';
+import { VoltMarketEditListing } from '@/components/voltmarket/VoltMarketEditListing';
 import { VoltMarketListingDetail } from '@/components/voltmarket/VoltMarketListingDetail';
 import { VoltMarketMessages } from '@/components/voltmarket/VoltMarketMessages';
 import { VoltMarketEnhancedMessages } from '@/components/voltmarket/VoltMarketEnhancedMessages';
@@ -80,6 +81,11 @@ export const VoltMarket = () => {
       <Route path="/create-listing" element={
         <VoltMarketLayout>
           {user ? <VoltMarketCreateListing /> : <WattbytesAuth />}
+        </VoltMarketLayout>
+      } />
+      <Route path="/edit-listing/:id" element={
+        <VoltMarketLayout>
+          {user ? <VoltMarketEditListing /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/messages" element={
