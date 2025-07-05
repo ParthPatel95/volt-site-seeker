@@ -67,11 +67,13 @@ export default {
 				'electric-purple': 'hsl(var(--watt-secondary))',
 				'electric-yellow': 'hsl(var(--watt-accent))',
 				'neon-green': 'hsl(var(--watt-success))',
+				'warm-orange': 'hsl(var(--watt-warning))',
 				'bright-cyan': 'hsl(var(--watt-primary))',
 				'watt-primary': 'hsl(var(--watt-primary))',
 				'watt-secondary': 'hsl(var(--watt-secondary))',
 				'watt-accent': 'hsl(var(--watt-accent))',
 				'watt-success': 'hsl(var(--watt-success))',
+				'watt-warning': 'hsl(var(--watt-warning))',
 				'watt-dark': 'hsl(var(--watt-dark))',
 				'watt-light': 'hsl(var(--watt-light))'
 			},

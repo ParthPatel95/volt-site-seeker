@@ -51,6 +51,7 @@
     --watt-secondary: 280 100% 60%;      /* Electric Purple #9933FF */
     --watt-accent: 45 100% 50%;          /* Energy Yellow #FFCC00 */
     --watt-success: 140 100% 40%;        /* Green #00CC66 */
+    --watt-warning: 30 100% 60%;         /* Warm Orange #FF9933 */
     --watt-dark: 220 30% 10%;            /* Dark Navy #1A1F2E */
     --watt-light: 220 50% 95%;           /* Light Blue #F0F4FF */
     --watt-gradient: linear-gradient(135deg, hsl(var(--watt-primary)), hsl(var(--watt-secondary)));
@@ -122,6 +123,14 @@
     color: hsl(var(--watt-accent));
   }
   
+  .text-watt-success {
+    color: hsl(var(--watt-success));
+  }
+  
+  .text-watt-warning {
+    color: hsl(var(--watt-warning));
+  }
+  
   .bg-watt-primary {
     background-color: hsl(var(--watt-primary));
   }
@@ -134,12 +143,24 @@
     background-color: hsl(var(--watt-accent));
   }
   
+  .bg-watt-success {
+    background-color: hsl(var(--watt-success));
+  }
+  
+  .bg-watt-warning {
+    background-color: hsl(var(--watt-warning));
+  }
+  
   .bg-watt-gradient {
     background: var(--watt-gradient);
   }
   
   .border-watt-primary {
     border-color: hsl(var(--watt-primary));
+  }
+  
+  .border-watt-warning {
+    border-color: hsl(var(--watt-warning));
   }
   
   .shadow-watt-glow {
