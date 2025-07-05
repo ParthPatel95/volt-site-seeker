@@ -36,8 +36,18 @@ export const VoltMarketHeader: React.FC = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/voltmarket');
+    console.log('Header sign out clicked');
+    try {
+      const result = await signOut();
+      if (result.error) {
+        console.error('Sign out failed:', result.error);
+      } else {
+        console.log('Navigating to /voltmarket after sign out');
+        navigate('/voltmarket');
+      }
+    } catch (err) {
+      console.error('Sign out handler error:', err);
+    }
   };
 
   return (

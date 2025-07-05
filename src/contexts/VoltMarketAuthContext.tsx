@@ -212,8 +212,23 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    console.log('Attempting to sign out...');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+      } else {
+        console.log('Sign out successful');
+        // Clear local state immediately
+        setUser(null);
+        setProfile(null);
+        setSession(null);
+      }
+      return { error };
+    } catch (err) {
+      console.error('Unexpected sign out error:', err);
+      return { error: err as Error };
+    }
   };
 
   const updateProfile = async (updates: Partial<VoltMarketProfile>) => {
