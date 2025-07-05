@@ -30,13 +30,25 @@ export const VoltMarketImageUpload: React.FC<VoltMarketImageUploadProps> = ({
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = listingId ? `${listingId}/${fileName}` : fileName;
+      
+      // Get current user for folder structure
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('Error getting user for upload:', userError);
+        return null;
+      }
+
+      // Use user ID as folder when no listing ID is available
+      const filePath = listingId ? `${listingId}/${fileName}` : `${user.id}/${fileName}`;
 
       const { error } = await supabase.storage
         .from(bucket)
         .upload(filePath, file);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
 
       const { data } = supabase.storage
         .from(bucket)
@@ -92,10 +104,13 @@ export const VoltMarketImageUpload: React.FC<VoltMarketImageUploadProps> = ({
 
   const removeImage = async (imageUrl: string, index: number) => {
     try {
-      // Extract file path from URL
+      // Extract file path from URL - get the last two parts (folder/filename)
       const urlParts = imageUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
-      const filePath = listingId ? `${listingId}/${fileName}` : fileName;
+      const folderName = urlParts[urlParts.length - 2];
+      
+      // Reconstruct the full path used during upload
+      const filePath = `${folderName}/${fileName}`;
 
       await supabase.storage
         .from(bucket)
@@ -110,6 +125,7 @@ export const VoltMarketImageUpload: React.FC<VoltMarketImageUploadProps> = ({
         description: "Image deleted successfully"
       });
     } catch (error) {
+      console.error('Error removing image:', error);
       toast({
         title: "Delete failed",
         description: "Failed to delete image",
