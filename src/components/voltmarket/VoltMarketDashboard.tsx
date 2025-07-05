@@ -1,13 +1,64 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
+import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 
 export const VoltMarketDashboard: React.FC = () => {
   const { profile, user, loading, createProfile } = useVoltMarketAuth();
+  const { userListings, fetchUserListings, deleteListing, updateListingStatus, loading: listingsLoading } = useVoltMarketListings();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (profile?.id) {
+      fetchUserListings(profile.id);
+    }
+  }, [profile?.id]);
+
+  const handleDeleteListing = async (listingId: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    const result = await deleteListing(listingId);
+    if (result.success) {
+      toast({
+        title: "Listing deleted",
+        description: "Your listing has been deleted successfully"
+      });
+    } else {
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete listing. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleToggleStatus = async (listingId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const result = await updateListingStatus(listingId, newStatus as "active" | "inactive");
+    
+    if (result.success) {
+      toast({
+        title: "Status updated",
+        description: `Listing is now ${newStatus}`
+      });
+    } else {
+      toast({
+        title: "Update failed",
+        description: "Failed to update listing status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const activeListings = userListings.filter(listing => listing.status === 'active').length;
 
   const handleCreateProfile = async () => {
     if (!user) return;
@@ -105,7 +156,7 @@ export const VoltMarketDashboard: React.FC = () => {
               <Search className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{activeListings}</div>
               <p className="text-xs text-muted-foreground">
                 listings currently active
               </p>
@@ -154,7 +205,86 @@ export const VoltMarketDashboard: React.FC = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Your Listings ({userListings.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {listingsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p>Loading your listings...</p>
+                </div>
+              ) : userListings.length === 0 ? (
+                <div className="text-center py-8">
+                  <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No listings yet</h3>
+                  <p className="text-gray-600 mb-4">Start by creating your first listing</p>
+                  {profile.role === 'seller' && (
+                    <Link to="/voltmarket/create-listing">
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Listing
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {userListings.map((listing) => (
+                    <div key={listing.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{listing.title}</h3>
+                            <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
+                              {listing.status}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-600 mb-2 line-clamp-2">{listing.description}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>${listing.asking_price?.toLocaleString()}</span>
+                            <span>{listing.power_capacity_mw} MW</span>
+                            <span>{listing.location}</span>
+                            <span>Created {new Date(listing.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleStatus(listing.id, listing.status)}
+                          >
+                            {listing.status === 'active' ? (
+                              <><EyeOff className="w-4 h-4 mr-1" /> Deactivate</>
+                            ) : (
+                              <><Eye className="w-4 h-4 mr-1" /> Activate</>
+                            )}
+                          </Button>
+                          <Link to={`/voltmarket/edit-listing/${listing.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Edit className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteListing(listing.id, listing.title)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
@@ -191,13 +321,16 @@ export const VoltMarketDashboard: React.FC = () => {
               </Link>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Getting Started Section */}
+        <div className="mt-8">
           <Card>
             <CardHeader>
               <CardTitle>Getting Started</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {!profile.is_email_verified && (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <h3 className="font-medium text-yellow-800">Verify Your Email</h3>
@@ -221,7 +354,7 @@ export const VoltMarketDashboard: React.FC = () => {
                   </div>
                 )}
                 
-                {profile.role === 'seller' && (
+                {profile.role === 'seller' && userListings.length === 0 && (
                   <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                     <h3 className="font-medium text-green-800">Create Your First Listing</h3>
                     <p className="text-sm text-green-700 mt-1">

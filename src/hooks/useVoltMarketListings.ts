@@ -1,6 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
+
+type VoltMarketListingStatus = Database['public']['Enums']['voltmarket_listing_status'];
 
 interface VoltMarketListing {
   id: string;
@@ -18,6 +21,7 @@ interface VoltMarketListing {
 
 export const useVoltMarketListings = () => {
   const [listings, setListings] = useState<VoltMarketListing[]>([]);
+  const [userListings, setUserListings] = useState<VoltMarketListing[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchListings = async () => {
@@ -35,6 +39,69 @@ export const useVoltMarketListings = () => {
       console.error('Error fetching listings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserListings = async (sellerId: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('voltmarket_listings')
+        .select('*')
+        .eq('seller_id', sellerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserListings(data || []);
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching user listings:', error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteListing = async (listingId: string) => {
+    try {
+      const { error } = await supabase
+        .from('voltmarket_listings')
+        .delete()
+        .eq('id', listingId);
+
+      if (error) throw error;
+      
+      // Remove from local state
+      setUserListings(prev => prev.filter(listing => listing.id !== listingId));
+      setListings(prev => prev.filter(listing => listing.id !== listingId));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      return { success: false, error };
+    }
+  };
+
+  const updateListingStatus = async (listingId: string, status: VoltMarketListingStatus) => {
+    try {
+      const { error } = await supabase
+        .from('voltmarket_listings')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', listingId);
+
+      if (error) throw error;
+      
+      // Update local state
+      const updateListing = (listing: VoltMarketListing) => 
+        listing.id === listingId ? { ...listing, status } : listing;
+      
+      setUserListings(prev => prev.map(updateListing));
+      setListings(prev => prev.map(updateListing));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating listing status:', error);
+      return { success: false, error };
     }
   };
 
@@ -93,8 +160,12 @@ export const useVoltMarketListings = () => {
 
   return {
     listings,
+    userListings,
     loading,
     fetchListings,
-    searchListings
+    fetchUserListings,
+    searchListings,
+    deleteListing,
+    updateListingStatus
   };
 };
