@@ -42,7 +42,7 @@ export const VoltMarketListings: React.FC = () => {
         .from('voltmarket_listings')
         .select(`
           *,
-          seller_profile:voltmarket_profiles!seller_id(company_name, is_id_verified)
+          voltmarket_profiles!seller_id(company_name, is_id_verified)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -54,7 +54,7 @@ export const VoltMarketListings: React.FC = () => {
       // Transform the data to match the expected interface
       const transformedData = data?.map(listing => ({
         ...listing,
-        voltmarket_profiles: listing.seller_profile
+        voltmarket_profiles: listing.voltmarket_profiles
       })) || [];
       
       console.log('Transformed listings:', transformedData);

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { 
   Battery, 
   Mail, 
@@ -17,7 +18,8 @@ import {
   Shield,
   CheckCircle,
   AlertCircle,
-  User
+  User,
+  Building2
 } from 'lucide-react';
 
 export const WattbytesAuth: React.FC = () => {
@@ -25,7 +27,10 @@ export const WattbytesAuth: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
+  const [sellerType, setSellerType] = useState<'site_owner' | 'broker' | 'realtor' | 'equipment_vendor'>('site_owner');
   const navigate = useNavigate();
+  const { user, signIn, signUp, loading: authLoading } = useVoltMarketAuth();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -37,14 +42,10 @@ export const WattbytesAuth: React.FC = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/voltmarket/dashboard');
-      }
-    };
-    checkUser();
-  }, [navigate]);
+    if (user && !authLoading) {
+      navigate('/voltmarket/dashboard');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -87,10 +88,7 @@ export const WattbytesAuth: React.FC = () => {
     try {
       if (isLogin) {
         // Sign in
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
+        const { data, error } = await signIn(formData.email, formData.password);
 
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
@@ -100,20 +98,15 @@ export const WattbytesAuth: React.FC = () => {
           }
         } else if (data.session) {
           setMessage({ type: 'success', text: 'Welcome back! Redirecting...' });
-          navigate('/voltmarket/dashboard');
+          setTimeout(() => navigate('/voltmarket/dashboard'), 500);
         }
       } else {
         // Sign up
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/voltmarket/dashboard`,
-            data: {
-              full_name: formData.fullName,
-              company: formData.company
-            }
-          }
+        const { data, error } = await signUp(formData.email, formData.password, {
+          role,
+          seller_type: role === 'seller' ? sellerType : undefined,
+          company_name: formData.company,
+          phone_number: undefined
         });
 
         if (error) {
@@ -144,6 +137,8 @@ export const WattbytesAuth: React.FC = () => {
       fullName: '',
       company: ''
     });
+    setRole('buyer');
+    setSellerType('site_owner');
     setMessage({ type: '', text: '' });
   };
 
@@ -288,6 +283,44 @@ export const WattbytesAuth: React.FC = () => {
                         placeholder="Enter your company name"
                       />
                     </div>
+                  </div>
+                )}
+
+                {/* Role Selection (Sign Up Only) */}
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <Label htmlFor="role" className="text-sm font-medium text-gray-700">
+                      I am a *
+                    </Label>
+                    <Select value={role} onValueChange={(value: 'buyer' | 'seller') => setRole(value)}>
+                      <SelectTrigger className="h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="buyer">Buyer - Looking for sites/equipment</SelectItem>
+                        <SelectItem value="seller">Seller - Offering sites/equipment</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Seller Type (Sign Up Only - Sellers) */}
+                {!isLogin && role === 'seller' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="sellerType" className="text-sm font-medium text-gray-700">
+                      Seller Type *
+                    </Label>
+                    <Select value={sellerType} onValueChange={(value: 'site_owner' | 'broker' | 'realtor' | 'equipment_vendor') => setSellerType(value)}>
+                      <SelectTrigger className="h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="site_owner">Site Owner</SelectItem>
+                        <SelectItem value="broker">Broker</SelectItem>
+                        <SelectItem value="realtor">Realtor</SelectItem>
+                        <SelectItem value="equipment_vendor">Equipment Vendor</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
