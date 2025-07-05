@@ -49,6 +49,7 @@ export const VoltMarketCreateListing: React.FC = () => {
     console.log('Form data:', formData);
     
     if (!profile) {
+      console.error('No profile found');
       toast({
         title: "Authentication Required",
         description: "Please sign in to create a listing",
@@ -59,6 +60,7 @@ export const VoltMarketCreateListing: React.FC = () => {
 
     // Validate required fields
     if (!formData.title || !formData.location || !formData.listing_type) {
+      console.error('Missing required fields:', { title: formData.title, location: formData.location, listing_type: formData.listing_type });
       toast({
         title: "Missing Required Fields",
         description: "Please fill in all required fields",

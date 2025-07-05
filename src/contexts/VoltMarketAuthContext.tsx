@@ -214,15 +214,19 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
   const signOut = async () => {
     console.log('Attempting to sign out...');
     try {
+      // Clear local state FIRST to ensure immediate UI update
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      setLoading(false);
+      
+      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
+        // Even if there's an error, we've cleared local state
       } else {
         console.log('Sign out successful');
-        // Clear local state immediately
-        setUser(null);
-        setProfile(null);
-        setSession(null);
       }
       return { error };
     } catch (err) {
