@@ -100,7 +100,7 @@ export const WattbytesAuth: React.FC = () => {
           }
         } else if (data.session) {
           setMessage({ type: 'success', text: 'Welcome back! Redirecting...' });
-          setTimeout(() => navigate('/voltmarket/dashboard'), 1500);
+          navigate('/voltmarket/dashboard');
         }
       } else {
         // Sign up
