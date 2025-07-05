@@ -17,14 +17,25 @@ export const VoltMarketDashboard: React.FC = () => {
       const result = await createProfile(user.id, { role: 'buyer' });
       
       if (result.error) {
-        // If duplicate key error, the profile already exists - try to fetch it
-        if (result.error.message?.includes('duplicate key')) {
+        console.error('Profile creation error:', result.error);
+        
+        // Check for duplicate key error (profile already exists)
+        const errorMessage = result.error.message || result.error.toString();
+        if (errorMessage.includes('duplicate key') || errorMessage.includes('voltmarket_profiles_user_id_key')) {
           console.log('Profile already exists, refreshing...');
           window.location.reload(); // Simple reload to refresh the profile state
+        } else {
+          // Show other errors to user
+          alert(`Error creating profile: ${errorMessage}`);
         }
+      } else {
+        console.log('Profile created successfully');
+        // Refresh to show the new profile
+        window.location.reload();
       }
     } catch (error) {
-      console.error('Error creating profile:', error);
+      console.error('Unexpected error creating profile:', error);
+      alert('An unexpected error occurred while creating your profile. Please try again.');
     }
   };
 
