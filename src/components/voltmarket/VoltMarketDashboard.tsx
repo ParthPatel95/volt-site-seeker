@@ -3,11 +3,49 @@ import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff, Mail } from 'lucide-react';
+
+const ResendVerificationButton: React.FC = () => {
+  const { resendEmailVerification } = useVoltMarketAuth();
+  const { toast } = useToast();
+  const [sending, setSending] = React.useState(false);
+
+  const handleResend = async () => {
+    setSending(true);
+    const { error } = await resendEmailVerification();
+    
+    if (error) {
+      toast({
+        title: "Failed to resend",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Verification email sent",
+        description: "Please check your email for the verification link."
+      });
+    }
+    setSending(false);
+  };
+
+  return (
+    <Button 
+      onClick={handleResend} 
+      disabled={sending}
+      size="sm"
+      variant="outline"
+      className="border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+    >
+      <Mail className="w-4 h-4 mr-2" />
+      {sending ? 'Sending...' : 'Resend Verification Email'}
+    </Button>
+  );
+};
 
 export const VoltMarketDashboard: React.FC = () => {
   const { profile, user, loading, createProfile } = useVoltMarketAuth();
@@ -334,9 +372,10 @@ export const VoltMarketDashboard: React.FC = () => {
                 {!profile.is_email_verified && (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <h3 className="font-medium text-yellow-800">Verify Your Email</h3>
-                    <p className="text-sm text-yellow-700 mt-1">
+                    <p className="text-sm text-yellow-700 mt-1 mb-3">
                       Check your email and click the verification link to complete your account setup.
                     </p>
+                    <ResendVerificationButton />
                   </div>
                 )}
                 

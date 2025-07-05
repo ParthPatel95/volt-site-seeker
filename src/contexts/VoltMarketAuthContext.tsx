@@ -29,6 +29,7 @@ interface VoltMarketAuthContextType {
   signOut: () => Promise<any>;
   updateProfile: (updates: Partial<VoltMarketProfile>) => Promise<any>;
   createProfile: (userId: string, userData: any) => Promise<any>;
+  resendEmailVerification: () => Promise<any>;
 }
 
 const VoltMarketAuthContext = createContext<VoltMarketAuthContextType | undefined>(undefined);
@@ -252,6 +253,20 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
     return { data, error };
   };
 
+  const resendEmailVerification = async () => {
+    if (!user?.email) return { error: new Error('No user email found') };
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/voltmarket`
+      }
+    });
+
+    return { error };
+  };
+
   const value = {
     user,
     session,
@@ -262,6 +277,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
     signOut,
     updateProfile,
     createProfile,
+    resendEmailVerification,
   };
 
   return (
