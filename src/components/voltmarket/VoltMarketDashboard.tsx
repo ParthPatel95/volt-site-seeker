@@ -12,8 +12,20 @@ export const VoltMarketDashboard: React.FC = () => {
   const handleCreateProfile = async () => {
     if (!user) return;
     
-    // Create a basic buyer profile if none exists
-    await createProfile(user.id, { role: 'buyer' });
+    try {
+      // Try to create a basic buyer profile if none exists
+      const result = await createProfile(user.id, { role: 'buyer' });
+      
+      if (result.error) {
+        // If duplicate key error, the profile already exists - try to fetch it
+        if (result.error.message?.includes('duplicate key')) {
+          console.log('Profile already exists, refreshing...');
+          window.location.reload(); // Simple reload to refresh the profile state
+        }
+      }
+    } catch (error) {
+      console.error('Error creating profile:', error);
+    }
   };
 
   if (loading) {
