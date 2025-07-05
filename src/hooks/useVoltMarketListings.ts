@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -24,7 +24,7 @@ export const useVoltMarketListings = () => {
   const [userListings, setUserListings] = useState<VoltMarketListing[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -40,9 +40,9 @@ export const useVoltMarketListings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchUserListings = async (sellerId: string) => {
+  const fetchUserListings = useCallback(async (sellerId: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -60,9 +60,9 @@ export const useVoltMarketListings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const deleteListing = async (listingId: string) => {
+  const deleteListing = useCallback(async (listingId: string) => {
     try {
       const { error } = await supabase
         .from('voltmarket_listings')
@@ -80,9 +80,9 @@ export const useVoltMarketListings = () => {
       console.error('Error deleting listing:', error);
       return { success: false, error };
     }
-  };
+  }, []);
 
-  const updateListingStatus = async (listingId: string, status: VoltMarketListingStatus) => {
+  const updateListingStatus = useCallback(async (listingId: string, status: VoltMarketListingStatus) => {
     try {
       const { error } = await supabase
         .from('voltmarket_listings')
@@ -103,9 +103,9 @@ export const useVoltMarketListings = () => {
       console.error('Error updating listing status:', error);
       return { success: false, error };
     }
-  };
+  }, []);
 
-  const searchListings = async (criteria: any) => {
+  const searchListings = useCallback(async (criteria: any) => {
     setLoading(true);
     try {
       let query = supabase
@@ -152,11 +152,11 @@ export const useVoltMarketListings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchListings();
-  }, []);
+  }, [fetchListings]);
 
   return {
     listings,

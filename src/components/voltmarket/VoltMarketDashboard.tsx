@@ -18,7 +18,7 @@ export const VoltMarketDashboard: React.FC = () => {
     if (profile?.id) {
       fetchUserListings(profile.id);
     }
-  }, [profile?.id]);
+  }, [profile?.id, fetchUserListings]);
 
   const handleDeleteListing = async (listingId: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
