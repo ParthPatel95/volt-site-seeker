@@ -129,9 +129,12 @@ export const VoltMarketQATest: React.FC = () => {
   // Individual test functions
   const testAuthentication = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
     try {
-      const { data: session } = await supabase.auth.getSession();
+      const { data: session, error } = await supabase.auth.getSession();
+      if (error) {
+        return { status: 'failed', message: `Auth error: ${error.message}` };
+      }
       if (!session.session) {
-        return { status: 'failed', message: 'No active user session found' };
+        return { status: 'failed', message: 'No active user session - please sign in first' };
       }
       return { status: 'passed', message: 'User session active and valid' };
     } catch (error) {
@@ -140,10 +143,18 @@ export const VoltMarketQATest: React.FC = () => {
   };
 
   const testProfileAccess = async (): Promise<Omit<TestResult, 'name' | 'category'>> =>  {
-    if (!profile?.user_id) {
-      return { status: 'failed', message: 'Profile data not accessible' };
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Profile access requires authentication - please sign in first' };
+      }
+      if (!profile?.user_id) {
+        return { status: 'failed', message: 'Profile data not accessible or incomplete' };
+      }
+      return { status: 'passed', message: 'Profile access working correctly' };
+    } catch (error) {
+      return { status: 'failed', message: 'Profile access test error' };
     }
-    return { status: 'passed', message: 'Profile access working correctly' };
   };
 
   const testRealtimeConnection = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
@@ -171,18 +182,28 @@ export const VoltMarketQATest: React.FC = () => {
   };
 
   const testReviewSystem = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'Review system requires authentication' };
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Review system requires authentication - please sign in first' };
+      }
+      return { status: 'passed', message: 'Review system accessible to authenticated users' };
+    } catch (error) {
+      return { status: 'failed', message: 'Review system test error' };
     }
-    return { status: 'passed', message: 'Review system accessible' };
   };
 
   const testReviewStats = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'Cannot test review stats without authentication' };
-    }
-    
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Review stats requires authentication - please sign in first' };
+      }
+      
+      if (!profile) {
+        return { status: 'failed', message: 'Cannot test review stats without profile' };
+      }
+      
       const { data, error } = await getReviewStats(profile.id);
       if (error) {
         return { status: 'failed', message: `Review stats error: ${error}` };
@@ -194,11 +215,12 @@ export const VoltMarketQATest: React.FC = () => {
   };
 
   const testVerificationSystem = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'Verification system requires authentication' };
-    }
-    
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Verification system requires authentication - please sign in first' };
+      }
+      
       const { data, error } = await getVerifications();
       if (error) {
         return { status: 'failed', message: `Verification system error: ${error}` };
@@ -222,11 +244,12 @@ export const VoltMarketQATest: React.FC = () => {
   };
 
   const testSavedSearches = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'Saved searches require authentication' };
-    }
-    
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Saved searches requires authentication - please sign in first' };
+      }
+      
       const { data, error } = await getSavedSearches();
       if (error) {
         return { status: 'failed', message: `Saved searches error: ${error}` };
@@ -275,27 +298,42 @@ export const VoltMarketQATest: React.FC = () => {
   };
 
   const testMessagingSystem = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'Messaging requires authentication' };
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Messaging requires authentication - please sign in first' };
+      }
+      return { status: 'passed', message: 'Messaging system accessible to authenticated users' };
+    } catch (error) {
+      return { status: 'failed', message: 'Messaging system test error' };
     }
-    return { status: 'passed', message: 'Messaging system accessible to authenticated users' };
   };
 
   const testWatchlistSystem = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'Watchlist requires authentication' };
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Watchlist requires authentication - please sign in first' };
+      }
+      return { status: 'passed', message: 'Watchlist system accessible to authenticated users' };
+    } catch (error) {
+      return { status: 'failed', message: 'Watchlist system test error' };
     }
-    return { status: 'passed', message: 'Watchlist system accessible to authenticated users' };
   };
 
   const testProfileManagement = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
-    if (!profile) {
-      return { status: 'failed', message: 'Profile management requires authentication' };
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        return { status: 'failed', message: 'Profile management requires authentication - please sign in first' };
+      }
+      if (!profile?.user_id || !profile?.role) {
+        return { status: 'failed', message: 'Profile data incomplete or missing' };
+      }
+      return { status: 'passed', message: `Profile complete: ${profile.role} role with user ID` };
+    } catch (error) {
+      return { status: 'failed', message: 'Profile management test error' };
     }
-    if (!profile.user_id || !profile.role) {
-      return { status: 'failed', message: 'Profile data incomplete' };
-    }
-    return { status: 'passed', message: `Profile complete: ${profile.role} role with user ID` };
   };
 
   const testSampleData = async (): Promise<Omit<TestResult, 'name' | 'category'>> => {
