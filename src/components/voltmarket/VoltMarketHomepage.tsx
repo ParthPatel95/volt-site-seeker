@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { BTCMiningROIWidget } from '@/components/landing/BTCMiningROIWidget';
+import { VoltMarketHostingCalculator } from './VoltMarketHostingCalculator';
+import { VoltMarketEnergyData } from './VoltMarketEnergyData';
 import { 
   Building2, 
   Users, 
@@ -238,28 +239,31 @@ export const VoltMarketHomepage: React.FC = () => {
         </div>
       </section>
 
-      {/* BTC Mining ROI Widget Section */}
+      {/* Mining Analytics & Energy Data Section */}
       <section className="py-20 bg-gradient-to-br from-watt-light/30 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-watt-primary/10 text-watt-primary border-watt-primary/20">
-              <Bitcoin className="w-4 h-4 mr-2" />
-              Mining Analytics
+              <Sparkles className="w-4 h-4 mr-2" />
+              Live Analytics
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Real-Time Mining
+              Mining Economics &
               <span className="text-watt-secondary block">
-                Profitability
+                Market Intelligence
               </span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Calculate Bitcoin mining returns with live market data, energy costs, and difficulty adjustments
+              Real-time profitability calculations and energy market data from North America's largest power grids
             </p>
           </div>
           
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-watt-glow border border-watt-primary/10">
-              <BTCMiningROIWidget />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-2 shadow-watt-glow border border-watt-primary/10">
+              <VoltMarketHostingCalculator />
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-2 shadow-watt-glow border border-watt-success/10">
+              <VoltMarketEnergyData />
             </div>
           </div>
         </div>
