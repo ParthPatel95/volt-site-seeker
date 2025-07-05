@@ -96,92 +96,110 @@ export const BTCMiningROIWidget = () => {
   };
 
   return (
-    <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg">
-      <div className="absolute inset-0 bg-watt-gradient opacity-0 group-hover:opacity-5 transition-opacity rounded-lg"></div>
-      <CardHeader className="relative pb-4">
-        <div className="flex justify-between items-start mb-4">
-          <Badge className="bg-watt-success/10 text-watt-success border-watt-success/20">
-            <div className="w-2 h-2 bg-watt-success rounded-full mr-2 animate-pulse"></div>
-            Live
-          </Badge>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-watt-primary">${btcData.price.toLocaleString()}</div>
-            <div className="text-sm text-gray-500">BTC Price</div>
+    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-neon-green/30 transition-all duration-300 group">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Bitcoin className="w-6 h-6 text-neon-green group-hover:scale-110 transition-transform duration-300" />
+            <CardTitle className="text-white text-xl">BTC Mining ROI Lab</CardTitle>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
+            <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">Live</Badge>
           </div>
         </div>
-        <CardTitle className="text-xl group-hover:text-watt-primary transition-colors leading-tight">
-          BTC Mining ROI Lab
-        </CardTitle>
+        <p className="text-slate-300 text-sm">Calculate mining profitability with real-time data</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Bitcoin Data */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-gradient-to-br from-watt-primary/5 to-watt-primary/10 rounded-lg p-4 hover:from-watt-primary/10 hover:to-watt-primary/15 transition-colors duration-200 border border-watt-primary/20">
+        {/* Live Bitcoin Data - 2x2 Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30">
             <div className="flex items-center space-x-2 mb-2">
-              <Bitcoin className="w-4 h-4 text-watt-primary" />
-              <span className="text-gray-600 text-sm">BTC Price</span>
+              <Bitcoin className="w-4 h-4 text-electric-blue flex-shrink-0" />
+              <span className="text-xs text-slate-400">BTC Price</span>
             </div>
-            <div className="text-2xl font-bold text-watt-primary">
+            <div className="text-lg font-bold text-electric-blue break-words">
               {isLoading ? (
-                <div className="animate-pulse bg-watt-primary/20 h-8 w-24 rounded"></div>
+                <div className="animate-pulse bg-electric-blue/20 h-6 w-20 rounded"></div>
               ) : (
                 `$${btcData.price.toLocaleString()}`
               )}
             </div>
-            <div className="text-xs text-gray-500 mt-1">Live Market Price</div>
           </div>
           
-          <div className="bg-gradient-to-br from-watt-secondary/5 to-watt-secondary/10 rounded-lg p-4 hover:from-watt-secondary/10 hover:to-watt-secondary/15 transition-colors duration-200 border border-watt-secondary/20">
+          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30">
             <div className="flex items-center space-x-2 mb-2">
-              <Hash className="w-4 h-4 text-watt-secondary" />
-              <span className="text-gray-600 text-sm">Difficulty</span>
+              <Hash className="w-4 h-4 text-electric-yellow flex-shrink-0" />
+              <span className="text-xs text-slate-400">Difficulty</span>
             </div>
-            <div className="text-2xl font-bold text-watt-secondary">
+            <div className="text-lg font-bold text-electric-yellow break-words">
               {isLoading ? (
-                <div className="animate-pulse bg-watt-secondary/20 h-8 w-20 rounded"></div>
+                <div className="animate-pulse bg-electric-yellow/20 h-6 w-16 rounded"></div>
               ) : (
                 `${(btcData.difficulty / 1e12).toFixed(1)}T`
               )}
             </div>
-            <div className="text-xs text-gray-500 mt-1">Network Difficulty</div>
+          </div>
+          
+          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-neon-green flex-shrink-0" />
+              <span className="text-xs text-slate-400">Daily Profit</span>
+            </div>
+            <div className="text-lg font-bold text-neon-green break-words">
+              {profitability ? `$${profitability.dailyProfit.toFixed(2)}` : '$0.00'}
+            </div>
+          </div>
+          
+          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30">
+            <div className="flex items-center space-x-2 mb-2">
+              <Zap className="w-4 h-4 text-warm-orange flex-shrink-0" />
+              <span className="text-xs text-slate-400">Monthly</span>
+            </div>
+            <div className="text-lg font-bold text-warm-orange break-words">
+              {profitability ? `$${profitability.monthlyProfit.toFixed(0)}` : '$0'}
+            </div>
           </div>
         </div>
 
-        {/* User Inputs */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Mining Setup</h3>
+        {/* Mining Setup Configuration */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-slate-200">Your Mining Setup</h4>
+            <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">Configure</Badge>
+          </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm text-gray-600 mb-2">Hashrate (TH/s)</label>
+              <label className="block text-xs text-slate-400 mb-1">Hashrate (TH/s)</label>
               <Input
                 type="number"
                 value={hashrate}
                 onChange={(e) => setHashrate(e.target.value)}
-                className="bg-white/70 border-watt-primary/20 text-gray-900 focus:border-watt-primary"
+                className="bg-slate-800/20 border-slate-700/30 text-white text-sm focus:border-electric-blue/50 focus:ring-electric-blue/20"
                 placeholder="200"
               />
             </div>
             
             <div>
-              <label className="block text-sm text-gray-600 mb-2">Energy Rate ($/kWh)</label>
+              <label className="block text-xs text-slate-400 mb-1">Energy ($/kWh)</label>
               <Input
                 type="number"
                 step="0.001"
                 value={energyRate}
                 onChange={(e) => setEnergyRate(e.target.value)}
-                className="bg-white/70 border-watt-primary/20 text-gray-900 focus:border-watt-primary"
+                className="bg-slate-800/20 border-slate-700/30 text-white text-sm focus:border-electric-blue/50 focus:ring-electric-blue/20"
                 placeholder="0.08"
               />
             </div>
             
             <div>
-              <label className="block text-sm text-gray-600 mb-2">Power Draw (W)</label>
+              <label className="block text-xs text-slate-400 mb-1">Power (W)</label>
               <Input
                 type="number"
                 value={powerDraw}
                 onChange={(e) => setPowerDraw(e.target.value)}
-                className="bg-white/70 border-watt-primary/20 text-gray-900 focus:border-watt-primary"
+                className="bg-slate-800/20 border-slate-700/30 text-white text-sm focus:border-electric-blue/50 focus:ring-electric-blue/20"
                 placeholder="3400"
               />
             </div>
@@ -189,52 +207,17 @@ export const BTCMiningROIWidget = () => {
           
           <Button 
             onClick={calculateProfitability}
-            className="w-full bg-watt-gradient hover:opacity-90 text-white"
+            className="w-full bg-neon-green/20 hover:bg-neon-green/30 text-neon-green border border-neon-green/30 transition-colors"
+            variant="outline"
             disabled={isLoading}
           >
             <Calculator className="w-4 h-4 mr-2" />
-            Recalculate Profitability
+            Recalculate ROI
           </Button>
         </div>
 
-        {/* Profitability Results */}
-        {profitability && (
-          <div className="space-y-4 pt-4 border-t border-watt-primary/20">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Profitability Analysis</h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-watt-success/5 to-watt-success/10 rounded-lg p-4 border border-watt-success/20">
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-watt-success" />
-                  <span className="text-gray-600 text-sm">Daily Profit</span>
-                </div>
-                <div className={`text-2xl font-bold ${profitability.dailyProfit > 0 ? 'text-watt-success' : 'text-red-500'}`}>
-                  ${profitability.dailyProfit.toFixed(2)}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Revenue: ${profitability.dailyRevenue.toFixed(2)} | 
-                  Power: ${profitability.dailyPowerCost.toFixed(2)}
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-watt-accent/5 to-watt-accent/10 rounded-lg p-4 border border-watt-accent/20">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Zap className="w-4 h-4 text-watt-accent" />
-                  <span className="text-gray-600 text-sm">Monthly Profit</span>
-                </div>
-                <div className={`text-2xl font-bold ${profitability.monthlyProfit > 0 ? 'text-watt-accent' : 'text-red-500'}`}>
-                  ${profitability.monthlyProfit.toFixed(0)}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  12-Month ROI: {profitability.yearlyROI.toFixed(1)}%
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="text-xs text-gray-500 pt-3 border-t border-watt-primary/20">
-          * Calculations assume current network conditions and do not account for difficulty changes
+        <div className="text-xs text-slate-300 pt-3 border-t border-slate-700/30">
+          * Calculations based on current network conditions. Results may vary with difficulty changes.
         </div>
       </CardContent>
     </Card>
