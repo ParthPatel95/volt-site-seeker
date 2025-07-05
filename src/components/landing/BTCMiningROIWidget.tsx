@@ -99,21 +99,19 @@ export const BTCMiningROIWidget = () => {
     <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg">
       <div className="absolute inset-0 bg-watt-gradient opacity-0 group-hover:opacity-5 transition-opacity rounded-lg"></div>
       <CardHeader className="relative pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-watt-primary/10 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-              <Bitcoin className="w-6 h-6 text-watt-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-gray-900 text-xl group-hover:text-watt-primary transition-colors">BTC Mining ROI Lab</CardTitle>
-              <p className="text-gray-600 text-sm">Calculate mining profitability with real-time data</p>
-            </div>
-          </div>
-          <Badge className="bg-watt-success/10 text-watt-success text-xs border-watt-success/20">
+        <div className="flex justify-between items-start mb-4">
+          <Badge className="bg-watt-success/10 text-watt-success border-watt-success/20">
             <div className="w-2 h-2 bg-watt-success rounded-full mr-2 animate-pulse"></div>
             Live
           </Badge>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-watt-primary">${btcData.price.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">BTC Price</div>
+          </div>
         </div>
+        <CardTitle className="text-xl group-hover:text-watt-primary transition-colors leading-tight">
+          BTC Mining ROI Lab
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Live Bitcoin Data */}
