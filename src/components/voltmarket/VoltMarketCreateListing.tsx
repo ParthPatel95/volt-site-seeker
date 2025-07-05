@@ -114,6 +114,32 @@ export const VoltMarketCreateListing: React.FC = () => {
         }
       }
 
+      // Then save documents to the documents table
+      if (documents.length > 0) {
+        console.log('Saving documents:', documents);
+        const documentInserts = documents.map((doc) => ({
+          listing_id: listing.id,
+          uploader_id: profile.id,
+          file_name: doc.name,
+          file_url: doc.url,
+          file_type: doc.type,
+          file_size: doc.size,
+          document_type: doc.document_type,
+          description: doc.description || null,
+          is_private: true
+        }));
+
+        const { error: documentError } = await supabase
+          .from('voltmarket_documents')
+          .insert(documentInserts);
+
+        if (documentError) {
+          console.error('Error saving documents:', documentError);
+        } else {
+          console.log('Documents saved successfully');
+        }
+      }
+
       console.log('Listing created successfully');
       toast({
         title: "Listing Created",
