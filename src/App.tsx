@@ -8,6 +8,7 @@ import { navItems } from "./nav-items";
 import { VoltMarket } from "./pages/VoltMarket";
 import { VoltMarketAuthProvider } from "./contexts/VoltMarketAuthContext";
 import Index from "./pages/Index";
+import VoltScout from "./pages/VoltScout";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           {navItems.map(({ to, page }) => (
             <Route key={to} path={to} element={page} />
           ))}
+          <Route path="/app/*" element={<VoltScout />} />
           <Route path="/voltmarket/*" element={
             <VoltMarketAuthProvider>
               <VoltMarket />
