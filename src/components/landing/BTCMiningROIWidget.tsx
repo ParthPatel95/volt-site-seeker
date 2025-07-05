@@ -96,14 +96,24 @@ export const BTCMiningROIWidget = () => {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-white to-watt-light/20 backdrop-blur-sm border border-watt-primary/20 hover:border-watt-primary/30 transition-all duration-300 group shadow-lg">
-      <CardHeader className="pb-4">
-        <div className="flex items-center space-x-2 mb-2">
-          <Bitcoin className="w-6 h-6 text-watt-primary group-hover:scale-110 transition-transform duration-300" />
-          <CardTitle className="text-gray-900 text-xl">BTC Mining ROI Lab</CardTitle>
-          <Badge className="bg-watt-success/10 text-watt-success text-xs border-watt-success/20">Live</Badge>
+    <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg">
+      <div className="absolute inset-0 bg-watt-gradient opacity-0 group-hover:opacity-5 transition-opacity rounded-lg"></div>
+      <CardHeader className="relative pb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-watt-primary/10 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+              <Bitcoin className="w-6 h-6 text-watt-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-gray-900 text-xl group-hover:text-watt-primary transition-colors">BTC Mining ROI Lab</CardTitle>
+              <p className="text-gray-600 text-sm">Calculate mining profitability with real-time data</p>
+            </div>
+          </div>
+          <Badge className="bg-watt-success/10 text-watt-success text-xs border-watt-success/20">
+            <div className="w-2 h-2 bg-watt-success rounded-full mr-2 animate-pulse"></div>
+            Live
+          </Badge>
         </div>
-        <p className="text-gray-600 text-sm">Calculate mining profitability with real-time data</p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Live Bitcoin Data */}
