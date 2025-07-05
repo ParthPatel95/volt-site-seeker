@@ -398,6 +398,185 @@ export const VoltMarketHomepage: React.FC = () => {
         </div>
       </section>
 
+      {/* Platform Features Section */}
+      <section className="py-20 bg-gradient-to-br from-background to-watt-light/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-watt-accent/10 text-watt-accent border-watt-accent/20">
+              <Bolt className="w-4 h-4 mr-2" />
+              Platform Features
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Everything You Need for
+              <span className="text-watt-primary block">
+                Energy Infrastructure
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              From discovery to transaction, VoltMarket provides comprehensive tools for energy infrastructure investment
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Real-Time Analytics */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-gradient-to-br from-white to-watt-success/5 border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="w-12 h-12 bg-watt-success/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <BarChart3 className="w-6 h-6 text-watt-success" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-watt-success transition-colors">
+                  Real-Time Market Data
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Live energy pricing from AESO, ERCOT, and global markets. Track renewable generation, demand patterns, and price volatility.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-watt-success/10 text-watt-success border-watt-success/20 text-xs">
+                    <Activity className="w-3 h-3 mr-1" />
+                    Live Updates
+                  </Badge>
+                  <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
+                    Global Coverage
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Mining Economics */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-gradient-to-br from-white to-watt-primary/5 border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="w-12 h-12 bg-watt-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Bitcoin className="w-6 h-6 text-watt-primary" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-watt-primary transition-colors">
+                  Mining Profitability
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Advanced calculators for hosting vs self-mining economics. Real-time BTC pricing, difficulty adjustments, and ROI projections.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-watt-primary/10 text-watt-primary border-watt-primary/20 text-xs">
+                    <Target className="w-3 h-3 mr-1" />
+                    ROI Analysis
+                  </Badge>
+                  <Badge className="bg-green-50 text-green-600 border-green-200 text-xs">
+                    Live BTC Data
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Asset Discovery */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-gradient-to-br from-white to-watt-secondary/5 border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="w-12 h-12 bg-watt-secondary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Search className="w-6 h-6 text-watt-secondary" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-watt-secondary transition-colors">
+                  Asset Discovery
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Comprehensive database of power infrastructure. From data centers to renewable facilities, find the perfect investment opportunity.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-watt-secondary/10 text-watt-secondary border-watt-secondary/20 text-xs">
+                    <Building2 className="w-3 h-3 mr-1" />
+                    1,247 Assets
+                  </Badge>
+                  <Badge className="bg-purple-50 text-purple-600 border-purple-200 text-xs">
+                    Global Reach
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Due Diligence */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-gradient-to-br from-white to-watt-accent/5 border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="w-12 h-12 bg-watt-accent/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Shield className="w-6 h-6 text-watt-accent" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-watt-accent transition-colors">
+                  Expert Due Diligence
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Professional analysis and verification services. Technical assessments, financial modeling, and risk evaluation by industry experts.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-watt-accent/10 text-watt-accent border-watt-accent/20 text-xs">
+                    <Users className="w-3 h-3 mr-1" />
+                    Expert Team
+                  </Badge>
+                  <Badge className="bg-orange-50 text-orange-600 border-orange-200 text-xs">
+                    Verified Reports
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Secure Transactions */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-gradient-to-br from-white to-green-50/50 border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-green-600 transition-colors">
+                  Secure Transactions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Enterprise-grade security for high-value transactions. Escrow services, legal documentation, and compliance management.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                    <Shield className="w-3 h-3 mr-1" />
+                    Bank-Grade Security
+                  </Badge>
+                  <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
+                    $2.4B Volume
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Portfolio Management */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-gradient-to-br from-white to-purple-50/50 border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-purple-600 transition-colors">
+                  Portfolio Optimization
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  AI-powered portfolio analysis and optimization. Track performance, manage risk, and identify new opportunities across your energy assets.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    AI-Powered
+                  </Badge>
+                  <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200 text-xs">
+                    Smart Analytics
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 bg-watt-gradient relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:40px_40px]" />
