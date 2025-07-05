@@ -254,6 +254,58 @@ export const VoltMarketHostingCalculator = () => {
           </div>
         )}
 
+        {/* Additional Mining Metrics */}
+        {results && (
+          <div className="space-y-3 pt-4 border-t border-watt-primary/20">
+            <h4 className="text-sm font-semibold text-gray-900">Mining Efficiency</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg p-3 border border-blue-200">
+                <div className="text-xs text-gray-600 mb-1">Power Efficiency</div>
+                <div className="text-sm font-bold text-blue-600">
+                  {(parseFloat(hashrate) / (parseFloat(powerDraw) / 1000)).toFixed(1)} TH/kW
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg p-3 border border-purple-200">
+                <div className="text-xs text-gray-600 mb-1">Daily kWh</div>
+                <div className="text-sm font-bold text-purple-600">
+                  {((parseFloat(powerDraw) / 1000) * 24).toFixed(1)} kWh
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Model Comparison */}
+        <div className="space-y-3 pt-4 border-t border-watt-primary/20">
+          <h4 className="text-sm font-semibold text-gray-900">Model Insights</h4>
+          <div className="space-y-2">
+            <div className="bg-gradient-to-br from-watt-secondary/5 to-watt-secondary/10 rounded-lg p-3 border border-watt-secondary/20">
+              <div className="text-xs text-gray-600 mb-2">
+                {calculationMode === 'hosting' ? 'Hosting Benefits' : 'Self-Mining Benefits'}
+              </div>
+              <div className="text-xs text-gray-700">
+                {calculationMode === 'hosting' 
+                  ? '• Lower upfront costs • Professional management • Guaranteed uptime'
+                  : '• Full control • Higher margins • No hosting fees'
+                }
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-gray-600">Current Model</span>
+              <Badge className="bg-watt-primary/10 text-watt-primary border-watt-primary/20 text-xs">
+                {calculationMode === 'hosting' ? 'Hosting' : 'Self-Mining'}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-gray-600">Break-even Timeline</span>
+              <span className="font-medium text-gray-900">
+                {results?.breakevenMonths ? `${results.breakevenMonths.toFixed(1)} months` : 'Calculate first'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         <Button 
           onClick={calculateProfitability}
           className="w-full bg-gradient-to-r from-watt-primary to-watt-secondary hover:opacity-90 text-white"
