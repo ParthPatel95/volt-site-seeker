@@ -36,20 +36,29 @@ export const VoltMarketListings: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState('all');
 
   const fetchListings = async () => {
+    console.log('Fetching listings...');
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('voltmarket_listings')
         .select(`
           *,
-          voltmarket_profiles!seller_id(company_name, is_id_verified)
+          seller_profile:voltmarket_profiles!seller_id(company_name, is_id_verified)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
-      const { data, error } = await query;
+      console.log('Listings query result:', { data, error });
 
       if (error) throw error;
-      setListings(data || []);
+      
+      // Transform the data to match the expected interface
+      const transformedData = data?.map(listing => ({
+        ...listing,
+        voltmarket_profiles: listing.seller_profile
+      })) || [];
+      
+      console.log('Transformed listings:', transformedData);
+      setListings(transformedData);
     } catch (error) {
       console.error('Error fetching listings:', error);
     } finally {

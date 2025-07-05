@@ -43,6 +43,7 @@ export const useVoltMarketListings = () => {
   }, []);
 
   const fetchUserListings = useCallback(async (sellerId: string) => {
+    console.log('Fetching user listings for seller ID:', sellerId);
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -50,6 +51,8 @@ export const useVoltMarketListings = () => {
         .select('*')
         .eq('seller_id', sellerId)
         .order('created_at', { ascending: false });
+
+      console.log('User listings query result:', { data, error, sellerId });
 
       if (error) throw error;
       setUserListings(data || []);
