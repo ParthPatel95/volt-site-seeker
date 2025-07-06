@@ -67,8 +67,10 @@ serve(async (req) => {
       throw new Error(`Email template not found: ${templateError.message}`);
     }
 
-    // Create verification URL
-    const verificationUrl = `${Deno.env.get('SUPABASE_URL').replace('/rest/v1', '')}/functions/v1/verify-email?token=${token}`;
+    // Create verification URL - use the correct Supabase project URL
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const baseUrl = supabaseUrl.replace('ktgosplhknmnyagxrgbe.supabase.co/rest/v1', 'ktgosplhknmnyagxrgbe.supabase.co');
+    const verificationUrl = `${baseUrl}/functions/v1/verify-email?token=${token}`;
 
     // Get user profile for name
     const { data: profile } = await supabaseClient
