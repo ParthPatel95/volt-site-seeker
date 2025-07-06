@@ -68,9 +68,7 @@ serve(async (req) => {
     }
 
     // Create verification URL - use the correct Supabase project URL
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const baseUrl = supabaseUrl.replace('ktgosplhknmnyagxrgbe.supabase.co/rest/v1', 'ktgosplhknmnyagxrgbe.supabase.co');
-    const verificationUrl = `${baseUrl}/functions/v1/verify-email?token=${token}`;
+    const verificationUrl = `https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/verify-email?token=${token}`;
 
     // Get user profile for name
     const { data: profile } = await supabaseClient
