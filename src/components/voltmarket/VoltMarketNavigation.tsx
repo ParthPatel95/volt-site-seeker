@@ -94,8 +94,8 @@ export const VoltMarketNavigation: React.FC = () => {
               </Link>
             </div>
 
-            {/* Center Navigation - No Extra Space */}
-            <div className="hidden lg:flex items-center justify-center flex-1">
+            {/* Right-aligned Navigation */}
+            <div className="hidden lg:flex items-center justify-end flex-1 mr-4">
               <nav className="flex items-center gap-1">
                 {primaryNavItems.map((item) => {
                   const Icon = item.icon;
