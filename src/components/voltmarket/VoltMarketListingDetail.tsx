@@ -9,6 +9,8 @@ import { VoltMarketContactButton } from './VoltMarketContactButton';
 import { VoltMarketWatchlistButton } from './VoltMarketWatchlistButton';
 import { VoltMarketLOIModal } from './VoltMarketLOIModal';
 import { VoltMarketDueDiligence } from './VoltMarketDueDiligence';
+import { VoltMarketAdvancedDueDiligence } from './VoltMarketAdvancedDueDiligence';
+import { VoltMarketPropertyMap } from './VoltMarketPropertyMap';
 import { VoltMarketListingImageGallery } from './VoltMarketListingImageGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
@@ -214,10 +216,12 @@ export const VoltMarketListingDetail: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
+                <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                <TabsTrigger value="location">Location</TabsTrigger>
                 <TabsTrigger value="seller">Seller</TabsTrigger>
               </TabsList>
 
@@ -391,6 +395,20 @@ export const VoltMarketListingDetail: React.FC = () => {
                   hasSignedNDA={hasSignedNDA}
                   onSignNDA={handleSignNDA}
                   onRequestAccess={handleRequestAccess}
+                />
+              </TabsContent>
+
+              <TabsContent value="analysis">
+                <VoltMarketAdvancedDueDiligence
+                  listingId={listing.id}
+                  listingData={listing}
+                />
+              </TabsContent>
+
+              <TabsContent value="location">
+                <VoltMarketPropertyMap
+                  listingId={listing.id}
+                  height="h-[600px]"
                 />
               </TabsContent>
 
