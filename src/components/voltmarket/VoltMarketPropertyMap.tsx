@@ -105,35 +105,68 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
           .from('voltmarket_listings')
           .select('*')
           .eq('id', listingId)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching listing:', error);
+          throw error;
+        }
 
-        if (data && data.latitude && data.longitude) {
-          propertyData = [{
-            id: data.id,
-            title: data.title,
-            address: data.location || 'Address not specified',
-            city: data.location?.split(',')[0] || 'Unknown City',
-            state: data.location?.split(',')[1]?.trim() || 'Unknown State',
-            coordinates: [data.longitude, data.latitude],
-            asking_price: data.asking_price,
-            property_type: data.listing_type,
-            power_capacity_mw: data.power_capacity_mw,
-            size_sqft: data.square_footage,
-            status: data.status,
-            image_url: undefined // Images are handled separately in VoltMarket
-          }];
+        console.log('Listing data:', data); // Debug log
+
+        if (data) {
+          // Check if coordinates exist
+          if (data.latitude && data.longitude) {
+            propertyData = [{
+              id: data.id,
+              title: data.title,
+              address: data.location || 'Location not specified',
+              city: data.location?.split(',')[0]?.trim() || 'Unknown City',
+              state: data.location?.split(',')[1]?.trim() || 'Unknown State',
+              coordinates: [data.longitude, data.latitude],
+              asking_price: data.asking_price,
+              property_type: data.listing_type,
+              power_capacity_mw: data.power_capacity_mw,
+              size_sqft: data.square_footage,
+              status: data.status,
+              image_url: undefined // Images are handled separately in VoltMarket
+            }];
+            console.log('Property data with coordinates:', propertyData); // Debug log
+          } else {
+            console.warn('Listing found but no coordinates available:', { 
+              lat: data.latitude, 
+              lng: data.longitude,
+              location: data.location 
+            });
+            toast({
+              title: "Location Unavailable",
+              description: "This listing doesn't have location coordinates available for mapping.",
+              variant: "destructive"
+            });
+          }
+        } else {
+          console.warn('No listing found with ID:', listingId);
+          toast({
+            title: "Listing Not Found",
+            description: "Could not find the requested listing.",
+            variant: "destructive"
+          });
         }
       } else if (listings.length > 0) {
         // Use provided listings
-          propertyData = listings
-          .filter(listing => listing.latitude && listing.longitude)
+        propertyData = listings
+          .filter(listing => {
+            const hasCoords = listing.latitude && listing.longitude;
+            if (!hasCoords) {
+              console.log('Skipping listing without coordinates:', listing.id);
+            }
+            return hasCoords;
+          })
           .map(listing => ({
             id: listing.id,
             title: listing.title,
-            address: listing.location || 'Address not specified',
-            city: listing.location?.split(',')[0] || 'Unknown City',
+            address: listing.location || 'Location not specified',
+            city: listing.location?.split(',')[0]?.trim() || 'Unknown City',
             state: listing.location?.split(',')[1]?.trim() || 'Unknown State',
             coordinates: [listing.longitude, listing.latitude],
             asking_price: listing.asking_price,
@@ -157,8 +190,8 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
         propertyData = (data || []).map(listing => ({
           id: listing.id,
           title: listing.title,
-          address: listing.location || 'Address not specified',
-          city: listing.location?.split(',')[0] || 'Unknown City',
+          address: listing.location || 'Location not specified',
+          city: listing.location?.split(',')[0]?.trim() || 'Unknown City',
           state: listing.location?.split(',')[1]?.trim() || 'Unknown State',
           coordinates: [listing.longitude, listing.latitude],
           asking_price: listing.asking_price,
@@ -170,18 +203,21 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
         }));
       }
 
+      console.log('Final property data:', propertyData); // Debug log
       setProperties(propertyData);
       
       // Load nearby infrastructure for the first property or selected property
       if (propertyData.length > 0) {
         const targetProperty = propertyData[0];
         await loadNearbyInfrastructure(targetProperty.coordinates);
+      } else {
+        console.log('No properties with coordinates found');
       }
     } catch (error) {
       console.error('Error loading properties:', error);
       toast({
         title: "Error",
-        description: "Failed to load property locations.",
+        description: `Failed to load property locations: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -432,6 +468,14 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
               <h4 className="font-medium mb-3">
                 Properties ({filteredProperties.length})
               </h4>
+              
+              {loading && (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-watt-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading properties...</p>
+                </div>
+              )}
+              
               <div className="space-y-3">
                 {filteredProperties.map((property) => (
                   <PropertyCard key={property.id} property={property} />
@@ -441,7 +485,12 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
               {filteredProperties.length === 0 && !loading && (
                 <div className="text-center py-8 text-muted-foreground">
                   <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p>No properties found with current filters.</p>
+                  <div className="space-y-2">
+                    <p>No properties found with location data.</p>
+                    {listingId && (
+                      <p className="text-xs">This listing may not have coordinates set up yet.</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

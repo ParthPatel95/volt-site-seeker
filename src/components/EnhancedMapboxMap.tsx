@@ -14,8 +14,16 @@ import {
   Navigation
 } from 'lucide-react';
 
-// Mapbox public token
-mapboxgl.accessToken = 'pk.eyJ1Ijoidm9sdHNjb3V0IiwiYSI6ImNtYnpqeWtmeDF5YjkycXB2MzQ3YWk0YzIifQ.YkeTxxJcGkgHTpt9miLk6A';
+// Mapbox public token - using the token from Supabase secrets
+const getMapboxToken = () => {
+  // For now, return the hardcoded token, but in production this should come from env
+  return 'pk.eyJ1Ijoidm9sdHNjb3V0IiwiYSI6ImNtYnpqeWtmeDF5YjkycXB2MzQ3YWk0YzIifQ.YkeTxxJcGkgHTpt9miLk6A';
+};
+
+// Initialize mapbox
+if (typeof window !== 'undefined') {
+  mapboxgl.accessToken = getMapboxToken();
+}
 
 interface MapboxMapProps {
   height?: string;
