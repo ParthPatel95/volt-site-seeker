@@ -78,7 +78,7 @@ export const VoltMarketListingDetail: React.FC = () => {
           voltmarket_profiles!seller_id(company_name, is_id_verified, bio)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setListing(data);
