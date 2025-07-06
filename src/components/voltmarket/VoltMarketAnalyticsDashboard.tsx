@@ -128,7 +128,7 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">VoltMarket Dashboard</h1>
             <p className="text-gray-600">Monitor your VoltMarket performance and insights</p>
           </div>
           
