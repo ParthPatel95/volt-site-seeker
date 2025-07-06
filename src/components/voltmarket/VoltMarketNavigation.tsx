@@ -77,24 +77,26 @@ export const VoltMarketNavigation: React.FC = () => {
       {/* Main Navigation Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-watt-primary/10 shadow-sm">
         <div className="container-responsive">
-          <div className="flex items-center h-16">
+          <div className="flex items-center justify-between h-16">
             {/* Logo & Brand */}
-            <Link to="/voltmarket/home" className="flex items-center gap-3 group">
-              <div className="p-2 bg-watt-gradient rounded-xl group-hover:shadow-watt-glow transition-all duration-300">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="text-xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent">
-                  VoltMarket
-                </span>
-                <span className="text-xs text-muted-foreground -mt-1">Energy Infrastructure Marketplace</span>
-              </div>
-              <span className="sm:hidden text-xl font-bold text-watt-primary">VM</span>
-            </Link>
+            <div className="flex-shrink-0">
+              <Link to="/voltmarket/home" className="flex items-center gap-3 group">
+                <div className="p-2 bg-watt-gradient rounded-xl group-hover:shadow-watt-glow transition-all duration-300">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent">
+                    VoltMarket
+                  </span>
+                  <span className="text-xs text-muted-foreground -mt-1">Energy Infrastructure Marketplace</span>
+                </div>
+                <span className="sm:hidden text-xl font-bold text-watt-primary">VM</span>
+              </Link>
+            </div>
 
             {/* Centered Navigation */}
-            <div className="hidden lg:flex flex-1 justify-center">
-              <nav className="flex items-center gap-8">
+            <div className="hidden lg:flex absolute left-1/2 transform -translate-x-1/2">
+              <nav className="flex items-center gap-6">
                 {primaryNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = isActiveRoute(item.path);
@@ -141,7 +143,7 @@ export const VoltMarketNavigation: React.FC = () => {
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-shrink-0">
               {user ? (
                 <>
                   {/* Create Listing CTA - Simplified */}
