@@ -76,10 +76,10 @@ export const VoltMarketNavigation: React.FC = () => {
     <>
       {/* Main Navigation Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-watt-primary/10 shadow-sm">
-        <div className="container-responsive">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo & Brand */}
-            <div className="flex-shrink-0">
+            {/* Logo & Brand - Fixed Width */}
+            <div className="w-64 flex-shrink-0">
               <Link to="/voltmarket/home" className="flex items-center gap-3 group">
                 <div className="p-2 bg-watt-gradient rounded-xl group-hover:shadow-watt-glow transition-all duration-300">
                   <Zap className="w-6 h-6 text-white" />
@@ -94,9 +94,9 @@ export const VoltMarketNavigation: React.FC = () => {
               </Link>
             </div>
 
-            {/* Centered Navigation */}
-            <div className="hidden lg:flex absolute left-1/2 transform -translate-x-1/2">
-              <nav className="flex items-center gap-6">
+            {/* Center Navigation - No Extra Space */}
+            <div className="hidden lg:flex items-center justify-center flex-1">
+              <nav className="flex items-center gap-1">
                 {primaryNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = isActiveRoute(item.path);
@@ -104,7 +104,7 @@ export const VoltMarketNavigation: React.FC = () => {
                     <Link
                       key={item.name}
                       to={item.path}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         isActive 
                           ? 'text-watt-primary bg-watt-primary/5' 
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -123,7 +123,7 @@ export const VoltMarketNavigation: React.FC = () => {
                     <Link
                       key={item.name}
                       to={item.path}
-                      className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         isActive 
                           ? 'text-watt-primary bg-watt-primary/5' 
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -142,8 +142,8 @@ export const VoltMarketNavigation: React.FC = () => {
               </nav>
             </div>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Right Actions - Fixed Width */}
+            <div className="w-64 flex items-center justify-end gap-3 flex-shrink-0">
               {user ? (
                 <>
                   {/* Create Listing CTA - Simplified */}
