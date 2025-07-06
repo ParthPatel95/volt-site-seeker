@@ -608,7 +608,7 @@ export const VoltMarketHomepage: React.FC = () => {
                 </Button>
               </Link>
               <Link to="/voltmarket/listings">
-                <Button size="lg" variant="outline" className="border-2 border-white/50 text-white hover:bg-white/10 backdrop-blur-sm font-bold px-10 py-4 text-lg transition-all duration-300 rounded-2xl">
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 hover:text-white backdrop-blur-sm font-bold px-10 py-4 text-lg transition-all duration-300 rounded-2xl">
                   Explore Marketplace
                   <Eye className="w-5 h-5 ml-2" />
                 </Button>
