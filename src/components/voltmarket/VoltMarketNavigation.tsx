@@ -47,9 +47,12 @@ export const VoltMarketNavigation: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/voltmarket');
+      // Navigate immediately after sign out
+      navigate('/voltmarket', { replace: true });
     } catch (error) {
       console.error('Sign out error:', error);
+      // Navigate even if there's an error to avoid getting stuck
+      navigate('/voltmarket', { replace: true });
     }
   };
 

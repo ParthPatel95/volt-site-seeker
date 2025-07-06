@@ -264,9 +264,6 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('Sign out successful');
       }
       
-      // Redirect to VoltMarket homepage
-      window.location.href = '/voltmarket';
-      
       return { error };
     } catch (err) {
       console.error('Unexpected sign out error:', err);
