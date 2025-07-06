@@ -63,6 +63,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
     }
 
     if (!profile?.id) {
+      console.error('No profile ID available:', { profile, user: profile?.user_id });
       toast({
         title: "Authentication required",
         description: "Please sign in to upload documents",
@@ -72,28 +73,37 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
     }
 
     try {
-      console.log('Starting document upload for:', file.name, 'Profile ID:', profile?.id);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${file.name}`;
-      // Use user folder for temp uploads, listing folder when listing exists
-      const filePath = listingId ? `${listingId}/${fileName}` : `temp/${profile.id}/${fileName}`;
+      console.log('Starting document upload for:', file.name);
+      console.log('Profile:', { id: profile.id, user_id: profile.user_id });
+      
+      // Simplified file path - just use profile ID for all uploads
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = `${profile.user_id}/${fileName}`;
       
       console.log('Upload path:', filePath);
+      console.log('File details:', { name: file.name, size: file.size, type: file.type });
 
       // Upload to storage
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
-        throw uploadError;
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
+
+      console.log('Upload successful:', uploadData);
 
       // Get public URL
       const { data: urlData } = supabase.storage
         .from('documents')
         .getPublicUrl(filePath);
+
+      console.log('Public URL:', urlData.publicUrl);
 
       const documentData = {
         name: file.name,
@@ -105,8 +115,9 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
         description: documentDescription || undefined
       };
 
-      // Save to database if listing exists
+      // Save to database only if listing exists
       if (listingId) {
+        console.log('Saving to database for listing:', listingId);
         const { data: dbData, error: dbError } = await supabase
           .from('voltmarket_documents')
           .insert({
@@ -127,9 +138,10 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
           console.error('Database save error:', dbError);
           // Clean up uploaded file
           await supabase.storage.from('documents').remove([filePath]);
-          throw dbError;
+          throw new Error(`Database save failed: ${dbError.message}`);
         }
 
+        console.log('Database save successful:', dbData);
         return {
           ...documentData,
           id: dbData.id
@@ -139,10 +151,10 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       return documentData;
     } catch (error) {
       console.error('Error uploading document:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Upload failed", 
-        description: `Failed to upload document: ${errorMessage}`,
+        description: errorMessage,
         variant: "destructive"
       });
       return null;
@@ -218,8 +230,9 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       // Remove from storage
       const urlParts = document.url.split('/');
       const fileName = urlParts[urlParts.length - 1];
-      const filePath = listingId ? `${listingId}/${fileName}` : `temp/${profile?.id}/${fileName}`;
+      const filePath = `${profile?.user_id}/${fileName}`;
 
+      console.log('Removing file:', filePath);
       await supabase.storage
         .from('documents')
         .remove([filePath]);
