@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -13,7 +12,6 @@ import {
 import { 
   Home,
   Search, 
-  SlidersHorizontal,
   MessageSquare, 
   Heart,
   User, 
@@ -25,10 +23,7 @@ import {
   Zap,
   Shield,
   BarChart3,
-  Bell,
-  ChevronDown,
-  Building2,
-  TrendingUp
+  ChevronDown
 } from 'lucide-react';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useVoltMarketRealtime } from '@/hooks/useVoltMarketRealtime';
@@ -38,9 +33,7 @@ export const VoltMarketNavigation: React.FC = () => {
   const { messages } = useVoltMarketRealtime();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Count unread messages
   const unreadCount = messages.filter(m => !m.is_read && m.recipient_id === profile?.id).length;
@@ -48,16 +41,6 @@ export const VoltMarketNavigation: React.FC = () => {
   // Get user initials
   const getInitials = (name: string) => {
     return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || 'U';
-  };
-
-  // Handle search
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/voltmarket/listings?search=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-      setIsSearchFocused(false);
-    }
   };
 
   // Handle sign out
@@ -83,7 +66,6 @@ export const VoltMarketNavigation: React.FC = () => {
   // Simplified navigation items for elegance
   const primaryNavItems = [
     { name: 'Browse', path: '/voltmarket/listings', icon: Search },
-    { name: 'Advanced Search', path: '/voltmarket/search', icon: SlidersHorizontal },
   ];
 
   const userNavItems = user ? [
@@ -109,20 +91,6 @@ export const VoltMarketNavigation: React.FC = () => {
               </div>
               <span className="sm:hidden text-xl font-bold text-watt-primary">VM</span>
             </Link>
-
-            {/* Simplified Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-lg mx-6">
-              <form onSubmit={handleSearch} className="w-full relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  type="text"
-                  placeholder="Search assets..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-9 bg-muted/30 border-0 focus:bg-background focus:ring-1 focus:ring-watt-primary/30 rounded-full text-sm"
-                />
-              </form>
-            </div>
 
             {/* Elegant Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-2">
@@ -176,35 +144,6 @@ export const VoltMarketNavigation: React.FC = () => {
             <div className="flex items-center gap-3">
               {user ? (
                 <>
-                  {/* Quick Actions Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1 px-2 py-1 hover:bg-muted/50 rounded-lg">
-                        <Settings className="w-4 h-4" />
-                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <Link to="/voltmarket/verification" className="cursor-pointer">
-                          <Shield className="w-4 h-4 mr-2" />
-                          {profile?.is_id_verified ? 'Verified' : 'Get Verified'}
-                          {profile?.is_id_verified && (
-                            <Badge className="ml-auto bg-watt-success/10 text-watt-success border-watt-success/20 text-xs">
-                              ✓
-                            </Badge>
-                          )}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/voltmarket/watchlist" className="cursor-pointer">
-                          <Heart className="w-4 h-4 mr-2" />
-                          Watchlist
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
                   {/* Create Listing CTA - Simplified */}
                   {profile?.role === 'seller' && (
                     <Link to="/voltmarket/create-listing">
@@ -233,35 +172,53 @@ export const VoltMarketNavigation: React.FC = () => {
                         <ChevronDown className="w-3 h-3 text-muted-foreground hidden lg:block" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <div className="p-3 border-b">
-                        <div className="font-medium text-sm">{profile?.company_name || 'User'}</div>
-                        <div className="text-xs text-muted-foreground">{user.email}</div>
-                      </div>
-                      <DropdownMenuItem asChild>
-                        <Link to="/voltmarket/dashboard" className="cursor-pointer">
-                          <User className="w-4 h-4 mr-2" />
-                          Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/voltmarket/analytics" className="cursor-pointer">
-                          <BarChart3 className="w-4 h-4 mr-2" />
-                          Analytics
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/voltmarket/profile" className="cursor-pointer">
-                          <Settings className="w-4 h-4 mr-2" />
-                          Settings
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
+                     <DropdownMenuContent align="end" className="w-48">
+                       <div className="p-3 border-b">
+                         <div className="font-medium text-sm">{profile?.company_name || 'User'}</div>
+                         <div className="text-xs text-muted-foreground">{user.email}</div>
+                       </div>
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/dashboard" className="cursor-pointer">
+                           <User className="w-4 h-4 mr-2" />
+                           Dashboard
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/verification" className="cursor-pointer">
+                           <Shield className="w-4 h-4 mr-2" />
+                           {profile?.is_id_verified ? 'Verified' : 'Get Verified'}
+                           {profile?.is_id_verified && (
+                             <Badge className="ml-auto bg-watt-success/10 text-watt-success border-watt-success/20 text-xs">
+                               ✓
+                             </Badge>
+                           )}
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/watchlist" className="cursor-pointer">
+                           <Heart className="w-4 h-4 mr-2" />
+                           Watchlist
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuSeparator />
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/analytics" className="cursor-pointer">
+                           <BarChart3 className="w-4 h-4 mr-2" />
+                           Analytics
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/profile" className="cursor-pointer">
+                           <Settings className="w-4 h-4 mr-2" />
+                           Settings
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuSeparator />
+                       <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
+                         <LogOut className="w-4 h-4 mr-2" />
+                         Sign Out
+                       </DropdownMenuItem>
+                     </DropdownMenuContent>
                   </DropdownMenu>
                 </>
               ) : (
@@ -290,20 +247,6 @@ export const VoltMarketNavigation: React.FC = () => {
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
             </div>
-          </div>
-
-          {/* Mobile Search Bar - Cleaner */}
-          <div className="md:hidden pb-3">
-            <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 bg-muted/30 border-0 focus:ring-1 focus:ring-watt-primary/30 rounded-full text-sm h-9"
-              />
-            </form>
           </div>
 
           {/* Mobile Menu */}
