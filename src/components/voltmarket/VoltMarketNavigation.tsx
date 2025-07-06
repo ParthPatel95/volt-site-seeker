@@ -93,8 +93,8 @@ export const VoltMarketNavigation: React.FC = () => {
             </Link>
 
             {/* Elegant Desktop Navigation - Centered */}
-            <div className="hidden lg:flex flex-1 justify-center">
-              <nav className="flex items-center gap-2">
+            <div className="hidden lg:flex flex-1 justify-center max-w-md mx-auto">
+              <nav className="flex items-center gap-4">
                 {/* Primary Navigation - Clean minimal style */}
                 {primaryNavItems.map((item) => {
                   const Icon = item.icon;
