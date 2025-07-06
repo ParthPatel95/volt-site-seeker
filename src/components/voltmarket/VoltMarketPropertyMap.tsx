@@ -138,11 +138,10 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
               lng: data.longitude,
               location: data.location 
             });
-            toast({
-              title: "Location Unavailable",
-              description: "This listing doesn't have location coordinates available for mapping.",
-              variant: "destructive"
-            });
+            // Set empty properties and return early for fallback display
+            setProperties([]);
+            setLoading(false);
+            return;
           }
         } else {
           console.warn('No listing found with ID:', listingId);
@@ -486,9 +485,9 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
                 <div className="text-center py-8 text-muted-foreground">
                   <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                   <div className="space-y-2">
-                    <p>No properties found with location data.</p>
+                    <p>Map view unavailable</p>
                     {listingId && (
-                      <p className="text-xs">This listing may not have coordinates set up yet.</p>
+                      <p className="text-sm">Location coordinates are not available for mapping.</p>
                     )}
                   </div>
                 </div>

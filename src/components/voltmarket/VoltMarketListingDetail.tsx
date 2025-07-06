@@ -11,6 +11,7 @@ import { VoltMarketLOIModal } from './VoltMarketLOIModal';
 import { VoltMarketDueDiligence } from './VoltMarketDueDiligence';
 import { VoltMarketAdvancedDueDiligence } from './VoltMarketAdvancedDueDiligence';
 import { VoltMarketPropertyMap } from './VoltMarketPropertyMap';
+import { VoltMarketLocationDisplay } from './VoltMarketLocationDisplay';
 import { VoltMarketListingImageGallery } from './VoltMarketListingImageGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
@@ -33,6 +34,8 @@ interface ListingDetail {
   title: string;
   description: string;
   location: string;
+  latitude?: number | null;
+  longitude?: number | null;
   listing_type: string;
   asking_price: number;
   lease_rate: number;
@@ -410,10 +413,17 @@ export const VoltMarketListingDetail: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="location">
-                <VoltMarketPropertyMap
-                  listingId={listing.id}
-                  height="h-[600px]"
-                />
+                {listing.latitude && listing.longitude ? (
+                  <VoltMarketPropertyMap
+                    listingId={listing.id}
+                    height="h-[600px]"
+                  />
+                ) : (
+                  <VoltMarketLocationDisplay
+                    location={listing.location}
+                    listingTitle={listing.title}
+                  />
+                )}
               </TabsContent>
 
               <TabsContent value="seller">
