@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
+import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileText, Download, X } from 'lucide-react';
 
@@ -72,17 +72,23 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
     }
 
     try {
+      console.log('Starting document upload for:', file.name, 'Profile ID:', profile?.id);
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${file.name}`;
       // Use user folder for temp uploads, listing folder when listing exists
       const filePath = listingId ? `${listingId}/${fileName}` : `temp/${profile.id}/${fileName}`;
+      
+      console.log('Upload path:', filePath);
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -133,9 +139,10 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       return documentData;
     } catch (error) {
       console.error('Error uploading document:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast({
         title: "Upload failed", 
-        description: "Failed to upload document. Please try again.",
+        description: `Failed to upload document: ${errorMessage}`,
         variant: "destructive"
       });
       return null;
