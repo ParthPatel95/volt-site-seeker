@@ -94,56 +94,58 @@ export const VoltMarketNavigation: React.FC = () => {
               </Link>
             </div>
 
-            {/* Right-aligned Navigation */}
-            <div className="hidden lg:flex items-center justify-end flex-1 mr-4">
-              <nav className="flex items-center gap-1">
-                {primaryNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = isActiveRoute(item.path);
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive 
-                          ? 'text-watt-primary bg-watt-primary/5' 
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
+            {/* Right-aligned Navigation - Only show when user is logged in */}
+            {user && (
+              <div className="hidden lg:flex items-center justify-end flex-1 mr-4">
+                <nav className="flex items-center gap-1">
+                  {primaryNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = isActiveRoute(item.path);
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.path}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isActive 
+                            ? 'text-watt-primary bg-watt-primary/5' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
 
-                {userNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = isActiveRoute(item.path);
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive 
-                          ? 'text-watt-primary bg-watt-primary/5' 
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{item.name}</span>
-                      {item.badge > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-watt-warning text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
+                  {userNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = isActiveRoute(item.path);
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.path}
+                        className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isActive 
+                            ? 'text-watt-primary bg-watt-primary/5' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{item.name}</span>
+                        {item.badge > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-watt-warning text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+            )}
 
-            {/* Right Actions - Fixed Width */}
-            <div className="w-64 flex items-center justify-end gap-3 flex-shrink-0">
+            {/* Right Actions - Dynamic width */}
+            <div className={`flex items-center justify-end gap-3 flex-shrink-0 ${user ? 'w-64' : ''}`}>
               {user ? (
                 <>
                   {/* Create Listing CTA - Simplified */}
