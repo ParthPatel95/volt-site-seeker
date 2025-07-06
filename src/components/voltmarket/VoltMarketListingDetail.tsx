@@ -15,6 +15,7 @@ import { VoltMarketListingImageGallery } from './VoltMarketListingImageGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
+import { useVoltMarketAccessRequests } from '@/hooks/useVoltMarketAccessRequests';
 import { useToast } from '@/hooks/use-toast';
 import { 
   MapPin, 
@@ -63,6 +64,7 @@ export const VoltMarketListingDetail: React.FC = () => {
   
   const { profile } = useVoltMarketAuth();
   const { submitLOI } = useVoltMarketLOI();
+  const { submitAccessRequest } = useVoltMarketAccessRequests();
   const { toast } = useToast();
 
   const fetchListing = async () => {
@@ -111,13 +113,15 @@ export const VoltMarketListingDetail: React.FC = () => {
     }
   };
 
-  const handleSignNDA = () => {
-    // Mock NDA signing - in real app this would be a proper flow
-    setHasSignedNDA(true);
-    toast({
-      title: "NDA Signed",
-      description: "You now have access to confidential documents."
-    });
+  const handleSignNDA = async () => {
+    if (!profile || !listing) return;
+    
+    const result = await submitAccessRequest(listing.id, profile.id, listing.seller_id);
+    if (result.success) {
+      // For now, we'll still set hasSignedNDA to show the UI change
+      // In a real implementation, this would be managed by checking the access request status
+      setHasSignedNDA(true);
+    }
   };
 
   const handleRequestAccess = (documentId: string) => {

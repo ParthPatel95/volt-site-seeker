@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { Link } from 'react-router-dom';
 import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff, Mail } from 'lucide-react';
+import { VoltMarketAccessRequests } from './VoltMarketAccessRequests';
+import { useVoltMarketAccessRequests } from '@/hooks/useVoltMarketAccessRequests';
 
 const ResendVerificationButton: React.FC = () => {
   const { resendEmailVerification } = useVoltMarketAuth();
@@ -51,13 +53,17 @@ const ResendVerificationButton: React.FC = () => {
 export const VoltMarketDashboard: React.FC = () => {
   const { profile, user, loading, createProfile } = useVoltMarketAuth();
   const { userListings, fetchUserListings, deleteListing, updateListingStatus, loading: listingsLoading } = useVoltMarketListings();
+  const { fetchAccessRequests } = useVoltMarketAccessRequests();
   const { toast } = useToast();
 
   useEffect(() => {
     if (profile?.id) {
       fetchUserListings(profile.id);
+      if (profile.role === 'seller') {
+        fetchAccessRequests(profile.id);
+      }
     }
-  }, [profile?.id, fetchUserListings]);
+  }, [profile?.id, profile?.role, fetchUserListings, fetchAccessRequests]);
 
   const handleDeleteListing = async (listingId: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
@@ -364,6 +370,13 @@ export const VoltMarketDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Access Requests Section - Only for sellers */}
+        {profile.role === 'seller' && (
+          <div className="mt-8">
+            <VoltMarketAccessRequests sellerId={profile.id} />
+          </div>
+        )}
 
         {/* Getting Started Section */}
         <div className="mt-8">

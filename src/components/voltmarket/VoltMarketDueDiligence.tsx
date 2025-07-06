@@ -145,10 +145,10 @@ export const VoltMarketDueDiligence: React.FC<VoltMarketDueDiligenceProps> = ({
                   Most due diligence documents require a signed NDA to access. This protects
                   sensitive business information while allowing serious buyers to review detailed documentation.
                 </p>
-                <Button onClick={onSignNDA} className="bg-amber-600 hover:bg-amber-700">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Sign NDA & Request Access
-                </Button>
+                 <Button onClick={onSignNDA} className="bg-amber-600 hover:bg-amber-700">
+                   <Shield className="w-4 h-4 mr-2" />
+                   Request Access
+                 </Button>
               </div>
             </div>
           </CardContent>
