@@ -179,8 +179,8 @@ serve(async (req) => {
       );
     }
 
-    // Success! Redirect to dashboard
-    const redirectUrl = `${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/voltmarket/dashboard?verified=true`;
+    // Success! Redirect to wattbyte.com
+    const redirectUrl = `https://www.wattbyte.com?verified=true`;
     
     return new Response(
       `<!DOCTYPE html>
@@ -205,8 +205,8 @@ serve(async (req) => {
             <h1>✅ Email Verified Successfully!</h1>
             <p>Your email address has been verified. You now have full access to WattBytes.</p>
             <div class="loading"></div>
-            <p>Redirecting you to your dashboard...</p>
-            <a href="${redirectUrl}" class="btn">Go to Dashboard</a>
+            <p>Redirecting you to WattByte.com...</p>
+            <a href="${redirectUrl}" class="btn">Go to WattByte.com</a>
           </div>
         </div>
       </body>
