@@ -192,7 +192,7 @@ export const VoltMarketHomepage: React.FC = () => {
                         className="flex-1 border-0 text-lg px-4 py-4 focus:ring-0 bg-transparent"
                       />
                       {searchQuery && (
-                        <Button className="mr-2 bg-watt-gradient hover:opacity-90 text-white px-6 py-3 rounded-xl">
+                        <Button className="mr-2 bg-watt-gradient hover:opacity-90 px-6 py-3 rounded-xl">
                           Search
                         </Button>
                       )}
@@ -204,13 +204,13 @@ export const VoltMarketHomepage: React.FC = () => {
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/voltmarket/listings">
-                  <Button size="lg" className="group bg-watt-gradient hover:opacity-90 text-white font-semibold px-10 py-4 text-lg shadow-watt-glow hover:shadow-2xl transition-all duration-300 transform hover:scale-105 rounded-2xl">
+                  <Button size="lg" className="group bg-watt-gradient hover:opacity-90 font-semibold px-10 py-4 text-lg shadow-watt-glow hover:shadow-2xl transition-all duration-300 transform hover:scale-105 rounded-2xl">
                     Explore Marketplace
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
                 <Link to="/voltmarket/create-listing">
-                  <Button size="lg" variant="outline" className="border-2 border-watt-primary text-watt-primary hover:bg-watt-primary hover:text-white font-semibold px-10 py-4 text-lg transition-all duration-300 rounded-2xl">
+                  <Button size="lg" variant="outline" className="border-2 border-watt-primary text-watt-primary hover:bg-watt-primary hover:text-primary-foreground font-semibold px-10 py-4 text-lg transition-all duration-300 rounded-2xl">
                     List Your Asset
                     <Building2 className="w-5 h-5 ml-2" />
                   </Button>
@@ -328,7 +328,7 @@ export const VoltMarketHomepage: React.FC = () => {
                       <span className="font-medium">{listing.type} Asset</span>
                     </div>
                   </div>
-                  <Button className="w-full mt-6 bg-watt-gradient hover:opacity-90 text-white group-hover:scale-105 transition-all duration-300 py-3 rounded-xl font-semibold">
+                  <Button className="w-full mt-6 bg-watt-gradient hover:opacity-90 group-hover:scale-105 transition-all duration-300 py-3 rounded-xl font-semibold">
                     View Details
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
