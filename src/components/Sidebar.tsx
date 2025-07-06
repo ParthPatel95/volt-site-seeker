@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
     { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
     { path: '/app/data-management', icon: Database, label: 'Data Management' },
-    { path: '/app/analytics', icon: Activity, label: 'Analytics Dashboard' }
+    { path: '/app/analytics', icon: Activity, label: 'VoltMarket Dashboard' }
   ];
 
   const handleSignOut = async () => {
