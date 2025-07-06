@@ -83,12 +83,11 @@ export const VoltMarketNavigation: React.FC = () => {
   // Simplified navigation items for elegance
   const primaryNavItems = [
     { name: 'Browse', path: '/voltmarket/listings', icon: Search },
-    { name: 'Search', path: '/voltmarket/search', icon: SlidersHorizontal },
+    { name: 'Advanced Search', path: '/voltmarket/search', icon: SlidersHorizontal },
   ];
 
   const userNavItems = user ? [
     { name: 'Messages', path: '/voltmarket/messages-enhanced', icon: MessageSquare, badge: unreadCount },
-    { name: 'Watchlist', path: '/voltmarket/watchlist', icon: Heart },
   ] : [];
 
   return (
@@ -177,20 +176,34 @@ export const VoltMarketNavigation: React.FC = () => {
             <div className="flex items-center gap-3">
               {user ? (
                 <>
-                  {/* Verification Status - Simplified */}
-                  <div className="hidden lg:flex">
-                    {profile?.is_id_verified ? (
-                      <div className="flex items-center gap-1 text-watt-success text-sm">
-                        <Shield className="w-4 h-4" />
-                        <span className="hidden xl:inline">Verified</span>
-                      </div>
-                    ) : (
-                      <Link to="/voltmarket/verification" className="flex items-center gap-1 text-watt-warning hover:text-watt-warning/80 text-sm transition-colors">
-                        <Shield className="w-4 h-4" />
-                        <span className="hidden xl:inline">Verify</span>
-                      </Link>
-                    )}
-                  </div>
+                  {/* Quick Actions Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="flex items-center gap-1 px-2 py-1 hover:bg-muted/50 rounded-lg">
+                        <Settings className="w-4 h-4" />
+                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link to="/voltmarket/verification" className="cursor-pointer">
+                          <Shield className="w-4 h-4 mr-2" />
+                          {profile?.is_id_verified ? 'Verified' : 'Get Verified'}
+                          {profile?.is_id_verified && (
+                            <Badge className="ml-auto bg-watt-success/10 text-watt-success border-watt-success/20 text-xs">
+                              ✓
+                            </Badge>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/voltmarket/watchlist" className="cursor-pointer">
+                          <Heart className="w-4 h-4 mr-2" />
+                          Watchlist
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   {/* Create Listing CTA - Simplified */}
                   {profile?.role === 'seller' && (
