@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Building2, Zap, Camera, FileText } from 'lucide-react';
+import { GooglePlacesInput } from '@/components/ui/google-places-input';
 
 export const VoltMarketCreateListing: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,6 +23,8 @@ export const VoltMarketCreateListing: React.FC = () => {
     title: '',
     description: '',
     location: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
     listing_type: 'site_sale' as 'site_sale' | 'site_lease' | 'hosting' | 'equipment',
     asking_price: 0,
     lease_rate: 0,
@@ -221,13 +224,24 @@ export const VoltMarketCreateListing: React.FC = () => {
 
                 <div>
                   <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
+                  <GooglePlacesInput
                     value={formData.location}
-                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="e.g., Dallas, TX"
-                    required
+                    onChange={(location, placeId, coordinates) => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        location,
+                        latitude: coordinates?.lat || null,
+                        longitude: coordinates?.lng || null
+                      }));
+                    }}
+                    placeholder="e.g., Dallas, TX or full address"
+                    className="w-full"
                   />
+                  {formData.latitude && formData.longitude && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ✓ Coordinates found ({formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)})
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">

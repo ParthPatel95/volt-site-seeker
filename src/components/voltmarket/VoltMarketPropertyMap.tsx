@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useGooglePlaces } from '@/hooks/useGooglePlaces';
 
 interface PropertyLocation {
   id: string;
@@ -89,6 +90,7 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
   const [showInfrastructure, setShowInfrastructure] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
+  const { geocodeAddress } = useGooglePlaces();
 
   useEffect(() => {
     loadProperties();
@@ -132,6 +134,49 @@ export const VoltMarketPropertyMap: React.FC<VoltMarketPropertyMapProps> = ({
               image_url: undefined // Images are handled separately in VoltMarket
             }];
             console.log('Property data with coordinates:', propertyData); // Debug log
+          } else if (data.location) {
+            // Try to geocode the location text
+            console.log('Attempting to geocode location:', data.location);
+            try {
+              const geocodeResult = await geocodeAddress(data.location);
+              if (geocodeResult) {
+                // Update the listing with coordinates
+                await supabase
+                  .from('voltmarket_listings')
+                  .update({
+                    latitude: geocodeResult.coordinates.lat,
+                    longitude: geocodeResult.coordinates.lng,
+                    location: geocodeResult.formattedAddress
+                  })
+                  .eq('id', data.id);
+
+                propertyData = [{
+                  id: data.id,
+                  title: data.title,
+                  address: geocodeResult.formattedAddress,
+                  city: geocodeResult.formattedAddress.split(',')[0]?.trim() || 'Unknown City',
+                  state: geocodeResult.formattedAddress.split(',')[1]?.trim() || 'Unknown State',
+                  coordinates: [geocodeResult.coordinates.lng, geocodeResult.coordinates.lat],
+                  asking_price: data.asking_price,
+                  property_type: data.listing_type,
+                  power_capacity_mw: data.power_capacity_mw,
+                  size_sqft: data.square_footage,
+                  status: data.status,
+                  image_url: undefined
+                }];
+                console.log('Geocoded property data:', propertyData);
+              } else {
+                console.warn('Failed to geocode location:', data.location);
+                setProperties([]);
+                setLoading(false);
+                return;
+              }
+            } catch (error) {
+              console.error('Error geocoding location:', error);
+              setProperties([]);
+              setLoading(false);
+              return;
+            }
           } else {
             console.warn('Listing found but no coordinates available:', { 
               lat: data.latitude, 
