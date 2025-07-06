@@ -89,7 +89,7 @@ serve(async (req) => {
 
     // Send email via Resend
     const emailResult = await resend.emails.send({
-      from: 'WattBytes <noreply@wattbytes.com>',
+      from: 'WattMarketplace <noreply@wattmarketplace.com>',
       to: [email],
       subject,
       html: htmlContent,
