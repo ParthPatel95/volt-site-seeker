@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +69,7 @@ export const VoltMarketListingDetail: React.FC = () => {
   const { submitLOI } = useVoltMarketLOI();
   const { submitAccessRequest } = useVoltMarketAccessRequests();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchListing = async () => {
     if (!id) return;
@@ -158,8 +159,14 @@ export const VoltMarketListingDetail: React.FC = () => {
   };
 
   useEffect(() => {
+    // Check authentication first
+    if (!profile) {
+      navigate('/voltmarket/auth');
+      return;
+    }
+    
     fetchListing();
-  }, [id]);
+  }, [id, profile, navigate]);
 
   if (loading) {
     return (
