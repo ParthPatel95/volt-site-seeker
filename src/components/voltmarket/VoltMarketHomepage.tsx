@@ -42,10 +42,12 @@ export const VoltMarketHomepage: React.FC = () => {
   useEffect(() => {
     const fetchBTCData = async () => {
       try {
-        const response = await fetch('https://api.coinbase.com/v2/prices/spot?currency=USD');
+        // Using a different API to avoid CORS issues
+        const response = await fetch('https://api.coindesk.com/v1/bpi/currentprice.json');
         const data = await response.json();
+        const price = parseFloat(data.bpi.USD.rate.replace(/,/g, ''));
         setBtcData({
-          price: parseFloat(data.data.amount),
+          price: price,
           difficulty: 68.5, // Simulated difficulty in TH
           hashrate: '450 EH/s' // Simulated network hashrate
         });
