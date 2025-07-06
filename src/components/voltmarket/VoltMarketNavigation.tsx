@@ -206,12 +206,6 @@ export const VoltMarketNavigation: React.FC = () => {
                        </DropdownMenuItem>
                        <DropdownMenuSeparator />
                        <DropdownMenuItem asChild>
-                         <Link to="/voltmarket/analytics" className="cursor-pointer">
-                           <BarChart3 className="w-4 h-4 mr-2" />
-                           Analytics
-                         </Link>
-                       </DropdownMenuItem>
-                       <DropdownMenuItem asChild>
                          <Link to="/voltmarket/profile" className="cursor-pointer">
                            <Settings className="w-4 h-4 mr-2" />
                            Settings

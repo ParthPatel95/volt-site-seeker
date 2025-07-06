@@ -13,6 +13,7 @@ import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
 import { PowerInfrastructure } from '@/components/PowerInfrastructure';
 import { BTCROIMainPage } from '@/components/btc_roi/BTCROIMainPage';
 import { DataManagement } from '@/components/DataManagement';
+import { VoltMarketAnalyticsDashboard } from '@/components/voltmarket/VoltMarketAnalyticsDashboard';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -74,6 +75,7 @@ const VoltScout = () => {
               <Route path="power-infrastructure" element={<PowerInfrastructure />} />
               <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
               <Route path="data-management" element={<DataManagement />} />
+              <Route path="analytics" element={<VoltMarketAnalyticsDashboard />} />
               <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Settings page coming soon...</p></div>} />
               {/* Redirect any unknown paths to dashboard */}
               <Route path="*" element={<Navigate to="/app" replace />} />

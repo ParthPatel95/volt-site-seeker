@@ -22,7 +22,8 @@ import {
   Target,
   TrendingUp,
   LogOut,
-  X
+  X,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -54,7 +55,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
     { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
-    { path: '/app/data-management', icon: Database, label: 'Data Management' }
+    { path: '/app/data-management', icon: Database, label: 'Data Management' },
+    { path: '/app/analytics', icon: Activity, label: 'Analytics Dashboard' }
   ];
 
   const handleSignOut = async () => {

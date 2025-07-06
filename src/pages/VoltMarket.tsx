@@ -13,7 +13,7 @@ import { VoltMarketMessages } from '@/components/voltmarket/VoltMarketMessages';
 import { VoltMarketEnhancedMessages } from '@/components/voltmarket/VoltMarketEnhancedMessages';
 import { VoltMarketWatchlist } from '@/components/voltmarket/VoltMarketWatchlist';
 import { VoltMarketVerificationCenter } from '@/components/voltmarket/VoltMarketVerificationCenter';
-import { VoltMarketAnalyticsDashboard } from '@/components/voltmarket/VoltMarketAnalyticsDashboard';
+
 import { VoltMarketAdvancedSearch } from '@/components/voltmarket/VoltMarketAdvancedSearch';
 import { VoltMarketNotificationCenter } from '@/components/voltmarket/VoltMarketNotificationCenter';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
@@ -61,11 +61,6 @@ export const VoltMarket = () => {
       <Route path="/dashboard" element={
         <VoltMarketLayout>
           {user ? <VoltMarketDashboard /> : <WattbytesAuth />}
-        </VoltMarketLayout>
-      } />
-      <Route path="/analytics" element={
-        <VoltMarketLayout>
-          {user ? <VoltMarketAnalyticsDashboard /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/profile" element={
