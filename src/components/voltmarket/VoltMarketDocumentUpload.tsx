@@ -164,7 +164,12 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
+    console.log('File selection started:', files.length, 'files selected');
+    console.log('Selected document type:', selectedDocumentType);
+    console.log('Current profile:', profile);
+    
     if (!selectedDocumentType) {
+      console.log('No document type selected');
       toast({
         title: "Document type required",
         description: "Please select a document type before uploading",
@@ -174,6 +179,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
     }
     
     if (files.length + documents.length > maxDocuments) {
+      console.log('Too many documents:', files.length + documents.length, 'max:', maxDocuments);
       toast({
         title: "Too many documents",
         description: `Maximum ${maxDocuments} documents allowed`,
@@ -183,11 +189,19 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
     }
 
     setUploading(true);
+    console.log('Starting upload process...');
 
     try {
-      const uploadPromises = files.map(uploadDocument);
+      const uploadPromises = files.map((file, index) => {
+        console.log(`Uploading file ${index + 1}:`, file.name, file.type, file.size);
+        return uploadDocument(file);
+      });
+      
       const uploadedDocs = await Promise.all(uploadPromises);
+      console.log('All uploads completed:', uploadedDocs);
+      
       const validDocs = uploadedDocs.filter(doc => doc !== null) as Document[];
+      console.log('Valid documents:', validDocs.length);
       
       const newDocuments = [...documents, ...validDocs];
       setDocuments(newDocuments);
@@ -197,11 +211,14 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       setSelectedDocumentType('');
       setDocumentDescription('');
 
-      toast({
-        title: "Documents uploaded",
-        description: `${validDocs.length} document(s) uploaded successfully`
-      });
+      if (validDocs.length > 0) {
+        toast({
+          title: "Documents uploaded",
+          description: `${validDocs.length} document(s) uploaded successfully`
+        });
+      }
     } catch (error) {
+      console.error('Upload process failed:', error);
       toast({
         title: "Upload failed",
         description: "Failed to upload documents. Please try again.",
@@ -212,6 +229,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      console.log('Upload process completed');
     }
   };
 
