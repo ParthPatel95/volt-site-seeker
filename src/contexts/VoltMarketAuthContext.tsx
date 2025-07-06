@@ -108,22 +108,26 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile
-          const profileData = await fetchProfile(session.user.id);
-          if (mounted) {
-            setProfile(profileData);
-            setLoading(false); // Set loading to false after profile is fetched
-          }
+          // Use setTimeout to avoid potential recursive calls
+          setTimeout(async () => {
+            if (mounted) {
+              const profileData = await fetchProfile(session.user.id);
+              if (mounted) {
+                setProfile(profileData);
+                setLoading(false);
+              }
+            }
+          }, 0);
         } else {
           if (mounted) {
             setProfile(null);
-            setLoading(false); // Set loading to false even if no user
+            setLoading(false);
           }
         }
       }
     );
 
-    // Check for existing session
+    // Check for existing session only once
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -157,7 +161,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Empty dependency array to run only once
 
   const signUp = async (email: string, password: string, userData: {
     role: 'buyer' | 'seller';
