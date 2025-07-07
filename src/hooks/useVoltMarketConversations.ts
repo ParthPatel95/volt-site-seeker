@@ -202,9 +202,12 @@ export const useVoltMarketConversations = () => {
     
     fetchConversations();
 
-    // Set up real-time subscriptions for live messaging
+    // Set up real-time subscriptions for live messaging with unique channel names
+    const messagesChannelName = `voltmarket-messages-${profile.id}-${Date.now()}`;
+    const conversationsChannelName = `voltmarket-conversations-${profile.id}-${Date.now()}`;
+    
     const messagesChannel = supabase
-      .channel('voltmarket-messages')
+      .channel(messagesChannelName)
       .on(
         'postgres_changes',
         {
@@ -214,14 +217,17 @@ export const useVoltMarketConversations = () => {
         },
         (payload) => {
           console.log('Real-time message event:', payload);
-          // Refresh conversations when messages change
-          fetchConversations();
+          // Only refresh if the message involves this user
+          const newMessage = payload.new as any;
+          if (newMessage && (newMessage.sender_id === profile.id || newMessage.recipient_id === profile.id)) {
+            fetchConversations();
+          }
         }
       )
       .subscribe();
 
     const conversationsChannel = supabase
-      .channel('voltmarket-conversations')
+      .channel(conversationsChannelName)
       .on(
         'postgres_changes',
         {
@@ -231,8 +237,11 @@ export const useVoltMarketConversations = () => {
         },
         (payload) => {
           console.log('Real-time conversation event:', payload);
-          // Refresh conversations when conversations change
-          fetchConversations();
+          // Only refresh if the conversation involves this user
+          const newConversation = payload.new as any;
+          if (newConversation && (newConversation.buyer_id === profile.id || newConversation.seller_id === profile.id)) {
+            fetchConversations();
+          }
         }
       )
       .subscribe();
@@ -242,7 +251,7 @@ export const useVoltMarketConversations = () => {
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(conversationsChannel);
     };
-  }, [profile]);
+  }, [profile?.id]); // Only re-run when profile id changes
 
   return {
     conversations,
