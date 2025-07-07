@@ -2060,6 +2060,51 @@ export type Database = {
           },
         ]
       }
+      voltmarket_access_requests: {
+        Row: {
+          company_name: string | null
+          company_type: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          message: string | null
+          phone: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role: string
+          status: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          company_type?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role: string
+          status?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          company_type?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       voltmarket_analytics: {
         Row: {
           created_at: string | null
