@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from './useVoltMarketAuth';
+import { useVoltMarketWebSocket } from './useVoltMarketWebSocket';
 
 interface Message {
   id: string;
@@ -35,6 +36,7 @@ interface Conversation {
 
 export const useVoltMarketConversations = () => {
   const { profile } = useVoltMarketAuth();
+  const { sendMessage: wsSendMessage, onMessage } = useVoltMarketWebSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -161,24 +163,8 @@ export const useVoltMarketConversations = () => {
     if (!profile) return;
 
     try {
-      // Insert message directly using listing_id
-      await supabase
-        .from('voltmarket_messages')
-        .insert({
-          listing_id: listingId,
-          sender_id: profile.id,
-          recipient_id: recipientId,
-          message
-        });
-
-      // Update conversation last_message_at
-      await supabase
-        .from('voltmarket_conversations')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('listing_id', listingId)
-        .or(`and(buyer_id.eq.${profile.id},seller_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},seller_id.eq.${profile.id})`);
-
-      fetchConversations();
+      // Use WebSocket to send message (it handles database insertion)
+      wsSendMessage(recipientId, listingId, message);
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -202,56 +188,48 @@ export const useVoltMarketConversations = () => {
     
     fetchConversations();
 
-    // Set up real-time subscriptions for live messaging with unique channel names
-    const messagesChannelName = `voltmarket-messages-${profile.id}-${Date.now()}`;
-    const conversationsChannelName = `voltmarket-conversations-${profile.id}-${Date.now()}`;
-    
-    const messagesChannel = supabase
-      .channel(messagesChannelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'voltmarket_messages'
-        },
-        (payload) => {
-          console.log('Real-time message event:', payload);
-          // Only refresh if the message involves this user
-          const newMessage = payload.new as any;
-          if (newMessage && (newMessage.sender_id === profile.id || newMessage.recipient_id === profile.id)) {
-            fetchConversations();
-          }
-        }
-      )
-      .subscribe();
+    // Set up WebSocket message handling for real-time updates
+    const unsubscribe = onMessage((message) => {
+      console.log('WebSocket message received:', message);
+      
+      switch (message.type) {
+        case 'new_message':
+          // Refresh conversations when new message arrives
+          fetchConversations();
+          break;
+          
+        case 'message_read':
+          // Update local state when message is marked as read
+          setConversations(prev => 
+            prev.map(conv => ({
+              ...conv,
+              messages: conv.messages.map(msg => 
+                msg.id === message.messageId 
+                  ? { ...msg, is_read: true }
+                  : msg
+              ),
+              unread_count: conv.messages.filter(m => 
+                m.recipient_id === profile.id && 
+                !m.is_read && 
+                m.id !== message.messageId
+              ).length
+            }))
+          );
+          break;
+          
+        case 'auth_success':
+          console.log('WebSocket authenticated successfully');
+          break;
+          
+        case 'error':
+          console.error('WebSocket error:', message.message);
+          break;
+      }
+    });
 
-    const conversationsChannel = supabase
-      .channel(conversationsChannelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'voltmarket_conversations'
-        },
-        (payload) => {
-          console.log('Real-time conversation event:', payload);
-          // Only refresh if the conversation involves this user
-          const newConversation = payload.new as any;
-          if (newConversation && (newConversation.buyer_id === profile.id || newConversation.seller_id === profile.id)) {
-            fetchConversations();
-          }
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscriptions
-    return () => {
-      supabase.removeChannel(messagesChannel);
-      supabase.removeChannel(conversationsChannel);
-    };
-  }, [profile?.id]); // Only re-run when profile id changes
+    // Cleanup WebSocket subscription
+    return unsubscribe;
+  }, [profile?.id, onMessage]); // Only re-run when profile id changes
 
   return {
     conversations,
