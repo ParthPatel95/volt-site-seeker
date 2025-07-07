@@ -48,14 +48,38 @@ export const useVoltMarketConversations = () => {
         .from('voltmarket_conversations')
         .select(`
           *,
-          listing:voltmarket_listings!voltmarket_conversations_listing_id_fkey(title, asking_price),
-          buyer:voltmarket_profiles!voltmarket_conversations_buyer_id_fkey(company_name, profile_image_url),
-          seller:voltmarket_profiles!voltmarket_conversations_seller_id_fkey(company_name, profile_image_url)
+          listing:voltmarket_listings(title, asking_price),
+          buyer:voltmarket_profiles!buyer_id(company_name, profile_image_url),
+          seller:voltmarket_profiles!seller_id(company_name, profile_image_url)
         `)
         .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
         .order('last_message_at', { ascending: false });
 
-      if (convError) throw convError;
+      if (convError) {
+        console.error('Conversation fetch error:', convError);
+        // Fallback: try simpler query without joins
+        const { data: simpleConversations, error: simpleError } = await supabase
+          .from('voltmarket_conversations')
+          .select('*')
+          .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
+          .order('last_message_at', { ascending: false });
+        
+        if (simpleError) throw simpleError;
+        
+        // Transform simple data to expected format
+        const conversationsWithDefaults = (simpleConversations || []).map(conv => ({
+          ...conv,
+          listing: { title: 'Loading...', asking_price: 0 },
+          other_party: { company_name: 'Loading...', profile_image_url: null },
+          messages: [],
+          last_message: null,
+          unread_count: 0
+        }));
+        
+        setConversations(conversationsWithDefaults);
+        setLoading(false);
+        return;
+      }
 
       // Fetch messages for each conversation
       const conversationsWithMessages = await Promise.all(
@@ -90,6 +114,8 @@ export const useVoltMarketConversations = () => {
       setConversations(conversationsWithMessages);
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      // Set empty state on error
+      setConversations([]);
     } finally {
       setLoading(false);
     }
