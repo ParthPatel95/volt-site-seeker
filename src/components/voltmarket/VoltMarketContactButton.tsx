@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MessageSquare } from 'lucide-react';
 import { useVoltMarketConversations } from '@/hooks/useVoltMarketConversations';
@@ -17,6 +18,7 @@ export const VoltMarketContactButton: React.FC<VoltMarketContactButtonProps> = (
   sellerId,
   className
 }) => {
+  const navigate = useNavigate();
   const { profile } = useVoltMarketAuth();
   const { createConversation } = useVoltMarketConversations();
   const { toast } = useToast();
@@ -33,10 +35,8 @@ export const VoltMarketContactButton: React.FC<VoltMarketContactButtonProps> = (
 
     try {
       await createConversation(listingId, sellerId);
-      toast({
-        title: "Conversation Started",
-        description: "You can now message the seller about this listing."
-      });
+      // Navigate directly to messages instead of just showing a popup
+      navigate('/voltmarket/messages');
     } catch (error) {
       toast({
         title: "Error",
