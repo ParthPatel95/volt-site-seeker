@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketPortfolio } from '@/hooks/useVoltMarketPortfolio';
 import { 
@@ -46,13 +51,20 @@ interface AdvancedMetrics {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
 export const VoltMarketAdvancedPortfolio: React.FC = () => {
-  const { portfolios, loading } = useVoltMarketPortfolio();
+  const { portfolios, loading, createPortfolio } = useVoltMarketPortfolio();
   console.log('Portfolio component rendering:', { portfolios, loading });
   const { toast } = useToast();
   const [selectedPortfolio, setSelectedPortfolio] = useState<string | null>(null);
   const [performanceData, setPerformanceData] = useState<any[]>([]);
   const [aiInsights, setAiInsights] = useState<string[]>([]);
   const [activeView, setActiveView] = useState('overview');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    description: '',
+    portfolioType: 'investment' as const,
+    riskTolerance: 'moderate' as const
+  });
 
   // Mock advanced metrics calculation
   const advancedMetrics = useMemo((): AdvancedMetrics => {
@@ -133,6 +145,41 @@ export const VoltMarketAdvancedPortfolio: React.FC = () => {
     return 'destructive';
   };
 
+  const handleCreatePortfolio = async () => {
+    try {
+      if (!createForm.name.trim()) {
+        toast({
+          title: "Error",
+          description: "Portfolio name is required",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      await createPortfolio(createForm);
+      
+      toast({
+        title: "Success",
+        description: "Portfolio created successfully",
+      });
+
+      setIsCreateModalOpen(false);
+      setCreateForm({
+        name: '',
+        description: '',
+        portfolioType: 'investment',
+        riskTolerance: 'moderate'
+      });
+    } catch (error) {
+      console.error('Error creating portfolio:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create portfolio",
+        variant: "destructive"
+      });
+    }
+  };
+
   const selectedPortfolioData = portfolios.find(p => p.id === selectedPortfolio);
 
   return (
@@ -188,10 +235,80 @@ export const VoltMarketAdvancedPortfolio: React.FC = () => {
                     Create your first portfolio to start tracking your energy infrastructure investments
                   </p>
                 </div>
-                <Button className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Portfolio
-                </Button>
+                <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="mt-4">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Portfolio
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create New Portfolio</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Portfolio Name</Label>
+                        <Input
+                          id="name"
+                          value={createForm.name}
+                          onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="My Energy Portfolio"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Description (optional)</Label>
+                        <Textarea
+                          id="description"
+                          value={createForm.description}
+                          onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Portfolio description..."
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="portfolioType">Portfolio Type</Label>
+                        <Select value={createForm.portfolioType} onValueChange={(value: any) => setCreateForm(prev => ({ ...prev, portfolioType: value }))}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="investment">Investment</SelectItem>
+                            <SelectItem value="development">Development</SelectItem>
+                            <SelectItem value="trading">Trading</SelectItem>
+                            <SelectItem value="research">Research</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="riskTolerance">Risk Tolerance</Label>
+                        <Select value={createForm.riskTolerance} onValueChange={(value: any) => setCreateForm(prev => ({ ...prev, riskTolerance: value }))}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="conservative">Conservative</SelectItem>
+                            <SelectItem value="moderate">Moderate</SelectItem>
+                            <SelectItem value="aggressive">Aggressive</SelectItem>
+                            <SelectItem value="speculative">Speculative</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex gap-2 pt-4">
+                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)} className="flex-1">
+                          Cancel
+                        </Button>
+                        <Button onClick={handleCreatePortfolio} className="flex-1">
+                          Create Portfolio
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardContent>
           </Card>
