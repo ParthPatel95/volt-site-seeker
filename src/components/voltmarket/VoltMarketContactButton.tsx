@@ -33,11 +33,16 @@ export const VoltMarketContactButton: React.FC<VoltMarketContactButtonProps> = (
       return;
     }
 
+    console.log('Creating conversation:', { listingId, sellerId, buyerId: profile.id });
+
     try {
-      await createConversation(listingId, sellerId);
+      const conversationId = await createConversation(listingId, sellerId);
+      console.log('Conversation created/found:', conversationId);
+      
       // Navigate directly to messages instead of just showing a popup
       navigate('/voltmarket/messages');
     } catch (error) {
+      console.error('Error in handleContact:', error);
       toast({
         title: "Error",
         description: "Failed to start conversation. Please try again.",
