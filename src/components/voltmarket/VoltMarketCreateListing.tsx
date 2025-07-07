@@ -30,14 +30,22 @@ export const VoltMarketCreateListing: React.FC = () => {
     lease_rate: 0,
     power_rate_per_kw: 0,
     power_capacity_mw: 0,
+    available_power_mw: 0,
     square_footage: 0,
     is_location_confidential: false,
+    property_type: 'other' as 'other' | 'industrial' | 'warehouse' | 'data_center' | 'land' | 'office',
     facility_tier: '',
     cooling_type: '',
+    hosting_types: [] as string[],
+    minimum_commitment_months: 0,
+    equipment_type: 'other' as 'other' | 'asic' | 'gpu' | 'cooling' | 'generator' | 'ups' | 'transformer',
     brand: '',
     model: '',
+    specs: {},
     equipment_condition: 'new' as 'new' | 'used' | 'refurbished',
-    quantity: 1
+    manufacture_year: new Date().getFullYear(),
+    quantity: 1,
+    shipping_terms: ''
   });
 
   const { profile } = useVoltMarketAuth();

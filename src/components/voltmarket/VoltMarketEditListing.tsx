@@ -22,15 +22,28 @@ interface ListingData {
   description: string;
   listing_type: VoltMarketListingType;
   asking_price: number;
+  lease_rate?: number;
+  power_rate_per_kw?: number;
   power_capacity_mw: number;
+  available_power_mw?: number;
+  square_footage?: number;
   location: string;
+  latitude?: number;
+  longitude?: number;
+  is_location_confidential?: boolean;
   property_type?: VoltMarketPropertyType;
-  zoning?: string;
-  total_acreage?: number;
-  available_acreage?: number;
-  utility_provider?: string;
-  transmission_access?: boolean;
-  environmental_permits?: boolean;
+  facility_tier?: string;
+  cooling_type?: string;
+  hosting_types?: string[];
+  minimum_commitment_months?: number;
+  equipment_type?: 'other' | 'asic' | 'gpu' | 'cooling' | 'generator' | 'ups' | 'transformer';
+  brand?: string;
+  model?: string;
+  specs?: any;
+  equipment_condition?: 'new' | 'used' | 'refurbished';
+  manufacture_year?: number;
+  quantity?: number;
+  shipping_terms?: string;
   status: string;
 }
 
@@ -101,15 +114,28 @@ export const VoltMarketEditListing: React.FC = () => {
           description: listing.description,
           listing_type: listing.listing_type,
           asking_price: listing.asking_price,
+          lease_rate: listing.lease_rate,
+          power_rate_per_kw: listing.power_rate_per_kw,
           power_capacity_mw: listing.power_capacity_mw,
+          available_power_mw: listing.available_power_mw,
+          square_footage: listing.square_footage,
           location: listing.location,
+          latitude: listing.latitude,
+          longitude: listing.longitude,
+          is_location_confidential: listing.is_location_confidential,
           property_type: listing.property_type,
-          zoning: listing.zoning,
-          total_acreage: listing.total_acreage,
-          available_acreage: listing.available_acreage,
-          utility_provider: listing.utility_provider,
-          transmission_access: listing.transmission_access,
-          environmental_permits: listing.environmental_permits,
+          facility_tier: listing.facility_tier,
+          cooling_type: listing.cooling_type,
+          hosting_types: listing.hosting_types,
+          minimum_commitment_months: listing.minimum_commitment_months,
+          equipment_type: listing.equipment_type,
+          brand: listing.brand,
+          model: listing.model,
+          specs: listing.specs,
+          equipment_condition: listing.equipment_condition,
+          manufacture_year: listing.manufacture_year,
+          quantity: listing.quantity,
+          shipping_terms: listing.shipping_terms,
           updated_at: new Date().toISOString()
         })
         .eq('id', listing.id)
@@ -232,25 +258,47 @@ export const VoltMarketEditListing: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="asking_price">Asking Price ($) *</Label>
+                  <Label htmlFor="asking_price">Asking Price ($)</Label>
                   <Input
                     id="asking_price"
                     type="number"
-                    value={listing.asking_price}
+                    value={listing.asking_price || ''}
                     onChange={(e) => handleInputChange('asking_price', parseFloat(e.target.value) || 0)}
                     placeholder="0"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="power_capacity_mw">Power Capacity (MW) *</Label>
+                  <Label htmlFor="power_capacity_mw">Power Capacity (MW)</Label>
                   <Input
                     id="power_capacity_mw"
                     type="number"
                     step="0.1"
-                    value={listing.power_capacity_mw}
+                    value={listing.power_capacity_mw || ''}
                     onChange={(e) => handleInputChange('power_capacity_mw', parseFloat(e.target.value) || 0)}
                     placeholder="0.0"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="lease_rate">Lease Rate ($/month)</Label>
+                  <Input
+                    id="lease_rate"
+                    type="number"
+                    value={listing.lease_rate || ''}
+                    onChange={(e) => handleInputChange('lease_rate', parseFloat(e.target.value) || 0)}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="square_footage">Square Footage</Label>
+                  <Input
+                    id="square_footage"
+                    type="number"
+                    value={listing.square_footage || ''}
+                    onChange={(e) => handleInputChange('square_footage', parseInt(e.target.value) || 0)}
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -281,13 +329,13 @@ export const VoltMarketEditListing: React.FC = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="total_acreage">Total Acreage</Label>
+                  <Label htmlFor="available_power_mw">Available Power (MW)</Label>
                   <Input
-                    id="total_acreage"
+                    id="available_power_mw"
                     type="number"
                     step="0.1"
-                    value={listing.total_acreage || ''}
-                    onChange={(e) => handleInputChange('total_acreage', parseFloat(e.target.value) || null)}
+                    value={listing.available_power_mw || ''}
+                    onChange={(e) => handleInputChange('available_power_mw', parseFloat(e.target.value) || null)}
                     placeholder="0.0"
                   />
                 </div>
@@ -295,33 +343,52 @@ export const VoltMarketEditListing: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="available_acreage">Available Acreage</Label>
-                  <Input
-                    id="available_acreage"
-                    type="number"
-                    step="0.1"
-                    value={listing.available_acreage || ''}
-                    onChange={(e) => handleInputChange('available_acreage', parseFloat(e.target.value) || null)}
-                    placeholder="0.0"
-                  />
+                  <Label htmlFor="facility_tier">Facility Tier</Label>
+                  <Select value={listing.facility_tier || ''} onValueChange={(value) => handleInputChange('facility_tier', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tier-1">Tier 1</SelectItem>
+                      <SelectItem value="tier-2">Tier 2</SelectItem>
+                      <SelectItem value="tier-3">Tier 3</SelectItem>
+                      <SelectItem value="tier-4">Tier 4</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
                 <div>
-                  <Label htmlFor="zoning">Zoning</Label>
+                  <Label htmlFor="cooling_type">Cooling Type</Label>
+                  <Select value={listing.cooling_type || ''} onValueChange={(value) => handleInputChange('cooling_type', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select cooling type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="air-cooled">Air Cooled</SelectItem>
+                      <SelectItem value="liquid-cooled">Liquid Cooled</SelectItem>
+                      <SelectItem value="immersion">Immersion</SelectItem>
+                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="brand">Brand</Label>
                   <Input
-                    id="zoning"
-                    value={listing.zoning || ''}
-                    onChange={(e) => handleInputChange('zoning', e.target.value)}
-                    placeholder="e.g., Industrial, Commercial"
+                    id="brand"
+                    value={listing.brand || ''}
+                    onChange={(e) => handleInputChange('brand', e.target.value)}
+                    placeholder="e.g., Bitmain"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="utility_provider">Utility Provider</Label>
+                  <Label htmlFor="model">Model</Label>
                   <Input
-                    id="utility_provider"
-                    value={listing.utility_provider || ''}
-                    onChange={(e) => handleInputChange('utility_provider', e.target.value)}
-                    placeholder="e.g., PG&E, ConEd"
+                    id="model"
+                    value={listing.model || ''}
+                    onChange={(e) => handleInputChange('model', e.target.value)}
+                    placeholder="e.g., Antminer S19"
                   />
                 </div>
               </div>
