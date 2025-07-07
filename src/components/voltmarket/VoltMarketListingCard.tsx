@@ -38,9 +38,10 @@ interface Listing {
 
 interface VoltMarketListingCardProps {
   listing: Listing;
+  enhanced?: boolean;
 }
 
-export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ listing }) => {
+export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ listing, enhanced = false }) => {
   const [images, setImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 

@@ -16,6 +16,7 @@ interface SavedSearch {
 export const useVoltMarketSavedSearches = () => {
   const { profile } = useVoltMarketAuth();
   const [loading, setLoading] = useState(false);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
   const saveSearch = async (searchName: string, searchCriteria: any, notificationEnabled = true) => {
     if (!profile) throw new Error('Must be logged in');
@@ -53,9 +54,34 @@ export const useVoltMarketSavedSearches = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      setSavedSearches(data || []);
       return { data, error: null };
     } catch (error) {
+      setSavedSearches([]);
       return { data: null, error };
+    }
+  };
+
+  const loadSearch = async (searchId: string) => {
+    if (!profile) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('voltmarket_saved_searches')
+        .select('*')
+        .eq('id', searchId)
+        .eq('user_id', profile.id)
+        .single();
+
+      if (error) throw error;
+      return {
+        id: data.id,
+        name: data.search_name,
+        criteria: data.search_criteria
+      };
+    } catch (error) {
+      console.error('Error loading saved search:', error);
+      return null;
     }
   };
 
@@ -92,8 +118,10 @@ export const useVoltMarketSavedSearches = () => {
 
   return {
     loading,
+    savedSearches,
     saveSearch,
     getSavedSearches,
+    loadSearch,
     deleteSearch,
     updateSearchNotifications
   };

@@ -10,6 +10,8 @@ import { VoltMarketWatchlistButton } from './VoltMarketWatchlistButton';
 import { VoltMarketLOIModal } from './VoltMarketLOIModal';
 import { VoltMarketDueDiligence } from './VoltMarketDueDiligence';
 import { VoltMarketAdvancedDueDiligence } from './VoltMarketAdvancedDueDiligence';
+import { VoltMarketListingAnalytics } from './VoltMarketListingAnalytics';
+import { VoltMarketRealTimeData } from './VoltMarketRealTimeData';
 import { VoltMarketPropertyMap } from './VoltMarketPropertyMap';
 import { VoltMarketLocationDisplay } from './VoltMarketLocationDisplay';
 import { VoltMarketListingImageGallery } from './VoltMarketListingImageGallery';
@@ -251,11 +253,12 @@ export const VoltMarketListingDetail: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="location">Location</TabsTrigger>
                 <TabsTrigger value="seller">Seller</TabsTrigger>
               </TabsList>
@@ -435,6 +438,13 @@ export const VoltMarketListingDetail: React.FC = () => {
 
               <TabsContent value="analysis">
                 <VoltMarketAdvancedDueDiligence
+                  listingId={listing.id}
+                  listingData={listing}
+                />
+              </TabsContent>
+
+              <TabsContent value="analytics">
+                <VoltMarketListingAnalytics
                   listingId={listing.id}
                   listingData={listing}
                 />
