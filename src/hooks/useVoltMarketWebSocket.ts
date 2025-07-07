@@ -11,7 +11,7 @@ interface UseWebSocketReturn {
   sendMessage: (recipientId: string, listingId: string, message: string) => void;
   markAsRead: (messageId: string) => void;
   setTyping: (recipientId: string, isTyping: boolean) => void;
-  onMessage: (callback: (message: WebSocketMessage) => void) => void;
+  onMessage: (callback: (message: WebSocketMessage) => void) => () => void;
   reconnect: () => void;
 }
 
@@ -27,7 +27,7 @@ export const useVoltMarketWebSocket = (): UseWebSocketReturn => {
     if (!profile?.id) return;
 
     try {
-      // Use the correct Supabase edge function URL format
+      // Use the correct Supabase Edge Functions WebSocket URL
       const wsUrl = `wss://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/voltmarket-chat`;
       console.log('Attempting to connect to WebSocket:', wsUrl);
       const ws = new WebSocket(wsUrl);
@@ -64,7 +64,7 @@ export const useVoltMarketWebSocket = (): UseWebSocketReturn => {
         setIsConnected(false);
         wsRef.current = null;
 
-        // Attempt to reconnect if not a clean close
+        // Attempt to reconnect if not a clean close and we haven't exceeded max attempts
         if (event.code !== 1000 && reconnectAttempts < 5) {
           const delay = Math.pow(2, reconnectAttempts) * 1000; // Exponential backoff
           console.log(`Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts + 1})`);

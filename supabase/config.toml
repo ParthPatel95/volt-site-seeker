@@ -2,3 +2,6 @@ project_id = "ktgosplhknmnyagxrgbe"
 
 [functions.verify-email]
 verify_jwt = false
+
+[functions.voltmarket-chat]
+verify_jwt = false
