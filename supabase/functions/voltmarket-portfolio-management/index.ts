@@ -27,7 +27,10 @@ Deno.serve(async (req) => {
       throw new Error('Invalid auth token')
     }
 
+    console.log('Portfolio function called', { method: req.method, url: req.url })
+
     const requestBody = req.method !== 'GET' ? await req.json().catch(() => ({})) : {}
+    console.log('Request body:', requestBody)
 
     switch (req.method) {
       case 'GET':

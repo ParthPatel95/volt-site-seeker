@@ -25,7 +25,8 @@ import {
   Sparkles,
   Rocket,
   Shield,
-  Globe
+  Globe,
+  Plus
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart as RechartsPieChart, Cell, BarChart, Bar, Tooltip, Legend } from 'recharts';
 
@@ -46,6 +47,7 @@ const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'
 
 export const VoltMarketAdvancedPortfolio: React.FC = () => {
   const { portfolios, loading } = useVoltMarketPortfolio();
+  console.log('Portfolio component rendering:', { portfolios, loading });
   const { toast } = useToast();
   const [selectedPortfolio, setSelectedPortfolio] = useState<string | null>(null);
   const [performanceData, setPerformanceData] = useState<any[]>([]);
@@ -164,64 +166,97 @@ export const VoltMarketAdvancedPortfolio: React.FC = () => {
           </div>
         </div>
 
-        {/* Portfolio Selection Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {portfolios.map((portfolio) => (
-            <Card 
-              key={portfolio.id}
-              className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                selectedPortfolio === portfolio.id
-                  ? 'ring-2 ring-blue-500 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950'
-                  : 'hover:shadow-md bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm'
-              }`}
-              onClick={() => setSelectedPortfolio(portfolio.id)}
-            >
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-lg">{portfolio.name}</h3>
-                      <Badge variant="outline" className="text-xs">
-                        {portfolio.portfolio_type}
-                      </Badge>
-                    </div>
-                    <Zap className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 dark:text-slate-400">Total Value</span>
-                      <span className="font-bold text-lg">
-                        {formatCurrency(portfolio.total_value || 0)}
-                      </span>
-                    </div>
-                    
-                    {portfolio.metrics && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600 dark:text-slate-400">Return</span>
-                        <div className="flex items-center gap-1">
-                          {portfolio.metrics.returnPercentage >= 0 ? (
-                            <ArrowUpRight className="w-3 h-3 text-emerald-500" />
-                          ) : (
-                            <ArrowDownRight className="w-3 h-3 text-red-500" />
-                          )}
-                          <span className={portfolio.metrics.returnPercentage >= 0 ? 'text-emerald-600' : 'text-red-600'}>
-                            {formatPercentage(portfolio.metrics.returnPercentage)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <Progress 
-                      value={Math.min(100, (portfolio.total_value || 0) / 10000000 * 100)} 
-                      className="h-2"
-                    />
-                  </div>
+        {/* Loading state */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-2">Loading portfolios...</span>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && portfolios.length === 0 && (
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <CardContent className="p-12 text-center">
+              <div className="space-y-4">
+                <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
+                  <PieChart className="w-8 h-8 text-slate-400" />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold">No portfolios found</h3>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Create your first portfolio to start tracking your energy infrastructure investments
+                  </p>
+                </div>
+                <Button className="mt-4">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Portfolio
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Portfolio Selection Grid */}
+        {!loading && portfolios.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {portfolios.map((portfolio) => (
+              <Card 
+                key={portfolio.id}
+                className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                  selectedPortfolio === portfolio.id
+                    ? 'ring-2 ring-blue-500 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950'
+                    : 'hover:shadow-md bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm'
+                }`}
+                onClick={() => setSelectedPortfolio(portfolio.id)}
+              >
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-lg">{portfolio.name}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {portfolio.portfolio_type}
+                        </Badge>
+                      </div>
+                      <Zap className="w-5 h-5 text-yellow-500" />
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">Total Value</span>
+                        <span className="font-bold text-lg">
+                          {formatCurrency(portfolio.total_value || 0)}
+                        </span>
+                      </div>
+                      
+                      {portfolio.metrics && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">Return</span>
+                          <div className="flex items-center gap-1">
+                            {portfolio.metrics.returnPercentage >= 0 ? (
+                              <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                            ) : (
+                              <ArrowDownRight className="w-3 h-3 text-red-500" />
+                            )}
+                            <span className={portfolio.metrics.returnPercentage >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                              {formatPercentage(portfolio.metrics.returnPercentage)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Progress 
+                        value={Math.min(100, (portfolio.total_value || 0) / 10000000 * 100)} 
+                        className="h-2"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Advanced Analytics Dashboard */}
         {selectedPortfolioData && (
