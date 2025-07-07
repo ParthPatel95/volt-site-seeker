@@ -23,7 +23,10 @@ import {
   Zap,
   Shield,
   BarChart3,
-  ChevronDown
+  ChevronDown,
+  Briefcase,
+  FileText,
+  Scale
 } from 'lucide-react';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { useVoltMarketRealtime } from '@/hooks/useVoltMarketRealtime';
@@ -73,6 +76,8 @@ export const VoltMarketNavigation: React.FC = () => {
 
   const userNavItems = user ? [
     { name: 'Messages', path: '/voltmarket/messages-enhanced', icon: MessageSquare, badge: unreadCount },
+    { name: 'Portfolio', path: '/voltmarket/portfolio', icon: Briefcase },
+    { name: 'Documents', path: '/voltmarket/documents', icon: FileText },
   ] : [];
 
   return (
@@ -188,6 +193,24 @@ export const VoltMarketNavigation: React.FC = () => {
                          <Link to="/voltmarket/dashboard" className="cursor-pointer">
                            <User className="w-4 h-4 mr-2" />
                            Dashboard
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/portfolio" className="cursor-pointer">
+                           <Briefcase className="w-4 h-4 mr-2" />
+                           Portfolio
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/documents" className="cursor-pointer">
+                           <FileText className="w-4 h-4 mr-2" />
+                           Documents
+                         </Link>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link to="/voltmarket/loi" className="cursor-pointer">
+                           <Scale className="w-4 h-4 mr-2" />
+                           LOI Center
                          </Link>
                        </DropdownMenuItem>
                        <DropdownMenuItem asChild>

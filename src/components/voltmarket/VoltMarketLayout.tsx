@@ -40,7 +40,10 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/voltmarket/listings" className="hover:text-watt-primary transition-colors">Browse Listings</Link></li>
                 <li><Link to="/voltmarket/search" className="hover:text-watt-primary transition-colors">Advanced Search</Link></li>
-                <li><Link to="/voltmarket/analytics" className="hover:text-watt-primary transition-colors">Market Analytics</Link></li>
+                <li><Link to="/voltmarket/portfolio" className="hover:text-watt-primary transition-colors">Portfolio Manager</Link></li>
+                <li><Link to="/voltmarket/documents" className="hover:text-watt-primary transition-colors">Document Center</Link></li>
+                <li><Link to="/voltmarket/loi" className="hover:text-watt-primary transition-colors">LOI Center</Link></li>
+                <li><Link to="/voltmarket/due-diligence" className="hover:text-watt-primary transition-colors">Due Diligence</Link></li>
                 <li><Link to="/voltmarket/verification" className="hover:text-watt-primary transition-colors">Get Verified</Link></li>
               </ul>
             </div>
