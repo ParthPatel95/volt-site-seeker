@@ -45,14 +45,14 @@ export const useVoltMarketConversations = () => {
 
     setLoading(true);
     try {
-      // Fetch conversations with related data
+      // Fetch conversations with related data - fix ambiguous relationship
       const { data: conversationData, error: convError } = await supabase
         .from('voltmarket_conversations')
         .select(`
           *,
-          listing:voltmarket_listings(title, asking_price),
-          buyer:voltmarket_profiles!buyer_id(company_name, profile_image_url),
-          seller:voltmarket_profiles!seller_id(company_name, profile_image_url)
+          listing:voltmarket_listings!voltmarket_conversations_listing_id_fkey(title, asking_price),
+          buyer:voltmarket_profiles!voltmarket_conversations_buyer_id_fkey(company_name, profile_image_url),
+          seller:voltmarket_profiles!voltmarket_conversations_seller_id_fkey(company_name, profile_image_url)
         `)
         .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
         .order('last_message_at', { ascending: false });
@@ -253,12 +253,12 @@ export const useVoltMarketConversations = () => {
       }
     });
 
-    // Also set up polling as fallback if WebSocket fails
+    // Also set up polling as fallback - reduce frequency to avoid spam
     const interval = setInterval(() => {
       if (!isConnected) {
         fetchConversations();
       }
-    }, 10000); // Poll every 10 seconds when WebSocket is disconnected
+    }, 30000); // Poll every 30 seconds when WebSocket is disconnected
 
     return () => {
       if (cleanup) cleanup();
