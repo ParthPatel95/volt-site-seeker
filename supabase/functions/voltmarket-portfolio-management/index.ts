@@ -5,26 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface PortfolioRequest {
-  name: string
-  description?: string
-  portfolioType: 'investment' | 'development' | 'trading' | 'research'
-  targetAllocation?: Record<string, number>
-  riskTolerance: 'conservative' | 'moderate' | 'aggressive' | 'speculative'
-}
-
-interface PortfolioItemRequest {
-  portfolioId: string
-  listingId?: string
-  itemType: 'listing' | 'investment' | 'opportunity' | 'research'
-  name: string
-  acquisitionPrice?: number
-  currentValue?: number
-  acquisitionDate?: string
-  notes?: string
-  metadata?: Record<string, any>
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -47,46 +27,25 @@ Deno.serve(async (req) => {
       throw new Error('Invalid auth token')
     }
 
-    const url = new URL(req.url)
-    const pathSegments = url.pathname.split('/').filter(Boolean)
-    const action = pathSegments[pathSegments.length - 1]
+    const requestBody = req.method !== 'GET' ? await req.json().catch(() => ({})) : {}
 
     switch (req.method) {
       case 'GET':
-        if (action === 'portfolios') {
-          return await handleGetPortfolios(supabase, user.id)
-        } else if (action === 'analytics') {
-          return await handlePortfolioAnalytics(req, supabase, user.id)
-        } else if (pathSegments.includes('items')) {
-          const portfolioId = pathSegments[pathSegments.length - 2]
-          return await handleGetPortfolioItems(portfolioId, supabase, user.id)
-        }
-        break
+        return await handleGetPortfolios(supabase, user.id)
 
       case 'POST':
+        const { action } = requestBody
+        
         if (action === 'create') {
-          return await handleCreatePortfolio(req, supabase, user.id)
+          return await handleCreatePortfolio(requestBody, supabase, user.id)
         } else if (action === 'add-item') {
-          return await handleAddPortfolioItem(req, supabase, user.id)
+          return await handleAddPortfolioItem(requestBody, supabase, user.id)
         } else if (action === 'analyze') {
-          return await handleAnalyzePortfolio(req, supabase, user.id)
-        }
-        break
-
-      case 'PUT':
-        if (pathSegments.includes('portfolios')) {
-          const portfolioId = pathSegments[pathSegments.length - 1]
-          return await handleUpdatePortfolio(portfolioId, req, supabase, user.id)
-        }
-        break
-
-      case 'DELETE':
-        if (pathSegments.includes('portfolios')) {
-          const portfolioId = pathSegments[pathSegments.length - 1]
-          return await handleDeletePortfolio(portfolioId, supabase, user.id)
-        } else if (pathSegments.includes('items')) {
-          const itemId = pathSegments[pathSegments.length - 1]
-          return await handleDeletePortfolioItem(itemId, supabase, user.id)
+          return await handleAnalyzePortfolio(requestBody, supabase, user.id)
+        } else if (action === 'items') {
+          return await handleGetPortfolioItems(requestBody.portfolioId, supabase, user.id)
+        } else if (action === 'delete') {
+          return await handleDeletePortfolio(requestBody.portfolioId, supabase, user.id)
         }
         break
     }
@@ -97,7 +56,7 @@ Deno.serve(async (req) => {
     console.error('Portfolio management error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
@@ -154,9 +113,7 @@ async function handleGetPortfolios(supabase: any, userId: string) {
   )
 }
 
-async function handleCreatePortfolio(req: Request, supabase: any, userId: string) {
-  const portfolioData: PortfolioRequest = await req.json()
-
+async function handleCreatePortfolio(portfolioData: any, supabase: any, userId: string) {
   const { data: portfolio, error } = await supabase
     .from('voltmarket_portfolios')
     .insert({
@@ -180,9 +137,7 @@ async function handleCreatePortfolio(req: Request, supabase: any, userId: string
   )
 }
 
-async function handleAddPortfolioItem(req: Request, supabase: any, userId: string) {
-  const itemData: PortfolioItemRequest = await req.json()
-
+async function handleAddPortfolioItem(itemData: any, supabase: any, userId: string) {
   // Verify portfolio ownership
   const { data: portfolio, error: portfolioError } = await supabase
     .from('voltmarket_portfolios')
@@ -262,8 +217,8 @@ async function handleGetPortfolioItems(portfolioId: string, supabase: any, userI
   )
 }
 
-async function handleAnalyzePortfolio(req: Request, supabase: any, userId: string) {
-  const { portfolioId } = await req.json()
+async function handleAnalyzePortfolio(requestData: any, supabase: any, userId: string) {
+  const { portfolioId } = requestData
 
   // Get portfolio with items
   const { data: portfolio, error: portfolioError } = await supabase
@@ -292,6 +247,23 @@ async function handleAnalyzePortfolio(req: Request, supabase: any, userId: strin
 
   return new Response(
     JSON.stringify({ analytics }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  )
+}
+
+async function handleDeletePortfolio(portfolioId: string, supabase: any, userId: string) {
+  const { error } = await supabase
+    .from('voltmarket_portfolios')
+    .delete()
+    .eq('id', portfolioId)
+    .eq('user_id', userId)
+
+  if (error) {
+    throw new Error(`Failed to delete portfolio: ${error.message}`)
+  }
+
+  return new Response(
+    JSON.stringify({ success: true }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 }
@@ -377,76 +349,4 @@ function generateRecommendations(items: any[], portfolio: any) {
   }
 
   return recommendations
-}
-
-async function handleUpdatePortfolio(portfolioId: string, req: Request, supabase: any, userId: string) {
-  const updateData = await req.json()
-
-  const { data: portfolio, error } = await supabase
-    .from('voltmarket_portfolios')
-    .update(updateData)
-    .eq('id', portfolioId)
-    .eq('user_id', userId)
-    .select()
-    .single()
-
-  if (error) {
-    throw new Error(`Failed to update portfolio: ${error.message}`)
-  }
-
-  return new Response(
-    JSON.stringify({ portfolio }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  )
-}
-
-async function handleDeletePortfolio(portfolioId: string, supabase: any, userId: string) {
-  const { error } = await supabase
-    .from('voltmarket_portfolios')
-    .delete()
-    .eq('id', portfolioId)
-    .eq('user_id', userId)
-
-  if (error) {
-    throw new Error(`Failed to delete portfolio: ${error.message}`)
-  }
-
-  return new Response(
-    JSON.stringify({ success: true }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  )
-}
-
-async function handleDeletePortfolioItem(itemId: string, supabase: any, userId: string) {
-  // Verify ownership through portfolio
-  const { data: item, error: itemError } = await supabase
-    .from('voltmarket_portfolio_items')
-    .select(`
-      id,
-      portfolio_id,
-      portfolio:voltmarket_portfolios!inner(user_id)
-    `)
-    .eq('id', itemId)
-    .single()
-
-  if (itemError || item.portfolio.user_id !== userId) {
-    throw new Error('Item not found or access denied')
-  }
-
-  const { error } = await supabase
-    .from('voltmarket_portfolio_items')
-    .delete()
-    .eq('id', itemId)
-
-  if (error) {
-    throw new Error(`Failed to delete portfolio item: ${error.message}`)
-  }
-
-  // Update portfolio total value
-  await updatePortfolioValue(supabase, item.portfolio_id)
-
-  return new Response(
-    JSON.stringify({ success: true }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  )
 }
