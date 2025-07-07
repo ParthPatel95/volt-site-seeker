@@ -33,12 +33,8 @@ export const VoltMarketContactButton: React.FC<VoltMarketContactButtonProps> = (
       return;
     }
 
-    console.log('Creating conversation:', { listingId, sellerId, buyerId: profile.id });
-
     try {
-      const conversationId = await createConversation(listingId, sellerId);
-      console.log('Conversation created/found:', conversationId);
-      
+      await createConversation(listingId, sellerId);
       // Navigate directly to messages instead of just showing a popup
       navigate('/voltmarket/messages');
     } catch (error) {

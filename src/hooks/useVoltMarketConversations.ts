@@ -98,8 +98,6 @@ export const useVoltMarketConversations = () => {
   const createConversation = async (listingId: string, recipientId: string) => {
     if (!profile) throw new Error('Must be logged in');
 
-    console.log('createConversation called with:', { listingId, recipientId, profileId: profile.id });
-
     try {
       // Check if conversation already exists
       const { data: existingConv, error: existingError } = await supabase
@@ -109,14 +107,10 @@ export const useVoltMarketConversations = () => {
         .or(`and(buyer_id.eq.${profile.id},seller_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},seller_id.eq.${profile.id})`)
         .maybeSingle();
 
-      console.log('Existing conversation check:', { existingConv, existingError });
-
       if (existingConv) {
-        console.log('Found existing conversation:', existingConv.id);
         return existingConv.id;
       }
 
-      console.log('Creating new conversation...');
       // Create new conversation
       const { data: newConv, error } = await supabase
         .from('voltmarket_conversations')
@@ -128,11 +122,8 @@ export const useVoltMarketConversations = () => {
         .select('id')
         .single();
 
-      console.log('New conversation result:', { newConv, error });
-
       if (error) throw error;
       
-      await fetchConversations();
       return newConv.id;
     } catch (error) {
       console.error('Error creating conversation:', error);
@@ -181,7 +172,50 @@ export const useVoltMarketConversations = () => {
   };
 
   useEffect(() => {
+    if (!profile) return;
+    
     fetchConversations();
+
+    // Set up real-time subscriptions for live messaging
+    const messagesChannel = supabase
+      .channel('voltmarket-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'voltmarket_messages'
+        },
+        (payload) => {
+          console.log('Real-time message event:', payload);
+          // Refresh conversations when messages change
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    const conversationsChannel = supabase
+      .channel('voltmarket-conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'voltmarket_conversations'
+        },
+        (payload) => {
+          console.log('Real-time conversation event:', payload);
+          // Refresh conversations when conversations change
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(conversationsChannel);
+    };
   }, [profile]);
 
   return {
