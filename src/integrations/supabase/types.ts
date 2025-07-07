@@ -2157,6 +2157,44 @@ export type Database = {
           },
         ]
       }
+      voltmarket_document_permissions: {
+        Row: {
+          document_id: string
+          expires_at: string | null
+          granted_at: string | null
+          granted_by: string
+          id: string
+          permission_type: string
+          user_id: string
+        }
+        Insert: {
+          document_id: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by: string
+          id?: string
+          permission_type: string
+          user_id: string
+        }
+        Update: {
+          document_id?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string
+          id?: string
+          permission_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_document_permissions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltmarket_documents: {
         Row: {
           created_at: string | null
@@ -2258,6 +2296,71 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: []
+      }
+      voltmarket_due_diligence_tasks: {
+        Row: {
+          assigned_to: string | null
+          attachments: string[] | null
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          listing_id: string
+          priority: string | null
+          status: string | null
+          task_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          attachments?: string[] | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_notes?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          listing_id: string
+          priority?: string | null
+          status?: string | null
+          task_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          attachments?: string[] | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_notes?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          listing_id?: string
+          priority?: string | null
+          status?: string | null
+          task_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_due_diligence_tasks_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       voltmarket_email_templates: {
         Row: {
@@ -2494,6 +2597,44 @@ export type Database = {
           },
         ]
       }
+      voltmarket_loi_documents: {
+        Row: {
+          document_type: string
+          file_path: string
+          filename: string
+          id: string
+          loi_id: string
+          uploaded_at: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          document_type: string
+          file_path: string
+          filename: string
+          id?: string
+          loi_id: string
+          uploaded_at?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          document_type?: string
+          file_path?: string
+          filename?: string
+          id?: string
+          loi_id?: string
+          uploaded_at?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_loi_documents_loi_id_fkey"
+            columns: ["loi_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_lois"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltmarket_lois: {
         Row: {
           buyer_id: string
@@ -2560,6 +2701,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      voltmarket_market_analytics: {
+        Row: {
+          analysis_period: string
+          confidence_score: number | null
+          data_sources: string[] | null
+          expires_at: string | null
+          forecasts: Json | null
+          generated_at: string | null
+          id: string
+          metrics: Json
+          period_end: string
+          period_start: string
+          property_type: string
+          region: string
+          trends: Json | null
+        }
+        Insert: {
+          analysis_period: string
+          confidence_score?: number | null
+          data_sources?: string[] | null
+          expires_at?: string | null
+          forecasts?: Json | null
+          generated_at?: string | null
+          id?: string
+          metrics?: Json
+          period_end: string
+          period_start: string
+          property_type: string
+          region: string
+          trends?: Json | null
+        }
+        Update: {
+          analysis_period?: string
+          confidence_score?: number | null
+          data_sources?: string[] | null
+          expires_at?: string | null
+          forecasts?: Json | null
+          generated_at?: string | null
+          id?: string
+          metrics?: Json
+          period_end?: string
+          period_start?: string
+          property_type?: string
+          region?: string
+          trends?: Json | null
+        }
+        Relationships: []
       }
       voltmarket_messages: {
         Row: {
@@ -2736,6 +2925,108 @@ export type Database = {
           },
         ]
       }
+      voltmarket_portfolio_items: {
+        Row: {
+          acquisition_date: string | null
+          acquisition_price: number | null
+          added_at: string | null
+          current_value: number | null
+          id: string
+          item_type: string
+          listing_id: string | null
+          metadata: Json | null
+          name: string
+          notes: string | null
+          portfolio_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          acquisition_date?: string | null
+          acquisition_price?: number | null
+          added_at?: string | null
+          current_value?: number | null
+          id?: string
+          item_type: string
+          listing_id?: string | null
+          metadata?: Json | null
+          name: string
+          notes?: string | null
+          portfolio_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          acquisition_date?: string | null
+          acquisition_price?: number | null
+          added_at?: string | null
+          current_value?: number | null
+          id?: string
+          item_type?: string
+          listing_id?: string | null
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          portfolio_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_portfolio_items_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_portfolio_items_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_portfolios: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          portfolio_type: string | null
+          risk_tolerance: string | null
+          target_allocation: Json | null
+          total_value: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          portfolio_type?: string | null
+          risk_tolerance?: string | null
+          target_allocation?: Json | null
+          total_value?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          portfolio_type?: string | null
+          risk_tolerance?: string | null
+          target_allocation?: Json | null
+          total_value?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       voltmarket_profiles: {
         Row: {
           bio: string | null
@@ -2889,6 +3180,60 @@ export type Database = {
           },
         ]
       }
+      voltmarket_search_filters: {
+        Row: {
+          advanced_filters: Json
+          alert_frequency: string | null
+          base_criteria: Json
+          created_at: string | null
+          financial_filters: Json | null
+          geographic_filters: Json | null
+          id: string
+          infrastructure_filters: Json | null
+          is_active: boolean | null
+          is_alert_enabled: boolean | null
+          last_run_at: string | null
+          name: string
+          results_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          advanced_filters?: Json
+          alert_frequency?: string | null
+          base_criteria?: Json
+          created_at?: string | null
+          financial_filters?: Json | null
+          geographic_filters?: Json | null
+          id?: string
+          infrastructure_filters?: Json | null
+          is_active?: boolean | null
+          is_alert_enabled?: boolean | null
+          last_run_at?: string | null
+          name: string
+          results_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          advanced_filters?: Json
+          alert_frequency?: string | null
+          base_criteria?: Json
+          created_at?: string | null
+          financial_filters?: Json | null
+          geographic_filters?: Json | null
+          id?: string
+          infrastructure_filters?: Json | null
+          is_active?: boolean | null
+          is_alert_enabled?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          results_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       voltmarket_transactions: {
         Row: {
           amount: number
@@ -2990,6 +3335,85 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_user_analytics: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          listing_id: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          listing_id?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          listing_id?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_user_analytics_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltmarket_verification_documents: {
+        Row: {
+          document_type: string
+          file_path: string
+          filename: string
+          id: string
+          uploaded_at: string | null
+          verification_id: string
+        }
+        Insert: {
+          document_type: string
+          file_path: string
+          filename: string
+          id?: string
+          uploaded_at?: string | null
+          verification_id: string
+        }
+        Update: {
+          document_type?: string
+          file_path?: string
+          filename?: string
+          id?: string
+          uploaded_at?: string | null
+          verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_verification_documents_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_verifications"
             referencedColumns: ["id"]
           },
         ]
