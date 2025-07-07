@@ -75,7 +75,7 @@ export const VoltMarketNavigation: React.FC = () => {
   ];
 
   const userNavItems = user ? [
-    { name: 'Messages', path: '/voltmarket/messages-enhanced', icon: MessageSquare, badge: unreadCount },
+    { name: 'Messages', path: '/voltmarket/contact-messages', icon: MessageSquare, badge: 0 },
     { name: 'Portfolio', path: '/voltmarket/portfolio', icon: Briefcase },
     { name: 'Documents', path: '/voltmarket/documents', icon: FileText },
   ] : [];
@@ -371,20 +371,15 @@ export const VoltMarketNavigation: React.FC = () => {
             </Link>
 
             <Link
-              to="/voltmarket/messages-enhanced"
+              to="/voltmarket/contact-messages"
               className={`relative flex flex-col items-center gap-1 p-3 rounded-xl touch-target transition-all duration-200 ${
-                isActiveRoute('/voltmarket/messages-enhanced') 
+                isActiveRoute('/voltmarket/contact-messages') 
                   ? 'text-watt-primary bg-watt-primary/10' 
                   : 'text-muted-foreground hover:text-watt-primary'
               }`}
             >
               <MessageSquare className="w-5 h-5" />
               <span className="text-xs font-medium">Messages</span>
-              {unreadCount > 0 && (
-                <div className="absolute top-1 right-2 w-4 h-4 bg-watt-warning rounded-full text-xs text-white flex items-center justify-center">
-                  {unreadCount}
-                </div>
-              )}
             </Link>
 
             <Link

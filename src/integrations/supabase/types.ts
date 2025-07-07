@@ -2129,6 +2129,53 @@ export type Database = {
         }
         Relationships: []
       }
+      voltmarket_contact_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          listing_id: string
+          listing_owner_id: string
+          message: string
+          sender_email: string
+          sender_name: string
+          sender_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          listing_id: string
+          listing_owner_id: string
+          message: string
+          sender_email: string
+          sender_name: string
+          sender_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          listing_id?: string
+          listing_owner_id?: string
+          message?: string
+          sender_email?: string
+          sender_name?: string
+          sender_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltmarket_contact_messages_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltmarket_conversations: {
         Row: {
           buyer_id: string

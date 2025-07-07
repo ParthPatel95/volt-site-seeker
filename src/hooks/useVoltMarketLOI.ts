@@ -16,7 +16,7 @@ export interface LOIData {
   closing_timeline: string;
   buyer_qualifications: string;
   additional_notes?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'countered';
+  status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
   updated_at: string;
 }
@@ -39,8 +39,8 @@ export const useVoltMarketLOI = () => {
 
       if (listingError) throw listingError;
 
-      // Create LOI record in the proper table using any type to bypass TypeScript error
-      const { data: loiRecord, error: loiError } = await (supabase as any)
+      // Create LOI record in the proper table
+      const { data: loiRecord, error: loiError } = await supabase
         .from('voltmarket_lois')
         .insert({
           listing_id: listingId,
@@ -61,19 +61,6 @@ export const useVoltMarketLOI = () => {
 
       if (loiError) throw loiError;
 
-      // Also create a message notification for the seller
-      const { error: messageError } = await supabase
-        .from('voltmarket_messages')
-        .insert({
-          listing_id: listingId,
-          sender_id: profile.id,
-          recipient_id: listing.seller_id,
-          message: `New LOI Submitted - Offering Price: $${loiData.offering_price.toLocaleString()}\n\nTerms: ${loiData.proposed_terms}\n\nBuyer Qualifications: ${loiData.buyer_qualifications}`,
-          is_read: false
-        });
-
-      if (messageError) throw messageError;
-
       return { success: true, data: loiRecord };
     } catch (error) {
       console.error('Error submitting LOI:', error);
@@ -87,8 +74,7 @@ export const useVoltMarketLOI = () => {
     if (!profile) return [];
 
     try {
-      // Use any type to bypass TypeScript error until types are regenerated
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('voltmarket_lois')
         .select(`
           *,
@@ -107,12 +93,11 @@ export const useVoltMarketLOI = () => {
     }
   };
 
-  const updateLOIStatus = async (loiId: string, status: 'accepted' | 'rejected' | 'countered') => {
+  const updateLOIStatus = async (loiId: string, status: 'accepted' | 'rejected' | 'pending') => {
     if (!profile) throw new Error('Not authenticated');
 
     try {
-      // Use any type to bypass TypeScript error until types are regenerated
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('voltmarket_lois')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', loiId)

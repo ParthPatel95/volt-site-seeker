@@ -1,56 +1,41 @@
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MessageSquare } from 'lucide-react';
-import { useVoltMarketConversations } from '@/hooks/useVoltMarketConversations';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
-import { useToast } from '@/hooks/use-toast';
+import { VoltMarketContactForm } from './VoltMarketContactForm';
 
 interface VoltMarketContactButtonProps {
   listingId: string;
   sellerId: string;
+  listingTitle: string;
   className?: string;
 }
 
 export const VoltMarketContactButton: React.FC<VoltMarketContactButtonProps> = ({
   listingId,
   sellerId,
+  listingTitle,
   className
 }) => {
-  const navigate = useNavigate();
-  const { profile } = useVoltMarketAuth();
-  const { createConversation } = useVoltMarketConversations();
-  const { toast } = useToast();
+  const [showContactForm, setShowContactForm] = useState(false);
 
-  const handleContact = async () => {
-    if (!profile) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to contact the seller.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      await createConversation(listingId, sellerId);
-      // Navigate directly to messages instead of just showing a popup
-      navigate('/voltmarket/messages');
-    } catch (error) {
-      console.error('Error in handleContact:', error);
-      toast({
-        title: "Error",
-        description: "Failed to start conversation. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const handleContact = () => {
+    setShowContactForm(true);
   };
 
   return (
-    <Button onClick={handleContact} className={className}>
-      <MessageSquare className="w-4 h-4 mr-2" />
-      Contact Seller
-    </Button>
+    <>
+      <Button onClick={handleContact} className={className}>
+        <MessageSquare className="w-4 h-4 mr-2" />
+        Contact Seller
+      </Button>
+
+      <VoltMarketContactForm
+        isOpen={showContactForm}
+        onClose={() => setShowContactForm(false)}
+        listingId={listingId}
+        listingTitle={listingTitle}
+        listingOwnerId={sellerId}
+      />
+    </>
   );
 };

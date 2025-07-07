@@ -244,7 +244,7 @@ export const VoltMarketListingDetail: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <VoltMarketWatchlistButton listingId={listing.id} />
-              <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} />
+              <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} />
             </div>
           </div>
         </div>
@@ -509,7 +509,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} className="w-full" />
+                <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} className="w-full" />
                 <Button 
                   variant="outline" 
                   className="w-full"

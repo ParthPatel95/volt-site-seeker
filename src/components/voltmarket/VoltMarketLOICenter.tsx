@@ -44,7 +44,7 @@ export const VoltMarketLOICenter: React.FC = () => {
 
   // Response form state
   const [responseForm, setResponseForm] = useState({
-    status: 'accepted' as 'accepted' | 'rejected' | 'countered',
+    status: 'accepted' as 'accepted' | 'rejected',
     responseNotes: '',
     counterOffer: ''
   });
@@ -492,22 +492,8 @@ export const VoltMarketLOICenter: React.FC = () => {
                 >
                   <option value="accepted">Accept</option>
                   <option value="rejected">Reject</option>
-                  <option value="countered">Counter Offer</option>
                 </select>
               </div>
-              
-              {responseForm.status === 'countered' && (
-                <div>
-                  <Label htmlFor="counter-offer">Counter Offer ($)</Label>
-                  <Input
-                    id="counter-offer"
-                    type="number"
-                    value={responseForm.counterOffer}
-                    onChange={(e) => setResponseForm(prev => ({ ...prev, counterOffer: e.target.value }))}
-                    placeholder="Enter counter offer amount"
-                  />
-                </div>
-              )}
               
               <div>
                 <Label htmlFor="response-notes">Response Notes</Label>

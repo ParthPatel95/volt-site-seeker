@@ -23,6 +23,7 @@ import { VoltMarketDocumentCenter } from '@/components/voltmarket/VoltMarketDocu
 import { VoltMarketPortfolioManager } from '@/components/voltmarket/VoltMarketPortfolioManager';
 import { VoltMarketLOICenter } from '@/components/voltmarket/VoltMarketLOICenter';
 import { VoltMarketDueDiligenceCenter } from '@/components/voltmarket/VoltMarketDueDiligenceCenter';
+import { VoltMarketContactMessages } from '@/components/voltmarket/VoltMarketContactMessages';
 
 export const VoltMarket = () => {
   const { user, loading } = useVoltMarketAuth();
@@ -113,14 +114,9 @@ export const VoltMarket = () => {
           {user ? <VoltMarketEditListing /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
-      <Route path="/messages" element={
+      <Route path="/contact-messages" element={
         <VoltMarketLayout>
-          {user ? <VoltMarketMessages /> : <WattbytesAuth />}
-        </VoltMarketLayout>
-      } />
-      <Route path="/messages-enhanced" element={
-        <VoltMarketLayout>
-          {user ? <VoltMarketEnhancedMessages /> : <WattbytesAuth />}
+          {user ? <VoltMarketContactMessages /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/notifications" element={
