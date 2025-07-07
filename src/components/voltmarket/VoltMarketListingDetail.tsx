@@ -71,6 +71,25 @@ export const VoltMarketListingDetail: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const checkNDAStatus = async () => {
+    if (!id || !profile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('voltmarket_nda_requests')
+        .select('status')
+        .eq('listing_id', id)
+        .eq('requester_id', profile.id)
+        .eq('status', 'approved')
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      setHasSignedNDA(!!data);
+    } catch (error) {
+      console.error('Error checking NDA status:', error);
+    }
+  };
+
   const fetchListing = async () => {
     if (!id) return;
 
@@ -122,9 +141,10 @@ export const VoltMarketListingDetail: React.FC = () => {
     
     const result = await submitAccessRequest(listing.id, profile.id, listing.seller_id);
     if (result.success) {
-      // For now, we'll still set hasSignedNDA to show the UI change
-      // In a real implementation, this would be managed by checking the access request status
-      setHasSignedNDA(true);
+      toast({
+        title: "Access Request Submitted",
+        description: "Your request has been sent to the listing owner for approval."
+      });
     }
   };
 
@@ -166,6 +186,7 @@ export const VoltMarketListingDetail: React.FC = () => {
     }
     
     fetchListing();
+    checkNDAStatus();
   }, [id, profile, navigate]);
 
   if (loading) {
