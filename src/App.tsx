@@ -10,6 +10,7 @@ import { VoltMarketAuthProvider } from "./contexts/VoltMarketAuthContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
+import ComprehensiveTest from "./pages/ComprehensiveTest";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
               <VoltMarket />
             </VoltMarketAuthProvider>
           } />
+          <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
