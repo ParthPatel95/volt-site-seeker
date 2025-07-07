@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from './useVoltMarketAuth';
-import { useVoltMarketWebSocket } from './useVoltMarketWebSocket';
+// Temporarily disable WebSocket import
+// import { useVoltMarketWebSocket } from './useVoltMarketWebSocket';
 
 interface Message {
   id: string;
@@ -36,7 +37,8 @@ interface Conversation {
 
 export const useVoltMarketConversations = () => {
   const { profile } = useVoltMarketAuth();
-  const { sendMessage: wsSendMessage, onMessage } = useVoltMarketWebSocket();
+  // Temporarily disable WebSocket to fix loading issues
+  // const { sendMessage: wsSendMessage, onMessage } = useVoltMarketWebSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -163,8 +165,29 @@ export const useVoltMarketConversations = () => {
     if (!profile) return;
 
     try {
-      // Use WebSocket to send message (it handles database insertion)
-      wsSendMessage(recipientId, listingId, message);
+      // Send message directly to database instead of WebSocket
+      const { data: newMessage, error } = await supabase
+        .from('voltmarket_messages')
+        .insert({
+          listing_id: listingId,
+          sender_id: profile.id,
+          recipient_id: recipientId,
+          message: message
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update conversation timestamp
+      await supabase
+        .from('voltmarket_conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('listing_id', listingId)
+        .or(`and(buyer_id.eq.${profile.id},seller_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},seller_id.eq.${profile.id})`);
+
+      // Refresh conversations to show new message
+      fetchConversations();
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -188,48 +211,15 @@ export const useVoltMarketConversations = () => {
     
     fetchConversations();
 
-    // Set up WebSocket message handling for real-time updates
-    const unsubscribe = onMessage((message) => {
-      console.log('WebSocket message received:', message);
-      
-      switch (message.type) {
-        case 'new_message':
-          // Refresh conversations when new message arrives
-          fetchConversations();
-          break;
-          
-        case 'message_read':
-          // Update local state when message is marked as read
-          setConversations(prev => 
-            prev.map(conv => ({
-              ...conv,
-              messages: conv.messages.map(msg => 
-                msg.id === message.messageId 
-                  ? { ...msg, is_read: true }
-                  : msg
-              ),
-              unread_count: conv.messages.filter(m => 
-                m.recipient_id === profile.id && 
-                !m.is_read && 
-                m.id !== message.messageId
-              ).length
-            }))
-          );
-          break;
-          
-        case 'auth_success':
-          console.log('WebSocket authenticated successfully');
-          break;
-          
-        case 'error':
-          console.error('WebSocket error:', message.message);
-          break;
-      }
-    });
+    // Set up polling for message updates every 5 seconds when active
+    const interval = setInterval(() => {
+      fetchConversations();
+    }, 5000);
 
-    // Cleanup WebSocket subscription
-    return unsubscribe;
-  }, [profile?.id, onMessage]); // Only re-run when profile id changes
+    return () => {
+      clearInterval(interval);
+    };
+  }, [profile?.id]); // Only re-run when profile id changes
 
   return {
     conversations,
