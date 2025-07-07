@@ -48,9 +48,9 @@ export const useVoltMarketConversations = () => {
         .from('voltmarket_conversations')
         .select(`
           *,
-          listing:voltmarket_listings!fk_conversations_listing(title, asking_price),
-          buyer:voltmarket_profiles!buyer_id(company_name, profile_image_url),
-          seller:voltmarket_profiles!seller_id(company_name, profile_image_url)
+          listing:voltmarket_listings(title, asking_price),
+          buyer:voltmarket_profiles!voltmarket_conversations_buyer_id_fkey(company_name, profile_image_url),
+          seller:voltmarket_profiles!voltmarket_conversations_seller_id_fkey(company_name, profile_image_url)
         `)
         .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
         .order('last_message_at', { ascending: false });
@@ -105,7 +105,7 @@ export const useVoltMarketConversations = () => {
         .select('id')
         .eq('listing_id', listingId)
         .or(`and(buyer_id.eq.${profile.id},seller_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},seller_id.eq.${profile.id})`)
-        .single();
+        .maybeSingle();
 
       if (existingConv) {
         return existingConv.id;
