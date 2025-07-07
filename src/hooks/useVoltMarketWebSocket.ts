@@ -27,7 +27,7 @@ export const useVoltMarketWebSocket = (): UseWebSocketReturn => {
     if (!profile?.id) return;
 
     try {
-      const wsUrl = `wss://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/voltmarket-chat`;
+      const wsUrl = `wss://ktgosplhknmnyagxrgbe.functions.supabase.co/voltmarket-chat`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
