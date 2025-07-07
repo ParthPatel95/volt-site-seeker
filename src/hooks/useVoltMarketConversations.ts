@@ -45,47 +45,24 @@ export const useVoltMarketConversations = () => {
 
     setLoading(true);
     try {
-      // Fetch conversations with related data - fix ambiguous relationship
+      // Fetch conversations with simplified approach first
       const { data: conversationData, error: convError } = await supabase
         .from('voltmarket_conversations')
-        .select(`
-          *,
-          listing:voltmarket_listings!voltmarket_conversations_listing_id_fkey(title, asking_price),
-          buyer:voltmarket_profiles!voltmarket_conversations_buyer_id_fkey(company_name, profile_image_url),
-          seller:voltmarket_profiles!voltmarket_conversations_seller_id_fkey(company_name, profile_image_url)
-        `)
+        .select('*')
         .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
-        .order('last_message_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (convError) {
         console.error('Conversation fetch error:', convError);
-        // Fallback: try simpler query without joins
-        const { data: simpleConversations, error: simpleError } = await supabase
-          .from('voltmarket_conversations')
-          .select('*')
-          .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
-          .order('last_message_at', { ascending: false });
-        
-        if (simpleError) throw simpleError;
-        
-        // Transform simple data to expected format
-        const conversationsWithDefaults = (simpleConversations || []).map(conv => ({
-          ...conv,
-          listing: { title: 'Loading...', asking_price: 0 },
-          other_party: { company_name: 'Loading...', profile_image_url: null },
-          messages: [],
-          last_message: null,
-          unread_count: 0
-        }));
-        
-        setConversations(conversationsWithDefaults);
+        setConversations([]);
         setLoading(false);
         return;
       }
 
-      // Fetch messages for each conversation
+      // Fetch messages and related data for each conversation
       const conversationsWithMessages = await Promise.all(
         (conversationData || []).map(async (conv) => {
+          // Fetch messages for this conversation
           const { data: messages, error: msgError } = await supabase
             .from('voltmarket_messages')
             .select('*')
@@ -97,15 +74,29 @@ export const useVoltMarketConversations = () => {
             console.error('Error fetching messages:', msgError);
           }
 
-          const otherParty = conv.buyer_id === profile.id ? conv.seller : conv.buyer;
+          // Fetch listing info
+          const { data: listing } = await supabase
+            .from('voltmarket_listings')
+            .select('title, asking_price')
+            .eq('id', conv.listing_id)
+            .single();
+
+          // Fetch other party profile
+          const otherUserId = conv.buyer_id === profile.id ? conv.seller_id : conv.buyer_id;
+          const { data: otherPartyProfile } = await supabase
+            .from('voltmarket_profiles')
+            .select('company_name, avatar_url')
+            .eq('user_id', otherUserId)
+            .single();
+
           const messageList = messages || [];
           const lastMessage = messageList.length > 0 ? messageList[messageList.length - 1] : null;
           const unreadCount = messageList.filter(m => m.recipient_id === profile.id && !m.is_read).length;
 
           return {
             ...conv,
-            listing: conv.listing || { title: 'Unknown Listing', asking_price: 0 },
-            other_party: otherParty || { company_name: 'Unknown', profile_image_url: null },
+            listing: listing || { title: 'Unknown Listing', asking_price: 0 },
+            other_party: otherPartyProfile || { company_name: 'Unknown User', profile_image_url: null },
             messages: messageList,
             last_message: lastMessage,
             unread_count: unreadCount

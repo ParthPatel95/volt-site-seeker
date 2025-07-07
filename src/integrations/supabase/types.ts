@@ -2797,6 +2797,7 @@ export type Database = {
       }
       voltmarket_messages: {
         Row: {
+          conversation_id: string | null
           created_at: string | null
           id: string
           is_read: boolean | null
@@ -2806,6 +2807,7 @@ export type Database = {
           sender_id: string
         }
         Insert: {
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           is_read?: boolean | null
@@ -2815,6 +2817,7 @@ export type Database = {
           sender_id: string
         }
         Update: {
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           is_read?: boolean | null
@@ -2843,6 +2846,13 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "voltmarket_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltmarket_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_conversations"
             referencedColumns: ["id"]
           },
           {

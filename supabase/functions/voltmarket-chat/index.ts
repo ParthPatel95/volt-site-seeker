@@ -84,11 +84,12 @@ Deno.serve((req) => {
           }
 
           // Update conversation timestamp
-          await supabase
-            .from('voltmarket_conversations')
-            .update({ last_message_at: new Date().toISOString() })
-            .eq('listing_id', data.listingId)
-            .or(`and(buyer_id.eq.${data.senderId},seller_id.eq.${data.recipientId}),and(buyer_id.eq.${data.recipientId},seller_id.eq.${data.senderId})`)
+          if (message.conversation_id) {
+            await supabase
+              .from('voltmarket_conversations')
+              .update({ updated_at: new Date().toISOString() })
+              .eq('id', message.conversation_id)
+          }
 
           // Broadcast message to both sender and recipient
           const messageData = {
