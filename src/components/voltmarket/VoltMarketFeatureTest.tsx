@@ -318,8 +318,7 @@ export const VoltMarketFeatureTest: React.FC = () => {
           <CardContent>
             <div className="h-96 overflow-y-auto">
               <VoltMarketListingAnalytics 
-                listingId="test-listing" 
-                listingData={{ title: "Test Listing", views: 245 }}
+                listingId="test-listing"
               />
             </div>
           </CardContent>

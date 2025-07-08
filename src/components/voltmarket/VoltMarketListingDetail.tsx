@@ -446,7 +446,6 @@ export const VoltMarketListingDetail: React.FC = () => {
               <TabsContent value="analytics">
                 <VoltMarketListingAnalytics
                   listingId={listing.id}
-                  listingData={listing}
                 />
               </TabsContent>
 
