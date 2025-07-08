@@ -113,15 +113,15 @@ export const VoltMarketComprehensiveTest: React.FC = () => {
         switch (test.name) {
           case 'User Authentication':
             if (user && profile) {
-              updateTestResult(test.name, 'passed', `User ${profile.display_name || 'Unknown'} is authenticated`, test.category, Date.now() - startTime);
+              updateTestResult(test.name, 'passed', `User ${profile.company_name || user.email || 'Unknown'} is authenticated`, test.category, Date.now() - startTime);
             } else {
               updateTestResult(test.name, 'failed', 'User not authenticated', test.category, Date.now() - startTime);
             }
             break;
 
           case 'Profile Data Loading':
-            if (profile?.display_name && profile?.bio) {
-              updateTestResult(test.name, 'passed', `Profile loaded: ${profile.display_name}`, test.category, Date.now() - startTime);
+            if (profile?.role && profile?.id) {
+              updateTestResult(test.name, 'passed', `Profile loaded: ${profile.company_name || profile.role}`, test.category, Date.now() - startTime);
             } else {
               updateTestResult(test.name, 'failed', 'Profile data incomplete', test.category, Date.now() - startTime);
             }
