@@ -80,7 +80,7 @@ export const VoltMarket = () => {
           {user ? <VoltMarketAdvancedPortfolio /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
-      <Route path="/loi" element={
+      <Route path="/loi-center" element={
         <VoltMarketLayout>
           {user ? <VoltMarketLOICenter /> : <WattbytesAuth />}
         </VoltMarketLayout>
