@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,11 +7,13 @@ import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useToast } from '@/hooks/use-toast';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { Link } from 'react-router-dom';
-import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff, Mail, FileCheck, HandHeart, Clock } from 'lucide-react';
+import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff, Mail, FileCheck, HandHeart, Clock, Star, ShoppingCart, Heart, DollarSign, BarChart3, Users } from 'lucide-react';
 import { VoltMarketAccessRequests } from './VoltMarketAccessRequests';
 import { useVoltMarketAccessRequests } from '@/hooks/useVoltMarketAccessRequests';
 import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+// Helper component for resending verification emails
 const ResendVerificationButton: React.FC = () => {
   const { resendEmailVerification } = useVoltMarketAuth();
   const { toast } = useToast();
@@ -51,33 +52,35 @@ const ResendVerificationButton: React.FC = () => {
   );
 };
 
-export const VoltMarketDashboard: React.FC = () => {
-  const { profile, user, loading, createProfile } = useVoltMarketAuth();
+// Seller Dashboard Component
+const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
   const { userListings, fetchUserListings, deleteListing, updateListingStatus, loading: listingsLoading } = useVoltMarketListings();
   const { fetchAccessRequests } = useVoltMarketAccessRequests();
   const { toast } = useToast();
+  
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingLOIs, setPendingLOIs] = useState(0);
   const [pendingDocumentRequests, setPendingDocumentRequests] = useState(0);
-
   const [contactMessages, setContactMessages] = useState<any[]>([]);
+  const [totalViews, setTotalViews] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [showMessageDetails, setShowMessageDetails] = useState(false);
 
   const fetchSellerMetrics = async () => {
-    if (!profile?.id || profile.role !== 'seller') return;
-
     try {
-      // Get unread messages count and messages
+      // Get messages and unread count
       const { data: messages, count: messageCount } = await supabase
         .from('voltmarket_contact_messages')
-        .select('*', { count: 'exact' })
+        .select('*, voltmarket_listings(title)')
         .eq('listing_owner_id', profile.id)
         .eq('is_read', false)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(5);
 
       setUnreadMessages(messageCount || 0);
       setContactMessages(messages || []);
 
-      // Get pending LOIs count
+      // Get pending LOIs
       const { count: loiCount } = await supabase
         .from('voltmarket_lois')
         .select('*', { count: 'exact', head: true })
@@ -86,7 +89,7 @@ export const VoltMarketDashboard: React.FC = () => {
 
       setPendingLOIs(loiCount || 0);
 
-      // Get pending document requests count
+      // Get pending document requests
       const { count: docCount } = await supabase
         .from('voltmarket_document_permissions')
         .select('*', { count: 'exact', head: true })
@@ -94,6 +97,16 @@ export const VoltMarketDashboard: React.FC = () => {
         .is('granted_at', null);
 
       setPendingDocumentRequests(docCount || 0);
+
+      // Get total views for all listings
+      const { data: listings } = await supabase
+        .from('voltmarket_listings')
+        .select('views_count')
+        .eq('seller_id', profile.id);
+
+      const views = listings?.reduce((sum, listing) => sum + (listing.views_count || 0), 0) || 0;
+      setTotalViews(views);
+
     } catch (error) {
       console.error('Error fetching seller metrics:', error);
     }
@@ -102,12 +115,10 @@ export const VoltMarketDashboard: React.FC = () => {
   useEffect(() => {
     if (profile?.id) {
       fetchUserListings(profile.id);
-      if (profile.role === 'seller') {
-        fetchAccessRequests(profile.id);
-        fetchSellerMetrics();
-      }
+      fetchAccessRequests(profile.id);
+      fetchSellerMetrics();
     }
-  }, [profile?.id, profile?.role, fetchUserListings, fetchAccessRequests]);
+  }, [profile?.id]);
 
   const handleDeleteListing = async (listingId: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
@@ -135,7 +146,7 @@ export const VoltMarketDashboard: React.FC = () => {
     
     if (result.success) {
       toast({
-        title: "Status updated",
+        title: "Status updated",  
         description: `Listing is now ${newStatus}`
       });
     } else {
@@ -149,28 +160,494 @@ export const VoltMarketDashboard: React.FC = () => {
 
   const activeListings = userListings.filter(listing => listing.status === 'active').length;
 
+  return (
+    <>
+      {/* Seller Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeListings}</div>
+            <p className="text-xs text-muted-foreground">
+              of {userListings.length} total listings
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setShowMessageDetails(true)}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{unreadMessages}</div>
+            <p className="text-xs text-muted-foreground">
+              {contactMessages.length > 0 && `Latest: ${contactMessages[0]?.sender_name}`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalViews}</div>
+            <p className="text-xs text-muted-foreground">
+              across all listings
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending LOIs</CardTitle>
+            <HandHeart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingLOIs}</div>
+            <p className="text-xs text-muted-foreground">
+              need your response
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Listings Management */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Your Listings ({userListings.length})</CardTitle>
+            <Link to="/voltmarket/create-listing">
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                New Listing
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {listingsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p>Loading your listings...</p>
+              </div>
+            ) : userListings.length === 0 ? (
+              <div className="text-center py-8">
+                <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No listings yet</h3>
+                <p className="text-gray-600 mb-4">Create your first listing to start selling</p>
+                <Link to="/voltmarket/create-listing">
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create First Listing
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {userListings.slice(0, 5).map((listing) => (
+                  <div key={listing.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-lg">{listing.title}</h3>
+                          <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
+                            {listing.status}
+                          </Badge>
+                        </div>
+                        <p className="text-gray-600 mb-2 line-clamp-2">{listing.description}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span>${listing.asking_price?.toLocaleString()}</span>
+                          <span>{listing.power_capacity_mw} MW</span>
+                          <span>{listing.location}</span>
+                          <span>Created {new Date(listing.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleStatus(listing.id, listing.status)}
+                        >
+                          {listing.status === 'active' ? (
+                            <><EyeOff className="w-4 h-4 mr-1" /> Hide</>
+                          ) : (
+                            <><Eye className="w-4 h-4 mr-1" /> Show</>
+                          )}
+                        </Button>
+                        <Link to={`/voltmarket/edit-listing/${listing.id}`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteListing(listing.id, listing.title)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {userListings.length > 5 && (
+                  <div className="text-center pt-4">
+                    <Link to="/voltmarket/my-listings">
+                      <Button variant="outline">View All Listings</Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Seller Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Seller Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Link to="/voltmarket/create-listing">
+              <Button className="w-full justify-start">
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Listing
+              </Button>
+            </Link>
+            
+            <Link to="/voltmarket/loi-center">
+              <Button variant="outline" className="w-full justify-start">
+                <HandHeart className="mr-2 h-4 w-4" />
+                Manage LOIs ({pendingLOIs})
+              </Button>
+            </Link>
+            
+            <Link to="/voltmarket/contact-messages">
+              <Button variant="outline" className="w-full justify-start">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                View Messages ({unreadMessages})
+              </Button>
+            </Link>
+            
+            <Link to="/voltmarket/document-requests">
+              <Button variant="outline" className="w-full justify-start">
+                <FileCheck className="mr-2 h-4 w-4" />
+                Document Requests ({pendingDocumentRequests})
+              </Button>
+            </Link>
+
+            <Link to="/voltmarket/analytics">
+              <Button variant="outline" className="w-full justify-start">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Analytics & Reports
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Access Requests Section */}
+      <div className="mt-8">
+        <VoltMarketAccessRequests sellerId={profile.id} />
+      </div>
+
+      {/* Message Details Dialog */}
+      <Dialog open={showMessageDetails} onOpenChange={setShowMessageDetails}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Recent Messages ({unreadMessages} unread)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {contactMessages.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No recent messages</p>
+            ) : (
+              contactMessages.map((message) => (
+                <div key={message.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-semibold">{message.sender_name}</h4>
+                      <p className="text-sm text-gray-500">{message.sender_email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">
+                        {new Date(message.created_at).toLocaleDateString()}
+                      </p>
+                      <Badge variant="secondary" className="mt-1">
+                        {message.voltmarket_listings?.title}
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="text-gray-700">{message.message}</p>
+                  {message.sender_phone && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Phone: {message.sender_phone}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex justify-end pt-4">
+            <Link to="/voltmarket/contact-messages">
+              <Button>View All Messages</Button>
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+// Buyer Dashboard Component
+const BuyerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
+  const { toast } = useToast();
+  const [savedSearches, setSavedSearches] = useState(0);
+  const [activeLOIs, setActiveLOIs] = useState(0);
+  const [watchlistCount, setWatchlistCount] = useState(0);
+  const [recentViews, setRecentViews] = useState(0);
+  const [messagesSent, setMessagesSent] = useState(0);
+  const [recentListings, setRecentListings] = useState<any[]>([]);
+
+  const fetchBuyerMetrics = async () => {
+    try {
+      // Get active LOIs submitted by buyer
+      const { count: loiCount } = await supabase
+        .from('voltmarket_lois')
+        .select('*', { count: 'exact', head: true })
+        .eq('buyer_id', profile.id)
+        .eq('status', 'pending');
+
+      setActiveLOIs(loiCount || 0);
+
+      // Get saved searches count (assuming we have this table)
+      const { count: searchCount } = await supabase
+        .from('search_criteria')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', profile.id)
+        .eq('is_active', true);
+
+      setSavedSearches(searchCount || 0);
+
+      // Get recent listings for browsing
+      const { data: listings } = await supabase
+        .from('voltmarket_listings')
+        .select('*, voltmarket_profiles(company_name)')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      setRecentListings(listings || []);
+
+    } catch (error) {
+      console.error('Error fetching buyer metrics:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (profile?.id) {
+      fetchBuyerMetrics();
+    }
+  }, [profile?.id]);
+
+  return (
+    <>
+      {/* Buyer Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active LOIs</CardTitle>
+            <HandHeart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeLOIs}</div>
+            <p className="text-xs text-muted-foreground">
+              letters of intent submitted
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Saved Searches</CardTitle>
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{savedSearches}</div>
+            <p className="text-xs text-muted-foreground">
+              active search alerts
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Watchlist</CardTitle>
+            <Heart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{watchlistCount}</div>
+            <p className="text-xs text-muted-foreground">
+              saved listings
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Recent Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{recentViews}</div>
+            <p className="text-xs text-muted-foreground">
+              listings viewed this week
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Recent Listings */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>New Listings</CardTitle>
+            <Link to="/voltmarket/listings">
+              <Button size="sm" variant="outline">
+                <Search className="mr-2 h-4 w-4" />
+                Browse All
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {recentListings.length === 0 ? (
+              <div className="text-center py-8">
+                <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No listings yet</h3>
+                <p className="text-gray-600 mb-4">Browse available listings to get started</p>
+                <Link to="/voltmarket/listings">
+                  <Button>
+                    <Search className="mr-2 h-4 w-4" />
+                    Browse Listings
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentListings.map((listing) => (
+                  <div key={listing.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-lg">{listing.title}</h3>
+                          <Badge variant="default">New</Badge>
+                        </div>
+                        <p className="text-gray-600 mb-2 line-clamp-2">{listing.description}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span>${listing.asking_price?.toLocaleString()}</span>
+                          <span>{listing.power_capacity_mw} MW</span>
+                          <span>{listing.location}</span>
+                          <span>by {listing.voltmarket_profiles?.company_name}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Link to={`/voltmarket/listing/${listing.id}`}>
+                          <Button size="sm">
+                            View Details
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Buyer Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Buyer Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Link to="/voltmarket/listings">
+              <Button className="w-full justify-start">
+                <Search className="mr-2 h-4 w-4" />
+                Browse Listings
+              </Button>
+            </Link>
+            
+            <Link to="/voltmarket/search">
+              <Button variant="outline" className="w-full justify-start">
+                <Search className="mr-2 h-4 w-4" />
+                Advanced Search
+              </Button>
+            </Link>
+            
+            <Link to="/voltmarket/my-lois">
+              <Button variant="outline" className="w-full justify-start">
+                <HandHeart className="mr-2 h-4 w-4" />
+                My LOIs ({activeLOIs})
+              </Button>
+            </Link>
+            
+            <Link to="/voltmarket/watchlist">
+              <Button variant="outline" className="w-full justify-start">
+                <Heart className="mr-2 h-4 w-4" />
+                Watchlist ({watchlistCount})
+              </Button>
+            </Link>
+
+            <Link to="/voltmarket/saved-searches">
+              <Button variant="outline" className="w-full justify-start">
+                <Star className="mr-2 h-4 w-4" />
+                Saved Searches ({savedSearches})
+              </Button>
+            </Link>
+
+            <Link to="/voltmarket/messages">
+              <Button variant="outline" className="w-full justify-start">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                My Messages
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+};
+
+// Main Dashboard Component
+export const VoltMarketDashboard: React.FC = () => {
+  const { profile, user, loading, createProfile } = useVoltMarketAuth();
+  const { toast } = useToast();
+
   const handleCreateProfile = async () => {
     if (!user) return;
     
     try {
-      // Try to create a basic buyer profile if none exists
       const result = await createProfile(user.id, { role: 'buyer' });
       
       if (result.error) {
         console.error('Profile creation error:', result.error);
-        
-        // Check for duplicate key error (profile already exists)
         const errorMessage = result.error.message || result.error.toString();
         if (errorMessage.includes('duplicate key') || errorMessage.includes('voltmarket_profiles_user_id_key')) {
           console.log('Profile already exists, refreshing...');
-          window.location.reload(); // Simple reload to refresh the profile state
+          window.location.reload();
         } else {
-          // Show other errors to user
           alert(`Error creating profile: ${errorMessage}`);
         }
       } else {
         console.log('Profile created successfully');
-        // Refresh to show the new profile
         window.location.reload();
       }
     } catch (error) {
@@ -241,250 +718,14 @@ export const VoltMarketDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
-              <Search className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeListings}</div>
-              <p className="text-xs text-muted-foreground">
-                listings currently active
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Messages</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{unreadMessages}</div>
-              <p className="text-xs text-muted-foreground">
-                unread messages
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                this month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Verification</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {profile.is_id_verified && profile.is_email_verified ? '✓' : '!'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {profile.is_id_verified && profile.is_email_verified ? 'Fully verified' : 'Needs verification'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Seller-specific metrics */}
-        {profile.role === 'seller' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending LOIs</CardTitle>
-                <HandHeart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pendingLOIs}</div>
-                <p className="text-xs text-muted-foreground">
-                  awaiting response
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Document Requests</CardTitle>
-                <FileCheck className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pendingDocumentRequests}</div>
-                <p className="text-xs text-muted-foreground">
-                  pending approval
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Response Time</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">&lt; 24h</div>
-                <p className="text-xs text-muted-foreground">
-                  average response
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Role-specific dashboard content */}
+        {profile.role === 'seller' ? (
+          <SellerDashboard profile={profile} />
+        ) : (
+          <BuyerDashboard profile={profile} />
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Your Listings ({userListings.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {listingsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p>Loading your listings...</p>
-                </div>
-              ) : userListings.length === 0 ? (
-                <div className="text-center py-8">
-                  <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No listings yet</h3>
-                  <p className="text-gray-600 mb-4">Start by creating your first listing</p>
-                  {profile.role === 'seller' && (
-                    <Link to="/voltmarket/create-listing">
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Listing
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {userListings.map((listing) => (
-                    <div key={listing.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg">{listing.title}</h3>
-                            <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
-                              {listing.status}
-                            </Badge>
-                          </div>
-                          <p className="text-gray-600 mb-2 line-clamp-2">{listing.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>${listing.asking_price?.toLocaleString()}</span>
-                            <span>{listing.power_capacity_mw} MW</span>
-                            <span>{listing.location}</span>
-                            <span>Created {new Date(listing.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggleStatus(listing.id, listing.status)}
-                          >
-                            {listing.status === 'active' ? (
-                              <><EyeOff className="w-4 h-4 mr-1" /> Deactivate</>
-                            ) : (
-                              <><Eye className="w-4 h-4 mr-1" /> Activate</>
-                            )}
-                          </Button>
-                          <Link to={`/voltmarket/edit-listing/${listing.id}`}>
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteListing(listing.id, listing.title)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Link to="/voltmarket/listings">
-                <Button variant="outline" className="w-full justify-start">
-                  <Search className="mr-2 h-4 w-4" />
-                  Browse Listings
-                </Button>
-              </Link>
-              
-              {profile.role === 'seller' && (
-                <Link to="/voltmarket/create-listing">
-                  <Button className="w-full justify-start">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create New Listing
-                  </Button>
-                </Link>
-              )}
-              
-              <Link to="/voltmarket/messages">
-                <Button variant="outline" className="w-full justify-start">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  View Messages
-                </Button>
-              </Link>
-              
-              <Link to="/voltmarket/profile">
-                <Button variant="outline" className="w-full justify-start">
-                  <User className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Button>
-              </Link>
-              
-              {profile.role === 'seller' && (
-                <>
-                  <Link to="/voltmarket/loi-center">
-                    <Button variant="outline" className="w-full justify-start">
-                      <HandHeart className="mr-2 h-4 w-4" />
-                      Manage LOIs ({pendingLOIs})
-                    </Button>
-                  </Link>
-                  
-                  <Link to="/voltmarket/document-requests">
-                    <Button variant="outline" className="w-full justify-start">
-                      <FileCheck className="mr-2 h-4 w-4" />
-                      Document Requests ({pendingDocumentRequests})
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Access Requests Section - Only for sellers */}
-        {profile.role === 'seller' && (
-          <div className="mt-8">
-            <VoltMarketAccessRequests sellerId={profile.id} />
-          </div>
-        )}
-
-        {/* Getting Started Section */}
+        {/* Getting Started Section - Common for both roles */}
         <div className="mt-8">
           <Card>
             <CardHeader>
@@ -516,19 +757,22 @@ export const VoltMarketDashboard: React.FC = () => {
                   </div>
                 )}
                 
-                {profile.role === 'seller' && userListings.length === 0 && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h3 className="font-medium text-green-800">Create Your First Listing</h3>
-                    <p className="text-sm text-green-700 mt-1">
-                      Start selling by creating your first listing on VoltMarket.
-                    </p>
-                    <Link to="/voltmarket/create-listing">
-                      <Button size="sm" className="mt-2">
-                        Create Listing
-                      </Button>
-                    </Link>
-                  </div>
-                )}
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h3 className="font-medium text-green-800">
+                    {profile.role === 'seller' ? 'Start Selling' : 'Start Buying'}
+                  </h3>
+                  <p className="text-sm text-green-700 mt-1">
+                    {profile.role === 'seller' 
+                      ? 'Create your first listing to start selling on VoltMarket'
+                      : 'Browse available listings to find your next investment'
+                    }
+                  </p>
+                  <Link to={profile.role === 'seller' ? '/voltmarket/create-listing' : '/voltmarket/listings'}>
+                    <Button size="sm" className="mt-2">
+                      {profile.role === 'seller' ? 'Create Listing' : 'Browse Listings'}
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>
