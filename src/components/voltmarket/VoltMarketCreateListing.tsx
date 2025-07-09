@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,18 +7,41 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { VoltMarketImageUpload } from './VoltMarketImageUpload';
 import { VoltMarketDocumentUpload } from './VoltMarketDocumentUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Building2, Zap, Camera, FileText } from 'lucide-react';
+import { Plus, Building2, Zap, Camera, FileText, MapPin, Settings, Tag, ChevronLeft, ChevronRight, CheckCircle, Wand2 } from 'lucide-react';
 import { GooglePlacesInput } from '@/components/ui/google-places-input';
 
+const categoryTags = [
+  'Greenfield',
+  'Brownfield', 
+  'Powered Land',
+  'Operational Facility',
+  'Modular Containers',
+  'Substation Access',
+  'Transformer Onsite',
+  'Behind-the-Meter',
+  'Renewable Site'
+];
+
+const steps = [
+  { id: 1, title: 'Basic Info', icon: Building2 },
+  { id: 2, title: 'Specifications', icon: Settings },
+  { id: 3, title: 'Media & Tags', icon: Camera },
+  { id: 4, title: 'Review', icon: CheckCircle }
+];
+
 export const VoltMarketCreateListing: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [autoDescription, setAutoDescription] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -31,10 +54,15 @@ export const VoltMarketCreateListing: React.FC = () => {
     power_rate_per_kw: 0,
     power_capacity_mw: 0,
     available_power_mw: 0,
-    square_footage: 0,
+    acres: 0,
     is_location_confidential: false,
     property_type: 'other' as 'other' | 'industrial' | 'warehouse' | 'data_center' | 'land' | 'office',
-    facility_tier: '',
+    site_type: '' as 'greenfield' | 'brownfield' | 'fully_built_energized' | '',
+    interconnection_status: '' as 'fully_interconnected' | 'in_queue' | 'behind_meter' | '',
+    utility_provider: '',
+    energy_price: 0,
+    energization_timeline: '',
+    power_mix: '',
     cooling_type: '',
     hosting_types: [] as string[],
     minimum_commitment_months: 0,
@@ -52,15 +80,58 @@ export const VoltMarketCreateListing: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Auto-generate description based on form data
+  useEffect(() => {
+    generateDescription();
+  }, [formData, selectedTags]);
+
+  const generateDescription = () => {
+    const { title, listing_type, power_capacity_mw, acres, site_type, interconnection_status, utility_provider, energy_price, power_mix } = formData;
+    
+    let description = '';
+    
+    if (title) description += `${title}\n\n`;
+    
+    if (listing_type === 'site_sale' || listing_type === 'site_lease') {
+      description += `This ${site_type || 'site'} offers `;
+      if (power_capacity_mw > 0) description += `${power_capacity_mw}MW of power capacity `;
+      if (acres > 0) description += `on ${acres} acres `;
+      description += `located in ${formData.location || '[Location]'}.\n\n`;
+      
+      if (interconnection_status) {
+        description += `Interconnection Status: ${interconnection_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}\n`;
+      }
+      
+      if (utility_provider) {
+        description += `Utility Provider: ${utility_provider}\n`;
+      }
+      
+      if (energy_price > 0) {
+        description += `Energy Price: $${energy_price}/MWh\n`;
+      }
+      
+      if (power_mix) {
+        description += `Power Mix: ${power_mix}\n`;
+      }
+      
+      if (selectedTags.length > 0) {
+        description += `\nFeatures: ${selectedTags.join(', ')}\n`;
+      }
+    } else if (listing_type === 'hosting') {
+      description += `Professional hosting facility with ${power_capacity_mw}MW capacity available for cryptocurrency mining operations.\n\n`;
+      if (energy_price > 0) description += `Competitive rates starting at $${formData.power_rate_per_kw}/kW.\n`;
+    } else if (listing_type === 'equipment') {
+      description += `${formData.equipment_condition} ${formData.brand} ${formData.model} equipment available.\n\n`;
+      if (formData.quantity > 1) description += `Quantity available: ${formData.quantity} units\n`;
+    }
+
+    setAutoDescription(description.trim());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Form submission started');
-    console.log('Profile:', profile);
-    console.log('Form data:', formData);
-    
     if (!profile) {
-      console.error('No profile found');
       toast({
         title: "Authentication Required",
         description: "Please sign in to create a listing",
@@ -71,7 +142,6 @@ export const VoltMarketCreateListing: React.FC = () => {
 
     // Validate required fields
     if (!formData.title || !formData.location || !formData.listing_type) {
-      console.error('Missing required fields:', { title: formData.title, location: formData.location, listing_type: formData.listing_type });
       toast({
         title: "Missing Required Fields",
         description: "Please fill in all required fields",
@@ -83,51 +153,36 @@ export const VoltMarketCreateListing: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('Creating listing with data:', {
+      // Create listing with auto-generated description and tags
+      const listingData = {
         ...formData,
+        description: autoDescription || formData.description,
+        category_tags: selectedTags,
         seller_id: profile.id,
-        status: 'active'
-      });
+        status: 'active' as const
+      };
 
-      // First create the listing
       const { data: listing, error: listingError } = await supabase
         .from('voltmarket_listings')
-        .insert({
-          ...formData,
-          seller_id: profile.id,
-          status: 'active' as const
-        })
+        .insert(listingData)
         .select()
         .single();
 
-      console.log('Listing creation result:', { listing, listingError });
+      if (listingError) throw listingError;
 
-      if (listingError) {
-        console.error('Listing error details:', listingError);
-        throw listingError;
-      }
-
-      // Then save images to the listing_images table
+      // Save images
       if (images.length > 0) {
-        console.log('Saving images:', images);
         const imageInserts = images.map((imageUrl, index) => ({
           listing_id: listing.id,
           image_url: imageUrl,
           sort_order: index
         }));
 
-        const { error: imageError } = await supabase
-          .from('voltmarket_listing_images')
-          .insert(imageInserts);
-
-        if (imageError) {
-          console.error('Error saving images:', imageError);
-        }
+        await supabase.from('voltmarket_listing_images').insert(imageInserts);
       }
 
-      // Then save documents to the documents table
+      // Save documents
       if (documents.length > 0) {
-        console.log('Saving documents:', documents);
         const documentInserts = documents.map((doc) => ({
           listing_id: listing.id,
           uploader_id: profile.id,
@@ -140,18 +195,9 @@ export const VoltMarketCreateListing: React.FC = () => {
           is_private: true
         }));
 
-        const { error: documentError } = await supabase
-          .from('voltmarket_documents')
-          .insert(documentInserts);
-
-        if (documentError) {
-          console.error('Error saving documents:', documentError);
-        } else {
-          console.log('Documents saved successfully');
-        }
+        await supabase.from('voltmarket_documents').insert(documentInserts);
       }
 
-      console.log('Listing created successfully');
       toast({
         title: "Listing Created",
         description: "Your listing has been published successfully"
@@ -159,16 +205,29 @@ export const VoltMarketCreateListing: React.FC = () => {
 
       navigate('/voltmarket/dashboard');
     } catch (error) {
-      console.error('Error creating listing:', error);
       toast({
         title: "Error",
         description: `Failed to create listing: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
-      console.log('Setting isSubmitting to false');
       setIsSubmitting(false);
     }
+  };
+
+  const canProceedToNextStep = () => {
+    if (currentStep === 1) {
+      return formData.title && formData.location && formData.listing_type;
+    }
+    return true;
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
   };
 
   if (!profile || profile.role !== 'seller') {
@@ -187,14 +246,48 @@ export const VoltMarketCreateListing: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Listing</h1>
-          <p className="text-gray-600">List your site, hosting facility, or equipment</p>
+          <p className="text-gray-600">Follow the steps below to create your listing</p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => {
+              const StepIcon = step.icon;
+              const isCompleted = currentStep > step.id;
+              const isCurrent = currentStep === step.id;
+              
+              return (
+                <div key={step.id} className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                    isCompleted ? 'bg-green-500 border-green-500 text-white' :
+                    isCurrent ? 'bg-blue-500 border-blue-500 text-white' :
+                    'bg-gray-200 border-gray-300 text-gray-400'
+                  }`}>
+                    {isCompleted ? <CheckCircle className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
+                  </div>
+                  <span className={`ml-2 text-sm font-medium ${
+                    isCurrent ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                  }`}>
+                    {step.title}
+                  </span>
+                  {index < steps.length - 1 && (
+                    <div className={`mx-4 h-0.5 w-16 ${
+                      isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                    }`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="space-y-8">
-            {/* Basic Information */}
+          {/* Step 1: Basic Information */}
+          {currentStep === 1 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -261,66 +354,105 @@ export const VoltMarketCreateListing: React.FC = () => {
                   />
                   <Label htmlFor="is_location_confidential">Keep exact location confidential</Label>
                 </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe your listing in detail..."
-                    rows={4}
-                  />
-                </div>
               </CardContent>
             </Card>
+          )}
 
-            {/* Images Section */}
+          {/* Step 2: Specifications */}
+          {currentStep === 2 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Camera className="w-5 h-5" />
-                  Photos
+                  <Settings className="w-5 h-5" />
+                  Specifications & Details
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <VoltMarketImageUpload
-                  existingImages={images}
-                  onImagesChange={setImages}
-                  maxImages={20}
-                  bucket="listing-images"
-                />
-              </CardContent>
-            </Card>
+              <CardContent className="space-y-6">
+                {/* Site Type for Site Sale/Lease */}
+                {(formData.listing_type === 'site_sale' || formData.listing_type === 'site_lease') && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="site_type">Site Type</Label>
+                        <Select value={formData.site_type} onValueChange={(value: 'greenfield' | 'brownfield' | 'fully_built_energized') => 
+                          setFormData(prev => ({ ...prev, site_type: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select site type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="greenfield">Greenfield</SelectItem>
+                            <SelectItem value="brownfield">Brownfield</SelectItem>
+                            <SelectItem value="fully_built_energized">Fully Built & Energized</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-            {/* Documents Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Documents
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <VoltMarketDocumentUpload
-                  existingDocuments={documents}
-                  onDocumentsChange={setDocuments}
-                  maxDocuments={10}
-                />
-              </CardContent>
-            </Card>
+                      <div>
+                        <Label htmlFor="interconnection_status">Interconnection Status</Label>
+                        <Select value={formData.interconnection_status} onValueChange={(value: 'fully_interconnected' | 'in_queue' | 'behind_meter') => 
+                          setFormData(prev => ({ ...prev, interconnection_status: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fully_interconnected">Fully Interconnected</SelectItem>
+                            <SelectItem value="in_queue">In Queue</SelectItem>
+                            <SelectItem value="behind_meter">Behind Meter</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-            {/* Pricing & Specifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
-                  Pricing & Specifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="utility_provider">Utility Provider</Label>
+                        <Input
+                          id="utility_provider"
+                          value={formData.utility_provider}
+                          onChange={(e) => setFormData(prev => ({ ...prev, utility_provider: e.target.value }))}
+                          placeholder="e.g., ERCOT, PJM"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="energy_price">Energy Price ($/MWh)</Label>
+                        <Input
+                          id="energy_price"
+                          type="number"
+                          step="0.01"
+                          value={formData.energy_price || ''}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            energy_price: parseFloat(e.target.value) || 0 
+                          }))}
+                          placeholder="45.00"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="energization_timeline">Energization Timeline</Label>
+                        <Input
+                          id="energization_timeline"
+                          value={formData.energization_timeline}
+                          onChange={(e) => setFormData(prev => ({ ...prev, energization_timeline: e.target.value }))}
+                          placeholder="e.g., Q2 2024, Immediate"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="power_mix">Power Mix</Label>
+                        <Input
+                          id="power_mix"
+                          value={formData.power_mix}
+                          onChange={(e) => setFormData(prev => ({ ...prev, power_mix: e.target.value }))}
+                          placeholder="e.g., 60% Natural Gas, 30% Wind, 10% Solar"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Pricing */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(formData.listing_type === 'site_sale') && (
+                  {formData.listing_type === 'site_sale' && (
                     <div>
                       <Label htmlFor="asking_price">Asking Price ($)</Label>
                       <Input
@@ -336,7 +468,7 @@ export const VoltMarketCreateListing: React.FC = () => {
                     </div>
                   )}
 
-                  {(formData.listing_type === 'site_lease') && (
+                  {formData.listing_type === 'site_lease' && (
                     <div>
                       <Label htmlFor="lease_rate">Monthly Lease Rate ($)</Label>
                       <Input
@@ -352,7 +484,7 @@ export const VoltMarketCreateListing: React.FC = () => {
                     </div>
                   )}
 
-                  {(formData.listing_type === 'hosting') && (
+                  {formData.listing_type === 'hosting' && (
                     <div>
                       <Label htmlFor="power_rate_per_kw">Power Rate ($/kW)</Label>
                       <Input
@@ -385,121 +517,233 @@ export const VoltMarketCreateListing: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="square_footage">Square Footage</Label>
+                    <Label htmlFor="acres">Land Size (Acres)</Label>
                     <Input
-                      id="square_footage"
+                      id="acres"
                       type="number"
-                      value={formData.square_footage || ''}
+                      step="0.1"
+                      value={formData.acres || ''}
                       onChange={(e) => setFormData(prev => ({ 
                         ...prev, 
-                        square_footage: parseInt(e.target.value) || 0 
+                        acres: parseFloat(e.target.value) || 0 
                       }))}
                       placeholder="0"
                     />
                   </div>
+                </div>
 
-                  {(formData.listing_type === 'site_sale' || formData.listing_type === 'site_lease') && (
-                    <>
-                      <div>
-                        <Label htmlFor="facility_tier">Facility Tier</Label>
-                        <Select value={formData.facility_tier} onValueChange={(value) => 
-                          setFormData(prev => ({ ...prev, facility_tier: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tier" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="tier-1">Tier 1</SelectItem>
-                            <SelectItem value="tier-2">Tier 2</SelectItem>
-                            <SelectItem value="tier-3">Tier 3</SelectItem>
-                            <SelectItem value="tier-4">Tier 4</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                {/* Equipment specific fields */}
+                {formData.listing_type === 'equipment' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="brand">Brand</Label>
+                      <Input
+                        id="brand"
+                        value={formData.brand}
+                        onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+                        placeholder="e.g., Bitmain"
+                      />
+                    </div>
 
-                      <div>
-                        <Label htmlFor="cooling_type">Cooling Type</Label>
-                        <Select value={formData.cooling_type} onValueChange={(value) => 
-                          setFormData(prev => ({ ...prev, cooling_type: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select cooling type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="air-cooled">Air Cooled</SelectItem>
-                            <SelectItem value="liquid-cooled">Liquid Cooled</SelectItem>
-                            <SelectItem value="immersion">Immersion</SelectItem>
-                            <SelectItem value="hybrid">Hybrid</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <div>
+                      <Label htmlFor="model">Model</Label>
+                      <Input
+                        id="model"
+                        value={formData.model}
+                        onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
+                        placeholder="e.g., Antminer S19 Pro"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="equipment_condition">Condition</Label>
+                      <Select value={formData.equipment_condition} onValueChange={(value: 'new' | 'used' | 'refurbished') => 
+                        setFormData(prev => ({ ...prev, equipment_condition: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="new">New</SelectItem>
+                          <SelectItem value="used">Used</SelectItem>
+                          <SelectItem value="refurbished">Refurbished</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="quantity">Quantity</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        value={formData.quantity}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          quantity: parseInt(e.target.value) || 1 
+                        }))}
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 3: Media & Tags */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              {/* Photos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Camera className="w-5 h-5" />
+                    Photos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <VoltMarketImageUpload
+                    existingImages={images}
+                    onImagesChange={setImages}
+                    maxImages={20}
+                    bucket="listing-images"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Documents */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Documents
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <VoltMarketDocumentUpload
+                    existingDocuments={documents}
+                    onDocumentsChange={setDocuments}
+                    maxDocuments={10}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Category Tags */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="w-5 h-5" />
+                    Category Tags
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">Choose one or more tags that best describe your listing:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {categoryTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant={selectedTags.includes(tag) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => toggleTag(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  {selectedTags.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Selected tags:</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedTags.map((tag) => (
+                          <Badge key={tag} variant="default">{tag}</Badge>
+                        ))}
                       </div>
-                    </>
+                    </div>
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-                  {formData.listing_type === 'equipment' && (
-                    <>
-                      <div>
-                        <Label htmlFor="brand">Brand</Label>
-                        <Input
-                          id="brand"
-                          value={formData.brand}
-                          onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
-                          placeholder="e.g., Bitmain"
-                        />
-                      </div>
+          {/* Step 4: Review */}
+          {currentStep === 4 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Review & Auto-Generated Description
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wand2 className="w-4 h-4" />
+                    <Label>Auto-Generated Description</Label>
+                  </div>
+                  <Textarea
+                    value={autoDescription}
+                    onChange={(e) => setAutoDescription(e.target.value)}
+                    rows={8}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This description was automatically generated based on your inputs. You can edit it above.
+                  </p>
+                </div>
 
-                      <div>
-                        <Label htmlFor="model">Model</Label>
-                        <Input
-                          id="model"
-                          value={formData.model}
-                          onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
-                          placeholder="e.g., Antminer S19 Pro"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="equipment_condition">Condition</Label>
-                        <Select value={formData.equipment_condition} onValueChange={(value: 'new' | 'used' | 'refurbished') => 
-                          setFormData(prev => ({ ...prev, equipment_condition: value }))}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="new">New</SelectItem>
-                            <SelectItem value="used">Used</SelectItem>
-                            <SelectItem value="refurbished">Refurbished</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="quantity">Quantity</Label>
-                        <Input
-                          id="quantity"
-                          type="number"
-                          min="1"
-                          value={formData.quantity}
-                          onChange={(e) => setFormData(prev => ({ 
-                            ...prev, 
-                            quantity: parseInt(e.target.value) || 1 
-                          }))}
-                        />
-                      </div>
-                    </>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong>Title:</strong> {formData.title}
+                  </div>
+                  <div>
+                    <strong>Type:</strong> {formData.listing_type.replace('_', ' ')}
+                  </div>
+                  <div>
+                    <strong>Location:</strong> {formData.location}
+                  </div>
+                  <div>
+                    <strong>Power Capacity:</strong> {formData.power_capacity_mw}MW
+                  </div>
+                  {formData.acres > 0 && (
+                    <div>
+                      <strong>Land Size:</strong> {formData.acres} acres
+                    </div>
+                  )}
+                  {selectedTags.length > 0 && (
+                    <div className="md:col-span-2">
+                      <strong>Tags:</strong> {selectedTags.join(', ')}
+                    </div>
                   )}
                 </div>
               </CardContent>
             </Card>
+          )}
 
-            {/* Submit */}
-            <div className="flex gap-4">
-              <Button type="button" variant="outline" onClick={() => navigate('/voltmarket/dashboard')}>
-                Cancel
+          {/* Navigation */}
+          <div className="flex justify-between mt-8">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1) : navigate('/voltmarket/dashboard')}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              {currentStep > 1 ? 'Previous' : 'Cancel'}
+            </Button>
+
+            {currentStep < 4 ? (
+              <Button
+                type="button"
+                onClick={() => setCurrentStep(currentStep + 1)}
+                disabled={!canProceedToNextStep()}
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
+            ) : (
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Creating...' : 'Create Listing'}
                 <Plus className="w-4 h-4 ml-2" />
               </Button>
-            </div>
+            )}
           </div>
         </form>
       </div>
