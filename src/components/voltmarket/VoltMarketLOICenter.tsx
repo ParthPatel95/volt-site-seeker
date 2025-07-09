@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
 import { 
@@ -540,12 +541,13 @@ export const VoltMarketLOICenter: React.FC = () => {
 
         {/* LOI Details Dialog */}
         <Dialog open={showLOIDetails} onOpenChange={setShowLOIDetails}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>LOI Details</DialogTitle>
             </DialogHeader>
-            {selectedLOI && (
-              <div className="space-y-6">
+            <ScrollArea className="h-full max-h-[60vh] pr-4">
+              {selectedLOI && (
+                <div className="space-y-6">
                 {/* LOI Information */}
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
@@ -680,11 +682,12 @@ export const VoltMarketLOICenter: React.FC = () => {
                       <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedLOI.additional_notes}</p>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+                 )}
+               </div>
+             )}
+            </ScrollArea>
+           </DialogContent>
+         </Dialog>
       </div>
     </div>
   );
