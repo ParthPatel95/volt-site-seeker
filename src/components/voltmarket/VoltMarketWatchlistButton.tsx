@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { useVoltMarketWatchlist } from '@/hooks/useVoltMarketWatchlist';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface VoltMarketWatchlistButtonProps {

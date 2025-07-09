@@ -21,7 +21,7 @@ import {
   Menu,
   TestTube
 } from 'lucide-react';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 
 export const VoltMarketHeader: React.FC = () => {
   const { user, profile, signOut } = useVoltMarketAuth();

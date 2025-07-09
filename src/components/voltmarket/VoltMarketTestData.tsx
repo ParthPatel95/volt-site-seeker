@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Database, Plus, Trash2 } from 'lucide-react';

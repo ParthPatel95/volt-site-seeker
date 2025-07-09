@@ -17,7 +17,7 @@ import {
   Lock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface DueDiligenceDocument {

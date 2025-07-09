@@ -16,7 +16,7 @@ import { VoltMarketPropertyMap } from './VoltMarketPropertyMap';
 import { VoltMarketLocationDisplay } from './VoltMarketLocationDisplay';
 import { VoltMarketListingImageGallery } from './VoltMarketListingImageGallery';
 import { supabase } from '@/integrations/supabase/client';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
 import { useVoltMarketAccessRequests } from '@/hooks/useVoltMarketAccessRequests';
 import { useToast } from '@/hooks/use-toast';

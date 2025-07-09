@@ -14,7 +14,7 @@ import {
   Filter
 } from 'lucide-react';
 import { useVoltMarketConversations } from '@/hooks/useVoltMarketConversations';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 
 export const VoltMarketMessages: React.FC = () => {
   const { profile } = useVoltMarketAuth();

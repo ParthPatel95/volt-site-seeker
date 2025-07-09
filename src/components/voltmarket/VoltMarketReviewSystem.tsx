@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketReviews } from '@/hooks/useVoltMarketReviews';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { Star, TrendingUp, Shield, CheckCircle, User } from 'lucide-react';
 
 interface ReviewSystemProps {

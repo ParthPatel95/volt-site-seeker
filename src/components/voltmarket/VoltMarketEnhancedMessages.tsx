@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketConversations } from '@/hooks/useVoltMarketConversations';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketRealtime } from '@/hooks/useVoltMarketRealtime';
 import { useVoltMarketAnalytics } from '@/hooks/useVoltMarketAnalytics';
 import { 

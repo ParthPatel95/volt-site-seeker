@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketRealtime } from '@/hooks/useVoltMarketRealtime';
 import { useVoltMarketReviews } from '@/hooks/useVoltMarketReviews';
 import { useVoltMarketVerification } from '@/hooks/useVoltMarketVerification';

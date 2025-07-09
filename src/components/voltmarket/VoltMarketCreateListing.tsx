@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { VoltMarketImageUpload } from './VoltMarketImageUpload';
 import { VoltMarketDocumentUpload } from './VoltMarketDocumentUpload';
 import { supabase } from '@/integrations/supabase/client';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Building2, Zap, Camera, FileText } from 'lucide-react';
 import { GooglePlacesInput } from '@/components/ui/google-places-input';

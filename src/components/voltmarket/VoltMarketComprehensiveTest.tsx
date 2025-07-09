@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useVoltMarketPortfolio } from '@/hooks/useVoltMarketPortfolio';
 import { supabase } from '@/integrations/supabase/client';

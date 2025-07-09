@@ -28,7 +28,7 @@ import {
   FileText,
   Scale
 } from 'lucide-react';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketRealtime } from '@/hooks/useVoltMarketRealtime';
 
 export const VoltMarketNavigation: React.FC = () => {
