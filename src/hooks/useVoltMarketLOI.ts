@@ -75,14 +75,21 @@ export const useVoltMarketLOI = () => {
         .select(`
           *,
           listing:voltmarket_listings(title, asking_price),
-          buyer:voltmarket_profiles!buyer_id(company_name),
-          seller:voltmarket_profiles!seller_id(company_name)
+          buyer:voltmarket_profiles!buyer_id(company_name, phone_number, bio, website),
+          seller:voltmarket_profiles!seller_id(company_name, phone_number, bio, website)
         `)
         .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Add type field to determine if received or sent
+      const loisWithType = (data || []).map(loi => ({
+        ...loi,
+        type: loi.seller_id === profile.id ? 'received' : 'sent'
+      }));
+      
+      return loisWithType;
     } catch (error) {
       console.error('Error fetching LOIs:', error);
       return [];

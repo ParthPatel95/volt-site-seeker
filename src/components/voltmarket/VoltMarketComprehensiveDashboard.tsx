@@ -260,7 +260,7 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
                       <MessageSquare className="w-5 h-5" />
                       Contact Messages
                     </div>
-                    <Link to="/voltmarket/messages">
+                    <Link to="/voltmarket/contact-messages">
                       <Button size="sm">
                         <MessageSquare className="w-4 h-4 mr-2" />
                         View All Messages
@@ -277,18 +277,20 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
                   ) : (
                     <div className="space-y-3">
                       {contactMessages.slice(0, 5).map((message) => (
-                        <div key={message.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                        <div key={message.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">{message.sender_name}</p>
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-gray-900">{message.sender_name}</p>
+                              {!message.is_read && (
+                                <Badge variant="secondary" className="text-xs">New</Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-600 line-clamp-2">{message.message}</p>
                             <p className="text-xs text-gray-500 mt-1">
                               {new Date(message.created_at).toLocaleString()}
                             </p>
                           </div>
-                          {!message.is_read && (
-                            <Badge variant="secondary">New</Badge>
-                          )}
                         </div>
                       ))}
                     </div>

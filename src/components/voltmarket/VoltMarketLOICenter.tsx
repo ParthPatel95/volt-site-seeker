@@ -20,7 +20,11 @@ import {
   FileText,
   MessageSquare,
   Calendar,
-  DollarSign
+  DollarSign,
+  Phone,
+  Mail,
+  Globe,
+  Building
 } from 'lucide-react';
 
 export const VoltMarketLOICenter: React.FC = () => {
@@ -31,6 +35,7 @@ export const VoltMarketLOICenter: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState(false);
   const [selectedLOI, setSelectedLOI] = useState<any>(null);
+  const [showLOIDetails, setShowLOIDetails] = useState(false);
 
   // Create LOI form state
   const [createForm, setCreateForm] = useState({
@@ -65,11 +70,11 @@ export const VoltMarketLOICenter: React.FC = () => {
     event.preventDefault();
     try {
       await submitLOI(createForm.listingId, {
-        proposedPrice: parseFloat(createForm.proposedPrice),
-        proposedTerms: createForm.proposedTerms,
-        validUntil: createForm.validUntil,
+        offering_price: parseFloat(createForm.proposedPrice),
+        proposed_terms: createForm.proposedTerms,
+        due_diligence_period_days: 30,
         contingencies: createForm.contingencies,
-        additionalNotes: createForm.additionalNotes
+        additional_notes: createForm.additionalNotes
       });
       
       toast({
@@ -306,7 +311,7 @@ export const VoltMarketLOICenter: React.FC = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">This Month</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {lois.filter(loi => new Date(loi.created_at).getMonth() === new Date().getMonth()).length}
+                    {lois.filter(loi => new Date(loi.submitted_at).getMonth() === new Date().getMonth()).length}
                   </p>
                 </div>
                 <Calendar className="w-8 h-8 text-purple-500" />
@@ -355,20 +360,20 @@ export const VoltMarketLOICenter: React.FC = () => {
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                             <div>
-                              <span className="font-medium">From:</span> {loi.submitter?.company_name || 'Unknown'}
+                              <span className="font-medium">From:</span> {loi.buyer?.company_name || 'Unknown'}
                             </div>
                             <div>
                               <span className="font-medium">Listing:</span> {loi.listing?.title || loi.listing_id}
                             </div>
                             <div>
-                              <span className="font-medium">Proposed:</span> {formatCurrency(loi.proposed_price)}
+                              <span className="font-medium">Proposed:</span> {formatCurrency(loi.offered_price)}
                             </div>
                             <div>
-                              <span className="font-medium">Valid Until:</span> {new Date(loi.valid_until).toLocaleDateString()}
+                              <span className="font-medium">Submitted:</span> {new Date(loi.submitted_at).toLocaleDateString()}
                             </div>
                           </div>
-                          {loi.proposed_terms && (
-                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{loi.proposed_terms}</p>
+                          {loi.conditions && (
+                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{loi.conditions}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2 ml-4">
@@ -384,9 +389,16 @@ export const VoltMarketLOICenter: React.FC = () => {
                             <MessageSquare className="w-4 h-4 mr-1" />
                             Respond
                           </Button>
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
+                           <Button 
+                             variant="outline" 
+                             size="sm"
+                             onClick={() => {
+                               setSelectedLOI(loi);
+                               setShowLOIDetails(true);
+                             }}
+                           >
+                             <Eye className="w-4 h-4" />
+                           </Button>
                         </div>
                       </div>
                     ))}
@@ -433,20 +445,20 @@ export const VoltMarketLOICenter: React.FC = () => {
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                             <div>
-                              <span className="font-medium">To:</span> {loi.recipient?.company_name || 'Unknown'}
+                              <span className="font-medium">To:</span> {loi.seller?.company_name || 'Unknown'}
                             </div>
                             <div>
                               <span className="font-medium">Listing:</span> {loi.listing?.title || loi.listing_id}
                             </div>
                             <div>
-                              <span className="font-medium">Proposed:</span> {formatCurrency(loi.proposed_price)}
+                              <span className="font-medium">Proposed:</span> {formatCurrency(loi.offered_price)}
                             </div>
                             <div>
-                              <span className="font-medium">Valid Until:</span> {new Date(loi.valid_until).toLocaleDateString()}
+                              <span className="font-medium">Submitted:</span> {new Date(loi.submitted_at).toLocaleDateString()}
                             </div>
                           </div>
-                          {loi.proposed_terms && (
-                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{loi.proposed_terms}</p>
+                          {loi.conditions && (
+                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{loi.conditions}</p>
                           )}
                           {loi.response_notes && (
                             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
@@ -461,9 +473,16 @@ export const VoltMarketLOICenter: React.FC = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-2 ml-4">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
+                           <Button 
+                             variant="outline" 
+                             size="sm"
+                             onClick={() => {
+                               setSelectedLOI(loi);
+                               setShowLOIDetails(true);
+                             }}
+                           >
+                             <Eye className="w-4 h-4" />
+                           </Button>
                         </div>
                       </div>
                     ))}
@@ -516,6 +535,154 @@ export const VoltMarketLOICenter: React.FC = () => {
                 </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* LOI Details Dialog */}
+        <Dialog open={showLOIDetails} onOpenChange={setShowLOIDetails}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>LOI Details</DialogTitle>
+            </DialogHeader>
+            {selectedLOI && (
+              <div className="space-y-6">
+                {/* LOI Information */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">LOI Information</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">LOI ID</p>
+                        <p className="text-sm text-gray-900">#{selectedLOI.id.slice(0, 8)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Status</p>
+                        <Badge className={getStatusColor(selectedLOI.status)}>
+                          <div className="flex items-center gap-1">
+                            {getStatusIcon(selectedLOI.status)}
+                            {selectedLOI.status}
+                          </div>
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Offered Price</p>
+                        <p className="text-sm text-gray-900">{formatCurrency(selectedLOI.offered_price || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Submitted</p>
+                        <p className="text-sm text-gray-900">{new Date(selectedLOI.submitted_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Listing Information</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Listing Title</p>
+                        <p className="text-sm text-gray-900">{selectedLOI.listing?.title || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Asking Price</p>
+                        <p className="text-sm text-gray-900">{formatCurrency(selectedLOI.listing?.asking_price || 0)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {selectedLOI.type === 'received' ? 'Buyer' : 'Seller'} Contact Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    {selectedLOI.type === 'received' ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Building className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Company</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.buyer?.company_name || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Phone</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.buyer?.phone_number || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Website</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.buyer?.website || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Bio</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.buyer?.bio || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Building className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Company</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.seller?.company_name || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Phone</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.seller?.phone_number || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Website</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.seller?.website || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Bio</p>
+                            <p className="text-sm text-gray-900">{selectedLOI.seller?.bio || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Terms and Conditions */}
+                {selectedLOI.conditions && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Terms & Conditions</h3>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedLOI.conditions}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Notes */}
+                {selectedLOI.additional_notes && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Additional Notes</h3>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedLOI.additional_notes}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
