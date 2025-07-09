@@ -18,7 +18,6 @@ import { VoltMarketAdvancedSearch } from '@/components/voltmarket/VoltMarketAdva
 import { VoltMarketNotificationCenter } from '@/components/voltmarket/VoltMarketNotificationCenter';
 import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
 import { VoltMarketQATest } from '@/components/voltmarket/VoltMarketQATest';
-import { VoltMarketComprehensiveDashboard } from '@/components/voltmarket/VoltMarketComprehensiveDashboard';
 import { VoltMarketDocumentCenter } from '@/components/voltmarket/VoltMarketDocumentCenter';
 import { VoltMarketAdvancedPortfolio } from '@/components/voltmarket/VoltMarketAdvancedPortfolio';
 import { VoltMarketLOICenter } from '@/components/voltmarket/VoltMarketLOICenter';
@@ -67,11 +66,6 @@ export const VoltMarket = () => {
         </VoltMarketLayout>
       } />
       <Route path="/dashboard" element={
-        <VoltMarketLayout>
-          {user ? <VoltMarketComprehensiveDashboard /> : <WattbytesAuth />}
-        </VoltMarketLayout>
-      } />
-      <Route path="/dashboard/classic" element={
         <VoltMarketLayout>
           {user ? <VoltMarketDashboard /> : <WattbytesAuth />}
         </VoltMarketLayout>
