@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Link } from 'react-router-dom';
 import { 
   FileText, 
   Briefcase, 
@@ -13,21 +14,78 @@ import {
   TrendingUp,
   Users,
   MapPin,
-  Calendar
+  Calendar,
+  MessageSquare,
+  HandHeart,
+  FileCheck
 } from 'lucide-react';
 import { useVoltMarketPortfolio } from '@/hooks/useVoltMarketPortfolio';
 import { useVoltMarketDocuments } from '@/hooks/useVoltMarketDocuments';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const VoltMarketComprehensiveDashboard: React.FC = () => {
   const { portfolios } = useVoltMarketPortfolio();
   const { documents } = useVoltMarketDocuments();
+  const { profile } = useVoltMarketAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingLOIs, setPendingLOIs] = useState(0);
+  const [pendingDocumentRequests, setPendingDocumentRequests] = useState(0);
+  const [receivedLOIs, setReceivedLOIs] = useState<any[]>([]);
+  const [contactMessages, setContactMessages] = useState<any[]>([]);
+
+  // Fetch seller-specific data
+  useEffect(() => {
+    const fetchSellerData = async () => {
+      if (!profile?.id || profile.role !== 'seller') return;
+
+      try {
+        // Get unread messages
+        const { data: messages, count: messageCount } = await supabase
+          .from('voltmarket_contact_messages')
+          .select('*', { count: 'exact' })
+          .eq('listing_owner_id', profile.id)
+          .eq('is_read', false)
+          .order('created_at', { ascending: false });
+
+        setUnreadMessages(messageCount || 0);
+        setContactMessages(messages || []);
+
+        // Get pending LOIs
+        const { data: lois, count: loiCount } = await supabase
+          .from('voltmarket_lois')
+          .select(`
+            *,
+            voltmarket_listings(title),
+            voltmarket_profiles!buyer_id(company_name)
+          `)
+          .eq('seller_id', profile.id)
+          .eq('status', 'pending')
+          .order('submitted_at', { ascending: false });
+
+        setPendingLOIs(loiCount || 0);
+        setReceivedLOIs(lois || []);
+
+        // Get pending document requests
+        const { count: docCount } = await supabase
+          .from('voltmarket_document_permissions')
+          .select('*', { count: 'exact', head: true })
+          .eq('granted_by', profile.id)
+          .is('granted_at', null);
+
+        setPendingDocumentRequests(docCount || 0);
+      } catch (error) {
+        console.error('Error fetching seller data:', error);
+      }
+    };
+
+    fetchSellerData();
+  }, [profile]);
 
   // Calculate summary metrics
   const totalPortfolioValue = portfolios.reduce((sum, p) => sum + (p.total_value || 0), 0);
   const totalDocuments = documents.length;
-  const recentActivity = 5; // Mock data
-  const pendingVerifications = 2; // Mock data
 
   const quickStats = [
     {
@@ -53,7 +111,7 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
     },
     {
       title: 'LOIs Pending',
-      value: '7',
+      value: pendingLOIs.toString(),
       change: '+2',
       icon: Scale,
       color: 'text-orange-600'
@@ -61,18 +119,27 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
   ];
 
   const recentActivities = [
-    { type: 'loi_received', message: 'New LOI received for Dallas Data Center', time: '2 hours ago' },
-    { type: 'document_shared', message: 'Financial documents shared with potential buyer', time: '4 hours ago' },
-    { type: 'verification_approved', message: 'Company verification approved', time: '1 day ago' },
-    { type: 'new_listing', message: 'Houston Solar Farm listed successfully', time: '2 days ago' },
-    { type: 'portfolio_update', message: 'Portfolio performance updated', time: '3 days ago' }
+    ...contactMessages.slice(0, 2).map(msg => ({
+      type: 'message_received',
+      message: `New message from ${msg.sender_name}`,
+      time: new Date(msg.created_at).toLocaleString()
+    })),
+    ...receivedLOIs.slice(0, 2).map(loi => ({
+      type: 'loi_received',
+      message: `New LOI received for ${loi.voltmarket_listings?.title || 'listing'}`,
+      time: new Date(loi.submitted_at).toLocaleString()
+    })),
+    { type: 'verification_approved', message: 'Company verification approved', time: '1 day ago' }
   ];
 
   const upcomingTasks = [
-    { task: 'Review LOI for Phoenix Battery Storage', due: 'Today', priority: 'high' },
-    { task: 'Upload due diligence documents', due: 'Tomorrow', priority: 'medium' },
-    { task: 'Complete financial verification', due: 'This week', priority: 'high' },
-    { task: 'Portfolio quarterly review', due: 'Next week', priority: 'low' }
+    ...receivedLOIs.slice(0, 2).map(loi => ({
+      task: `Review LOI for ${loi.voltmarket_listings?.title || 'listing'}`,
+      due: 'Today',
+      priority: 'high' as const
+    })),
+    { task: 'Upload due diligence documents', due: 'Tomorrow', priority: 'medium' as const },
+    { task: 'Complete financial verification', due: 'This week', priority: 'high' as const }
   ];
 
   return (
@@ -122,7 +189,10 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="portfolios">Portfolios</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="lois">LOIs</TabsTrigger>
+            <TabsTrigger value="lois">LOIs ({pendingLOIs})</TabsTrigger>
+            {profile?.role === 'seller' && (
+              <TabsTrigger value="messages">Messages ({unreadMessages})</TabsTrigger>
+            )}
             <TabsTrigger value="verification">Verification</TabsTrigger>
           </TabsList>
 
@@ -138,7 +208,7 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentActivities.map((activity, index) => (
+                    {recentActivities.slice(0, 5).map((activity, index) => (
                       <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
                         <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
                         <div className="flex-1">
@@ -161,7 +231,7 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {upcomingTasks.map((task, index) => (
+                    {upcomingTasks.slice(0, 4).map((task, index) => (
                       <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">{task.task}</p>
@@ -180,6 +250,53 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
               </Card>
             </div>
           </TabsContent>
+
+          {profile?.role === 'seller' && (
+            <TabsContent value="messages">
+              <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5" />
+                      Contact Messages
+                    </div>
+                    <Link to="/voltmarket/messages">
+                      <Button size="sm">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        View All Messages
+                      </Button>
+                    </Link>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {contactMessages.length === 0 ? (
+                    <div className="text-center py-8">
+                      <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-600">No new messages</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {contactMessages.slice(0, 5).map((message) => (
+                        <div key={message.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                          <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{message.sender_name}</p>
+                            <p className="text-sm text-gray-600 line-clamp-2">{message.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(message.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          {!message.is_read && (
+                            <Badge variant="secondary">New</Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="portfolios">
             <Card className="bg-white/70 backdrop-blur-sm border-white/50">
@@ -255,12 +372,54 @@ export const VoltMarketComprehensiveDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Scale className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">LOI Management</h3>
-                  <p className="text-gray-600 mb-4">Submit and track formal Letters of Intent</p>
-                  <Button>View LOIs</Button>
-                </div>
+                {profile?.role === 'seller' ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">Received LOIs</h3>
+                      <Link to="/voltmarket/loi-center">
+                        <Button size="sm">
+                          <HandHeart className="w-4 h-4 mr-2" />
+                          View All ({pendingLOIs})
+                        </Button>
+                      </Link>
+                    </div>
+                    
+                    {receivedLOIs.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-600">No pending LOIs</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {receivedLOIs.slice(0, 3).map((loi) => (
+                          <div key={loi.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {loi.voltmarket_listings?.title || 'Listing'}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                From: {loi.voltmarket_profiles?.company_name || 'Unknown'}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Offer: ${loi.offered_price?.toLocaleString() || 'N/A'}
+                              </p>
+                            </div>
+                            <Badge variant="outline">Pending</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Scale className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">LOI Management</h3>
+                    <p className="text-gray-600 mb-4">Submit and track formal Letters of Intent</p>
+                    <Link to="/voltmarket/loi-center">
+                      <Button>View LOIs</Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
