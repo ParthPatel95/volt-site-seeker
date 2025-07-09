@@ -306,18 +306,36 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
   const updateProfile = async (updates: Partial<VoltMarketProfile>) => {
     if (!user) return { error: new Error('No user logged in') };
 
-    const { data, error } = await supabase
-      .from('voltmarket_profiles')
-      .update(updates)
-      .eq('user_id', user.id)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('voltmarket_profiles')
+        .update(updates)
+        .eq('user_id', user.id)
+        .select()
+        .single();
 
-    if (!error && data) {
-      setProfile(data);
+      if (error) {
+        console.error('Profile update error:', error);
+        return { data: null, error };
+      }
+
+      if (data) {
+        console.log('Profile updated successfully:', data);
+        setProfile(data);
+        
+        // Force a page refresh if role changed to ensure dashboard updates
+        if (updates.role && updates.role !== profile?.role) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        }
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      console.error('Unexpected profile update error:', err);
+      return { data: null, error: err as Error };
     }
-
-    return { data, error };
   };
 
   const resendEmailVerification = async () => {
