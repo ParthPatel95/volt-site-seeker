@@ -253,12 +253,14 @@ export const VoltMarketListingDetail: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className={`grid w-full ${profile?.id === listing.seller_id ? 'grid-cols-7' : 'grid-cols-6'}`}>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="analysis">Analysis</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                {profile?.id === listing.seller_id && (
+                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                )}
                 <TabsTrigger value="location">Location</TabsTrigger>
                 <TabsTrigger value="seller">Seller</TabsTrigger>
               </TabsList>
@@ -443,11 +445,13 @@ export const VoltMarketListingDetail: React.FC = () => {
                 />
               </TabsContent>
 
-              <TabsContent value="analytics">
-                <VoltMarketListingAnalytics
-                  listingId={listing.id}
-                />
-              </TabsContent>
+              {profile?.id === listing.seller_id && (
+                <TabsContent value="analytics">
+                  <VoltMarketListingAnalytics
+                    listingId={listing.id}
+                  />
+                </TabsContent>
+              )}
 
               <TabsContent value="location">
                 {listing.latitude && listing.longitude ? (
