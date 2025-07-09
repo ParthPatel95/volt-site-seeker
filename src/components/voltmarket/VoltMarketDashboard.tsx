@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +8,10 @@ import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useToast } from '@/hooks/use-toast';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { Link } from 'react-router-dom';
-import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff, Mail } from 'lucide-react';
+import { Plus, MessageSquare, User, Search, TrendingUp, AlertTriangle, Edit, Trash2, Eye, EyeOff, Mail, FileCheck, HandHeart, Clock } from 'lucide-react';
 import { VoltMarketAccessRequests } from './VoltMarketAccessRequests';
 import { useVoltMarketAccessRequests } from '@/hooks/useVoltMarketAccessRequests';
+import { supabase } from '@/integrations/supabase/client';
 
 const ResendVerificationButton: React.FC = () => {
   const { resendEmailVerification } = useVoltMarketAuth();
@@ -55,12 +56,51 @@ export const VoltMarketDashboard: React.FC = () => {
   const { userListings, fetchUserListings, deleteListing, updateListingStatus, loading: listingsLoading } = useVoltMarketListings();
   const { fetchAccessRequests } = useVoltMarketAccessRequests();
   const { toast } = useToast();
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingLOIs, setPendingLOIs] = useState(0);
+  const [pendingDocumentRequests, setPendingDocumentRequests] = useState(0);
+
+  const fetchSellerMetrics = async () => {
+    if (!profile?.id || profile.role !== 'seller') return;
+
+    try {
+      // Get unread messages count
+      const { count: messageCount } = await supabase
+        .from('voltmarket_contact_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('listing_owner_id', profile.id)
+        .eq('is_read', false);
+
+      setUnreadMessages(messageCount || 0);
+
+      // Get pending LOIs count
+      const { count: loiCount } = await supabase
+        .from('voltmarket_lois')
+        .select('*', { count: 'exact', head: true })
+        .eq('seller_id', profile.id)
+        .eq('status', 'pending');
+
+      setPendingLOIs(loiCount || 0);
+
+      // Get pending document requests count
+      const { count: docCount } = await supabase
+        .from('voltmarket_document_permissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('granted_by', profile.id)
+        .is('granted_at', null);
+
+      setPendingDocumentRequests(docCount || 0);
+    } catch (error) {
+      console.error('Error fetching seller metrics:', error);
+    }
+  };
 
   useEffect(() => {
     if (profile?.id) {
       fetchUserListings(profile.id);
       if (profile.role === 'seller') {
         fetchAccessRequests(profile.id);
+        fetchSellerMetrics();
       }
     }
   }, [profile?.id, profile?.role, fetchUserListings, fetchAccessRequests]);
@@ -217,7 +257,7 @@ export const VoltMarketDashboard: React.FC = () => {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{unreadMessages}</div>
               <p className="text-xs text-muted-foreground">
                 unread messages
               </p>
@@ -252,6 +292,50 @@ export const VoltMarketDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Seller-specific metrics */}
+        {profile.role === 'seller' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending LOIs</CardTitle>
+                <HandHeart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pendingLOIs}</div>
+                <p className="text-xs text-muted-foreground">
+                  awaiting response
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Document Requests</CardTitle>
+                <FileCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pendingDocumentRequests}</div>
+                <p className="text-xs text-muted-foreground">
+                  pending approval
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">&lt; 24h</div>
+                <p className="text-xs text-muted-foreground">
+                  average response
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="lg:col-span-2">
@@ -367,6 +451,24 @@ export const VoltMarketDashboard: React.FC = () => {
                   Edit Profile
                 </Button>
               </Link>
+              
+              {profile.role === 'seller' && (
+                <>
+                  <Link to="/voltmarket/loi-center">
+                    <Button variant="outline" className="w-full justify-start">
+                      <HandHeart className="mr-2 h-4 w-4" />
+                      Manage LOIs ({pendingLOIs})
+                    </Button>
+                  </Link>
+                  
+                  <Link to="/voltmarket/document-requests">
+                    <Button variant="outline" className="w-full justify-start">
+                      <FileCheck className="mr-2 h-4 w-4" />
+                      Document Requests ({pendingDocumentRequests})
+                    </Button>
+                  </Link>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
