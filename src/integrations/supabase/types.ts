@@ -2729,6 +2729,7 @@ export type Database = {
       }
       voltmarket_lois: {
         Row: {
+          additional_notes: string | null
           buyer_id: string
           conditions: string | null
           custom_loi_url: string | null
@@ -2743,6 +2744,7 @@ export type Database = {
           timeline_days: number | null
         }
         Insert: {
+          additional_notes?: string | null
           buyer_id: string
           conditions?: string | null
           custom_loi_url?: string | null
@@ -2757,6 +2759,7 @@ export type Database = {
           timeline_days?: number | null
         }
         Update: {
+          additional_notes?: string | null
           buyer_id?: string
           conditions?: string | null
           custom_loi_url?: string | null

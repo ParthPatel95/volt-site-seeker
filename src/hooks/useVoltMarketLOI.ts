@@ -47,13 +47,9 @@ export const useVoltMarketLOI = () => {
           buyer_id: profile.id,
           seller_id: listing.seller_id,
           status: 'pending',
-          offering_price: loiData.offering_price,
-          proposed_terms: loiData.proposed_terms,
-          due_diligence_period_days: loiData.due_diligence_period_days,
-          contingencies: loiData.contingencies,
-          financing_details: loiData.financing_details,
-          closing_timeline: loiData.closing_timeline,
-          buyer_qualifications: loiData.buyer_qualifications,
+          offered_price: loiData.offering_price,
+          conditions: loiData.proposed_terms,
+          timeline_days: loiData.due_diligence_period_days,
           additional_notes: loiData.additional_notes,
         })
         .select()
@@ -83,7 +79,7 @@ export const useVoltMarketLOI = () => {
           seller:voltmarket_profiles!seller_id(company_name)
         `)
         .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
-        .order('created_at', { ascending: false });
+        .order('submitted_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -99,7 +95,7 @@ export const useVoltMarketLOI = () => {
     try {
       const { data, error } = await supabase
         .from('voltmarket_lois')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ status, responded_at: new Date().toISOString() })
         .eq('id', loiId)
         .eq('seller_id', profile.id)
         .select()
