@@ -207,12 +207,12 @@ export const VoltMarketNavigation: React.FC = () => {
                            Documents
                          </Link>
                        </DropdownMenuItem>
-                       <DropdownMenuItem asChild>
-                         <Link to="/voltmarket/loi" className="cursor-pointer">
-                           <Scale className="w-4 h-4 mr-2" />
-                           LOI Center
-                         </Link>
-                       </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/voltmarket/loi-center" className="cursor-pointer">
+                            <Scale className="w-4 h-4 mr-2" />
+                            LOI Center
+                          </Link>
+                        </DropdownMenuItem>
                        <DropdownMenuItem asChild>
                          <Link to="/voltmarket/verification" className="cursor-pointer">
                            <Shield className="w-4 h-4 mr-2" />
