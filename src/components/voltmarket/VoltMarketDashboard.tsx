@@ -60,18 +60,22 @@ export const VoltMarketDashboard: React.FC = () => {
   const [pendingLOIs, setPendingLOIs] = useState(0);
   const [pendingDocumentRequests, setPendingDocumentRequests] = useState(0);
 
+  const [contactMessages, setContactMessages] = useState<any[]>([]);
+
   const fetchSellerMetrics = async () => {
     if (!profile?.id || profile.role !== 'seller') return;
 
     try {
-      // Get unread messages count
-      const { count: messageCount } = await supabase
+      // Get unread messages count and messages
+      const { data: messages, count: messageCount } = await supabase
         .from('voltmarket_contact_messages')
-        .select('*', { count: 'exact', head: true })
+        .select('*', { count: 'exact' })
         .eq('listing_owner_id', profile.id)
-        .eq('is_read', false);
+        .eq('is_read', false)
+        .order('created_at', { ascending: false });
 
       setUnreadMessages(messageCount || 0);
+      setContactMessages(messages || []);
 
       // Get pending LOIs count
       const { count: loiCount } = await supabase
