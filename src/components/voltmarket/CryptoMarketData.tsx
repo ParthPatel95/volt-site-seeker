@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Sparkles, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Sparkles, Activity, BarChart3 } from 'lucide-react';
+import { CryptoAnalysisModal } from './CryptoAnalysisModal';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CryptoData {
   symbol: string;
@@ -38,7 +40,36 @@ const formatPrice = (price: number) => {
 };
 
 export const CryptoMarketData: React.FC<CryptoMarketDataProps> = ({ cryptos }) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCrypto, setSelectedCrypto] = useState<string | null>(null);
+  const [cryptoDetails, setCryptoDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  
   const cryptoList = Object.values(cryptos).filter(Boolean) as CryptoData[];
+
+  const handleCryptoClick = async (symbol: string) => {
+    setSelectedCrypto(symbol);
+    setModalOpen(true);
+    setLoading(true);
+    setCryptoDetails(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('crypto-details', {
+        body: { symbol }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setCryptoDetails(data);
+    } catch (error) {
+      console.error('Error fetching crypto details:', error);
+      // You could show a toast here
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (cryptoList.length === 0) {
     return (
@@ -84,7 +115,8 @@ export const CryptoMarketData: React.FC<CryptoMarketDataProps> = ({ cryptos }) =
           {cryptoList.map((crypto) => (
             <div 
               key={crypto.symbol} 
-              className="group relative bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-purple-100/50 hover:shadow-md hover:scale-105 transition-all duration-300 hover:border-purple-200"
+              onClick={() => handleCryptoClick(crypto.symbol)}
+              className="group relative bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-purple-100/50 hover:shadow-md hover:scale-105 transition-all duration-300 hover:border-purple-200 cursor-pointer"
             >
               {/* Glow effect on hover */}
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -121,6 +153,11 @@ export const CryptoMarketData: React.FC<CryptoMarketDataProps> = ({ cryptos }) =
                     </p>
                   </div>
                   
+                  {/* Click indicator */}
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <BarChart3 className="w-4 h-4 text-purple-500" />
+                  </div>
+                  
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center py-1 border-b border-gray-100">
                       <span className="text-gray-600 font-medium">Market Cap</span>
@@ -142,6 +179,14 @@ export const CryptoMarketData: React.FC<CryptoMarketDataProps> = ({ cryptos }) =
           <span>Last updated: {cryptoList[0]?.lastUpdated ? new Date(cryptoList[0].lastUpdated).toLocaleTimeString() : 'Just now'}</span>
         </div>
       </CardContent>
+
+      {/* Crypto Analysis Modal */}
+      <CryptoAnalysisModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        cryptoDetails={cryptoDetails}
+        loading={loading}
+      />
     </Card>
   );
 };
