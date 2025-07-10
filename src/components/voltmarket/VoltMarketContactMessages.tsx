@@ -23,7 +23,6 @@ interface ContactMessage {
   message: string;
   is_read: boolean;
   created_at: string;
-  listing_title?: string;
 }
 
 export const VoltMarketContactMessages: React.FC = () => {
@@ -34,60 +33,25 @@ export const VoltMarketContactMessages: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchMessages = async () => {
-    if (!profile) {
-      console.log('No profile found, skipping message fetch');
+    if (!profile?.id) {
       setLoading(false);
       return;
     }
 
-    console.log('Fetching messages for profile:', profile.id);
-
     try {
-      // First get the contact messages
-      const { data: contactMessages, error: messagesError } = await supabase
+      const { data: contactMessages, error } = await supabase
         .from('voltmarket_contact_messages')
         .select('*')
         .eq('listing_owner_id', profile.id)
         .order('created_at', { ascending: false });
 
-      if (messagesError) {
-        console.error('Messages query error:', messagesError);
-        throw messagesError;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
       }
 
-      console.log('Raw contact messages:', contactMessages);
-
-      if (!contactMessages || contactMessages.length === 0) {
-        console.log('No contact messages found');
-        setMessages([]);
-        setUnreadCount(0);
-        setLoading(false);
-        return;
-      }
-
-      // Get listing titles separately
-      const listingIds = contactMessages.map(msg => msg.listing_id);
-      const { data: listings, error: listingsError } = await supabase
-        .from('voltmarket_listings')
-        .select('id, title')
-        .in('id', listingIds);
-
-      if (listingsError) {
-        console.error('Listings query error:', listingsError);
-      }
-
-      console.log('Listings data:', listings);
-
-      // Combine the data
-      const messagesWithTitles = contactMessages.map(msg => ({
-        ...msg,
-        listing_title: listings?.find(listing => listing.id === msg.listing_id)?.title || 'Unknown Listing'
-      }));
-
-      console.log('Final messages with titles:', messagesWithTitles);
-
-      setMessages(messagesWithTitles);
-      setUnreadCount(messagesWithTitles.filter(msg => !msg.is_read).length);
+      setMessages(contactMessages || []);
+      setUnreadCount((contactMessages || []).filter(msg => !msg.is_read).length);
     } catch (error) {
       console.error('Error fetching contact messages:', error);
       toast({
@@ -232,7 +196,7 @@ export const VoltMarketContactMessages: React.FC = () => {
                       )}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Regarding: <span className="font-medium">{message.listing_title}</span>
+                      Regarding: <span className="font-medium">Listing ID: {message.listing_id}</span>
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                       <Clock className="w-3 h-3" />
