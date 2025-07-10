@@ -58,7 +58,7 @@ serve(async (req) => {
 
     console.log(`Fetching fresh data for ${symbol} from CoinMarketCap`);
 
-    // Fetch fresh data from CoinMarketCap - using v1 endpoint for better reliability
+    // Fetch fresh data from CoinMarketCap using v1 endpoint
     const quotesResponse = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`, {
       headers: {
         'X-CMC_PRO_API_KEY': apiKey,
@@ -71,11 +71,17 @@ serve(async (req) => {
     if (!quotesResponse.ok) {
       const errorText = await quotesResponse.text();
       console.error(`Quotes API error: ${errorText}`);
-      throw new Error(`CoinMarketCap quotes API error: ${quotesResponse.status}`);
+      throw new Error(`CoinMarketCap quotes API error: ${quotesResponse.status} - ${errorText}`);
     }
 
     const quotesData = await quotesResponse.json();
-    console.log(`Quotes data structure:`, JSON.stringify(quotesData, null, 2));
+    console.log(`API Response structure:`, JSON.stringify(quotesData, null, 2));
+
+    // Check API status first
+    if (!quotesData.status || quotesData.status.error_code !== 0) {
+      console.error('API returned error:', quotesData.status?.error_message || 'Unknown error');
+      throw new Error(quotesData.status?.error_message || 'CoinMarketCap API error');
+    }
 
     // Check if we have data
     if (!quotesData.data || Object.keys(quotesData.data).length === 0) {
@@ -83,26 +89,24 @@ serve(async (req) => {
       throw new Error('No cryptocurrency data found');
     }
 
-    // Get the first cryptocurrency from the response
-    const cryptoId = Object.keys(quotesData.data)[0];
-    const cryptoQuotes = quotesData.data[cryptoId];
-
-    console.log(`Found crypto ID: ${cryptoId}`);
-    console.log(`Has quotes: ${!!cryptoQuotes}`);
-
-    if (!cryptoQuotes) {
-      console.error(`No data found for crypto: ${symbol}`);
-      throw new Error('Cryptocurrency data not found');
+    // Get the first cryptocurrency from the response (CoinMarketCap returns data keyed by symbol)
+    const cryptoData = quotesData.data[symbol.toUpperCase()];
+    
+    if (!cryptoData) {
+      console.error(`No data found for crypto symbol: ${symbol}`);
+      throw new Error(`Cryptocurrency ${symbol} not found`);
     }
 
-    // Format response with just the essential data we can get from quotes endpoint
+    console.log(`Found crypto data for ${symbol}:`, JSON.stringify(cryptoData, null, 2));
+
+    // Format response with the data from quotes endpoint
     const result = {
       symbol: symbol.toUpperCase(),
-      name: cryptoQuotes.name || 'Unknown',
-      logo: null, // Not available in v1 quotes endpoint
-      description: null, // Not available in v1 quotes endpoint
-      category: null, // Not available in v1 quotes endpoint
-      tags: [],
+      name: cryptoData.name || 'Unknown',
+      logo: null, // Not available in quotes endpoint
+      description: null, // Not available in quotes endpoint
+      category: null, // Not available in quotes endpoint
+      tags: cryptoData.tags || [],
       
       // URLs - not available in quotes endpoint
       website: null,
@@ -111,41 +115,41 @@ serve(async (req) => {
       reddit: null,
       sourceCode: null,
       
-      // Market data - this is what we can get from quotes endpoint
-      price: cryptoQuotes.quote?.USD?.price || 0,
-      marketCap: cryptoQuotes.quote?.USD?.market_cap || 0,
-      marketCapRank: cryptoQuotes.cmc_rank || 0,
-      volume24h: cryptoQuotes.quote?.USD?.volume_24h || 0,
-      volumeChange24h: cryptoQuotes.quote?.USD?.volume_change_24h || 0,
-      percentChange1h: cryptoQuotes.quote?.USD?.percent_change_1h || 0,
-      percentChange24h: cryptoQuotes.quote?.USD?.percent_change_24h || 0,
-      percentChange7d: cryptoQuotes.quote?.USD?.percent_change_7d || 0,
-      percentChange30d: cryptoQuotes.quote?.USD?.percent_change_30d || 0,
-      percentChange60d: cryptoQuotes.quote?.USD?.percent_change_60d || 0,
-      percentChange90d: cryptoQuotes.quote?.USD?.percent_change_90d || 0,
+      // Market data from quotes endpoint
+      price: cryptoData.quote?.USD?.price || 0,
+      marketCap: cryptoData.quote?.USD?.market_cap || 0,
+      marketCapRank: cryptoData.cmc_rank || 0,
+      volume24h: cryptoData.quote?.USD?.volume_24h || 0,
+      volumeChange24h: cryptoData.quote?.USD?.volume_change_24h || 0,
+      percentChange1h: cryptoData.quote?.USD?.percent_change_1h || 0,
+      percentChange24h: cryptoData.quote?.USD?.percent_change_24h || 0,
+      percentChange7d: cryptoData.quote?.USD?.percent_change_7d || 0,
+      percentChange30d: cryptoData.quote?.USD?.percent_change_30d || 0,
+      percentChange60d: cryptoData.quote?.USD?.percent_change_60d || 0,
+      percentChange90d: cryptoData.quote?.USD?.percent_change_90d || 0,
       
       // Supply data
-      circulatingSupply: cryptoQuotes.circulating_supply || 0,
-      totalSupply: cryptoQuotes.total_supply || 0,
-      maxSupply: cryptoQuotes.max_supply || null,
+      circulatingSupply: cryptoData.circulating_supply || 0,
+      totalSupply: cryptoData.total_supply || 0,
+      maxSupply: cryptoData.max_supply || null,
       
       // Technical data - not available in quotes endpoint
-      platform: null,
+      platform: cryptoData.platform || null,
       contractAddress: null,
       
       // Additional info
-      dateAdded: cryptoQuotes.date_added,
-      lastUpdated: cryptoQuotes.last_updated,
+      dateAdded: cryptoData.date_added,
+      lastUpdated: cryptoData.last_updated,
       
       // Mining info
-      isMineable: false, // Not available in quotes endpoint
+      isMineable: cryptoData.is_fiat === 0, // Approximation
       
       // Market metrics
-      fullyDilutedMarketCap: cryptoQuotes.quote?.USD?.fully_diluted_market_cap || 0,
-      dominance: cryptoQuotes.quote?.USD?.market_cap_dominance || 0
+      fullyDilutedMarketCap: cryptoData.quote?.USD?.fully_diluted_market_cap || 0,
+      dominance: cryptoData.quote?.USD?.market_cap_dominance || 0
     };
 
-    console.log(`Formatted result:`, JSON.stringify(result, null, 2));
+    console.log(`Formatted result for ${symbol}:`, JSON.stringify(result, null, 2));
 
     // Cache the result
     await supabase
@@ -156,7 +160,7 @@ serve(async (req) => {
         last_updated: new Date().toISOString()
       });
 
-    console.log(`Cached fresh data for ${symbol}`);
+    console.log(`Successfully cached data for ${symbol}`);
 
     return new Response(
       JSON.stringify(result),
