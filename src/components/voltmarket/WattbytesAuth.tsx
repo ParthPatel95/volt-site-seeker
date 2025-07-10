@@ -159,8 +159,8 @@ export const WattbytesAuth: React.FC = () => {
               <Battery className="w-10 h-10 text-white" />
             </div>
             <div className="ml-4">
-              <h1 className="text-3xl font-bold text-white">Wattbytes</h1>
-              <p className="text-blue-100">Energy Intelligence Platform</p>
+              <h1 className="text-3xl font-bold text-white">GridBazaar</h1>
+              <p className="text-blue-100">Energy Infrastructure Marketplace</p>
             </div>
           </div>
           
@@ -201,8 +201,8 @@ export const WattbytesAuth: React.FC = () => {
                 <Battery className="w-8 h-8 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-watt-primary">Wattbytes</h1>
-            <p className="text-gray-600">Energy Intelligence Platform</p>
+            <h1 className="text-2xl font-bold text-watt-primary">GridBazaar</h1>
+            <p className="text-gray-600">Energy Infrastructure Marketplace</p>
           </div>
 
           <Card className="shadow-2xl border-0">
