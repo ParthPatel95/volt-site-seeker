@@ -50,53 +50,7 @@ serve(async (req) => {
       throw new Error('Cryptocurrency symbol is required');
     }
 
-    // TEMPORARY: Test if function is working at all
-    console.log('=== FUNCTION IS WORKING - RETURNING TEST DATA ===');
-    const testResult = {
-      symbol: symbol.toUpperCase(),
-      name: symbol === 'BTC' ? 'Bitcoin' : symbol === 'ETH' ? 'Ethereum' : symbol === 'LTC' ? 'Litecoin' : 'Test Crypto',
-      logo: null,
-      description: `Real-time data for ${symbol} from CoinMarketCap API.`,
-      category: 'cryptocurrency', 
-      tags: ['pow', 'mineable', 'payments'],
-      website: symbol === 'BTC' ? 'https://bitcoin.org' : symbol === 'ETH' ? 'https://ethereum.org' : null,
-      technicalDoc: symbol === 'BTC' ? 'https://bitcoin.org/bitcoin.pdf' : null,
-      twitter: null,
-      reddit: null,
-      sourceCode: symbol === 'BTC' ? 'https://github.com/bitcoin/bitcoin' : null,
-      price: symbol === 'BTC' ? 96500 : symbol === 'ETH' ? 3250 : symbol === 'LTC' ? 91 : 150,
-      marketCap: symbol === 'BTC' ? 1900000000000 : symbol === 'ETH' ? 400000000000 : 6920000000,
-      marketCapRank: symbol === 'BTC' ? 1 : symbol === 'ETH' ? 2 : symbol === 'LTC' ? 16 : 10,
-      volume24h: symbol === 'BTC' ? 25000000000 : 15000000000,
-      volumeChange24h: 3.25,
-      percentChange1h: 0.15,
-      percentChange24h: 2.4,
-      percentChange7d: 8.7,
-      percentChange30d: 15.2,
-      percentChange60d: 25.1,
-      percentChange90d: 45.8,
-      circulatingSupply: symbol === 'BTC' ? 19800000 : symbol === 'ETH' ? 120000000 : 75000000,
-      totalSupply: symbol === 'BTC' ? 19800000 : symbol === 'ETH' ? 120000000 : 84000000,
-      maxSupply: symbol === 'BTC' ? 21000000 : symbol === 'LTC' ? 84000000 : null,
-      platform: null,
-      contractAddress: null,
-      dateAdded: '2009-01-03T00:00:00.000Z',
-      lastUpdated: new Date().toISOString(),
-      isMineable: true,
-      fullyDilutedMarketCap: symbol === 'BTC' ? 2000000000000 : 450000000000,
-      dominance: symbol === 'BTC' ? 58.5 : symbol === 'ETH' ? 18.2 : 0.4
-    };
-
-    console.log('Returning test result for:', symbol);
-    return new Response(
-      JSON.stringify(testResult),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+    console.log(`Proceeding to fetch data for ${symbol}`);
 
     // Check cache first - only fetch new data if older than 4 hours
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
