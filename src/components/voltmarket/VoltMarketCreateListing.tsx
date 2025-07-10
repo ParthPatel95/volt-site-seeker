@@ -54,15 +54,10 @@ export const VoltMarketCreateListing: React.FC = () => {
     power_rate_per_kw: 0,
     power_capacity_mw: 0,
     available_power_mw: 0,
-    acres: 0,
+    square_footage: 0,
     is_location_confidential: false,
     property_type: 'other' as 'other' | 'industrial' | 'warehouse' | 'data_center' | 'land' | 'office',
-    site_type: '' as 'greenfield' | 'brownfield' | 'fully_built_energized' | '',
-    interconnection_status: '' as 'fully_interconnected' | 'in_queue' | 'behind_meter' | '',
-    utility_provider: '',
-    energy_price: 0,
-    energization_timeline: '',
-    power_mix: '',
+    facility_tier: '',
     cooling_type: '',
     hosting_types: [] as string[],
     minimum_commitment_months: 0,
@@ -86,40 +81,24 @@ export const VoltMarketCreateListing: React.FC = () => {
   }, [formData, selectedTags]);
 
   const generateDescription = () => {
-    const { title, listing_type, power_capacity_mw, acres, site_type, interconnection_status, utility_provider, energy_price, power_mix } = formData;
+    const { title, listing_type, power_capacity_mw, square_footage } = formData;
     
     let description = '';
     
     if (title) description += `${title}\n\n`;
     
     if (listing_type === 'site_sale' || listing_type === 'site_lease') {
-      description += `This ${site_type || 'site'} offers `;
+      description += `This property offers `;
       if (power_capacity_mw > 0) description += `${power_capacity_mw}MW of power capacity `;
-      if (acres > 0) description += `on ${acres} acres `;
+      if (square_footage > 0) description += `with ${square_footage} square feet `;
       description += `located in ${formData.location || '[Location]'}.\n\n`;
       
-      if (interconnection_status) {
-        description += `Interconnection Status: ${interconnection_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}\n`;
-      }
-      
-      if (utility_provider) {
-        description += `Utility Provider: ${utility_provider}\n`;
-      }
-      
-      if (energy_price > 0) {
-        description += `Energy Price: $${energy_price}/MWh\n`;
-      }
-      
-      if (power_mix) {
-        description += `Power Mix: ${power_mix}\n`;
-      }
-      
       if (selectedTags.length > 0) {
-        description += `\nFeatures: ${selectedTags.join(', ')}\n`;
+        description += `Features: ${selectedTags.join(', ')}\n`;
       }
     } else if (listing_type === 'hosting') {
       description += `Professional hosting facility with ${power_capacity_mw}MW capacity available for cryptocurrency mining operations.\n\n`;
-      if (energy_price > 0) description += `Competitive rates starting at $${formData.power_rate_per_kw}/kW.\n`;
+      description += `Competitive rates starting at $${formData.power_rate_per_kw}/kW.\n`;
     } else if (listing_type === 'equipment') {
       description += `${formData.equipment_condition} ${formData.brand} ${formData.model} equipment available.\n\n`;
       if (formData.quantity > 1) description += `Quantity available: ${formData.quantity} units\n`;
@@ -179,8 +158,10 @@ export const VoltMarketCreateListing: React.FC = () => {
         power_rate_per_kw: formData.power_rate_per_kw,
         power_capacity_mw: formData.power_capacity_mw,
         available_power_mw: formData.available_power_mw,
+        square_footage: formData.square_footage,
         is_location_confidential: formData.is_location_confidential,
         property_type: formData.property_type,
+        facility_tier: formData.facility_tier,
         cooling_type: formData.cooling_type,
         hosting_types: formData.hosting_types,
         minimum_commitment_months: formData.minimum_commitment_months,
@@ -411,87 +392,36 @@ export const VoltMarketCreateListing: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Site Type for Site Sale/Lease */}
-                {(formData.listing_type === 'site_sale' || formData.listing_type === 'site_lease') && (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="site_type">Site Type</Label>
-                        <Select value={formData.site_type} onValueChange={(value: 'greenfield' | 'brownfield' | 'fully_built_energized') => 
-                          setFormData(prev => ({ ...prev, site_type: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select site type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="greenfield">Greenfield</SelectItem>
-                            <SelectItem value="brownfield">Brownfield</SelectItem>
-                            <SelectItem value="fully_built_energized">Fully Built & Energized</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                {/* Property Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="property_type">Property Type</Label>
+                    <Select value={formData.property_type} onValueChange={(value: 'other' | 'industrial' | 'warehouse' | 'data_center' | 'land' | 'office') => 
+                      setFormData(prev => ({ ...prev, property_type: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="industrial">Industrial</SelectItem>
+                        <SelectItem value="warehouse">Warehouse</SelectItem>
+                        <SelectItem value="data_center">Data Center</SelectItem>
+                        <SelectItem value="land">Land</SelectItem>
+                        <SelectItem value="office">Office</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      <div>
-                        <Label htmlFor="interconnection_status">Interconnection Status</Label>
-                        <Select value={formData.interconnection_status} onValueChange={(value: 'fully_interconnected' | 'in_queue' | 'behind_meter') => 
-                          setFormData(prev => ({ ...prev, interconnection_status: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fully_interconnected">Fully Interconnected</SelectItem>
-                            <SelectItem value="in_queue">In Queue</SelectItem>
-                            <SelectItem value="behind_meter">Behind Meter</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="utility_provider">Utility Provider</Label>
-                        <Input
-                          id="utility_provider"
-                          value={formData.utility_provider}
-                          onChange={(e) => setFormData(prev => ({ ...prev, utility_provider: e.target.value }))}
-                          placeholder="e.g., ERCOT, PJM"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="energy_price">Energy Price ($/MWh)</Label>
-                        <Input
-                          id="energy_price"
-                          type="number"
-                          step="0.01"
-                          value={formData.energy_price || ''}
-                          onChange={(e) => setFormData(prev => ({ 
-                            ...prev, 
-                            energy_price: parseFloat(e.target.value) || 0 
-                          }))}
-                          placeholder="45.00"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="energization_timeline">Energization Timeline</Label>
-                        <Input
-                          id="energization_timeline"
-                          value={formData.energization_timeline}
-                          onChange={(e) => setFormData(prev => ({ ...prev, energization_timeline: e.target.value }))}
-                          placeholder="e.g., Q2 2024, Immediate"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="power_mix">Power Mix</Label>
-                        <Input
-                          id="power_mix"
-                          value={formData.power_mix}
-                          onChange={(e) => setFormData(prev => ({ ...prev, power_mix: e.target.value }))}
-                          placeholder="e.g., 60% Natural Gas, 30% Wind, 10% Solar"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
+                  <div>
+                    <Label htmlFor="facility_tier">Facility Tier</Label>
+                    <Input
+                      id="facility_tier"
+                      value={formData.facility_tier}
+                      onChange={(e) => setFormData(prev => ({ ...prev, facility_tier: e.target.value }))}
+                      placeholder="e.g., Tier 3, Tier 4"
+                    />
+                  </div>
+                </div>
 
                 {/* Pricing */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -560,15 +490,14 @@ export const VoltMarketCreateListing: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="acres">Land Size (Acres)</Label>
+                    <Label htmlFor="square_footage">Square Footage</Label>
                     <Input
-                      id="acres"
+                      id="square_footage"
                       type="number"
-                      step="0.1"
-                      value={formData.acres || ''}
+                      value={formData.square_footage || ''}
                       onChange={(e) => setFormData(prev => ({ 
                         ...prev, 
-                        acres: parseFloat(e.target.value) || 0 
+                        square_footage: parseInt(e.target.value) || 0 
                       }))}
                       placeholder="0"
                     />
@@ -746,9 +675,9 @@ export const VoltMarketCreateListing: React.FC = () => {
                   <div>
                     <strong>Power Capacity:</strong> {formData.power_capacity_mw}MW
                   </div>
-                  {formData.acres > 0 && (
+                  {formData.square_footage > 0 && (
                     <div>
-                      <strong>Land Size:</strong> {formData.acres} acres
+                      <strong>Square Footage:</strong> {formData.square_footage.toLocaleString()} sq ft
                     </div>
                   )}
                   {selectedTags.length > 0 && (

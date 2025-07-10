@@ -16,7 +16,7 @@ import { VoltMarketVerificationCenter } from '@/components/voltmarket/VoltMarket
 
 import { VoltMarketAdvancedSearch } from '@/components/voltmarket/VoltMarketAdvancedSearch';
 import { VoltMarketNotificationCenter } from '@/components/voltmarket/VoltMarketNotificationCenter';
-import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { VoltMarketQATest } from '@/components/voltmarket/VoltMarketQATest';
 import { VoltMarketDocumentCenter } from '@/components/voltmarket/VoltMarketDocumentCenter';
 import { VoltMarketAdvancedPortfolio } from '@/components/voltmarket/VoltMarketAdvancedPortfolio';
