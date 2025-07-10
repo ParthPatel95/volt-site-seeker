@@ -592,7 +592,7 @@ const BuyerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               </Button>
             </Link>
             
-            <Link to="/voltmarket/my-lois">
+            <Link to="/voltmarket/loi-center">
               <Button variant="outline" className="w-full justify-start">
                 <HandHeart className="mr-2 h-4 w-4" />
                 My LOIs ({activeLOIs})
