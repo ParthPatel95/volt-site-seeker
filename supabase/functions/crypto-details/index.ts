@@ -50,55 +50,6 @@ serve(async (req) => {
       throw new Error('Cryptocurrency symbol is required');
     }
 
-    // TEMPORARY: Return mock data to test the modal
-    console.log('=== RETURNING MOCK DATA FOR TESTING ===');
-    const mockResult = {
-      symbol: symbol.toUpperCase(),
-      name: symbol === 'BTC' ? 'Bitcoin' : symbol === 'ETH' ? 'Ethereum' : symbol === 'LTC' ? 'Litecoin' : 'Crypto',
-      logo: null,
-      description: `${symbol} is a popular cryptocurrency used for mining operations.`,
-      category: 'cryptocurrency',
-      tags: ['pow', 'mineable', 'payments'],
-      website: 'https://bitcoin.org',
-      technicalDoc: null,
-      twitter: null,
-      reddit: null,
-      sourceCode: 'https://github.com/bitcoin/bitcoin',
-      price: symbol === 'BTC' ? 95000 : symbol === 'ETH' ? 3200 : 100,
-      marketCap: symbol === 'BTC' ? 1900000000000 : 400000000000,
-      marketCapRank: symbol === 'BTC' ? 1 : symbol === 'ETH' ? 2 : 3,
-      volume24h: 50000000000,
-      volumeChange24h: 5.2,
-      percentChange1h: 0.5,
-      percentChange24h: 2.4,
-      percentChange7d: 8.7,
-      percentChange30d: 15.2,
-      percentChange60d: 25.1,
-      percentChange90d: 45.8,
-      circulatingSupply: symbol === 'BTC' ? 19800000 : 120000000,
-      totalSupply: symbol === 'BTC' ? 19800000 : 120000000,
-      maxSupply: symbol === 'BTC' ? 21000000 : null,
-      platform: null,
-      contractAddress: null,
-      dateAdded: '2009-01-03T00:00:00.000Z',
-      lastUpdated: new Date().toISOString(),
-      isMineable: true,
-      fullyDilutedMarketCap: symbol === 'BTC' ? 2000000000000 : 450000000000,
-      dominance: symbol === 'BTC' ? 58.5 : 18.2
-    };
-
-    console.log('Returning mock result:', JSON.stringify(mockResult, null, 2));
-    
-    return new Response(
-      JSON.stringify(mockResult),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
-
     // Check cache first - only fetch new data if older than 4 hours
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
     
@@ -175,16 +126,16 @@ serve(async (req) => {
       symbol: symbol.toUpperCase(),
       name: cryptoData.name || 'Unknown',
       logo: null, // Not available in quotes endpoint
-      description: null, // Not available in quotes endpoint
-      category: null, // Not available in quotes endpoint
+      description: `${cryptoData.name} is a ${cryptoData.tags?.includes('mineable') ? 'mineable ' : ''}cryptocurrency${cryptoData.tags?.includes('pow') ? ' that uses Proof of Work consensus' : ''}.`,
+      category: cryptoData.tags?.[0] || 'cryptocurrency',
       tags: cryptoData.tags || [],
       
-      // URLs - not available in quotes endpoint
-      website: null,
-      technicalDoc: null,
+      // URLs - not available in quotes endpoint but we can provide common ones
+      website: symbol === 'BTC' ? 'https://bitcoin.org' : symbol === 'ETH' ? 'https://ethereum.org' : null,
+      technicalDoc: symbol === 'BTC' ? 'https://bitcoin.org/bitcoin.pdf' : symbol === 'ETH' ? 'https://ethereum.org/en/whitepaper/' : null,
       twitter: null,
       reddit: null,
-      sourceCode: null,
+      sourceCode: symbol === 'BTC' ? 'https://github.com/bitcoin/bitcoin' : symbol === 'ETH' ? 'https://github.com/ethereum/go-ethereum' : null,
       
       // Market data from quotes endpoint
       price: cryptoData.quote?.USD?.price || 0,
@@ -254,7 +205,7 @@ serve(async (req) => {
       symbol: 'ERROR',
       name: 'Error loading data',
       logo: null,
-      description: null,
+      description: 'Unable to load cryptocurrency data at this time.',
       category: null,
       tags: [],
       website: null,
