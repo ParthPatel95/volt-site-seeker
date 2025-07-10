@@ -34,71 +34,26 @@ export const VoltMarketContactMessages: React.FC = () => {
 
   const fetchMessages = async () => {
     if (!profile?.id) {
-      console.log('❌ No profile or profile.id found:', profile);
       setLoading(false);
       return;
     }
 
-    console.log('🔍 Fetching messages for profile ID:', profile.id);
-    console.log('🔍 Profile object:', profile);
-
     try {
-      // Check if user is authenticated
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('🔐 Auth check - user:', user);
-      console.log('🔐 Auth check - error:', authError);
-      
-      if (!user) {
-        console.log('❌ User not authenticated, attempting to get session...');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('🔐 Session check - session:', session);
-        console.log('🔐 Session check - error:', sessionError);
-        
-        if (!session) {
-          console.log('❌ No valid session found');
-          toast({
-            title: "Authentication Required",
-            description: "Please sign in to view your messages",
-            variant: "destructive"
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      console.log('🚀 About to execute query...');
-      console.log('🚀 Query parameters - listing_owner_id:', profile.id);
-      
       const { data: contactMessages, error } = await supabase
         .from('voltmarket_contact_messages')
         .select('*')
         .eq('listing_owner_id', profile.id)
         .order('created_at', { ascending: false });
 
-      console.log('📊 Query result - error:', error);
-      console.log('📊 Query result - data:', contactMessages);
-      console.log('📊 Data length:', contactMessages?.length);
-      
-      // Let's also test if we can access the table at all
-      const { data: allMessages, error: allError } = await supabase
-        .from('voltmarket_contact_messages')
-        .select('*')
-        .limit(5);
-      
-      console.log('🔍 All messages test - error:', allError);
-      console.log('🔍 All messages test - data:', allMessages);
-      console.log('🔍 All messages test - count:', allMessages?.length);
-
       if (error) {
-        console.error('❌ Database error:', error);
+        console.error('Error fetching messages:', error);
         throw error;
       }
 
-      console.log('✅ Setting messages:', contactMessages || []);
       setMessages(contactMessages || []);
       setUnreadCount((contactMessages || []).filter(msg => !msg.is_read).length);
     } catch (error) {
-      console.error('❌ Error in fetchMessages:', error);
+      console.error('Error fetching contact messages:', error);
       toast({
         title: "Error",
         description: "Failed to load contact messages",
