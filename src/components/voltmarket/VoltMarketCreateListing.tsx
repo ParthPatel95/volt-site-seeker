@@ -153,6 +153,19 @@ export const VoltMarketCreateListing: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Check authentication before proceeding
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Session Expired",
+          description: "Please sign in again to create a listing",
+          variant: "destructive"
+        });
+        navigate('/voltmarket/auth');
+        return;
+      }
+
       // Create listing with auto-generated description and tags
       const listingData = {
         ...formData,
@@ -168,7 +181,10 @@ export const VoltMarketCreateListing: React.FC = () => {
         .select()
         .single();
 
-      if (listingError) throw listingError;
+      if (listingError) {
+        console.error('Listing creation error:', listingError);
+        throw listingError;
+      }
 
       // Save images
       if (images.length > 0) {
