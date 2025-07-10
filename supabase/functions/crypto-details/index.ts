@@ -50,6 +50,55 @@ serve(async (req) => {
       throw new Error('Cryptocurrency symbol is required');
     }
 
+    // TEMPORARY: Return mock data to test the modal
+    console.log('=== RETURNING MOCK DATA FOR TESTING ===');
+    const mockResult = {
+      symbol: symbol.toUpperCase(),
+      name: symbol === 'BTC' ? 'Bitcoin' : symbol === 'ETH' ? 'Ethereum' : symbol === 'LTC' ? 'Litecoin' : 'Crypto',
+      logo: null,
+      description: `${symbol} is a popular cryptocurrency used for mining operations.`,
+      category: 'cryptocurrency',
+      tags: ['pow', 'mineable', 'payments'],
+      website: 'https://bitcoin.org',
+      technicalDoc: null,
+      twitter: null,
+      reddit: null,
+      sourceCode: 'https://github.com/bitcoin/bitcoin',
+      price: symbol === 'BTC' ? 95000 : symbol === 'ETH' ? 3200 : 100,
+      marketCap: symbol === 'BTC' ? 1900000000000 : 400000000000,
+      marketCapRank: symbol === 'BTC' ? 1 : symbol === 'ETH' ? 2 : 3,
+      volume24h: 50000000000,
+      volumeChange24h: 5.2,
+      percentChange1h: 0.5,
+      percentChange24h: 2.4,
+      percentChange7d: 8.7,
+      percentChange30d: 15.2,
+      percentChange60d: 25.1,
+      percentChange90d: 45.8,
+      circulatingSupply: symbol === 'BTC' ? 19800000 : 120000000,
+      totalSupply: symbol === 'BTC' ? 19800000 : 120000000,
+      maxSupply: symbol === 'BTC' ? 21000000 : null,
+      platform: null,
+      contractAddress: null,
+      dateAdded: '2009-01-03T00:00:00.000Z',
+      lastUpdated: new Date().toISOString(),
+      isMineable: true,
+      fullyDilutedMarketCap: symbol === 'BTC' ? 2000000000000 : 450000000000,
+      dominance: symbol === 'BTC' ? 58.5 : 18.2
+    };
+
+    console.log('Returning mock result:', JSON.stringify(mockResult, null, 2));
+    
+    return new Response(
+      JSON.stringify(mockResult),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
+
     // Check cache first - only fetch new data if older than 4 hours
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
     
