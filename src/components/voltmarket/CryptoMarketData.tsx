@@ -121,12 +121,12 @@ export const CryptoMarketData: React.FC<CryptoMarketDataProps> = ({ cryptos }) =
         </p>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
           {cryptoList.map((crypto) => (
             <div 
               key={crypto.symbol} 
               onClick={() => handleCryptoClick(crypto.symbol)}
-              className="group relative bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-purple-100/50 hover:shadow-md hover:scale-105 transition-all duration-300 hover:border-purple-200 cursor-pointer"
+              className="group relative bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 shadow-sm border border-purple-100/50 hover:shadow-md hover:scale-105 transition-all duration-300 hover:border-purple-200 cursor-pointer min-h-[160px] flex flex-col"
             >
               {/* Glow effect on hover */}
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
