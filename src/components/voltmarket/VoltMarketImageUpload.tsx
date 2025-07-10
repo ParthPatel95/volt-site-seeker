@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface VoltMarketImageUploadProps {
@@ -25,16 +26,21 @@ export const VoltMarketImageUpload: React.FC<VoltMarketImageUploadProps> = ({
   const [images, setImages] = useState<string[]>(existingImages);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useVoltMarketAuth();
 
   const uploadImage = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       
-      // Get current user for folder structure
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error('Error getting user for upload:', userError);
+      // Check if user is available from auth context
+      if (!user) {
+        console.error('No user available for upload');
+        toast({
+          title: "Authentication Error",
+          description: "Please sign in to upload images",
+          variant: "destructive"
+        });
         return null;
       }
 
