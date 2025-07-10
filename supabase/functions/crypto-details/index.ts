@@ -50,10 +50,7 @@ serve(async (req) => {
       throw new Error('Cryptocurrency symbol is required');
     }
 
-    console.log(`Proceeding to fetch data for ${symbol}`);
-
-    // Skip cache for now to force fresh data
-    console.log(`Fetching fresh data for ${symbol} from CoinMarketCap (cache bypassed)`);
+    console.log(`Fetching fresh data for ${symbol} from CoinMarketCap API`);
 
     // Fetch fresh data from CoinMarketCap using v1 endpoint
     const apiUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`;
