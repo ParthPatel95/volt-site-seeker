@@ -324,12 +324,13 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('Profile updated successfully:', data);
         setProfile(data);
         
-        // Force a page refresh if role changed to ensure dashboard updates
-        if (updates.role && updates.role !== profile?.role) {
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
-        }
+        // Refresh profile data from database to ensure we have latest
+        setTimeout(async () => {
+          const freshProfile = await fetchProfile(user.id);
+          if (freshProfile) {
+            setProfile(freshProfile);
+          }
+        }, 100);
       }
 
       return { data, error: null };
