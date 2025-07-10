@@ -18,8 +18,8 @@ serve(async (req) => {
       throw new Error('CoinMarketCap API key not configured');
     }
 
-    // Fetch data for top 5 mined cryptocurrencies from CoinMarketCap
-    const response = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC,ETH,LTC,BCH,DOGE', {
+    // Fetch data for top 6 mined cryptocurrencies from CoinMarketCap
+    const response = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC,ETH,LTC,BCH,DOGE,XMR', {
       headers: {
         'X-CMC_PRO_API_KEY': apiKey,
         'Accept': 'application/json'
@@ -53,7 +53,8 @@ serve(async (req) => {
       ETH: data.data.ETH ? formatCryptoData(data.data.ETH, 'ETH') : null,
       LTC: data.data.LTC ? formatCryptoData(data.data.LTC, 'LTC') : null,
       BCH: data.data.BCH ? formatCryptoData(data.data.BCH, 'BCH') : null,
-      DOGE: data.data.DOGE ? formatCryptoData(data.data.DOGE, 'DOGE') : null
+      DOGE: data.data.DOGE ? formatCryptoData(data.data.DOGE, 'DOGE') : null,
+      XMR: data.data.XMR ? formatCryptoData(data.data.XMR, 'XMR') : null
     };
 
     // Return structured data for the frontend
@@ -93,7 +94,8 @@ serve(async (req) => {
         ETH: { symbol: 'ETH', name: 'Ethereum', price: 3500, marketCap: 420000000000, volume24h: 15000000000, percentChange24h: 1.8, lastUpdated: new Date().toISOString() },
         LTC: { symbol: 'LTC', name: 'Litecoin', price: 120, marketCap: 9000000000, volume24h: 800000000, percentChange24h: 3.2, lastUpdated: new Date().toISOString() },
         BCH: { symbol: 'BCH', name: 'Bitcoin Cash', price: 450, marketCap: 9000000000, volume24h: 500000000, percentChange24h: -0.5, lastUpdated: new Date().toISOString() },
-        DOGE: { symbol: 'DOGE', name: 'Dogecoin', price: 0.35, marketCap: 50000000000, volume24h: 2000000000, percentChange24h: 5.1, lastUpdated: new Date().toISOString() }
+        DOGE: { symbol: 'DOGE', name: 'Dogecoin', price: 0.35, marketCap: 50000000000, volume24h: 2000000000, percentChange24h: 5.1, lastUpdated: new Date().toISOString() },
+        XMR: { symbol: 'XMR', name: 'Monero', price: 180, marketCap: 3300000000, volume24h: 150000000, percentChange24h: 1.2, lastUpdated: new Date().toISOString() }
       },
       price: 107800,
       marketCap: 2100000000000,

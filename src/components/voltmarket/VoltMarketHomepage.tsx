@@ -43,6 +43,7 @@ interface CryptoData {
     LTC?: any;
     BCH?: any;
     DOGE?: any;
+    XMR?: any;
   };
 }
 
