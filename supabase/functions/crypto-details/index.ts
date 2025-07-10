@@ -13,23 +13,35 @@ serve(async (req) => {
   }
 
   try {
+    console.log('=== CRYPTO DETAILS FUNCTION START ===');
     const apiKey = Deno.env.get('COINMARKETCAP_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
+    console.log('Environment check:', {
+      hasApiKey: !!apiKey,
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseKey,
+      apiKeyLength: apiKey ? apiKey.length : 0
+    });
+    
     if (!apiKey) {
+      console.error('CoinMarketCap API key not configured');
       throw new Error('CoinMarketCap API key not configured');
     }
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase configuration missing');
       throw new Error('Supabase configuration missing');
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { symbol } = await req.json();
+    console.log('Request symbol:', symbol);
     
     if (!symbol) {
+      console.error('No symbol provided');
       throw new Error('Cryptocurrency symbol is required');
     }
 
