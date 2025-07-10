@@ -3613,6 +3613,33 @@ export type Database = {
           },
         ]
       }
+      voltscout_approved_users: {
+        Row: {
+          approved_at: string
+          approved_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -3625,6 +3652,10 @@ export type Database = {
       clean_expired_verification_tokens: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      is_voltscout_approved: {
+        Args: { user_id: string }
+        Returns: boolean
       }
       restore_verified_site: {
         Args: { site_id: string }

@@ -23,9 +23,29 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [showAccessForm, setShowAccessForm] = useState(false);
+  const [hasVoltMarketAccount, setHasVoltMarketAccount] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check if user has a VoltMarket account but not VoltScout approval
+    const checkVoltMarketAccount = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Check if they have a VoltMarket profile
+        const { data: voltMarketProfile } = await supabase
+          .from('voltmarket_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        if (voltMarketProfile) {
+          setHasVoltMarketAccount(true);
+        }
+      }
+    };
+
+    checkVoltMarketAccount();
+
     // Only set up auth state listener if onAuthStateChange is provided
     if (onAuthStateChange) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -92,14 +112,50 @@ export function Auth({ onAuthStateChange }: AuthProps) {
           </Link>
           <CardTitle>Access VoltScout Platform</CardTitle>
           <CardDescription>
-            {showAccessForm 
-              ? "Request access to our AI-powered energy discovery platform"
-              : "Sign in to access your account"
+            {hasVoltMarketAccount 
+              ? "Your VoltMarket account does not have VoltScout access. Please contact support for approval."
+              : showAccessForm 
+                ? "Request access to our AI-powered energy discovery platform"
+                : "Sign in to access your account"
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {showAccessForm ? (
+          {hasVoltMarketAccount ? (
+            <div className="space-y-6 text-center">
+              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <h3 className="font-semibold text-orange-800 mb-2">VoltScout Access Required</h3>
+                <p className="text-orange-700 text-sm mb-4">
+                  You have a VoltMarket account, but VoltScout requires separate approval. 
+                  Contact our team to request VoltScout platform access.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link 
+                    to="/voltmarket" 
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Go to VoltMarket
+                  </Link>
+                  <Button 
+                    onClick={() => setShowAccessForm(true)}
+                    variant="outline"
+                  >
+                    Request VoltScout Access
+                  </Button>
+                </div>
+              </div>
+              <Button 
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  setHasVoltMarketAccount(false);
+                }}
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Sign out and use different account
+              </Button>
+            </div>
+          ) : showAccessForm ? (
             <div className="space-y-6">
               <AccessRequestForm />
               <div className="text-center">
