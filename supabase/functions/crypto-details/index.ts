@@ -58,72 +58,60 @@ serve(async (req) => {
 
     console.log(`Fetching fresh data for ${symbol} from CoinMarketCap`);
 
-    // Fetch fresh data from CoinMarketCap
-    const metadataResponse = await fetch(`https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?symbol=${symbol}`, {
+    // Fetch fresh data from CoinMarketCap - using v1 endpoint for better reliability
+    const quotesResponse = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`, {
       headers: {
         'X-CMC_PRO_API_KEY': apiKey,
         'Accept': 'application/json'
       }
     });
 
-    const quotesResponse = await fetch(`https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?symbol=${symbol}`, {
-      headers: {
-        'X-CMC_PRO_API_KEY': apiKey,
-        'Accept': 'application/json'
-      }
-    });
-
-    console.log(`Metadata response status: ${metadataResponse.status}`);
     console.log(`Quotes response status: ${quotesResponse.status}`);
 
-    if (!metadataResponse.ok || !quotesResponse.ok) {
-      const metadataError = await metadataResponse.text();
-      const quotesError = await quotesResponse.text();
-      console.error(`Metadata error: ${metadataError}`);
-      console.error(`Quotes error: ${quotesError}`);
-      throw new Error(`CoinMarketCap API error: ${metadataResponse.status} ${quotesResponse.status}`);
+    if (!quotesResponse.ok) {
+      const errorText = await quotesResponse.text();
+      console.error(`Quotes API error: ${errorText}`);
+      throw new Error(`CoinMarketCap quotes API error: ${quotesResponse.status}`);
     }
 
-    const [metadataData, quotesData] = await Promise.all([
-      metadataResponse.json(),
-      quotesResponse.json()
-    ]);
+    const quotesData = await quotesResponse.json();
+    console.log(`Quotes data structure:`, JSON.stringify(quotesData, null, 2));
 
-    console.log(`Metadata data keys: ${Object.keys(metadataData)}`);
-    console.log(`Quotes data keys: ${Object.keys(quotesData)}`);
-    console.log(`Quotes data.data keys: ${quotesData.data ? Object.keys(quotesData.data) : 'no data'}`);
+    // Check if we have data
+    if (!quotesData.data || Object.keys(quotesData.data).length === 0) {
+      console.error('No quotes data returned from API');
+      throw new Error('No cryptocurrency data found');
+    }
 
-    // Extract the cryptocurrency data
-    const cryptoId = Object.keys(quotesData.data || {})[0];
-    const cryptoQuotes = quotesData.data?.[cryptoId];
-    const cryptoMetadata = metadataData.data?.[cryptoId];
+    // Get the first cryptocurrency from the response
+    const cryptoId = Object.keys(quotesData.data)[0];
+    const cryptoQuotes = quotesData.data[cryptoId];
 
     console.log(`Found crypto ID: ${cryptoId}`);
     console.log(`Has quotes: ${!!cryptoQuotes}`);
-    console.log(`Has metadata: ${!!cryptoMetadata}`);
 
-    if (!cryptoQuotes || !cryptoMetadata) {
-      console.error(`Missing data - quotes: ${!!cryptoQuotes}, metadata: ${!!cryptoMetadata}`);
+    if (!cryptoQuotes) {
+      console.error(`No data found for crypto: ${symbol}`);
       throw new Error('Cryptocurrency data not found');
     }
 
-    // Format comprehensive response
+    // Format response with just the essential data we can get from quotes endpoint
     const result = {
       symbol: symbol.toUpperCase(),
-      name: cryptoMetadata.name,
-      logo: cryptoMetadata.logo,
-      description: cryptoMetadata.description,
-      category: cryptoMetadata.category,
-      tags: cryptoMetadata.tags || [],
+      name: cryptoQuotes.name || 'Unknown',
+      logo: null, // Not available in v1 quotes endpoint
+      description: null, // Not available in v1 quotes endpoint
+      category: null, // Not available in v1 quotes endpoint
+      tags: [],
       
-      // URLs
-      website: cryptoMetadata.urls?.website?.[0] || null,
-      technicalDoc: cryptoMetadata.urls?.technical_doc?.[0] || null,
-      twitter: cryptoMetadata.urls?.twitter?.[0] || null,
-      reddit: cryptoMetadata.urls?.reddit?.[0] || null,
-      sourceCode: cryptoMetadata.urls?.source_code?.[0] || null,
+      // URLs - not available in quotes endpoint
+      website: null,
+      technicalDoc: null,
+      twitter: null,
+      reddit: null,
+      sourceCode: null,
       
-      // Market data
+      // Market data - this is what we can get from quotes endpoint
       price: cryptoQuotes.quote?.USD?.price || 0,
       marketCap: cryptoQuotes.quote?.USD?.market_cap || 0,
       marketCapRank: cryptoQuotes.cmc_rank || 0,
@@ -141,21 +129,23 @@ serve(async (req) => {
       totalSupply: cryptoQuotes.total_supply || 0,
       maxSupply: cryptoQuotes.max_supply || null,
       
-      // Technical data
-      platform: cryptoMetadata.platform || null,
-      contractAddress: cryptoMetadata.contract_address || null,
+      // Technical data - not available in quotes endpoint
+      platform: null,
+      contractAddress: null,
       
       // Additional info
       dateAdded: cryptoQuotes.date_added,
       lastUpdated: cryptoQuotes.last_updated,
       
-      // Mining info (for applicable coins)
-      isMineable: cryptoMetadata.tags?.includes('mineable') || false,
+      // Mining info
+      isMineable: false, // Not available in quotes endpoint
       
       // Market metrics
       fullyDilutedMarketCap: cryptoQuotes.quote?.USD?.fully_diluted_market_cap || 0,
       dominance: cryptoQuotes.quote?.USD?.market_cap_dominance || 0
     };
+
+    console.log(`Formatted result:`, JSON.stringify(result, null, 2));
 
     // Cache the result
     await supabase
