@@ -23,6 +23,7 @@ import { VoltMarketAdvancedPortfolio } from '@/components/voltmarket/VoltMarketA
 import { VoltMarketLOICenter } from '@/components/voltmarket/VoltMarketLOICenter';
 import { VoltMarketDueDiligenceCenter } from '@/components/voltmarket/VoltMarketDueDiligenceCenter';
 import { VoltMarketContactMessages } from '@/components/voltmarket/VoltMarketContactMessages';
+import { VoltMarketDocumentRequests } from '@/components/voltmarket/VoltMarketDocumentRequests';
 import { VoltMarketInvestmentCalculator } from '@/components/voltmarket/VoltMarketInvestmentCalculator';
 import { VoltMarketMarketReports } from '@/components/voltmarket/VoltMarketMarketReports';
 
@@ -113,6 +114,11 @@ export const VoltMarket = () => {
       <Route path="/contact-messages" element={
         <VoltMarketLayout>
           {user ? <VoltMarketContactMessages /> : <WattbytesAuth />}
+        </VoltMarketLayout>
+      } />
+      <Route path="/document-requests" element={
+        <VoltMarketLayout>
+          {user ? <VoltMarketDocumentRequests /> : <WattbytesAuth />}
         </VoltMarketLayout>
       } />
       <Route path="/notifications" element={
