@@ -73,7 +73,14 @@ serve(async (req) => {
       }
     });
 
+    console.log(`Metadata response status: ${metadataResponse.status}`);
+    console.log(`Quotes response status: ${quotesResponse.status}`);
+
     if (!metadataResponse.ok || !quotesResponse.ok) {
+      const metadataError = await metadataResponse.text();
+      const quotesError = await quotesResponse.text();
+      console.error(`Metadata error: ${metadataError}`);
+      console.error(`Quotes error: ${quotesError}`);
       throw new Error(`CoinMarketCap API error: ${metadataResponse.status} ${quotesResponse.status}`);
     }
 
@@ -82,12 +89,21 @@ serve(async (req) => {
       quotesResponse.json()
     ]);
 
+    console.log(`Metadata data keys: ${Object.keys(metadataData)}`);
+    console.log(`Quotes data keys: ${Object.keys(quotesData)}`);
+    console.log(`Quotes data.data keys: ${quotesData.data ? Object.keys(quotesData.data) : 'no data'}`);
+
     // Extract the cryptocurrency data
-    const cryptoId = Object.keys(quotesData.data)[0];
-    const cryptoQuotes = quotesData.data[cryptoId];
-    const cryptoMetadata = metadataData.data[cryptoId];
+    const cryptoId = Object.keys(quotesData.data || {})[0];
+    const cryptoQuotes = quotesData.data?.[cryptoId];
+    const cryptoMetadata = metadataData.data?.[cryptoId];
+
+    console.log(`Found crypto ID: ${cryptoId}`);
+    console.log(`Has quotes: ${!!cryptoQuotes}`);
+    console.log(`Has metadata: ${!!cryptoMetadata}`);
 
     if (!cryptoQuotes || !cryptoMetadata) {
+      console.error(`Missing data - quotes: ${!!cryptoQuotes}, metadata: ${!!cryptoMetadata}`);
       throw new Error('Cryptocurrency data not found');
     }
 
