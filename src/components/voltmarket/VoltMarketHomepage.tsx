@@ -239,16 +239,6 @@ export const VoltMarketHomepage: React.FC = () => {
         </div>
       </section>
 
-      {/* Cryptocurrency Market Data */}
-      {cryptoData && (
-        <section className="py-20 bg-gradient-to-br from-orange-50/50 to-yellow-50/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <CryptoMarketData cryptos={cryptoData.cryptos} />
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Featured Listings */}
       <section className="py-20 bg-white">
