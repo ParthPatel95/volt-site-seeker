@@ -23,9 +23,7 @@ interface ContactMessage {
   message: string;
   is_read: boolean;
   created_at: string;
-  voltmarket_listings: {
-    title: string;
-  };
+  listing_title?: string;
 }
 
 export const VoltMarketContactMessages: React.FC = () => {
@@ -38,26 +36,58 @@ export const VoltMarketContactMessages: React.FC = () => {
   const fetchMessages = async () => {
     if (!profile) {
       console.log('No profile found, skipping message fetch');
+      setLoading(false);
       return;
     }
 
     console.log('Fetching messages for profile:', profile.id);
 
     try {
-      const { data, error } = await supabase
+      // First get the contact messages
+      const { data: contactMessages, error: messagesError } = await supabase
         .from('voltmarket_contact_messages')
-        .select(`
-          *,
-          voltmarket_listings(title)
-        `)
+        .select('*')
         .eq('listing_owner_id', profile.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (messagesError) {
+        console.error('Messages query error:', messagesError);
+        throw messagesError;
+      }
 
-      console.log('Fetched contact messages:', data);
-      setMessages(data || []);
-      setUnreadCount((data || []).filter(msg => !msg.is_read).length);
+      console.log('Raw contact messages:', contactMessages);
+
+      if (!contactMessages || contactMessages.length === 0) {
+        console.log('No contact messages found');
+        setMessages([]);
+        setUnreadCount(0);
+        setLoading(false);
+        return;
+      }
+
+      // Get listing titles separately
+      const listingIds = contactMessages.map(msg => msg.listing_id);
+      const { data: listings, error: listingsError } = await supabase
+        .from('voltmarket_listings')
+        .select('id, title')
+        .in('id', listingIds);
+
+      if (listingsError) {
+        console.error('Listings query error:', listingsError);
+      }
+
+      console.log('Listings data:', listings);
+
+      // Combine the data
+      const messagesWithTitles = contactMessages.map(msg => ({
+        ...msg,
+        listing_title: listings?.find(listing => listing.id === msg.listing_id)?.title || 'Unknown Listing'
+      }));
+
+      console.log('Final messages with titles:', messagesWithTitles);
+
+      setMessages(messagesWithTitles);
+      setUnreadCount(messagesWithTitles.filter(msg => !msg.is_read).length);
     } catch (error) {
       console.error('Error fetching contact messages:', error);
       toast({
@@ -141,9 +171,7 @@ export const VoltMarketContactMessages: React.FC = () => {
   };
 
   useEffect(() => {
-    if (profile) {
-      fetchMessages();
-    }
+    fetchMessages();
   }, [profile]);
 
   if (loading) {
@@ -151,7 +179,7 @@ export const VoltMarketContactMessages: React.FC = () => {
       <div className="space-y-4">
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+            <div key={i} className="h-32 bg-muted rounded-lg"></div>
           ))}
         </div>
       </div>
@@ -162,8 +190,8 @@ export const VoltMarketContactMessages: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Contact Messages</h2>
-          <p className="text-gray-600">Messages from potential buyers about your listings</p>
+          <h2 className="text-2xl font-bold">Contact Messages</h2>
+          <p className="text-muted-foreground">Messages from potential buyers about your listings</p>
         </div>
         {unreadCount > 0 && (
           <Button onClick={markAllAsRead} variant="outline">
@@ -177,9 +205,9 @@ export const VoltMarketContactMessages: React.FC = () => {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No messages yet</h3>
-              <p className="text-gray-600">
+              <MessageSquare className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
+              <p className="text-muted-foreground">
                 When potential buyers contact you about your listings, their messages will appear here.
               </p>
             </div>
@@ -188,25 +216,25 @@ export const VoltMarketContactMessages: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {messages.map((message) => (
-            <Card key={message.id} className={`${!message.is_read ? 'border-blue-200 bg-blue-50' : ''}`}>
+            <Card key={message.id} className={`${!message.is_read ? 'border-primary/50 bg-primary/5' : ''}`}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg flex items-center gap-2">
                       {!message.is_read && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
                       )}
                       {message.sender_name}
                       {!message.is_read && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        <Badge variant="secondary">
                           New
                         </Badge>
                       )}
                     </CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Regarding: <span className="font-medium">{message.voltmarket_listings.title}</span>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Regarding: <span className="font-medium">{message.listing_title}</span>
                     </p>
-                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                       <Clock className="w-3 h-3" />
                       {new Date(message.created_at).toLocaleString()}
                     </p>
@@ -234,21 +262,21 @@ export const VoltMarketContactMessages: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-6">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Mail className="w-4 h-4" />
                     <a 
                       href={`mailto:${message.sender_email}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {message.sender_email}
                     </a>
                   </div>
                   {message.sender_phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Phone className="w-4 h-4" />
                       <a 
                         href={`tel:${message.sender_phone}`}
-                        className="text-blue-600 hover:underline"
+                        className="text-primary hover:underline"
                       >
                         {message.sender_phone}
                       </a>
@@ -256,9 +284,9 @@ export const VoltMarketContactMessages: React.FC = () => {
                   )}
                 </div>
                 
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <h4 className="font-medium text-gray-900 mb-2">Message:</h4>
-                  <p className="text-gray-700 whitespace-pre-line">{message.message}</p>
+                <div className="bg-background rounded-lg p-4 border">
+                  <h4 className="font-medium mb-2">Message:</h4>
+                  <p className="text-foreground whitespace-pre-line">{message.message}</p>
                 </div>
               </CardContent>
             </Card>
