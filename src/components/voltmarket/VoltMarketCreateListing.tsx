@@ -179,15 +179,8 @@ export const VoltMarketCreateListing: React.FC = () => {
         power_rate_per_kw: formData.power_rate_per_kw,
         power_capacity_mw: formData.power_capacity_mw,
         available_power_mw: formData.available_power_mw,
-        land_size_acres: formData.acres, // Map acres to land_size_acres
         is_location_confidential: formData.is_location_confidential,
         property_type: formData.property_type,
-        site_type: formData.site_type,
-        interconnection_status: formData.interconnection_status,
-        utility_provider: formData.utility_provider,
-        energy_price: formData.energy_price,
-        energization_timeline: formData.energization_timeline,
-        power_mix: formData.power_mix,
         cooling_type: formData.cooling_type,
         hosting_types: formData.hosting_types,
         minimum_commitment_months: formData.minimum_commitment_months,
@@ -199,7 +192,6 @@ export const VoltMarketCreateListing: React.FC = () => {
         manufacture_year: formData.manufacture_year,
         quantity: formData.quantity,
         shipping_terms: formData.shipping_terms,
-        category_tags: selectedTags,
         seller_id: profile.id,
         status: 'active' as const
       };
