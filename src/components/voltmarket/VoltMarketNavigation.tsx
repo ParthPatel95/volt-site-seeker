@@ -94,7 +94,7 @@ export const VoltMarketNavigation: React.FC = () => {
                 </div>
                 <div className="hidden sm:flex flex-col">
                   <span className="text-xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent">
-                    VoltMarket
+                    GridBazaar
                   </span>
                   <span className="text-xs text-muted-foreground -mt-1">Energy Infrastructure Marketplace</span>
                 </div>
