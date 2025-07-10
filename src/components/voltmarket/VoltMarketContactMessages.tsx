@@ -34,9 +34,13 @@ export const VoltMarketContactMessages: React.FC = () => {
 
   const fetchMessages = async () => {
     if (!profile?.id) {
+      console.log('❌ No profile or profile.id found:', profile);
       setLoading(false);
       return;
     }
+
+    console.log('🔍 Fetching messages for profile ID:', profile.id);
+    console.log('🔍 Profile object:', profile);
 
     try {
       const { data: contactMessages, error } = await supabase
@@ -45,15 +49,20 @@ export const VoltMarketContactMessages: React.FC = () => {
         .eq('listing_owner_id', profile.id)
         .order('created_at', { ascending: false });
 
+      console.log('📊 Query result - error:', error);
+      console.log('📊 Query result - data:', contactMessages);
+      console.log('📊 Data length:', contactMessages?.length);
+
       if (error) {
-        console.error('Error fetching messages:', error);
+        console.error('❌ Database error:', error);
         throw error;
       }
 
+      console.log('✅ Setting messages:', contactMessages || []);
       setMessages(contactMessages || []);
       setUnreadCount((contactMessages || []).filter(msg => !msg.is_read).length);
     } catch (error) {
-      console.error('Error fetching contact messages:', error);
+      console.error('❌ Error in fetchMessages:', error);
       toast({
         title: "Error",
         description: "Failed to load contact messages",
