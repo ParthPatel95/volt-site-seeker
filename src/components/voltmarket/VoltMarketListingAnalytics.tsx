@@ -60,7 +60,7 @@ export const VoltMarketListingAnalytics: React.FC<{ listingId: string }> = ({ li
         .from('voltmarket_listings')
         .select('title')
         .eq('id', listingId)
-        .single();
+        .maybeSingle();
       
       if (listingError) throw listingError;
 

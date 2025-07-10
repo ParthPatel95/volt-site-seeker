@@ -42,23 +42,36 @@ export const VoltMarketHomepage: React.FC = () => {
   useEffect(() => {
     const fetchBTCData = async () => {
       try {
-        // Using a different API to avoid CORS issues
-        const response = await fetch('https://api.coindesk.com/v1/bpi/currentprice.json');
-        const data = await response.json();
-        const price = parseFloat(data.bpi.USD.rate.replace(/,/g, ''));
+        // Try CoinDesk first, fallback to Coinbase
+        let price;
+        try {
+          const response = await fetch('https://api.coindesk.com/v1/bpi/currentprice.json');
+          if (!response.ok) throw new Error('CoinDesk API failed');
+          const data = await response.json();
+          price = parseFloat(data.bpi.USD.rate.replace(/,/g, ''));
+        } catch {
+          // Fallback to Coinbase API
+          const response = await fetch('https://api.coinbase.com/v2/prices/spot?currency=USD');
+          if (!response.ok) throw new Error('All APIs failed');
+          const data = await response.json();
+          price = parseFloat(data.data.amount);
+        }
+        
         setBtcData({
           price: price,
           difficulty: 68.5, // Simulated difficulty in TH
           hashrate: '450 EH/s' // Simulated network hashrate
         });
       } catch (error) {
-        console.error('Failed to fetch BTC data:', error);
-        // Fallback data
-        setBtcData({
-          price: 107800,
-          difficulty: 68.5,
-          hashrate: '450 EH/s'
-        });
+        // Only log error once to avoid spam, use fallback data
+        if (!btcData) {
+          console.log('Using fallback BTC data due to API issues');
+          setBtcData({
+            price: 107800,
+            difficulty: 68.5,
+            hashrate: '450 EH/s'
+          });
+        }
       }
     };
 

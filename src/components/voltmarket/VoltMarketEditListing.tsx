@@ -71,7 +71,7 @@ export const VoltMarketEditListing: React.FC = () => {
         .select('*')
         .eq('id', id)
         .eq('seller_id', profile!.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching listing:', error);

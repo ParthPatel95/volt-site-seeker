@@ -205,7 +205,7 @@ export const VoltMarketFeatureTest: React.FC = () => {
       .from('voltmarket_profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
       
     if (error || !voltMarketProfile) {
       throw new Error('VoltMarket profile verification failed');

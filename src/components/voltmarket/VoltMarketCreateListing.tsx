@@ -193,7 +193,7 @@ export const VoltMarketCreateListing: React.FC = () => {
         .from('voltmarket_listings')
         .insert(listingData)
         .select()
-        .single();
+        .maybeSingle();
 
       if (listingError) {
         console.error('Listing creation error:', listingError);

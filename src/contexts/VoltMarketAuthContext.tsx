@@ -83,7 +83,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
           is_email_verified: false,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Profile creation error:', error);
@@ -312,7 +312,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         .update(updates)
         .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Profile update error:', error);

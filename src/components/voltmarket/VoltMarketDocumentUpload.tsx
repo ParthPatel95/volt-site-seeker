@@ -132,7 +132,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
             is_private: true
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (dbError) {
           console.error('Database save error:', dbError);

@@ -199,7 +199,7 @@ export function CityPowerAnalysis() {
         .from('city_power_analysis')
         .insert(analysisData)
         .select()
-        .single();
+        .maybeSingle();
 
       if (saveError) {
         console.error('Error saving analysis:', saveError);
