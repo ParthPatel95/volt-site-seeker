@@ -54,14 +54,19 @@ export const CryptoMarketData: React.FC<CryptoMarketDataProps> = ({ cryptos }) =
     setCryptoDetails(null);
 
     try {
+      console.log('Fetching crypto details for:', symbol);
       const { data, error } = await supabase.functions.invoke('crypto-details', {
         body: { symbol }
       });
 
+      console.log('Function response:', { data, error });
+
       if (error) {
+        console.error('Function error:', error);
         throw new Error(error.message);
       }
 
+      console.log('Setting crypto details:', data);
       setCryptoDetails(data);
     } catch (error) {
       console.error('Error fetching crypto details:', error);
