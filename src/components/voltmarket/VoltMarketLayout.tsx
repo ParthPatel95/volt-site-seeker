@@ -28,7 +28,7 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="w-6 h-6 text-watt-primary" />
-                <span className="text-lg font-bold text-foreground">VoltMarket</span>
+                <span className="text-lg font-bold text-foreground">GridBazaar</span>
               </div>
               <p className="text-muted-foreground text-sm">
                 The premier marketplace for energy infrastructure assets, connecting buyers and sellers worldwide.
@@ -71,7 +71,7 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
           
           <div className="border-t border-border/50 mt-8 pt-8 flex items-center justify-between">
             <p className="text-muted-foreground text-sm">
-              © 2024 VoltMarket. All rights reserved.
+              © 2025 GridBazaar. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <Badge variant="secondary" className="text-xs bg-watt-success/10 text-watt-success border-watt-success/20">
