@@ -330,7 +330,7 @@ export const VoltMarketComprehensiveTest: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <TestTube className="w-6 h-6" />
-            VoltMarket Comprehensive Test Suite
+            GridBazaar Comprehensive Test Suite
           </h2>
           <p className="text-muted-foreground">
             Complete system validation and feature testing

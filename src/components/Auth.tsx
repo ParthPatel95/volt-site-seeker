@@ -23,28 +23,28 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [showAccessForm, setShowAccessForm] = useState(false);
-  const [hasVoltMarketAccount, setHasVoltMarketAccount] = useState(false);
+  const [hasGridBazaarAccount, setHasGridBazaarAccount] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user has a VoltMarket account but not VoltScout approval
-    const checkVoltMarketAccount = async () => {
+    // Check if user has a GridBazaar account but not VoltScout approval
+    const checkGridBazaarAccount = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Check if they have a VoltMarket profile
-        const { data: voltMarketProfile } = await supabase
+        // Check if they have a GridBazaar profile
+        const { data: gridBazaarProfile } = await supabase
           .from('voltmarket_profiles')
           .select('id')
           .eq('user_id', session.user.id)
           .single();
         
-        if (voltMarketProfile) {
-          setHasVoltMarketAccount(true);
+        if (gridBazaarProfile) {
+          setHasGridBazaarAccount(true);
         }
       }
     };
 
-    checkVoltMarketAccount();
+    checkGridBazaarAccount();
 
     // Only set up auth state listener if onAuthStateChange is provided
     if (onAuthStateChange) {
@@ -112,7 +112,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
           </Link>
           <CardTitle>Access VoltScout Platform</CardTitle>
           <CardDescription>
-            {hasVoltMarketAccount 
+            {hasGridBazaarAccount 
               ? "Your GridBazaar account does not have VoltScout access. Please contact support for approval."
               : showAccessForm 
                 ? "Request access to our AI-powered energy discovery platform"
@@ -121,12 +121,12 @@ export function Auth({ onAuthStateChange }: AuthProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {hasVoltMarketAccount ? (
+          {hasGridBazaarAccount ? (
             <div className="space-y-6 text-center">
               <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
                 <h3 className="font-semibold text-orange-800 mb-2">VoltScout Access Required</h3>
                 <p className="text-orange-700 text-sm mb-4">
-                  You have a VoltMarket account, but VoltScout requires separate approval. 
+                  You have a GridBazaar account, but VoltScout requires separate approval. 
                   Contact our team to request VoltScout platform access.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -134,7 +134,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
                     to="/voltmarket" 
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                   >
-                    Go to VoltMarket
+                    Go to GridBazaar
                   </Link>
                   <Button 
                     onClick={() => setShowAccessForm(true)}
@@ -147,7 +147,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
               <Button 
                 onClick={async () => {
                   await supabase.auth.signOut();
-                  setHasVoltMarketAccount(false);
+                  setHasGridBazaarAccount(false);
                 }}
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground"
