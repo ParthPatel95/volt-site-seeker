@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { VoltMarketHostingCalculator } from './VoltMarketHostingCalculator';
 import { VoltMarketEnergyData } from './VoltMarketEnergyData';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Building2, 
   Users, 
@@ -42,25 +43,17 @@ export const VoltMarketHomepage: React.FC = () => {
   useEffect(() => {
     const fetchBTCData = async () => {
       try {
-        // Try CoinDesk first, fallback to Coinbase
-        let price;
-        try {
-          const response = await fetch('https://api.coindesk.com/v1/bpi/currentprice.json');
-          if (!response.ok) throw new Error('CoinDesk API failed');
-          const data = await response.json();
-          price = parseFloat(data.bpi.USD.rate.replace(/,/g, ''));
-        } catch {
-          // Fallback to Coinbase API
-          const response = await fetch('https://api.coinbase.com/v2/prices/spot?currency=USD');
-          if (!response.ok) throw new Error('All APIs failed');
-          const data = await response.json();
-          price = parseFloat(data.data.amount);
+        // Use our secure edge function to fetch BTC data from CoinMarketCap
+        const { data, error } = await supabase.functions.invoke('fetch-btc-data');
+        
+        if (error) {
+          throw new Error(`Edge function error: ${error.message}`);
         }
         
         setBtcData({
-          price: price,
-          difficulty: 68.5, // Simulated difficulty in TH
-          hashrate: '450 EH/s' // Simulated network hashrate
+          price: data.price,
+          difficulty: data.difficulty,
+          hashrate: data.hashrate
         });
       } catch (error) {
         // Only log error once to avoid spam, use fallback data

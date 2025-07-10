@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bitcoin, Zap, Clock, TrendingUp, Hash, Award } from 'lucide-react';
 import { BTCNetworkData } from './types/btc_roi_types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BTCROILiveStatsCardProps {
   networkData: BTCNetworkData | null;
