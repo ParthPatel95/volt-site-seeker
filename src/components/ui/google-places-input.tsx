@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Search, X } from 'lucide-react';
+import { MapPin, Search, X, Target } from 'lucide-react';
 import { useGooglePlaces } from '@/hooks/useGooglePlaces';
 import { cn } from '@/lib/utils';
 
@@ -13,15 +13,17 @@ interface GooglePlacesInputProps {
   className?: string;
   disabled?: boolean;
   types?: string;
+  acceptCoordinates?: boolean;
 }
 
 export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
   value,
   onChange,
-  placeholder = "Enter address...",
+  placeholder = "Enter address or coordinates (lat, lng)...",
   className,
   disabled = false,
-  types = 'address'
+  types = 'address',
+  acceptCoordinates = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -46,16 +48,58 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Helper function to parse coordinates
+  const parseCoordinates = (input: string): { lat: number; lng: number } | null => {
+    if (!acceptCoordinates) return null;
+    
+    // Remove whitespace and normalize separators
+    const cleaned = input.trim().replace(/\s+/g, '');
+    
+    // Match various coordinate formats
+    const patterns = [
+      /^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/, // lat,lng
+      /^(-?\d+\.?\d*)\s+(-?\d+\.?\d*)$/, // lat lng
+      /^lat:\s*(-?\d+\.?\d*)[,\s]+lng:\s*(-?\d+\.?\d*)$/i, // lat: X, lng: Y
+      /^latitude:\s*(-?\d+\.?\d*)[,\s]+longitude:\s*(-?\d+\.?\d*)$/i, // latitude: X, longitude: Y
+      /^\((-?\d+\.?\d*),\s*(-?\d+\.?\d*)\)$/, // (lat,lng)
+    ];
+
+    for (const pattern of patterns) {
+      const match = cleaned.match(pattern);
+      if (match) {
+        const lat = parseFloat(match[1]);
+        const lng = parseFloat(match[2]);
+        
+        // Validate coordinate ranges
+        if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+          return { lat, lng };
+        }
+      }
+    }
+    return null;
+  };
+
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
     setSelectedPlace(null);
     
+    // Check if input looks like coordinates
+    const coordinates = parseCoordinates(newValue);
+    if (coordinates) {
+      // If valid coordinates detected, use them directly
+      onChange(newValue, undefined, coordinates);
+      clearPredictions();
+      setIsOpen(false);
+      return;
+    }
+    
     if (newValue !== value) {
       onChange(newValue);
     }
 
-    if (newValue.trim().length >= 2) {
+    // Only search for places if it's not coordinates and has enough characters
+    if (newValue.trim().length >= 2 && !coordinates) {
       await searchPlaces(newValue, types);
       setIsOpen(true);
     } else {
@@ -96,6 +140,10 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
     }
   };
 
+  // Check if current input is coordinates
+  const currentCoordinates = parseCoordinates(inputValue);
+  const isCoordinateInput = !!currentCoordinates;
+
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative">
@@ -106,9 +154,17 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
           onChange={handleInputChange}
           placeholder={placeholder}
           disabled={disabled || isGeocoding}
-          className="pr-20"
+          className={cn(
+            "pr-20",
+            isCoordinateInput && "border-green-500 focus:border-green-600"
+          )}
         />
         <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {isCoordinateInput && (
+            <div className="flex items-center gap-1 mr-1">
+              <Target className="w-4 h-4 text-green-600" />
+            </div>
+          )}
           {inputValue && (
             <Button
               type="button"
@@ -120,7 +176,7 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
               <X className="w-4 h-4" />
             </Button>
           )}
-          {inputValue && !selectedPlace && (
+          {inputValue && !selectedPlace && !isCoordinateInput && (
             <Button
               type="button"
               variant="ghost"
@@ -139,6 +195,21 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
           )}
         </div>
       </div>
+
+      {/* Helper text for coordinate formats */}
+      {acceptCoordinates && inputValue && !isCoordinateInput && !isOpen && (
+        <p className="text-xs text-muted-foreground mt-1">
+          💡 You can also enter coordinates directly: 40.7128, -74.0060 or lat: 40.7128, lng: -74.0060
+        </p>
+      )}
+
+      {/* Coordinate validation feedback */}
+      {isCoordinateInput && (
+        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+          <Target className="w-3 h-3" />
+          ✓ Valid coordinates detected ({currentCoordinates.lat.toFixed(4)}, {currentCoordinates.lng.toFixed(4)})
+        </p>
+      )}
 
       {isOpen && predictions.length > 0 && (
         <Card className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto">
