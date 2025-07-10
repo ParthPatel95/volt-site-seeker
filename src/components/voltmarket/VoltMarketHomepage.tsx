@@ -209,6 +209,78 @@ export const VoltMarketHomepage: React.FC = () => {
         </div>
       </section>
 
+      {/* Why GridBazaar Leads */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-blue-100 text-blue-700 border-blue-200">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Market Leadership
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Why GridBazaar
+              <span className="text-blue-600 block">
+                Leads the Market
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              The first and only marketplace built specifically for energy infrastructure professionals
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="space-y-8">
+              {[
+                {
+                  title: "Industry-First Real-Time Integration",
+                  description: "Only platform with live AESO, ERCOT, and energy market data integration for instant pricing and market conditions.",
+                  icon: "📊"
+                },
+                {
+                  title: "Most Advanced Mining Economics",
+                  description: "Comprehensive ROI calculations with real-time difficulty adjustments, energy costs, and profitability forecasting.",
+                  icon: "⚖️"
+                },
+                {
+                  title: "Specialized Energy Focus",
+                  description: "Purpose-built for energy infrastructure, not generic real estate. Every feature designed for energy professionals.",
+                  icon: "🎯"
+                },
+                {
+                  title: "Professional-Grade Analytics",
+                  description: "Institutional-level analysis tools with risk assessment, ESG compliance, and portfolio optimization.",
+                  icon: "📈"
+                }
+              ].map((advantage, index) => (
+                <div key={index} className="flex items-start space-x-6 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl">{advantage.icon}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">{advantage.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{advantage.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 rounded-3xl p-12 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-32 h-32 bg-gradient-to-br from-watt-primary to-watt-secondary rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                  <span className="text-5xl">👑</span>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-6">Market Leadership</h3>
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  GridBazaar processes over $2B in energy infrastructure opportunities with 99.9% uptime and enterprise-grade security.
+                </p>
+                <Badge className="bg-gradient-to-r from-watt-primary to-watt-secondary text-white px-6 py-2 text-lg">
+                  #1 Energy Infrastructure Platform
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Mining Analytics & Energy Data Section */}
       <section className="py-20 bg-gradient-to-br from-watt-light/30 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -317,77 +389,6 @@ export const VoltMarketHomepage: React.FC = () => {
         </div>
       </section>
 
-      {/* Why GridBazaar Leads */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="mb-6 bg-blue-100 text-blue-700 border-blue-200">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Market Leadership
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Why GridBazaar
-              <span className="text-blue-600 block">
-                Leads the Market
-              </span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              The first and only marketplace built specifically for energy infrastructure professionals
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="space-y-8">
-              {[
-                {
-                  title: "Industry-First Real-Time Integration",
-                  description: "Only platform with live AESO, ERCOT, and energy market data integration for instant pricing and market conditions.",
-                  icon: "📊"
-                },
-                {
-                  title: "Most Advanced Mining Economics",
-                  description: "Comprehensive ROI calculations with real-time difficulty adjustments, energy costs, and profitability forecasting.",
-                  icon: "⚖️"
-                },
-                {
-                  title: "Specialized Energy Focus",
-                  description: "Purpose-built for energy infrastructure, not generic real estate. Every feature designed for energy professionals.",
-                  icon: "🎯"
-                },
-                {
-                  title: "Professional-Grade Analytics",
-                  description: "Institutional-level analysis tools with risk assessment, ESG compliance, and portfolio optimization.",
-                  icon: "📈"
-                }
-              ].map((advantage, index) => (
-                <div key={index} className="flex items-start space-x-6 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl">{advantage.icon}</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{advantage.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{advantage.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 rounded-3xl p-12 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-32 h-32 bg-gradient-to-br from-watt-primary to-watt-secondary rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
-                  <span className="text-5xl">👑</span>
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-6">Market Leadership</h3>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  GridBazaar processes over $2B in energy infrastructure opportunities with 99.9% uptime and enterprise-grade security.
-                </p>
-                <Badge className="bg-gradient-to-r from-watt-primary to-watt-secondary text-white px-6 py-2 text-lg">
-                  #1 Energy Infrastructure Platform
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Market Opportunity */}
       <section className="py-20 bg-white">
