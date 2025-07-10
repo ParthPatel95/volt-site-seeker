@@ -190,15 +190,52 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error fetching detailed crypto data:', error);
+    console.error('=== CRYPTO DETAILS FUNCTION ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Return fallback data with error indication
+    const fallbackResult = {
+      symbol: 'ERROR',
+      name: 'Error loading data',
+      logo: null,
+      description: null,
+      category: null,
+      tags: [],
+      website: null,
+      technicalDoc: null,
+      twitter: null,
+      reddit: null,
+      sourceCode: null,
+      price: 0,
+      marketCap: 0,
+      marketCapRank: 0,
+      volume24h: 0,
+      volumeChange24h: 0,
+      percentChange1h: 0,
+      percentChange24h: 0,
+      percentChange7d: 0,
+      percentChange30d: 0,
+      percentChange60d: 0,
+      percentChange90d: 0,
+      circulatingSupply: 0,
+      totalSupply: 0,
+      maxSupply: null,
+      platform: null,
+      contractAddress: null,
+      dateAdded: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      isMineable: false,
+      fullyDilutedMarketCap: 0,
+      dominance: 0,
+      error: true,
+      errorMessage: error.message
+    };
     
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        fallback: true 
-      }),
+      JSON.stringify(fallbackResult),
       { 
-        status: 500,
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
