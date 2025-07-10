@@ -66,6 +66,11 @@ export const CryptoMarketData: React.FC<CryptoMarketDataProps> = ({ cryptos }) =
         throw new Error(error.message);
       }
 
+      if (!data) {
+        console.error('No data returned from function');
+        throw new Error('No data returned from function');
+      }
+
       console.log('Setting crypto details:', data);
       setCryptoDetails(data);
     } catch (error) {

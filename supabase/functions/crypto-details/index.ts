@@ -71,7 +71,11 @@ serve(async (req) => {
     console.log(`Fetching fresh data for ${symbol} from CoinMarketCap`);
 
     // Fetch fresh data from CoinMarketCap using v1 endpoint
-    const quotesResponse = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`, {
+    const apiUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`;
+    console.log('API URL:', apiUrl);
+    console.log('API Key first 8 chars:', apiKey ? apiKey.substring(0, 8) + '...' : 'NOT SET');
+
+    const quotesResponse = await fetch(apiUrl, {
       headers: {
         'X-CMC_PRO_API_KEY': apiKey,
         'Accept': 'application/json'
@@ -79,6 +83,7 @@ serve(async (req) => {
     });
 
     console.log(`Quotes response status: ${quotesResponse.status}`);
+    console.log(`Quotes response headers:`, Object.fromEntries(quotesResponse.headers.entries()));
 
     if (!quotesResponse.ok) {
       const errorText = await quotesResponse.text();
