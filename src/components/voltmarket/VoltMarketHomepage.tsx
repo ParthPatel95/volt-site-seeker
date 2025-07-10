@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { VoltMarketHostingCalculator } from './VoltMarketHostingCalculator';
 import { VoltMarketEnergyData } from './VoltMarketEnergyData';
+import { CryptoMarketData } from './CryptoMarketData';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Building2, 
@@ -35,9 +36,20 @@ interface BTCData {
   hashrate: string;
 }
 
+interface CryptoData {
+  cryptos: {
+    BTC?: any;
+    ETH?: any; 
+    LTC?: any;
+    BCH?: any;
+    DOGE?: any;
+  };
+}
+
 export const VoltMarketHomepage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [btcData, setBtcData] = useState<BTCData | null>(null);
+  const [cryptoData, setCryptoData] = useState<CryptoData | null>(null);
 
   // Fetch live BTC data
   useEffect(() => {
@@ -54,6 +66,11 @@ export const VoltMarketHomepage: React.FC = () => {
           price: data.price,
           difficulty: data.difficulty,
           hashrate: data.hashrate
+        });
+        
+        // Set crypto data for the new component
+        setCryptoData({
+          cryptos: data.cryptos || {}
         });
       } catch (error) {
         // Only log error once to avoid spam, use fallback data
@@ -276,6 +293,17 @@ export const VoltMarketHomepage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Cryptocurrency Market Data */}
+      {cryptoData && (
+        <section className="py-20 bg-gradient-to-br from-orange-50/50 to-yellow-50/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8">
+              <CryptoMarketData cryptos={cryptoData.cryptos} />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Listings */}
       <section className="py-20 bg-white">
