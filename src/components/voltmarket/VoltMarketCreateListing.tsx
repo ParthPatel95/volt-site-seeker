@@ -183,7 +183,13 @@ export const VoltMarketCreateListing: React.FC = () => {
 
       if (listingError) {
         console.error('Listing creation error:', listingError);
-        throw listingError;
+        toast({
+          title: "Error Creating Listing",
+          description: `Database error: ${listingError.message || JSON.stringify(listingError)}`,
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       // Save images
