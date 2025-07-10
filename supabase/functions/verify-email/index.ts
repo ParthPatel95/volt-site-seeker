@@ -32,7 +32,7 @@ serve(async (req) => {
               <h1>❌ Invalid Verification Link</h1>
               <p>The verification link is invalid or missing required information.</p>
               <p>Please request a new verification email from your account.</p>
-              <a href="${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/voltmarket/auth" class="btn">Go to Login</a>
+              <a href="https://www.wattbyte.com/voltmarket/auth" class="btn">Go to Login</a>
             </div>
           </div>
         </body>
@@ -75,7 +75,7 @@ serve(async (req) => {
               <h1>🔗 Link Expired or Invalid</h1>
               <p>This verification link has either expired or has already been used.</p>
               <p>Please request a new verification email from your account settings.</p>
-              <a href="${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/voltmarket/auth" class="btn">Go to Login</a>
+              <a href="https://www.wattbyte.com/voltmarket/auth" class="btn">Go to Login</a>
             </div>
           </div>
         </body>
@@ -111,7 +111,7 @@ serve(async (req) => {
               <h1>⏰ Link Expired</h1>
               <p>This verification link has expired. Verification links are valid for 24 hours.</p>
               <p>Please request a new verification email from your account.</p>
-              <a href="${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/voltmarket/auth" class="btn">Go to Login</a>
+              <a href="https://www.wattbyte.com/voltmarket/auth" class="btn">Go to Login</a>
             </div>
           </div>
         </body>
@@ -165,7 +165,7 @@ serve(async (req) => {
             <div class="error">
               <h1>❌ Verification Error</h1>
               <p>There was an error updating your account. Please try again or contact support.</p>
-              <a href="${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/voltmarket/auth" class="btn">Go to Login</a>
+              <a href="https://www.wattbyte.com/voltmarket/auth" class="btn">Go to Login</a>
             </div>
           </div>
         </body>
@@ -179,8 +179,8 @@ serve(async (req) => {
       );
     }
 
-    // Success! Redirect to wattbyte.com
-    const redirectUrl = `https://www.wattbyte.com?verified=true`;
+    // Success! Redirect to login page
+    const redirectUrl = `https://www.wattbyte.com/voltmarket/auth?verified=true`;
     
     return new Response(
       `<!DOCTYPE html>
@@ -203,10 +203,10 @@ serve(async (req) => {
         <div class="container">
           <div class="success">
             <h1>✅ Email Verified Successfully!</h1>
-            <p>Your email address has been verified. You now have full access to WattBytes.</p>
+            <p>Your email address has been verified. You can now sign in to your account.</p>
             <div class="loading"></div>
-            <p>Redirecting you to WattByte.com...</p>
-            <a href="${redirectUrl}" class="btn">Go to WattByte.com</a>
+            <p>Redirecting you to login page...</p>
+            <a href="${redirectUrl}" class="btn">Go to Login</a>
           </div>
         </div>
       </body>
@@ -240,7 +240,7 @@ serve(async (req) => {
           <div class="error">
             <h1>❌ Verification Failed</h1>
             <p>An unexpected error occurred during verification. Please try again or contact support.</p>
-            <a href="${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/voltmarket/auth" class="btn">Go to Login</a>
+            <a href="https://www.wattbyte.com/voltmarket/auth" class="btn">Go to Login</a>
           </div>
         </div>
       </body>

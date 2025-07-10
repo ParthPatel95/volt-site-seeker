@@ -204,12 +204,13 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
     try {
       console.log('Starting signup process...');
       
-      // Sign up user with Supabase auth (disable email confirmation for now)
+      // Sign up user with Supabase auth (disable automatic email confirmation)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/voltmarket/dashboard`,
+          // Don't send automatic verification email - we'll use our custom system
+          emailRedirectTo: undefined,
           data: {
             role: userData.role,
             company_name: userData.company_name

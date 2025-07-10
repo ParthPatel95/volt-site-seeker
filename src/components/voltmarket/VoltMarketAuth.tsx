@@ -1,18 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Zap, Mail, Lock, User, Building } from 'lucide-react';
+import { Zap, Mail, Lock, User, Building, CheckCircle } from 'lucide-react';
 
 export const VoltMarketAuth: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerificationSuccess, setShowVerificationSuccess] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -26,6 +28,18 @@ export const VoltMarketAuth: React.FC = () => {
   const { signIn, signUp } = useVoltMarketAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user arrived after email verification
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('verified') === 'true') {
+      setShowVerificationSuccess(true);
+      // Remove the parameter from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Hide the message after 10 seconds
+      setTimeout(() => setShowVerificationSuccess(false), 10000);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +118,14 @@ export const VoltMarketAuth: React.FC = () => {
             <CardTitle>{isSignUp ? 'Sign Up' : 'Sign In'}</CardTitle>
           </CardHeader>
           <CardContent>
+            {showVerificationSuccess && (
+              <Alert className="mb-4 border-green-200 bg-green-50">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <AlertDescription className="text-green-700">
+                  ✅ Email verified successfully! You can now sign in to your account.
+                </AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="email" className="flex items-center gap-2">
