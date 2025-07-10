@@ -199,22 +199,11 @@ export const VoltMarketHomepage: React.FC = () => {
               </div>
 
               {/* Mining Market Intelligence */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto pt-8">
-                {miningIntelligence.map((stat, index) => {
-                  const Icon = stat.icon;
-                  return (
-                    <Card key={index} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-gray-200/50">
-                      <CardContent className="p-6 text-center">
-                        <div className={`w-12 h-12 ${stat.color} bg-opacity-10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                          <Icon className={`w-6 h-6 ${stat.color}`} />
-                        </div>
-                        <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
-                        <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+              {cryptoData && (
+                <div className="max-w-6xl mx-auto pt-8">
+                  <CryptoMarketData cryptos={cryptoData.cryptos} />
+                </div>
+              )}
             </div>
           </div>
         </div>
