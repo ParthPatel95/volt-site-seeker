@@ -92,11 +92,11 @@ export const VoltMarketHomepage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const marketStats = [
-    { label: "Active Listings", value: "1,247", icon: Building2, color: "text-blue-500" },
-    { label: "Total Volume", value: "$2.4B", icon: DollarSign, color: "text-green-500" },
-    { label: "Active Users", value: "12,847", icon: Users, color: "text-purple-500" },
-    { label: "Energy Capacity", value: "5.2 GW", icon: Zap, color: "text-yellow-500" }
+  const miningIntelligence = [
+    { label: "BTC Hash Rate", value: "785 EH/s", icon: Hash, color: "text-orange-500" },
+    { label: "Mining Revenue", value: "$42.3M", icon: DollarSign, color: "text-green-500" },
+    { label: "Active Miners", value: "2,847", icon: Users, color: "text-purple-500" },
+    { label: "Network Difficulty", value: "101.7T", icon: Zap, color: "text-blue-500" }
   ];
 
   const featuredListings = [
@@ -198,9 +198,9 @@ export const VoltMarketHomepage: React.FC = () => {
                 </Link>
               </div>
 
-              {/* Market Stats */}
+              {/* Mining Market Intelligence */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto pt-8">
-                {marketStats.map((stat, index) => {
+                {miningIntelligence.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
                     <Card key={index} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-gray-200/50">
