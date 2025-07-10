@@ -457,64 +457,6 @@ export const VoltMarketHomepage: React.FC = () => {
 
 
 
-      {/* Market Intelligence Dashboard */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="mb-6 bg-blue-100 text-blue-700 border-blue-200">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Live Market Data
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Market
-              <span className="text-blue-600 block">
-                Intelligence
-              </span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Real-time insights from the global power infrastructure marketplace
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-blue-50/30 border-0 shadow-lg">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <BarChart3 className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-2">$43.72/MWh</div>
-              <div className="text-gray-600 font-medium">Average Power Price</div>
-              <div className="text-sm text-blue-600 mt-2">↗ +2.1% today</div>
-            </Card>
-
-            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-green-50/30 border-0 shadow-lg">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <TrendingUp className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-2">+15.3%</div>
-              <div className="text-gray-600 font-medium">Price Growth YoY</div>
-              <div className="text-sm text-green-600 mt-2">Strong upward trend</div>
-            </Card>
-
-            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-purple-50/30 border-0 shadow-lg">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <Globe className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-2">847</div>
-              <div className="text-gray-600 font-medium">Active Markets</div>
-              <div className="text-sm text-purple-600 mt-2">Global coverage</div>
-            </Card>
-
-            <Card className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-orange-50/30 border-0 shadow-lg">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-2">99.7%</div>
-              <div className="text-gray-600 font-medium">Security Rating</div>
-              <div className="text-sm text-orange-600 mt-2">Enterprise-grade</div>
-            </Card>
-          </div>
-        </div>
-      </section>
 
       {/* Platform Features Section */}
       <section className="py-20 bg-gradient-to-br from-background to-watt-light/20">
