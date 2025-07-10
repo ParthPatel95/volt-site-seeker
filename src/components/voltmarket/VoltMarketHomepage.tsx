@@ -138,51 +138,6 @@ export const VoltMarketHomepage: React.FC = () => {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            {/* Live BTC Price Ticker */}
-            {btcData && (
-              <div className="mb-12">
-                <Card className="bg-gradient-to-r from-watt-primary/5 to-watt-secondary/5 border-watt-primary/20 max-w-5xl mx-auto shadow-watt-glow hover:shadow-2xl transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-                      <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 bg-watt-primary/10 rounded-2xl">
-                            <Bitcoin className="w-8 h-8 text-watt-primary" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-600">Bitcoin Price</div>
-                            <div className="text-3xl font-bold text-watt-primary">
-                              ${btcData.price.toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                        <Badge className="bg-watt-success/10 text-watt-success border-watt-success/20">
-                          <div className="w-2 h-2 bg-watt-success rounded-full mr-2 animate-pulse"></div>
-                          Live
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-8">
-                        <div className="text-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                            <Hash className="w-4 h-4" />
-                            <span>Network Difficulty</span>
-                          </div>
-                          <div className="text-2xl font-bold text-watt-secondary">{btcData.difficulty}T</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                            <Activity className="w-4 h-4" />
-                            <span>Hashrate</span>
-                          </div>
-                          <div className="text-2xl font-bold text-watt-accent">{btcData.hashrate}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
 
             <div className="space-y-8">
               <Badge className="bg-watt-primary/10 text-watt-primary border-watt-primary/20 hover:bg-watt-primary/20 transition-all duration-300 px-4 py-2">

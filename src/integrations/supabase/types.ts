@@ -459,6 +459,30 @@ export type Database = {
         }
         Relationships: []
       }
+      crypto_details_cache: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          last_updated: string
+          symbol: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          last_updated?: string
+          symbol: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          last_updated?: string
+          symbol?: string
+        }
+        Relationships: []
+      }
       distress_alerts: {
         Row: {
           alert_type: string
