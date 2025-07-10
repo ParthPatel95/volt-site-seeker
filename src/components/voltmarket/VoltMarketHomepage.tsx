@@ -147,15 +147,15 @@ export const VoltMarketHomepage: React.FC = () => {
 
               <div className="space-y-6 relative z-10">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                  <span className="text-gray-900 block">Trade Power</span>
+                  <span className="text-gray-900 block">GridBazaar</span>
                   <span className="text-watt-primary block mt-2">
-                    Infrastructure
+                    Energy Infrastructure
                   </span>
                 </h1>
 
                 <p className="text-lg md:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-                  The world's premier marketplace for energy assets. Discover, evaluate, and invest in 
-                  power infrastructure from data centers to renewable facilities.
+                  The world's most advanced energy infrastructure marketplace with real-time analytics and AI-powered insights. 
+                  Join the revolution in energy asset trading.
                 </p>
               </div>
 
@@ -240,70 +240,215 @@ export const VoltMarketHomepage: React.FC = () => {
       </section>
 
 
-      {/* Featured Listings */}
+      {/* Technology Stack */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-watt-secondary/10 text-watt-secondary border-watt-secondary/20">
               <Target className="w-4 h-4 mr-2" />
-              Featured Opportunities
+              Advanced Technology Stack
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Premium Power
+              Industry-Leading
               <span className="text-watt-accent block">
-                Infrastructure
+                Technology
               </span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Hand-selected energy infrastructure opportunities from our expert team
+              The most sophisticated technology powering the energy infrastructure marketplace
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {featuredListings.map((listing, index) => (
-              <Card key={listing.id} className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                title: "AI-Powered Analysis",
+                description: "Advanced machine learning algorithms for asset valuation and risk assessment",
+                features: ["Real-time market analysis", "Predictive modeling", "Risk scoring"],
+                icon: "🧠",
+                gradient: "from-blue-500 to-purple-600"
+              },
+              {
+                title: "Real-Time Energy Data",
+                description: "Live integration with AESO, ERCOT, and other energy market operators",
+                features: ["Live pricing feeds", "Market conditions", "Grid analytics"],
+                icon: "⚡",
+                gradient: "from-yellow-500 to-orange-600"
+              },
+              {
+                title: "Due Diligence Automation",
+                description: "Comprehensive automated analysis and documentation workflows",
+                features: ["Document verification", "Compliance checks", "Risk reports"],
+                icon: "📋",
+                gradient: "from-green-500 to-emerald-600"
+              },
+              {
+                title: "Enterprise Security",
+                description: "Bank-grade security with advanced encryption and compliance frameworks",
+                features: ["Multi-factor auth", "Encrypted transactions", "Audit trails"],
+                icon: "🛡️",
+                gradient: "from-red-500 to-pink-600"
+              }
+            ].map((tech, index) => (
+              <Card key={index} className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg">
                 <div className="absolute inset-0 bg-watt-gradient opacity-0 group-hover:opacity-5 transition-opacity rounded-lg"></div>
-                <CardHeader className="relative pb-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <Badge className={`${listing.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'} border`}>
-                      <div className={`w-2 h-2 ${listing.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full mr-2 animate-pulse`}></div>
-                      {listing.status}
-                    </Badge>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-watt-primary">{listing.price}</div>
-                      <div className="text-sm text-gray-500">Total Value</div>
-                    </div>
+                <CardContent className="p-8 text-center relative">
+                  <div className={`w-20 h-20 bg-gradient-to-br ${tech.gradient} rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                    <span className="text-3xl">{tech.icon}</span>
                   </div>
-                  <CardTitle className="text-xl group-hover:text-watt-primary transition-colors leading-tight">
-                    {listing.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 text-gray-600">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <MapPin className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-watt-primary transition-colors">
+                    {tech.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                    {tech.description}
+                  </p>
+                  <div className="space-y-2">
+                    {tech.features.map((feature, i) => (
+                      <div key={i} className="flex items-center justify-center text-xs text-gray-500">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></div>
+                        {feature}
                       </div>
-                      <span className="font-medium">{listing.location}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-600">
-                      <div className="p-2 bg-yellow-50 rounded-lg">
-                        <Bolt className="w-4 h-4 text-yellow-600" />
-                      </div>
-                      <span className="font-medium">{listing.capacity} Capacity</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-600">
-                      <div className="p-2 bg-purple-50 rounded-lg">
-                        <Factory className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <span className="font-medium">{listing.type} Asset</span>
-                    </div>
+                    ))}
                   </div>
-                  <Button className="w-full mt-6 bg-watt-gradient hover:opacity-90 group-hover:scale-105 transition-all duration-300 py-3 rounded-xl font-semibold">
-                    View Details
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
                 </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why GridBazaar Leads */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-blue-100 text-blue-700 border-blue-200">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Market Leadership
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Why GridBazaar
+              <span className="text-blue-600 block">
+                Leads the Market
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              The first and only marketplace built specifically for energy infrastructure professionals
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="space-y-8">
+              {[
+                {
+                  title: "Industry-First Real-Time Integration",
+                  description: "Only platform with live AESO, ERCOT, and energy market data integration for instant pricing and market conditions.",
+                  icon: "📊"
+                },
+                {
+                  title: "Most Advanced Mining Economics",
+                  description: "Comprehensive ROI calculations with real-time difficulty adjustments, energy costs, and profitability forecasting.",
+                  icon: "⚖️"
+                },
+                {
+                  title: "Specialized Energy Focus",
+                  description: "Purpose-built for energy infrastructure, not generic real estate. Every feature designed for energy professionals.",
+                  icon: "🎯"
+                },
+                {
+                  title: "Professional-Grade Analytics",
+                  description: "Institutional-level analysis tools with risk assessment, ESG compliance, and portfolio optimization.",
+                  icon: "📈"
+                }
+              ].map((advantage, index) => (
+                <div key={index} className="flex items-start space-x-6 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl">{advantage.icon}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">{advantage.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{advantage.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 rounded-3xl p-12 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-32 h-32 bg-gradient-to-br from-watt-primary to-watt-secondary rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                  <span className="text-5xl">👑</span>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-6">Market Leadership</h3>
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  GridBazaar processes over $2B in energy infrastructure opportunities with 99.9% uptime and enterprise-grade security.
+                </p>
+                <Badge className="bg-gradient-to-r from-watt-primary to-watt-secondary text-white px-6 py-2 text-lg">
+                  #1 Energy Infrastructure Platform
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Market Opportunity */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-green-100 text-green-700 border-green-200">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Market Opportunity
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Massive Market
+              <span className="text-green-600 block">
+                Opportunity
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              The global energy infrastructure market represents unprecedented investment opportunities
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                value: "$2.8T",
+                label: "Global Energy Infrastructure Market",
+                description: "Total addressable market size",
+                trend: "+8.2% CAGR",
+                gradient: "from-blue-500 to-blue-600"
+              },
+              {
+                value: "$890B",
+                label: "Annual Energy Investment",
+                description: "Yearly capital deployment",
+                trend: "+12% YoY",
+                gradient: "from-green-500 to-green-600"
+              },
+              {
+                value: "450GW",
+                label: "Renewable Capacity Growth",
+                description: "New capacity needed by 2030",
+                trend: "+15% annually",
+                gradient: "from-purple-500 to-purple-600"
+              },
+              {
+                value: "$1.2T",
+                label: "Mining Infrastructure Value",
+                description: "Bitcoin mining market cap",
+                trend: "+45% growth",
+                gradient: "from-orange-500 to-orange-600"
+              }
+            ].map((stat, index) => (
+              <Card key={index} className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-gray-50/30 border-0 shadow-lg">
+                <div className={`w-16 h-16 bg-gradient-to-br ${stat.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-4xl font-bold text-gray-900 mb-3">{stat.value}</div>
+                <div className="text-lg font-semibold text-gray-700 mb-2">{stat.label}</div>
+                <div className="text-sm text-gray-500 mb-4">{stat.description}</div>
+                <Badge className="bg-green-50 text-green-600 border-green-200">
+                  {stat.trend}
+                </Badge>
               </Card>
             ))}
           </div>
@@ -375,16 +520,16 @@ export const VoltMarketHomepage: React.FC = () => {
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-watt-accent/10 text-watt-accent border-watt-accent/20">
               <Bolt className="w-4 h-4 mr-2" />
-              Platform Features
+              Professional Tools
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Everything You Need for
+              Professional-Grade
               <span className="text-watt-primary block">
-                Energy Infrastructure
+                Tools & Analytics
               </span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From discovery to transaction, VoltMarket provides comprehensive tools for energy infrastructure investment
+              From discovery to transaction, GridBazaar provides comprehensive tools for energy infrastructure investment
             </p>
           </div>
 
@@ -568,7 +713,7 @@ export const VoltMarketHomepage: React.FC = () => {
             </h2>
             
             <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Join thousands of investors discovering the future of energy infrastructure
+              Connect with verified energy professionals and access the most advanced marketplace for energy infrastructure assets
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center pt-8">
