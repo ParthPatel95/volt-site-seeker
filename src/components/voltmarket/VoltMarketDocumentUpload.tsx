@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
+import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileText, Download, X } from 'lucide-react';
 
@@ -48,8 +49,10 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
   const [documents, setDocuments] = useState<Document[]>(existingDocuments);
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
   const [documentDescription, setDocumentDescription] = useState<string>('');
+  const [selectedListingId, setSelectedListingId] = useState<string>(listingId || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { profile } = useVoltMarketAuth();
+  const { userListings } = useVoltMarketListings();
   const { toast } = useToast();
 
   const uploadDocument = async (file: File): Promise<Document | null> => {
@@ -115,13 +118,14 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
         description: documentDescription || undefined
       };
 
-      // Save to database only if listing exists
-      if (listingId) {
-        console.log('Saving to database for listing:', listingId);
+      // Save to database if listing is selected or this is for a specific listing
+      const targetListingId = selectedListingId || listingId;
+      if (targetListingId) {
+        console.log('Saving to database for listing:', targetListingId);
         const { data: dbData, error: dbError } = await supabase
           .from('voltmarket_documents')
           .insert({
-            listing_id: listingId,
+            listing_id: targetListingId,
             uploader_id: profile.id,
             file_name: file.name,
             file_url: urlData.publicUrl,
@@ -236,7 +240,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
   const removeDocument = async (document: Document, index: number) => {
     try {
       // Remove from database if it has an ID
-      if (document.id && listingId) {
+      if (document.id) {
         const { error: dbError } = await supabase
           .from('voltmarket_documents')
           .delete()
@@ -319,6 +323,25 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
                 />
               </div>
             </div>
+
+            {!listingId && userListings.length > 0 && (
+              <div className="mt-4">
+                <Label htmlFor="listing-select">Associate with Listing (Optional)</Label>
+                <Select value={selectedListingId} onValueChange={setSelectedListingId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a listing (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">General document (no listing)</SelectItem>
+                    {userListings.map((listing) => (
+                      <SelectItem key={listing.id} value={listing.id}>
+                        {listing.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
             <div className="flex items-center gap-4">
               <Button

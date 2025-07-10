@@ -2322,7 +2322,7 @@ export type Database = {
           file_url: string
           id: string
           is_private: boolean | null
-          listing_id: string
+          listing_id: string | null
           uploader_id: string
         }
         Insert: {
@@ -2335,7 +2335,7 @@ export type Database = {
           file_url: string
           id?: string
           is_private?: boolean | null
-          listing_id: string
+          listing_id?: string | null
           uploader_id: string
         }
         Update: {
@@ -2348,7 +2348,7 @@ export type Database = {
           file_url?: string
           id?: string
           is_private?: boolean | null
-          listing_id?: string
+          listing_id?: string | null
           uploader_id?: string
         }
         Relationships: [
