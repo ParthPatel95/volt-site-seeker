@@ -71,7 +71,7 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `voltmarket-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `gridbazaar-analytics-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
   };
 
@@ -128,8 +128,8 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">VoltMarket Dashboard</h1>
-            <p className="text-gray-600">Monitor your VoltMarket performance and insights</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">GridBazaar Dashboard</h1>
+            <p className="text-gray-600">Monitor your GridBazaar performance and insights</p>
           </div>
           
           <div className="flex items-center gap-4">

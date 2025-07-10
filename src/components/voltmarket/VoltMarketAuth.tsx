@@ -107,7 +107,7 @@ export const VoltMarketAuth: React.FC = () => {
           <div className="flex items-center justify-center mb-4">
             <Zap className="w-12 h-12 text-blue-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">VoltMarket</h1>
+          <h1 className="text-3xl font-bold text-gray-900">GridBazaar</h1>
           <p className="mt-2 text-gray-600">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </p>

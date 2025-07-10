@@ -113,7 +113,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
           <CardTitle>Access VoltScout Platform</CardTitle>
           <CardDescription>
             {hasVoltMarketAccount 
-              ? "Your VoltMarket account does not have VoltScout access. Please contact support for approval."
+              ? "Your GridBazaar account does not have VoltScout access. Please contact support for approval."
               : showAccessForm 
                 ? "Request access to our AI-powered energy discovery platform"
                 : "Sign in to access your account"

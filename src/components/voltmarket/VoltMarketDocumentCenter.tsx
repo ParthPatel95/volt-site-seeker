@@ -156,7 +156,7 @@ export const VoltMarketDocumentCenter: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Document Center</h1>
-            <p className="text-gray-600 mt-1">Manage your VoltMarket documents securely</p>
+            <p className="text-gray-600 mt-1">Manage your GridBazaar documents securely</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" size="sm">

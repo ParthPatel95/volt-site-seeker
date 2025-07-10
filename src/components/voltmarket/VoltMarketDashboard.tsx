@@ -714,7 +714,7 @@ export const VoltMarketDashboard: React.FC = () => {
             Welcome back{profile.company_name ? `, ${profile.company_name}` : ''}!
           </h1>
           <p className="text-gray-600">
-            Your VoltMarket {profile.role} dashboard
+            Your GridBazaar {profile.role} dashboard
           </p>
         </div>
 
@@ -763,7 +763,7 @@ export const VoltMarketDashboard: React.FC = () => {
                   </h3>
                   <p className="text-sm text-green-700 mt-1">
                     {profile.role === 'seller' 
-                      ? 'Create your first listing to start selling on VoltMarket'
+                      ? 'Create your first listing to start selling on GridBazaar'
                       : 'Browse available listings to find your next investment'
                     }
                   </p>

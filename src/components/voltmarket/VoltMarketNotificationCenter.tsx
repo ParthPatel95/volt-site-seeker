@@ -141,7 +141,7 @@ export const VoltMarketNotificationCenter: React.FC = () => {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Notification Center</h1>
-            <p className="text-gray-600">Stay updated with your VoltMarket activity</p>
+            <p className="text-gray-600">Stay updated with your GridBazaar activity</p>
           </div>
           
           <div className="flex items-center gap-4">
@@ -176,7 +176,7 @@ export const VoltMarketNotificationCenter: React.FC = () => {
                   <div className="text-center py-8 text-gray-500">
                     <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p>No notifications yet</p>
-                    <p className="text-sm">You'll see updates about your VoltMarket activity here</p>
+                    <p className="text-sm">You'll see updates about your GridBazaar activity here</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
