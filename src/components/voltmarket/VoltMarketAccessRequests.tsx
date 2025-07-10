@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useVoltMarketAccessRequests } from '@/hooks/useVoltMarketAccessRequests';
 import { Link } from 'react-router-dom';
-import { CheckCircle, XCircle, MessageSquare, Clock, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, MessageSquare, Clock, FileText, User, Calendar, Building, Loader2 } from 'lucide-react';
 
 interface VoltMarketAccessRequestsProps {
   sellerId: string;
@@ -45,14 +45,17 @@ export const VoltMarketAccessRequests: React.FC<VoltMarketAccessRequestsProps> =
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Access Requests</CardTitle>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <FileText className="w-5 h-5 text-primary" />
+            Access Requests
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-sm text-gray-500 mt-2">Loading requests...</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading access requests...</p>
           </div>
         </CardContent>
       </Card>
@@ -60,88 +63,173 @@ export const VoltMarketAccessRequests: React.FC<VoltMarketAccessRequestsProps> =
   }
 
   const pendingRequests = accessRequests.filter(req => req.status === 'pending');
+  const approvedRequests = accessRequests.filter(req => req.status === 'approved');
+  const rejectedRequests = accessRequests.filter(req => req.status === 'rejected');
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          Access Requests ({pendingRequests.length} pending)
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {accessRequests.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>No access requests yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {accessRequests.map((request) => (
-              <div
-                key={request.id}
-                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {getStatusIcon(request.status)}
-                      <h4 className="font-medium">
-                        {request.requester_profile?.company_name || 'Anonymous User'}
-                      </h4>
-                      <Badge className={getStatusColor(request.status)}>
-                        {request.status}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-2">
-                      Requested access to: <strong>{request.listing?.title}</strong>
-                    </p>
-                    
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>Role: {request.requester_profile?.role}</span>
-                      <span>Requested: {new Date(request.created_at).toLocaleDateString()}</span>
-                      {request.approved_at && (
-                        <span>Processed: {new Date(request.approved_at).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 ml-4">
-                    {request.status === 'pending' && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(request.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleReject(request.id)}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Decline
-                        </Button>
-                      </>
-                    )}
-                    <Link to={`/voltmarket/messages?user=${request.requester_id}`}>
-                      <Button variant="outline" size="sm">
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        Message
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-yellow-800">Pending</p>
+                <p className="text-2xl font-bold text-yellow-900">{pendingRequests.length}</p>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <Clock className="h-8 w-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-800">Approved</p>
+                <p className="text-2xl font-bold text-green-900">{approvedRequests.length}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-800">Rejected</p>
+                <p className="text-2xl font-bold text-red-900">{rejectedRequests.length}</p>
+              </div>
+              <XCircle className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Requests List */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              <span className="text-xl">Access Requests</span>
+            </div>
+            {pendingRequests.length > 0 && (
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                {pendingRequests.length} pending
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {accessRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center">
+                <div className="p-4 bg-muted/50 rounded-full mb-4">
+                  <FileText className="w-12 h-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">No access requests yet</h3>
+                <p className="text-muted-foreground max-w-sm">
+                  When buyers request access to your documents, they'll appear here for your review.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {accessRequests.map((request) => (
+                <Card key={request.id} className="border border-border/50 hover:shadow-md transition-all duration-200">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                      {/* Main Content */}
+                      <div className="flex-1 space-y-3">
+                        {/* Header with status */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(request.status)}
+                            <h4 className="font-semibold text-lg">
+                              {request.requester_profile?.company_name || 'Anonymous User'}
+                            </h4>
+                          </div>
+                          <Badge className={getStatusColor(request.status)} variant="secondary">
+                            {request.status}
+                          </Badge>
+                        </div>
+                        
+                        {/* Listing Info */}
+                        <div className="bg-muted/30 rounded-lg p-3">
+                          <p className="text-sm font-medium mb-1">Requested access to:</p>
+                          <p className="font-semibold text-primary">
+                            {request.listing?.title}
+                          </p>
+                        </div>
+                        
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Role:</span>
+                            <span className="font-medium">{request.requester_profile?.role}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Requested:</span>
+                            <span className="font-medium">
+                              {new Date(request.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          
+                          {request.approved_at && (
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Processed:</span>
+                              <span className="font-medium">
+                                {new Date(request.approved_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:min-w-[140px]">
+                        {request.status === 'pending' && (
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(request.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white w-full"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReject(request.id)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200 w-full"
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Decline
+                            </Button>
+                          </div>
+                        )}
+                        <Link to={`/voltmarket/messages?user=${request.requester_id}`} className="w-full">
+                          <Button variant="outline" size="sm" className="w-full">
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            Message
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
