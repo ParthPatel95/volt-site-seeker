@@ -97,7 +97,7 @@ export const VoltMarketHeader: React.FC = () => {
                 </Button>
               </Link>
               
-              <Link to="/voltmarket/messages">
+              <Link to="/voltmarket/notifications">
                 <Button variant="ghost" size="sm">
                   <MessageSquare className="w-4 h-4" />
                 </Button>
@@ -195,8 +195,8 @@ export const VoltMarketHeader: React.FC = () => {
                   <Link to="/voltmarket/dashboard" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
                   </Link>
-                  <Link to="/voltmarket/messages" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start">Messages</Button>
+                  <Link to="/voltmarket/notifications" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">Notifications</Button>
                   </Link>
                   <Link to="/voltmarket/profile" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">Profile</Button>

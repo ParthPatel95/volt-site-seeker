@@ -299,7 +299,7 @@ const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
                 ))}
                 {userListings.length > 5 && (
                   <div className="text-center pt-4">
-                    <Link to="/voltmarket/my-listings">
+                    <Link to="/voltmarket/dashboard">
                       <Button variant="outline">View All Listings</Button>
                     </Link>
                   </div>
@@ -343,7 +343,7 @@ const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               </Button>
             </Link>
 
-            <Link to="/voltmarket/analytics">
+            <Link to="/voltmarket/dashboard">
               <Button variant="outline" className="w-full justify-start">
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Analytics & Reports
@@ -606,17 +606,17 @@ const BuyerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               </Button>
             </Link>
 
-            <Link to="/voltmarket/saved-searches">
+            <Link to="/voltmarket/search">
               <Button variant="outline" className="w-full justify-start">
                 <Star className="mr-2 h-4 w-4" />
-                Saved Searches ({savedSearches})
+                Advanced Search
               </Button>
             </Link>
 
-            <Link to="/voltmarket/messages">
+            <Link to="/voltmarket/notifications">
               <Button variant="outline" className="w-full justify-start">
                 <MessageSquare className="mr-2 h-4 w-4" />
-                My Messages
+                Notifications
               </Button>
             </Link>
           </CardContent>
