@@ -558,7 +558,7 @@ const BuyerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
-                        <Link to={`/voltmarket/listing/${listing.id}`}>
+                        <Link to={`/voltmarket/listings/${listing.id}`}>
                           <Button size="sm">
                             View Details
                           </Button>
