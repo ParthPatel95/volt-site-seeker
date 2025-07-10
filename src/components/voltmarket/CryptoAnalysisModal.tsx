@@ -20,8 +20,25 @@ import {
   Coins,
   Activity,
   BarChart3,
-  Hash
+  Hash,
+  PieChart
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  Area,
+  AreaChart,
+  LineChart,
+  Line
+} from 'recharts';
 
 interface CryptoDetails {
   symbol: string;
@@ -97,6 +114,22 @@ const PercentageChange: React.FC<{ value: number; label: string }> = ({ value, l
     </div>
   </div>
 );
+
+const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="font-semibold">{label}</p>
+        <p className="text-purple-600">
+          {`${payload[0].value >= 0 ? '+' : ''}${payload[0].value.toFixed(2)}%`}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export const CryptoAnalysisModal: React.FC<CryptoAnalysisModalProps> = ({ 
   isOpen, 
@@ -193,22 +226,152 @@ export const CryptoAnalysisModal: React.FC<CryptoAnalysisModalProps> = ({
               </CardContent>
             </Card>
 
-            {/* Price Performance */}
+            {/* Price Performance Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Performance Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-purple-600" />
+                    Price Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={[
+                          { period: '1h', change: cryptoDetails.percentChange1h },
+                          { period: '24h', change: cryptoDetails.percentChange24h },
+                          { period: '7d', change: cryptoDetails.percentChange7d },
+                          { period: '30d', change: cryptoDetails.percentChange30d },
+                          { period: '60d', change: cryptoDetails.percentChange60d },
+                          { period: '90d', change: cryptoDetails.percentChange90d },
+                        ]}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis 
+                          dataKey="period" 
+                          className="text-xs fill-gray-600"
+                        />
+                        <YAxis className="text-xs fill-gray-600" />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Bar 
+                          dataKey="change" 
+                          fill="#8b5cf6"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Supply Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-purple-600" />
+                    Supply Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Tooltip 
+                          formatter={(value, name) => [
+                            `${formatSupply(Number(value))} (${((Number(value) / (cryptoDetails.maxSupply || cryptoDetails.totalSupply)) * 100).toFixed(1)}%)`,
+                            name
+                          ]}
+                        />
+                        <Pie
+                          data={[
+                            { 
+                              name: 'Circulating', 
+                              value: cryptoDetails.circulatingSupply,
+                              fill: COLORS[0]
+                            },
+                            { 
+                              name: 'Remaining', 
+                              value: (cryptoDetails.maxSupply || cryptoDetails.totalSupply) - cryptoDetails.circulatingSupply,
+                              fill: COLORS[1]
+                            }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {[
+                            { name: 'Circulating', value: cryptoDetails.circulatingSupply },
+                            { name: 'Remaining', value: (cryptoDetails.maxSupply || cryptoDetails.totalSupply) - cryptoDetails.circulatingSupply }
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Market Metrics */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-purple-600" />
-                  Price Performance
+                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                  Market Metrics Comparison
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  <PercentageChange value={cryptoDetails.percentChange1h} label="1 Hour" />
-                  <PercentageChange value={cryptoDetails.percentChange24h} label="24 Hours" />
-                  <PercentageChange value={cryptoDetails.percentChange7d} label="7 Days" />
-                  <PercentageChange value={cryptoDetails.percentChange30d} label="30 Days" />
-                  <PercentageChange value={cryptoDetails.percentChange60d} label="60 Days" />
-                  <PercentageChange value={cryptoDetails.percentChange90d} label="90 Days" />
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={[
+                        {
+                          metric: 'Market Cap',
+                          value: cryptoDetails.marketCap / 1e9,
+                          unit: 'B'
+                        },
+                        {
+                          metric: '24h Volume',
+                          value: cryptoDetails.volume24h / 1e9,
+                          unit: 'B'
+                        },
+                        {
+                          metric: 'Fully Diluted Cap',
+                          value: cryptoDetails.fullyDilutedMarketCap / 1e9,
+                          unit: 'B'
+                        }
+                      ]}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                      <XAxis 
+                        dataKey="metric" 
+                        className="text-xs fill-gray-600"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis 
+                        className="text-xs fill-gray-600"
+                        label={{ value: 'Billions ($)', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`$${Number(value).toFixed(2)}B`, 'Value']}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#8b5cf6" 
+                        fill="#8b5cf6" 
+                        fillOpacity={0.6}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
