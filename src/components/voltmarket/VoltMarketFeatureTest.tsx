@@ -9,6 +9,8 @@ import { VoltMarketListingAnalytics } from './VoltMarketListingAnalytics';
 import { VoltMarketSearchMap } from './VoltMarketSearchMap';
 import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useVoltMarketSavedSearches } from '@/hooks/useVoltMarketSavedSearches';
+import { useVoltMarketAuth } from '@/hooks/useVoltMarketAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TestResult {
   name: string;
@@ -19,6 +21,8 @@ interface TestResult {
 
 export const VoltMarketFeatureTest: React.FC = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([
+    { name: 'VoltMarket Authentication', status: 'pending' },
+    { name: 'VoltScout Access Separation', status: 'pending' },
     { name: 'Enhanced Search System', status: 'pending' },
     { name: 'Real-Time Market Data', status: 'pending' },
     { name: 'Listing Performance Analytics', status: 'pending' },
@@ -34,6 +38,7 @@ export const VoltMarketFeatureTest: React.FC = () => {
 
   const { listings, loading: listingsLoading, fetchListings, searchListings } = useVoltMarketListings();
   const { saveSearch, getSavedSearches, loadSearch } = useVoltMarketSavedSearches();
+  const { user, profile } = useVoltMarketAuth();
 
   const updateTestResult = (index: number, result: Partial<TestResult>) => {
     setTestResults(prev => prev.map((test, i) => 
@@ -185,10 +190,53 @@ export const VoltMarketFeatureTest: React.FC = () => {
     }
   };
 
+  const testVoltMarketAuth = async () => {
+    // Test VoltMarket authentication
+    if (!user) {
+      throw new Error('User is not authenticated in VoltMarket');
+    }
+    
+    if (!profile) {
+      throw new Error('VoltMarket profile not found');
+    }
+    
+    // Verify user has VoltMarket profile
+    const { data: voltMarketProfile, error } = await supabase
+      .from('voltmarket_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+      
+    if (error || !voltMarketProfile) {
+      throw new Error('VoltMarket profile verification failed');
+    }
+  };
+
+  const testVoltScoutSeparation = async () => {
+    // Test that VoltMarket users don't have VoltScout access
+    if (!user) {
+      throw new Error('User is not authenticated');
+    }
+    
+    const { data: isApproved, error } = await supabase
+      .rpc('is_voltscout_approved', { user_id: user.id });
+      
+    if (error) {
+      throw new Error(`VoltScout approval check failed: ${error.message}`);
+    }
+    
+    // For VoltMarket users, this should be false unless specifically approved
+    if (isApproved && !profile?.is_email_verified) {
+      throw new Error('VoltScout access not properly separated');
+    }
+  };
+
   const runAllTests = async () => {
     setIsRunning(true);
     
     const tests = [
+      testVoltMarketAuth,
+      testVoltScoutSeparation,
       testEnhancedSearch,
       testRealTimeData,
       testListingAnalytics,
