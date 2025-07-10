@@ -36,7 +36,12 @@ export const VoltMarketContactMessages: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchMessages = async () => {
-    if (!profile) return;
+    if (!profile) {
+      console.log('No profile found, skipping message fetch');
+      return;
+    }
+
+    console.log('Fetching messages for profile:', profile.id);
 
     try {
       const { data, error } = await supabase
@@ -50,6 +55,7 @@ export const VoltMarketContactMessages: React.FC = () => {
 
       if (error) throw error;
 
+      console.log('Fetched contact messages:', data);
       setMessages(data || []);
       setUnreadCount((data || []).filter(msg => !msg.is_read).length);
     } catch (error) {
