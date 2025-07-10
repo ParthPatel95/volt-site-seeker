@@ -52,30 +52,8 @@ serve(async (req) => {
 
     console.log(`Proceeding to fetch data for ${symbol}`);
 
-    // Check cache first - only fetch new data if older than 4 hours
-    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-    
-    const { data: cachedData, error: cacheError } = await supabase
-      .from('crypto_details_cache')
-      .select('data, last_updated')
-      .eq('symbol', symbol.toUpperCase())
-      .gte('last_updated', fourHoursAgo)
-      .maybeSingle();
-
-    if (cachedData && !cacheError) {
-      console.log(`Returning cached data for ${symbol}`);
-      return new Response(
-        JSON.stringify(cachedData.data),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
-        }
-      );
-    }
-
-    console.log(`Fetching fresh data for ${symbol} from CoinMarketCap`);
+    // Skip cache for now to force fresh data
+    console.log(`Fetching fresh data for ${symbol} from CoinMarketCap (cache bypassed)`);
 
     // Fetch fresh data from CoinMarketCap using v1 endpoint
     const apiUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`;
