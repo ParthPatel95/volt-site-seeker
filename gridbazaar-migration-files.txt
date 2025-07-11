@@ -1,0 +1,132 @@
+# Complete List of Files to Copy for GridBazaar Migration
+
+## Core Application Files (COPY THESE)
+
+### Main App Structure
+src/App.tsx (modify for GridBazaar-only routing)
+src/main.tsx
+src/index.css
+src/nav-items.tsx (modify for GridBazaar routes)
+
+### Authentication & Context
+src/contexts/VoltMarketAuthContext.tsx
+src/hooks/useVoltMarketAuth.ts
+src/hooks/useVoltMarketAuth.tsx
+
+### All VoltMarket Pages
+src/pages/VoltMarket.tsx
+
+### All VoltMarket Components (Complete Directory)
+src/components/voltmarket/EmailVerificationBanner.tsx
+src/components/voltmarket/VoltMarketAccessRequests.tsx
+src/components/voltmarket/VoltMarketAdvancedDueDiligence.tsx
+src/components/voltmarket/VoltMarketAdvancedPortfolio.tsx
+src/components/voltmarket/VoltMarketAdvancedSearch.tsx
+src/components/voltmarket/VoltMarketAnalyticsDashboard.tsx
+src/components/voltmarket/VoltMarketAuth.tsx
+src/components/voltmarket/VoltMarketComprehensiveTest.tsx
+src/components/voltmarket/VoltMarketDashboard.tsx
+src/components/voltmarket/VoltMarketDocumentUpload.tsx
+src/components/voltmarket/VoltMarketDocuments.tsx
+src/components/voltmarket/VoltMarketDueDiligence.tsx
+src/components/voltmarket/VoltMarketLayout.tsx
+src/components/voltmarket/VoltMarketListingCard.tsx
+src/components/voltmarket/VoltMarketListingForm.tsx
+src/components/voltmarket/VoltMarketListings.tsx
+src/components/voltmarket/VoltMarketLOICenter.tsx
+src/components/voltmarket/VoltMarketMessages.tsx
+src/components/voltmarket/VoltMarketNavigation.tsx
+src/components/voltmarket/VoltMarketNotifications.tsx
+src/components/voltmarket/VoltMarketPortfolio.tsx
+src/components/voltmarket/VoltMarketProfile.tsx
+src/components/voltmarket/VoltMarketSearch.tsx
+src/components/voltmarket/VoltMarketTransactions.tsx
+src/components/voltmarket/VoltMarketVerification.tsx
+src/components/voltmarket/VoltMarketWatchlist.tsx
+
+### All VoltMarket Hooks
+src/hooks/useVoltMarketAccessRequests.ts
+src/hooks/useVoltMarketAnalytics.ts
+src/hooks/useVoltMarketDocuments.ts
+src/hooks/useVoltMarketListings.ts
+src/hooks/useVoltMarketMessages.ts
+src/hooks/useVoltMarketNotifications.ts
+src/hooks/useVoltMarketPortfolio.ts
+src/hooks/useVoltMarketSavedSearches.ts
+src/hooks/useVoltMarketTransactions.ts
+src/hooks/useVoltMarketVerification.ts
+src/hooks/useVoltMarketWatchlist.ts
+
+### Supabase Edge Functions
+supabase/functions/create-voltmarket-profile/index.ts
+supabase/functions/send-verification-email/index.ts
+supabase/functions/verify-email/index.ts
+supabase/functions/voltmarket-chat/index.ts
+supabase/functions/voltmarket-document-management/index.ts
+supabase/functions/voltmarket-loi-management/index.ts
+supabase/functions/voltmarket-notifications/index.ts
+supabase/functions/voltmarket-portfolio-management/index.ts
+supabase/functions/voltmarket-verification-system/index.ts
+
+### Database Migrations (All VoltMarket Tables)
+supabase/migrations/20250702201738-616d3e57-eb19-4245-9aa5-5ce49afe53f9.sql
+supabase/migrations/20250702202156-a5a5c9b7-3829-4c5f-9f8b-2e4a3c5b7d9e.sql
+supabase/migrations/20250702202359-voltmarket-profiles-extended.sql
+supabase/migrations/20250702202753-voltmarket-email-verification.sql
+supabase/migrations/20250702203046-voltmarket-email-templates.sql
+supabase/migrations/20250702203346-voltmarket-user-activity.sql
+supabase/migrations/20250702203640-voltmarket-portfolios.sql
+supabase/migrations/20250702204022-voltmarket-watchlist.sql
+supabase/migrations/20250702204244-voltmarket-access-requests.sql
+supabase/migrations/20250702204524-voltmarket-listing-images.sql
+supabase/migrations/20250702204729-voltmarket-due-diligence.sql
+supabase/migrations/20250702205042-voltmarket-lois.sql
+supabase/migrations/20250702205333-voltmarket-nda-requests.sql
+supabase/migrations/20250702205629-voltmarket-verifications.sql
+supabase/migrations/20250702210000-voltmarket-documents.sql
+supabase/migrations/20250702210300-voltmarket-conversations.sql
+supabase/migrations/20250702210500-voltmarket-messages.sql
+supabase/migrations/20250702210700-voltmarket-notifications.sql
+supabase/migrations/20250702211000-voltmarket-analytics.sql
+supabase/migrations/20250710230602-e5539cbe-0b57-4859-afef-4f32bfac4d44.sql
+
+### Configuration Files
+supabase/config.toml (modify project_id for new project)
+
+## Files to EXCLUDE (Don't Copy)
+
+### VoltScout-Specific Files
+src/pages/VoltScout.tsx
+src/pages/ComprehensiveTest.tsx
+src/pages/Index.tsx (current multi-app version)
+src/components/Auth.tsx (VoltScout version)
+src/components/Sidebar.tsx (VoltScout specific)
+src/components/ScrollToTop.tsx
+src/components/landing/ (entire directory)
+
+### Any hooks or components not related to VoltMarket
+All files with "voltscout", "industry", "btc", or other non-VoltMarket prefixes
+
+## Key Changes Required After Copy
+
+1. **New App.tsx**: Remove VoltScout routing, make VoltMarket the main app
+2. **New Index.tsx**: Create GridBazaar-specific landing page
+3. **Update nav-items.tsx**: Only include GridBazaar/VoltMarket routes
+4. **Update VoltMarketLayout.tsx**: Remove any VoltScout references
+5. **Update package.json**: Clean up dependencies not needed
+6. **Update all auth redirects**: Point to GridBazaar URLs instead of /voltmarket/*
+7. **Update email templates**: Reference GridBazaar branding
+8. **Update Supabase config**: New project ID if using separate database
+
+## Required Secrets for New Project
+- OPENAI_API_KEY
+- RESEND_API_KEY
+- GOOGLE_MAPS_API_KEY
+- GOOGLE_PLACES_API_KEY
+- MAPBOX_ACCESS_TOKEN
+- STRIPE_SECRET_KEY (if payments enabled)
+- SUPABASE_URL (new project)
+- SUPABASE_ANON_KEY (new project)
+- SUPABASE_SERVICE_ROLE_KEY (new project)
+
+This list provides everything needed to create a standalone GridBazaar application.
