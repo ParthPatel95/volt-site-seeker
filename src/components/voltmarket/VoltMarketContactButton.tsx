@@ -25,8 +25,8 @@ export const VoltMarketContactButton: React.FC<VoltMarketContactButtonProps> = (
   return (
     <>
       <Button onClick={handleContact} className={className}>
-        <MessageSquare className="w-4 h-4 mr-2" />
-        Contact Seller
+        <MessageSquare className="w-4 h-4 mr-1 md:mr-2 flex-shrink-0" />
+        <span className="truncate">Contact Seller</span>
       </Button>
 
       <VoltMarketContactForm

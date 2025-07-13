@@ -101,8 +101,8 @@ export const VoltMarketAuth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6 md:space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <Zap className="w-12 h-12 text-blue-600" />

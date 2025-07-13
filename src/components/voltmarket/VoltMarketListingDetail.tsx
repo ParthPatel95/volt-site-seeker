@@ -220,57 +220,59 @@ export const VoltMarketListingDetail: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
-              <div className="flex items-center gap-4 text-gray-600 mb-4">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {listing.location}
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 break-words">{listing.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 md:gap-4 text-gray-600 mb-4">
+                <div className="flex items-center gap-1 min-w-0">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{listing.location}</span>
                 </div>
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="flex-shrink-0">
                   {getListingTypeLabel(listing.listing_type)}
                 </Badge>
                 {listing.voltmarket_profiles?.is_id_verified && (
-                  <Badge variant="outline" className="text-green-600">
+                  <Badge variant="outline" className="text-green-600 flex-shrink-0">
                     Verified Seller
                   </Badge>
                 )}
               </div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl md:text-2xl font-bold text-green-600">
                 {getPriceDisplay()}
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <VoltMarketWatchlistButton listingId={listing.id} />
               <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} />
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className={`grid w-full ${profile?.id === listing.seller_id ? 'grid-cols-7' : 'grid-cols-6'}`}>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="analysis">Analysis</TabsTrigger>
-                {profile?.id === listing.seller_id && (
-                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                )}
-                <TabsTrigger value="location">Location</TabsTrigger>
-                <TabsTrigger value="seller">Seller</TabsTrigger>
-              </TabsList>
+            <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
+              <div className="overflow-x-auto">
+                <TabsList className={`grid w-max min-w-full ${profile?.id === listing.seller_id ? 'grid-cols-7' : 'grid-cols-6'} gap-1`}>
+                  <TabsTrigger value="overview" className="text-xs md:text-sm whitespace-nowrap">Overview</TabsTrigger>
+                  <TabsTrigger value="details" className="text-xs md:text-sm whitespace-nowrap">Details</TabsTrigger>
+                  <TabsTrigger value="documents" className="text-xs md:text-sm whitespace-nowrap">Documents</TabsTrigger>
+                  <TabsTrigger value="analysis" className="text-xs md:text-sm whitespace-nowrap">Analysis</TabsTrigger>
+                  {profile?.id === listing.seller_id && (
+                    <TabsTrigger value="analytics" className="text-xs md:text-sm whitespace-nowrap">Analytics</TabsTrigger>
+                  )}
+                  <TabsTrigger value="location" className="text-xs md:text-sm whitespace-nowrap">Location</TabsTrigger>
+                  <TabsTrigger value="seller" className="text-xs md:text-sm whitespace-nowrap">Seller</TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="overview" className="space-y-6">
+              <TabsContent value="overview" className="space-y-4 md:space-y-6">
                 {/* Image Gallery */}
                 <VoltMarketListingImageGallery listingId={listing.id} />
                 
                 {/* Description and Key Details */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>Description</CardTitle>
@@ -287,38 +289,38 @@ export const VoltMarketListingDetail: React.FC = () => {
                       <CardTitle>Key Specifications</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
+                      <div className="space-y-3 md:space-y-4">
                         {listing.power_capacity_mw > 0 && (
                           <div className="flex items-center justify-between py-2 border-b">
-                            <div className="flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-blue-600" />
-                              <span className="font-medium">Power Capacity</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Zap className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <span className="font-medium text-sm md:text-base">Power Capacity</span>
                             </div>
-                            <span className="text-lg font-semibold text-blue-600">{listing.power_capacity_mw}MW</span>
+                            <span className="text-base md:text-lg font-semibold text-blue-600 flex-shrink-0">{listing.power_capacity_mw}MW</span>
                           </div>
                         )}
                         {listing.square_footage && (
                           <div className="flex items-center justify-between py-2 border-b">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-green-600" />
-                              <span className="font-medium">Square Footage</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Building2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span className="font-medium text-sm md:text-base">Square Footage</span>
                             </div>
-                            <span className="text-lg font-semibold">{listing.square_footage.toLocaleString()} sq ft</span>
+                            <span className="text-base md:text-lg font-semibold flex-shrink-0">{listing.square_footage.toLocaleString()} sq ft</span>
                           </div>
                         )}
                         <div className="flex items-center justify-between py-2 border-b">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-red-600" />
-                            <span className="font-medium">Location</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <MapPin className="w-4 h-4 text-red-600 flex-shrink-0" />
+                            <span className="font-medium text-sm md:text-base">Location</span>
                           </div>
-                          <span className="text-lg font-semibold">{listing.location}</span>
+                          <span className="text-base md:text-lg font-semibold flex-shrink-0 text-right">{listing.location}</span>
                         </div>
                         <div className="flex items-center justify-between py-2">
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-green-600" />
-                            <span className="font-medium">Price</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <DollarSign className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span className="font-medium text-sm md:text-base">Price</span>
                           </div>
-                          <span className="text-lg font-semibold text-green-600">{getPriceDisplay()}</span>
+                          <span className="text-base md:text-lg font-semibold text-green-600 flex-shrink-0">{getPriceDisplay()}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -332,7 +334,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                       <CardTitle>Additional Details</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {listing.facility_tier && (
                           <div>
                             <label className="text-sm font-medium text-gray-500">Facility Tier</label>
@@ -369,7 +371,7 @@ export const VoltMarketListingDetail: React.FC = () => {
                     <CardTitle>Specifications</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {listing.power_capacity_mw > 0 && (
                         <div>
                           <label className="text-sm font-medium text-gray-500">Power Capacity</label>

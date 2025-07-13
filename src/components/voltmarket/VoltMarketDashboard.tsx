@@ -460,7 +460,7 @@ const BuyerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
   return (
     <>
       {/* Buyer Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active LOIs</CardTitle>
@@ -515,7 +515,7 @@ const BuyerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
         {/* Recent Listings */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">

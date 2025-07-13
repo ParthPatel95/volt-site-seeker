@@ -267,9 +267,9 @@ export const VoltMarketCreateListing: React.FC = () => {
   };
 
   if (!profile || profile.role !== 'seller') {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+  return (
+    <div className="min-h-screen bg-gray-50 py-4 md:py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900">Access Restricted</h2>
             <p className="text-gray-600 mt-2">Only verified sellers can create listings.</p>
@@ -405,7 +405,7 @@ export const VoltMarketCreateListing: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Power Infrastructure Specifications */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div>
                     <Label htmlFor="power_capacity_mw">Total Power Capacity (MW) *</Label>
                     <Input
