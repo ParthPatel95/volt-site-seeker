@@ -84,28 +84,28 @@ export const VoltMarketNavigation: React.FC = () => {
     <>
       {/* Main Navigation Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-watt-primary/10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo & Brand - Fixed Width */}
-            <div className="w-64 flex-shrink-0">
-              <Link to="/voltmarket/home" className="flex items-center gap-3 group">
-                <div className="p-2 bg-watt-gradient rounded-xl group-hover:shadow-watt-glow transition-all duration-300">
-                  <Zap className="w-6 h-6 text-white" />
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-16 min-w-0">
+            {/* Logo & Brand - Responsive Width */}
+            <div className="flex-shrink-0 min-w-0">
+              <Link to="/voltmarket/home" className="flex items-center gap-2 sm:gap-3 group min-w-0">
+                <div className="p-2 bg-watt-gradient rounded-xl group-hover:shadow-watt-glow transition-all duration-300 flex-shrink-0">
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div className="hidden sm:flex flex-col">
-                  <span className="text-xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent">
+                <div className="hidden sm:flex flex-col min-w-0">
+                  <span className="text-lg lg:text-xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent truncate">
                     GridBazaar
                   </span>
-                  <span className="text-xs text-muted-foreground -mt-1">Energy Infrastructure Marketplace</span>
+                  <span className="text-xs text-muted-foreground -mt-1 hidden lg:block truncate">Energy Infrastructure Marketplace</span>
                 </div>
-                <span className="sm:hidden text-xl font-bold text-watt-primary">VM</span>
+                <span className="sm:hidden text-lg font-bold text-watt-primary">GB</span>
               </Link>
             </div>
 
             {/* Right-aligned Navigation - Only show when user is logged in */}
             {user && (
-              <div className="hidden lg:flex items-center justify-end flex-1 mr-4">
-                <nav className="flex items-center gap-1">
+              <div className="hidden lg:flex items-center justify-end flex-1 mr-2 min-w-0">
+                <nav className="flex items-center gap-1 overflow-hidden">
                   {primaryNavItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = isActiveRoute(item.path);
@@ -153,15 +153,15 @@ export const VoltMarketNavigation: React.FC = () => {
             )}
 
             {/* Right Actions - Dynamic width */}
-            <div className={`flex items-center justify-end gap-3 flex-shrink-0 ${user ? 'w-64' : ''}`}>
+            <div className="flex items-center justify-end gap-2 sm:gap-3 flex-shrink-0 min-w-0">
               {user ? (
                 <>
                   {/* Create Listing CTA - Simplified */}
                   {profile?.role === 'seller' && (
                     <Link to="/voltmarket/create-listing">
-                      <Button size="sm" className="bg-watt-gradient hover:opacity-90 text-white shadow-sm">
-                        <Plus className="w-4 h-4 mr-1" />
-                        <span className="hidden sm:inline">List</span>
+                      <Button size="sm" className="bg-watt-gradient hover:opacity-90 text-white shadow-sm text-sm">
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden md:inline ml-1">List</span>
                       </Button>
                     </Link>
                   )}
@@ -169,19 +169,19 @@ export const VoltMarketNavigation: React.FC = () => {
                   {/* Elegant User Profile */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="flex items-center gap-2 p-1 hover:bg-muted/50 rounded-full">
-                        <div className="w-8 h-8 bg-watt-gradient rounded-full flex items-center justify-center text-white font-medium text-sm">
+                      <Button variant="ghost" className="flex items-center gap-1 sm:gap-2 p-1 hover:bg-muted/50 rounded-full min-w-0">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-watt-gradient rounded-full flex items-center justify-center text-white font-medium text-xs sm:text-sm flex-shrink-0">
                           {getInitials(profile?.company_name || 'User')}
                         </div>
-                        <div className="hidden lg:block text-left">
-                          <div className="text-sm font-medium leading-none">
+                        <div className="hidden lg:block text-left min-w-0">
+                          <div className="text-sm font-medium leading-none truncate max-w-20 xl:max-w-32">
                             {profile?.company_name?.split(' ')[0] || 'User'}
                           </div>
                           {profile?.is_id_verified && (
                             <div className="text-xs text-watt-success mt-0.5">Verified</div>
                           )}
                         </div>
-                        <ChevronDown className="w-3 h-3 text-muted-foreground hidden lg:block" />
+                        <ChevronDown className="w-3 h-3 text-muted-foreground hidden lg:block flex-shrink-0" />
                       </Button>
                     </DropdownMenuTrigger>
                      <DropdownMenuContent align="end" className="w-48">
@@ -246,15 +246,17 @@ export const VoltMarketNavigation: React.FC = () => {
                   </DropdownMenu>
                 </>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Link to="/voltmarket/auth">
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-watt-primary">
-                      Sign In
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-watt-primary text-sm">
+                      <span className="hidden sm:inline">Sign In</span>
+                      <span className="sm:hidden">In</span>
                     </Button>
                   </Link>
                   <Link to="/voltmarket/auth">
-                    <Button size="sm" className="bg-watt-gradient hover:opacity-90 text-white">
-                      Get Started
+                    <Button size="sm" className="bg-watt-gradient hover:opacity-90 text-white text-sm">
+                      <span className="hidden sm:inline">Get Started</span>
+                      <span className="sm:hidden">Start</span>
                     </Button>
                   </Link>
                 </div>
@@ -275,8 +277,8 @@ export const VoltMarketNavigation: React.FC = () => {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="lg:hidden py-4 border-t border-border/50 bg-background/95 backdrop-blur-sm">
-              <div className="space-y-2">
+            <div className="lg:hidden py-4 border-t border-border/50 bg-background/95 backdrop-blur-sm max-h-96 overflow-y-auto">
+              <div className="space-y-2 px-2">
                 {/* Primary Navigation */}
                 {primaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -345,65 +347,65 @@ export const VoltMarketNavigation: React.FC = () => {
       {/* Mobile Bottom Navigation */}
       {user && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border/50 safe-area-pb">
-          <div className="grid grid-cols-5 gap-1 p-2">
+          <div className="grid grid-cols-5 gap-0.5 p-1.5">
             <Link
               to="/voltmarket/home"
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl touch-target transition-all duration-200 ${
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/home') 
                   ? 'text-watt-primary bg-watt-primary/10' 
                   : 'text-muted-foreground hover:text-watt-primary'
               }`}
             >
-              <Home className="w-5 h-5" />
-              <span className="text-xs font-medium">Home</span>
+              <Home className="w-4 h-4" />
+              <span className="text-xs font-medium leading-none">Home</span>
             </Link>
 
             <Link
               to="/voltmarket/listings"
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl touch-target transition-all duration-200 ${
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/listings') 
                   ? 'text-watt-primary bg-watt-primary/10' 
                   : 'text-muted-foreground hover:text-watt-primary'
               }`}
             >
-              <Search className="w-5 h-5" />
-              <span className="text-xs font-medium">Browse</span>
+              <Search className="w-4 h-4" />
+              <span className="text-xs font-medium leading-none">Browse</span>
             </Link>
 
             <Link
               to="/voltmarket/contact-messages"
-              className={`relative flex flex-col items-center gap-1 p-3 rounded-xl touch-target transition-all duration-200 ${
+              className={`relative flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/contact-messages') 
                   ? 'text-watt-primary bg-watt-primary/10' 
                   : 'text-muted-foreground hover:text-watt-primary'
               }`}
             >
-              <MessageSquare className="w-5 h-5" />
-              <span className="text-xs font-medium">Messages</span>
+              <MessageSquare className="w-4 h-4" />
+              <span className="text-xs font-medium leading-none">Messages</span>
             </Link>
 
             <Link
               to="/voltmarket/watchlist"
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl touch-target transition-all duration-200 ${
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/watchlist') 
                   ? 'text-watt-primary bg-watt-primary/10' 
                   : 'text-muted-foreground hover:text-watt-primary'
               }`}
             >
-              <Heart className="w-5 h-5" />
-              <span className="text-xs font-medium">Watchlist</span>
+              <Heart className="w-4 h-4" />
+              <span className="text-xs font-medium leading-none">Watchlist</span>
             </Link>
 
             <Link
               to="/voltmarket/dashboard"
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl touch-target transition-all duration-200 ${
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/dashboard') 
                   ? 'text-watt-primary bg-watt-primary/10' 
                   : 'text-muted-foreground hover:text-watt-primary'
               }`}
             >
-              <User className="w-5 h-5" />
-              <span className="text-xs font-medium">Profile</span>
+              <User className="w-4 h-4" />
+              <span className="text-xs font-medium leading-none">Profile</span>
             </Link>
           </div>
         </div>

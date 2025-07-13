@@ -16,14 +16,14 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
       <VoltMarketNavigation />
 
       {/* Main Content with mobile bottom navigation spacing */}
-      <main className="pb-20 lg:pb-0">
+      <main className="pb-20 lg:pb-0 px-2 sm:px-4 lg:px-6">
         {children}
       </main>
 
       {/* Enhanced Footer */}
       <footer className="bg-background border-t border-border/50 mt-12">
-        <div className="container-responsive py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="w-6 h-6 text-watt-primary" />
@@ -68,11 +68,11 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
             </div>
           </div>
           
-          <div className="border-t border-border/50 mt-8 pt-8 flex items-center justify-between">
-            <p className="text-muted-foreground text-sm">
+          <div className="border-t border-border/50 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-muted-foreground text-sm text-center sm:text-left">
               © 2025 GridBazaar. All rights reserved.
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
               <Badge variant="secondary" className="text-xs bg-watt-success/10 text-watt-success border-watt-success/20">
                 Real-time Enabled
               </Badge>

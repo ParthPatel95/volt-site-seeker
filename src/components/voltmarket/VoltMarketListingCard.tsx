@@ -146,19 +146,19 @@ export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ li
       </div>
 
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg">{listing.title}</CardTitle>
-          <Badge variant="secondary">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <CardTitle className="text-base sm:text-lg line-clamp-2">{listing.title}</CardTitle>
+          <Badge variant="secondary" className="self-start shrink-0 text-xs">
             {getListingTypeLabel(listing.listing_type)}
           </Badge>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center text-gray-600">
-            <MapPin className="w-4 h-4 mr-1" />
-            <span className="text-sm">{listing.location}</span>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center text-gray-600 min-w-0">
+            <MapPin className="w-4 h-4 mr-1 shrink-0" />
+            <span className="text-sm truncate">{listing.location}</span>
           </div>
           {listing.voltmarket_profiles?.is_id_verified && (
-            <Badge variant="outline" className="text-green-600">
+            <Badge variant="outline" className="text-green-600 text-xs self-start shrink-0">
               <Shield className="w-3 h-3 mr-1" />
               Verified
             </Badge>
@@ -167,26 +167,26 @@ export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ li
       </CardHeader>
 
       <CardContent>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center text-green-600 font-semibold">
-            <DollarSign className="w-4 h-4 mr-1" />
-            {getPriceDisplay()}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div className="flex items-center text-green-600 font-semibold min-w-0">
+            <DollarSign className="w-4 h-4 mr-1 shrink-0" />
+            <span className="truncate">{getPriceDisplay()}</span>
           </div>
           {listing.power_capacity_mw > 0 && (
-            <div className="flex items-center text-blue-600">
+            <div className="flex items-center text-blue-600 shrink-0">
               <Zap className="w-4 h-4 mr-1" />
               <span className="text-sm">{listing.power_capacity_mw}MW</span>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center text-gray-500 text-sm">
-            <Calendar className="w-4 h-4 mr-1" />
-            {new Date(listing.created_at).toLocaleDateString()}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center text-gray-500 text-sm min-w-0">
+            <Calendar className="w-4 h-4 mr-1 shrink-0" />
+            <span className="truncate">{new Date(listing.created_at).toLocaleDateString()}</span>
           </div>
-          <Link to={`/voltmarket/listings/${listing.id}`}>
-            <Button size="sm">View Details</Button>
+          <Link to={`/voltmarket/listings/${listing.id}`} className="shrink-0">
+            <Button size="sm" className="w-full sm:w-auto">View Details</Button>
           </Link>
         </div>
       </CardContent>

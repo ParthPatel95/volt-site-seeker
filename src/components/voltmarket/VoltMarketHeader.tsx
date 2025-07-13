@@ -54,36 +54,36 @@ export const VoltMarketHeader: React.FC = () => {
 
   return (
     <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="flex justify-between items-center h-16 min-w-0">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/voltmarket" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="flex items-center flex-shrink-0 min-w-0">
+            <Link to="/voltmarket" className="flex items-center space-x-2 min-w-0">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-sm">GB</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">GridBazaar</span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900 truncate">GridBazaar</span>
             </Link>
           </div>
 
           {/* Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-lg mx-8">
+          <div className="hidden md:flex flex-1 max-w-md lg:max-w-lg mx-4 lg:mx-8">
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   type="text"
-                  placeholder="Search listings, locations, equipment..."
+                  placeholder="Search listings..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full"
+                  className="pl-10 w-full text-sm"
                 />
               </div>
             </form>
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
+          <nav className="hidden md:flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
             <Link to="/voltmarket/listings">
               <Button variant="ghost">Browse</Button>
             </Link>

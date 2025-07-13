@@ -163,14 +163,14 @@ const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
   return (
     <>
       {/* Seller Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
             <Search className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeListings}</div>
+            <div className="text-xl sm:text-2xl font-bold">{activeListings}</div>
             <p className="text-xs text-muted-foreground">
               of {userListings.length} total listings
             </p>
@@ -183,8 +183,8 @@ const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{unreadMessages}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-xl sm:text-2xl font-bold">{unreadMessages}</div>
+            <p className="text-xs text-muted-foreground truncate">
               {contactMessages.length > 0 && `Latest: ${contactMessages[0]?.sender_name}`}
             </p>
           </CardContent>
@@ -196,20 +196,20 @@ const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalViews}</div>
+            <div className="text-xl sm:text-2xl font-bold">{totalViews}</div>
             <p className="text-xs text-muted-foreground">
               across all listings
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="sm:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending LOIs</CardTitle>
             <HandHeart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingLOIs}</div>
+            <div className="text-xl sm:text-2xl font-bold">{pendingLOIs}</div>
             <p className="text-xs text-muted-foreground">
               need your response
             </p>
@@ -218,13 +218,13 @@ const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Listings Management */}
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Your Listings ({userListings.length})</CardTitle>
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-lg sm:text-xl">Your Listings ({userListings.length})</CardTitle>
             <Link to="/voltmarket/create-listing">
-              <Button size="sm">
+              <Button size="sm" className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 New Listing
               </Button>
@@ -250,53 +250,54 @@ const SellerDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               </div>
             ) : (
               <div className="space-y-4">
-                {userListings.slice(0, 5).map((listing) => (
-                  <div key={listing.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg">{listing.title}</h3>
-                          <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
-                            {listing.status}
-                          </Badge>
-                        </div>
-                        <p className="text-gray-600 mb-2 line-clamp-2">{listing.description}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>${listing.asking_price?.toLocaleString()}</span>
-                          <span>{listing.power_capacity_mw} MW</span>
-                          <span>{listing.location}</span>
-                          <span>Created {new Date(listing.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleToggleStatus(listing.id, listing.status)}
-                        >
-                          {listing.status === 'active' ? (
-                            <><EyeOff className="w-4 h-4 mr-1" /> Hide</>
-                          ) : (
-                            <><Eye className="w-4 h-4 mr-1" /> Show</>
-                          )}
-                        </Button>
-                        <Link to={`/voltmarket/edit-listing/${listing.id}`}>
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteListing(listing.id, listing.title)}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                 {userListings.slice(0, 5).map((listing) => (
+                   <div key={listing.id} className="border rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                       <div className="flex-1 min-w-0">
+                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 mb-2">
+                           <h3 className="font-semibold text-base sm:text-lg truncate">{listing.title}</h3>
+                           <Badge variant={listing.status === 'active' ? 'default' : 'secondary'} className="self-start">
+                             {listing.status}
+                           </Badge>
+                         </div>
+                         <p className="text-gray-600 mb-2 line-clamp-2 text-sm sm:text-base">{listing.description}</p>
+                         <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+                           <span>${listing.asking_price?.toLocaleString()}</span>
+                           <span>{listing.power_capacity_mw} MW</span>
+                           <span className="truncate max-w-32">{listing.location}</span>
+                           <span className="hidden sm:inline">Created {new Date(listing.created_at).toLocaleDateString()}</span>
+                         </div>
+                       </div>
+                       <div className="flex items-center gap-1 sm:gap-2 sm:ml-4 flex-shrink-0">
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => handleToggleStatus(listing.id, listing.status)}
+                           className="text-xs sm:text-sm"
+                         >
+                           {listing.status === 'active' ? (
+                             <><EyeOff className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" /> <span className="hidden sm:inline">Hide</span></>
+                           ) : (
+                             <><Eye className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" /> <span className="hidden sm:inline">Show</span></>
+                           )}
+                         </Button>
+                         <Link to={`/voltmarket/edit-listing/${listing.id}`}>
+                           <Button variant="outline" size="sm">
+                             <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                           </Button>
+                         </Link>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => handleDeleteListing(listing.id, listing.title)}
+                           className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                         >
+                           <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                         </Button>
+                       </div>
+                     </div>
+                   </div>
+                 ))}
                 {userListings.length > 5 && (
                   <div className="text-center pt-4">
                     <Link to="/voltmarket/dashboard">

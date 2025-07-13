@@ -101,9 +101,9 @@ export const VoltMarketContactForm: React.FC<VoltMarketContactFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-md mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle className="flex items-center justify-between text-lg">
             Contact Seller
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="w-4 h-4" />
@@ -113,7 +113,7 @@ export const VoltMarketContactForm: React.FC<VoltMarketContactFormProps> = ({
 
         <div className="mb-4">
           <p className="text-sm text-gray-600">
-            Regarding: <span className="font-medium">{listingTitle}</span>
+            Regarding: <span className="font-medium line-clamp-2">{listingTitle}</span>
           </p>
         </div>
 
@@ -168,11 +168,11 @@ export const VoltMarketContactForm: React.FC<VoltMarketContactFormProps> = ({
             />
           </div>
 
-          <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 order-2 sm:order-1">
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting} className="flex-1">
+            <Button type="submit" disabled={submitting} className="flex-1 order-1 sm:order-2">
               {submitting ? (
                 <>Sending...</>
               ) : (
@@ -185,7 +185,7 @@ export const VoltMarketContactForm: React.FC<VoltMarketContactFormProps> = ({
           </div>
         </form>
 
-        <div className="text-xs text-gray-500 mt-2">
+        <div className="text-xs text-gray-500 mt-2 text-center sm:text-left">
           * Required fields. The listing owner will contact you directly using the information provided.
         </div>
       </DialogContent>
