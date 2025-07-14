@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Settings, Users, Check, X, Clock } from 'lucide-react';
+import { Settings, Users, Check, X, Clock, RefreshCw, UserPlus, Shield } from 'lucide-react';
 
 interface AccessRequest {
   id: string;
@@ -156,13 +156,26 @@ export function AdminSettings() {
       {/* Access Requests Management */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Access Requests
-          </CardTitle>
-          <CardDescription>
-            Review and manage user access requests for the VoltScout platform
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Access Requests
+              </CardTitle>
+              <CardDescription>
+                Review and manage user access requests for the VoltScout platform
+              </CardDescription>
+            </div>
+            <Button
+              onClick={fetchAccessRequests}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {accessRequests.length === 0 ? (
@@ -272,7 +285,68 @@ export function AdminSettings() {
         </CardContent>
       </Card>
 
-      {/* Admin Information */}
+      {/* Admin Tools */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Admin Tools
+          </CardTitle>
+          <CardDescription>
+            Additional administrative tools and system management
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4">
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <UserPlus className="w-4 h-4" />
+                Manual User Management
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Manually add or remove users from the VoltScout platform
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  toast({
+                    title: "Manual User Management",
+                    description: "This feature allows you to directly add users to the approved list without going through the request process.",
+                  });
+                }}
+              >
+                Manage Users
+              </Button>
+            </Card>
+            
+            <Card className="p-4">
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                System Settings
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Configure platform-wide settings and preferences
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  toast({
+                    title: "System Settings",
+                    description: "Configure platform settings, email templates, and system preferences.",
+                  });
+                }}
+              >
+                Configure
+              </Button>
+            </Card>
+          </div>
+        </CardContent>
+
+      </Card>
+
+      {/* Administrator Information */}
       <Card>
         <CardHeader>
           <CardTitle>Administrator Information</CardTitle>
