@@ -119,6 +119,38 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
       trend: 'up',
       icon: TrendingUp,
       color: 'text-orange-600'
+    },
+    {
+      title: 'Total Transactions',
+      value: analyticsData.total_transactions,
+      change: '+31%',
+      trend: 'up',
+      icon: DollarSign,
+      color: 'text-emerald-600'
+    },
+    {
+      title: 'Avg Deal Size',
+      value: '$2.4M',
+      change: '+18%',
+      trend: 'up',
+      icon: Building2,
+      color: 'text-indigo-600'
+    },
+    {
+      title: 'Monthly Volume',
+      value: '$15.2M',
+      change: '+45%',
+      trend: 'up',
+      icon: TrendingUp,
+      color: 'text-cyan-600'
+    },
+    {
+      title: 'Conversion Rate',
+      value: '14.8%',
+      change: '+5.2%',
+      trend: 'up',
+      icon: Activity,
+      color: 'text-rose-600'
     }
   ];
 
@@ -196,7 +228,7 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-4 sm:mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mb-4 sm:mb-8">
           {/* Popular Locations */}
           <Card>
             <CardHeader>
@@ -255,38 +287,160 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+
+          {/* Revenue Trends */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Revenue Trends
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={[
+                  { month: 'Jan', revenue: 1200000, fees: 36000, growth: 12 },
+                  { month: 'Feb', revenue: 1350000, fees: 40500, growth: 15 },
+                  { month: 'Mar', revenue: 1480000, fees: 44400, growth: 18 },
+                  { month: 'Apr', revenue: 1620000, fees: 48600, growth: 22 },
+                  { month: 'May', revenue: 1750000, fees: 52500, growth: 25 },
+                  { month: 'Jun', revenue: 1890000, fees: 56700, growth: 28 }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <Tooltip formatter={(value, name) => [
+                    name === 'revenue' ? `$${(value as number / 1000000).toFixed(1)}M` : 
+                    name === 'fees' ? `$${(value as number / 1000).toFixed(0)}K` : 
+                    `${value}%`,
+                    name
+                  ]} />
+                  <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} />
+                  <Line type="monotone" dataKey="fees" stroke="#82ca9d" strokeWidth={2} />
+                  <Line type="monotone" dataKey="growth" stroke="#ffc658" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Activity Timeline */}
+        {/* Activity and Performance Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-4 sm:mb-8">
+          {/* Platform Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                Platform Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={[
+                  { name: 'Week 1', listings: 65, users: 28, transactions: 12 },
+                  { name: 'Week 2', listings: 78, users: 34, transactions: 18 },
+                  { name: 'Week 3', listings: 82, users: 41, transactions: 22 },
+                  { name: 'Week 4', listings: 95, users: 48, transactions: 28 }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="listings" stackId="1" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="users" stackId="1" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="transactions" stackId="1" stroke="#ffc658" fill="#ffc658" fillOpacity={0.6} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Performance Metrics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Performance Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={[
+                  { metric: 'Conversion', value: 14.8, target: 15 },
+                  { metric: 'Engagement', value: 78.2, target: 75 },
+                  { metric: 'Retention', value: 92.5, target: 90 },
+                  { metric: 'Satisfaction', value: 89.3, target: 85 },
+                  { metric: 'Growth', value: 23.7, target: 20 }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="metric" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <Tooltip formatter={(value) => [`${value}%`, 'Performance']} />
+                  <Bar dataKey="value" fill="#0088FE" name="Current" />
+                  <Bar dataKey="target" fill="#00C49F" name="Target" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Geographic Distribution */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Platform Activity
+              <MapPin className="w-5 h-5" />
+              Geographic Distribution & Market Coverage
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={[
-                { name: 'Week 1', listings: 65, users: 28, transactions: 12 },
-                { name: 'Week 2', listings: 78, users: 34, transactions: 18 },
-                { name: 'Week 3', listings: 82, users: 41, transactions: 22 },
-                { name: 'Week 4', listings: 95, users: 48, transactions: 28 }
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="listings" stackId="1" stroke="#8884d8" fill="#8884d8" />
-                <Area type="monotone" dataKey="users" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
-                <Area type="monotone" dataKey="transactions" stackId="1" stroke="#ffc658" fill="#ffc658" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={[
+                    { state: 'Texas', listings: 145, volume: 45.2, growth: 28 },
+                    { state: 'California', listings: 123, volume: 38.7, growth: 22 },
+                    { state: 'New York', listings: 98, volume: 31.4, growth: 18 },
+                    { state: 'Florida', listings: 87, volume: 28.9, growth: 35 },
+                    { state: 'Illinois', listings: 76, volume: 24.1, growth: 15 },
+                    { state: 'Pennsylvania', listings: 65, volume: 19.8, growth: 12 },
+                    { state: 'Ohio', listings: 54, volume: 16.3, growth: 25 }
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="state" angle={-45} textAnchor="end" height={80} fontSize={12} />
+                    <YAxis yAxisId="left" orientation="left" fontSize={12} />
+                    <YAxis yAxisId="right" orientation="right" fontSize={12} />
+                    <Tooltip />
+                    <Bar yAxisId="left" dataKey="listings" fill="#8884d8" name="Listings" />
+                    <Bar yAxisId="right" dataKey="volume" fill="#82ca9d" name="Volume ($M)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-800">Top Markets</h4>
+                <div className="space-y-3">
+                  {[
+                    { region: 'Southeast', share: '32%', trend: '+18%' },
+                    { region: 'West Coast', share: '28%', trend: '+22%' },
+                    { region: 'Northeast', share: '24%', trend: '+15%' },
+                    { region: 'Midwest', share: '16%', trend: '+12%' }
+                  ].map((market, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{market.region}</p>
+                        <p className="text-xs text-gray-600">{market.share} market share</p>
+                      </div>
+                      <Badge variant="secondary" className="text-green-600 bg-green-50">
+                        {market.trend}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Market Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        {/* Comprehensive Market Insights */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Market Trends</CardTitle>
@@ -304,6 +458,10 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Success Rate</span>
                   <span className="font-semibold text-green-600">78%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Market Velocity</span>
+                  <span className="font-semibold text-blue-600">2.3x</span>
                 </div>
               </div>
             </CardContent>
@@ -327,6 +485,10 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
                   <span className="text-sm text-gray-600">Profile Views</span>
                   <span className="font-semibold">12,345</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Session Duration</span>
+                  <span className="font-semibold">18.5 min</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -349,7 +511,97 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
                   <span className="text-sm text-gray-600">Growth Rate</span>
                   <span className="font-semibold text-green-600">+23%</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">ARPU</span>
+                  <span className="font-semibold">$3,240</span>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Operational KPIs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Lead Response Time</span>
+                  <span className="font-semibold">2.3 hrs</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Quality Score</span>
+                  <span className="font-semibold text-green-600">9.2/10</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Support Tickets</span>
+                  <span className="font-semibold">127</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Platform Uptime</span>
+                  <span className="font-semibold text-green-600">99.8%</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Advanced Analytics Dashboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          {/* Power Capacity Analytics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                Power Capacity Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={[
+                  { range: '<1MW', count: 45, percentage: 25 },
+                  { range: '1-5MW', count: 67, percentage: 35 },
+                  { range: '5-10MW', count: 34, percentage: 20 },
+                  { range: '10-25MW', count: 23, percentage: 15 },
+                  { range: '>25MW', count: 12, percentage: 5 }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="range" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8884d8" name="Listings" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Market Predictions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Market Predictions (6 months)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={[
+                  { month: 'Jul', predicted: 180, confidence: 85 },
+                  { month: 'Aug', predicted: 195, confidence: 82 },
+                  { month: 'Sep', predicted: 210, confidence: 78 },
+                  { month: 'Oct', predicted: 225, confidence: 75 },
+                  { month: 'Nov', predicted: 240, confidence: 72 },
+                  { month: 'Dec', predicted: 255, confidence: 68 }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" fontSize={12} />
+                  <YAxis yAxisId="left" fontSize={12} />
+                  <YAxis yAxisId="right" orientation="right" fontSize={12} />
+                  <Tooltip />
+                  <Line yAxisId="left" type="monotone" dataKey="predicted" stroke="#8884d8" strokeWidth={3} name="Predicted Listings" />
+                  <Line yAxisId="right" type="monotone" dataKey="confidence" stroke="#82ca9d" strokeWidth={2} name="Confidence %" />
+                </LineChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
