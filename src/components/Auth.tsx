@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Zap, AlertCircle, Bitcoin, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AccessRequestForm } from '@/components/AccessRequestForm';
 import { EnhancedLogo } from './EnhancedLogo';
 
@@ -25,6 +25,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const [showAccessForm, setShowAccessForm] = useState(false);
   const [hasGridBazaarAccount, setHasGridBazaarAccount] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user has a GridBazaar account but not VoltScout approval
@@ -69,17 +70,40 @@ export function Auth({ onAuthStateChange }: AuthProps) {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
+      // Check if user is approved for VoltScout
+      if (data.user) {
+        const { data: isApproved } = await supabase
+          .rpc('is_voltscout_approved', { user_id: data.user.id });
+
+        if (isApproved) {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully signed in.",
+          });
+          // Redirect to app after successful sign in
+          navigate('/app');
+        } else {
+          // Check if they have a GridBazaar profile
+          const { data: gridBazaarProfile } = await supabase
+            .from('voltmarket_profiles')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .single();
+          
+          if (gridBazaarProfile) {
+            setHasGridBazaarAccount(true);
+          } else {
+            setError('Your account does not have VoltScout access. Please request access or contact support.');
+          }
+        }
+      }
     } catch (error: any) {
       setError(error.message);
     } finally {
