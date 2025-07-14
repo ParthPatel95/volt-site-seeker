@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Settings, Users, Check, X, Clock, RefreshCw, UserPlus, Shield } from 'lucide-react';
+import { Settings, Users, Check, X, Clock, RefreshCw, UserPlus, Shield, UserMinus, Mail, Trash2, Save } from 'lucide-react';
 
 interface AccessRequest {
   id: string;
@@ -20,10 +23,22 @@ interface AccessRequest {
   created_at: string;
 }
 
+interface ApprovedUser {
+  id: string;
+  user_id: string;
+  approved_at: string;
+  notes: string | null;
+}
+
 export function AdminSettings() {
   const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([]);
+  const [approvedUsers, setApprovedUsers] = useState<ApprovedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showSystemSettings, setShowSystemSettings] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserNotes, setNewUserNotes] = useState('');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -33,10 +48,25 @@ export function AdminSettings() {
   useEffect(() => {
     if (isAdmin) {
       fetchAccessRequests();
+      fetchApprovedUsers();
     } else {
       setLoading(false);
     }
   }, [isAdmin]);
+
+  const fetchApprovedUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('voltscout_approved_users')
+        .select('*')
+        .order('approved_at', { ascending: false });
+
+      if (error) throw error;
+      setApprovedUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching approved users:', error);
+    }
+  };
 
   const fetchAccessRequests = async () => {
     try {
@@ -98,6 +128,108 @@ export function AdminSettings() {
       toast({
         title: "Error",
         description: "Failed to update request status",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const addUserManually = async () => {
+    if (!newUserEmail.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessing('add-user');
+    try {
+      // First check if the user exists in auth.users
+      const { data: existingUser, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', newUserEmail.trim())
+        .single();
+
+      if (userError && userError.code !== 'PGRST116') {
+        throw userError;
+      }
+
+      // If user doesn't exist, they need to create an account first
+      if (!existingUser) {
+        toast({
+          title: "User Not Found",
+          description: "This user needs to create an account first before being added to VoltScout.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Add user to approved list
+      const { error } = await supabase
+        .from('voltscout_approved_users')
+        .insert([{
+          user_id: existingUser.id,
+          notes: newUserNotes.trim() || null,
+          approved_by: user?.id
+        }]);
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          toast({
+            title: "User Already Approved",
+            description: "This user is already approved for VoltScout access.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+
+      toast({
+        title: "User Added",
+        description: `${newUserEmail} has been manually added to VoltScout.`,
+      });
+
+      setNewUserEmail('');
+      setNewUserNotes('');
+      fetchApprovedUsers();
+    } catch (error) {
+      console.error('Error adding user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add user to approved list",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const removeUser = async (userId: string) => {
+    setProcessing(userId);
+    try {
+      const { error } = await supabase
+        .from('voltscout_approved_users')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "User Removed",
+        description: "User has been removed from VoltScout access.",
+      });
+
+      fetchApprovedUsers();
+    } catch (error) {
+      console.error('Error removing user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove user",
         variant: "destructive",
       });
     } finally {
@@ -299,47 +431,133 @@ export function AdminSettings() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="p-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <UserPlus className="w-4 h-4" />
-                Manual User Management
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Manually add or remove users from the VoltScout platform
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  toast({
-                    title: "Manual User Management",
-                    description: "This feature allows you to directly add users to the approved list without going through the request process.",
-                  });
-                }}
-              >
-                Manage Users
-              </Button>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Manual User Management
+                </h3>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowUserManagement(!showUserManagement)}
+                >
+                  {showUserManagement ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+              
+              {showUserManagement && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="userEmail">Add User by Email</Label>
+                    <Input
+                      id="userEmail"
+                      type="email"
+                      placeholder="user@example.com"
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="userNotes">Notes (Optional)</Label>
+                    <Textarea
+                      id="userNotes"
+                      placeholder="Add any notes about this user..."
+                      value={newUserNotes}
+                      onChange={(e) => setNewUserNotes(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={addUserManually}
+                    disabled={processing === 'add-user'}
+                    className="w-full"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    {processing === 'add-user' ? 'Adding...' : 'Add User'}
+                  </Button>
+                  
+                  {/* Current Approved Users */}
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium mb-2">Currently Approved Users ({approvedUsers.length})</h4>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      {approvedUsers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No approved users yet</p>
+                      ) : (
+                        approvedUsers.map((approvedUser) => (
+                          <div key={approvedUser.id} className="flex justify-between items-center text-sm bg-muted p-2 rounded">
+                            <span>{approvedUser.user_id}</span>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeUser(approvedUser.user_id)}
+                              disabled={processing === approvedUser.user_id}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
             
             <Card className="p-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                System Settings
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Configure platform-wide settings and preferences
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  toast({
-                    title: "System Settings",
-                    description: "Configure platform settings, email templates, and system preferences.",
-                  });
-                }}
-              >
-                Configure
-              </Button>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  System Settings
+                </h3>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowSystemSettings(!showSystemSettings)}
+                >
+                  {showSystemSettings ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+              
+              {showSystemSettings && (
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 border rounded">
+                      <div>
+                        <h4 className="font-medium">Email Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Configure email settings</p>
+                      </div>
+                      <Button size="sm" variant="outline">
+                        <Mail className="w-4 h-4 mr-1" />
+                        Configure
+                      </Button>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 border rounded">
+                      <div>
+                        <h4 className="font-medium">Platform Settings</h4>
+                        <p className="text-sm text-muted-foreground">General platform configuration</p>
+                      </div>
+                      <Button size="sm" variant="outline">
+                        <Settings className="w-4 h-4 mr-1" />
+                        Manage
+                      </Button>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 border rounded">
+                      <div>
+                        <h4 className="font-medium">Data Export</h4>
+                        <p className="text-sm text-muted-foreground">Export platform data</p>
+                      </div>
+                      <Button size="sm" variant="outline">
+                        <Save className="w-4 h-4 mr-1" />
+                        Export
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
           </div>
         </CardContent>
