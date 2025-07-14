@@ -518,12 +518,13 @@ export type Database = {
       }
       due_diligence_reports: {
         Row: {
-          company_id: string
+          company_id: string | null
           created_at: string
           executive_summary: string | null
           financial_analysis: Json | null
           generated_by: string | null
           id: string
+          listing_id: string | null
           power_infrastructure_assessment: Json | null
           recommendations: string[] | null
           report_data: Json | null
@@ -533,12 +534,13 @@ export type Database = {
           valuation_analysis: Json | null
         }
         Insert: {
-          company_id: string
+          company_id?: string | null
           created_at?: string
           executive_summary?: string | null
           financial_analysis?: Json | null
           generated_by?: string | null
           id?: string
+          listing_id?: string | null
           power_infrastructure_assessment?: Json | null
           recommendations?: string[] | null
           report_data?: Json | null
@@ -548,12 +550,13 @@ export type Database = {
           valuation_analysis?: Json | null
         }
         Update: {
-          company_id?: string
+          company_id?: string | null
           created_at?: string
           executive_summary?: string | null
           financial_analysis?: Json | null
           generated_by?: string | null
           id?: string
+          listing_id?: string | null
           power_infrastructure_assessment?: Json | null
           recommendations?: string[] | null
           report_data?: Json | null
@@ -568,6 +571,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "due_diligence_reports_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "voltmarket_listings"
             referencedColumns: ["id"]
           },
         ]
