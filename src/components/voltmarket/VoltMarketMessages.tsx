@@ -94,14 +94,14 @@ export const VoltMarketMessages: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-          <p className="text-gray-600">Communicate with buyers and sellers</p>
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">Messages</h1>
+          <p className="text-sm sm:text-base text-gray-600">Communicate with buyers and sellers</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 h-[500px] sm:h-[600px] lg:h-[700px]">
           {/* Conversations List */}
           <div className="lg:col-span-1">
             <Card className="h-full">
@@ -135,38 +135,40 @@ export const VoltMarketMessages: React.FC = () => {
                           selectedConversationId === conversation.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                         }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarFallback className="bg-blue-100 text-blue-600">
-                              {getInitials(conversation.other_party.company_name || 'Unknown')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h3 className="text-sm font-medium text-gray-900 truncate">
-                                {conversation.other_party.company_name || 'Unknown Company'}
-                              </h3>
-                              {conversation.unread_count > 0 && (
-                                <Badge variant="default" className="text-xs">
-                                  {conversation.unread_count}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 mb-1 truncate">
-                              <Building2 className="w-3 h-3 inline mr-1" />
-                              {conversation.listing.title}
-                            </p>
-                            {conversation.last_message && (
-                              <p className="text-xs truncate text-gray-600">
-                                {conversation.last_message.message}
-                              </p>
-                            )}
-                            <div className="flex items-center text-xs text-gray-400 mt-1">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {formatTimeAgo(conversation.last_message?.created_at || conversation.last_message_at)}
-                            </div>
-                          </div>
-                        </div>
+                         <div className="flex items-start gap-2 sm:gap-3">
+                           <Avatar className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                             <AvatarFallback className="bg-blue-100 text-blue-600 text-xs sm:text-sm">
+                               {getInitials(conversation.other_party.company_name || 'Unknown')}
+                             </AvatarFallback>
+                           </Avatar>
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center justify-between mb-1">
+                               <h3 className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                                 {conversation.other_party.company_name || 'Unknown Company'}
+                               </h3>
+                               {conversation.unread_count > 0 && (
+                                 <Badge variant="default" className="text-xs flex-shrink-0">
+                                   {conversation.unread_count}
+                                 </Badge>
+                               )}
+                             </div>
+                             <p className="text-xs text-gray-500 mb-1 truncate">
+                               <Building2 className="w-3 h-3 inline mr-1" />
+                               {conversation.listing.title}
+                             </p>
+                             {conversation.last_message && (
+                               <p className="text-xs truncate text-gray-600 break-words">
+                                 {conversation.last_message.message}
+                               </p>
+                             )}
+                             <div className="flex items-center text-xs text-gray-400 mt-1">
+                               <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+                               <span className="truncate">
+                                 {formatTimeAgo(conversation.last_message?.created_at || conversation.last_message_at)}
+                               </span>
+                             </div>
+                           </div>
+                         </div>
                       </div>
                     ))
                   )}
@@ -211,17 +213,17 @@ export const VoltMarketMessages: React.FC = () => {
                               key={message.id}
                               className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                             >
-                              <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                isOwnMessage
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-100 text-gray-900'
-                              }`}>
-                                <p className="text-sm">{message.message}</p>
-                                <p className={`text-xs mt-1 ${
-                                  isOwnMessage ? 'text-blue-100' : 'text-gray-500'
-                                }`}>
-                                  {formatTimeAgo(message.created_at)}
-                                </p>
+                               <div className={`max-w-[250px] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 rounded-lg ${
+                                 isOwnMessage
+                                   ? 'bg-blue-600 text-white'
+                                   : 'bg-gray-100 text-gray-900'
+                               }`}>
+                                 <p className="text-xs sm:text-sm break-words">{message.message}</p>
+                                 <p className={`text-xs mt-1 ${
+                                   isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                                 }`}>
+                                   {formatTimeAgo(message.created_at)}
+                                 </p>
                               </div>
                             </div>
                           );

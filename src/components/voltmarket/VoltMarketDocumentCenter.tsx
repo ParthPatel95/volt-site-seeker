@@ -150,13 +150,13 @@ export const VoltMarketDocumentCenter: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-2 sm:p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Document Center</h1>
-            <p className="text-gray-600 mt-1">Manage your GridBazaar documents securely</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">Document Center</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your GridBazaar documents securely</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" size="sm">
@@ -176,7 +176,7 @@ export const VoltMarketDocumentCenter: React.FC = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleFileUpload} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="file-upload">Select File</Label>
                   <Input
@@ -289,50 +289,51 @@ export const VoltMarketDocumentCenter: React.FC = () => {
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                     {filteredDocuments.map((document) => (
-                      <div key={document.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="p-3 bg-blue-100 rounded-lg">
-                            <FileText className="w-6 h-6 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-gray-900">{document.original_filename}</h3>
-                              {document.is_confidential && (
-                                <Lock className="w-4 h-4 text-red-500" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <Badge className={documentTypeColors[document.document_type as keyof typeof documentTypeColors]}>
-                                {document.document_type.replace('_', ' ')}
-                              </Badge>
-                              <Badge className={accessLevelColors[document.access_level as keyof typeof accessLevelColors]}>
-                                {document.access_level}
-                              </Badge>
-                              <span>•</span>
-                              <span>{(document.file_size / 1024 / 1024).toFixed(2)} MB</span>
-                              <span>•</span>
-                              <span>Uploaded {new Date(document.created_at).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownload(document.id)}
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(document.id, document.original_filename)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
+                       <div key={document.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow gap-3">
+                         <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                           <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
+                             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2 mb-1">
+                               <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">{document.original_filename}</h3>
+                               {document.is_confidential && (
+                                 <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
+                               )}
+                             </div>
+                             <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500">
+                               <Badge className={`${documentTypeColors[document.document_type as keyof typeof documentTypeColors]} text-xs`}>
+                                 {document.document_type.replace('_', ' ')}
+                               </Badge>
+                               <Badge className={`${accessLevelColors[document.access_level as keyof typeof accessLevelColors]} text-xs`}>
+                                 {document.access_level}
+                               </Badge>
+                               <span className="hidden sm:inline">•</span>
+                               <span className="text-xs">{(document.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                               <span className="hidden sm:inline">•</span>
+                               <span className="text-xs">Uploaded {new Date(document.created_at).toLocaleDateString()}</span>
+                             </div>
+                           </div>
+                         </div>
+                         <div className="flex items-center gap-2 flex-shrink-0">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleDownload(document.id)}
+                             className="text-xs sm:text-sm px-2 sm:px-3"
+                           >
+                             <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                           </Button>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleDelete(document.id, document.original_filename)}
+                             className="text-red-600 hover:text-red-800 text-xs sm:text-sm px-2 sm:px-3"
+                           >
+                             <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                           </Button>
+                         </div>
+                       </div>
                     ))}
                   </div>
                 )}

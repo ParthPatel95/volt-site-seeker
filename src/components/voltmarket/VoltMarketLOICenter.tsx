@@ -168,13 +168,13 @@ export const VoltMarketLOICenter: React.FC = () => {
   const sentLOIs = lois.filter(loi => loi.type === 'sent');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-2 sm:p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">LOI Center</h1>
-            <p className="text-gray-600 mt-1">Manage Letters of Intent for your energy infrastructure deals</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">LOI Center</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Manage Letters of Intent for your energy infrastructure deals</p>
           </div>
           <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
             <DialogTrigger asChild>
@@ -188,7 +188,7 @@ export const VoltMarketLOICenter: React.FC = () => {
                 <DialogTitle>Submit Letter of Intent</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmitLOI} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="listing-id">Listing ID</Label>
                     <Input
@@ -265,67 +265,75 @@ export const VoltMarketLOICenter: React.FC = () => {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <Card className="bg-white/70 backdrop-blur-sm border-white/50">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total LOIs</p>
-                  <p className="text-2xl font-bold text-gray-900">{lois.length}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">Total LOIs</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{lois.length}</p>
                 </div>
-                <Scale className="w-8 h-8 text-blue-500" />
+                <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/70 backdrop-blur-sm border-white/50">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">Pending</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-600">
                     {lois.filter(loi => loi.status === 'pending').length}
                   </p>
                 </div>
-                <Clock className="w-8 h-8 text-yellow-500" />
+                <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/70 backdrop-blur-sm border-white/50">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Accepted</p>
-                  <p className="text-2xl font-bold text-green-600">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">Accepted</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">
                     {lois.filter(loi => loi.status === 'accepted').length}
                   </p>
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
+                <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/70 backdrop-blur-sm border-white/50">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">This Month</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
                     {lois.filter(loi => new Date(loi.submitted_at).getMonth() === new Date().getMonth()).length}
                   </p>
                 </div>
-                <Calendar className="w-8 h-8 text-purple-500" />
+                <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* LOI Lists */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white/70 backdrop-blur-sm border border-white/50">
-            <TabsTrigger value="received">Received LOIs ({receivedLOIs.length})</TabsTrigger>
-            <TabsTrigger value="sent">Sent LOIs ({sentLOIs.length})</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          <TabsList className="bg-white/70 backdrop-blur-sm border border-white/50 w-full sm:w-auto">
+            <TabsTrigger value="received" className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden sm:inline">Received LOIs </span>
+              <span className="sm:hidden">Received </span>
+              ({receivedLOIs.length})
+            </TabsTrigger>
+            <TabsTrigger value="sent" className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden sm:inline">Sent LOIs </span>
+              <span className="sm:hidden">Sent </span>
+              ({sentLOIs.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="received">
@@ -347,61 +355,67 @@ export const VoltMarketLOICenter: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {receivedLOIs.map((loi) => (
-                      <div key={loi.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">LOI #{loi.id.slice(0, 8)}</h3>
-                            <Badge className={getStatusColor(loi.status)}>
-                              <div className="flex items-center gap-1">
-                                {getStatusIcon(loi.status)}
-                                {loi.status}
-                              </div>
-                            </Badge>
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                            <div>
-                              <span className="font-medium">From:</span> {loi.buyer?.company_name || 'Unknown'}
-                            </div>
-                            <div>
-                              <span className="font-medium">Listing:</span> {loi.listing?.title || loi.listing_id}
-                            </div>
-                            <div>
-                              <span className="font-medium">Proposed:</span> {formatCurrency(loi.offered_price)}
-                            </div>
-                            <div>
-                              <span className="font-medium">Submitted:</span> {new Date(loi.submitted_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                          {loi.conditions && (
-                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{loi.conditions}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedLOI(loi);
-                              setShowResponseForm(true);
-                            }}
-                            disabled={loi.status !== 'pending'}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            Respond
-                          </Button>
-                           <Button 
-                             variant="outline" 
+                     {receivedLOIs.map((loi) => (
+                       <div key={loi.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow gap-3 lg:gap-4">
+                         <div className="flex-1 min-w-0">
+                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                             <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">LOI #{loi.id.slice(0, 8)}</h3>
+                             <Badge className={`${getStatusColor(loi.status)} text-xs w-fit`}>
+                               <div className="flex items-center gap-1">
+                                 {getStatusIcon(loi.status)}
+                                 {loi.status}
+                               </div>
+                             </Badge>
+                           </div>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                             <div className="min-w-0">
+                               <span className="font-medium">From:</span> 
+                               <span className="ml-1 truncate inline-block max-w-full">{loi.buyer?.company_name || 'Unknown'}</span>
+                             </div>
+                             <div className="min-w-0">
+                               <span className="font-medium">Listing:</span> 
+                               <span className="ml-1 truncate inline-block max-w-full">{loi.listing?.title || loi.listing_id}</span>
+                             </div>
+                             <div>
+                               <span className="font-medium">Proposed:</span> 
+                               <span className="ml-1">{formatCurrency(loi.offered_price)}</span>
+                             </div>
+                             <div>
+                               <span className="font-medium">Submitted:</span> 
+                               <span className="ml-1">{new Date(loi.submitted_at).toLocaleDateString()}</span>
+                             </div>
+                           </div>
+                           {loi.conditions && (
+                             <p className="text-xs sm:text-sm text-gray-700 mt-2 line-clamp-2 break-words">{loi.conditions}</p>
+                           )}
+                         </div>
+                         <div className="flex items-center gap-2 lg:ml-4 flex-shrink-0">
+                           <Button
+                             variant="outline"
                              size="sm"
                              onClick={() => {
                                setSelectedLOI(loi);
-                               setShowLOIDetails(true);
+                               setShowResponseForm(true);
                              }}
+                             disabled={loi.status !== 'pending'}
+                             className="text-xs sm:text-sm px-2 sm:px-3"
                            >
-                             <Eye className="w-4 h-4" />
+                             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                             <span className="hidden sm:inline">Respond</span>
                            </Button>
-                        </div>
-                      </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedLOI(loi);
+                                setShowLOIDetails(true);
+                              }}
+                              className="px-2 sm:px-3"
+                            >
+                              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                         </div>
+                       </div>
                     ))}
                   </div>
                 )}
@@ -432,60 +446,65 @@ export const VoltMarketLOICenter: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {sentLOIs.map((loi) => (
-                      <div key={loi.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">LOI #{loi.id.slice(0, 8)}</h3>
-                            <Badge className={getStatusColor(loi.status)}>
-                              <div className="flex items-center gap-1">
-                                {getStatusIcon(loi.status)}
-                                {loi.status}
-                              </div>
-                            </Badge>
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                            <div>
-                              <span className="font-medium">To:</span> {loi.seller?.company_name || 'Unknown'}
-                            </div>
-                            <div>
-                              <span className="font-medium">Listing:</span> {loi.listing?.title || loi.listing_id}
-                            </div>
-                            <div>
-                              <span className="font-medium">Proposed:</span> {formatCurrency(loi.offered_price)}
-                            </div>
-                            <div>
-                              <span className="font-medium">Submitted:</span> {new Date(loi.submitted_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                          {loi.conditions && (
-                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{loi.conditions}</p>
-                          )}
-                          {loi.response_notes && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                              <p className="text-sm font-medium text-gray-900 mb-1">Response:</p>
-                              <p className="text-sm text-gray-700">{loi.response_notes}</p>
-                              {loi.counter_offer && (
-                                <p className="text-sm text-gray-700 mt-1">
-                                  <span className="font-medium">Counter Offer:</span> {formatCurrency(loi.counter_offer)}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                           <Button 
-                             variant="outline" 
-                             size="sm"
-                             onClick={() => {
-                               setSelectedLOI(loi);
-                               setShowLOIDetails(true);
-                             }}
-                           >
-                             <Eye className="w-4 h-4" />
-                           </Button>
-                        </div>
-                      </div>
+                     {sentLOIs.map((loi) => (
+                       <div key={loi.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow gap-3 lg:gap-4">
+                         <div className="flex-1 min-w-0">
+                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                             <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">LOI #{loi.id.slice(0, 8)}</h3>
+                             <Badge className={`${getStatusColor(loi.status)} text-xs w-fit`}>
+                               <div className="flex items-center gap-1">
+                                 {getStatusIcon(loi.status)}
+                                 {loi.status}
+                               </div>
+                             </Badge>
+                           </div>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                             <div className="min-w-0">
+                               <span className="font-medium">To:</span> 
+                               <span className="ml-1 truncate inline-block max-w-full">{loi.seller?.company_name || 'Unknown'}</span>
+                             </div>
+                             <div className="min-w-0">
+                               <span className="font-medium">Listing:</span> 
+                               <span className="ml-1 truncate inline-block max-w-full">{loi.listing?.title || loi.listing_id}</span>
+                             </div>
+                             <div>
+                               <span className="font-medium">Proposed:</span> 
+                               <span className="ml-1">{formatCurrency(loi.offered_price)}</span>
+                             </div>
+                             <div>
+                               <span className="font-medium">Submitted:</span> 
+                               <span className="ml-1">{new Date(loi.submitted_at).toLocaleDateString()}</span>
+                             </div>
+                           </div>
+                           {loi.conditions && (
+                             <p className="text-xs sm:text-sm text-gray-700 mt-2 line-clamp-2 break-words">{loi.conditions}</p>
+                           )}
+                           {loi.response_notes && (
+                             <div className="mt-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                               <p className="text-xs sm:text-sm font-medium text-gray-900 mb-1">Response:</p>
+                               <p className="text-xs sm:text-sm text-gray-700 break-words">{loi.response_notes}</p>
+                               {loi.counter_offer && (
+                                 <p className="text-xs sm:text-sm text-gray-700 mt-1">
+                                   <span className="font-medium">Counter Offer:</span> {formatCurrency(loi.counter_offer)}
+                                 </p>
+                               )}
+                             </div>
+                           )}
+                         </div>
+                         <div className="flex items-center gap-2 lg:ml-4 flex-shrink-0">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedLOI(loi);
+                                setShowLOIDetails(true);
+                              }}
+                              className="px-2 sm:px-3"
+                            >
+                              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                         </div>
+                       </div>
                     ))}
                   </div>
                 )}
@@ -549,9 +568,9 @@ export const VoltMarketLOICenter: React.FC = () => {
               {selectedLOI && (
                 <div className="space-y-6">
                 {/* LOI Information */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">LOI Information</h3>
+                    <h3 className="text-base lg:text-lg font-semibold text-gray-900">LOI Information</h3>
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-medium text-gray-600">LOI ID</p>
@@ -578,7 +597,7 @@ export const VoltMarketLOICenter: React.FC = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Listing Information</h3>
+                    <h3 className="text-base lg:text-lg font-semibold text-gray-900">Listing Information</h3>
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Listing Title</p>
@@ -594,10 +613,10 @@ export const VoltMarketLOICenter: React.FC = () => {
 
                 {/* Contact Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-base lg:text-lg font-semibold text-gray-900">
                     {selectedLOI.type === 'received' ? 'Buyer' : 'Seller'} Contact Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
                     {selectedLOI.type === 'received' ? (
                       <>
                         <div className="flex items-center gap-2">

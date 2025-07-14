@@ -123,16 +123,16 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">GridBazaar Dashboard</h1>
-            <p className="text-gray-600">Monitor your GridBazaar performance and insights</p>
+        <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 truncate">GridBazaar Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-600">Monitor your GridBazaar performance and insights</p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -167,27 +167,27 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
           {kpiCards.map((kpi, index) => {
             const IconComponent = kpi.icon;
             return (
               <Card key={index}>
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">{kpi.title}</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{kpi.title}</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">
                         {kpi.value.toLocaleString()}
                       </p>
                       <Badge 
                         variant="secondary" 
-                        className="mt-2 text-green-600 bg-green-50"
+                        className="mt-1 sm:mt-2 text-green-600 bg-green-50 text-xs"
                       >
                         {kpi.change}
                       </Badge>
                     </div>
-                    <div className={`p-3 rounded-full bg-gray-50 ${kpi.color}`}>
-                      <IconComponent className="w-6 h-6" />
+                    <div className={`p-2 sm:p-3 rounded-full bg-gray-50 ${kpi.color} flex-shrink-0`}>
+                      <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                     </div>
                   </div>
                 </CardContent>
@@ -196,7 +196,7 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-4 sm:mb-8">
           {/* Popular Locations */}
           <Card>
             <CardHeader>
@@ -206,16 +206,17 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={analyticsData.popular_locations}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="location" 
                     angle={-45}
                     textAnchor="end"
-                    height={100}
+                    height={80}
+                    fontSize={12}
                   />
-                  <YAxis />
+                  <YAxis fontSize={12} />
                   <Tooltip />
                   <Bar dataKey="count" fill="#0088FE" />
                 </BarChart>
@@ -232,7 +233,7 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
                     data={analyticsData.listing_categories}
@@ -240,9 +241,10 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
                     cy="50%"
                     labelLine={false}
                     label={({ category, count }) => `${category}: ${count}`}
-                    outerRadius={80}
+                    outerRadius={60}
                     fill="#8884d8"
                     dataKey="count"
+                    fontSize={12}
                   >
                     {analyticsData.listing_categories.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -284,7 +286,7 @@ export const VoltMarketAnalyticsDashboard: React.FC = () => {
         </Card>
 
         {/* Market Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Market Trends</CardTitle>
