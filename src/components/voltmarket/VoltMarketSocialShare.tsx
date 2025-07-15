@@ -24,8 +24,8 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
   imageUrl
 }) => {
   const { toast } = useToast();
-  // Use meta-proxy URL for social sharing to ensure proper preview
-  const shareUrl = `https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/meta-proxy?listingId=${listingId}`;
+  // Use the actual listing URL for WhatsApp since meta-proxy isn't being hit
+  const shareUrl = window.location.href;
   const currentUrl = window.location.href;
   
   // Set up meta tags for social sharing
