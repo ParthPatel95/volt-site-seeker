@@ -103,6 +103,7 @@ export const useVoltMarketDueDiligence = () => {
       const insertData: any = {
         ...reportData,
         company_id: reportData.company_id || null,
+        generated_by: profile.user_id, // Set the creator's user ID
         report_data: {
           status: 'pending_documents',
           completion_percentage: 0,
