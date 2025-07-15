@@ -15,6 +15,7 @@ import { VoltMarketRealTimeData } from './VoltMarketRealTimeData';
 import { VoltMarketPropertyMap } from './VoltMarketPropertyMap';
 import { VoltMarketLocationDisplay } from './VoltMarketLocationDisplay';
 import { VoltMarketListingImageGallery } from './VoltMarketListingImageGallery';
+import { VoltMarketSocialShare } from './VoltMarketSocialShare';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
@@ -66,6 +67,7 @@ export const VoltMarketListingDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showLOIModal, setShowLOIModal] = useState(false);
   const [hasSignedNDA, setHasSignedNDA] = useState(false);
+  const [firstImage, setFirstImage] = useState<string | undefined>(undefined);
   
   const { profile } = useVoltMarketAuth();
   const { submitLOI } = useVoltMarketLOI();
@@ -107,6 +109,22 @@ export const VoltMarketListingDetail: React.FC = () => {
 
       if (error) throw error;
       setListing(data);
+
+      // Fetch first image for social sharing
+      if (data) {
+        const { data: imageData } = await supabase
+          .from('voltmarket_listing_images')
+          .select('image_url')
+          .eq('listing_id', data.id)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (imageData?.image_url) {
+          setFirstImage(imageData.image_url);
+        }
+      }
     } catch (error) {
       console.error('Error fetching listing:', error);
       toast({
@@ -543,6 +561,17 @@ export const VoltMarketListingDetail: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Social Share */}
+            <VoltMarketSocialShare
+              listingId={listing.id}
+              title={listing.title}
+              description={listing.description || ''}
+              price={getPriceDisplay()}
+              location={listing.location}
+              powerCapacity={listing.power_capacity_mw > 0 ? listing.power_capacity_mw : undefined}
+              imageUrl={firstImage}
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
