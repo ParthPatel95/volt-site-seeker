@@ -50,13 +50,18 @@ export const usePageMeta = (meta: PageMetaData) => {
       const fullImageUrl = meta.image.startsWith('http') 
         ? meta.image 
         : `${window.location.origin}${meta.image}`;
+      console.log('Setting og:image meta tag with URL:', fullImageUrl);
       updateMetaTag('og:image', fullImageUrl);
       updateMetaTag('og:image:width', '1200');
       updateMetaTag('og:image:height', '630');
+      updateMetaTag('og:image:type', 'image/jpeg');
       
       // Update Twitter tags
       updateNameMetaTag('twitter:card', 'summary_large_image');
       updateNameMetaTag('twitter:image', fullImageUrl);
+      
+      // Add additional meta tags that WhatsApp might look for
+      updateMetaTag('og:image:secure_url', fullImageUrl);
     }
     
     updateNameMetaTag('twitter:title', meta.title);
