@@ -597,20 +597,28 @@ export const VoltMarketListingDetail: React.FC = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {profile ? (
+                 {profile ? (
                   <>
-                    <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} className="w-full" />
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={handleLOIClick}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Submit LOI
-                    </Button>
+                    {profile.id !== listing.seller_id ? (
+                      <>
+                        <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} className="w-full" />
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={handleLOIClick}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Submit LOI
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="text-center p-4 bg-gray-50 rounded-lg">
+                        <p className="text-gray-600">This is your listing</p>
+                      </div>
+                    )}
                     <VoltMarketWatchlistButton listingId={listing.id} size="default" variant="outline" />
                   </>
-                ) : (
+                 ) : (
                   <div className="space-y-3">
                     <Button 
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white"
