@@ -32,6 +32,11 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
     const shareTitle = `${title} - ${price}`;
     const shareDescription = `${cleanDescription}${powerCapacity ? ` | ${powerCapacity}MW` : ''} | ${location}`;
     
+    // Ensure we have a full URL for the image
+    const fullImageUrl = imageUrl ? 
+      (imageUrl.startsWith('http') ? imageUrl : `${window.location.origin}${imageUrl}`) : 
+      null;
+    
     // Update meta tags
     const updateMetaTag = (property: string, content: string) => {
       let tag = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
@@ -57,23 +62,33 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
     updateMetaTag('og:title', shareTitle);
     updateMetaTag('og:description', shareDescription);
     updateMetaTag('og:url', currentUrl);
-    updateMetaTag('og:type', 'website');
+    updateMetaTag('og:type', 'article');
     updateMetaTag('og:site_name', 'VoltMarket');
-    if (imageUrl) {
-      updateMetaTag('og:image', imageUrl);
+    
+    if (fullImageUrl) {
+      updateMetaTag('og:image', fullImageUrl);
       updateMetaTag('og:image:alt', title);
+      updateMetaTag('og:image:width', '1200');
+      updateMetaTag('og:image:height', '630');
+      updateMetaTag('og:image:type', 'image/jpeg');
     }
 
     // Twitter Card tags
     updateNameMetaTag('twitter:card', 'summary_large_image');
     updateNameMetaTag('twitter:title', shareTitle);
     updateNameMetaTag('twitter:description', shareDescription);
-    if (imageUrl) {
-      updateNameMetaTag('twitter:image', imageUrl);
+    updateNameMetaTag('twitter:site', '@VoltMarket');
+    
+    if (fullImageUrl) {
+      updateNameMetaTag('twitter:image', fullImageUrl);
+      updateNameMetaTag('twitter:image:alt', title);
     }
 
     // LinkedIn specific
     updateMetaTag('og:locale', 'en_US');
+    
+    // Force refresh of social media crawlers by updating the page title
+    document.title = shareTitle;
     
     return () => {
       // Cleanup function to remove meta tags when component unmounts
