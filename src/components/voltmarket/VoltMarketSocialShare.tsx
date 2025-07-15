@@ -32,10 +32,12 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
     const shareTitle = `${title} - ${price}`;
     const shareDescription = `${cleanDescription}${powerCapacity ? ` | ${powerCapacity}MW` : ''} | ${location}`;
     
-    // Ensure we have a full URL for the image
+    // Ensure we have a full URL for the image - handle Supabase storage URLs
     const fullImageUrl = imageUrl ? 
-      (imageUrl.startsWith('http') ? imageUrl : `${window.location.origin}${imageUrl}`) : 
-      null;
+      (imageUrl.startsWith('http') ? imageUrl : 
+       imageUrl.startsWith('/') ? `${window.location.origin}${imageUrl}` :
+       `${window.location.origin}/${imageUrl}`) : 
+      `${window.location.origin}/placeholder.svg`;
     
     // Update meta tags
     const updateMetaTag = (property: string, content: string) => {
