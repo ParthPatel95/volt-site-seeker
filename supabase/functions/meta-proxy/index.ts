@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Enable CORS for all requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -15,25 +16,54 @@ serve(async (req) => {
     const url = new URL(req.url);
     const listingId = url.searchParams.get('listingId');
     const userAgent = req.headers.get('user-agent') || '';
+    const referer = req.headers.get('referer') || '';
     
-    console.log('Meta-proxy request:', { listingId, userAgent });
+    console.log('Meta-proxy request:', { 
+      listingId, 
+      userAgent, 
+      referer,
+      method: req.method,
+      url: req.url 
+    });
     
     if (!listingId) {
       console.log('Missing listing ID, returning 400');
-      return new Response('Missing listing ID', { status: 400 });
+      return new Response('Missing listing ID', { 
+        status: 400,
+        headers: corsHeaders 
+      });
     }
 
-    // Check for debug mode
+    // Check for debug mode or force mode
     const debug = url.searchParams.get('debug') === 'true';
+    const force = url.searchParams.get('force') === 'true';
     
-    // Check if it's a social media crawler
-    // WhatsApp often uses facebookexternalhit or WhatsApp in user agent
-    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider|slurp|facebot|ia_archiver|WhatsApp|facebook/i.test(userAgent);
-    console.log('Is crawler:', isCrawler, 'Debug mode:', debug, 'User-Agent:', userAgent);
+    // Enhanced crawler detection - be more aggressive about serving meta tags
+    const isCrawler = /facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider|slurp|facebot|ia_archiver|WhatsApp|facebook|preview|meta|social|share/i.test(userAgent);
     
-    // If it's not a crawler and not in debug mode, redirect to the actual listing
-    if (!isCrawler && !debug) {
-      console.log('Not a crawler and not debug mode, redirecting to actual listing');
+    // Also serve meta tags for any request that looks like it might be for sharing
+    const hasShareIndicators = referer.includes('facebook') || 
+                              referer.includes('whatsapp') || 
+                              referer.includes('telegram') || 
+                              referer.includes('linkedin') ||
+                              url.searchParams.has('utm_source');
+    
+    // Always serve meta tags for social media requests by default (this is the key fix)
+    const shouldServeMeta = isCrawler || debug || hasShareIndicators || force || true; // Force serving meta tags for all requests
+    
+    console.log('Request analysis:', { 
+      isCrawler, 
+      hasShareIndicators, 
+      debug,
+      force,
+      userAgent,
+      referer,
+      shouldServeMeta
+    });
+    
+    // Only redirect regular browser requests if explicitly not a sharing context
+    if (!shouldServeMeta) {
+      console.log('Regular browser request, redirecting to actual listing');
       const actualUrl = `https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com/voltmarket/listings/${listingId}`;
       return new Response(null, {
         status: 302,
@@ -83,13 +113,18 @@ serve(async (req) => {
     let fullImageUrl = 'https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com/placeholder.svg';
     
     if (imageUrl) {
-      if (imageUrl.startsWith('http')) {
+      if (imageUrl.startsWith('https://ktgosplhknmnyagxrgbe.supabase.co/storage/v1/object/public/')) {
+        // Supabase storage URL - use as is
+        fullImageUrl = imageUrl;
+      } else if (imageUrl.startsWith('http')) {
+        // Already a full URL
         fullImageUrl = imageUrl;
       } else if (imageUrl.startsWith('/')) {
+        // Relative URL from domain root
         fullImageUrl = `https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com${imageUrl}`;
       } else {
-        // Handle Supabase storage URLs - use the full URL as provided since it should already be complete
-        fullImageUrl = imageUrl;
+        // Other formats - treat as Supabase storage
+        fullImageUrl = imageUrl.includes('supabase.co') ? imageUrl : `https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com/${imageUrl}`;
       }
     }
     
