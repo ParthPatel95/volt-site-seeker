@@ -23,13 +23,16 @@ serve(async (req) => {
       return new Response('Missing listing ID', { status: 400 });
     }
 
-    // Check if it's a social media crawler
-    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider|slurp/i.test(userAgent);
-    console.log('Is crawler:', isCrawler, 'User-Agent:', userAgent);
+    // Check for debug mode
+    const debug = url.searchParams.get('debug') === 'true';
     
-    // If it's not a crawler, redirect to the actual listing
-    if (!isCrawler) {
-      console.log('Not a crawler, redirecting to actual listing');
+    // Check if it's a social media crawler
+    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider|slurp|facebot|ia_archiver/i.test(userAgent);
+    console.log('Is crawler:', isCrawler, 'Debug mode:', debug, 'User-Agent:', userAgent);
+    
+    // If it's not a crawler and not in debug mode, redirect to the actual listing
+    if (!isCrawler && !debug) {
+      console.log('Not a crawler and not debug mode, redirecting to actual listing');
       const actualUrl = `https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com/voltmarket/listings/${listingId}`;
       return new Response(null, {
         status: 302,
@@ -81,6 +84,9 @@ serve(async (req) => {
         fullImageUrl = imageUrl;
       } else if (imageUrl.startsWith('/')) {
         fullImageUrl = `https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com${imageUrl}`;
+      } else {
+        // Handle Supabase storage URLs
+        fullImageUrl = `https://ktgosplhknmnyagxrgbe.supabase.co/storage/v1/object/public/listing-images/${imageUrl}`;
       }
     }
 
@@ -111,7 +117,7 @@ serve(async (req) => {
   <meta property="og:image" content="${fullImageUrl}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:url" content="https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/meta-proxy?listingId=${listingId}">
+  <meta property="og:url" content="${actualUrl}">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="VoltMarket">
   
@@ -136,7 +142,9 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Cache-Control': debug ? 'no-cache, no-store, must-revalidate' : 'public, max-age=3600',
+        'Pragma': debug ? 'no-cache' : undefined,
+        'Expires': debug ? '0' : undefined,
       },
     });
 

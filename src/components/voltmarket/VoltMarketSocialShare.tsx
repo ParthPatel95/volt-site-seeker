@@ -296,9 +296,27 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
             variant="outline"
             size="sm"
             onClick={handleTestMetaProxy}
+            className="flex items-center gap-2"
+          >
+            🔧 Test Proxy
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`${shareUrl}&debug=true`, '_blank')}
+            className="flex items-center gap-2"
+          >
+            👁️ Debug View
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(shareUrl)}`, '_blank')}
             className="flex items-center gap-2 col-span-full"
           >
-            🔧 Test Meta Proxy
+            🔍 Facebook Debugger (Force Refresh Cache)
           </Button>
         </div>
       </CardContent>
