@@ -24,7 +24,7 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
   imageUrl
 }) => {
   const { toast } = useToast();
-  const currentUrl = window.location.href;
+  const currentUrl = `${window.location.href}?share=${Date.now()}`; // Add cache-busting parameter
   
   // Set up meta tags for social sharing
   useEffect(() => {
