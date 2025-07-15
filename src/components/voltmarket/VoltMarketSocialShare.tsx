@@ -32,20 +32,35 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
     const shareTitle = `${title} - ${price}`;
     const shareDescription = `${cleanDescription}${powerCapacity ? ` | ${powerCapacity}MW` : ''} | ${location}`;
     
-    // Ensure we have a full URL for the image - handle Supabase storage URLs
-    const fullImageUrl = imageUrl ? 
-      (imageUrl.startsWith('http') ? imageUrl : 
-       imageUrl.startsWith('/') ? `${window.location.origin}${imageUrl}` :
-       `${window.location.origin}/${imageUrl}`) : 
-      `${window.location.origin}/placeholder.svg`;
+    // Handle Supabase storage URLs and ensure we have a full URL for the image
+    let fullImageUrl = '';
+    if (imageUrl) {
+      if (imageUrl.startsWith('http')) {
+        fullImageUrl = imageUrl;
+      } else if (imageUrl.includes('supabase.co')) {
+        fullImageUrl = imageUrl.startsWith('//') ? `https:${imageUrl}` : imageUrl;
+      } else if (imageUrl.startsWith('/')) {
+        fullImageUrl = `${window.location.origin}${imageUrl}`;
+      } else {
+        fullImageUrl = `${window.location.origin}/${imageUrl}`;
+      }
+    } else {
+      // Use a default high-res image instead of placeholder
+      fullImageUrl = `${window.location.origin}/placeholder.svg`;
+    }
     
-    // Update meta tags
+    // Store original meta tag values to restore later
+    const originalTags = new Map();
+    
     const updateMetaTag = (property: string, content: string) => {
       let tag = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
       if (!tag) {
         tag = document.createElement('meta');
         tag.setAttribute('property', property);
+        tag.setAttribute('data-social-share', 'true');
         document.head.appendChild(tag);
+      } else if (!originalTags.has(property)) {
+        originalTags.set(property, tag.content);
       }
       tag.content = content;
     };
@@ -55,7 +70,10 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
       if (!tag) {
         tag = document.createElement('meta');
         tag.setAttribute('name', name);
+        tag.setAttribute('data-social-share', 'true');
         document.head.appendChild(tag);
+      } else if (!originalTags.has(name)) {
+        originalTags.set(name, tag.content);
       }
       tag.content = content;
     };
@@ -66,39 +84,40 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
     updateMetaTag('og:url', currentUrl);
     updateMetaTag('og:type', 'article');
     updateMetaTag('og:site_name', 'VoltMarket');
-    
-    if (fullImageUrl) {
-      updateMetaTag('og:image', fullImageUrl);
-      updateMetaTag('og:image:alt', title);
-      updateMetaTag('og:image:width', '1200');
-      updateMetaTag('og:image:height', '630');
-      updateMetaTag('og:image:type', 'image/jpeg');
-    }
+    updateMetaTag('og:image', fullImageUrl);
+    updateMetaTag('og:image:alt', title);
+    updateMetaTag('og:image:width', '1200');
+    updateMetaTag('og:image:height', '630');
+    updateMetaTag('og:image:type', 'image/jpeg');
+    updateMetaTag('og:locale', 'en_US');
 
     // Twitter Card tags
     updateNameMetaTag('twitter:card', 'summary_large_image');
     updateNameMetaTag('twitter:title', shareTitle);
     updateNameMetaTag('twitter:description', shareDescription);
     updateNameMetaTag('twitter:site', '@VoltMarket');
+    updateNameMetaTag('twitter:image', fullImageUrl);
+    updateNameMetaTag('twitter:image:alt', title);
     
-    if (fullImageUrl) {
-      updateNameMetaTag('twitter:image', fullImageUrl);
-      updateNameMetaTag('twitter:image:alt', title);
-    }
-
-    // LinkedIn specific
-    updateMetaTag('og:locale', 'en_US');
-    
-    // Force refresh of social media crawlers by updating the page title
+    // Update page title for social sharing
+    const originalTitle = document.title;
     document.title = shareTitle;
     
+    // Don't cleanup on unmount to preserve meta tags for social crawlers
     return () => {
-      // Cleanup function to remove meta tags when component unmounts
-      const tags = document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]');
-      tags.forEach(tag => {
-        if (tag.getAttribute('property')?.startsWith('og:') || 
-            tag.getAttribute('name')?.startsWith('twitter:')) {
-          tag.remove();
+      // Restore original title
+      document.title = originalTitle;
+      
+      // Only remove tags we created, restore original values for existing ones
+      const socialTags = document.querySelectorAll('meta[data-social-share="true"]');
+      socialTags.forEach(tag => tag.remove());
+      
+      // Restore original meta tag values
+      originalTags.forEach((originalValue, key) => {
+        const isProperty = key.startsWith('og:');
+        const tag = document.querySelector(isProperty ? `meta[property="${key}"]` : `meta[name="${key}"]`) as HTMLMetaElement;
+        if (tag) {
+          tag.content = originalValue;
         }
       });
     };
