@@ -27,7 +27,8 @@ serve(async (req) => {
     const debug = url.searchParams.get('debug') === 'true';
     
     // Check if it's a social media crawler
-    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider|slurp|facebot|ia_archiver/i.test(userAgent);
+    // WhatsApp often uses facebookexternalhit or WhatsApp in user agent
+    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider|slurp|facebot|ia_archiver|WhatsApp|facebook/i.test(userAgent);
     console.log('Is crawler:', isCrawler, 'Debug mode:', debug, 'User-Agent:', userAgent);
     
     // If it's not a crawler and not in debug mode, redirect to the actual listing
@@ -85,10 +86,12 @@ serve(async (req) => {
       } else if (imageUrl.startsWith('/')) {
         fullImageUrl = `https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com${imageUrl}`;
       } else {
-        // Handle Supabase storage URLs
-        fullImageUrl = `https://ktgosplhknmnyagxrgbe.supabase.co/storage/v1/object/public/listing-images/${imageUrl}`;
+        // Handle Supabase storage URLs - use the full URL as provided since it should already be complete
+        fullImageUrl = imageUrl;
       }
     }
+    
+    console.log('Image processing:', { originalImageUrl: imageUrl, finalImageUrl: fullImageUrl });
 
     // Clean description for HTML
     const cleanDescription = (listing.description || 'Power infrastructure listing').replace(/"/g, '&quot;').replace(/\n/g, ' ').substring(0, 160);
