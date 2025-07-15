@@ -1,0 +1,2 @@
+-- Update the config.toml file for the new AI document analysis function
+-- This is handled automatically by the edge function creation
