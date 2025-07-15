@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Meta Proxy</title>
+</head>
+<body>
+    <h1>Testing Meta Proxy</h1>
+    <button onclick="testMetaProxy()">Test Meta Proxy Function</button>
+    <div id="result"></div>
+
+    <script>
+        async function testMetaProxy() {
+            const listingId = '00d3df21-224a-483b-a2bd-128509a532e8';
+            const url = `https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/meta-proxy?listingId=${listingId}`;
+            
+            try {
+                console.log('Testing meta-proxy with URL:', url);
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const text = await response.text();
+                console.log('Response text:', text);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>Response Status: ${response.status}</h3>
+                    <h3>Response Text:</h3>
+                    <pre>${text}</pre>
+                `;
+            } catch (error) {
+                console.error('Error testing meta-proxy:', error);
+                document.getElementById('result').innerHTML = `<h3>Error: ${error.message}</h3>`;
+            }
+        }
+    </script>
+</body>
+</html>

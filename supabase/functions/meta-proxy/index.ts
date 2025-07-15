@@ -19,12 +19,12 @@ serve(async (req) => {
     console.log('Meta-proxy request:', { listingId, userAgent });
     
     if (!listingId) {
+      console.log('Missing listing ID, returning 400');
       return new Response('Missing listing ID', { status: 400 });
     }
 
-    // Check if it's a social media crawler
-    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider/i.test(userAgent);
-    console.log('Is crawler:', isCrawler);
+    // For now, let's handle all requests (not just crawlers) to test
+    console.log('Processing request for listing:', listingId, 'User-Agent:', userAgent);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
