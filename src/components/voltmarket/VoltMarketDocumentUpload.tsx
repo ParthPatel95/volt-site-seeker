@@ -1,15 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, Download, X } from 'lucide-react';
+import { Upload, FileText, Download, X, Brain, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface Document {
   id?: string;
@@ -20,14 +21,18 @@ interface Document {
   document_type: string;
   uploadedAt: string;
   description?: string;
+  status?: 'uploaded' | 'analyzing' | 'analyzed' | 'error';
+  ai_analysis?: any;
 }
 
 interface VoltMarketDocumentUploadProps {
   listingId?: string;
+  reportId?: string;
   existingDocuments?: Document[];
   onDocumentsChange: (documents: Document[]) => void;
   maxDocuments?: number;
   allowedTypes?: string[];
+  enableAIAnalysis?: boolean;
 }
 
 const DOCUMENT_TYPES = [
@@ -40,10 +45,12 @@ const DOCUMENT_TYPES = [
 
 export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> = ({
   listingId,
+  reportId,
   existingDocuments = [],
   onDocumentsChange,
   maxDocuments = 20,
-  allowedTypes = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.png']
+  allowedTypes = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.png'],
+  enableAIAnalysis = false
 }) => {
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<Document[]>(existingDocuments);
@@ -115,7 +122,8 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
         type: file.type,
         document_type: selectedDocumentType,
         uploadedAt: new Date().toISOString(),
-        description: documentDescription || undefined
+        description: documentDescription || undefined,
+        status: 'uploaded' as const
       };
 
       // Save to database if listing is selected or this is for a specific listing
@@ -215,6 +223,11 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
       setSelectedDocumentType('');
       setDocumentDescription('');
 
+      // Start AI analysis if enabled
+      if (enableAIAnalysis && reportId && validDocs.length > 0) {
+        analyzeDocuments(validDocs);
+      }
+
       if (validDocs.length > 0) {
         toast({
           title: "Documents uploaded",
@@ -274,6 +287,95 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
         description: "Failed to delete document",
         variant: "destructive"
       });
+    }
+  };
+
+  const analyzeDocuments = async (documentsToAnalyze: Document[]) => {
+    for (const doc of documentsToAnalyze) {
+      try {
+        // Update document status to analyzing
+        setDocuments(prev => 
+          prev.map(d => 
+            d.url === doc.url 
+              ? { ...d, status: 'analyzing' }
+              : d
+          )
+        );
+
+        // Call AI analysis function
+        const { data, error } = await supabase.functions.invoke('ai-document-analysis', {
+          body: {
+            documentUrl: doc.url,
+            documentType: doc.document_type,
+            listingId: listingId,
+            reportId: reportId
+          }
+        });
+
+        if (error) throw error;
+
+        // Update document status to analyzed
+        setDocuments(prev => 
+          prev.map(d => 
+            d.url === doc.url 
+              ? { 
+                  ...d, 
+                  status: 'analyzed',
+                  ai_analysis: data.analysis
+                }
+              : d
+          )
+        );
+
+        toast({
+          title: "Analysis Complete",
+          description: `AI analysis completed for ${doc.name}`,
+        });
+
+      } catch (error: any) {
+        console.error('Analysis error:', error);
+        
+        // Update document status to error
+        setDocuments(prev => 
+          prev.map(d => 
+            d.url === doc.url 
+              ? { ...d, status: 'error' }
+              : d
+          )
+        );
+
+        toast({
+          title: "Analysis Failed",
+          description: error.message || `Failed to analyze ${doc.name}`,
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const getStatusIcon = (status?: string) => {
+    switch (status) {
+      case 'analyzing':
+        return <Brain className="h-4 w-4 animate-spin text-blue-500" />;
+      case 'analyzed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <FileText className="w-8 h-8 text-blue-600" />;
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'analyzing':
+        return <Badge variant="default" className="bg-blue-100 text-blue-800">Analyzing...</Badge>;
+      case 'analyzed':
+        return <Badge variant="default" className="bg-green-100 text-green-800">Analyzed</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -384,7 +486,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <FileText className="w-8 h-8 text-blue-600" />
+                    {getStatusIcon(document.status)}
                     <div>
                       <p className="font-medium">{document.name}</p>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -392,6 +494,7 @@ export const VoltMarketDocumentUpload: React.FC<VoltMarketDocumentUploadProps> =
                         <Badge variant="outline">
                           {DOCUMENT_TYPES.find(t => t.value === document.document_type)?.label || document.document_type}
                         </Badge>
+                        {getStatusBadge(document.status)}
                         {document.description && (
                           <span className="text-xs">• {document.description}</span>
                         )}
