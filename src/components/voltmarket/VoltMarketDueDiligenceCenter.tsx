@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketDueDiligence } from '@/hooks/useVoltMarketDueDiligence';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Search, 
   FileText, 
@@ -50,7 +51,41 @@ export const VoltMarketDueDiligenceCenter: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+
+    // Set up real-time subscription for due diligence reports
+    const channel = supabase
+      .channel('due-diligence-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'due_diligence_reports'
+        },
+        (payload) => {
+          console.log('Report updated:', payload);
+          // Update the specific report in the list
+          setReports(prev => 
+            prev.map(report => 
+              report.id === payload.new.id ? payload.new : report
+            )
+          );
+          
+          // Show toast notification for completed reports
+          if (payload.new.report_data?.status === 'completed') {
+            toast({
+              title: "Report completed",
+              description: "Your due diligence report has been completed and is ready for review."
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [toast]);
 
   const loadData = async () => {
     try {
