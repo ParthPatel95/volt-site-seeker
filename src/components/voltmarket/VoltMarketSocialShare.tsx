@@ -24,7 +24,9 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
   imageUrl
 }) => {
   const { toast } = useToast();
-  const currentUrl = `${window.location.href}?share=${Date.now()}`; // Add cache-busting parameter
+  // Use meta-proxy URL for social sharing to ensure proper preview
+  const shareUrl = `https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/meta-proxy?listingId=${listingId}`;
+  const currentUrl = window.location.href;
   
   // Set up meta tags for social sharing
   useEffect(() => {
@@ -126,33 +128,33 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
   const shareText = `Check out this ${title} listing on VoltMarket - ${price}${powerCapacity ? ` | ${powerCapacity}MW` : ''} | ${location}`;
 
   const handleFacebookShare = () => {
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     window.open(url, '_blank', 'width=600,height=400');
   };
 
   const handleLinkedInShare = () => {
-    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`;
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
     window.open(url, '_blank', 'width=600,height=400');
   };
 
   const handleWhatsAppShare = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + currentUrl)}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
     window.open(url, '_blank');
   };
 
   const handleTelegramShare = () => {
-    const url = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(shareText)}`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
     window.open(url, '_blank');
   };
 
   const handleTwitterShare = () => {
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(currentUrl)}`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(url, '_blank', 'width=600,height=400');
   };
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(currentUrl);
+      await navigator.clipboard.writeText(shareUrl);
       toast({
         title: "Link Copied",
         description: "The listing link has been copied to your clipboard."

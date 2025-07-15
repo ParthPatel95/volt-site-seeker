@@ -219,16 +219,7 @@ export const VoltMarketListingDetail: React.FC = () => {
     }
   };
 
-  // Set page meta tags for social sharing
-  usePageMeta({
-    title: listing ? `${listing.title} - ${getPriceDisplay()} | VoltMarket` : 'Loading... | VoltMarket',
-    description: listing ? 
-      `${listing.description?.substring(0, 160) || 'Power infrastructure listing'} | ${listing.location}${listing.power_capacity_mw > 0 ? ` | ${listing.power_capacity_mw}MW` : ''}` : 
-      'Loading listing details...',
-    image: firstImage,
-    url: window.location.href,
-    type: 'article'
-  });
+  // Meta tags are now handled by the edge function for social crawlers
 
   useEffect(() => {
     // Always fetch listing data, regardless of authentication
