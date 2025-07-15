@@ -157,6 +157,26 @@ export const VoltMarketListingDetail: React.FC = () => {
     });
   };
 
+  const handleProtectedAction = (actionName: string) => {
+    if (!profile) {
+      toast({
+        title: "Sign In Required",
+        description: `Please sign in to ${actionName}`,
+        variant: "default"
+      });
+      navigate('/voltmarket/auth');
+      return;
+    }
+  };
+
+  const handleLOIClick = () => {
+    if (!profile) {
+      handleProtectedAction('submit a Letter of Intent');
+      return;
+    }
+    setShowLOIModal(true);
+  };
+
   const getPriceDisplay = () => {
     if (!listing) return '';
     
@@ -181,15 +201,14 @@ export const VoltMarketListingDetail: React.FC = () => {
   };
 
   useEffect(() => {
-    // Check authentication first
-    if (!profile) {
-      navigate('/voltmarket/auth');
-      return;
-    }
-    
+    // Always fetch listing data, regardless of authentication
     fetchListing();
-    checkNDAStatus();
-  }, [id, profile, navigate]);
+    
+    // Only check NDA status if user is authenticated
+    if (profile) {
+      checkNDAStatus();
+    }
+  }, [id, profile]);
 
   if (loading) {
     return (
@@ -243,8 +262,19 @@ export const VoltMarketListingDetail: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
-              <VoltMarketWatchlistButton listingId={listing.id} />
-              <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} />
+              {profile ? (
+                <>
+                  <VoltMarketWatchlistButton listingId={listing.id} />
+                  <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} />
+                </>
+              ) : (
+                <Button 
+                  onClick={() => handleProtectedAction('access listing features')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Sign In to Contact
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -254,11 +284,15 @@ export const VoltMarketListingDetail: React.FC = () => {
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
               <div className="overflow-x-auto">
-                <TabsList className={`grid w-max min-w-full ${profile?.id === listing.seller_id ? 'grid-cols-7' : 'grid-cols-6'} gap-1`}>
+                <TabsList className={`grid w-max min-w-full ${profile?.id === listing.seller_id ? 'grid-cols-7' : profile ? 'grid-cols-6' : 'grid-cols-4'} gap-1`}>
                   <TabsTrigger value="overview" className="text-xs md:text-sm whitespace-nowrap">Overview</TabsTrigger>
                   <TabsTrigger value="details" className="text-xs md:text-sm whitespace-nowrap">Details</TabsTrigger>
-                  <TabsTrigger value="documents" className="text-xs md:text-sm whitespace-nowrap">Documents</TabsTrigger>
-                  <TabsTrigger value="analysis" className="text-xs md:text-sm whitespace-nowrap">Analysis</TabsTrigger>
+                  {profile && (
+                    <>
+                      <TabsTrigger value="documents" className="text-xs md:text-sm whitespace-nowrap">Documents</TabsTrigger>
+                      <TabsTrigger value="analysis" className="text-xs md:text-sm whitespace-nowrap">Analysis</TabsTrigger>
+                    </>
+                  )}
                   {profile?.id === listing.seller_id && (
                     <TabsTrigger value="analytics" className="text-xs md:text-sm whitespace-nowrap">Analytics</TabsTrigger>
                   )}
@@ -514,16 +548,44 @@ export const VoltMarketListingDetail: React.FC = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} className="w-full" />
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setShowLOIModal(true)}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Submit LOI
-                </Button>
-                <VoltMarketWatchlistButton listingId={listing.id} size="default" variant="outline" />
+                {profile ? (
+                  <>
+                    <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} className="w-full" />
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={handleLOIClick}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Submit LOI
+                    </Button>
+                    <VoltMarketWatchlistButton listingId={listing.id} size="default" variant="outline" />
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => handleProtectedAction('contact the seller')}
+                    >
+                      Sign In to Contact
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleProtectedAction('submit a Letter of Intent')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Sign In for LOI
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleProtectedAction('add to watchlist')}
+                    >
+                      Sign In to Save
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
