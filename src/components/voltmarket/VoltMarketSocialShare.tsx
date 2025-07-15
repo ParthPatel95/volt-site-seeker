@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Share2, Facebook, Linkedin, MessageCircle, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { testSocialShareMeta } from '@/utils/testSocialShare';
 
 interface VoltMarketSocialShareProps {
   listingId: string;
@@ -185,6 +186,18 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Test button for development */}
+        <div className="mb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => testSocialShareMeta()}
+            className="text-xs text-gray-500 hover:text-gray-700"
+          >
+            Test Meta Tags (Check Console)
+          </Button>
+        </div>
+        
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Button
             variant="outline"
