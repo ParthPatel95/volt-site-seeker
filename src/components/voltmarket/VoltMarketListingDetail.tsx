@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
 import { useVoltMarketAccessRequests } from '@/hooks/useVoltMarketAccessRequests';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useToast } from '@/hooks/use-toast';
 import { 
   MapPin, 
@@ -217,6 +218,17 @@ export const VoltMarketListingDetail: React.FC = () => {
       default: return type;
     }
   };
+
+  // Set page meta tags for social sharing
+  usePageMeta({
+    title: listing ? `${listing.title} - ${getPriceDisplay()} | VoltMarket` : 'Loading... | VoltMarket',
+    description: listing ? 
+      `${listing.description?.substring(0, 160) || 'Power infrastructure listing'} | ${listing.location}${listing.power_capacity_mw > 0 ? ` | ${listing.power_capacity_mw}MW` : ''}` : 
+      'Loading listing details...',
+    image: firstImage,
+    url: window.location.href,
+    type: 'article'
+  });
 
   useEffect(() => {
     // Always fetch listing data, regardless of authentication
