@@ -28,8 +28,6 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
   const shareUrl = `https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/meta-proxy?listingId=${listingId}`;
   const currentUrl = window.location.href;
   
-  console.log('VoltMarketSocialShare URLs:', { shareUrl, currentUrl, listingId });
-  
   // Set up meta tags for social sharing
   useEffect(() => {
     const cleanDescription = description.replace(/\n/g, ' ').substring(0, 160);
@@ -171,29 +169,6 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
     }
   };
 
-  const handleTestMetaProxy = async () => {
-    try {
-      console.log('Testing meta-proxy with URL:', shareUrl);
-      const response = await fetch(shareUrl);
-      console.log('Meta-proxy response status:', response.status);
-      const text = await response.text();
-      console.log('Meta-proxy response:', text);
-      
-      toast({
-        title: "Meta Proxy Test",
-        description: `Status: ${response.status}. Check console for details.`,
-        variant: response.ok ? "default" : "destructive"
-      });
-    } catch (error) {
-      console.error('Error testing meta-proxy:', error);
-      toast({
-        title: "Meta Proxy Test Failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
@@ -291,33 +266,6 @@ export const VoltMarketSocialShare: React.FC<VoltMarketSocialShareProps> = ({
               <span className="hidden sm:inline">More</span>
             </Button>
           )}
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleTestMetaProxy}
-            className="flex items-center gap-2"
-          >
-            🔧 Test Proxy
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(`${shareUrl}&debug=true`, '_blank')}
-            className="flex items-center gap-2"
-          >
-            👁️ Debug View
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(`https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(shareUrl)}`, '_blank')}
-            className="flex items-center gap-2 col-span-full"
-          >
-            🔍 Facebook Debugger (Force Refresh Cache)
-          </Button>
         </div>
       </CardContent>
     </Card>

@@ -43,6 +43,8 @@ serve(async (req) => {
         }
       });
     }
+    
+    console.log('Serving meta tags for crawler or debug mode');
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -130,14 +132,19 @@ serve(async (req) => {
   <meta name="twitter:description" content="${shareDescription}">
   <meta name="twitter:image" content="${fullImageUrl}">
   
-  <!-- Redirect immediately -->
+  <!-- Redirect immediately for browsers -->
   <meta http-equiv="refresh" content="0; url=${actualUrl}">
+  <script>
+    // Immediate redirect for browsers that support JavaScript
+    if (typeof window !== 'undefined') {
+      window.location.href = '${actualUrl}';
+    }
+  </script>
 </head>
 <body>
-  <p>Redirecting to listing...</p>
-  <script>
-    window.location.href = '${actualUrl}';
-  </script>
+  <h1>${listing.title}</h1>
+  <p>${cleanDescription}</p>
+  <p>Redirecting to full listing...</p>
 </body>
 </html>`;
 
