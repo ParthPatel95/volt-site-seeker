@@ -23,8 +23,22 @@ serve(async (req) => {
       return new Response('Missing listing ID', { status: 400 });
     }
 
-    // For now, let's handle all requests (not just crawlers) to test
-    console.log('Processing request for listing:', listingId, 'User-Agent:', userAgent);
+    // Check if it's a social media crawler
+    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|bot|crawler|spider|slurp/i.test(userAgent);
+    console.log('Is crawler:', isCrawler, 'User-Agent:', userAgent);
+    
+    // If it's not a crawler, redirect to the actual listing
+    if (!isCrawler) {
+      console.log('Not a crawler, redirecting to actual listing');
+      const actualUrl = `https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com/voltmarket/listings/${listingId}`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': actualUrl,
+          ...corsHeaders,
+        }
+      });
+    }
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -97,7 +111,7 @@ serve(async (req) => {
   <meta property="og:image" content="${fullImageUrl}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:url" content="${actualUrl}">
+  <meta property="og:url" content="https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/meta-proxy?listingId=${listingId}">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="VoltMarket">
   
