@@ -26,6 +26,8 @@ import { VoltMarketContactMessages } from '@/components/voltmarket/VoltMarketCon
 import { VoltMarketDocumentRequests } from '@/components/voltmarket/VoltMarketDocumentRequests';
 import { VoltMarketInvestmentCalculator } from '@/components/voltmarket/VoltMarketInvestmentCalculator';
 import { VoltMarketMarketReports } from '@/components/voltmarket/VoltMarketMarketReports';
+import { ForgotPassword } from '@/pages/ForgotPassword';
+import { ResetPassword } from '@/pages/ResetPassword';
 
 export const VoltMarket = () => {
   const { user, loading } = useVoltMarketAuth();
@@ -51,6 +53,8 @@ export const VoltMarket = () => {
         </VoltMarketLayout>
       } />
       <Route path="/auth" element={<WattbytesAuth />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/listings" element={
         <VoltMarketLayout>
           <VoltMarketListings />

@@ -414,6 +414,18 @@ export const WattbytesAuth: React.FC = () => {
                 </Button>
               </form>
 
+              {/* Forgot Password Link (Login Only) */}
+              {isLogin && (
+                <div className="text-center">
+                  <Link 
+                    to="/voltmarket/forgot-password" 
+                    className="text-sm text-watt-primary hover:text-watt-primary/80 font-medium transition-colors"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+              )}
+
               {/* Toggle Mode */}
               <div className="text-center pt-4 border-t border-gray-200">
                 <p className="text-gray-600 mb-3">
