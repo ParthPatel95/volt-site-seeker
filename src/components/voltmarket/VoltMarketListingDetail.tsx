@@ -123,6 +123,7 @@ export const VoltMarketListingDetail: React.FC = () => {
           .maybeSingle();
         
         if (imageData?.image_url) {
+          console.log('Raw image URL from database:', imageData.image_url);
           setFirstImage(imageData.image_url);
         }
       }
@@ -220,6 +221,7 @@ export const VoltMarketListingDetail: React.FC = () => {
   };
 
   // Set meta tags for social sharing when listing data is available
+  console.log('Setting meta tags with firstImage:', firstImage);
   usePageMeta({
     title: listing ? `${listing.title} - ${getPriceDisplay()} | VoltMarket` : 'VoltMarket Listing',
     description: listing ? `${listing.description.substring(0, 160)} | ${listing.location}${listing.power_capacity_mw ? ` | ${listing.power_capacity_mw}MW` : ''}` : 'Power infrastructure listing on VoltMarket',
