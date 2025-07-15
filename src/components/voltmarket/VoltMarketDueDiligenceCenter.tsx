@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketDueDiligence } from '@/hooks/useVoltMarketDueDiligence';
+import { VoltMarketDocumentUpload } from './VoltMarketDocumentUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Search, 
