@@ -63,16 +63,19 @@ export const VoltMarketDueDiligenceCenter: React.FC = () => {
           table: 'due_diligence_reports'
         },
         (payload) => {
-          console.log('Report updated:', payload);
+          console.log('Report updated via realtime:', payload);
+          
           // Update the specific report in the list
-          setReports(prev => 
-            prev.map(report => 
-              report.id === payload.new.id ? payload.new : report
-            )
-          );
+          setReports(prev => {
+            const updated = prev.map(report => 
+              report.id === payload.new.id ? { ...report, ...payload.new } : report
+            );
+            console.log('Updated reports:', updated);
+            return updated;
+          });
           
           // Show toast notification for completed reports
-          if (payload.new.report_data?.status === 'completed') {
+          if (payload.new.report_data?.status === 'completed' && payload.old.report_data?.status !== 'completed') {
             toast({
               title: "Report completed",
               description: "Your due diligence report has been completed and is ready for review."
@@ -80,9 +83,24 @@ export const VoltMarketDueDiligenceCenter: React.FC = () => {
           }
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'due_diligence_reports'
+        },
+        (payload) => {
+          console.log('New report created via realtime:', payload);
+          setReports(prev => [payload.new, ...prev]);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [toast]);
