@@ -222,10 +222,11 @@ export const VoltMarketListingDetail: React.FC = () => {
 
   // Set meta tags for social sharing when listing data is available
   console.log('Setting meta tags with firstImage:', firstImage);
+  const imageUrl = firstImage ? `${firstImage}?v=${Date.now()}` : 'https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com/placeholder.svg';
   usePageMeta({
     title: listing ? `${listing.title} - ${getPriceDisplay()} | VoltMarket` : 'VoltMarket Listing',
     description: listing ? `${listing.description.substring(0, 160)} | ${listing.location}${listing.power_capacity_mw ? ` | ${listing.power_capacity_mw}MW` : ''}` : 'Power infrastructure listing on VoltMarket',
-    image: firstImage || 'https://9fe0623a-4080-437c-aca0-ba8b38e9d029.lovableproject.com/placeholder.svg',
+    image: imageUrl,
     url: window.location.href,
     type: 'article'
   });
