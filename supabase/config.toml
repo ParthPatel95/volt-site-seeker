@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.voltmarket-chat]
 verify_jwt = false
+
+[functions.meta-proxy]
+verify_jwt = false
