@@ -303,7 +303,9 @@ export const VoltMarketListingDetail: React.FC = () => {
               {profile ? (
                 <>
                   <VoltMarketWatchlistButton listingId={listing.id} />
-                  <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} />
+                  {profile.id !== listing.seller_id && (
+                    <VoltMarketContactButton listingId={listing.id} sellerId={listing.seller_id} listingTitle={listing.title} />
+                  )}
                 </>
               ) : (
                 <Button 
