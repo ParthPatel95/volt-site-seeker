@@ -729,10 +729,19 @@ export function GlobalSearchInterface() {
                 </TabsContent>
 
                 {/* Tab contents for filtered results */}
-                {['listings', 'companies', 'properties', 'documents', 'calculations', 'alerts', 'news', 'insights'].map((type) => (
-                  <TabsContent key={type} value={type} className="space-y-4">
+                {[
+                  { tab: 'listings', type: 'listing' },
+                  { tab: 'companies', type: 'company' },
+                  { tab: 'properties', type: 'property' },
+                  { tab: 'documents', type: 'document' },
+                  { tab: 'calculations', type: 'calculation' },
+                  { tab: 'alerts', type: 'alert' },
+                  { tab: 'news', type: 'news' },
+                  { tab: 'insights', type: 'insight' }
+                ].map(({ tab, type }) => (
+                  <TabsContent key={tab} value={tab} className="space-y-4">
                     {results
-                      .filter(r => r.type === type.slice(0, -1))
+                      .filter(r => r.type === type)
                       .map((result) => (
                         <Card key={result.id} className="cursor-pointer hover:shadow-md transition-shadow"
                               onClick={() => result.url && window.open(result.url, '_blank')}>
