@@ -40,8 +40,10 @@ serve(async (req) => {
     console.log('Fetching AESO data...');
 
     const headers = {
+      'X-API-Key': aesoApiKey,
       'Ocp-Apim-Subscription-Key': aesoSubKey,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     };
 
     // Get current date for API calls

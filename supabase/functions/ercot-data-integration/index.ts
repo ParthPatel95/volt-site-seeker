@@ -98,8 +98,9 @@ serve(async (req) => {
     let pricing, loadData, generationMix;
 
     // If public data is accessible, parse the HTML for basic pricing data
+    let htmlContent = '';
     if (publicDataResponse.ok) {
-      const htmlContent = await publicDataResponse.text();
+      htmlContent = await publicDataResponse.text();
       console.log('ERCOT HTML data length:', htmlContent.length);
       
       // Extract pricing data from HTML table (simplified parsing)
@@ -137,8 +138,12 @@ serve(async (req) => {
       }
     } else {
       console.warn('Failed to fetch ERCOT pricing data:', pricingResponse.status);
-      const errorText = await pricingResponse.text();
-      console.log('ERCOT pricing error:', errorText);
+      try {
+        const errorText = await pricingResponse.text();
+        console.log('ERCOT pricing error:', errorText);
+      } catch (e) {
+        console.log('Could not read pricing error response');
+      }
     }
 
     // Process load data
@@ -158,8 +163,12 @@ serve(async (req) => {
       }
     } else {
       console.warn('Failed to fetch ERCOT load data:', loadResponse.status);
-      const errorText = await loadResponse.text();
-      console.log('ERCOT load error:', errorText);
+      try {
+        const errorText = await loadResponse.text();
+        console.log('ERCOT load error:', errorText);
+      } catch (e) {
+        console.log('Could not read load error response');
+      }
     }
 
     // Process generation mix data
@@ -191,8 +200,12 @@ serve(async (req) => {
       }
     } else {
       console.warn('Failed to fetch ERCOT generation data:', generationResponse.status);
-      const errorText = await generationResponse.text();
-      console.log('ERCOT generation error:', errorText);
+      try {
+        const errorText = await generationResponse.text();
+        console.log('ERCOT generation error:', errorText);
+      } catch (e) {
+        console.log('Could not read generation error response');
+      }
     }
 
     // If no data was retrieved from APIs, provide fallback data
