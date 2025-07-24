@@ -40,7 +40,7 @@ serve(async (req) => {
 
     // Fetch current pricing data
     const pricingResponse = await fetch(
-      'https://api.ercot.com/api/public-reports/np4-190-cd/real_time_spp_15m',
+      'https://pubapi.ercot.com/api/public-reports/np4-190-cd/real_time_spp_15m',
       {
         headers: {
           'Ocp-Apim-Subscription-Key': ercotApiKey,
@@ -51,7 +51,7 @@ serve(async (req) => {
 
     // Fetch load data
     const loadResponse = await fetch(
-      'https://api.ercot.com/api/public-reports/np3-565-cd/actual_loads_of_weather_zones',
+      'https://pubapi.ercot.com/api/public-reports/np3-565-cd/actual_loads_of_weather_zones',
       {
         headers: {
           'Ocp-Apim-Subscription-Key': ercotApiKey,
@@ -62,7 +62,7 @@ serve(async (req) => {
 
     // Fetch generation mix data
     const generationResponse = await fetch(
-      'https://api.ercot.com/api/public-reports/np3-560-cd/fuel_mix_and_load_data',
+      'https://pubapi.ercot.com/api/public-reports/np3-560-cd/fuel_mix_and_load_data',
       {
         headers: {
           'Ocp-Apim-Subscription-Key': ercotApiKey,

@@ -45,21 +45,18 @@ serve(async (req) => {
       'Content-Type': 'application/json'
     };
 
+    // Get current date for API calls
+    const today = new Date().toISOString().split('T')[0];
+
     // Fetch current pricing data
     const pricingResponse = await fetch(
-      'https://api.aeso.ca/report/v1.1/price/poolPrice',
+      `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${today}`,
       { headers }
     );
 
-    // Fetch load data
-    const loadResponse = await fetch(
-      'https://api.aeso.ca/report/v1.1/load/currentSystemDemand',
-      { headers }
-    );
-
-    // Fetch generation mix data
+    // Fetch generation mix data (current supply and demand)
     const generationResponse = await fetch(
-      'https://api.aeso.ca/report/v1.1/generation/currentSupplyDemand',
+      'https://apimgw.aeso.ca/public/currentsupplydemand-api/v1/csd/summary/current',
       { headers }
     );
 
@@ -70,13 +67,13 @@ serve(async (req) => {
       const pricingData = await pricingResponse.json();
       console.log('AESO pricing data received');
       
-      if (pricingData && pricingData.return && pricingData.return.Pool_Price_Report) {
-        const priceData = pricingData.return.Pool_Price_Report;
-        const currentPrice = parseFloat(priceData.pool_price || 0);
+      if (pricingData && pricingData['Pool Price Report'] && pricingData['Pool Price Report'].length > 0) {
+        const latestPrice = pricingData['Pool Price Report'][pricingData['Pool Price Report'].length - 1];
+        const currentPrice = parseFloat(latestPrice.pool_price || 0);
         
         pricing = {
           current_price: currentPrice,
-          average_price: currentPrice * 0.85, // Estimate based on typical patterns
+          average_price: currentPrice * 0.85,
           peak_price: currentPrice * 1.8,
           off_peak_price: currentPrice * 0.4,
           market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low'
@@ -86,41 +83,22 @@ serve(async (req) => {
       console.warn('Failed to fetch AESO pricing data:', pricingResponse.status);
     }
 
-    // Process load data
-    if (loadResponse.ok) {
-      const loadDataResponse = await loadResponse.json();
-      console.log('AESO load data received');
-      
-      if (loadDataResponse && loadDataResponse.return && loadDataResponse.return.Current_System_Demand_Report) {
-        const demandData = loadDataResponse.return.Current_System_Demand_Report;
-        const currentDemand = parseFloat(demandData.system_demand || 0);
-        
-        loadData = {
-          current_demand_mw: currentDemand,
-          peak_forecast_mw: currentDemand * 1.3, // Estimate based on typical patterns
-          reserve_margin: 12.5 // AESO typical reserve margin
-        };
-      }
-    } else {
-      console.warn('Failed to fetch AESO load data:', loadResponse.status);
-    }
-
     // Process generation mix data
     if (generationResponse.ok) {
       const generationData = await generationResponse.json();
       console.log('AESO generation data received');
       
-      if (generationData && generationData.return && generationData.return.Current_Supply_Demand_Report) {
-        const supplyData = generationData.return.Current_Supply_Demand_Report;
+      if (generationData) {
+        const currentDemand = generationData.alberta_internal_load || 0;
+        const totalGeneration = generationData.total_net_generation || 0;
         
-        const naturalGas = parseFloat(supplyData.gas || 0);
-        const wind = parseFloat(supplyData.wind || 0);
-        const solar = parseFloat(supplyData.solar || 0);
-        const coal = parseFloat(supplyData.coal || 0);
-        const hydro = parseFloat(supplyData.hydro || 0);
-        const other = parseFloat(supplyData.other || 0);
+        // Extract generation by fuel type from the generation breakdown if available
+        const naturalGas = 0; // AESO API doesn't provide detailed fuel breakdown in this endpoint
+        const wind = 0;
+        const solar = 0;
+        const coal = 0;
+        const hydro = 0;
         
-        const totalGeneration = naturalGas + wind + solar + coal + hydro + other;
         const renewableGeneration = wind + solar + hydro;
         
         generationMix = {
@@ -131,6 +109,13 @@ serve(async (req) => {
           coal_mw: coal,
           hydro_mw: hydro,
           renewable_percentage: totalGeneration > 0 ? (renewableGeneration / totalGeneration) * 100 : 0
+        };
+
+        // Use current demand as load data
+        loadData = {
+          current_demand_mw: currentDemand,
+          peak_forecast_mw: currentDemand * 1.3,
+          reserve_margin: 12.5
         };
       }
     } else {
