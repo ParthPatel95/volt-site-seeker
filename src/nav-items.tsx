@@ -1,5 +1,6 @@
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
+import ComprehensiveFeaturesTest from './pages/ComprehensiveFeaturesTest';
 
 export interface NavItem {
   title: string;
@@ -9,6 +10,9 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  // Add any additional nav items here if needed in the future
-  // For now, this is just to prevent the build error
+  {
+    title: 'Comprehensive Features Test',
+    to: '/comprehensive-features-test',
+    page: <ComprehensiveFeaturesTest />
+  }
 ];

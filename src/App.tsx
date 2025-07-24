@@ -11,6 +11,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import ComprehensiveTest from "./pages/ComprehensiveTest";
+import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 
 const queryClient = new QueryClient();
 
