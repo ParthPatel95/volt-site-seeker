@@ -516,6 +516,138 @@ export type Database = {
         }
         Relationships: []
       }
+      document_folders: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          owner_id: string
+          parent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "document_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_permissions: {
+        Row: {
+          document_id: string
+          expires_at: string | null
+          granted_at: string | null
+          granted_by: string
+          id: string
+          permission_level: Database["public"]["Enums"]["permission_level"]
+          user_id: string
+        }
+        Insert: {
+          document_id: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by: string
+          id?: string
+          permission_level: Database["public"]["Enums"]["permission_level"]
+          user_id: string
+        }
+        Update: {
+          document_id?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string
+          id?: string
+          permission_level?: Database["public"]["Enums"]["permission_level"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_permissions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          category: Database["public"]["Enums"]["document_category"] | null
+          created_at: string | null
+          description: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          folder_id: string | null
+          id: string
+          is_private: boolean | null
+          name: string
+          owner_id: string
+          tags: string[] | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["document_category"] | null
+          created_at?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          folder_id?: string | null
+          id?: string
+          is_private?: boolean | null
+          name: string
+          owner_id: string
+          tags?: string[] | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["document_category"] | null
+          created_at?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          folder_id?: string | null
+          id?: string
+          is_private?: boolean | null
+          name?: string
+          owner_id?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "document_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       due_diligence_reports: {
         Row: {
           company_id: string | null
@@ -762,6 +894,104 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      generated_reports: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          file_url: string | null
+          generated_by: string
+          id: string
+          name: string
+          parameters: Json | null
+          report_data: Json
+          status: string | null
+          template_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          file_url?: string | null
+          generated_by: string
+          id?: string
+          name: string
+          parameters?: Json | null
+          report_data: Json
+          status?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          file_url?: string | null
+          generated_by?: string
+          id?: string
+          name?: string
+          parameters?: Json | null
+          report_data?: Json
+          status?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gridbazaar_profiles: {
+        Row: {
+          bio: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          is_email_verified: boolean
+          is_id_verified: boolean
+          linkedin_url: string | null
+          phone_number: string | null
+          profile_image_url: string | null
+          role: string
+          seller_type: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          is_email_verified?: boolean
+          is_id_verified?: boolean
+          linkedin_url?: string | null
+          phone_number?: string | null
+          profile_image_url?: string | null
+          role?: string
+          seller_type?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          is_email_verified?: boolean
+          is_id_verified?: boolean
+          linkedin_url?: string | null
+          phone_number?: string | null
+          profile_image_url?: string | null
+          role?: string
+          seller_type?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
       }
       industry_intel_results: {
         Row: {
@@ -1039,6 +1269,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string
+          priority: string
+          read: boolean | null
+          source: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message: string
+          priority?: string
+          read?: boolean | null
+          source: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string
+          priority?: string
+          read?: boolean | null
+          source?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       portfolio_recommendations: {
         Row: {
           created_at: string
@@ -1312,6 +1581,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      report_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          template_config: Json
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          template_config: Json
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          template_config?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       scraped_properties: {
         Row: {
@@ -1787,6 +2092,60 @@ export type Database = {
           last_triggered?: string | null
           notification_channels?: string[]
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_settings: Json | null
+          ui_preferences: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_settings?: Json | null
+          ui_preferences?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_settings?: Json | null
+          ui_preferences?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -3687,6 +4046,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       is_voltscout_approved: {
         Args: { user_id: string }
         Returns: boolean
@@ -3706,6 +4072,16 @@ export type Database = {
         | "price_change"
         | "status_change"
         | "high_voltscore"
+      app_role: "admin" | "moderator" | "user" | "viewer"
+      document_category:
+        | "contract"
+        | "report"
+        | "technical"
+        | "financial"
+        | "legal"
+        | "marketing"
+        | "other"
+      permission_level: "read" | "write" | "admin"
       property_status:
         | "available"
         | "under_contract"
@@ -3889,6 +4265,17 @@ export const Constants = {
         "status_change",
         "high_voltscore",
       ],
+      app_role: ["admin", "moderator", "user", "viewer"],
+      document_category: [
+        "contract",
+        "report",
+        "technical",
+        "financial",
+        "legal",
+        "marketing",
+        "other",
+      ],
+      permission_level: ["read", "write", "admin"],
       property_status: [
         "available",
         "under_contract",
