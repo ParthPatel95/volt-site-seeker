@@ -95,44 +95,64 @@ export function IdleIndustryScanner() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Factory className="w-6 h-6 text-orange-600" />
-              Enhanced Idle Industry Scanner
-              <Badge variant="outline" className="ml-auto">AI-Powered Multi-Source</Badge>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Factory className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                <span className="text-lg sm:text-xl font-bold">Enhanced Idle Industry Scanner</span>
+              </div>
+              <Badge variant="outline" className="self-start sm:ml-2 text-xs sm:text-sm">AI-Powered Multi-Source</Badge>
             </div>
             <div className="flex items-center gap-2">
               {scanStats && (
-                <Badge variant="secondary">
-                  {scanStats.totalSitesFound} sites • {Math.round(scanStats.totalEstimatedFreeMW)}MW available
+                <Badge variant="secondary" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">{scanStats.totalSitesFound} sites • {Math.round(scanStats.totalEstimatedFreeMW)}MW available</span>
+                  <span className="sm:hidden">{scanStats.totalSitesFound} sites • {Math.round(scanStats.totalEstimatedFreeMW)}MW</span>
                 </Badge>
               )}
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <Tabs defaultValue="scanner" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="scanner">🔍 Enhanced Scanner</TabsTrigger>
-              <TabsTrigger value="results">📊 Results ({sites.length})</TabsTrigger>
-              <TabsTrigger value="map">🗺️ Interactive Map</TabsTrigger>
-              <TabsTrigger value="analytics">📈 Analytics</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
+              <TabsTrigger value="scanner" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm">
+                <Search className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">🔍 Enhanced Scanner</span>
+                <span className="sm:hidden">Scanner</span>
+              </TabsTrigger>
+              <TabsTrigger value="results" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm">
+                <Database className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">📊 Results ({sites.length})</span>
+                <span className="sm:hidden">Results</span>
+              </TabsTrigger>
+              <TabsTrigger value="map" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">🗺️ Interactive Map</span>
+                <span className="sm:hidden">Map</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm">
+                <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">📈 Analytics</span>
+                <span className="sm:hidden">Analytics</span>
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="scanner" className="space-y-6">
+            <TabsContent value="scanner" className="space-y-4 sm:space-y-6">
               {/* Enhanced Scan Configuration */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
-                    Multi-Source Scan Configuration
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">Multi-Source Scan Configuration</span>
+                    <span className="sm:hidden">Scan Configuration</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent className="space-y-4 p-4 sm:p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Jurisdiction *</label>
                       <select
@@ -143,7 +163,7 @@ export function IdleIndustryScanner() {
                           city: '' // Reset city when jurisdiction changes
                         })}
                         disabled={currentScan?.status === 'processing'}
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-2 sm:p-3 border rounded-md text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">Select state or province</option>
                         {JURISDICTIONS.map(jurisdiction => (
@@ -160,7 +180,7 @@ export function IdleIndustryScanner() {
                         value={scanConfig.city}
                         onChange={(e) => setScanConfig({...scanConfig, city: e.target.value})}
                         disabled={currentScan?.status === 'processing' || !scanConfig.jurisdiction || availableCities.length === 0}
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-2 sm:p-3 border rounded-md text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">All cities</option>
                         {availableCities.map(city => (
@@ -175,66 +195,66 @@ export function IdleIndustryScanner() {
                   {/* Data Source Configuration */}
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Data Sources (Select Multiple)</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <div className="flex items-center space-x-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableEPAData}
                           onChange={(e) => setScanConfig({...scanConfig, enableEPAData: e.target.checked})}
-                          className="rounded"
+                          className="rounded flex-shrink-0"
                         />
-                        <span className="text-sm">EPA Facility Registry</span>
+                        <span className="text-xs sm:text-sm truncate">EPA Facility Registry</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableFERCData}
                           onChange={(e) => setScanConfig({...scanConfig, enableFERCData: e.target.checked})}
-                          className="rounded"
+                          className="rounded flex-shrink-0"
                         />
-                        <span className="text-sm">FERC Generator DB</span>
+                        <span className="text-xs sm:text-sm truncate">FERC Generator DB</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableBusinessRegistry}
                           onChange={(e) => setScanConfig({...scanConfig, enableBusinessRegistry: e.target.checked})}
-                          className="rounded"
+                          className="rounded flex-shrink-0"
                         />
-                        <span className="text-sm">Business Registrations</span>
+                        <span className="text-xs sm:text-sm truncate">Business Registrations</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableGooglePlaces}
                           onChange={(e) => setScanConfig({...scanConfig, enableGooglePlaces: e.target.checked})}
-                          className="rounded"
+                          className="rounded flex-shrink-0"
                         />
-                        <span className="text-sm">Google Places API</span>
+                        <span className="text-xs sm:text-sm truncate">Google Places API</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableCommercialRealEstate}
                           onChange={(e) => setScanConfig({...scanConfig, enableCommercialRealEstate: e.target.checked})}
-                          className="rounded"
+                          className="rounded flex-shrink-0"
                         />
-                        <span className="text-sm">Commercial Real Estate</span>
+                        <span className="text-xs sm:text-sm truncate">Commercial Real Estate</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableSatelliteAnalysis}
                           onChange={(e) => setScanConfig({...scanConfig, enableSatelliteAnalysis: e.target.checked})}
-                          className="rounded"
+                          className="rounded flex-shrink-0"
                         />
-                        <span className="text-sm">Satellite Analysis</span>
+                        <span className="text-xs sm:text-sm truncate">Satellite Analysis</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Advanced Options */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
                         Confidence Threshold: {scanConfig.includeConfidenceThreshold}%
@@ -258,7 +278,7 @@ export function IdleIndustryScanner() {
                       <select
                         value={scanConfig.maxResults}
                         onChange={(e) => setScanConfig({...scanConfig, maxResults: parseInt(e.target.value)})}
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-2 border rounded-md text-sm sm:text-base"
                       >
                         <option value={50}>50</option>
                         <option value={100}>100</option>
@@ -280,22 +300,24 @@ export function IdleIndustryScanner() {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                     <Button 
                       onClick={handleStartScan}
                       disabled={currentScan?.status === 'processing' || !scanConfig.jurisdiction}
-                      className="flex-1"
+                      className="flex-1 text-sm sm:text-base"
                       size="lg"
                     >
                       {currentScan?.status === 'processing' ? (
                         <>
-                          <Search className="w-4 h-4 mr-2 animate-spin" />
-                          Scanning... ({currentScan.progress}%)
+                          <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                          <span className="hidden sm:inline">Scanning... ({currentScan.progress}%)</span>
+                          <span className="sm:hidden">Scanning... {currentScan.progress}%</span>
                         </>
                       ) : (
                         <>
-                          <Search className="w-4 h-4 mr-2" />
-                          Start Enhanced Multi-Source Scan
+                          <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Start Enhanced Multi-Source Scan</span>
+                          <span className="sm:hidden">Start Scan</span>
                         </>
                       )}
                     </Button>
@@ -305,16 +327,20 @@ export function IdleIndustryScanner() {
                         <Button 
                           variant="outline"
                           onClick={() => exportSites('csv')}
+                          className="text-sm sm:text-base"
                         >
-                          <Download className="w-4 h-4 mr-2" />
-                          Export CSV
+                          <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Export CSV</span>
+                          <span className="sm:hidden">Export</span>
                         </Button>
                         <Button 
                           variant="destructive"
                           onClick={handleDeleteAll}
+                          className="text-sm sm:text-base"
                         >
-                          <Factory className="w-4 h-4 mr-2" />
-                          Delete All
+                          <Factory className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Delete All</span>
+                          <span className="sm:hidden">Delete</span>
                         </Button>
                       </>
                     )}
@@ -334,7 +360,7 @@ export function IdleIndustryScanner() {
 
               {/* Scan Statistics */}
               {scanStats && (
-                <div className="grid gap-4 md:grid-cols-4">
+                <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
