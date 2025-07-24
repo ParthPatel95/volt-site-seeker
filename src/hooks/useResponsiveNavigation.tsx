@@ -16,14 +16,21 @@ export function useResponsiveNavigation(items: NavigationItem[]) {
 
   useEffect(() => {
     if (isMobile) {
-      // On mobile, show only top 3 priority items, rest go to dropdown
+      // On mobile, show only top 4 priority items, rest go to dropdown
       const sorted = [...items].sort((a, b) => a.priority - b.priority);
-      setVisibleItems(sorted.slice(0, 3));
-      setHiddenItems(sorted.slice(3));
+      setVisibleItems(sorted.slice(0, 4));
+      setHiddenItems(sorted.slice(4));
     } else {
-      // On desktop, show all items
-      setVisibleItems(items);
-      setHiddenItems([]);
+      // On desktop, show all items or limit based on screen width
+      const isTablet = window.innerWidth < 1024;
+      if (isTablet && items.length > 6) {
+        const sorted = [...items].sort((a, b) => a.priority - b.priority);
+        setVisibleItems(sorted.slice(0, 5));
+        setHiddenItems(sorted.slice(5));
+      } else {
+        setVisibleItems(items);
+        setHiddenItems([]);
+      }
     }
   }, [isMobile, items]);
 

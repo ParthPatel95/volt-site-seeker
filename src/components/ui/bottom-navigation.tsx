@@ -20,9 +20,9 @@ interface BottomNavigationProps {
 export function BottomNavigation({ items, className }: BottomNavigationProps) {
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border",
-      "flex items-center justify-around px-2 py-2 safe-area-pb",
-      "md:hidden", // Only show on mobile
+      "fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border",
+      "flex items-center justify-around px-1 py-1 safe-area-pb",
+      "md:hidden shadow-lg", // Only show on mobile
       className
     )}>
       {items.map((item) => (
@@ -32,9 +32,10 @@ export function BottomNavigation({ items, className }: BottomNavigationProps) {
           size="sm"
           onClick={item.onClick}
           className={cn(
-            "flex flex-col items-center justify-center p-2 min-w-0 flex-1 max-w-[80px]",
-            "h-12 relative transition-all duration-200",
-            item.active && "bg-primary/10 text-primary"
+            "flex flex-col items-center justify-center p-1.5 min-w-0 flex-1 max-w-[90px]",
+            "h-14 relative transition-all duration-200 rounded-lg",
+            "touch-target active:scale-95",
+            item.active ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent"
           )}
         >
           <div className="relative">
@@ -45,7 +46,7 @@ export function BottomNavigation({ items, className }: BottomNavigationProps) {
               </span>
             )}
           </div>
-          <span className="text-xs truncate max-w-full leading-none">
+          <span className="text-[10px] sm:text-xs truncate max-w-full leading-tight mt-0.5">
             {item.label}
           </span>
         </Button>

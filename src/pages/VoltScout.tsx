@@ -39,7 +39,7 @@ const VoltScout = () => {
 
   return (
     <AuthWrapper>
-      <div className="flex h-screen bg-gray-50 overflow-hidden">
+      <div className="flex h-screen bg-background overflow-hidden">
         <Sidebar
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
@@ -49,14 +49,15 @@ const VoltScout = () => {
         />
         
         <div className={`flex-1 flex flex-col transition-all duration-300 ${
-          isMobile ? 'ml-0' : isCollapsed ? 'ml-16' : 'ml-64 sm:ml-72'
+          isMobile ? 'ml-0' : isCollapsed ? 'ml-16' : 'ml-64 xl:ml-72'
         } overflow-hidden`}>
-          {/* Mobile menu button */}
+          {/* Mobile menu button with better touch target */}
           {isMobile && (
-            <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2">
+            <div className="lg:hidden bg-background border-b border-border px-3 py-2 safe-area-pt">
               <button
                 onClick={() => setIsOpen(true)}
-                className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                className="p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors touch-target min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Open navigation menu"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -65,8 +66,9 @@ const VoltScout = () => {
             </div>
           )}
           
-          <div className="flex-1 overflow-auto">
-            <Routes>
+          <div className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6">
+            <div className="container mx-auto max-w-7xl">
+              <Routes>
               <Route index element={<Dashboard />} />
               <Route path="aeso-market" element={<AESOMarket />} />
               <Route path="market-intelligence" element={<AESOMarketIntelligence />} />
@@ -85,7 +87,8 @@ const VoltScout = () => {
               <Route path="settings" element={<AdminSettings />} />
               {/* Redirect any unknown paths to dashboard */}
               <Route path="*" element={<Navigate to="/app" replace />} />
-            </Routes>
+              </Routes>
+            </div>
           </div>
         </div>
       </div>
