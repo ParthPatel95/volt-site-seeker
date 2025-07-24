@@ -8,7 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useVoltMarketListings } from '@/hooks/useVoltMarketListings';
 import { useVoltMarketSavedSearches } from '@/hooks/useVoltMarketSavedSearches';
 import { VoltMarketListingCard } from './VoltMarketListingCard';
@@ -478,6 +478,9 @@ export const VoltMarketEnhancedSearch: React.FC = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Save Search</DialogTitle>
+              <DialogDescription>
+                Save your current search criteria to quickly access them later.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>

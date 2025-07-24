@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketLOI } from '@/hooks/useVoltMarketLOI';
@@ -186,6 +186,9 @@ export const VoltMarketLOICenter: React.FC = () => {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Submit Letter of Intent</DialogTitle>
+                <DialogDescription>
+                  Submit a formal offer for an energy infrastructure listing.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmitLOI} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -518,6 +521,9 @@ export const VoltMarketLOICenter: React.FC = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Respond to LOI</DialogTitle>
+              <DialogDescription>
+                Send your response to the Letter of Intent.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleRespondToLOI} className="space-y-4">
               <div>
@@ -563,6 +569,9 @@ export const VoltMarketLOICenter: React.FC = () => {
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>LOI Details</DialogTitle>
+              <DialogDescription>
+                View detailed information about this Letter of Intent.
+              </DialogDescription>
             </DialogHeader>
             <ScrollArea className="h-full max-h-[60vh] pr-4">
               {selectedLOI && (
