@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AESOPricing {
   current_price: number;
@@ -36,64 +37,75 @@ export const useAESOData = () => {
   const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
   const [loading, setLoading] = useState(true);
-  const [connectionStatus] = useState<'connected' | 'fallback'>('fallback');
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'fallback'>('connected');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simulate realistic AESO data
-        const mockPricing: AESOPricing = {
-          current_price: 45.67,
-          average_price: 42.31,
-          peak_price: 89.45,
-          off_peak_price: 28.92,
-          market_conditions: 'normal',
-          timestamp: new Date().toISOString(),
-          qa_metadata: {
-            source: 'simulated',
-            confidence: 0.9
-          }
-        };
+        setError(null);
+        const { data, error } = await supabase.functions.invoke('aeso-data-integration');
+        
+        if (error) {
+          console.error('AESO API error:', error);
+          setError('Failed to fetch AESO data');
+          setConnectionStatus('fallback');
+          return;
+        }
 
-        const mockLoadData: AESOLoadData = {
-          current_demand_mw: 8450,
-          peak_forecast_mw: 11200,
-          reserve_margin: 18.5,
-          capacity_margin: 15.2,
-          forecast_date: new Date().toISOString()
-        };
-
-        const mockGenerationMix: AESOGenerationMix = {
-          total_generation_mw: 9100,
-          natural_gas_mw: 4550,
-          wind_mw: 2730,
-          hydro_mw: 1365,
-          solar_mw: 455,
-          coal_mw: 820,
-          other_mw: 180,
-          renewable_percentage: 54.2,
-          timestamp: new Date().toISOString()
-        };
-
-        setPricing(mockPricing);
-        setLoadData(mockLoadData);
-        setGenerationMix(mockGenerationMix);
+        if (data?.success) {
+          setPricing(data.pricing);
+          setLoadData(data.loadData);
+          setGenerationMix(data.generationMix);
+          setConnectionStatus('connected');
+        } else {
+          console.error('AESO data fetch failed:', data?.error);
+          setError(data?.error || 'Unknown error fetching AESO data');
+          setConnectionStatus('fallback');
+        }
       } catch (error) {
         console.error('Error fetching AESO data:', error);
+        setError('Network error fetching AESO data');
+        setConnectionStatus('fallback');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 300000); // 5 minutes
     return () => clearInterval(interval);
   }, []);
 
-  const refetch = () => {
+  const refetch = async () => {
     setLoading(true);
-    // Trigger data refresh
-    setTimeout(() => setLoading(false), 1000);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-data-integration');
+      
+      if (error) {
+        console.error('AESO API error:', error);
+        setError('Failed to fetch AESO data');
+        setConnectionStatus('fallback');
+        return;
+      }
+
+      if (data?.success) {
+        setPricing(data.pricing);
+        setLoadData(data.loadData);
+        setGenerationMix(data.generationMix);
+        setConnectionStatus('connected');
+      } else {
+        setError(data?.error || 'Unknown error fetching AESO data');
+        setConnectionStatus('fallback');
+      }
+    } catch (error) {
+      console.error('Error refetching AESO data:', error);
+      setError('Network error fetching AESO data');
+      setConnectionStatus('fallback');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
@@ -102,6 +114,7 @@ export const useAESOData = () => {
     generationMix,
     loading,
     connectionStatus,
+    error,
     refetch
   };
 };

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ERCOTPricing {
   current_price: number;
@@ -29,53 +30,66 @@ export const useERCOTData = () => {
   const [loadData, setLoadData] = useState<ERCOTLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<ERCOTGenerationMix | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simulate realistic ERCOT data
-        const mockPricing: ERCOTPricing = {
-          current_price: 32.45,
-          average_price: 29.87,
-          peak_price: 67.23,
-          off_peak_price: 18.56,
-          market_conditions: 'normal'
-        };
+        setError(null);
+        const { data, error } = await supabase.functions.invoke('ercot-data-integration');
+        
+        if (error) {
+          console.error('ERCOT API error:', error);
+          setError('Failed to fetch ERCOT data');
+          return;
+        }
 
-        const mockLoadData: ERCOTLoadData = {
-          current_demand_mw: 52340,
-          peak_forecast_mw: 78500,
-          reserve_margin: 15.2
-        };
-
-        const mockGenerationMix: ERCOTGenerationMix = {
-          total_generation_mw: 58750,
-          natural_gas_mw: 28420,
-          wind_mw: 15680,
-          solar_mw: 8920,
-          nuclear_mw: 5730,
-          renewable_percentage: 41.8
-        };
-
-        setPricing(mockPricing);
-        setLoadData(mockLoadData);
-        setGenerationMix(mockGenerationMix);
+        if (data?.success) {
+          setPricing(data.pricing);
+          setLoadData(data.loadData);
+          setGenerationMix(data.generationMix);
+        } else {
+          console.error('ERCOT data fetch failed:', data?.error);
+          setError(data?.error || 'Unknown error fetching ERCOT data');
+        }
       } catch (error) {
         console.error('Error fetching ERCOT data:', error);
+        setError('Network error fetching ERCOT data');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 300000); // 5 minutes
     return () => clearInterval(interval);
   }, []);
 
-  const refetch = () => {
+  const refetch = async () => {
     setLoading(true);
-    // Trigger data refresh
-    setTimeout(() => setLoading(false), 1000);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('ercot-data-integration');
+      
+      if (error) {
+        console.error('ERCOT API error:', error);
+        setError('Failed to fetch ERCOT data');
+        return;
+      }
+
+      if (data?.success) {
+        setPricing(data.pricing);
+        setLoadData(data.loadData);
+        setGenerationMix(data.generationMix);
+      } else {
+        setError(data?.error || 'Unknown error fetching ERCOT data');
+      }
+    } catch (error) {
+      console.error('Error refetching ERCOT data:', error);
+      setError('Network error fetching ERCOT data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
@@ -83,6 +97,7 @@ export const useERCOTData = () => {
     loadData,
     generationMix,
     loading,
+    error,
     refetch
   };
 };
