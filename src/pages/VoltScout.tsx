@@ -16,6 +16,14 @@ import { DataManagement } from '@/components/DataManagement';
 import { VoltMarketAnalyticsDashboard } from '@/components/voltmarket/VoltMarketAnalyticsDashboard';
 import { VoltMarketAuthProvider } from '@/contexts/VoltMarketAuthContext';
 import { AdminSettings } from '@/components/admin/AdminSettings';
+import { AdvancedAnalyticsDashboard } from '@/components/analytics/AdvancedAnalyticsDashboard';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { GlobalSearchInterface } from '@/components/search/GlobalSearchInterface';
+import { DocumentManagementSystem } from '@/components/documents/DocumentManagementSystem';
+import { AdvancedReportingEngine } from '@/components/reports/AdvancedReportingEngine';
+import { UserManagementSystem } from '@/components/users/UserManagementSystem';
+import { RealTimeMarketData } from '@/components/realtime/RealTimeMarketData';
+import { ExternalAPIIntegrations } from '@/components/integrations/ExternalAPIIntegrations';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -84,6 +92,14 @@ const VoltScout = () => {
                   <VoltMarketAnalyticsDashboard />
                 </VoltMarketAuthProvider>
               } />
+              <Route path="advanced-analytics" element={<AdvancedAnalyticsDashboard />} />
+              <Route path="notifications" element={<NotificationCenter />} />
+              <Route path="global-search" element={<GlobalSearchInterface />} />
+              <Route path="documents" element={<DocumentManagementSystem />} />
+              <Route path="reports" element={<AdvancedReportingEngine />} />
+              <Route path="users" element={<UserManagementSystem />} />
+              <Route path="realtime" element={<RealTimeMarketData />} />
+              <Route path="integrations" element={<ExternalAPIIntegrations />} />
               <Route path="settings" element={<AdminSettings />} />
               {/* Redirect any unknown paths to dashboard */}
               <Route path="*" element={<Navigate to="/app" replace />} />
