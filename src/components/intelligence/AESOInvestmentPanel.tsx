@@ -37,24 +37,24 @@ export function AESOInvestmentPanel({ marketAnalytics, historicalPrices, loading
   }
 
   const calculateInvestmentScore = () => {
-    if (!marketAnalytics || !historicalPrices) return 0;
+    if (!marketAnalytics || !historicalPrices || !historicalPrices.statistics) return 0;
     
     let score = 50; // Base score
     
     // Price factors (30 points)
-    if (historicalPrices.statistics.average_price > 80) score += 15;
-    if (historicalPrices.statistics.price_volatility < 50) score += 15;
+    if (historicalPrices.statistics?.average_price && historicalPrices.statistics.average_price > 80) score += 15;
+    if (historicalPrices.statistics?.price_volatility !== undefined && historicalPrices.statistics.price_volatility < 50) score += 15;
     
     // Market stress factors (20 points)
-    if (marketAnalytics.market_stress_score < 50) score += 20;
+    if (marketAnalytics?.market_stress_score !== undefined && marketAnalytics.market_stress_score < 50) score += 20;
     
     // Opportunity factors (30 points)
-    const highPriorityOpps = marketAnalytics.investment_opportunities?.filter(op => op.priority === 'high').length || 0;
+    const highPriorityOpps = marketAnalytics?.investment_opportunities?.filter(op => op?.priority === 'high').length || 0;
     score += Math.min(30, highPriorityOpps * 10);
     
     // Risk factors (-20 points max)
-    if (marketAnalytics.risk_assessment.overall_risk_level === 'high') score -= 20;
-    else if (marketAnalytics.risk_assessment.overall_risk_level === 'medium') score -= 10;
+    if (marketAnalytics?.risk_assessment?.overall_risk_level === 'high') score -= 20;
+    else if (marketAnalytics?.risk_assessment?.overall_risk_level === 'medium') score -= 10;
     
     return Math.max(0, Math.min(100, score));
   };
@@ -260,13 +260,13 @@ export function AESOInvestmentPanel({ marketAnalytics, historicalPrices, loading
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
-                    ${historicalPrices.statistics.average_price.toFixed(2)}
+                    ${historicalPrices.statistics.average_price?.toFixed(2) || '0.00'}
                   </div>
                   <div className="text-sm text-purple-700">Average Price</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
-                    ${historicalPrices.statistics.max_price.toFixed(2)}
+                    ${historicalPrices.statistics.max_price?.toFixed(2) || '0.00'}
                   </div>
                   <div className="text-sm text-green-700">Peak Price</div>
                 </div>
@@ -276,19 +276,19 @@ export function AESOInvestmentPanel({ marketAnalytics, historicalPrices, loading
                 <div className="flex justify-between">
                   <span className="text-sm">Price Range</span>
                   <span className="font-semibold">
-                    ${historicalPrices.statistics.min_price.toFixed(2)} - ${historicalPrices.statistics.max_price.toFixed(2)}
+                    ${historicalPrices.statistics.min_price?.toFixed(2) || '0.00'} - ${historicalPrices.statistics.max_price?.toFixed(2) || '0.00'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Volatility Index</span>
                   <span className="font-semibold">
-                    {historicalPrices.statistics.price_volatility.toFixed(1)}
+                    {historicalPrices.statistics.price_volatility?.toFixed(1) || '0.0'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Data Points</span>
                   <span className="font-semibold">
-                    {historicalPrices.statistics.total_records}
+                    {historicalPrices.statistics.total_records || 0}
                   </span>
                 </div>
               </div>
@@ -296,11 +296,11 @@ export function AESOInvestmentPanel({ marketAnalytics, historicalPrices, loading
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                 <h4 className="font-semibold text-sm mb-1">Market Assessment</h4>
                 <p className="text-sm text-muted-foreground">
-                  {historicalPrices.statistics.average_price > 80 ?
+                  {(historicalPrices.statistics.average_price || 0) > 80 ?
                     'Strong pricing environment supports generation investment returns.' :
                     'Moderate pricing suggests selective investment approach.'
                   }
-                  {historicalPrices.statistics.price_volatility > 50 ?
+                  {(historicalPrices.statistics.price_volatility || 0) > 50 ?
                     ' High volatility presents both opportunities and risks.' :
                     ' Stable pricing reduces investment risk profile.'
                   }
