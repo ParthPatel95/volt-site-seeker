@@ -1,5 +1,6 @@
 
 import { RegionalEnergyData, HourlyPrice } from '../types/btc_roi_types';
+import { supabase } from '@/integrations/supabase/client';
 
 export class RegionalEnergyService {
   private static readonly CACHE_DURATION = 60 * 60 * 1000; // 1 hour
@@ -31,34 +32,76 @@ export class RegionalEnergyService {
   }
 
   private static async fetchERCOTData(): Promise<RegionalEnergyData> {
-    console.log('Generating ERCOT data...');
-    const hourlyPrices = this.generateRealisticERCOTData();
+    console.log('Fetching real ERCOT data...');
     
-    return {
-      region: 'ERCOT',
-      hourlyPrices,
-      averagePrice: this.calculateAverage(hourlyPrices),
-      peakPrice: Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
-      offPeakPrice: Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
-      lastUpdated: new Date()
-    };
+    try {
+      const { data, error } = await supabase.functions.invoke('ercot-data-integration');
+      
+      if (error || !data?.success) {
+        throw new Error(data?.error || 'Failed to fetch ERCOT data');
+      }
+
+      // Generate hourly prices based on real current data
+      const hourlyPrices = this.generateRealisticERCOTData(data.pricing?.current_price || 45);
+      
+      return {
+        region: 'ERCOT',
+        hourlyPrices,
+        averagePrice: data.pricing?.average_price || this.calculateAverage(hourlyPrices),
+        peakPrice: data.pricing?.peak_price || Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
+        offPeakPrice: data.pricing?.off_peak_price || Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
+        lastUpdated: new Date()
+      };
+    } catch (error) {
+      console.error('Error fetching live ERCOT data, using fallback:', error);
+      const hourlyPrices = this.generateRealisticERCOTData();
+      return {
+        region: 'ERCOT',
+        hourlyPrices,
+        averagePrice: this.calculateAverage(hourlyPrices),
+        peakPrice: Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
+        offPeakPrice: Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
+        lastUpdated: new Date()
+      };
+    }
   }
 
   private static async fetchAESOData(): Promise<RegionalEnergyData> {
-    console.log('Generating AESO data...');
-    const hourlyPrices = this.generateRealisticAESOData();
+    console.log('Fetching real AESO data...');
     
-    return {
-      region: 'AESO',
-      hourlyPrices,
-      averagePrice: this.calculateAverage(hourlyPrices),
-      peakPrice: Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
-      offPeakPrice: Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
-      lastUpdated: new Date()
-    };
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-data-integration');
+      
+      if (error || !data?.success) {
+        throw new Error(data?.error || 'Failed to fetch AESO data');
+      }
+
+      // Generate hourly prices based on real current data
+      const hourlyPrices = this.generateRealisticAESOData(data.pricing?.current_price || 75);
+      
+      return {
+        region: 'AESO',
+        hourlyPrices,
+        averagePrice: data.pricing?.average_price || this.calculateAverage(hourlyPrices),
+        peakPrice: data.pricing?.peak_price || Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
+        offPeakPrice: data.pricing?.off_peak_price || Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
+        lastUpdated: new Date()
+      };
+    } catch (error) {
+      console.error('Error fetching live AESO data, using fallback:', error);
+      const hourlyPrices = this.generateRealisticAESOData();
+      return {
+        region: 'AESO',
+        hourlyPrices,
+        averagePrice: this.calculateAverage(hourlyPrices),
+        peakPrice: Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
+        offPeakPrice: Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
+        lastUpdated: new Date()
+      };
+    }
   }
 
-  private static generateRealisticERCOTData(): HourlyPrice[] {
+  private static generateRealisticERCOTData(currentPrice?: number): HourlyPrice[] {
     const prices: HourlyPrice[] = [];
     const now = new Date();
     
@@ -68,8 +111,8 @@ export class RegionalEnergyService {
       const hour = timestamp.getHours();
       const month = timestamp.getMonth();
       
-      // Base price around $35/MWh (realistic ERCOT average)
-      let basePrice = 35;
+      // Base price around current real price or $35/MWh fallback
+      let basePrice = currentPrice || 35;
       
       // Seasonal adjustment (higher in summer due to AC load)
       if (month >= 5 && month <= 8) {
@@ -114,7 +157,7 @@ export class RegionalEnergyService {
     return prices;
   }
 
-  private static generateRealisticAESOData(): HourlyPrice[] {
+  private static generateRealisticAESOData(currentPrice?: number): HourlyPrice[] {
     const prices: HourlyPrice[] = [];
     const now = new Date();
     
@@ -124,8 +167,8 @@ export class RegionalEnergyService {
       const hour = timestamp.getHours();
       const month = timestamp.getMonth();
       
-      // Base price around $65 CAD/MWh (realistic AESO average)
-      let basePrice = 65;
+      // Base price around current real price or $65 CAD/MWh fallback
+      let basePrice = currentPrice || 65;
       
       // Seasonal adjustment (higher in winter due to heating demand)
       if (month >= 10 || month <= 2) {

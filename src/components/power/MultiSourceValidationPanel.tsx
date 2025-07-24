@@ -50,12 +50,8 @@ export function MultiSourceValidationPanel() {
       setProgress(25);
 
       // Phase 2: Cross-reference with regulatory data
-      const { data: regulatoryData, error: regError } = await supabase.functions.invoke('regulatory-data-integration', {
-        body: {
-          action: selectedRegion === 'alberta' ? 'fetch_aeso_data' : 'fetch_ercot_data',
-          region: selectedRegion
-        }
-      });
+      const functionName = selectedRegion === 'alberta' ? 'aeso-data-integration' : 'ercot-data-integration';
+      const { data: regulatoryData, error: regError } = await supabase.functions.invoke(functionName);
 
       if (regError) throw regError;
 

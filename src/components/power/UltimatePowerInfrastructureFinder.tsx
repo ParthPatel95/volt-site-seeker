@@ -86,13 +86,8 @@ export function UltimatePowerInfrastructureFinder() {
       setCurrentPhase('Phase 1: Regulatory Data Integration');
       setProgress(5);
       
-      const { data: regulatoryData, error: regError } = await supabase.functions.invoke('regulatory-data-integration', {
-        body: {
-          action: searchRegion === 'alberta' ? 'fetch_aeso_data' : 'fetch_ercot_data',
-          region: searchRegion,
-          city: selectedCity !== 'All Cities' ? selectedCity : undefined
-        }
-      });
+      const functionName = searchRegion === 'alberta' ? 'aeso-data-integration' : 'ercot-data-integration';
+      const { data: regulatoryData, error: regError } = await supabase.functions.invoke(functionName);
 
       if (regError) throw regError;
       setProgress(20);
