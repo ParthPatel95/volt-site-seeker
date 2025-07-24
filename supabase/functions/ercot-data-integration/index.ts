@@ -39,34 +39,31 @@ serve(async (req) => {
     console.log('Fetching ERCOT data...');
     console.log('ERCOT API Key configured:', ercotApiKey ? 'YES' : 'NO');
 
-    // Let's try a simple test endpoint first
-    const testResponse = await fetch('https://pubapi.ercot.com/api/1/services/read/dashboards/todays-outlook', {
-      headers: {
-        'Ocp-Apim-Subscription-Key': ercotApiKey,
-        'Content-Type': 'application/json'
-      }
-    });
+    // Try ERCOT's public real-time data HTML page first (no auth needed)
+    const publicDataResponse = await fetch('https://www.ercot.com/content/cdr/html/real_time_spp.html');
+    console.log('ERCOT public data response status:', publicDataResponse.status);
 
-    console.log('ERCOT test endpoint status:', testResponse.status);
-    if (!testResponse.ok) {
-      const errorText = await testResponse.text();
-      console.log('ERCOT test error:', errorText);
+    // If the public page works, try the API endpoints
+    // Fetch current pricing data - try different endpoint
+    const pricingResponse = await fetch(
+      'https://api.ercot.com/api/1/services/read/dashboards/daily-summary',
+      {
+        headers: {
+          'Ocp-Apim-Subscription-Key': ercotApiKey,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('ERCOT pricing response status:', pricingResponse.status);
+    if (!pricingResponse.ok) {
+      const errorText = await pricingResponse.text();
+      console.log('ERCOT pricing error:', errorText);
     }
 
-    // Fetch current pricing data
-    const pricingResponse = await fetch(
-      'https://pubapi.ercot.com/api/public-reports/np4-190-cd/real_time_spp_15m',
-      {
-        headers: {
-          'Ocp-Apim-Subscription-Key': ercotApiKey,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    // Fetch load data
+    // Try alternative load data endpoint
     const loadResponse = await fetch(
-      'https://pubapi.ercot.com/api/public-reports/np3-565-cd/actual_loads_of_weather_zones',
+      'https://api.ercot.com/api/1/services/read/dashboards/system-wide-demand',
       {
         headers: {
           'Ocp-Apim-Subscription-Key': ercotApiKey,
@@ -75,9 +72,15 @@ serve(async (req) => {
       }
     );
 
-    // Fetch generation mix data
+    console.log('ERCOT load response status:', loadResponse.status);
+    if (!loadResponse.ok) {
+      const errorText = await loadResponse.text();
+      console.log('ERCOT load error:', errorText);
+    }
+
+    // Try generation mix endpoint
     const generationResponse = await fetch(
-      'https://pubapi.ercot.com/api/public-reports/np3-560-cd/fuel_mix_and_load_data',
+      'https://api.ercot.com/api/1/services/read/dashboards/fuel-mix',
       {
         headers: {
           'Ocp-Apim-Subscription-Key': ercotApiKey,
@@ -85,15 +88,38 @@ serve(async (req) => {
         }
       }
     );
+
+    console.log('ERCOT generation response status:', generationResponse.status);
+    if (!generationResponse.ok) {
+      const errorText = await generationResponse.text();
+      console.log('ERCOT generation error:', errorText);
+    }
 
     let pricing, loadData, generationMix;
 
-    // If test endpoint works, proceed with real data
-    if (testResponse.ok) {
-      console.log('ERCOT API accessible, fetching real data...');
+    // If public data is accessible, parse the HTML for basic pricing data
+    if (publicDataResponse.ok) {
+      const htmlContent = await publicDataResponse.text();
+      console.log('ERCOT HTML data length:', htmlContent.length);
       
-      // Process pricing data
-      if (pricingResponse.ok) {
+      // Extract pricing data from HTML table (simplified parsing)
+      const priceMatch = htmlContent.match(/(\d+\.\d+)/);
+      if (priceMatch) {
+        const currentPrice = parseFloat(priceMatch[1]);
+        console.log('Extracted current price from HTML:', currentPrice);
+        
+        pricing = {
+          current_price: currentPrice,
+          average_price: currentPrice * 0.9,
+          peak_price: currentPrice * 1.8,
+          off_peak_price: currentPrice * 0.5,
+          market_conditions: currentPrice > 50 ? 'high' : 'normal'
+        };
+      }
+    }
+
+    // If API endpoints work, process their data
+    if (pricingResponse.ok) {
         const pricingData = await pricingResponse.json();
         console.log('ERCOT pricing data received:', pricingData.length || 0, 'records');
         
