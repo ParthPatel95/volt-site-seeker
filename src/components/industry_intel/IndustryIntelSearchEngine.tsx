@@ -61,7 +61,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
             <Badge variant="outline" className="ml-auto">Real-Time Data</Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           {/* Jurisdiction Selection */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Target Jurisdiction *</label>
@@ -69,7 +69,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
               value={searchConfig.jurisdiction}
               onChange={(e) => setSearchConfig({...searchConfig, jurisdiction: e.target.value})}
               disabled={isScanning}
-              className="w-full p-3 border rounded-md"
+              className="w-full p-2 sm:p-3 border rounded-md text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select state or province</option>
               {JURISDICTIONS.map(jurisdiction => (
@@ -83,104 +83,106 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
           {/* Data Source Configuration */}
           <div className="space-y-3">
             <label className="text-sm font-medium">Intelligence Sources</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="flex items-center space-x-3 p-3 border rounded-md">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-md">
                 <input
                   type="checkbox"
                   checked={searchConfig.enableIdleProperties}
                   onChange={(e) => setSearchConfig({...searchConfig, enableIdleProperties: e.target.checked})}
-                  className="rounded"
+                  className="rounded flex-shrink-0"
                 />
-                <div className="flex items-center gap-2">
-                  <Factory className="w-4 h-4 text-orange-600" />
-                  <span className="text-sm">Idle Properties</span>
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                  <Factory className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm truncate">Idle Properties</span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 border rounded-md">
+              <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-md">
                 <input
                   type="checkbox"
                   checked={searchConfig.enableCorporateDistress}
                   onChange={(e) => setSearchConfig({...searchConfig, enableCorporateDistress: e.target.checked})}
-                  className="rounded"
+                  className="rounded flex-shrink-0"
                 />
-                <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-red-600" />
-                  <span className="text-sm">Corporate Distress</span>
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                  <Building className="w-3 h-3 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm truncate">Corporate Distress</span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 border rounded-md">
+              <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-md">
                 <input
                   type="checkbox"
                   checked={searchConfig.enableSatelliteAnalysis}
                   onChange={(e) => setSearchConfig({...searchConfig, enableSatelliteAnalysis: e.target.checked})}
-                  className="rounded"
+                  className="rounded flex-shrink-0"
                 />
-                <div className="flex items-center gap-2">
-                  <Satellite className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm">Satellite Analysis</span>
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                  <Satellite className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm truncate">Satellite Analysis</span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 border rounded-md">
+              <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-md">
                 <input
                   type="checkbox"
                   checked={searchConfig.enableSECFilings}
                   onChange={(e) => setSearchConfig({...searchConfig, enableSECFilings: e.target.checked})}
-                  className="rounded"
+                  className="rounded flex-shrink-0"
                 />
-                <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm">SEC/SEDAR Filings</span>
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                  <Database className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm truncate">SEC/SEDAR Filings</span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 border rounded-md">
+              <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-md">
                 <input
                   type="checkbox"
                   checked={searchConfig.enableBankruptcyData}
                   onChange={(e) => setSearchConfig({...searchConfig, enableBankruptcyData: e.target.checked})}
-                  className="rounded"
+                  className="rounded flex-shrink-0"
                 />
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  <span className="text-sm">Bankruptcy Courts</span>
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                  <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm truncate">Bankruptcy Courts</span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 border rounded-md">
+              <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-md">
                 <input
                   type="checkbox"
                   checked={searchConfig.enableNewsIntelligence}
                   onChange={(e) => setSearchConfig({...searchConfig, enableNewsIntelligence: e.target.checked})}
-                  className="rounded"
+                  className="rounded flex-shrink-0"
                 />
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-green-600" />
-                  <span className="text-sm">News Intelligence</span>
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm truncate">News Intelligence</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Scan Controls */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-2 sm:gap-4 pt-4">
             <Button 
               onClick={handleStartScan}
               disabled={isScanning || !searchConfig.jurisdiction}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-sm sm:text-base"
               size="lg"
             >
               {isScanning ? (
                 <>
-                  <Search className="w-4 h-4 mr-2 animate-spin" />
-                  Scanning... ({scanProgress}%)
+                  <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                  <span className="hidden sm:inline">Scanning... ({scanProgress}%)</span>
+                  <span className="sm:hidden">Scan... {scanProgress}%</span>
                 </>
               ) : (
                 <>
-                  <Search className="w-4 h-4 mr-2" />
-                  Start Unified Intelligence Scan
+                  <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Start Unified Intelligence Scan</span>
+                  <span className="sm:hidden">Start Scan</span>
                 </>
               )}
             </Button>
@@ -207,7 +209,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
 
           {/* Scan Results Summary */}
           {scanStats && (
-            <div className="grid gap-4 md:grid-cols-4 pt-4">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4 pt-4">
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
