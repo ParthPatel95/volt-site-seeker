@@ -26,19 +26,71 @@ const handler = async (req: Request): Promise<Response> => {
       case 'fetch_current_rates': {
         const { market_code } = params;
         
-        // Mock current rates data
-        const ratesData = {
-          current_rate: 45.50 + Math.random() * 10, // $45.50-55.50/MWh
-          market_code,
-          timestamp: new Date().toISOString(),
-          forecast: [
-            46.20 + Math.random() * 5,
-            44.80 + Math.random() * 5,
-            43.90 + Math.random() * 5
-          ],
-          market_conditions: 'normal',
-          peak_demand_rate: 65.30 + Math.random() * 15
-        };
+        let ratesData;
+        
+        if (market_code === 'AESO') {
+          // Call the AESO data integration function
+          try {
+            const { data: aesoData, error: aesoError } = await supabase.functions.invoke('aeso-data-integration');
+            
+            if (aesoError) {
+              console.error('AESO function error:', aesoError);
+              throw aesoError;
+            }
+
+            if (aesoData?.success && aesoData.pricing) {
+              ratesData = {
+                current_rate: aesoData.pricing.current_price,
+                market_code: 'AESO',
+                timestamp: new Date().toISOString(),
+                forecast: [
+                  aesoData.pricing.current_price * 1.02,
+                  aesoData.pricing.current_price * 0.98,
+                  aesoData.pricing.current_price * 0.95
+                ],
+                market_conditions: aesoData.pricing.market_conditions || 'normal',
+                peak_demand_rate: aesoData.pricing.peak_price || aesoData.pricing.current_price * 1.5,
+                load_data: aesoData.loadData,
+                generation_mix: aesoData.generationMix
+              };
+            } else {
+              console.warn('AESO API returned no data, using fallback');
+              ratesData = {
+                current_rate: 78.50,
+                market_code: 'AESO',
+                timestamp: new Date().toISOString(),
+                forecast: [80.15, 77.20, 76.30],
+                market_conditions: 'normal',
+                peak_demand_rate: 145.20
+              };
+            }
+          } catch (error) {
+            console.error('Error calling AESO function:', error);
+            // Fallback AESO data
+            ratesData = {
+              current_rate: 78.50,
+              market_code: 'AESO',
+              timestamp: new Date().toISOString(),
+              forecast: [80.15, 77.20, 76.30],
+              market_conditions: 'normal',
+              peak_demand_rate: 145.20
+            };
+          }
+        } else {
+          // Mock current rates data for other markets
+          ratesData = {
+            current_rate: 45.50 + Math.random() * 10, // $45.50-55.50/MWh
+            market_code,
+            timestamp: new Date().toISOString(),
+            forecast: [
+              46.20 + Math.random() * 5,
+              44.80 + Math.random() * 5,
+              43.90 + Math.random() * 5
+            ],
+            market_conditions: 'normal',
+            peak_demand_rate: 65.30 + Math.random() * 15
+          };
+        }
 
         // Get the actual market ID from the database instead of using a string
         const { data: marketData } = await supabase
@@ -116,6 +168,13 @@ const handler = async (req: Request): Promise<Response> => {
             market_code: 'ERCOT',
             region: 'Texas',
             timezone: 'America/Chicago'
+          },
+          {
+            id: 'aeso-001',
+            market_name: 'AESO',
+            market_code: 'AESO',
+            region: 'Alberta, Canada',
+            timezone: 'America/Edmonton'
           },
           {
             id: 'pjm-001',

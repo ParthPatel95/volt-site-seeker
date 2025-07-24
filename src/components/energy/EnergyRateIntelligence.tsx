@@ -40,6 +40,7 @@ export function EnergyRateIntelligence() {
 
   const markets = [
     { code: 'ERCOT', name: 'Texas (ERCOT)', region: 'Texas' },
+    { code: 'AESO', name: 'Alberta (AESO)', region: 'Alberta, Canada' },
     { code: 'PJM', name: 'Eastern US (PJM)', region: 'Eastern US' },
     { code: 'CAISO', name: 'California (CAISO)', region: 'California' },
     { code: 'NYISO', name: 'New York (NYISO)', region: 'New York' }
@@ -99,10 +100,17 @@ export function EnergyRateIntelligence() {
 
   const generateMockCalculations = () => {
     const baseRate = selectedMarket === 'ERCOT' ? 0.045 : 
+                    selectedMarket === 'AESO' ? 0.078 :  // CAD to USD approximation
                     selectedMarket === 'CAISO' ? 0.065 : 
                     selectedMarket === 'PJM' ? 0.055 : 0.060;
     
-    const utilities = [
+    const utilities = selectedMarket === 'AESO' ? [
+      { name: 'ATCO Electric', tariff: 'Large General Service', multiplier: 1.0 },
+      { name: 'EPCOR Distribution', tariff: 'Industrial Rate', multiplier: 1.05 },
+      { name: 'FortisAlberta', tariff: 'Commercial Service', multiplier: 0.98 },
+      { name: 'AltaLink', tariff: 'Transmission Service', multiplier: 1.12 },
+      { name: 'ENMAX Power', tariff: 'Business Rate', multiplier: 0.94 }
+    ] : [
       { name: 'TXU Energy', tariff: 'Large Commercial Rate', multiplier: 1.0 },
       { name: 'Reliant Energy', tariff: 'Business Power Plus', multiplier: 1.05 },
       { name: 'Direct Energy', tariff: 'Commercial Fixed', multiplier: 0.98 },
@@ -299,6 +307,72 @@ export function EnergyRateIntelligence() {
               )}
             </CardContent>
           </Card>
+
+          {/* AESO-specific Market Data */}
+          {selectedMarket === 'AESO' && currentRates?.load_data && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Activity className="w-5 h-5 mr-2" />
+                  AESO Grid Operations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-xl font-bold text-blue-600">
+                      {currentRates.load_data.current_demand_mw?.toLocaleString()} MW
+                    </div>
+                    <div className="text-sm text-blue-700">Current Demand</div>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-xl font-bold text-green-600">
+                      {currentRates.load_data.peak_forecast_mw?.toLocaleString()} MW
+                    </div>
+                    <div className="text-sm text-green-700">Peak Forecast</div>
+                  </div>
+                  <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                    <div className="text-xl font-bold text-yellow-600">
+                      {currentRates.load_data.reserve_margin}%
+                    </div>
+                    <div className="text-sm text-yellow-700">Reserve Margin</div>
+                  </div>
+                </div>
+
+                {currentRates.generation_mix && (
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Generation Mix</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Renewable Sources</span>
+                        <Badge variant="secondary">
+                          {currentRates.generation_mix.renewable_percentage}%
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Natural Gas:</span>
+                          <span>{currentRates.generation_mix.natural_gas_mw} MW</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Wind:</span>
+                          <span>{currentRates.generation_mix.wind_mw} MW</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Solar:</span>
+                          <span>{currentRates.generation_mix.solar_mw} MW</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Hydro:</span>
+                          <span>{currentRates.generation_mix.hydro_mw} MW</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="cost-calculator" className="space-y-6">
