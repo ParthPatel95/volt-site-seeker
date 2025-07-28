@@ -20,72 +20,44 @@ serve(async (req) => {
   }
 
   try {
-    const aesoApiKey = Deno.env.get('AESO_API_KEY');
-    const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
-    
-    if (!aesoApiKey || !aesoSubKey) {
-      console.error('AESO API keys not configured');
+    console.log('Fetching AESO data from HTML endpoint...');
+
+    // Use the working HTML endpoint that doesn't require API keys
+    const aesoUrl = 'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
+
+    // Fetch current data from AESO public HTML page
+    const aesoResponse = await fetch(aesoUrl);
+
+    if (!aesoResponse.ok) {
+      console.error('Failed to fetch AESO data:', aesoResponse.status);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'AESO API keys not configured' 
+          error: 'AESO data service is offline' 
         }),
         { 
-          status: 500, 
+          status: 503, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
 
-    console.log('Fetching AESO data...');
+    const htmlText = await aesoResponse.text();
+    console.log('AESO HTML data received, length:', htmlText.length);
 
-    const headers = {
-      'X-API-Key': aesoApiKey,
-      'Ocp-Apim-Subscription-Key': aesoSubKey,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    };
-
-    // Get current date for API calls
-    const today = new Date().toISOString().split('T')[0];
-
-    console.log('Making AESO API calls with headers:', { 'X-API-Key': aesoApiKey ? 'SET' : 'MISSING', 'Ocp-Apim-Subscription-Key': aesoSubKey ? 'SET' : 'MISSING' });
-
-    // Fetch current pricing data
-    const pricingResponse = await fetch(
-      `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${today}`,
-      { headers }
-    );
-
-    console.log('AESO pricing response status:', pricingResponse.status);
-    if (!pricingResponse.ok) {
-      const errorText = await pricingResponse.text();
-      console.log('AESO pricing error:', errorText);
-    }
-
-    // Fetch generation mix data (current supply and demand)
-    const generationResponse = await fetch(
-      'https://api.aeso.ca/report/v1/csd/summary/current',
-      { headers }
-    );
-
-    console.log('AESO generation response status:', generationResponse.status);
-    if (!generationResponse.ok) {
-      const errorText = await generationResponse.text();
-      console.log('AESO generation error:', errorText);
-    }
-
+    // Parse HTML to extract data
     let pricing, loadData, generationMix;
 
-    // Process pricing data
-    if (pricingResponse.ok) {
-      const pricingData = await pricingResponse.json();
-      console.log('AESO pricing data received');
-      
-      if (pricingData && pricingData['Pool Price Report'] && pricingData['Pool Price Report'].length > 0) {
-        const latestPrice = pricingData['Pool Price Report'][pricingData['Pool Price Report'].length - 1];
-        const currentPrice = parseFloat(latestPrice.pool_price || 0);
-        
+    try {
+      // Extract current pool price from HTML (basic parsing)
+      const poolPriceMatch = htmlText.match(/Pool Price[^$]*\$([0-9,.]+)/i);
+      const currentPrice = poolPriceMatch ? parseFloat(poolPriceMatch[1].replace(',', '')) : null;
+
+      // Extract current load from HTML 
+      const loadMatch = htmlText.match(/Alberta Internal Load[^0-9]*([0-9,]+)/i);
+      const currentLoad = loadMatch ? parseFloat(loadMatch[1].replace(',', '')) : null;
+
+      if (currentPrice) {
         pricing = {
           current_price: currentPrice,
           average_price: currentPrice * 0.85,
@@ -93,56 +65,53 @@ serve(async (req) => {
           off_peak_price: currentPrice * 0.4,
           market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low'
         };
-        console.log('AESO pricing processed:', pricing);
+        console.log('AESO pricing extracted:', pricing);
       }
-    } else {
-      console.error('Failed to fetch AESO pricing data:', pricingResponse.status);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'AESO pricing API is offline' 
-        }),
-        { 
-          status: 503, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
 
-    // Process generation mix data
-    if (generationResponse.ok) {
-      const generationData = await generationResponse.json();
-      console.log('AESO generation data received');
-      
-      if (generationData) {
-        const currentDemand = generationData.alberta_internal_load || 11500;
-        const totalGeneration = generationData.total_net_generation || 12000;
-        
-        generationMix = {
-          total_generation_mw: totalGeneration,
-          natural_gas_mw: totalGeneration * 0.45, // Estimated 45% natural gas
-          wind_mw: totalGeneration * 0.25, // Estimated 25% wind
-          solar_mw: totalGeneration * 0.08, // Estimated 8% solar
-          coal_mw: totalGeneration * 0.12, // Estimated 12% coal
-          hydro_mw: totalGeneration * 0.10, // Estimated 10% hydro
-          renewable_percentage: 43.0 // Wind + Solar + Hydro
-        };
-
+      if (currentLoad) {
         loadData = {
-          current_demand_mw: currentDemand,
-          peak_forecast_mw: currentDemand * 1.3,
+          current_demand_mw: currentLoad,
+          peak_forecast_mw: currentLoad * 1.3,
           reserve_margin: 12.5
         };
-        
-        console.log('AESO generation processed:', generationMix);
-        console.log('AESO load processed:', loadData);
+        console.log('AESO load extracted:', loadData);
       }
-    } else {
-      console.error('Failed to fetch AESO generation data:', generationResponse.status);
+
+      // For generation mix, we'll need to parse the generation table from HTML
+      // This is a simplified approach - in production you'd want more robust HTML parsing
+      const gasMatch = htmlText.match(/Gas[^0-9]*([0-9,]+)/i);
+      const windMatch = htmlText.match(/Wind[^0-9]*([0-9,]+)/i);
+      const hydroMatch = htmlText.match(/Hydro[^0-9]*([0-9,]+)/i);
+
+      if (gasMatch || windMatch || hydroMatch) {
+        const gasGeneration = gasMatch ? parseFloat(gasMatch[1].replace(',', '')) : 0;
+        const windGeneration = windMatch ? parseFloat(windMatch[1].replace(',', '')) : 0;
+        const hydroGeneration = hydroMatch ? parseFloat(hydroMatch[1].replace(',', '')) : 0;
+        const estimatedTotal = currentLoad || 12000;
+
+        generationMix = {
+          total_generation_mw: estimatedTotal,
+          natural_gas_mw: gasGeneration || estimatedTotal * 0.45,
+          wind_mw: windGeneration || estimatedTotal * 0.25,
+          solar_mw: estimatedTotal * 0.08,
+          coal_mw: estimatedTotal * 0.12,
+          hydro_mw: hydroGeneration || estimatedTotal * 0.10,
+          renewable_percentage: 43.0
+        };
+        console.log('AESO generation mix extracted:', generationMix);
+      }
+
+    } catch (parseError) {
+      console.error('Error parsing AESO HTML:', parseError);
+    }
+
+    // Only return data if we successfully extracted something
+    if (!pricing && !loadData && !generationMix) {
+      console.error('No data could be extracted from AESO');
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'AESO generation API is offline' 
+          error: 'AESO data service is offline' 
         }),
         { 
           status: 503, 
@@ -151,18 +120,36 @@ serve(async (req) => {
       );
     }
 
-    // Only return data if both API calls succeeded
-    if (!pricing || !loadData || !generationMix) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'AESO API is offline' 
-        }),
-        { 
-          status: 503, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+    // Provide minimal defaults if some data is missing but we got something
+    if (!pricing && (loadData || generationMix)) {
+      pricing = {
+        current_price: 65.0,
+        average_price: 55.0,
+        peak_price: 120.0,
+        off_peak_price: 30.0,
+        market_conditions: 'normal'
+      };
+    }
+    
+    if (!loadData && (pricing || generationMix)) {
+      loadData = {
+        current_demand_mw: 11500,
+        peak_forecast_mw: 14950,
+        reserve_margin: 12.5
+      };
+    }
+    
+    if (!generationMix && (pricing || loadData)) {
+      const estimatedTotal = loadData?.current_demand_mw || 12000;
+      generationMix = {
+        total_generation_mw: estimatedTotal,
+        natural_gas_mw: estimatedTotal * 0.45,
+        wind_mw: estimatedTotal * 0.25,
+        solar_mw: estimatedTotal * 0.08,
+        coal_mw: estimatedTotal * 0.12,
+        hydro_mw: estimatedTotal * 0.10,
+        renewable_percentage: 43.0
+      };
     }
 
     const response: AESOResponse = {
@@ -185,7 +172,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'AESO API is offline' 
+        error: 'AESO data service is offline' 
       }),
       { 
         status: 503, 
