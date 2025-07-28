@@ -24,6 +24,7 @@ import { AdvancedReportingEngine } from '@/components/reports/AdvancedReportingE
 import { UserManagementSystem } from '@/components/users/UserManagementSystem';
 import { RealTimeMarketData } from '@/components/realtime/RealTimeMarketData';
 import { ExternalAPIIntegrations } from '@/components/integrations/ExternalAPIIntegrations';
+import { BottomNavigationWrapper } from '@/components/BottomNavigationWrapper';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -61,21 +62,21 @@ const VoltScout = () => {
         } overflow-hidden`}>
           {/* Mobile menu button with better touch target */}
           {isMobile && (
-            <div className="lg:hidden bg-background border-b border-border px-3 py-2 safe-area-pt">
+            <div className="lg:hidden bg-background border-b border-border px-2 sm:px-3 py-2 safe-area-pt">
               <button
                 onClick={() => setIsOpen(true)}
-                className="p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors touch-target min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2 sm:p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors touch-target min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Open navigation menu"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
             </div>
           )}
           
-          <div className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6">
-            <div className="container mx-auto max-w-7xl">
+          <div className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6 custom-scrollbar">
+            <div className="container-responsive">
               <Routes>
               <Route index element={<Dashboard />} />
               <Route path="aeso-market" element={<AESOMarket />} />
@@ -106,6 +107,9 @@ const VoltScout = () => {
               </Routes>
             </div>
           </div>
+          
+          {/* Bottom navigation for mobile */}
+          {isMobile && <BottomNavigationWrapper />}
         </div>
       </div>
     </AuthWrapper>

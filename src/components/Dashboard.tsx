@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { useAESOData } from '@/hooks/useAESOData';
+import { ResponsiveMetricsGrid, ResponsiveContentGrid } from '@/components/ResponsiveGrid';
+import { ResponsivePageContainer, ResponsiveSection } from '@/components/ResponsiveContainer';
 
 interface DashboardMetric {
   title: string;
@@ -176,8 +178,8 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <ResponsivePageContainer className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+      <ResponsiveSection className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -206,7 +208,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <ResponsiveMetricsGrid>
           {metrics.map((metric, index) => {
             const Icon = metric.icon;
             return (
@@ -236,10 +238,10 @@ export const Dashboard = () => {
               </Card>
             );
           })}
-        </div>
+        </ResponsiveMetricsGrid>
 
         {/* Live Energy Market Data */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ResponsiveContentGrid>
           {/* ERCOT Live Data */}
           <Card>
             <CardHeader>
@@ -363,7 +365,7 @@ export const Dashboard = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </ResponsiveContentGrid>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -561,7 +563,7 @@ export const Dashboard = () => {
             </Card>
           </div>
         </div>
-      </div>
-    </div>
+      </ResponsiveSection>
+    </ResponsivePageContainer>
   );
 };
