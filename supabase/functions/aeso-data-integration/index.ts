@@ -53,7 +53,7 @@ serve(async (req) => {
 
     // Fetch current pricing data
     const pricingResponse = await fetch(
-      `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${today}`,
+      `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${today}`,
       { headers }
     );
 
@@ -65,7 +65,7 @@ serve(async (req) => {
 
     // Fetch generation mix data (current supply and demand)
     const generationResponse = await fetch(
-      'https://apimgw.aeso.ca/public/currentsupplydemand-api/v1/csd/summary/current',
+      'https://api.aeso.ca/report/v1/csd/summary/current',
       { headers }
     );
 
