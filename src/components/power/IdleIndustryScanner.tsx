@@ -53,6 +53,7 @@ export function IdleIndustryScanner() {
 
   const [selectedSite, setSelectedSite] = useState<EnhancedVerifiedSite | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState('scanner');
 
   const getCitiesForJurisdiction = (jurisdiction: string) => {
     switch (jurisdiction) {
@@ -115,28 +116,55 @@ export function IdleIndustryScanner() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
-          <Tabs defaultValue="scanner" className="w-full">
-            <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-auto min-w-full p-1">
-                <TabsTrigger value="scanner" className="flex items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm min-w-0 flex-1">
-                  <Search className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline truncate">🔍 Enhanced Scanner</span>
-                  <span className="sm:hidden truncate">Scanner</span>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Mobile: Dropdown Style Navigation */}
+            <div className="sm:hidden mb-4">
+              <select 
+                value={activeTab}
+                className="w-full p-3 border rounded-md text-sm bg-background"
+                onChange={(e) => setActiveTab(e.target.value)}
+              >
+                <option value="scanner">🔍 Enhanced Scanner</option>
+                <option value="results">📊 Results ({sites.length})</option>
+                <option value="map">🗺️ Interactive Map</option>
+                <option value="analytics">📈 Analytics</option>
+              </select>
+            </div>
+
+            {/* Desktop: Regular Tabs */}
+            <div className="hidden sm:block">
+              <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted">
+                <TabsTrigger 
+                  value="scanner" 
+                  className="flex items-center justify-center gap-2 py-3 px-2 text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap"
+                >
+                  <Search className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden xl:inline">Enhanced Scanner</span>
+                  <span className="xl:hidden">Scanner</span>
                 </TabsTrigger>
-                <TabsTrigger value="results" className="flex items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm min-w-0 flex-1">
-                  <Database className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline truncate">📊 Results ({sites.length})</span>
-                  <span className="sm:hidden truncate">Results</span>
+                <TabsTrigger 
+                  value="results" 
+                  className="flex items-center justify-center gap-2 py-3 px-2 text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap"
+                >
+                  <Database className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden xl:inline">Results ({sites.length})</span>
+                  <span className="xl:hidden">Results</span>
                 </TabsTrigger>
-                <TabsTrigger value="map" className="flex items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm min-w-0 flex-1">
-                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline truncate">🗺️ Interactive Map</span>
-                  <span className="sm:hidden truncate">Map</span>
+                <TabsTrigger 
+                  value="map" 
+                  className="flex items-center justify-center gap-2 py-3 px-2 text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap"
+                >
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden xl:inline">Interactive Map</span>
+                  <span className="xl:hidden">Map</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm min-w-0 flex-1">
-                  <Eye className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline truncate">📈 Analytics</span>
-                  <span className="sm:hidden truncate">Analytics</span>
+                <TabsTrigger 
+                  value="analytics" 
+                  className="flex items-center justify-center gap-2 py-3 px-2 text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap"
+                >
+                  <Eye className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden xl:inline">Analytics</span>
+                  <span className="xl:hidden">Analytics</span>
                 </TabsTrigger>
               </TabsList>
             </div>
