@@ -181,37 +181,37 @@ export function EnhancedResultsPanel({
             </div>
 
             {/* Sites Table */}
-            <div className="w-full overflow-hidden border rounded-lg">
+            <div className="w-full border rounded-lg">
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[1000px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12 min-w-[48px]">
+                      <TableHead className="w-12 min-w-[48px] sticky left-0 bg-background z-10">
                         <Checkbox
                           checked={selectedSites.length === sites.length && sites.length > 0}
                           onCheckedChange={handleSelectAll}
                         />
                       </TableHead>
-                      <TableHead className="min-w-[150px]">Site Name</TableHead>
+                      <TableHead className="min-w-[150px] sticky left-12 bg-background z-10">Site Name</TableHead>
                       <TableHead className="min-w-[120px]">Location</TableHead>
                       <TableHead className="min-w-[100px]">Industry</TableHead>
                       <TableHead className="min-w-[100px]">Power Potential</TableHead>
                       <TableHead className="min-w-[90px]">Available MW</TableHead>
                       <TableHead className="min-w-[90px]">Confidence</TableHead>
                       <TableHead className="min-w-[80px]">Status</TableHead>
-                      <TableHead className="min-w-[140px] text-center">Actions</TableHead>
+                      <TableHead className="min-w-[140px] text-center sticky right-0 bg-background z-10">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sites.map((site) => (
                       <TableRow key={site.id}>
-                        <TableCell className="w-12">
+                        <TableCell className="w-12 sticky left-0 bg-background z-10">
                           <Checkbox
                             checked={selectedSites.includes(site.id)}
                             onCheckedChange={(checked) => onSiteSelect(site.id)}
                           />
                         </TableCell>
-                        <TableCell className="min-w-0">
+                        <TableCell className="min-w-0 sticky left-12 bg-background z-10">
                           <div>
                             <div className="font-medium truncate">{site.name}</div>
                             <div className="text-sm text-gray-500 truncate">{site.facility_type}</div>
@@ -247,7 +247,7 @@ export function EnhancedResultsPanel({
                             {site.business_status || 'Unknown'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="min-w-0">
+                        <TableCell className="min-w-0 sticky right-0 bg-background z-10">
                           <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
                             <Button
                               size="sm"
