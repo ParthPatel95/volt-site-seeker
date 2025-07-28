@@ -199,7 +199,7 @@ export function EnhancedResultsPanel({
                       <TableHead className="min-w-[90px]">Available MW</TableHead>
                       <TableHead className="min-w-[90px]">Confidence</TableHead>
                       <TableHead className="min-w-[80px]">Status</TableHead>
-                      <TableHead className="min-w-[100px]">Actions</TableHead>
+                      <TableHead className="min-w-[140px] text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -248,22 +248,24 @@ export function EnhancedResultsPanel({
                           </Badge>
                         </TableCell>
                         <TableCell className="min-w-0">
-                          <div className="flex gap-1">
+                          <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleViewDetails(site)}
-                              className="flex-shrink-0"
+                              className="flex items-center gap-1 flex-shrink-0 text-xs"
                             >
                               <Eye className="w-3 h-3" />
+                              <span className="hidden sm:inline">View</span>
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => onDeleteSite(site.id)}
-                              className="flex-shrink-0"
+                              className="flex items-center gap-1 flex-shrink-0 text-xs hover:bg-red-50 hover:border-red-200"
                             >
                               <Trash2 className="w-3 h-3" />
+                              <span className="hidden sm:inline">Delete</span>
                             </Button>
                           </div>
                         </TableCell>
