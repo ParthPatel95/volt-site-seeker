@@ -1,8 +1,13 @@
-export { LiveMarketDashboard as RealTimeMarketData } from './LiveMarketDashboard';
-
-// Legacy export for backwards compatibility
-import { LiveMarketDashboard } from './LiveMarketDashboard';
-export default LiveMarketDashboard;
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  TrendingUp,
   TrendingDown, 
   Activity, 
   DollarSign,
