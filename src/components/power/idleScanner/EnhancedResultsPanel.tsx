@@ -120,151 +120,158 @@ export function EnhancedResultsPanel({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Factory className="w-5 h-5 text-orange-600" />
-              Enhanced Results ({sites.length} sites found)
+      <Card className="w-full overflow-hidden">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Factory className="w-5 h-5 text-orange-600 flex-shrink-0" />
+              <span className="truncate">Enhanced Results ({sites.length} sites found)</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               {selectedSites.length > 0 && (
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => onBulkDelete(selectedSites)}
+                  className="whitespace-nowrap"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
+                  <Trash2 className="w-4 h-4 mr-2 flex-shrink-0" />
                   Delete Selected ({selectedSites.length})
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={() => onExport('csv')}>
-                <Download className="w-4 h-4 mr-2" />
-                Export CSV
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => onExport('json')}>
-                <Download className="w-4 h-4 mr-2" />
-                Export JSON
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => onExport('csv')} className="whitespace-nowrap">
+                  <Download className="w-4 h-4 mr-2 flex-shrink-0" />
+                  Export CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onExport('json')} className="whitespace-nowrap">
+                  <Download className="w-4 h-4 mr-2 flex-shrink-0" />
+                  Export JSON
+                </Button>
+              </div>
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <div className="space-y-4">
             {/* Summary Statistics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-blue-50 p-3 rounded-lg min-w-0">
                 <div className="text-sm text-blue-600">Total Sites</div>
-                <div className="text-xl font-bold text-blue-800">{sites.length}</div>
+                <div className="text-xl font-bold text-blue-800 truncate">{sites.length}</div>
               </div>
-              <div className="bg-green-50 p-3 rounded-lg">
+              <div className="bg-green-50 p-3 rounded-lg min-w-0">
                 <div className="text-sm text-green-600">Available Power</div>
-                <div className="text-xl font-bold text-green-800">
+                <div className="text-xl font-bold text-green-800 truncate">
                   {Math.round(sites.reduce((sum, site) => sum + (site.estimated_free_mw || 0), 0))} MW
                 </div>
               </div>
-              <div className="bg-orange-50 p-3 rounded-lg">
+              <div className="bg-orange-50 p-3 rounded-lg min-w-0">
                 <div className="text-sm text-orange-600">High Confidence</div>
-                <div className="text-xl font-bold text-orange-800">
+                <div className="text-xl font-bold text-orange-800 truncate">
                   {sites.filter(site => site.confidence_score >= 80).length}
                 </div>
               </div>
-              <div className="bg-purple-50 p-3 rounded-lg">
+              <div className="bg-purple-50 p-3 rounded-lg min-w-0">
                 <div className="text-sm text-purple-600">High Potential</div>
-                <div className="text-xl font-bold text-purple-800">
+                <div className="text-xl font-bold text-purple-800 truncate">
                   {sites.filter(site => site.power_potential === 'High').length}
                 </div>
               </div>
             </div>
 
             {/* Sites Table */}
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedSites.length === sites.length && sites.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Site Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Industry</TableHead>
-                    <TableHead>Power Potential</TableHead>
-                    <TableHead>Available MW</TableHead>
-                    <TableHead>Confidence</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sites.map((site) => (
-                    <TableRow key={site.id}>
-                      <TableCell>
+            <div className="w-full overflow-hidden border rounded-lg">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 min-w-[48px]">
                         <Checkbox
-                          checked={selectedSites.includes(site.id)}
-                          onCheckedChange={(checked) => onSiteSelect(site.id)}
+                          checked={selectedSites.length === sites.length && sites.length > 0}
+                          onCheckedChange={handleSelectAll}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{site.name}</div>
-                          <div className="text-sm text-gray-500">{site.facility_type}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm">{site.city}, {site.state}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{site.industry_type}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getPowerPotentialColor(site.power_potential || 'Unknown')}>
-                          {site.power_potential || 'Unknown'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-orange-500" />
-                          <span className="font-medium">{site.estimated_free_mw || 'N/A'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getConfidenceColor(site.confidence_score)}>
-                          {site.confidence_score}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={site.business_status === 'active' ? 'default' : 'secondary'}>
-                          {site.business_status || 'Unknown'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewDetails(site)}
-                          >
-                            <Eye className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onDeleteSite(site.id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead className="min-w-[150px]">Site Name</TableHead>
+                      <TableHead className="min-w-[120px]">Location</TableHead>
+                      <TableHead className="min-w-[100px]">Industry</TableHead>
+                      <TableHead className="min-w-[100px]">Power Potential</TableHead>
+                      <TableHead className="min-w-[90px]">Available MW</TableHead>
+                      <TableHead className="min-w-[90px]">Confidence</TableHead>
+                      <TableHead className="min-w-[80px]">Status</TableHead>
+                      <TableHead className="min-w-[100px]">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {sites.map((site) => (
+                      <TableRow key={site.id}>
+                        <TableCell className="w-12">
+                          <Checkbox
+                            checked={selectedSites.includes(site.id)}
+                            onCheckedChange={(checked) => onSiteSelect(site.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <div>
+                            <div className="font-medium truncate">{site.name}</div>
+                            <div className="text-sm text-gray-500 truncate">{site.facility_type}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm truncate">{site.city}, {site.state}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <div className="text-sm truncate">{site.industry_type}</div>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <Badge className={`${getPowerPotentialColor(site.power_potential || 'Unknown')} whitespace-nowrap`}>
+                            {site.power_potential || 'Unknown'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <div className="flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-orange-500 flex-shrink-0" />
+                            <span className="font-medium truncate">{site.estimated_free_mw || 'N/A'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <Badge className={`${getConfidenceColor(site.confidence_score)} whitespace-nowrap`}>
+                            {site.confidence_score}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <Badge variant={site.business_status === 'active' ? 'default' : 'secondary'} className="whitespace-nowrap">
+                            {site.business_status || 'Unknown'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewDetails(site)}
+                              className="flex-shrink-0"
+                            >
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onDeleteSite(site.id)}
+                              className="flex-shrink-0"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
         </CardContent>

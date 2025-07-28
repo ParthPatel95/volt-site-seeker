@@ -141,19 +141,19 @@ export function IdleIndustryScanner() {
               </TabsList>
             </div>
 
-            <TabsContent value="scanner" className="space-y-4 sm:space-y-6">
+            <TabsContent value="scanner" className="mt-4 space-y-4 sm:space-y-6">
               {/* Enhanced Scan Configuration */}
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader className="p-4 sm:p-6">
                   <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                    <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="hidden sm:inline">Multi-Source Scan Configuration</span>
-                    <span className="sm:hidden">Scan Configuration</span>
+                    <Settings className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <span className="hidden sm:inline truncate">Multi-Source Scan Configuration</span>
+                    <span className="sm:hidden truncate">Scan Configuration</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-4 sm:p-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <label className="text-sm font-medium">Jurisdiction *</label>
                       <select
                         value={scanConfig.jurisdiction}
@@ -163,7 +163,7 @@ export function IdleIndustryScanner() {
                           city: '' // Reset city when jurisdiction changes
                         })}
                         disabled={currentScan?.status === 'processing'}
-                        className="w-full p-2 sm:p-3 border rounded-md text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 sm:p-3 border rounded-md text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
                       >
                         <option value="">Select state or province</option>
                         {JURISDICTIONS.map(jurisdiction => (
@@ -174,13 +174,13 @@ export function IdleIndustryScanner() {
                       </select>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <label className="text-sm font-medium">City (Optional)</label>
                       <select
                         value={scanConfig.city}
                         onChange={(e) => setScanConfig({...scanConfig, city: e.target.value})}
                         disabled={currentScan?.status === 'processing' || !scanConfig.jurisdiction || availableCities.length === 0}
-                        className="w-full p-2 sm:p-3 border rounded-md text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 sm:p-3 border rounded-md text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
                       >
                         <option value="">All cities</option>
                         {availableCities.map(city => (
@@ -195,8 +195,8 @@ export function IdleIndustryScanner() {
                   {/* Data Source Configuration */}
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Data Sources (Select Multiple)</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md min-w-0">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableEPAData}
@@ -205,7 +205,7 @@ export function IdleIndustryScanner() {
                         />
                         <span className="text-xs sm:text-sm truncate">EPA Facility Registry</span>
                       </div>
-                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md min-w-0">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableFERCData}
@@ -214,7 +214,7 @@ export function IdleIndustryScanner() {
                         />
                         <span className="text-xs sm:text-sm truncate">FERC Generator DB</span>
                       </div>
-                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md min-w-0">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableBusinessRegistry}
@@ -223,7 +223,7 @@ export function IdleIndustryScanner() {
                         />
                         <span className="text-xs sm:text-sm truncate">Business Registrations</span>
                       </div>
-                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md min-w-0">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableGooglePlaces}
@@ -232,7 +232,7 @@ export function IdleIndustryScanner() {
                         />
                         <span className="text-xs sm:text-sm truncate">Google Places API</span>
                       </div>
-                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md min-w-0">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableCommercialRealEstate}
@@ -241,7 +241,7 @@ export function IdleIndustryScanner() {
                         />
                         <span className="text-xs sm:text-sm truncate">Commercial Real Estate</span>
                       </div>
-                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md">
+                      <div className="flex items-center space-x-2 p-2 sm:p-3 border rounded-md min-w-0">
                         <input
                           type="checkbox"
                           checked={scanConfig.enableSatelliteAnalysis}
@@ -255,7 +255,7 @@ export function IdleIndustryScanner() {
 
                   {/* Advanced Options */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <label className="text-sm font-medium">
                         Confidence Threshold: {scanConfig.includeConfidenceThreshold}%
                       </label>
@@ -273,12 +273,12 @@ export function IdleIndustryScanner() {
                       />
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <label className="text-sm font-medium">Max Results</label>
                       <select
                         value={scanConfig.maxResults}
                         onChange={(e) => setScanConfig({...scanConfig, maxResults: parseInt(e.target.value)})}
-                        className="w-full p-2 border rounded-md text-sm sm:text-base"
+                        className="w-full p-2 border rounded-md text-sm sm:text-base min-w-0"
                       >
                         <option value={50}>50</option>
                         <option value={100}>100</option>
@@ -292,32 +292,32 @@ export function IdleIndustryScanner() {
                   {currentScan && currentScan.status === 'processing' && (
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>{currentScan.current_phase}</span>
-                        <span>{currentScan.progress}%</span>
+                        <span className="truncate">{currentScan.current_phase}</span>
+                        <span className="flex-shrink-0">{currentScan.progress}%</span>
                       </div>
                       <Progress value={currentScan.progress} className="w-full" />
                     </div>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <Button 
                       onClick={handleStartScan}
                       disabled={currentScan?.status === 'processing' || !scanConfig.jurisdiction}
-                      className="flex-1 text-sm sm:text-base"
+                      className="flex-1 text-sm sm:text-base min-w-0"
                       size="lg"
                     >
                       {currentScan?.status === 'processing' ? (
                         <>
-                          <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
-                          <span className="hidden sm:inline">Scanning... ({currentScan.progress}%)</span>
-                          <span className="sm:hidden">Scanning... {currentScan.progress}%</span>
+                          <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin flex-shrink-0" />
+                          <span className="hidden sm:inline truncate">Scanning... ({currentScan.progress}%)</span>
+                          <span className="sm:hidden truncate">Scanning... {currentScan.progress}%</span>
                         </>
                       ) : (
                         <>
-                          <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                          <span className="hidden sm:inline">Start Enhanced Multi-Source Scan</span>
-                          <span className="sm:hidden">Start Scan</span>
+                          <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
+                          <span className="hidden sm:inline truncate">Start Enhanced Multi-Source Scan</span>
+                          <span className="sm:hidden truncate">Start Scan</span>
                         </>
                       )}
                     </Button>
@@ -327,18 +327,18 @@ export function IdleIndustryScanner() {
                         <Button 
                           variant="outline"
                           onClick={() => exportSites('csv')}
-                          className="text-sm sm:text-base"
+                          className="text-sm sm:text-base min-w-0 flex-shrink-0"
                         >
-                          <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                           <span className="hidden sm:inline">Export CSV</span>
                           <span className="sm:hidden">Export</span>
                         </Button>
                         <Button 
                           variant="destructive"
                           onClick={handleDeleteAll}
-                          className="text-sm sm:text-base"
+                          className="text-sm sm:text-base min-w-0 flex-shrink-0"
                         >
-                          <Factory className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <Factory className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                           <span className="hidden sm:inline">Delete All</span>
                           <span className="sm:hidden">Delete</span>
                         </Button>
@@ -348,8 +348,8 @@ export function IdleIndustryScanner() {
 
                   {/* Information */}
                   <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <AlertDescription className="text-sm">
                       <strong>Enhanced Multi-Source Discovery:</strong> This scanner uses 6+ data sources including 
                       EPA registries, FERC databases, business registrations, Google Places, commercial real estate 
                       listings, and satellite imagery analysis for comprehensive site discovery.
@@ -360,58 +360,58 @@ export function IdleIndustryScanner() {
 
               {/* Scan Statistics */}
               {scanStats && (
-                <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-                  <Card>
+                <div className="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4">
+                  <Card className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
                           <Database className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm text-muted-foreground">Total Sites</p>
-                          <p className="text-2xl font-bold">{scanStats.totalSitesFound}</p>
+                          <p className="text-2xl font-bold truncate">{scanStats.totalSitesFound}</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                        <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
                           <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm text-muted-foreground">Verified Sites</p>
-                          <p className="text-2xl font-bold">{scanStats.verifiedSites}</p>
+                          <p className="text-2xl font-bold truncate">{scanStats.verifiedSites}</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                        <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex-shrink-0">
                           <Zap className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm text-muted-foreground">Available Power</p>
-                          <p className="text-2xl font-bold">{Math.round(scanStats.totalEstimatedFreeMW)}MW</p>
+                          <p className="text-2xl font-bold truncate">{Math.round(scanStats.totalEstimatedFreeMW)}MW</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex-shrink-0">
                           <Eye className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm text-muted-foreground">Data Sources</p>
-                          <p className="text-2xl font-bold">{scanStats.dataSourcesUsed.length}</p>
+                          <p className="text-2xl font-bold truncate">{scanStats.dataSourcesUsed.length}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -420,38 +420,42 @@ export function IdleIndustryScanner() {
               )}
             </TabsContent>
 
-            <TabsContent value="results">
-              <EnhancedResultsPanel
-                sites={sites}
-                selectedSites={selectedSites}
-                filters={filters}
-                loading={loading}
-                onSiteSelect={handleSiteSelect}
-                onBulkSelect={handleBulkSelect}
-                onFiltersChange={setFilters}
-                onDeleteSite={deleteSite}
-                onBulkDelete={bulkDeleteSites}
-                onExport={exportSites}
-                onViewDetails={handleViewDetails}
-              />
+            <TabsContent value="results" className="mt-4">
+              <div className="w-full overflow-hidden">
+                <EnhancedResultsPanel
+                  sites={sites}
+                  selectedSites={selectedSites}
+                  filters={filters}
+                  loading={loading}
+                  onSiteSelect={handleSiteSelect}
+                  onBulkSelect={handleBulkSelect}
+                  onFiltersChange={setFilters}
+                  onDeleteSite={deleteSite}
+                  onBulkDelete={bulkDeleteSites}
+                  onExport={exportSites}
+                  onViewDetails={handleViewDetails}
+                />
+              </div>
             </TabsContent>
 
-            <TabsContent value="map">
-              <EnhancedInteractiveMap
-                sites={sites}
-                selectedSites={selectedSites}
-                onSiteSelect={handleSiteSelect}
-                onSitesSelect={handleBulkSelect}
-                filters={filters}
-                onFilterChange={setFilters}
-              />
+            <TabsContent value="map" className="mt-4">
+              <div className="w-full overflow-hidden">
+                <EnhancedInteractiveMap
+                  sites={sites}
+                  selectedSites={selectedSites}
+                  onSiteSelect={handleSiteSelect}
+                  onSitesSelect={handleBulkSelect}
+                  filters={filters}
+                  onFilterChange={setFilters}
+                />
+              </div>
             </TabsContent>
 
-            <TabsContent value="analytics" className="space-y-4">
+            <TabsContent value="analytics" className="mt-4 space-y-4">
               {scanStats ? (
                 <div className="grid gap-6">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+                    <Card className="overflow-hidden">
                       <CardContent className="p-4">
                         <div className="text-2xl font-bold text-green-600">{scanStats.highConfidenceSites}</div>
                         <div className="text-sm text-gray-600">High Confidence Sites</div>
@@ -460,7 +464,7 @@ export function IdleIndustryScanner() {
                         </div>
                       </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="overflow-hidden">
                       <CardContent className="p-4">
                         <div className="text-2xl font-bold text-yellow-600">{scanStats.mediumConfidenceSites}</div>
                         <div className="text-sm text-gray-600">Medium Confidence Sites</div>
@@ -469,7 +473,7 @@ export function IdleIndustryScanner() {
                         </div>
                       </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="overflow-hidden">
                       <CardContent className="p-4">
                         <div className="text-2xl font-bold">{scanStats.averageConfidenceScore}</div>
                         <div className="text-sm text-gray-600">Average Confidence Score</div>
@@ -480,16 +484,16 @@ export function IdleIndustryScanner() {
                     </Card>
                   </div>
 
-                  <Card>
+                  <Card className="overflow-hidden">
                     <CardHeader>
                       <CardTitle>Data Sources Used</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid gap-2 md:grid-cols-2">
+                      <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
                         {scanStats.dataSourcesUsed.map(source => (
-                          <div key={source} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span className="text-sm">{source.replace(/_/g, ' ')}</span>
+                          <div key={source} className="flex items-center gap-2 p-2 bg-gray-50 rounded min-w-0">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                            <span className="text-sm truncate">{source.replace(/_/g, ' ')}</span>
                           </div>
                         ))}
                       </div>
