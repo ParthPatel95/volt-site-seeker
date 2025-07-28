@@ -208,42 +208,20 @@ serve(async (req) => {
       }
     }
 
-    // Provide fallback data for missing components
-    if (!loadData) {
-      console.log('Providing fallback load data - API endpoint may need updated authentication');
-      loadData = {
-        current_demand_mw: pricing ? Math.round(pricing.current_price * 2100) : 52000, // Rough estimate based on price
-        peak_forecast_mw: pricing ? Math.round(pricing.current_price * 3150) : 78000,
-        reserve_margin: 15.0
-      };
+    // Only return data if all APIs succeeded
+    if (!pricing || !loadData || !generationMix) {
+      console.error('ERCOT API data incomplete - rejecting request');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'ERCOT API is offline' 
+        }),
+        { 
+          status: 503, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
-    
-    if (!generationMix) {
-      console.log('Providing fallback generation mix data - API endpoint may need updated authentication');
-      const currentDemand = loadData.current_demand_mw;
-      generationMix = {
-        total_generation_mw: Math.round(currentDemand * 1.03), // Slight excess for reserves
-        natural_gas_mw: Math.round(currentDemand * 0.52), // ~52% natural gas
-        wind_mw: Math.round(currentDemand * 0.34), // ~34% wind (Texas leads in wind)
-        solar_mw: Math.round(currentDemand * 0.08), // ~8% solar
-        nuclear_mw: Math.round(currentDemand * 0.09), // ~9% nuclear
-        renewable_percentage: 42.0 // Wind + Solar percentage
-      };
-    }
-    
-    // Final fallback if still no pricing data
-    if (!pricing) {
-      console.warn('No pricing data available, using complete fallback');
-      pricing = {
-        current_price: 45.50,
-        average_price: 42.30,
-        peak_price: 89.20,
-        off_peak_price: 25.80,
-        market_conditions: 'normal'
-      };
-    }
-
-    // Always provide data - fallback is already handled above
 
     const response: ERCOTResponse = {
       success: true,
@@ -262,34 +240,13 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in ERCOT data integration:', error);
     
-    // Return fallback data even on error
-    const response: ERCOTResponse = {
-      success: true,
-      pricing: {
-        current_price: 45.50,
-        average_price: 42.30,
-        peak_price: 89.20,
-        off_peak_price: 25.80,
-        market_conditions: 'normal'
-      },
-      loadData: {
-        current_demand_mw: 52000,
-        peak_forecast_mw: 78000,
-        reserve_margin: 15.0
-      },
-      generationMix: {
-        total_generation_mw: 53560,
-        natural_gas_mw: 27040,
-        wind_mw: 17680,
-        solar_mw: 4160,
-        nuclear_mw: 4680,
-        renewable_percentage: 42.0
-      }
-    };
-
     return new Response(
-      JSON.stringify(response),
+      JSON.stringify({ 
+        success: false, 
+        error: 'ERCOT API is offline' 
+      }),
       { 
+        status: 503, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

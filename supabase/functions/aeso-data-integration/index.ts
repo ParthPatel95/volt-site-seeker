@@ -96,15 +96,17 @@ serve(async (req) => {
         console.log('AESO pricing processed:', pricing);
       }
     } else {
-      console.warn('Failed to fetch AESO pricing data:', pricingResponse.status);
-      // Provide fallback Alberta pricing data
-      pricing = {
-        current_price: 78.50,
-        average_price: 65.30,
-        peak_price: 145.20,
-        off_peak_price: 32.80,
-        market_conditions: 'normal'
-      };
+      console.error('Failed to fetch AESO pricing data:', pricingResponse.status);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'AESO pricing API is offline' 
+        }),
+        { 
+          status: 503, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Process generation mix data
@@ -136,26 +138,32 @@ serve(async (req) => {
         console.log('AESO load processed:', loadData);
       }
     } else {
-      console.warn('Failed to fetch AESO generation data:', generationResponse.status);
-      // Provide fallback Alberta data
-      generationMix = {
-        total_generation_mw: 12000,
-        natural_gas_mw: 5400,
-        wind_mw: 3000,
-        solar_mw: 960,
-        coal_mw: 1440,
-        hydro_mw: 1200,
-        renewable_percentage: 43.0
-      };
-      
-      loadData = {
-        current_demand_mw: 11500,
-        peak_forecast_mw: 14950,
-        reserve_margin: 12.5
-      };
+      console.error('Failed to fetch AESO generation data:', generationResponse.status);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'AESO generation API is offline' 
+        }),
+        { 
+          status: 503, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Always provide data - fallback is already handled above
+    // Only return data if both API calls succeeded
+    if (!pricing || !loadData || !generationMix) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'AESO API is offline' 
+        }),
+        { 
+          status: 503, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     const response: AESOResponse = {
       success: true,
@@ -174,35 +182,13 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in AESO data integration:', error);
     
-    // Return fallback data even on error
-    const response: AESOResponse = {
-      success: true,
-      pricing: {
-        current_price: 78.50,
-        average_price: 65.30,
-        peak_price: 145.20,
-        off_peak_price: 32.80,
-        market_conditions: 'normal'
-      },
-      loadData: {
-        current_demand_mw: 11500,
-        peak_forecast_mw: 14950,
-        reserve_margin: 12.5
-      },
-      generationMix: {
-        total_generation_mw: 12000,
-        natural_gas_mw: 5400,
-        wind_mw: 3000,
-        solar_mw: 960,
-        coal_mw: 1440,
-        hydro_mw: 1200,
-        renewable_percentage: 43.0
-      }
-    };
-
     return new Response(
-      JSON.stringify(response),
+      JSON.stringify({ 
+        success: false, 
+        error: 'AESO API is offline' 
+      }),
       { 
+        status: 503, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
