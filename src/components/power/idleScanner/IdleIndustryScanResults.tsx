@@ -189,93 +189,99 @@ export function IdleIndustryScanResults({
             </div>
 
             {/* Sites Table */}
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedSites.length === sites.length && sites.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Site Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Industry</TableHead>
-                    <TableHead>Power Capacity</TableHead>
-                    <TableHead>Idle Score</TableHead>
-                    <TableHead>Confidence</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sites.map((site) => (
-                    <TableRow key={site.id}>
-                      <TableCell>
+            <div className="w-full border rounded-lg">
+              <div className="overflow-x-auto">
+                <Table className="min-w-[1000px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 min-w-[48px] sticky left-0 bg-background z-10">
                         <Checkbox
-                          checked={selectedSites.includes(site.id)}
-                          onCheckedChange={(checked) => onSiteSelect(site.id)}
+                          checked={selectedSites.length === sites.length && sites.length > 0}
+                          onCheckedChange={handleSelectAll}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{site.name}</div>
-                          <div className="text-sm text-gray-500">{site.industryType}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm">{site.address}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{site.industryType}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-orange-500" />
-                          <span className="font-medium">{formatPowerCapacity(site.estimatedFreeMW)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getIdleScoreColor(site.idleScore)}>
-                          {site.idleScore}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getConfidenceColor(site.confidenceLevel)}>
-                          {site.confidenceLevel}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={site.operationalStatus === 'active' ? 'default' : 'secondary'}>
-                          {site.operationalStatus || 'unknown'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewDetails(site)}
-                          >
-                            <Eye className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onDeleteSite(site.id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead className="min-w-[150px] sticky left-12 bg-background z-10">Site Name</TableHead>
+                      <TableHead className="min-w-[120px]">Location</TableHead>
+                      <TableHead className="min-w-[100px]">Industry</TableHead>
+                      <TableHead className="min-w-[100px]">Power Capacity</TableHead>
+                      <TableHead className="min-w-[90px]">Idle Score</TableHead>
+                      <TableHead className="min-w-[90px]">Confidence</TableHead>
+                      <TableHead className="min-w-[80px]">Status</TableHead>
+                      <TableHead className="min-w-[140px] text-center sticky right-0 bg-background z-10">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {sites.map((site) => (
+                      <TableRow key={site.id}>
+                        <TableCell className="w-12 sticky left-0 bg-background z-10">
+                          <Checkbox
+                            checked={selectedSites.includes(site.id)}
+                            onCheckedChange={(checked) => onSiteSelect(site.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="sticky left-12 bg-background z-10">
+                          <div>
+                            <div className="font-medium truncate">{site.name}</div>
+                            <div className="text-sm text-gray-500 truncate">{site.industryType}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-gray-400" />
+                            <span className="text-sm truncate">{site.address}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm truncate">{site.industryType}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-orange-500" />
+                            <span className="font-medium">{formatPowerCapacity(site.estimatedFreeMW)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getIdleScoreColor(site.idleScore)} whitespace-nowrap`}>
+                            {site.idleScore}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getConfidenceColor(site.confidenceLevel)} whitespace-nowrap`}>
+                            {site.confidenceLevel}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={site.operationalStatus === 'active' ? 'default' : 'secondary'} className="whitespace-nowrap">
+                            {site.operationalStatus || 'unknown'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="sticky right-0 bg-background z-10">
+                          <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewDetails(site)}
+                              className="flex items-center gap-1 flex-shrink-0 text-xs"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span className="hidden sm:inline">View</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onDeleteSite(site.id)}
+                              className="flex items-center gap-1 flex-shrink-0 text-xs hover:bg-red-50 hover:border-red-200"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span className="hidden sm:inline">Delete</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
         </CardContent>

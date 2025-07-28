@@ -107,25 +107,27 @@ export function SubstationTable({
         filteredResults={filteredSubstations.length}
       />
 
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <SubstationTableHeader showCheckboxes={showCheckboxes} />
-          <TableBody>
-            {filteredSubstations.map((substation) => (
-              <SubstationTableRow
-                key={substation.id}
-                substation={substation}
-                showCheckboxes={showCheckboxes}
-                selectedIds={selectedIds}
-                onSelectionChange={onSelectionChange}
-                onViewDetails={handleViewDetails}
-                onViewOnMap={onViewOnMap}
-                onAnalyzeSubstation={onAnalyzeSubstation}
-                analyzing={analyzing}
-              />
-            ))}
-          </TableBody>
-        </Table>
+      <div className="w-full border rounded-lg">
+        <div className="overflow-x-auto">
+          <Table className="min-w-[1000px]">
+            <SubstationTableHeader showCheckboxes={showCheckboxes} />
+            <TableBody>
+              {filteredSubstations.map((substation) => (
+                <SubstationTableRow
+                  key={substation.id}
+                  substation={substation}
+                  showCheckboxes={showCheckboxes}
+                  selectedIds={selectedIds}
+                  onSelectionChange={onSelectionChange}
+                  onViewDetails={handleViewDetails}
+                  onViewOnMap={onViewOnMap}
+                  onAnalyzeSubstation={onAnalyzeSubstation}
+                  analyzing={analyzing}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <SubstationDetailsModal

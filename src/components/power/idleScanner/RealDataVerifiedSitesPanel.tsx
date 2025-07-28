@@ -248,78 +248,81 @@ export function RealDataVerifiedSitesPanel() {
 
             <TabsContent value="results" className="space-y-4">
               {filteredSites.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Site Name</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Confidence</TableHead>
-                        <TableHead>Verified</TableHead>
-                        <TableHead>Visual Status</TableHead>
-                        <TableHead>Power Potential</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredSites.map((site) => (
-                        <TableRow key={site.id}>
-                          <TableCell className="font-medium">
-                            <div>
-                              <div className="font-semibold">{site.name}</div>
-                              <div className="text-xs text-gray-600">
-                                {site.sources.length} sources
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span className="text-sm">{site.city}, {site.state}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {getConfidenceBadge(
-                              site.confidenceScore.total, 
-                              site.confidenceScore.level
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {site.validation.isVerified ? (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-red-600" />
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getVisualStatusIcon(site.satelliteAnalysis.visualStatus)}
-                              <span className="text-sm">{site.satelliteAnalysis.visualStatus}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              site.gptAnalysis.powerPotential === 'High' ? 'default' :
-                              site.gptAnalysis.powerPotential === 'Medium' ? 'secondary' : 
-                              'outline'
-                            }>
-                              {site.gptAnalysis.powerPotential}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleViewDetails(site)}
-                            >
-                              <Eye className="w-3 h-3 mr-1" />
-                              Details
-                            </Button>
-                          </TableCell>
+                <div className="w-full border rounded-lg">
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-[1000px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[150px] sticky left-0 bg-background z-10">Site Name</TableHead>
+                          <TableHead className="min-w-[120px]">Location</TableHead>
+                          <TableHead className="min-w-[100px]">Confidence</TableHead>
+                          <TableHead className="min-w-[80px]">Verified</TableHead>
+                          <TableHead className="min-w-[120px]">Visual Status</TableHead>
+                          <TableHead className="min-w-[100px]">Power Potential</TableHead>
+                          <TableHead className="min-w-[120px] text-center sticky right-0 bg-background z-10">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredSites.map((site) => (
+                          <TableRow key={site.id}>
+                            <TableCell className="font-medium sticky left-0 bg-background z-10">
+                              <div>
+                                <div className="font-semibold truncate">{site.name}</div>
+                                <div className="text-xs text-gray-600">
+                                  {site.sources.length} sources
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                <span className="text-sm truncate">{site.city}, {site.state}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {getConfidenceBadge(
+                                site.confidenceScore.total, 
+                                site.confidenceScore.level
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {site.validation.isVerified ? (
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <XCircle className="w-4 h-4 text-red-600" />
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getVisualStatusIcon(site.satelliteAnalysis.visualStatus)}
+                                <span className="text-sm">{site.satelliteAnalysis.visualStatus}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                site.gptAnalysis.powerPotential === 'High' ? 'default' :
+                                site.gptAnalysis.powerPotential === 'Medium' ? 'secondary' : 
+                                'outline'
+                              } className="whitespace-nowrap">
+                                {site.gptAnalysis.powerPotential}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="sticky right-0 bg-background z-10">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewDetails(site)}
+                                className="flex items-center gap-1 text-xs"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span className="hidden sm:inline">Details</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8">

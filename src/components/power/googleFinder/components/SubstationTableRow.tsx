@@ -65,7 +65,7 @@ export function SubstationTableRow({
   return (
     <TableRow key={substation.id}>
       {showCheckboxes && (
-        <TableCell>
+        <TableCell className="w-12 sticky left-0 bg-background z-10">
           <Checkbox
             checked={selectedIds.includes(substation.id)}
             onCheckedChange={(checked) => 
@@ -74,7 +74,7 @@ export function SubstationTableRow({
           />
         </TableCell>
       )}
-      <TableCell className="font-medium">
+      <TableCell className={`font-medium ${showCheckboxes ? 'sticky left-12' : 'sticky left-0'} bg-background z-10`}>
         <div className="flex items-center gap-2">
           <Building2 className="w-4 h-4 text-gray-500" />
           <span className="max-w-48 truncate">{substation.name}</span>
@@ -121,7 +121,7 @@ export function SubstationTableRow({
           {substation.analysis_status}
         </Badge>
       </TableCell>
-      <TableCell>
+      <TableCell className="sticky right-0 bg-background z-10">
         <SubstationActions
           substation={substation}
           onViewDetails={onViewDetails}

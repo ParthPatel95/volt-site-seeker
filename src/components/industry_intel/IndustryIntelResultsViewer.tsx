@@ -105,98 +105,103 @@ export function IndustryIntelResultsViewer() {
               <h3 className="text-lg font-medium text-gray-600 mb-2">No results found</h3>
               <p className="text-gray-500">Run an intelligence scan to see results here</p>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Power (MW)</TableHead>
-                  <TableHead>Distress Score</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {results.map((result) => (
-                  <TableRow key={result.id}>
-                    <TableCell className="font-medium">{result.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={getTypeColor(result.opportunity_type) as any} className="flex items-center gap-1 w-fit">
-                        {getTypeIcon(result.opportunity_type)}
-                        {result.opportunity_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {result.city && result.state ? `${result.city}, ${result.state}` : result.address || 'Location not specified'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                        <Zap className="w-3 h-3" />
-                        {result.estimated_power_mw}MW
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="h-2 rounded-full bg-gradient-to-r from-green-500 to-red-500" 
-                            style={{ width: `${result.distress_score}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm">{result.distress_score}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        value={result.status}
-                        onChange={(e) => handleStatusUpdate(result.id, e.target.value as any)}
-                        className="text-sm border rounded px-2 py-1"
-                      >
-                        <option value="active">Active</option>
-                        <option value="monitoring">Monitoring</option>
-                        <option value="closed">Closed</option>
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(result.created_at).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => setSelectedResult(result)}
+           ) : (
+            <div className="w-full border rounded-lg">
+              <div className="overflow-x-auto">
+                <Table className="min-w-[1000px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[150px] sticky left-0 bg-background z-10">Name</TableHead>
+                      <TableHead className="min-w-[100px]">Type</TableHead>
+                      <TableHead className="min-w-[120px]">Location</TableHead>
+                      <TableHead className="min-w-[100px]">Power (MW)</TableHead>
+                      <TableHead className="min-w-[120px]">Distress Score</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
+                      <TableHead className="min-w-[100px]">Date</TableHead>
+                      <TableHead className="min-w-[140px] text-center sticky right-0 bg-background z-10">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {results.map((result) => (
+                      <TableRow key={result.id}>
+                        <TableCell className="font-medium sticky left-0 bg-background z-10">{result.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={getTypeColor(result.opportunity_type) as any} className="flex items-center gap-1 w-fit">
+                            {getTypeIcon(result.opportunity_type)}
+                            {result.opportunity_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {result.city && result.state ? `${result.city}, ${result.state}` : result.address || 'Location not specified'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                            <Zap className="w-3 h-3" />
+                            {result.estimated_power_mw}MW
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="h-2 rounded-full bg-gradient-to-r from-green-500 to-red-500" 
+                                style={{ width: `${result.distress_score}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-sm">{result.distress_score}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <select
+                            value={result.status}
+                            onChange={(e) => handleStatusUpdate(result.id, e.target.value as any)}
+                            className="text-sm border rounded px-2 py-1"
                           >
-                            <Eye className="w-3 h-3 mr-1" />
-                            View Details
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              {getTypeIcon(result.opportunity_type)}
-                              {result.name}
-                              <Badge variant={getTypeColor(result.opportunity_type) as any}>
-                                {result.opportunity_type}
-                              </Badge>
-                            </DialogTitle>
-                          </DialogHeader>
-                          {selectedResult && <DetailedResultView result={selectedResult} />}
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                            <option value="active">Active</option>
+                            <option value="monitoring">Monitoring</option>
+                            <option value="closed">Closed</option>
+                          </select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(result.created_at).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="sticky right-0 bg-background z-10">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => setSelectedResult(result)}
+                                className="flex items-center gap-1 text-xs"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span className="hidden sm:inline">View Details</span>
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  {getTypeIcon(result.opportunity_type)}
+                                  {result.name}
+                                  <Badge variant={getTypeColor(result.opportunity_type) as any}>
+                                    {result.opportunity_type}
+                                  </Badge>
+                                </DialogTitle>
+                              </DialogHeader>
+                              {selectedResult && <DetailedResultView result={selectedResult} />}
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+           )}
         </CardContent>
       </Card>
     </div>
