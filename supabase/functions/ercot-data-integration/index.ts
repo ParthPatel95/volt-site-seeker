@@ -81,7 +81,7 @@ serve(async (req) => {
 
         // Try to get load data from ERCOT API
         const loadResponse = await fetch(
-          'https://api.ercot.com/api/public-reports/np6-905-cd/actual_loads_of_forecast_zones?size=1',
+          'https://api.ercot.com/api/public-reports/np3-921-ex/2d_agg_load_summary?size=1',
           { headers: apiHeaders }
         );
 
@@ -95,8 +95,8 @@ serve(async (req) => {
             const latestLoad = loadDataResponse[loadDataResponse.length - 1];
             
             loadData = {
-              current_demand_mw: parseFloat(latestLoad.actual_load || 0),
-              peak_forecast_mw: parseFloat(latestLoad.actual_load || 0) * 1.1,
+              current_demand_mw: parseFloat(latestLoad.MW || latestLoad.load || 0),
+              peak_forecast_mw: parseFloat(latestLoad.MW || latestLoad.load || 0) * 1.1,
               reserve_margin: 15.0
             };
             console.log('ERCOT load processed:', loadData);
@@ -109,7 +109,7 @@ serve(async (req) => {
 
         // Try to get generation data from ERCOT API
         const generationResponse = await fetch(
-          'https://api.ercot.com/api/public-reports/np6-905-cd/actual_system_load_by_weather_zone?size=1',
+          'https://api.ercot.com/api/public-reports/np3-920-ex/2d_agg_gen_summary?size=1',
           { headers: apiHeaders }
         );
 
@@ -121,15 +121,19 @@ serve(async (req) => {
           
           if (generationData && Array.isArray(generationData) && generationData.length > 0) {
             const latestGeneration = generationData[generationData.length - 1];
-            const totalGeneration = parseFloat(latestGeneration.system_total || 0);
+            const totalGeneration = parseFloat(latestGeneration.MW || latestGeneration.generation || 0);
+            const windMW = parseFloat(latestGeneration.wind_MW || latestGeneration.wind || 0);
+            const solarMW = parseFloat(latestGeneration.solar_MW || latestGeneration.solar || 0);
+            const gasMW = parseFloat(latestGeneration.natural_gas_MW || latestGeneration.gas || 0);
+            const nuclearMW = parseFloat(latestGeneration.nuclear_MW || latestGeneration.nuclear || 0);
             
             generationMix = {
               total_generation_mw: totalGeneration,
-              natural_gas_mw: totalGeneration * 0.52, // Texas is ~52% natural gas
-              wind_mw: totalGeneration * 0.34, // Texas leads in wind ~34%
-              solar_mw: totalGeneration * 0.08, // ~8% solar
-              nuclear_mw: totalGeneration * 0.06, // ~6% nuclear
-              renewable_percentage: 42.0 // Wind + Solar + small amount of hydro
+              natural_gas_mw: gasMW || totalGeneration * 0.52,
+              wind_mw: windMW || totalGeneration * 0.34,
+              solar_mw: solarMW || totalGeneration * 0.08,
+              nuclear_mw: nuclearMW || totalGeneration * 0.06,
+              renewable_percentage: totalGeneration > 0 ? ((windMW + solarMW) / totalGeneration * 100) : 42.0
             };
             console.log('ERCOT generation processed:', generationMix);
           }
@@ -143,9 +147,9 @@ serve(async (req) => {
       }
     }
 
-    // Only return data if we have at least pricing data
-    if (!pricing) {
-      console.error('No pricing data could be extracted from ERCOT');
+    // Only return data if we have pricing, load, and generation data
+    if (!pricing || !loadData || !generationMix) {
+      console.error('Incomplete ERCOT data - missing pricing, load, or generation data');
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -156,27 +160,6 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
-    }
-
-    // Provide reasonable defaults for missing data
-    if (!loadData) {
-      loadData = {
-        current_demand_mw: pricing.current_price * 2100, // Rough correlation
-        peak_forecast_mw: pricing.current_price * 3150,
-        reserve_margin: 15.0
-      };
-    }
-    
-    if (!generationMix) {
-      const estimatedTotal = loadData.current_demand_mw * 1.03;
-      generationMix = {
-        total_generation_mw: estimatedTotal,
-        natural_gas_mw: estimatedTotal * 0.52,
-        wind_mw: estimatedTotal * 0.34,
-        solar_mw: estimatedTotal * 0.08,
-        nuclear_mw: estimatedTotal * 0.06,
-        renewable_percentage: 42.0
-      };
     }
 
     const response: ERCOTResponse = {
