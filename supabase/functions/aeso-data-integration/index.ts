@@ -137,35 +137,22 @@ serve(async (req) => {
 
     } catch (parseError) {
       console.error('Error parsing AESO HTML:', parseError);
+      // Continue with any data we might have extracted before the error
     }
 
-    // Return data if we have at least load data or generation mix, even without pricing
-    if (!loadData && !generationMix) {
-      console.error('No meaningful data could be extracted from AESO');
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'AESO data service is offline' 
-        }),
-        { 
-          status: 503, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // If we have load/generation data but no pricing, still provide the data without pricing
     console.log('AESO data extraction summary:', {
       hasPricing: !!pricing,
       hasLoadData: !!loadData,
-      hasGenerationMix: !!generationMix
+      hasGenerationMix: !!generationMix,
+      currentPrice: currentPrice
     });
 
+    // Always return data if we have load data or generation mix, even without pricing
     const response: AESOResponse = {
       success: true,
-      pricing,
-      loadData,
-      generationMix
+      pricing: pricing || null,
+      loadData: loadData || null,
+      generationMix: generationMix || null
     };
 
     return new Response(

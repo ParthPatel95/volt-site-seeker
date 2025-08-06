@@ -314,7 +314,7 @@ export const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {aesoPricing && (
+              {aesoPricing ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-red-50 p-3 rounded-lg">
                     <div className="text-sm text-gray-600">Current Price</div>
@@ -328,6 +328,11 @@ export const Dashboard = () => {
                       {aesoPricing.market_conditions}
                     </div>
                   </div>
+                </div>
+              ) : (
+                <div className="bg-amber-50 p-3 rounded-lg">
+                  <div className="text-sm text-amber-700">Pricing data temporarily unavailable</div>
+                  <div className="text-xs text-amber-600">Load and generation data shown below</div>
                 </div>
               )}
               
