@@ -67,17 +67,6 @@ export const Dashboard = () => {
     error: aesoError 
   } = useAESOData();
 
-  // Debug AESO data
-  console.log('AESO Debug - Full data:', {
-    aesoPricing,
-    aesoLoad,
-    aesoGeneration,
-    aesoLoading,
-    aesoError,
-    pricingExists: !!aesoPricing,
-    loadExists: !!aesoLoad,
-    generationExists: !!aesoGeneration
-  });
 
   // Simulate data loading
   useEffect(() => {
