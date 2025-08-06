@@ -139,13 +139,13 @@ serve(async (req) => {
       console.error('Error parsing AESO HTML:', parseError);
     }
 
-    // Only return data if we successfully extracted something
-    if (!pricing && !loadData && !generationMix) {
-      console.error('No data could be extracted from AESO');
+    // Only return data if we successfully extracted real pricing
+    if (!currentPrice) {
+      console.error('No real price data could be extracted from AESO');
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'AESO data service is offline' 
+          error: 'AESO pricing data unavailable' 
         }),
         { 
           status: 503, 
@@ -154,18 +154,9 @@ serve(async (req) => {
       );
     }
 
-    // Provide minimal defaults if some data is missing but we got something
-    if (!pricing && (loadData || generationMix)) {
-      pricing = {
-        current_price: 65.0,
-        average_price: 55.0,
-        peak_price: 120.0,
-        off_peak_price: 30.0,
-        market_conditions: 'normal'
-      };
-    }
-    
-    if (!loadData && (pricing || generationMix)) {
+    // Only use real data - no fallbacks for pricing
+    // If we don't have load data but have pricing, provide minimal load estimates
+    if (!loadData && currentPrice) {
       loadData = {
         current_demand_mw: 11500,
         peak_forecast_mw: 14950,
@@ -173,7 +164,8 @@ serve(async (req) => {
       };
     }
     
-    if (!generationMix && (pricing || loadData)) {
+    // If we don't have generation mix but have real pricing, provide estimates
+    if (!generationMix && currentPrice) {
       const estimatedTotal = loadData?.current_demand_mw || 12000;
       generationMix = {
         total_generation_mw: estimatedTotal,
