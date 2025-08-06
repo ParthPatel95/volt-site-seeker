@@ -139,13 +139,13 @@ serve(async (req) => {
       console.error('Error parsing AESO HTML:', parseError);
     }
 
-    // Only return data if we successfully extracted real pricing
-    if (!currentPrice) {
-      console.error('No real price data could be extracted from AESO');
+    // Only return data if we successfully extracted something meaningful
+    if (!currentPrice && !loadData && !generationMix) {
+      console.error('No data could be extracted from AESO');
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'AESO pricing data unavailable' 
+          error: 'AESO data service is offline' 
         }),
         { 
           status: 503, 
