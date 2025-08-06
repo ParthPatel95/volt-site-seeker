@@ -47,10 +47,10 @@ serve(async (req) => {
 
     // Parse HTML to extract data
     let pricing, loadData, generationMix;
+    let currentPrice = null;
 
     try {
       // Extract current pool price from HTML with multiple patterns
-      let currentPrice = null;
       
       // Try multiple regex patterns for pool price
       const poolPricePatterns = [
@@ -139,9 +139,9 @@ serve(async (req) => {
       console.error('Error parsing AESO HTML:', parseError);
     }
 
-    // Only return data if we successfully extracted something meaningful
-    if (!currentPrice && !loadData && !generationMix) {
-      console.error('No data could be extracted from AESO');
+    // Return data if we have at least load data or generation mix, even without pricing
+    if (!loadData && !generationMix) {
+      console.error('No meaningful data could be extracted from AESO');
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -154,29 +154,12 @@ serve(async (req) => {
       );
     }
 
-    // Only use real data - no fallbacks for pricing
-    // If we don't have load data but have pricing, provide minimal load estimates
-    if (!loadData && currentPrice) {
-      loadData = {
-        current_demand_mw: 11500,
-        peak_forecast_mw: 14950,
-        reserve_margin: 12.5
-      };
-    }
-    
-    // If we don't have generation mix but have real pricing, provide estimates
-    if (!generationMix && currentPrice) {
-      const estimatedTotal = loadData?.current_demand_mw || 12000;
-      generationMix = {
-        total_generation_mw: estimatedTotal,
-        natural_gas_mw: estimatedTotal * 0.45,
-        wind_mw: estimatedTotal * 0.25,
-        solar_mw: estimatedTotal * 0.08,
-        coal_mw: estimatedTotal * 0.12,
-        hydro_mw: estimatedTotal * 0.10,
-        renewable_percentage: 43.0
-      };
-    }
+    // If we have load/generation data but no pricing, still provide the data without pricing
+    console.log('AESO data extraction summary:', {
+      hasPricing: !!pricing,
+      hasLoadData: !!loadData,
+      hasGenerationMix: !!generationMix
+    });
 
     const response: AESOResponse = {
       success: true,
