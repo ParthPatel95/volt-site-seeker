@@ -66,6 +66,14 @@ export const Dashboard = () => {
     loading: aesoLoading 
   } = useAESOData();
 
+  // Debug AESO data
+  console.log('AESO Debug:', {
+    aesoPricing,
+    aesoLoad,
+    aesoGeneration,
+    aesoLoading
+  });
+
   // Simulate data loading
   useEffect(() => {
     const timer = setTimeout(() => {
