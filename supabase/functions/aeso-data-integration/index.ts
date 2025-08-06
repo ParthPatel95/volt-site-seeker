@@ -49,9 +49,43 @@ serve(async (req) => {
     let pricing, loadData, generationMix;
 
     try {
-      // Extract current pool price from HTML (basic parsing)
-      const poolPriceMatch = htmlText.match(/Pool Price[^$]*\$([0-9,.]+)/i);
-      const currentPrice = poolPriceMatch ? parseFloat(poolPriceMatch[1].replace(',', '')) : null;
+      // Extract current pool price from HTML with multiple patterns
+      let currentPrice = null;
+      
+      // Try multiple regex patterns for pool price
+      const poolPricePatterns = [
+        /Pool Price[^$]*\$([0-9,.]+)/i,
+        /System Marginal Price[^$]*\$([0-9,.]+)/i,
+        /Current Pool Price[^$]*\$([0-9,.]+)/i,
+        /\$([0-9,.]+)[^0-9]*Pool/i,
+        /\$([0-9,.]+)[^0-9]*MWh/i,
+        /Price[^0-9]*\$([0-9,.]+)/i
+      ];
+      
+      for (const pattern of poolPricePatterns) {
+        const match = htmlText.match(pattern);
+        if (match) {
+          currentPrice = parseFloat(match[1].replace(/,/g, ''));
+          console.log(`AESO price found with pattern: ${pattern}, value: $${currentPrice}`);
+          break;
+        }
+      }
+      
+      // If no specific pattern works, try to find any dollar amount that looks like a price
+      if (!currentPrice) {
+        const allPriceMatches = htmlText.match(/\$([0-9,.]+)/g);
+        if (allPriceMatches && allPriceMatches.length > 0) {
+          // Look for reasonable electricity prices (between $1 and $1000/MWh)
+          for (const priceMatch of allPriceMatches) {
+            const price = parseFloat(priceMatch.replace(/[$,]/g, ''));
+            if (price >= 1 && price <= 1000) {
+              currentPrice = price;
+              console.log(`AESO price found from general search: $${currentPrice}`);
+              break;
+            }
+          }
+        }
+      }
 
       // Extract current load from HTML 
       const loadMatch = htmlText.match(/Alberta Internal Load[^0-9]*([0-9,]+)/i);
