@@ -63,15 +63,20 @@ export const Dashboard = () => {
     pricing: aesoPricing, 
     loadData: aesoLoad, 
     generationMix: aesoGeneration,
-    loading: aesoLoading 
+    loading: aesoLoading,
+    error: aesoError 
   } = useAESOData();
 
   // Debug AESO data
-  console.log('AESO Debug:', {
+  console.log('AESO Debug - Full data:', {
     aesoPricing,
     aesoLoad,
     aesoGeneration,
-    aesoLoading
+    aesoLoading,
+    aesoError,
+    pricingExists: !!aesoPricing,
+    loadExists: !!aesoLoad,
+    generationExists: !!aesoGeneration
   });
 
   // Simulate data loading
