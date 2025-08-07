@@ -188,21 +188,25 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 min-w-0">
                   <p className="text-sm text-muted-foreground">Current Price</p>
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold">{currentPrice > 0 ? formatPrice(currentPrice).cad : 'CA$45.67'}/MWh</p>
-                    <p className="text-lg text-muted-foreground">{currentPrice > 0 ? formatPrice(currentPrice).usd : '$33.45 USD'}/MWh</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold break-all leading-tight">
+                      {currentPrice > 0 ? formatPrice(currentPrice).cad : 'CA$45.67'}/MWh
+                    </p>
+                    <p className="text-sm sm:text-base lg:text-lg text-muted-foreground break-all leading-tight">
+                      {currentPrice > 0 ? formatPrice(currentPrice).usd : '$33.45 USD'}/MWh
+                    </p>
                   </div>
-                  <Badge variant={currentPrice > 60 ? 'destructive' : 'default'}>
+                  <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="text-xs">
                     {currentPrice > 60 ? 'HIGH DEMAND' : 'NORMAL'}
                   </Badge>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <p className="text-sm text-muted-foreground">Average Price</p>
                   <div className="space-y-1">
-                    <p className="text-xl font-semibold">
+                    <p className="text-base sm:text-lg lg:text-xl font-semibold break-all leading-tight">
                       {pricing?.average_price 
                         ? formatPrice(pricing.average_price).cad 
                         : 'CA$47.89'}/MWh
