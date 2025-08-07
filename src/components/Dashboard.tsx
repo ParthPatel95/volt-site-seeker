@@ -48,7 +48,6 @@ interface AlertItem {
 }
 
 export const Dashboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Live data hooks
@@ -66,15 +65,12 @@ export const Dashboard = () => {
     loading: aesoLoading,
     error: aesoError 
   } = useAESOData();
+  
+  // Use real loading states from data hooks
+  const isLoading = ercotLoading || aesoLoading;
 
 
-  // Simulate data loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Remove simulated loading - use real data loading states
 
   const metrics: DashboardMetric[] = [
     {
@@ -153,9 +149,7 @@ export const Dashboard = () => {
   };
 
   const refreshData = () => {
-    setIsLoading(true);
     setLastUpdated(new Date());
-    setTimeout(() => setIsLoading(false), 1000);
   };
 
   if (isLoading) {
