@@ -86,8 +86,7 @@ export function UltimatePowerInfrastructureFinder() {
       setCurrentPhase('Phase 1: Regulatory Data Integration');
       setProgress(5);
       
-      const functionName = searchRegion === 'alberta' ? 'aeso-data-integration' : 'ercot-data-integration';
-      const { data: regulatoryData, error: regError } = await supabase.functions.invoke(functionName);
+      const { data: regulatoryData, error: regError } = await supabase.functions.invoke('energy-data-integration');
 
       if (regError) throw regError;
       setProgress(20);

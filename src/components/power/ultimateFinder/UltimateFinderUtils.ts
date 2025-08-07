@@ -5,24 +5,21 @@ export const calculateRateEstimation = async (result: FinderResult, searchRegion
   try {
     const defaultPowerRequirement = 50;
     
-    const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
-      body: {
-        action: 'calculate_energy_costs',
-        monthly_consumption_mwh: defaultPowerRequirement * 24 * 30,
-        peak_demand_mw: defaultPowerRequirement,
-        location: { state: searchRegion === 'texas' ? 'TX' : 'AB' },
-        substation_info: {
-          voltage_level: result.voltage_level,
-          capacity: result.capacity_estimate,
-          utility_owner: result.utility_owner
-        }
-      }
-    });
+    const { data, error } = await supabase.functions.invoke('energy-data-integration');
 
     if (error) throw error;
 
-    const baseRate = searchRegion === 'texas' ? 0.045 : 0.065;
-    const demandCharge = searchRegion === 'texas' ? 15 : 18;
+    // Use real data if available, otherwise use default rates
+    let baseRate = searchRegion === 'texas' ? 0.045 : 0.065;
+    let demandCharge = searchRegion === 'texas' ? 15 : 18;
+    
+    if (data?.success) {
+      if (searchRegion === 'texas' && data.ercot?.pricing) {
+        baseRate = data.ercot.pricing.current_price / 1000; // Convert $/MWh to $/kWh
+      } else if (searchRegion === 'alberta' && data.aeso?.pricing) {
+        baseRate = data.aeso.pricing.current_price / 1000; // Convert $/MWh to $/kWh
+      }
+    }
     
     let rateMultiplier = 1.0;
     if (result.voltage_level.includes('500kV') || result.voltage_level.includes('345kV')) {

@@ -125,12 +125,7 @@ export function useEnergyRates() {
   }) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
-        body: {
-          action: 'calculate_energy_costs',
-          ...params
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('energy-data-integration');
 
       if (error) {
         console.error('Edge function error:', error);
@@ -141,11 +136,26 @@ export function useEnergyRates() {
         throw new Error(data.error || 'Cost calculation failed');
       }
 
-      return data?.cost_calculation || {
-        monthly_cost: params.monthly_consumption_mwh * 50,
+      // Use real data to calculate costs
+      const monthlyMWh = params.monthly_consumption_mwh;
+      const peakMW = params.peak_demand_mw;
+      const state = params.location?.state;
+      
+      // Get rate based on location
+      let baseRate = 50; // default
+      if (data?.ercot?.pricing && (state === 'TX' || state === 'Texas')) {
+        baseRate = data.ercot.pricing.current_price;
+      } else if (data?.aeso?.pricing && (state === 'AB' || state === 'Alberta')) {
+        baseRate = data.aeso.pricing.current_price;
+      }
+      
+      return {
+        monthly_cost: monthlyMWh * baseRate,
         breakdown: {
-          energy_cost: params.monthly_consumption_mwh * 40,
-          demand_charge: params.peak_demand_mw * 10
+          energy_cost: monthlyMWh * baseRate * 0.8,
+          demand_charge: peakMW * 10,
+          transmission_cost: monthlyMWh * baseRate * 0.15,
+          taxes_fees: monthlyMWh * baseRate * 0.05
         }
       };
 
@@ -181,12 +191,7 @@ export function useEnergyRates() {
     try {
       console.log('Fetching current rates for market:', marketCode);
       
-      const { data, error } = await supabase.functions.invoke('energy-rate-intelligence', {
-        body: {
-          action: 'fetch_current_rates',
-          market_code: marketCode
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('energy-data-integration');
 
       if (error) {
         console.error('Edge function error:', error);
@@ -199,12 +204,39 @@ export function useEnergyRates() {
 
       console.log('Received rates data:', data);
       
-      const ratesData = data?.rates || {
-        current_rate: 45.50,
-        forecast: [46.00, 44.20, 43.80],
-        market_conditions: 'normal',
-        peak_demand_rate: 65.30
-      };
+      // Extract rates data based on market code
+      let ratesData;
+      if (marketCode === 'ERCOT' && data?.ercot?.pricing) {
+        ratesData = {
+          current_rate: data.ercot.pricing.current_price,
+          forecast: [
+            data.ercot.pricing.peak_price, 
+            data.ercot.pricing.average_price, 
+            data.ercot.pricing.off_peak_price
+          ],
+          market_conditions: data.ercot.pricing.market_conditions,
+          peak_demand_rate: data.ercot.pricing.peak_price
+        };
+      } else if (marketCode === 'AESO' && data?.aeso?.pricing) {
+        ratesData = {
+          current_rate: data.aeso.pricing.current_price,
+          forecast: [
+            data.aeso.pricing.peak_price, 
+            data.aeso.pricing.average_price, 
+            data.aeso.pricing.off_peak_price
+          ],
+          market_conditions: data.aeso.pricing.market_conditions,
+          peak_demand_rate: data.aeso.pricing.peak_price
+        };
+      } else {
+        // Fallback data
+        ratesData = {
+          current_rate: 45.50,
+          forecast: [46.00, 44.20, 43.80],
+          market_conditions: 'normal',
+          peak_demand_rate: 65.30
+        };
+      }
 
       setCurrentRates(ratesData);
       return ratesData;
