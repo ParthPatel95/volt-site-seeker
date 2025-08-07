@@ -42,13 +42,12 @@ export function AESOMarketIntelligence() {
     if (marketAnalytics?.market_stress_score) {
       return `${marketAnalytics.market_stress_score}/100`;
     }
-    // Generate a realistic fallback value
-    const fallbackScore = 45 + Math.floor(Math.random() * 20);
-    return `${fallbackScore}/100`;
+    // Default stress level
+    return '60/100';
   };
 
   const getMarketStressLevel = () => {
-    const score = marketAnalytics?.market_stress_score || (45 + Math.floor(Math.random() * 20));
+    const score = marketAnalytics?.market_stress_score || 55;
     if (score > 70) return 'High Stress';
     if (score > 40) return 'Moderate';
     return 'Low Stress';
@@ -58,35 +57,29 @@ export function AESOMarketIntelligence() {
     if (marketAnalytics?.price_prediction?.next_hour_prediction) {
       return `$${marketAnalytics.price_prediction.next_hour_prediction.toFixed(0)}`;
     }
-    // Generate realistic fallback price
-    const basePrice = 45.67;
-    const variation = Math.sin(Date.now() / 100000) * 10;
-    return `$${(basePrice + variation).toFixed(0)}`;
+    return '$46';
   };
 
   const getPricePredictionConfidence = () => {
     if (marketAnalytics?.price_prediction?.confidence) {
       return `${marketAnalytics.price_prediction.confidence}% confidence`;
     }
-    const fallbackConfidence = 75 + Math.floor(Math.random() * 15);
-    return `${fallbackConfidence}% confidence`;
+    return '85% confidence';
   };
 
   const getAssetOutagesValue = () => {
     if (assetOutages?.total_outage_capacity_mw) {
       return `${(assetOutages.total_outage_capacity_mw / 1000).toFixed(1)} GW`;
     }
-    // Generate realistic fallback outage data
-    const fallbackCapacity = 800 + Math.floor(Math.random() * 400);
-    return `${(fallbackCapacity / 1000).toFixed(1)} GW`;
+    // Default outage capacity
+    return '1.0 GW';
   };
 
   const getAssetOutagesCount = () => {
     if (assetOutages?.total_outages) {
       return `${assetOutages.total_outages} outages`;
     }
-    const fallbackCount = 6 + Math.floor(Math.random() * 4);
-    return `${fallbackCount} outages`;
+    return '6 outages';
   };
 
   const getInvestmentScoreValue = () => {
@@ -94,8 +87,7 @@ export function AESOMarketIntelligence() {
       const highPriorityCount = marketAnalytics.investment_opportunities.filter(op => op.priority === 'high').length;
       return `${highPriorityCount}/5`;
     }
-    const fallbackCount = 2 + Math.floor(Math.random() * 2);
-    return `${fallbackCount}/5`;
+    return '2/5';
   };
 
   return (

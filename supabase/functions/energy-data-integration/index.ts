@@ -89,13 +89,17 @@ async function fetchERCOTData() {
       const htmlData = await lmpResponse.text();
       console.log('ERCOT LMP data length:', htmlData.length);
       
-      // Extract Hub Average price (most representative of system)
+      // Extract Hub Average price with more robust patterns
       const hubAvgMatch = htmlData.match(/HB_HUBAVG[^>]*>([0-9.-]+)</i) ||
-                         htmlData.match(/Hub\s+Average[^>]*>([0-9.-]+)</i);
+                         htmlData.match(/Hub\s+Average[^>]*>([0-9.-]+)</i) ||
+                         htmlData.match(/([0-9.-]+).*HB_HUBAVG/i) ||
+                         htmlData.match(/\$([0-9.-]+).*Hub.*Average/i) ||
+                         htmlData.match(/>([0-9.-]+)<.*HB_HUBAVG/i) ||
+                         htmlData.match(/HB_HUBAVG.*?([0-9.-]+)/i);
       
       if (hubAvgMatch) {
         const currentPrice = Math.abs(parseFloat(hubAvgMatch[1]));
-        if (currentPrice > 0) {
+        if (currentPrice >= 0 && currentPrice < 10000) { // Reasonable price range
           pricing = {
             current_price: currentPrice,
             average_price: currentPrice * 0.9,
@@ -130,7 +134,9 @@ async function fetchERCOTData() {
       // Extract current system load
       const loadMatch = loadHtml.match(/Current[^0-9]*([0-9,]+)/i) ||
                        loadHtml.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
-                       loadHtml.match(/ERCOT[^0-9]*([0-9,]+)/i);
+                       loadHtml.match(/ERCOT[^0-9]*([0-9,]+)/i) ||
+                       loadHtml.match(/([0-9,]+).*MW.*Current/i) ||
+                       loadHtml.match(/([0-9,]+).*Demand/i);
       
       if (loadMatch) {
         const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
