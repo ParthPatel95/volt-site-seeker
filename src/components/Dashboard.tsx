@@ -6,10 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  TrendingUp, 
   TrendingDown, 
   Zap, 
-  DollarSign, 
   Users, 
   Activity,
   AlertTriangle,
@@ -28,16 +26,9 @@ import {
 } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { useAESOData } from '@/hooks/useAESOData';
-import { ResponsiveMetricsGrid, ResponsiveContentGrid } from '@/components/ResponsiveGrid';
+import { ResponsiveContentGrid } from '@/components/ResponsiveGrid';
 import { ResponsivePageContainer, ResponsiveSection } from '@/components/ResponsiveContainer';
 
-interface DashboardMetric {
-  title: string;
-  value: string;
-  change: string;
-  changeType: 'increase' | 'decrease' | 'neutral';
-  icon: React.ComponentType<{ className?: string }>;
-}
 
 interface AlertItem {
   id: string;
@@ -72,36 +63,6 @@ export const Dashboard = () => {
 
   // Remove simulated loading - use real data loading states
 
-  const metrics: DashboardMetric[] = [
-    {
-      title: 'Total Revenue',
-      value: '$124,532',
-      change: '+12.5%',
-      changeType: 'increase',
-      icon: DollarSign
-    },
-    {
-      title: 'Active Projects',
-      value: '23',
-      change: '+3',
-      changeType: 'increase',
-      icon: Activity
-    },
-    {
-      title: 'Energy Efficiency',
-      value: '87.3%',
-      change: '+2.1%',
-      changeType: 'increase',
-      icon: Zap
-    },
-    {
-      title: 'System Uptime',
-      value: '99.2%',
-      change: '-0.3%',
-      changeType: 'decrease',
-      icon: CheckCircle
-    }
-  ];
 
   const alerts: AlertItem[] = [
     {
@@ -189,52 +150,20 @@ export const Dashboard = () => {
               variant="outline" 
               size="sm" 
               onClick={refreshData}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-xs sm:text-sm"
             >
               <RefreshCw className="w-4 h-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="p-2">
               <Settings className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="p-2">
               <Bell className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <ResponsiveMetricsGrid>
-          {metrics.map((metric, index) => {
-            const Icon = metric.icon;
-            return (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Icon className="w-5 h-5 text-gray-600" />
-                      <span className="text-sm text-gray-600">{metric.title}</span>
-                    </div>
-                    <Badge 
-                      variant={metric.changeType === 'increase' ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {metric.changeType === 'increase' ? (
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="w-3 h-3 mr-1" />
-                      )}
-                      {metric.change}
-                    </Badge>
-                  </div>
-                  <div className="mt-2">
-                    <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </ResponsiveMetricsGrid>
 
         {/* Live Energy Market Data */}
         <ResponsiveContentGrid>
@@ -249,16 +178,16 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {ercotPricing && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="text-sm text-gray-600">Current Price</div>
-                    <div className="text-xl font-bold text-blue-600">
+                    <div className="text-lg sm:text-xl font-bold text-blue-600 break-all">
                       ${ercotPricing.current_price.toFixed(2)}/MWh
                     </div>
                   </div>
                   <div className="bg-green-50 p-3 rounded-lg">
                     <div className="text-sm text-gray-600">Market Status</div>
-                    <div className="text-lg font-semibold text-green-600 capitalize">
+                    <div className="text-base sm:text-lg font-semibold text-green-600 capitalize break-words">
                       {ercotPricing.market_conditions}
                     </div>
                   </div>
@@ -269,7 +198,7 @@ export const Dashboard = () => {
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Current Demand</span>
-                    <span className="font-bold">{(ercotLoad.current_demand_mw / 1000).toFixed(1)} GW</span>
+                    <span className="font-bold text-sm sm:text-base">{(ercotLoad.current_demand_mw / 1000).toFixed(1)} GW</span>
                   </div>
                   <Progress value={(ercotLoad.current_demand_mw / ercotLoad.peak_forecast_mw) * 100} className="mt-2" />
                 </div>
@@ -278,18 +207,18 @@ export const Dashboard = () => {
               {ercotGeneration && (
                 <div className="space-y-2">
                   <div className="text-sm font-medium">Generation Mix</div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="flex items-center gap-1">
-                      <Fuel className="w-3 h-3 text-blue-500" />
-                      <span>Gas: {((ercotGeneration.natural_gas_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                  <div className="grid grid-cols-3 gap-1 sm:gap-2 text-xs">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Fuel className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                      <span className="truncate">Gas: {((ercotGeneration.natural_gas_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Wind className="w-3 h-3 text-green-500" />
-                      <span>Wind: {((ercotGeneration.wind_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Wind className="w-3 h-3 text-green-500 flex-shrink-0" />
+                      <span className="truncate">Wind: {((ercotGeneration.wind_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-yellow-500" />
-                      <span>Solar: {((ercotGeneration.solar_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Sun className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                      <span className="truncate">Solar: {((ercotGeneration.solar_mw / ercotGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
                     </div>
                   </div>
                   <div className="mt-2 text-xs text-green-600 font-medium">
@@ -311,16 +240,16 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {aesoPricing ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-red-50 p-3 rounded-lg">
                     <div className="text-sm text-gray-600">Current Price</div>
-                    <div className="text-xl font-bold text-red-600">
+                    <div className="text-lg sm:text-xl font-bold text-red-600 break-all">
                       CA${aesoPricing.current_price.toFixed(2)}/MWh
                     </div>
                   </div>
                   <div className="bg-green-50 p-3 rounded-lg">
                     <div className="text-sm text-gray-600">Market Status</div>
-                    <div className="text-lg font-semibold text-green-600 capitalize">
+                    <div className="text-base sm:text-lg font-semibold text-green-600 capitalize break-words">
                       {aesoPricing.market_conditions}
                     </div>
                   </div>
@@ -336,7 +265,7 @@ export const Dashboard = () => {
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Current Demand</span>
-                    <span className="font-bold">{(aesoLoad.current_demand_mw / 1000).toFixed(1)} GW</span>
+                    <span className="font-bold text-sm sm:text-base">{(aesoLoad.current_demand_mw / 1000).toFixed(1)} GW</span>
                   </div>
                   <Progress value={(aesoLoad.current_demand_mw / aesoLoad.peak_forecast_mw) * 100} className="mt-2" />
                 </div>
@@ -345,18 +274,18 @@ export const Dashboard = () => {
               {aesoGeneration && (
                 <div className="space-y-2">
                   <div className="text-sm font-medium">Generation Mix</div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="flex items-center gap-1">
-                      <Fuel className="w-3 h-3 text-blue-500" />
-                      <span>Gas: {((aesoGeneration.natural_gas_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                  <div className="grid grid-cols-3 gap-1 sm:gap-2 text-xs">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Fuel className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                      <span className="truncate">Gas: {((aesoGeneration.natural_gas_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Wind className="w-3 h-3 text-green-500" />
-                      <span>Wind: {((aesoGeneration.wind_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Wind className="w-3 h-3 text-green-500 flex-shrink-0" />
+                      <span className="truncate">Wind: {((aesoGeneration.wind_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Activity className="w-3 h-3 text-blue-600" />
-                      <span>Hydro: {((aesoGeneration.hydro_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Activity className="w-3 h-3 text-blue-600 flex-shrink-0" />
+                      <span className="truncate">Hydro: {((aesoGeneration.hydro_mw / aesoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
                     </div>
                   </div>
                   <div className="mt-2 text-xs text-green-600 font-medium">
