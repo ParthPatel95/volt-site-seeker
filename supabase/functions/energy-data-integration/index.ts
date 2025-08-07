@@ -78,7 +78,7 @@ async function fetchERCOTData() {
   // Try ERCOT's real-time LMP data first
   try {
     console.log('Fetching ERCOT real-time LMP data...');
-    const lmpUrl = 'https://www.ercot.com/content/cdr/html/rtd_ind_lmp_lz_hb.html';
+    const lmpUrl = 'https://www.ercot.com/content/cdr/html/current_np6788.html';
     const lmpResponse = await fetch(lmpUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -89,17 +89,24 @@ async function fetchERCOTData() {
       const htmlData = await lmpResponse.text();
       console.log('ERCOT LMP data length:', htmlData.length);
       
-      // Extract Hub Average price with more robust patterns
-      const hubAvgMatch = htmlData.match(/HB_HUBAVG[^>]*>([0-9.-]+)</i) ||
-                         htmlData.match(/Hub\s+Average[^>]*>([0-9.-]+)</i) ||
-                         htmlData.match(/([0-9.-]+).*HB_HUBAVG/i) ||
-                         htmlData.match(/\$([0-9.-]+).*Hub.*Average/i) ||
-                         htmlData.match(/>([0-9.-]+)<.*HB_HUBAVG/i) ||
-                         htmlData.match(/HB_HUBAVG.*?([0-9.-]+)/i);
+      // Extract settlement point prices and calculate average
+      const priceMatches = htmlData.match(/\|\s*[A-Z0-9_]+\s*\|\s*([0-9]+\.?[0-9]*)\s*\|/g);
       
-      if (hubAvgMatch) {
-        const currentPrice = Math.abs(parseFloat(hubAvgMatch[1]));
-        if (currentPrice >= 0 && currentPrice < 10000) { // Reasonable price range
+      if (priceMatches && priceMatches.length > 10) {
+        // Extract numeric prices from matches
+        const prices = priceMatches
+          .map(match => {
+            const priceMatch = match.match(/\|\s*[A-Z0-9_]+\s*\|\s*([0-9]+\.?[0-9]*)\s*\|/);
+            return priceMatch ? parseFloat(priceMatch[1]) : null;
+          })
+          .filter(price => price !== null && price > 0 && price < 10000)
+          .slice(0, 50); // Take first 50 valid prices to avoid outliers
+        
+        if (prices.length > 5) {
+          // Calculate average of settlement point prices
+          const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+          const currentPrice = Math.round(avgPrice * 100) / 100;
+          
           pricing = {
             current_price: currentPrice,
             average_price: currentPrice * 0.9,
@@ -108,8 +115,30 @@ async function fetchERCOTData() {
             market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
             timestamp: new Date().toISOString()
           };
-          console.log('Real ERCOT pricing extracted:', pricing);
+          console.log('Real ERCOT pricing extracted from', prices.length, 'settlement points:', pricing);
           realDataFound = true;
+        }
+      }
+      
+      // Fallback: try to extract hub average specifically
+      if (!realDataFound) {
+        const hubAvgMatch = htmlData.match(/HB_HUBAVG[^|]*\|\s*([0-9]+\.?[0-9]*)\s*\|/i) ||
+                           htmlData.match(/HUBAVG[^|]*\|\s*([0-9]+\.?[0-9]*)\s*\|/i);
+        
+        if (hubAvgMatch) {
+          const currentPrice = parseFloat(hubAvgMatch[1]);
+          if (currentPrice >= 0 && currentPrice < 10000) {
+            pricing = {
+              current_price: currentPrice,
+              average_price: currentPrice * 0.9,
+              peak_price: currentPrice * 1.8,
+              off_peak_price: currentPrice * 0.5,
+              market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+              timestamp: new Date().toISOString()
+            };
+            console.log('Real ERCOT hub average pricing extracted:', pricing);
+            realDataFound = true;
+          }
         }
       }
     }
