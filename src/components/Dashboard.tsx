@@ -102,7 +102,7 @@ export const Dashboard = () => {
         {/* Header with Wattbytes Branding */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8">
           <div className="space-y-3">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-watt-gradient bg-clip-text text-transparent leading-tight">
+            <h1 className="text-4xl sm:text-5xl font-bold text-watt-primary leading-tight">
               WattBytes Energy Dashboard
             </h1>
             <p className="text-muted-foreground flex items-center gap-2 text-base">
@@ -416,7 +416,7 @@ export const Dashboard = () => {
           <CardHeader className="bg-gradient-to-r from-watt-primary/10 to-watt-secondary/10 pb-4">
             <CardTitle className="flex items-center gap-3 text-2xl">
               <BarChart3 className="w-6 h-6 text-watt-primary" />
-              <span className="bg-watt-gradient bg-clip-text text-transparent">Market Insights</span>
+              <span className="text-watt-primary font-bold">Market Insights</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
