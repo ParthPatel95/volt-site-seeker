@@ -98,14 +98,14 @@ export const Dashboard = () => {
 
   return (
     <ResponsivePageContainer className="min-h-screen bg-gradient-to-br from-background to-watt-light/10">
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-8 animate-fade-in py-6">
         {/* Header with Wattbytes Branding */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl font-bold bg-watt-gradient bg-clip-text text-transparent">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8">
+          <div className="space-y-3">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-watt-gradient bg-clip-text text-transparent leading-tight">
               WattBytes Energy Dashboard
             </h1>
-            <p className="text-muted-foreground flex items-center gap-2 text-sm sm:text-base">
+            <p className="text-muted-foreground flex items-center gap-2 text-base">
               <Clock className="w-4 h-4" />
               Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
@@ -113,18 +113,19 @@ export const Dashboard = () => {
           <Button 
             onClick={refreshData}
             disabled={isLoading}
-            className="bg-watt-primary hover:bg-watt-primary/90 text-white shadow-watt-glow transition-all duration-300 hover:shadow-lg"
+            size="lg"
+            className="bg-watt-primary hover:bg-watt-primary/90 text-white shadow-watt-glow transition-all duration-300 hover:shadow-lg hover:scale-105 self-start sm:self-center"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? 'Refreshing...' : 'Refresh Data'}
           </Button>
         </div>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* ERCOT Price Card */}
-          <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-primary/5">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">ERCOT Price</p>
@@ -159,8 +160,8 @@ export const Dashboard = () => {
           </Card>
 
           {/* AESO Price Card */}
-          <Card className="border-l-4 border-watt-secondary hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="border-l-4 border-watt-secondary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-secondary/5">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">AESO Price</p>
@@ -195,8 +196,8 @@ export const Dashboard = () => {
           </Card>
 
           {/* Total Generation */}
-          <Card className="border-l-4 border-watt-success hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="border-l-4 border-watt-success hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-success/5">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">Total Generation</p>
@@ -216,8 +217,8 @@ export const Dashboard = () => {
           </Card>
 
           {/* Renewable Percentage */}
-          <Card className="border-l-4 border-watt-accent hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="border-l-4 border-watt-accent hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-accent/5">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">Renewable Mix</p>
@@ -238,16 +239,16 @@ export const Dashboard = () => {
         </div>
 
         {/* Live Market Data Grid */}
-        <ResponsiveSection>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ResponsiveSection className="mt-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* ERCOT Detailed Card */}
-            <Card className="hover:shadow-lg transition-all duration-300 border-watt-primary/20">
-              <CardHeader className="pb-3 bg-gradient-to-r from-watt-primary/5 to-transparent">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MapPin className="w-5 h-5 text-watt-primary" />
+            <Card className="hover:shadow-lg transition-all duration-300 border-watt-primary/20 bg-gradient-to-br from-card to-watt-primary/5">
+              <CardHeader className="pb-4 bg-gradient-to-r from-watt-primary/10 to-transparent">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <MapPin className="w-6 h-6 text-watt-primary" />
                   <span className="text-watt-primary font-bold">ERCOT (Texas)</span>
                   {ercotLoading && (
-                    <div className="w-4 h-4 border-2 border-watt-primary border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-watt-primary border-t-transparent rounded-full animate-spin" />
                   )}
                   <Badge 
                     variant={ercotPricing?.market_conditions === 'normal' ? 'default' : 'secondary'} 
@@ -257,7 +258,7 @@ export const Dashboard = () => {
                   </Badge>
                 </CardTitle>
               </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-6">
               {/* Pricing */}
               {ercotPricing && (
                 <div className="grid grid-cols-2 gap-3">
@@ -323,13 +324,13 @@ export const Dashboard = () => {
           </Card>
 
             {/* AESO Detailed Card */}
-            <Card className="hover:shadow-lg transition-all duration-300 border-watt-secondary/20">
-              <CardHeader className="pb-3 bg-gradient-to-r from-watt-secondary/5 to-transparent">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MapPin className="w-5 h-5 text-watt-secondary" />
+            <Card className="hover:shadow-lg transition-all duration-300 border-watt-secondary/20 bg-gradient-to-br from-card to-watt-secondary/5">
+              <CardHeader className="pb-4 bg-gradient-to-r from-watt-secondary/10 to-transparent">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <MapPin className="w-6 h-6 text-watt-secondary" />
                   <span className="text-watt-secondary font-bold">AESO (Alberta)</span>
                   {aesoLoading && (
-                    <div className="w-4 h-4 border-2 border-watt-secondary border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-watt-secondary border-t-transparent rounded-full animate-spin" />
                   )}
                   <Badge 
                     variant={aesoPricing?.market_conditions === 'low' ? 'default' : 'secondary'} 
@@ -339,7 +340,7 @@ export const Dashboard = () => {
                   </Badge>
                 </CardTitle>
               </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-6">
               {/* Pricing */}
               {aesoPricing ? (
                 <div className="grid grid-cols-2 gap-3">
@@ -411,15 +412,15 @@ export const Dashboard = () => {
         </ResponsiveSection>
 
         {/* Market Insights */}
-        <Card className="hover:shadow-lg transition-all duration-300 border-watt-primary/10">
-          <CardHeader className="bg-gradient-to-r from-watt-primary/5 to-watt-secondary/5">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <BarChart3 className="w-5 h-5 text-watt-primary" />
+        <Card className="hover:shadow-lg transition-all duration-300 border-watt-primary/10 bg-gradient-to-br from-card to-watt-primary/5 mt-12">
+          <CardHeader className="bg-gradient-to-r from-watt-primary/10 to-watt-secondary/10 pb-4">
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <BarChart3 className="w-6 h-6 text-watt-primary" />
               <span className="bg-watt-gradient bg-clip-text text-transparent">Market Insights</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center p-6 bg-gradient-to-br from-watt-primary/10 to-watt-primary/5 rounded-xl border border-watt-primary/20">
                 <p className="text-2xl font-bold text-watt-primary">
                   {(ercotLoad && aesoLoad) ? 
