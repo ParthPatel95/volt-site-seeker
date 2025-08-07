@@ -58,7 +58,7 @@ const VoltScout = () => {
         
         <div className={`flex-1 flex flex-col transition-all duration-300 ${
           isMobile ? 'ml-0' : isCollapsed ? 'ml-16' : 'ml-64 xl:ml-72'
-        } overflow-hidden`}>
+        } min-w-0 overflow-hidden`}>
           {/* Mobile menu button with better touch target */}
           {isMobile && (
             <div className="lg:hidden bg-background border-b border-border px-2 sm:px-3 py-2 safe-area-pt">
@@ -74,7 +74,7 @@ const VoltScout = () => {
             </div>
           )}
           
-          <div className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6 custom-scrollbar">
+          <div className="flex-1 min-w-0 overflow-auto p-2 sm:p-4 lg:p-6 custom-scrollbar">
             <div className="container-responsive">
               <Routes>
               <Route index element={<Dashboard />} />

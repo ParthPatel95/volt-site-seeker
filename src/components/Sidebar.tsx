@@ -77,14 +77,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-slate-900 text-white">
+    <div className="flex flex-col h-full bg-background text-foreground border-r border-border">
       {/* Header */}
-      <div className={`p-3 sm:p-4 border-b border-slate-700 ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
+      <div className={`p-3 sm:p-4 border-b border-border ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
         {/* Mobile Close Button */}
         {isMobile && (
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-watt-gradient rounded-lg flex items-center justify-center flex-shrink-0">
                 <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <h1 className="text-lg sm:text-xl font-bold truncate">VoltScout</h1>
@@ -105,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <>
             {(!isCollapsed || isMobile) && (
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-watt-gradient rounded-lg flex items-center justify-center flex-shrink-0">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
                 <h1 className="text-xl font-bold">VoltScout</h1>
@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             
             {isCollapsed && !isMobile && (
               <div className="flex justify-center">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-watt-gradient rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
               </div>
@@ -125,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="absolute -right-3 top-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-1 h-6 w-6 z-50"
+              className="absolute -right-3 top-4 bg-muted hover:bg-muted/80 border border-border text-foreground p-1 h-6 w-6 z-50"
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </Button>
@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 p-1 sm:p-2 space-y-0.5 sm:space-y-1 overflow-y-auto ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
+      <nav className={`flex-1 p-1 sm:p-2 space-y-0.5 sm:space-y-1 overflow-y-auto min-w-0 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -146,8 +146,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => isMobile && setIsOpen(false)}
               className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg transition-colors group ${
                 isActive 
-                  ? 'bg-orange-600 text-white' 
-                  : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+                  ? 'bg-accent text-accent-foreground ring-1 ring-primary/20' 
+                  : 'hover:bg-accent text-muted-foreground hover:text-foreground'
               } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
               title={isCollapsed && !isMobile ? item.label : ''}
             >
@@ -165,8 +165,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => isMobile && setIsOpen(false)}
           className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg transition-colors ${
             location.pathname === '/app/settings'
-              ? 'bg-orange-600 text-white' 
-              : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+              ? 'bg-accent text-accent-foreground' 
+              : 'hover:bg-accent text-muted-foreground hover:text-foreground'
           } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
           title={isCollapsed && !isMobile ? 'Settings' : ''}
         >
@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <Button
           variant="ghost"
           onClick={handleSignOut}
-          className={`w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800 p-2 sm:p-3 h-auto ${
+          className={`w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent p-2 sm:p-3 h-auto ${
             isCollapsed && !isMobile ? 'px-2' : ''
           } ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
           title={isCollapsed && !isMobile ? 'Sign Out' : ''}

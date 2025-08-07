@@ -125,7 +125,7 @@ export const BTCROIMainPage = () => {
                 <div className="p-2 sm:p-3 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl shadow-lg flex-shrink-0">
                   <Bitcoin className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" />
                 </div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-watt-primary text-center sm:text-left">
                   BTC Mining ROI Lab
                 </h1>
                 <div className="p-2 sm:p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg flex-shrink-0">

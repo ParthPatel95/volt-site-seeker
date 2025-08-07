@@ -89,7 +89,7 @@ export const VoltScoutAccessPage = () => {
               <span>Sign In</span>
             </Link>
           </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-electric-blue to-neon-green bg-clip-text text-transparent">
+          <h1 className="text-xl font-bold text-watt-primary">
             VoltScout Platform Access
           </h1>
         </div>
