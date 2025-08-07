@@ -50,8 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navigationItems = [
     { path: '/app', icon: Home, label: 'Dashboard' },
-    { path: '/app/aeso-market', icon: Zap, label: 'AESO Market' },
-    { path: '/app/market-intelligence', icon: Brain, label: 'Market Intelligence' },
+    { path: '/app/aeso-market-hub', icon: MapPin, label: 'AESO Market Hub' },
     { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates' },
     { path: '/app/industry-intelligence', icon: TrendingUp, label: 'Industry Intelligence' },
     { path: '/app/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence' },

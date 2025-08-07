@@ -4,8 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthWrapper } from '@/components/AuthWrapper';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
-import { AESOMarket } from '@/components/AESOMarket';
-import { AESOMarketIntelligence } from '@/components/AESOMarketIntelligence';
+import { AESOMarketComprehensive } from '@/components/AESOMarketComprehensive';
 import { EnergyRateIntelligence } from '@/components/energy/EnergyRateIntelligence';
 import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
@@ -79,8 +78,7 @@ const VoltScout = () => {
             <div className="container-responsive">
               <Routes>
               <Route index element={<Dashboard />} />
-              <Route path="aeso-market" element={<AESOMarket />} />
-              <Route path="market-intelligence" element={<AESOMarketIntelligence />} />
+              <Route path="aeso-market-hub" element={<AESOMarketComprehensive />} />
               <Route path="energy-rates" element={<EnergyRateIntelligence />} />
               <Route path="industry-intelligence" element={<IndustryIntelligence />} />
               <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
