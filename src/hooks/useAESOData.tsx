@@ -44,19 +44,19 @@ export const useAESOData = () => {
     const fetchData = async () => {
       try {
         setError(null);
-        const { data, error } = await supabase.functions.invoke('aeso-data-integration');
+        const { data, error } = await supabase.functions.invoke('energy-data-integration');
         
         if (error) {
-          console.error('AESO API error:', error);
+          console.error('Energy data fetch error:', error);
           setError('Failed to fetch AESO data');
           setConnectionStatus('fallback');
           return;
         }
 
-        if (data?.success) {
-          setPricing(data.pricing);
-          setLoadData(data.loadData);
-          setGenerationMix(data.generationMix);
+        if (data?.success && data?.aeso) {
+          setPricing(data.aeso.pricing);
+          setLoadData(data.aeso.loadData);
+          setGenerationMix(data.aeso.generationMix);
           setConnectionStatus('connected');
         } else {
           console.error('AESO data fetch failed:', data?.error);
@@ -81,19 +81,19 @@ export const useAESOData = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke('aeso-data-integration');
+      const { data, error } = await supabase.functions.invoke('energy-data-integration');
       
       if (error) {
-        console.error('AESO API error:', error);
+        console.error('Energy data fetch error:', error);
         setError('Failed to fetch AESO data');
         setConnectionStatus('fallback');
         return;
       }
 
-      if (data?.success) {
-        setPricing(data.pricing);
-        setLoadData(data.loadData);
-        setGenerationMix(data.generationMix);
+      if (data?.success && data?.aeso) {
+        setPricing(data.aeso.pricing);
+        setLoadData(data.aeso.loadData);
+        setGenerationMix(data.aeso.generationMix);
         setConnectionStatus('connected');
       } else {
         setError(data?.error || 'Unknown error fetching AESO data');

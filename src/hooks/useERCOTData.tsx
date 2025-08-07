@@ -36,18 +36,18 @@ export const useERCOTData = () => {
     const fetchData = async () => {
       try {
         setError(null);
-        const { data, error } = await supabase.functions.invoke('ercot-data-integration');
+        const { data, error } = await supabase.functions.invoke('energy-data-integration');
         
         if (error) {
-          console.error('ERCOT API error:', error);
+          console.error('Energy data fetch error:', error);
           setError('Failed to fetch ERCOT data');
           return;
         }
 
-        if (data?.success) {
-          setPricing(data.pricing);
-          setLoadData(data.loadData);
-          setGenerationMix(data.generationMix);
+        if (data?.success && data?.ercot) {
+          setPricing(data.ercot.pricing);
+          setLoadData(data.ercot.loadData);
+          setGenerationMix(data.ercot.generationMix);
         } else {
           console.error('ERCOT data fetch failed:', data?.error);
           setError(data?.error || 'Unknown error fetching ERCOT data');
@@ -69,18 +69,18 @@ export const useERCOTData = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke('ercot-data-integration');
+      const { data, error } = await supabase.functions.invoke('energy-data-integration');
       
       if (error) {
-        console.error('ERCOT API error:', error);
+        console.error('Energy data fetch error:', error);
         setError('Failed to fetch ERCOT data');
         return;
       }
 
-      if (data?.success) {
-        setPricing(data.pricing);
-        setLoadData(data.loadData);
-        setGenerationMix(data.generationMix);
+      if (data?.success && data?.ercot) {
+        setPricing(data.ercot.pricing);
+        setLoadData(data.ercot.loadData);
+        setGenerationMix(data.ercot.generationMix);
       } else {
         setError(data?.error || 'Unknown error fetching ERCOT data');
       }

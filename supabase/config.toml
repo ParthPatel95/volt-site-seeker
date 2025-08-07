@@ -12,8 +12,5 @@ verify_jwt = false
 [functions.meta-proxy]
 verify_jwt = false
 
-[functions.ercot-data-integration]
-verify_jwt = false
-
-[functions.aeso-data-integration]
+[functions.energy-data-integration]
 verify_jwt = false

@@ -35,21 +35,21 @@ export class RegionalEnergyService {
     console.log('Fetching real ERCOT data...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('ercot-data-integration');
+      const { data, error } = await supabase.functions.invoke('energy-data-integration');
       
-      if (error || !data?.success) {
+      if (error || !data?.success || !data?.ercot) {
         throw new Error(data?.error || 'Failed to fetch ERCOT data');
       }
 
       // Generate hourly prices based on real current data
-      const hourlyPrices = this.generateRealisticERCOTData(data.pricing?.current_price || 45);
+      const hourlyPrices = this.generateRealisticERCOTData(data.ercot.pricing?.current_price || 45);
       
       return {
         region: 'ERCOT',
         hourlyPrices,
-        averagePrice: data.pricing?.average_price || this.calculateAverage(hourlyPrices),
-        peakPrice: data.pricing?.peak_price || Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
-        offPeakPrice: data.pricing?.off_peak_price || Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
+        averagePrice: data.ercot.pricing?.average_price || this.calculateAverage(hourlyPrices),
+        peakPrice: data.ercot.pricing?.peak_price || Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
+        offPeakPrice: data.ercot.pricing?.off_peak_price || Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
         lastUpdated: new Date()
       };
     } catch (error) {
@@ -70,21 +70,21 @@ export class RegionalEnergyService {
     console.log('Fetching real AESO data...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('aeso-data-integration');
+      const { data, error } = await supabase.functions.invoke('energy-data-integration');
       
-      if (error || !data?.success) {
+      if (error || !data?.success || !data?.aeso) {
         throw new Error(data?.error || 'Failed to fetch AESO data');
       }
 
       // Generate hourly prices based on real current data
-      const hourlyPrices = this.generateRealisticAESOData(data.pricing?.current_price || 75);
+      const hourlyPrices = this.generateRealisticAESOData(data.aeso.pricing?.current_price || 75);
       
       return {
         region: 'AESO',
         hourlyPrices,
-        averagePrice: data.pricing?.average_price || this.calculateAverage(hourlyPrices),
-        peakPrice: data.pricing?.peak_price || Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
-        offPeakPrice: data.pricing?.off_peak_price || Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
+        averagePrice: data.aeso.pricing?.average_price || this.calculateAverage(hourlyPrices),
+        peakPrice: data.aeso.pricing?.peak_price || Math.max(...hourlyPrices.map(h => h.pricePerMWh)),
+        offPeakPrice: data.aeso.pricing?.off_peak_price || Math.min(...hourlyPrices.map(h => h.pricePerMWh)),
         lastUpdated: new Date()
       };
     } catch (error) {
