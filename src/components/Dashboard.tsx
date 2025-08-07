@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { useAESOData } from '@/hooks/useAESOData';
-import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
+import { ResponsivePageContainer, ResponsiveSection } from '@/components/ResponsiveContainer';
 
 export const Dashboard = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
