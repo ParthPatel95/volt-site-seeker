@@ -331,50 +331,53 @@ export function RealTimeMarketData() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Real-Time Market Data</h1>
-          <p className="text-muted-foreground">Live energy markets and power grid status</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">Real-Time Market Data</h1>
+            <p className="text-sm sm:text-base text-muted-foreground break-words">Live energy markets and power grid status</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={isConnected ? 'success' : 'destructive'} className="gap-1 flex-shrink-0">
+              <Activity className="w-3 h-3" />
+              <span className="hidden sm:inline">{isConnected ? 'Connected' : 'Disconnected'}</span>
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={manualRefresh}
+              className="gap-2 flex-shrink-0"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+            <Button
+              variant={autoRefresh ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className="gap-2 flex-shrink-0"
+            >
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Auto Refresh</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={isConnected ? 'success' : 'destructive'} className="gap-1">
-            <Activity className="w-3 h-3" />
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={manualRefresh}
-            className="gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
-          </Button>
-          <Button
-            variant={autoRefresh ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            className="gap-2"
-          >
-            <Clock className="w-4 h-4" />
-            Auto Refresh
-          </Button>
+
+        <div className="text-sm text-muted-foreground">
+          Last updated: {lastUpdate.toLocaleTimeString()}
         </div>
-      </div>
 
-      <div className="text-sm text-muted-foreground">
-        Last updated: {lastUpdate.toLocaleTimeString()}
-      </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="power">Power Grids</TabsTrigger>
-          <TabsTrigger value="commodities">Commodities</TabsTrigger>
-          <TabsTrigger value="charts">Charts</TabsTrigger>
-          <TabsTrigger value="news">News</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="overview" className="w-full">
+          <div className="w-full overflow-x-auto">
+            <TabsList className="grid grid-cols-5 w-full min-w-max sm:min-w-0">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-4">Overview</TabsTrigger>
+              <TabsTrigger value="power" className="text-xs sm:text-sm px-2 sm:px-4">Power Grids</TabsTrigger>
+              <TabsTrigger value="commodities" className="text-xs sm:text-sm px-2 sm:px-4">Commodities</TabsTrigger>
+              <TabsTrigger value="charts" className="text-xs sm:text-sm px-2 sm:px-4">Charts</TabsTrigger>
+              <TabsTrigger value="news" className="text-xs sm:text-sm px-2 sm:px-4">News</TabsTrigger>
+            </TabsList>
+          </div>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Key Metrics */}
@@ -450,15 +453,15 @@ export function RealTimeMarketData() {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {powerGrids.map((grid) => (
-                  <div key={grid.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{grid.name}</div>
-                      <div className="text-sm text-muted-foreground">{grid.region}</div>
-                      <div className="text-lg font-bold">{formatCurrency(grid.price)}</div>
+                  <div key={grid.id} className="flex items-center justify-between p-3 border rounded-lg min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium truncate">{grid.name}</div>
+                      <div className="text-sm text-muted-foreground truncate">{grid.region}</div>
+                      <div className="text-lg font-bold break-all">{formatCurrency(grid.price)}</div>
                     </div>
-                    <Badge variant={getStatusColor(grid.status)} className="gap-1">
+                    <Badge variant={getStatusColor(grid.status)} className="gap-1 flex-shrink-0 ml-2">
                       {getStatusIcon(grid.status)}
-                      {grid.status}
+                      <span className="hidden sm:inline">{grid.status}</span>
                     </Badge>
                   </div>
                 ))}
@@ -670,6 +673,7 @@ export function RealTimeMarketData() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

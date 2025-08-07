@@ -93,21 +93,21 @@ export function AESOMarketIntelligence() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center">
-            <Brain className="w-6 h-6 mr-2 text-blue-600" />
-            AESO Market Intelligence Platform
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground flex items-center flex-wrap">
+            <Brain className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-blue-600 flex-shrink-0" />
+            <span className="break-words">AESO Market Intelligence Platform</span>
           </h1>
-          <p className="text-muted-foreground">Advanced analytics and forecasting for Alberta's electricity market</p>
+          <p className="text-sm sm:text-base text-muted-foreground break-words">Advanced analytics and forecasting for Alberta's electricity market</p>
         </div>
         <Button 
           onClick={refetchAll}
           disabled={loading}
-          className="bg-gradient-to-r from-blue-600 to-blue-700"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 flex-shrink-0 w-full sm:w-auto"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Intelligence
+          <span className="sm:inline">Refresh Intelligence</span>
         </Button>
       </div>
 
@@ -121,17 +121,17 @@ export function AESOMarketIntelligence() {
       )}
 
       {/* Market Intelligence Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-100">Market Stress</CardTitle>
-            <Gauge className="h-4 w-4 text-green-200" />
+            <CardTitle className="text-sm font-medium text-green-100 truncate">Market Stress</CardTitle>
+            <Gauge className="h-4 w-4 text-green-200 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold break-all">
               {getMarketStressValue()}
             </div>
-            <p className="text-xs text-green-200">
+            <p className="text-xs text-green-200 break-words">
               {getMarketStressLevel()}
             </p>
           </CardContent>
@@ -183,28 +183,30 @@ export function AESOMarketIntelligence() {
 
       {/* Intelligence Tabs */}
       <Tabs defaultValue="analytics" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="analytics" className="flex items-center space-x-2">
-            <BarChart3 className="w-4 h-4" />
-            <span>Analytics</span>
-          </TabsTrigger>
-          <TabsTrigger value="forecast" className="flex items-center space-x-2">
-            <Wind className="w-4 h-4" />
-            <span>Forecasts</span>
-          </TabsTrigger>
-          <TabsTrigger value="outages" className="flex items-center space-x-2">
-            <AlertTriangle className="w-4 h-4" />
-            <span>Outages</span>
-          </TabsTrigger>
-          <TabsTrigger value="investment" className="flex items-center space-x-2">
-            <Target className="w-4 h-4" />
-            <span>Investment</span>
-          </TabsTrigger>
-          <TabsTrigger value="alerts" className="flex items-center space-x-2">
-            <Zap className="w-4 h-4" />
-            <span>Alerts</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto">
+          <TabsList className="grid grid-cols-5 w-full min-w-max sm:min-w-0">
+            <TabsTrigger value="analytics" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4">
+              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="forecast" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Wind className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Forecasts</span>
+            </TabsTrigger>
+            <TabsTrigger value="outages" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4">
+              <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Outages</span>
+            </TabsTrigger>
+            <TabsTrigger value="investment" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Target className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Investment</span>
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Alerts</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="analytics">
           <AESOMarketAnalyticsPanel 

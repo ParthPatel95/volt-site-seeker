@@ -96,36 +96,36 @@ export function AESOMarket() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center">
-            <MapPin className="w-6 h-6 mr-2 text-red-600" />
-            AESO Market Intelligence
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground flex items-center flex-wrap">
+            <MapPin className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-red-600 flex-shrink-0" />
+            <span className="break-words">AESO Market Intelligence</span>
           </h1>
-          <p className="text-muted-foreground">Live Alberta Electric System Operator market data</p>
+          <p className="text-sm sm:text-base text-muted-foreground break-words">Live Alberta Electric System Operator market data</p>
         </div>
         <Button 
           onClick={handleRefreshAll}
           disabled={loading}
-          className="bg-gradient-to-r from-red-600 to-red-700"
+          className="bg-gradient-to-r from-red-600 to-red-700 flex-shrink-0 w-full sm:w-auto"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh All Data
+          <span className="sm:inline">Refresh All Data</span>
         </Button>
       </div>
 
       {/* Real-time Market Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-100">Current Price</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-200" />
+            <CardTitle className="text-sm font-medium text-blue-100 truncate">Current Price</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-200 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold break-all">
               {currentPrice > 0 ? formatPrice(currentPrice).cad.split('/')[0] : 'CA$45.67'}
             </div>
-            <p className="text-xs text-blue-200">
+            <p className="text-xs text-blue-200 break-all">
               {currentPrice > 0 ? formatPrice(currentPrice).usd.split('/')[0] : '$33.45 USD'}/MWh
             </p>
           </CardContent>
@@ -133,40 +133,40 @@ export function AESOMarket() {
 
         <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-100">System Load</CardTitle>
-            <Gauge className="h-4 w-4 text-green-200" />
+            <CardTitle className="text-sm font-medium text-green-100 truncate">System Load</CardTitle>
+            <Gauge className="h-4 w-4 text-green-200 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold break-all">
               {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : '10.8 GW'}
             </div>
-            <p className="text-xs text-green-200">Current demand</p>
+            <p className="text-xs text-green-200 break-words">Current demand</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-100">Renewables</CardTitle>
-            <Wind className="h-4 w-4 text-purple-200" />
+            <CardTitle className="text-sm font-medium text-purple-100 truncate">Renewables</CardTitle>
+            <Wind className="h-4 w-4 text-purple-200 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
               {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : '32.5%'}
             </div>
-            <p className="text-xs text-purple-200">Of total generation</p>
+            <p className="text-xs text-purple-200 break-words">Of total generation</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-100">Operating Reserve</CardTitle>
-            <Shield className="h-4 w-4 text-orange-200" />
+            <CardTitle className="text-sm font-medium text-orange-100 truncate">Operating Reserve</CardTitle>
+            <Shield className="h-4 w-4 text-orange-200 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
               {(operatingReserveData.total_reserve_mw / 1000).toFixed(1)} GW
             </div>
-            <p className="text-xs text-orange-200">Total reserve capacity</p>
+            <p className="text-xs text-orange-200 break-words">Total reserve capacity</p>
           </CardContent>
         </Card>
       </div>
@@ -268,41 +268,41 @@ export function AESOMarket() {
         <CardContent>
           {generationMix ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <Fuel className="w-6 h-6 mx-auto mb-2 text-blue-500" />
-                  <p className="text-sm text-muted-foreground">Natural Gas</p>
-                  <p className="text-xl font-bold">{generationMix.natural_gas_mw ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '0.0'} GW</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
+                <div className="text-center p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <Fuel className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-blue-500 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Natural Gas</p>
+                  <p className="text-base sm:text-xl font-bold break-all">{generationMix.natural_gas_mw ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
-                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <Wind className="w-6 h-6 mx-auto mb-2 text-green-500" />
-                  <p className="text-sm text-muted-foreground">Wind</p>
-                  <p className="text-xl font-bold">{generationMix.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                <div className="text-center p-2 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <Wind className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-green-500 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Wind</p>
+                  <p className="text-base sm:text-xl font-bold break-all">{generationMix.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.wind_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
-                <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                  <Sun className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
-                  <p className="text-sm text-muted-foreground">Solar</p>
-                  <p className="text-xl font-bold">{generationMix.solar_mw ? (generationMix.solar_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                <div className="text-center p-2 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <Sun className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-yellow-500 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Solar</p>
+                  <p className="text-base sm:text-xl font-bold break-all">{generationMix.solar_mw ? (generationMix.solar_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.solar_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <Activity className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-                  <p className="text-sm text-muted-foreground">Hydro</p>
-                  <p className="text-xl font-bold">{generationMix.hydro_mw ? (generationMix.hydro_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                <div className="text-center p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <Activity className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-blue-600 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Hydro</p>
+                  <p className="text-base sm:text-xl font-bold break-all">{generationMix.hydro_mw ? (generationMix.hydro_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.hydro_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
-                  <Fuel className="w-6 h-6 mx-auto mb-2 text-gray-600" />
-                  <p className="text-sm text-muted-foreground">Coal</p>
-                  <p className="text-xl font-bold">{generationMix.coal_mw ? (generationMix.coal_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                <div className="text-center p-2 sm:p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+                  <Fuel className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-gray-600 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Coal</p>
+                  <p className="text-base sm:text-xl font-bold break-all">{generationMix.coal_mw ? (generationMix.coal_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.coal_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
-                <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <Zap className="w-6 h-6 mx-auto mb-2 text-purple-500" />
-                  <p className="text-sm text-muted-foreground">Other</p>
-                  <p className="text-xl font-bold">{generationMix.other_mw ? (generationMix.other_mw / 1000).toFixed(1) : '0.0'} GW</p>
+                <div className="text-center p-2 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <Zap className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-purple-500 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Other</p>
+                  <p className="text-base sm:text-xl font-bold break-all">{generationMix.other_mw ? (generationMix.other_mw / 1000).toFixed(1) : '0.0'} GW</p>
                   <p className="text-xs text-muted-foreground">{generationMix.total_generation_mw ? ((generationMix.other_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%</p>
                 </div>
               </div>

@@ -271,7 +271,7 @@ export function UltimatePowerInfrastructureFinder() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6 space-y-6">
       <UltimateFinderHeader />
 
       <UltimateFinderSearchControls

@@ -150,15 +150,15 @@ export function EnergyRateIntelligence() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Energy Rate Intelligence</h1>
-          <p className="text-muted-foreground">Real-time electricity pricing and cost analysis for power-intensive facilities</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">Energy Rate Intelligence</h1>
+          <p className="text-sm sm:text-base text-muted-foreground break-words">Real-time electricity pricing and cost analysis for power-intensive facilities</p>
         </div>
-        <Button onClick={fetchCurrentRates} disabled={loading}>
+        <Button onClick={fetchCurrentRates} disabled={loading} className="flex-shrink-0 w-full sm:w-auto">
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Rates
+          <span className="sm:inline">Refresh Rates</span>
         </Button>
       </div>
 
@@ -171,28 +171,29 @@ export function EnergyRateIntelligence() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="min-w-0">
               <label className="text-sm font-medium">Energy Market</label>
               <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50 bg-background border shadow-lg">
                   {markets.map(market => (
-                    <SelectItem key={market.code} value={market.code}>
-                      {market.name}
+                    <SelectItem key={market.code} value={market.code} className="cursor-pointer hover:bg-muted">
+                      <span className="truncate">{market.name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1">
+            <div className="min-w-0">
               <label className="text-sm font-medium">State</label>
               <Input 
                 value={location} 
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="TX"
+                className="w-full"
               />
             </div>
           </div>
@@ -200,26 +201,28 @@ export function EnergyRateIntelligence() {
       </Card>
 
       <Tabs defaultValue="current-rates" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="current-rates">Current Rates</TabsTrigger>
-          <TabsTrigger value="cost-calculator">Cost Calculator</TabsTrigger>
-          <TabsTrigger value="forecast">Price Forecast</TabsTrigger>
-          <TabsTrigger value="rate-finder">Rate Finder</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto">
+          <TabsList className="grid grid-cols-4 w-full min-w-max sm:min-w-0">
+            <TabsTrigger value="current-rates" className="text-xs sm:text-sm px-2 sm:px-4">Current Rates</TabsTrigger>
+            <TabsTrigger value="cost-calculator" className="text-xs sm:text-sm px-2 sm:px-4">Cost Calculator</TabsTrigger>
+            <TabsTrigger value="forecast" className="text-xs sm:text-sm px-2 sm:px-4">Price Forecast</TabsTrigger>
+            <TabsTrigger value="rate-finder" className="text-xs sm:text-sm px-2 sm:px-4">Rate Finder</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="current-rates" className="space-y-6">
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm text-muted-foreground">Current Price</p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl sm:text-2xl font-bold break-all">
                       ${currentRates?.current_rate ? currentRates.current_rate.toFixed(2) : '0.00'}
                     </p>
                     <p className="text-xs text-muted-foreground">per MWh</p>
                   </div>
-                  <Activity className="w-8 h-8 text-green-600" />
+                  <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
                 </div>
               </CardContent>
             </Card>
