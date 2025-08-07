@@ -400,7 +400,7 @@ async function fetchAESOData() {
   // Try AESO's Current Supply and Demand report first
   try {
     console.log('Trying AESO CSD Report for real-time data...');
-    const csdUrl = 'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
+    const csdUrl = 'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
     const csdResponse = await fetch(csdUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
