@@ -635,12 +635,13 @@ async function fetchAESOData() {
   const aesoApiKey = Deno.env.get('AESO_API_KEY');
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
   
-  if ((aesoApiKey && aesoSubKey) && !realDataFound) {
+  if (aesoApiKey && aesoSubKey && !pricing) {
     try {
-      console.log('Trying AESO API with keys...');
+      console.log('Trying AESO API with keys for pricing...');
       const apiHeaders = {
-        'X-API-Key': aesoApiKey,
+        'x-api-key': aesoApiKey,
         'Ocp-Apim-Subscription-Key': aesoSubKey,
+        'Accept': 'application/json',
         'Content-Type': 'application/json'
       };
 
@@ -650,24 +651,50 @@ async function fetchAESOData() {
       );
       
       if (priceResponse.ok) {
-        const priceData = await priceResponse.json();
-        if (priceData?.return?.Pool_Price_Report?.length > 0) {
-          const latest = priceData.return.Pool_Price_Report[priceData.return.Pool_Price_Report.length - 1];
-          const price = parseFloat(latest.price || latest.system_marginal_price || 0);
-          
-          if (price > 0) {
+        const json = await priceResponse.json();
+        // Handle multiple possible shapes the API may return
+        const reports: any = (
+          json?.return?.Pool_Price_Report ||
+          json?.return?.['Pool Price Report'] ||
+          json?.Pool_Price_Report ||
+          json?.['Pool Price Report'] ||
+          json?.data?.return?.Pool_Price_Report ||
+          json?.data?.return?.['Pool Price Report'] ||
+          (Array.isArray(json?.return) ? json.return : null)
+        );
+
+        if (Array.isArray(reports) && reports.length > 0) {
+          const latest = reports[reports.length - 1] || reports[0];
+          const priceKeys = [
+            'pool_price', 'poolPrice', 'price',
+            'system_marginal_price', 'System_Marginal_Price', 'SMP', 'smp'
+          ];
+          let price: number | null = null;
+          for (const k of priceKeys) {
+            if (latest && latest[k] != null) {
+              const v = parseFloat(String(latest[k]));
+              if (!Number.isNaN(v)) { price = v; break; }
+            }
+          }
+          if (price != null && price >= 0) {
             pricing = {
               current_price: price,
-              average_price: price * 0.85,
-              peak_price: price * 1.8,
-              off_peak_price: price * 0.4,
+              average_price: Math.round(price * 0.85 * 100) / 100,
+              peak_price: Math.round(price * 1.8 * 100) / 100,
+              off_peak_price: Math.round(price * 0.4 * 100) / 100,
               market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
               timestamp: new Date().toISOString(),
               source: 'aeso_api'
             };
             realDataFound = true;
+          } else {
+            console.warn('AESO API pricing: latest object missing price fields', latest);
           }
+        } else {
+          console.warn('AESO API pricing: unexpected response shape', json);
         }
+      } else {
+        console.error('AESO API pricing response not OK:', priceResponse.status, priceResponse.statusText);
       }
     } catch (apiError) {
       console.error('AESO API error:', apiError);
