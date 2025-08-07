@@ -10,6 +10,7 @@ interface AESOPricing {
   market_conditions: string;
   timestamp: string;
   qa_metadata?: any;
+  source?: string;
 }
 
 interface AESOLoadData {
@@ -18,6 +19,7 @@ interface AESOLoadData {
   reserve_margin: number;
   capacity_margin: number;
   forecast_date: string;
+  source?: string;
 }
 
 interface AESOGenerationMix {
@@ -30,6 +32,7 @@ interface AESOGenerationMix {
   other_mw: number;
   renewable_percentage: number;
   timestamp: string;
+  source?: string;
 }
 
 export const useAESOData = () => {

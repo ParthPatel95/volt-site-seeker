@@ -8,12 +8,14 @@ interface ERCOTPricing {
   peak_price: number;
   off_peak_price: number;
   market_conditions: string;
+  source?: string;
 }
 
 interface ERCOTLoadData {
   current_demand_mw: number;
   peak_forecast_mw: number;
   reserve_margin: number;
+  source?: string;
 }
 
 interface ERCOTGenerationMix {
@@ -23,6 +25,7 @@ interface ERCOTGenerationMix {
   solar_mw: number;
   nuclear_mw: number;
   renewable_percentage: number;
+  source?: string;
 }
 
 export const useERCOTData = () => {

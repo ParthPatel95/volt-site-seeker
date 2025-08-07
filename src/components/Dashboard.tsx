@@ -24,6 +24,7 @@ import {
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { useAESOData } from '@/hooks/useAESOData';
 import { ResponsivePageContainer, ResponsiveSection } from '@/components/ResponsiveContainer';
+import { DataSourceBadge } from '@/components/energy/DataSourceBadge';
 
 export const Dashboard = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -257,6 +258,13 @@ export const Dashboard = () => {
                     {ercotPricing?.market_conditions || 'Loading...'}
                   </Badge>
                 </CardTitle>
+                <div className="mt-2 flex justify-end">
+                  <DataSourceBadge 
+                    pricingSource={ercotPricing?.source}
+                    loadSource={ercotLoad?.source}
+                    mixSource={ercotGeneration?.source}
+                  />
+                </div>
               </CardHeader>
             <CardContent className="space-y-6 p-6">
               {/* Pricing */}
@@ -339,6 +347,13 @@ export const Dashboard = () => {
                     {aesoPricing?.market_conditions || 'Loading...'}
                   </Badge>
                 </CardTitle>
+                <div className="mt-2 flex justify-end">
+                  <DataSourceBadge 
+                    pricingSource={aesoPricing?.source}
+                    loadSource={aesoLoad?.source}
+                    mixSource={aesoGeneration?.source}
+                  />
+                </div>
               </CardHeader>
             <CardContent className="space-y-6 p-6">
               {/* Pricing */}
