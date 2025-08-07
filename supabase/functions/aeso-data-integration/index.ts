@@ -25,87 +25,142 @@ serve(async (req) => {
     let pricing, loadData, generationMix;
     let dataFound = false;
 
-    // Try AESO API first if we have API keys
+    // Try real-time AESO data from multiple sources
+    let realDataFound = false;
+    
+    // Try the Current Supply and Demand report first (most reliable)
+    try {
+      console.log('Trying AESO CSD Report for real-time data...');
+      const csdUrl = 'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
+      const csdResponse = await fetch(csdUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      
+      if (csdResponse.ok) {
+        const htmlText = await csdResponse.text();
+        console.log('AESO CSD data received, length:', htmlText.length);
+
+        // Extract Pool Price (System Marginal Price)
+        const poolPriceMatch = htmlText.match(/Pool\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
+                               htmlText.match(/System\s+Marginal\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
+                               htmlText.match(/>Current\s+Pool\s+Price<[^$]*\$([0-9,]+\.?[0-9]*)/i);
+        
+        if (poolPriceMatch) {
+          const currentPrice = parseFloat(poolPriceMatch[1].replace(/,/g, ''));
+          if (currentPrice >= 0) {
+            pricing = {
+              current_price: currentPrice,
+              average_price: currentPrice * 0.85,
+              peak_price: currentPrice * 1.8,
+              off_peak_price: currentPrice * 0.4,
+              market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+              timestamp: new Date().toISOString()
+            };
+            console.log('Real AESO pricing extracted:', pricing);
+            realDataFound = true;
+            dataFound = true;
+          }
+        }
+
+        // Extract Alberta Internal Load
+        const loadMatch = htmlText.match(/Alberta\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
+                         htmlText.match(/Total\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
+                         htmlText.match(/System\s+Load[^0-9]*([0-9,]+)/i);
+        
+        if (loadMatch) {
+          const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
+          if (currentLoad > 0) {
+            loadData = {
+              current_demand_mw: currentLoad,
+              peak_forecast_mw: currentLoad * 1.3,
+              reserve_margin: 12.5,
+              capacity_margin: 15.0,
+              forecast_date: new Date().toISOString()
+            };
+            console.log('Real AESO load extracted:', loadData);
+            realDataFound = true;
+            dataFound = true;
+          }
+        }
+
+        // Extract generation data if available
+        const gasMatch = htmlText.match(/GAS[^0-9]*([0-9,]+)/i);
+        const windMatch = htmlText.match(/WIND[^0-9]*([0-9,]+)/i);
+        const hydroMatch = htmlText.match(/HYDRO[^0-9]*([0-9,]+)/i);
+        const coalMatch = htmlText.match(/COAL[^0-9]*([0-9,]+)/i);
+        
+        if (gasMatch || windMatch || hydroMatch || coalMatch) {
+          const gasGen = gasMatch ? parseFloat(gasMatch[1].replace(/,/g, '')) : 0;
+          const windGen = windMatch ? parseFloat(windMatch[1].replace(/,/g, '')) : 0;
+          const hydroGen = hydroMatch ? parseFloat(hydroMatch[1].replace(/,/g, '')) : 0;
+          const coalGen = coalMatch ? parseFloat(coalMatch[1].replace(/,/g, '')) : 0;
+          const totalGen = gasGen + windGen + hydroGen + coalGen;
+          
+          if (totalGen > 0) {
+            generationMix = {
+              total_generation_mw: totalGen,
+              natural_gas_mw: gasGen,
+              wind_mw: windGen,
+              hydro_mw: hydroGen,
+              coal_mw: coalGen,
+              solar_mw: 0,
+              other_mw: 0,
+              renewable_percentage: ((windGen + hydroGen) / totalGen * 100),
+              timestamp: new Date().toISOString()
+            };
+            console.log('Real AESO generation extracted:', generationMix);
+            realDataFound = true;
+            dataFound = true;
+          }
+        }
+      }
+    } catch (csdError) {
+      console.error('Error fetching AESO CSD data:', csdError);
+    }
+
+    // Try AESO API if we have keys and no real data yet
     const aesoApiKey = Deno.env.get('AESO_API_KEY');
     const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
     
-    console.log('AESO API Key configured:', aesoApiKey ? 'YES' : 'NO');
-    console.log('AESO Sub Key configured:', aesoSubKey ? 'YES' : 'NO');
-
-    if (aesoApiKey && aesoSubKey) {
+    if ((aesoApiKey && aesoSubKey) && !realDataFound) {
       try {
+        console.log('Trying AESO API with keys...');
         const apiHeaders = {
           'X-API-Key': aesoApiKey,
           'Ocp-Apim-Subscription-Key': aesoSubKey,
           'Content-Type': 'application/json'
         };
 
-        // Try to get System Marginal Price from AESO API
-        const smpResponse = await fetch(
+        // Try pool price endpoint
+        const priceResponse = await fetch(
           'https://api.aeso.ca/report/v1.1/price/poolPrice',
           { headers: apiHeaders }
         );
-
-        console.log('AESO SMP API response status:', smpResponse.status);
         
-        if (smpResponse.ok) {
-          const smpData = await smpResponse.json();
-          console.log('AESO SMP data received:', smpData);
-          
-          if (smpData && smpData.return && smpData.return.Pool_Price_Report && smpData.return.Pool_Price_Report.length > 0) {
-            const latestPrice = smpData.return.Pool_Price_Report[smpData.return.Pool_Price_Report.length - 1];
-            const currentPrice = parseFloat(latestPrice.price || latestPrice.system_marginal_price || 0);
+        if (priceResponse.ok) {
+          const priceData = await priceResponse.json();
+          if (priceData?.return?.Pool_Price_Report?.length > 0) {
+            const latest = priceData.return.Pool_Price_Report[priceData.return.Pool_Price_Report.length - 1];
+            const price = parseFloat(latest.price || latest.system_marginal_price || 0);
             
-            if (currentPrice > 0) {
+            if (price > 0) {
               pricing = {
-                current_price: currentPrice,
-                average_price: currentPrice * 0.85,
-                peak_price: currentPrice * 1.8,
-                off_peak_price: currentPrice * 0.4,
-                market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low'
+                current_price: price,
+                average_price: price * 0.85,
+                peak_price: price * 1.8,
+                off_peak_price: price * 0.4,
+                market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
+                timestamp: new Date().toISOString()
               };
-              console.log('AESO pricing from API:', pricing);
+              realDataFound = true;
               dataFound = true;
             }
           }
-        } else {
-          console.error('Failed to fetch AESO SMP data:', smpResponse.status);
-          const errorText = await smpResponse.text();
-          console.log('AESO SMP error:', errorText);
         }
-
-        // Try to get load data from AESO API
-        const loadResponse = await fetch(
-          'https://api.aeso.ca/report/v1.1/load/albertaInternalLoad',
-          { headers: apiHeaders }
-        );
-
-        console.log('AESO load API response status:', loadResponse.status);
-        
-        if (loadResponse.ok) {
-          const loadDataResponse = await loadResponse.json();
-          console.log('AESO load data received:', loadDataResponse);
-          
-          if (loadDataResponse && loadDataResponse.return && loadDataResponse.return.Alberta_Internal_Load && loadDataResponse.return.Alberta_Internal_Load.length > 0) {
-            const latestLoad = loadDataResponse.return.Alberta_Internal_Load[loadDataResponse.return.Alberta_Internal_Load.length - 1];
-            const currentLoad = parseFloat(latestLoad.alberta_internal_load || latestLoad.load || 0);
-            
-            if (currentLoad > 0) {
-              loadData = {
-                current_demand_mw: currentLoad,
-                peak_forecast_mw: currentLoad * 1.3,
-                reserve_margin: 12.5
-              };
-              console.log('AESO load from API:', loadData);
-              dataFound = true;
-            }
-          }
-        } else {
-          console.error('Failed to fetch AESO load data:', loadResponse.status);
-        }
-
       } catch (apiError) {
-        console.error('Error calling AESO API:', apiError);
+        console.error('AESO API error:', apiError);
       }
     }
 

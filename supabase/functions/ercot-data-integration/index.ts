@@ -22,49 +22,81 @@ serve(async (req) => {
   try {
     console.log('Fetching ERCOT data...');
 
-    // Use ERCOT's public real-time data page for pricing
-    const ercotPublicUrl = 'https://www.ercot.com/content/cdr/html/real_time_spp.html';
-    
-    console.log('Fetching ERCOT public data...');
-    const publicResponse = await fetch(ercotPublicUrl);
-    
-    console.log('ERCOT public data response status:', publicResponse.status);
-    if (!publicResponse.ok) {
-      console.error('Failed to fetch ERCOT public data:', publicResponse.status);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'ERCOT data service is offline' 
-        }),
-        { 
-          status: 503, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    const htmlData = await publicResponse.text();
-    console.log('ERCOT HTML data length:', htmlData.length);
-    
+    // Try multiple ERCOT real-time data sources
+    let realDataFound = false;
     let pricing, loadData, generationMix;
 
+    // Try ERCOT's real-time LMP data first
     try {
-      // Extract current price from HTML (basic regex parsing)
-      const priceMatch = htmlData.match(/[-]?\d+\.?\d*/);
-      const currentPrice = priceMatch ? parseFloat(priceMatch[0]) : null;
+      console.log('Fetching ERCOT real-time LMP data...');
+      const lmpUrl = 'https://www.ercot.com/content/cdr/html/rtd_ind_lmp_lz_hb.html';
+      const lmpResponse = await fetch(lmpUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
       
-      if (currentPrice !== null) {
-        pricing = {
-          current_price: Math.abs(currentPrice), // Ensure positive
-          average_price: Math.abs(currentPrice) * 0.9,
-          peak_price: Math.abs(currentPrice) * 1.8,
-          off_peak_price: Math.abs(currentPrice) * 0.5,
-          market_conditions: Math.abs(currentPrice) > 100 ? 'high' : Math.abs(currentPrice) > 50 ? 'normal' : 'low'
-        };
-        console.log('Extracted current price from HTML:', currentPrice);
+      if (lmpResponse.ok) {
+        const htmlData = await lmpResponse.text();
+        console.log('ERCOT LMP data length:', htmlData.length);
+        
+        // Extract Hub Average price (most representative of system)
+        const hubAvgMatch = htmlData.match(/HB_HUBAVG[^>]*>([0-9.-]+)</i) ||
+                           htmlData.match(/Hub\s+Average[^>]*>([0-9.-]+)</i);
+        
+        if (hubAvgMatch) {
+          const currentPrice = Math.abs(parseFloat(hubAvgMatch[1]));
+          if (currentPrice > 0) {
+            pricing = {
+              current_price: currentPrice,
+              average_price: currentPrice * 0.9,
+              peak_price: currentPrice * 1.8,
+              off_peak_price: currentPrice * 0.5,
+              market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low'
+            };
+            console.log('Real ERCOT pricing extracted:', pricing);
+            realDataFound = true;
+          }
+        }
       }
-    } catch (parseError) {
-      console.error('Error parsing ERCOT HTML:', parseError);
+    } catch (lmpError) {
+      console.error('Error fetching ERCOT LMP data:', lmpError);
+    }
+
+    // Try ERCOT's system load data
+    try {
+      console.log('Fetching ERCOT system load data...');
+      const loadUrl = 'https://www.ercot.com/content/cdr/html/CURRENT_DASL_OP_HSL.html';
+      const loadResponse = await fetch(loadUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      
+      if (loadResponse.ok) {
+        const loadHtml = await loadResponse.text();
+        console.log('ERCOT load data length:', loadHtml.length);
+        
+        // Extract current system load
+        const loadMatch = loadHtml.match(/Current[^0-9]*([0-9,]+)/i) ||
+                         loadHtml.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
+                         loadHtml.match(/ERCOT[^0-9]*([0-9,]+)/i);
+        
+        if (loadMatch) {
+          const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
+          if (currentLoad > 0) {
+            loadData = {
+              current_demand_mw: currentLoad,
+              peak_forecast_mw: currentLoad * 1.15,
+              reserve_margin: 15.0
+            };
+            console.log('Real ERCOT load extracted:', loadData);
+            realDataFound = true;
+          }
+        }
+      }
+    } catch (loadError) {
+      console.error('Error fetching ERCOT load data:', loadError);
     }
 
     // Try to get additional data from ERCOT's system load and generation data
