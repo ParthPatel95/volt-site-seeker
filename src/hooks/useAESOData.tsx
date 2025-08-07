@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AESOPricing {
@@ -42,9 +42,16 @@ export const useAESOData = () => {
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'fallback'>('connected');
   const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const isFetchingRef = useRef(false);
+  const lastFetchAtRef = useRef(0);
 
   useEffect(() => {
     const fetchData = async () => {
+      const now = Date.now();
+      if (isFetchingRef.current || now - lastFetchAtRef.current < 1500) return;
+      isFetchingRef.current = true;
+      lastFetchAtRef.current = now;
       try {
         setError(null);
         const { data, error } = await supabase.functions.invoke('energy-data-integration');
@@ -72,18 +79,28 @@ export const useAESOData = () => {
         setConnectionStatus('fallback');
       } finally {
         setLoading(false);
+        isFetchingRef.current = false;
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 300000); // 5 minutes
-    return () => clearInterval(interval);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = window.setInterval(fetchData, 300000); // 5 minutes
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, []);
 
   const refetch = async () => {
+    if (isFetchingRef.current) return;
     setLoading(true);
     setError(null);
     try {
+      isFetchingRef.current = true;
+      lastFetchAtRef.current = Date.now();
       const { data, error } = await supabase.functions.invoke('energy-data-integration');
       
       if (error) {
@@ -108,6 +125,7 @@ export const useAESOData = () => {
       setConnectionStatus('fallback');
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ERCOTPricing {
@@ -34,19 +34,24 @@ export const useERCOTData = () => {
   const [generationMix, setGenerationMix] = useState<ERCOTGenerationMix | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const isFetchingRef = useRef(false);
+  const lastFetchAtRef = useRef(0);
 
   useEffect(() => {
     const fetchData = async () => {
+      const now = Date.now();
+      if (isFetchingRef.current || now - lastFetchAtRef.current < 1500) return;
+      isFetchingRef.current = true;
+      lastFetchAtRef.current = now;
       try {
         setError(null);
         const { data, error } = await supabase.functions.invoke('energy-data-integration');
-        
         if (error) {
           console.error('Energy data fetch error:', error);
           setError('Failed to fetch ERCOT data');
           return;
         }
-
         if (data?.success && data?.ercot) {
           setPricing(data.ercot.pricing);
           setLoadData(data.ercot.loadData);
@@ -60,26 +65,36 @@ export const useERCOTData = () => {
         setError('Network error fetching ERCOT data');
       } finally {
         setLoading(false);
+        isFetchingRef.current = false;
       }
     };
 
+    // initial fetch and stabilized interval (handles React 18 StrictMode)
     fetchData();
-    const interval = setInterval(fetchData, 300000); // 5 minutes
-    return () => clearInterval(interval);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = window.setInterval(fetchData, 300000); // 5 minutes
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, []);
 
   const refetch = async () => {
+    if (isFetchingRef.current) return;
     setLoading(true);
     setError(null);
     try {
+      isFetchingRef.current = true;
+      lastFetchAtRef.current = Date.now();
       const { data, error } = await supabase.functions.invoke('energy-data-integration');
-      
       if (error) {
         console.error('Energy data fetch error:', error);
         setError('Failed to fetch ERCOT data');
         return;
       }
-
       if (data?.success && data?.ercot) {
         setPricing(data.ercot.pricing);
         setLoadData(data.ercot.loadData);
@@ -92,6 +107,7 @@ export const useERCOTData = () => {
       setError('Network error fetching ERCOT data');
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 

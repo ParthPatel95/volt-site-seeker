@@ -494,25 +494,69 @@ async function fetchAESOData() {
   if (!pricing || !loadData || !generationMix) {
     try {
       console.log('Trying AESO CSD via proxy...');
-      const proxyUrl = 'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
-      const proxied = await fetch(proxyUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (proxied.ok) {
-        const htmlText = await proxied.text();
-        console.log('AESO CSD proxy data len:', htmlText.length);
-        // Pool price
+
+      // Try multiple proxy variants (some endpoints are picky about contentType and scheme)
+      const proxyUrls = [
+        'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet?contentType=html',
+        'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet',
+      ];
+
+      let proxyText: string | null = null;
+      for (const url of proxyUrls) {
+        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (res.ok) {
+          proxyText = await res.text();
+          console.log('AESO CSD proxy data len:', proxyText.length, 'from', url);
+          break;
+        }
+      }
+
+      // As a last resort, try CSV via proxy and parse text
+      if (!proxyText) {
+        const csvUrl = 'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet?contentType=csv';
+        const resCsv = await fetch(csvUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (resCsv.ok) {
+          proxyText = await resCsv.text();
+          console.log('AESO CSD proxy CSV len:', proxyText.length);
+        }
+      }
+
+      if (proxyText) {
+        const text = proxyText;
+
+        // Flexible number extractors that work on HTML or plain text
+        const num = (s: string | undefined | null) => {
+          if (!s) return null;
+          const m = s.match(/([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/);
+          return m ? parseFloat(m[1].replace(/,/g, '')) : null;
+        };
+
+        // Pricing
         if (!pricing) {
-          const poolPriceMatch = htmlText.match(/Pool\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
-                                 htmlText.match(/System\s+Marginal\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
-                                 htmlText.match(/Current\s+Pool\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i);
-          if (poolPriceMatch) {
-            const price = parseFloat(poolPriceMatch[1].replace(/,/g, ''));
-            if (price >= 0) {
+          const priceMatch = text.match(/(?:Pool|System)\s+(?:Marginal\s+)?Price[^0-9$]*\$?([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/i);
+          const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : null;
+          if (price !== null && price >= 0) {
+            pricing = {
+              current_price: price,
+              average_price: price * 0.85,
+              peak_price: price * 1.8,
+              off_peak_price: price * 0.4,
+              market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
+              timestamp: new Date().toISOString(),
+              source: 'aeso_csd_proxy'
+            };
+            realDataFound = true;
+          } else {
+            // CSV heuristic: find a line with "Pool Price" and grab the first number
+            const line = text.split(/\r?\n/).find(l => /pool\s*price/i.test(l));
+            const priceCsv = num(line || '');
+            if (priceCsv !== null && priceCsv >= 0) {
               pricing = {
-                current_price: price,
-                average_price: price * 0.85,
-                peak_price: price * 1.8,
-                off_peak_price: price * 0.4,
-                market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
+                current_price: priceCsv,
+                average_price: priceCsv * 0.85,
+                peak_price: priceCsv * 1.8,
+                off_peak_price: priceCsv * 0.4,
+                market_conditions: priceCsv > 100 ? 'high' : priceCsv > 50 ? 'normal' : 'low',
                 timestamp: new Date().toISOString(),
                 source: 'aeso_csd_proxy'
               };
@@ -520,17 +564,33 @@ async function fetchAESOData() {
             }
           }
         }
+
         // Load
         if (!loadData) {
-          const loadMatch = htmlText.match(/Alberta\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
-                            htmlText.match(/Total\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
-                            htmlText.match(/System\s+Load[^0-9]*([0-9,]+)/i);
-          if (loadMatch) {
-            const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
-            if (currentLoad > 0) {
+          const loadMatch = text.match(/(?:Alberta|Total)\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
+                            text.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
+                            text.match(/AIES\s+(?:Demand|Load)[^0-9]*([0-9,]+)/i);
+          const currentLoad = loadMatch ? parseFloat(loadMatch[1].replace(/,/g, '')) : null;
+
+          if (currentLoad && currentLoad > 0) {
+            loadData = {
+              current_demand_mw: currentLoad,
+              peak_forecast_mw: currentLoad * 1.3,
+              reserve_margin: 12.5,
+              capacity_margin: 15.0,
+              forecast_date: new Date().toISOString(),
+              timestamp: new Date().toISOString(),
+              source: 'aeso_csd_proxy'
+            };
+            realDataFound = true;
+          } else {
+            // CSV heuristic: find a line that looks like AIL/AIES load
+            const line = text.split(/\r?\n/).find(l => /(AIES|Alberta).*?(Load|Demand)/i.test(l));
+            const loadCsv = num(line || '');
+            if (loadCsv && loadCsv > 0) {
               loadData = {
-                current_demand_mw: currentLoad,
-                peak_forecast_mw: currentLoad * 1.3,
+                current_demand_mw: loadCsv,
+                peak_forecast_mw: loadCsv * 1.3,
                 reserve_margin: 12.5,
                 capacity_margin: 15.0,
                 forecast_date: new Date().toISOString(),
@@ -541,33 +601,29 @@ async function fetchAESOData() {
             }
           }
         }
-        // Generation
+
+        // Generation (best-effort on text output)
         if (!generationMix) {
-          const gasMatch = htmlText.match(/GAS[^0-9]*([0-9,]+)/i);
-          const windMatch = htmlText.match(/WIND[^0-9]*([0-9,]+)/i);
-          const hydroMatch = htmlText.match(/HYDRO[^0-9]*([0-9,]+)/i);
-          const coalMatch = htmlText.match(/COAL[^0-9]*([0-9,]+)/i);
-          if (gasMatch || windMatch || hydroMatch || coalMatch) {
-            const gasGen = gasMatch ? parseFloat(gasMatch[1].replace(/,/g, '')) : 0;
-            const windGen = windMatch ? parseFloat(windMatch[1].replace(/,/g, '')) : 0;
-            const hydroGen = hydroMatch ? parseFloat(hydroMatch[1].replace(/,/g, '')) : 0;
-            const coalGen = coalMatch ? parseFloat(coalMatch[1].replace(/,/g, '')) : 0;
-            const totalGen = gasGen + windGen + hydroGen + coalGen;
-            if (totalGen > 0) {
-              generationMix = {
-                total_generation_mw: totalGen,
-                natural_gas_mw: gasGen,
-                wind_mw: windGen,
-                hydro_mw: hydroGen,
-                coal_mw: coalGen,
-                solar_mw: 0,
-                other_mw: 0,
-                renewable_percentage: ((windGen + hydroGen) / totalGen * 100),
-                timestamp: new Date().toISOString(),
-                source: 'aeso_csd_proxy'
-              };
-              realDataFound = true;
-            }
+          const gas = num((text.match(/GAS[^0-9]*([0-9,]+)/i) || [])[1]);
+          const wind = num((text.match(/WIND[^0-9]*([0-9,]+)/i) || [])[1]);
+          const hydro = num((text.match(/HYDRO[^0-9]*([0-9,]+)/i) || [])[1]);
+          const coal = num((text.match(/COAL[^0-9]*([0-9,]+)/i) || [])[1]);
+          const vals = [gas, wind, hydro, coal].map(v => v || 0);
+          const totalGen = vals.reduce((a, b) => a + b, 0);
+          if (totalGen > 0) {
+            generationMix = {
+              total_generation_mw: totalGen,
+              natural_gas_mw: vals[0],
+              wind_mw: vals[1],
+              hydro_mw: vals[2],
+              coal_mw: vals[3],
+              solar_mw: 0,
+              other_mw: 0,
+              renewable_percentage: ((vals[1] + vals[2]) / totalGen * 100),
+              timestamp: new Date().toISOString(),
+              source: 'aeso_csd_proxy'
+            };
+            realDataFound = true;
           }
         }
       }
