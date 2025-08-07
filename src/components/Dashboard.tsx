@@ -437,60 +437,6 @@ export const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <Users className="w-4 h-4 mr-2" />
-                  Manage Users
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Zap className="w-4 h-4 mr-2" />
-                  Energy Settings
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  View Reports
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Settings className="w-4 h-4 mr-2" />
-                  System Settings
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* System Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle>System Status</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">API Services</span>
-                  <Badge variant="default" className="bg-green-100 text-green-800">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Online
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Database</span>
-                  <Badge variant="default" className="bg-green-100 text-green-800">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Connected
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Monitoring</span>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    Warning
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </ResponsiveSection>
