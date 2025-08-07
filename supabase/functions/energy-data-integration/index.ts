@@ -88,59 +88,54 @@ async function fetchERCOTData() {
     if (lmpResponse.ok) {
       const htmlData = await lmpResponse.text();
       console.log('ERCOT LMP data length:', htmlData.length);
-      
-      // Extract settlement point prices and calculate average
-      const priceMatches = htmlData.match(/\|\s*[A-Z0-9_]+\s*\|\s*([0-9]+\.?[0-9]*)\s*\|/g);
-      
-      if (priceMatches && priceMatches.length > 10) {
-        // Extract numeric prices from matches
-        const prices = priceMatches
-          .map(match => {
-            const priceMatch = match.match(/\|\s*[A-Z0-9_]+\s*\|\s*([0-9]+\.?[0-9]*)\s*\|/);
-            return priceMatch ? parseFloat(priceMatch[1]) : null;
-          })
-          .filter(price => price !== null && price > 0 && price < 10000)
-          .slice(0, 50); // Take first 50 valid prices to avoid outliers
-        
-        if (prices.length > 5) {
-          // Calculate average of settlement point prices
-          const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-          const currentPrice = Math.round(avgPrice * 100) / 100;
-          
+
+      // Prefer HUBAVG row if present
+      const hubAvgRegex = /HB[_\s-]*HUBAVG[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>/i;
+      const hubAvgMatch = htmlData.match(hubAvgRegex);
+      if (hubAvgMatch) {
+        const currentPrice = parseFloat(hubAvgMatch[1]);
+        if (!Number.isNaN(currentPrice) && currentPrice >= 0 && currentPrice < 10000) {
+          pricing = {
+            current_price: Math.round(currentPrice * 100) / 100,
+            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
+            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
+            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
+            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+            timestamp: new Date().toISOString(),
+            source: 'ercot_lmp_hubavg'
+          };
+          console.log('Real ERCOT hub average pricing extracted:', pricing);
+          realDataFound = true;
+        }
+      }
+
+      // If HUBAVG not found, compute average across LZ/HB rows
+      if (!realDataFound) {
+        const rowRegex = /<tr[^>]*>[\s\S]*?<td[^>]*>\s*([^<]+)\s*<\/td>[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>[\s\S]*?<\/tr>/gi;
+        const prices: number[] = [];
+        let m: RegExpExecArray | null;
+        while ((m = rowRegex.exec(htmlData)) !== null) {
+          const name = (m[1] || '').toUpperCase();
+          const val = parseFloat(m[2]);
+          const isNodeOrHub = name.includes('HB') || name.includes('HUB') || name.includes('LZ');
+          if (isNodeOrHub && !Number.isNaN(val) && val > -1000 && val < 10000) {
+            prices.push(val);
+          }
+        }
+        if (prices.length >= 5) {
+          const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+          const currentPrice = Math.round(avg * 100) / 100;
           pricing = {
             current_price: currentPrice,
-            average_price: currentPrice * 0.9,
-            peak_price: currentPrice * 1.8,
-            off_peak_price: currentPrice * 0.5,
+            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
+            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
+            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
             market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
             timestamp: new Date().toISOString(),
             source: 'ercot_lmp'
           };
-          console.log('Real ERCOT pricing extracted from', prices.length, 'settlement points:', pricing);
+          console.log('Real ERCOT pricing extracted from', prices.length, 'rows');
           realDataFound = true;
-        }
-      }
-      
-      // Fallback: try to extract hub average specifically
-      if (!realDataFound) {
-        const hubAvgMatch = htmlData.match(/HB_HUBAVG[^|]*\|\s*([0-9]+\.?[0-9]*)\s*\|/i) ||
-                           htmlData.match(/HUBAVG[^|]*\|\s*([0-9]+\.?[0-9]*)\s*\|/i);
-        
-        if (hubAvgMatch) {
-          const currentPrice = parseFloat(hubAvgMatch[1]);
-          if (currentPrice >= 0 && currentPrice < 10000) {
-            pricing = {
-              current_price: currentPrice,
-              average_price: currentPrice * 0.9,
-              peak_price: currentPrice * 1.8,
-              off_peak_price: currentPrice * 0.5,
-              market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-              timestamp: new Date().toISOString(),
-              source: 'ercot_lmp_hubavg'
-            };
-            console.log('Real ERCOT hub average pricing extracted:', pricing);
-            realDataFound = true;
-          }
         }
       }
     }
@@ -163,25 +158,31 @@ async function fetchERCOTData() {
       console.log('ERCOT load data length:', loadHtml.length);
       
       // Extract current system load
+      let currentLoadVal: number | null = null;
       const loadMatch = loadHtml.match(/Current[^0-9]*([0-9,]+)/i) ||
                        loadHtml.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
-                       loadHtml.match(/ERCOT[^0-9]*([0-9,]+)/i) ||
-                       loadHtml.match(/([0-9,]+).*MW.*Current/i) ||
-                       loadHtml.match(/([0-9,]+).*Demand/i);
-      
+                       loadHtml.match(/System\s+Demand[^0-9]*([0-9,]+)/i) ||
+                       loadHtml.match(/([0-9,]+)\s*MW\s*(?:Current|Actual)/i);
       if (loadMatch) {
-        const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
-        if (currentLoad > 0) {
-          loadData = {
-            current_demand_mw: currentLoad,
-            peak_forecast_mw: currentLoad * 1.15,
-            reserve_margin: 15.0,
-            timestamp: new Date().toISOString(),
-            source: 'ercot_load_html'
-          };
-          console.log('Real ERCOT load extracted:', loadData);
-          realDataFound = true;
+        currentLoadVal = parseFloat(loadMatch[1].replace(/,/g, ''));
+      }
+      // Table-based fallback: capture number in the next TD after a label cell
+      if (!currentLoadVal) {
+        const rowNumMatch = loadHtml.match(/<tr[^>]*>[\s\S]*?(?:Current|System)[\s\S]*?(?:Demand|Load)[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>[\s\S]*?<\/tr>/i);
+        if (rowNumMatch) {
+          currentLoadVal = parseFloat(rowNumMatch[1].replace(/,/g, ''));
         }
+      }
+      if (currentLoadVal && currentLoadVal > 0) {
+        loadData = {
+          current_demand_mw: currentLoadVal,
+          peak_forecast_mw: currentLoadVal * 1.15,
+          reserve_margin: 15.0,
+          timestamp: new Date().toISOString(),
+          source: 'ercot_load_html'
+        };
+        console.log('Real ERCOT load extracted:', loadData);
+        realDataFound = true;
       }
     }
   } catch (loadError) {
