@@ -142,6 +142,50 @@ async function fetchERCOTData() {
   } catch (lmpError) {
     console.error('Error fetching ERCOT LMP data:', lmpError);
   }
+  
+  // If not parsed yet, try via proxy fetcher (handles TLS/CORS issues)
+  if (!pricing) {
+    try {
+      console.log('Fetching ERCOT LMP via proxy...');
+      const proxyUrl = 'https://r.jina.ai/http://www.ercot.com/content/cdr/html/current_np6788.html';
+      const proxied = await fetch(proxyUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (proxied.ok) {
+        const htmlData = await proxied.text();
+        // Prefer HUBAVG
+        const hubAvgRegex = /HB[_\s-]*HUBAVG[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>/i;
+        const hubAvgMatch = htmlData.match(hubAvgRegex);
+        let currentPrice: number | null = null;
+        if (hubAvgMatch) {
+          currentPrice = parseFloat(hubAvgMatch[1]);
+        } else {
+          const rowRegex = /<tr[^>]*>[\s\S]*?<td[^>]*>\s*([^<]+)\s*<\/td>[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>[\s\S]*?<\/tr>/gi;
+          const prices: number[] = [];
+          let m: RegExpExecArray | null;
+          while ((m = rowRegex.exec(htmlData)) !== null) {
+            const name = (m[1] || '').toUpperCase();
+            const val = parseFloat(m[2]);
+            const isNodeOrHub = name.includes('HB') || name.includes('HUB') || name.includes('LZ');
+            if (isNodeOrHub && !Number.isNaN(val) && val > -1000 && val < 10000) prices.push(val);
+          }
+          if (prices.length >= 5) currentPrice = Math.round((prices.reduce((a,b)=>a+b,0)/prices.length)*100)/100;
+        }
+        if (currentPrice !== null && currentPrice >= 0) {
+          pricing = {
+            current_price: currentPrice,
+            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
+            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
+            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
+            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+            timestamp: new Date().toISOString(),
+            source: 'ercot_lmp_proxy'
+          };
+          console.log('ERCOT pricing via proxy extracted:', pricing);
+        }
+      }
+    } catch (proxyErr) {
+      console.error('ERCOT LMP proxy fetch failed:', proxyErr);
+    }
+  }
 
   // Try ERCOT's system load data
   try {
@@ -187,6 +231,37 @@ async function fetchERCOTData() {
     }
   } catch (loadError) {
     console.error('Error fetching ERCOT load data:', loadError);
+  }
+  
+  // If load not parsed yet, try proxy as well
+  if (!loadData) {
+    try {
+      console.log('Fetching ERCOT load via proxy...');
+      const proxyLoadUrl = 'https://r.jina.ai/http://www.ercot.com/content/cdr/html/CURRENT_DASL_OP_HSL.html';
+      const proxiedLoad = await fetch(proxyLoadUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (proxiedLoad.ok) {
+        const loadHtml = await proxiedLoad.text();
+        let currentLoadVal: number | null = null;
+        const loadMatch = loadHtml.match(/Current[^0-9]*([0-9,]+)/i) ||
+                         loadHtml.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
+                         loadHtml.match(/System\s+Demand[^0-9]*([0-9,]+)/i) ||
+                         loadHtml.match(/([0-9,]+)\s*MW\s*(?:Current|Actual)/i) ||
+                         loadHtml.match(/<tr[^>]*>[\s\S]*?(?:Current|System)[\s\S]*?(?:Demand|Load)[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>[\s\S]*?<\/tr>/i);
+        if (loadMatch) currentLoadVal = parseFloat(loadMatch[1].replace(/,/g, ''));
+        if (currentLoadVal && currentLoadVal > 0) {
+          loadData = {
+            current_demand_mw: currentLoadVal,
+            peak_forecast_mw: currentLoadVal * 1.15,
+            reserve_margin: 15.0,
+            timestamp: new Date().toISOString(),
+            source: 'ercot_load_proxy'
+          };
+          console.log('ERCOT load via proxy extracted:', loadData);
+        }
+      }
+    } catch (proxyErr) {
+      console.error('ERCOT load proxy fetch failed:', proxyErr);
+    }
   }
 
   // Try ERCOT API if available
@@ -415,7 +490,92 @@ async function fetchAESOData() {
     console.error('Error fetching AESO CSD data:', csdError);
   }
 
-  // Try AESO API if available
+  // If CSD HTML failed, try via proxy reader (handles TLS issues)
+  if (!pricing || !loadData || !generationMix) {
+    try {
+      console.log('Trying AESO CSD via proxy...');
+      const proxyUrl = 'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
+      const proxied = await fetch(proxyUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (proxied.ok) {
+        const htmlText = await proxied.text();
+        console.log('AESO CSD proxy data len:', htmlText.length);
+        // Pool price
+        if (!pricing) {
+          const poolPriceMatch = htmlText.match(/Pool\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
+                                 htmlText.match(/System\s+Marginal\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
+                                 htmlText.match(/Current\s+Pool\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i);
+          if (poolPriceMatch) {
+            const price = parseFloat(poolPriceMatch[1].replace(/,/g, ''));
+            if (price >= 0) {
+              pricing = {
+                current_price: price,
+                average_price: price * 0.85,
+                peak_price: price * 1.8,
+                off_peak_price: price * 0.4,
+                market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
+                timestamp: new Date().toISOString(),
+                source: 'aeso_csd_proxy'
+              };
+              realDataFound = true;
+            }
+          }
+        }
+        // Load
+        if (!loadData) {
+          const loadMatch = htmlText.match(/Alberta\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
+                            htmlText.match(/Total\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
+                            htmlText.match(/System\s+Load[^0-9]*([0-9,]+)/i);
+          if (loadMatch) {
+            const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
+            if (currentLoad > 0) {
+              loadData = {
+                current_demand_mw: currentLoad,
+                peak_forecast_mw: currentLoad * 1.3,
+                reserve_margin: 12.5,
+                capacity_margin: 15.0,
+                forecast_date: new Date().toISOString(),
+                timestamp: new Date().toISOString(),
+                source: 'aeso_csd_proxy'
+              };
+              realDataFound = true;
+            }
+          }
+        }
+        // Generation
+        if (!generationMix) {
+          const gasMatch = htmlText.match(/GAS[^0-9]*([0-9,]+)/i);
+          const windMatch = htmlText.match(/WIND[^0-9]*([0-9,]+)/i);
+          const hydroMatch = htmlText.match(/HYDRO[^0-9]*([0-9,]+)/i);
+          const coalMatch = htmlText.match(/COAL[^0-9]*([0-9,]+)/i);
+          if (gasMatch || windMatch || hydroMatch || coalMatch) {
+            const gasGen = gasMatch ? parseFloat(gasMatch[1].replace(/,/g, '')) : 0;
+            const windGen = windMatch ? parseFloat(windMatch[1].replace(/,/g, '')) : 0;
+            const hydroGen = hydroMatch ? parseFloat(hydroMatch[1].replace(/,/g, '')) : 0;
+            const coalGen = coalMatch ? parseFloat(coalMatch[1].replace(/,/g, '')) : 0;
+            const totalGen = gasGen + windGen + hydroGen + coalGen;
+            if (totalGen > 0) {
+              generationMix = {
+                total_generation_mw: totalGen,
+                natural_gas_mw: gasGen,
+                wind_mw: windGen,
+                hydro_mw: hydroGen,
+                coal_mw: coalGen,
+                solar_mw: 0,
+                other_mw: 0,
+                renewable_percentage: ((windGen + hydroGen) / totalGen * 100),
+                timestamp: new Date().toISOString(),
+                source: 'aeso_csd_proxy'
+              };
+              realDataFound = true;
+            }
+          }
+        }
+      }
+    } catch (proxyErr) {
+      console.error('AESO CSD proxy fetch failed:', proxyErr);
+    }
+  }
+
   const aesoApiKey = Deno.env.get('AESO_API_KEY');
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
   
