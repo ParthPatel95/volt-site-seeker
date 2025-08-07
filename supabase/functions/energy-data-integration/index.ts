@@ -113,7 +113,8 @@ async function fetchERCOTData() {
             peak_price: currentPrice * 1.8,
             off_peak_price: currentPrice * 0.5,
             market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: 'ercot_lmp'
           };
           console.log('Real ERCOT pricing extracted from', prices.length, 'settlement points:', pricing);
           realDataFound = true;
@@ -134,7 +135,8 @@ async function fetchERCOTData() {
               peak_price: currentPrice * 1.8,
               off_peak_price: currentPrice * 0.5,
               market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              source: 'ercot_lmp_hubavg'
             };
             console.log('Real ERCOT hub average pricing extracted:', pricing);
             realDataFound = true;
@@ -174,7 +176,8 @@ async function fetchERCOTData() {
             current_demand_mw: currentLoad,
             peak_forecast_mw: currentLoad * 1.15,
             reserve_margin: 15.0,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: 'ercot_load_html'
           };
           console.log('Real ERCOT load extracted:', loadData);
           realDataFound = true;
@@ -222,7 +225,8 @@ async function fetchERCOTData() {
               nuclear_mw: nuclearGeneration,
               coal_mw: coalGeneration,
               renewable_percentage: ((windGeneration + solarGeneration) / totalGeneration * 100),
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              source: 'ercot_api'
             };
             console.log('Real ERCOT generation extracted:', generationMix);
           }
@@ -252,7 +256,8 @@ async function fetchERCOTData() {
       current_demand_mw: Math.round(currentLoad),
       peak_forecast_mw: Math.round(currentLoad * 1.15),
       reserve_margin: 15.0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      source: 'fallback'
     };
   }
   
@@ -278,7 +283,8 @@ async function fetchERCOTData() {
       nuclear_mw: Math.round(totalGeneration * 0.08),
       coal_mw: Math.round(totalGeneration * 0.03),
       renewable_percentage: Math.round(((windMW + solarMW) / totalGeneration * 100)),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      source: 'fallback'
     };
   }
 
@@ -301,7 +307,8 @@ async function fetchERCOTData() {
       peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
       off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
       market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      source: 'fallback'
     };
   }
 
@@ -317,7 +324,7 @@ async function fetchAESOData() {
   // Try AESO's Current Supply and Demand report first
   try {
     console.log('Trying AESO CSD Report for real-time data...');
-    const csdUrl = 'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
+    const csdUrl = 'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
     const csdResponse = await fetch(csdUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -342,7 +349,8 @@ async function fetchAESOData() {
             peak_price: currentPrice * 1.8,
             off_peak_price: currentPrice * 0.4,
             market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: 'aeso_csd'
           };
           console.log('Real AESO pricing extracted:', pricing);
           realDataFound = true;
@@ -363,7 +371,8 @@ async function fetchAESOData() {
             reserve_margin: 12.5,
             capacity_margin: 15.0,
             forecast_date: new Date().toISOString(),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: 'aeso_csd'
           };
           console.log('Real AESO load extracted:', loadData);
           realDataFound = true;
@@ -393,7 +402,8 @@ async function fetchAESOData() {
             solar_mw: 0,
             other_mw: 0,
             renewable_percentage: ((windGen + hydroGen) / totalGen * 100),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: 'aeso_csd'
           };
           console.log('Real AESO generation extracted:', generationMix);
           realDataFound = true;
@@ -435,7 +445,8 @@ async function fetchAESOData() {
               peak_price: price * 1.8,
               off_peak_price: price * 0.4,
               market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              source: 'aeso_api'
             };
             realDataFound = true;
           }
@@ -459,7 +470,8 @@ async function fetchAESOData() {
       peak_price: currentPrice * 1.8,
       off_peak_price: currentPrice * 0.4,
       market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      source: 'fallback'
     };
   }
 
@@ -475,7 +487,8 @@ async function fetchAESOData() {
       reserve_margin: 12.5,
       capacity_margin: 15.0,
       forecast_date: new Date().toISOString(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      source: 'fallback'
     };
   }
 
@@ -490,7 +503,8 @@ async function fetchAESOData() {
       coal_mw: totalGeneration * 0.12,
       hydro_mw: totalGeneration * 0.10,
       renewable_percentage: 43.0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      source: 'fallback'
     };
   }
 
