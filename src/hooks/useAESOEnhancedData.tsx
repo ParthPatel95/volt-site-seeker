@@ -253,11 +253,7 @@ export function useAESOEnhancedData() {
     try {
       console.log('Fetching AESO enhanced data:', dataType);
       
-      const { data, error } = await supabase.functions.invoke('aeso-data-integration', {
-        body: {
-          action: dataType
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('energy-data-integration');
 
       if (error) {
         console.error('AESO Enhanced API error:', error);
