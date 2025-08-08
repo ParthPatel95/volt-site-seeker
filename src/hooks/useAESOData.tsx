@@ -76,16 +76,8 @@ export const useAESOData = () => {
             });
             setConnectionStatus('connected');
           } else {
-            const fallbackP: AESOPricing = {
-              current_price: 75,
-              average_price: 75,
-              peak_price: 85,
-              off_peak_price: 60,
-              market_conditions: 'normal',
-              timestamp: new Date().toISOString(),
-              source: 'fallback'
-            };
-            setPricing(fallbackP);
+            console.warn('AESO pricing missing in response; leaving pricing null to avoid fallback badge.', data?.aeso);
+            setPricing(null);
             setConnectionStatus('fallback');
           }
           setLoadData(data.aeso.loadData);
@@ -145,16 +137,8 @@ export const useAESOData = () => {
           });
           setConnectionStatus('connected');
         } else {
-          const fallbackP: AESOPricing = {
-            current_price: 75,
-            average_price: 75,
-            peak_price: 85,
-            off_peak_price: 60,
-            market_conditions: 'normal',
-            timestamp: new Date().toISOString(),
-            source: 'fallback'
-          };
-          setPricing(fallbackP);
+          console.warn('AESO pricing missing in response (refetch); leaving pricing null to avoid fallback badge.', data?.aeso);
+          setPricing(null);
           setConnectionStatus('fallback');
         }
         setLoadData(data.aeso.loadData);
