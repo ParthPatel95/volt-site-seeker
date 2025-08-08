@@ -769,8 +769,10 @@ async function fetchAESOData() {
   // Try official AESO API via APIM "Pool Price Report v1.1" (apimgw.aeso.ca)
   if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey)) {
     try {
-      const startStr = new Date().toISOString().slice(0, 10);
-      const endStr = startStr;
+      const start = new Date();
+      const startStr = start.toISOString().slice(0, 10);
+      const end = new Date(start.getTime() + 24*60*60*1000); // fetch through tomorrow to ensure inclusive range
+      const endStr = end.toISOString().slice(0, 10);
       const urls = [
         // apimgw domain variants
         `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
