@@ -819,6 +819,7 @@ async function fetchAESOData() {
 
   const aesoApiKey = Deno.env.get('AESO_API_KEY');
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
+  console.log('AESO keys present', { subKey: !!aesoSubKey, apiKey: !!aesoApiKey });
   
   // Try official AESO API via APIM "Pool Price Report v1.1" (apimgw.aeso.ca)
   if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey)) {
@@ -831,6 +832,9 @@ async function fetchAESOData() {
         // apimgw domain variants
         `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
         `https://apimgw.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
+        // developer gateway variants
+        `https://developer-apim.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
+        `https://developer-apim.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
         // api.aeso.ca domain variants (some tenants route here)
         `https://api.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
         `https://api.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
@@ -864,7 +868,7 @@ async function fetchAESOData() {
         for (const headers of headerVariants) {
           try {
             console.log('Trying AESO APIM URL:', url, 'with headers:', Object.keys(headers));
-            const res = await fetch(url, { headers });
+            const res = await fetch(url, { headers: { ...headers, 'User-Agent': 'Mozilla/5.0 LovableEnergy/1.0' } });
             if (!res.ok) {
               const text = await res.text().catch(() => '');
               console.error('AESO APIM not OK', res.status, res.statusText, 'body:', text?.slice(0, 200));
@@ -993,5 +997,6 @@ async function fetchAESOData() {
     };
   }
 
+  console.log('AESO return summary', { pricingSource: pricing?.source, currentPrice: pricing?.current_price, loadSource: loadData?.source, mixSource: generationMix?.source });
   return { pricing, loadData, generationMix };
 }
