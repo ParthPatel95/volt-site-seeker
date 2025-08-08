@@ -453,21 +453,38 @@ async function fetchAESOData() {
         foundPrice = parseFloat(tdMatch[1].replace(/,/g, ''));
       }
 
-      // If not found via TD adjacency, fall back to flexible text patterns
+      // If not found via TD adjacency, try near-label window scan and flexible patterns
       if (foundPrice == null) {
-        const candidates = [
-          // With or without dollar sign (support C$ and $)
-          ...candFrom(/Current\s+Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...candFrom(/Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...candFrom(/System\s+Marginal\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          // With explicit units
-          ...candFrom(/\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-          ...candFrom(/C\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-          ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi)
-        ].filter(v => v > 0 && v < 10000);
-        const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
-        if (currentPrice !== null) {
-          foundPrice = currentPrice;
+        // Scan a small window after common labels to catch values inside complex tables/spans
+        const labels = ['Pool Price', 'System Marginal Price', 'SMP'];
+        const numberRe = /(?:C\$|\$)?\s*([-+]?[0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[-+]?[0-9]+(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*(?:\/\s*MWh)?/i;
+        for (const label of labels) {
+          const m = htmlText.match(new RegExp(label + '[\\s\\S]{0,400}', 'i'));
+          if (m) {
+            const inWin = (m[0] || '').match(numberRe);
+            if (inWin) {
+              const n = parseFloat(inWin[1].replace(/,/g, ''));
+              if (!Number.isNaN(n)) { foundPrice = n; break; }
+            }
+          }
+        }
+
+        // Fallback to flexible text patterns across the whole document
+        if (foundPrice == null) {
+          const candidates = [
+            // With or without dollar sign (support C$ and $)
+            ...candFrom(/Current\s+Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...candFrom(/Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...candFrom(/System\s+Marginal\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            // With explicit units
+            ...candFrom(/\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+            ...candFrom(/C\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+            ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi)
+          ].filter(v => v > 0 && v < 10000);
+          const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
+          if (currentPrice !== null) {
+            foundPrice = currentPrice;
+          }
         }
       }
 
