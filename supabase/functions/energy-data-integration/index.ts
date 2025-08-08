@@ -783,6 +783,19 @@ async function fetchAESOData() {
         `https://api.aeso.ca/public/systemmarginalprice/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
       ];
 
+      // Build combined URL list including query-param auth variants
+      const urlsAll = (() => {
+        const set = new Set<string>(urls);
+        if (aesoSubKey) {
+          urls.forEach(u => set.add(`${u}&subscription-key=${encodeURIComponent(aesoSubKey!)}`));
+        }
+        if (aesoApiKey) {
+          // Some deployments accept API key in query too
+          urls.forEach(u => set.add(`${u}&x-api-key=${encodeURIComponent(aesoApiKey!)}`));
+        }
+        return Array.from(set);
+      })();
+
       const headerVariants = [
         { 'Ocp-Apim-Subscription-Key': aesoSubKey, 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
         { 'x-api-key': aesoApiKey, 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
@@ -791,7 +804,7 @@ async function fetchAESOData() {
 
       let parsedPrice: number | null = null;
 
-      for (const url of urls) {
+      for (const url of urlsAll) {
         for (const headers of headerVariants) {
           try {
             console.log('Trying AESO APIM URL:', url, 'with headers:', Object.keys(headers));
