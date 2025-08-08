@@ -686,23 +686,38 @@ async function fetchAESOData() {
     }
   }
   
-  // Additional attempt: dedicated SMP (System Marginal Price) report if pricing still missing
+  // Additional attempt: dedicated SMP/Pool Price reports if pricing still missing
   if (!pricing) {
     try {
-      console.log('Trying AESO SMP Report for pricing...');
-      const smpUrl = 'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html';
-      const smpRes = await fetch(smpUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      let smpText: string | null = null;
-      if (smpRes.ok) {
-        smpText = await smpRes.text();
-      } else {
-        // Proxy fallback
-        const smpProxy = 'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html';
-        const smpProxyRes = await fetch(smpProxy, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (smpProxyRes.ok) smpText = await smpProxyRes.text();
+      console.log('Trying AESO SMP/Pool Price reports for pricing...');
+
+      const baseUrls = [
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=html',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=html',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=csv',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=csv',
+      ];
+
+      const proxy = (u: string) => u.replace(/^http:\/\//, 'https://r.jina.ai/http://').replace(/^https:\/\//, 'https://r.jina.ai/https://');
+      const tryUrls = [...baseUrls, ...baseUrls.map(proxy)];
+
+      let text: string | null = null;
+      let usedUrl: string | null = null;
+      for (const url of tryUrls) {
+        try {
+          const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+          if (res.ok) {
+            text = await res.text();
+            usedUrl = url;
+            break;
+          }
+        } catch (_) { /* keep trying */ }
       }
-      if (smpText) {
-        // Extract likely $/MWh near SMP labels, avoid picking $0 change values
+
+      if (text) {
+        // Extract likely $/MWh near SMP/Pool Price labels (handle $, units, or bare numbers)
         const pick = (src: string, re: RegExp) => {
           const arr: number[] = [];
           for (const m of src.matchAll(re)) {
@@ -711,27 +726,40 @@ async function fetchAESOData() {
           }
           return arr;
         };
-        const cands = [
-          ...pick(smpText, /System\s+Marginal\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...pick(smpText, /Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...pick(smpText, /\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi)
+
+        const candidates = [
+          ...pick(text, /System\s+Marginal\s+Price[^$\n]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...pick(text, /Pool\s+Price[^$\n]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...pick(text, /\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+          ...pick(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi),
         ].filter(v => v > 0 && v < 10000);
-        const p = cands.length ? cands[cands.length - 1] : null;
-        if (p !== null) {
+
+        let p: number | null = null;
+        if (candidates.length) {
+          p = candidates[candidates.length - 1];
+        } else if (/contentType=csv/i.test(usedUrl || '')) {
+          // CSV fallback: grab the last numeric value on the line mentioning price
+          const line = text.split(/\r?\n/).reverse().find(l => /pool\s*price|system\s*marginal\s*price|SMP/i.test(l));
+          const m = line?.match(/([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/);
+          p = m ? parseFloat(m[1].replace(/,/g, '')) : null;
+        }
+
+        if (p != null) {
+          const val = Math.round(p * 100) / 100;
           pricing = {
-            current_price: Math.round(p * 100) / 100,
-            average_price: Math.round(p * 0.85 * 100) / 100,
-            peak_price: Math.round(p * 1.8 * 100) / 100,
-            off_peak_price: Math.round(p * 0.4 * 100) / 100,
-            market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
+            current_price: val,
+            average_price: Math.round(val * 0.85 * 100) / 100,
+            peak_price: Math.round(val * 1.8 * 100) / 100,
+            off_peak_price: Math.round(val * 0.4 * 100) / 100,
+            market_conditions: val > 100 ? 'high' : val > 50 ? 'normal' : 'low',
             timestamp: new Date().toISOString(),
-            source: 'aeso_smp'
+            source: usedUrl?.includes('PoolPriceReportServlet') ? 'aeso_poolprice' : 'aeso_smp',
           };
-          console.log('AESO SMP pricing extracted:', pricing);
+          console.log('AESO pricing extracted from HTML:', { source: pricing.source, url: usedUrl, value: val });
         }
       }
-    } catch (smpErr) {
-      console.error('AESO SMP fetch failed:', smpErr);
+    } catch (priceErr) {
+      console.error('AESO SMP/Pool Price fetch failed:', priceErr);
     }
   }
 
