@@ -830,9 +830,11 @@ async function fetchAESOData() {
     }
   }
 
-  const aesoApiKey = Deno.env.get('AESO_API_KEY');
+  const aesoPrimary = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY');
+  const aesoSecondary = Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY');
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
-  console.log('AESO keys present', { subKey: !!aesoSubKey, apiKey: !!aesoApiKey });
+  const aesoApiKey = Deno.env.get('AESO_API_KEY');
+  console.log('AESO subscription key presence', { primary: !!aesoPrimary, secondary: !!aesoSecondary, legacySub: !!aesoSubKey, legacyApi: !!aesoApiKey });
   
   // Try official AESO APIM Pool Price Date Range report exactly per docs (both keys are subscription keys)
   if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey)) {
@@ -848,9 +850,9 @@ async function fetchAESOData() {
         'https://apimgw.aeso.ca',
       ];
 
-      // Treat both provided secrets as subscription keys (primary/secondary)
-      const subKeys = [aesoSubKey, aesoApiKey].filter((v): v is string => !!v);
-      console.log('AESO subscription keys present:', subKeys.map(k => k ? `${k.slice(0,4)}…${k.slice(-4)}` : 'none'));
+      const uniq = (arr: string[]) => Array.from(new Set(arr.filter((v): v is string => !!v && v.trim().length > 0)));
+      const subKeys = uniq([aesoPrimary || '', aesoSecondary || '', aesoSubKey || '', aesoApiKey || '']);
+      console.log('AESO subscription keys (masked tails):', subKeys.map(k => `${k.slice(0,4)}…${k.slice(-4)}`));
 
       const tryFetchJson = async (url: string, key: string) => {
         console.log('AESO APIM attempt', { url, header: 'Ocp-Apim-Subscription-Key', keyTail: key.slice(-6) });
