@@ -34,7 +34,13 @@ export function EnergyRateInputForm({
           <Label>Input Method</Label>
           <Select
             value={input.inputMode || 'coords'}
-            onValueChange={(value: 'coords' | 'grid') => onInputChange({ ...input, inputMode: value })}
+            onValueChange={(value: 'coords' | 'grid') => {
+              if (value === 'grid') {
+                onInputChange({ ...input, inputMode: 'grid', gridRegion: input.gridRegion || 'AESO' });
+              } else {
+                onInputChange({ ...input, inputMode: 'coords' });
+              }
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select input method" />
@@ -87,7 +93,16 @@ export function EnergyRateInputForm({
             <Label>Grid Region</Label>
             <Select
               value={input.gridRegion || 'AESO'}
-              onValueChange={(value: 'ERCOT' | 'AESO') => onInputChange({ ...input, gridRegion: value })}
+              onValueChange={(value: 'ERCOT' | 'AESO') => {
+                const coords = value === 'ERCOT' 
+                  ? { latitude: 31.0, longitude: -97.0 }
+                  : { latitude: 53.5, longitude: -113.5 };
+                onInputChange({ 
+                  ...input, 
+                  gridRegion: value,
+                  ...(((input.inputMode || 'coords') === 'grid') ? coords : {})
+                });
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select grid region" />

@@ -40,15 +40,7 @@ const handleCalculate = async () => {
   let payload: EnergyRateInput;
 
   if (usingGrid) {
-    const region = (input as any).gridRegion as 'ERCOT' | 'AESO' | undefined;
-    if (!region) {
-      toast({
-        title: "Select Grid",
-        description: "Please choose a grid region (AESO or ERCOT).",
-        variant: "destructive"
-      });
-      return;
-    }
+    const region = ((input as any).gridRegion as 'ERCOT' | 'AESO' | undefined) ?? 'AESO';
 
     // Representative coordinates for grid-level estimate
     const regionCoords = region === 'ERCOT'
