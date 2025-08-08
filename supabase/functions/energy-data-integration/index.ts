@@ -456,13 +456,14 @@ async function fetchAESOData() {
       // If not found via TD adjacency, fall back to flexible text patterns
       if (foundPrice == null) {
         const candidates = [
-          // With or without dollar sign
-          ...candFrom(/Current\s+Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...candFrom(/Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...candFrom(/System\s+Marginal\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          // With or without dollar sign (support C$ and $)
+          ...candFrom(/Current\s+Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...candFrom(/Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...candFrom(/System\s+Marginal\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
           // With explicit units
           ...candFrom(/\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-          ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi)
+          ...candFrom(/C\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+          ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi)
         ].filter(v => v > 0 && v < 10000);
         const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
         if (currentPrice !== null) {
@@ -594,11 +595,12 @@ async function fetchAESOData() {
             return arr;
           };
           const cands = [
-            ...pickFrom(text, /Current\s+Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pickFrom(text, /Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pickFrom(text, /System\s+Marginal\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /Current\s+Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /System\s+Marginal\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
             ...pickFrom(text, /\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-            ...pickFrom(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi)
+            ...pickFrom(text, /C\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+            ...pickFrom(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi)
           ].filter(v => v > 0 && v < 10000);
           const price = cands.length ? cands[cands.length - 1] : null;
           if (price !== null) {
