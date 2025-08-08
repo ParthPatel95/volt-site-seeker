@@ -436,7 +436,7 @@ async function fetchAESOData() {
       const htmlText = await csdResponse.text();
       console.log('AESO CSD data received, length:', htmlText.length);
 
-      // Extract Pool Price (robust parsing to avoid picking $0 like change deltas)
+      // Extract Pool/System Marginal Price (accept $, units or plain numbers)
       const candFrom = (re: RegExp) => {
         const out: number[] = [];
         for (const m of htmlText.matchAll(re)) {
@@ -446,18 +446,23 @@ async function fetchAESOData() {
         return out;
       };
       const candidates = [
-        ...candFrom(/Current\s+Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-        ...candFrom(/Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-        ...candFrom(/System\s+Marginal\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi)
+        // With or without dollar sign
+        ...candFrom(/Current\s+Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+        ...candFrom(/Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+        ...candFrom(/System\s+Marginal\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+        // With explicit units
+        ...candFrom(/\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+        ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi)
       ].filter(v => v > 0 && v < 10000);
       const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
       if (currentPrice !== null) {
+        const p = Math.round(currentPrice * 100) / 100;
         pricing = {
-          current_price: currentPrice,
-          average_price: currentPrice * 0.85,
-          peak_price: currentPrice * 1.8,
-          off_peak_price: currentPrice * 0.4,
-          market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+          current_price: p,
+          average_price: Math.round(p * 0.85 * 100) / 100,
+          peak_price: Math.round(p * 1.8 * 100) / 100,
+          off_peak_price: Math.round(p * 0.4 * 100) / 100,
+          market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
           timestamp: new Date().toISOString(),
           source: 'aeso_csd'
         };
@@ -563,7 +568,7 @@ async function fetchAESOData() {
           return m ? parseFloat(m[1].replace(/,/g, '')) : null;
         };
 
-        // Pricing (robust): prefer values in lines mentioning Pool/System Marginal Price
+        // Pricing (robust): prefer values near Pool/System Marginal Price, accept $, units or plain numbers
         if (!pricing) {
           const pickFrom = (text: string, re: RegExp) => {
             const arr: number[] = [];
@@ -574,34 +579,38 @@ async function fetchAESOData() {
             return arr;
           };
           const cands = [
-            ...pickFrom(text, /Current\s+Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pickFrom(text, /Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pickFrom(text, /System\s+Marginal\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi)
+            ...pickFrom(text, /Current\s+Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /System\s+Marginal\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+            ...pickFrom(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi)
           ].filter(v => v > 0 && v < 10000);
           const price = cands.length ? cands[cands.length - 1] : null;
           if (price !== null) {
+            const p = Math.round(price * 100) / 100;
             pricing = {
-              current_price: price,
-              average_price: price * 0.85,
-              peak_price: price * 1.8,
-              off_peak_price: price * 0.4,
-              market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
+              current_price: p,
+              average_price: Math.round(p * 0.85 * 100) / 100,
+              peak_price: Math.round(p * 1.8 * 100) / 100,
+              off_peak_price: Math.round(p * 0.4 * 100) / 100,
+              market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
               timestamp: new Date().toISOString(),
               source: 'aeso_csd_proxy'
             };
             realDataFound = true;
           } else {
-            // CSV heuristic: find a line with "Pool Price" and grab the first number
-            const line = text.split(/\r?\n/).find(l => /pool\s*price/i.test(l));
+            // CSV heuristic: find a line with "Pool Price" (with or without units)
+            const line = text.split(/\r?\n/).find(l => /pool\s*price|system\s*marginal\s*price/i.test(l));
             const m = line?.match(/([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/);
             const priceCsv = m ? parseFloat(m[1].replace(/,/g, '')) : null;
             if (priceCsv !== null && priceCsv > 0) {
+              const p = Math.round(priceCsv * 100) / 100;
               pricing = {
-                current_price: priceCsv,
-                average_price: priceCsv * 0.85,
-                peak_price: priceCsv * 1.8,
-                off_peak_price: priceCsv * 0.4,
-                market_conditions: priceCsv > 100 ? 'high' : priceCsv > 50 ? 'normal' : 'low',
+                current_price: p,
+                average_price: Math.round(p * 0.85 * 100) / 100,
+                peak_price: Math.round(p * 1.8 * 100) / 100,
+                off_peak_price: Math.round(p * 0.4 * 100) / 100,
+                market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
                 timestamp: new Date().toISOString(),
                 source: 'aeso_csd_proxy'
               };
@@ -716,7 +725,7 @@ async function fetchAESOData() {
             off_peak_price: Math.round(p * 0.4 * 100) / 100,
             market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
             timestamp: new Date().toISOString(),
-            source: 'aeso_csd'
+            source: 'aeso_smp'
           };
           console.log('AESO SMP pricing extracted:', pricing);
         }
