@@ -8,22 +8,67 @@ import { useEnergyRateEstimator } from '@/hooks/useEnergyRateEstimator';
 import { Calculator } from 'lucide-react';
 import { EnergyRateInput } from './EnergyRateInputTypes';
 
+type UIEnergyRateInput = Partial<EnergyRateInput> & {
+  inputMode?: 'coords' | 'grid';
+  gridRegion?: 'ERCOT' | 'AESO';
+};
+
 export function EnergyRateEstimator() {
-  const [input, setInput] = useState<Partial<EnergyRateInput>>({
+  const [input, setInput] = useState<UIEnergyRateInput>({
     currency: 'CAD',
     customerClass: 'Industrial',
-    retailAdder: 0.3
+    retailAdder: 0.3,
+    inputMode: 'coords'
   });
   const [results, setResults] = useState(null);
   const { calculateRates, loading, downloadCSV, downloadPDF } = useEnergyRateEstimator();
   const { toast } = useToast();
 
-  const handleCalculate = async () => {
-    // Validate inputs
-    if (!input.latitude || !input.longitude || !input.contractedLoadMW) {
+const handleCalculate = async () => {
+  const usingGrid = (input as any).inputMode === 'grid';
+
+  // Validate contracted load
+  if (!input.contractedLoadMW || input.contractedLoadMW <= 0 || input.contractedLoadMW > 1000) {
+    toast({
+      title: "Invalid Load",
+      description: "Contracted load must be between 0 and 1000 MW",
+      variant: "destructive"
+    });
+    return;
+  }
+
+  let payload: EnergyRateInput;
+
+  if (usingGrid) {
+    const region = (input as any).gridRegion as 'ERCOT' | 'AESO' | undefined;
+    if (!region) {
+      toast({
+        title: "Select Grid",
+        description: "Please choose a grid region (AESO or ERCOT).",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Representative coordinates for grid-level estimate
+    const regionCoords = region === 'ERCOT'
+      ? { latitude: 31.0, longitude: -97.0 } // Central Texas (ERCOT)
+      : { latitude: 53.5, longitude: -113.5 }; // Central Alberta (AESO)
+
+    // Reflect chosen coords in UI for transparency
+    setInput((prev) => ({ ...(prev as any), latitude: regionCoords.latitude, longitude: regionCoords.longitude }));
+
+    payload = {
+      ...(input as EnergyRateInput),
+      latitude: regionCoords.latitude,
+      longitude: regionCoords.longitude,
+    };
+  } else {
+    // Coordinate mode validation
+    if (!input.latitude || !input.longitude) {
       toast({
         title: "Missing Required Fields",
-        description: "Please enter latitude, longitude, and contracted load",
+        description: "Please enter latitude and longitude",
         variant: "destructive"
       });
       return;
@@ -32,39 +77,33 @@ export function EnergyRateEstimator() {
     if (Math.abs(input.latitude) > 90 || Math.abs(input.longitude) > 180) {
       toast({
         title: "Invalid Coordinates",
-        description: "Please enter valid latitude (-90 to 90) and longitude (-180 to 180)",
+        description: "Latitude (-90 to 90) and longitude (-180 to 180)",
         variant: "destructive"
       });
       return;
     }
 
-    if (input.contractedLoadMW <= 0 || input.contractedLoadMW > 1000) {
-      toast({
-        title: "Invalid Load",
-        description: "Contracted load must be between 0 and 1000 MW",
-        variant: "destructive"
-      });
-      return;
-    }
+    payload = input as EnergyRateInput;
+  }
 
-    try {
-      console.log('Calculating energy rates for:', input);
-      const rateResults = await calculateRates(input as EnergyRateInput);
-      setResults(rateResults);
-      
-      toast({
-        title: "Calculation Complete",
-        description: "Energy rate estimate generated successfully"
-      });
-    } catch (error: any) {
-      console.error('Rate calculation error:', error);
-      toast({
-        title: "Calculation Failed",
-        description: error.message || "Failed to calculate energy rates",
-        variant: "destructive"
-      });
-    }
-  };
+  try {
+    console.log('Calculating energy rates for:', payload);
+    const rateResults = await calculateRates(payload);
+    setResults(rateResults);
+
+    toast({
+      title: "Calculation Complete",
+      description: "Energy rate estimate generated successfully"
+    });
+  } catch (error: any) {
+    console.error('Rate calculation error:', error);
+    toast({
+      title: "Calculation Failed",
+      description: error.message || "Failed to calculate energy rates",
+      variant: "destructive"
+    });
+  }
+};
 
   const handleMapClick = () => {
     // Future enhancement: open map picker
