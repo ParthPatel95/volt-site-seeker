@@ -51,9 +51,12 @@ const handleCalculate = async () => {
     setInput((prev) => ({ ...(prev as any), latitude: regionCoords.latitude, longitude: regionCoords.longitude }));
 
     payload = {
-      ...(input as EnergyRateInput),
       latitude: regionCoords.latitude,
       longitude: regionCoords.longitude,
+      contractedLoadMW: Number(input.contractedLoadMW!),
+      currency: (input.currency as 'CAD' | 'USD')!,
+      customerClass: (input.customerClass as 'Industrial' | 'Commercial')!,
+      retailAdder: input.retailAdder ?? 0,
     };
   } else {
     // Coordinate mode validation
@@ -75,7 +78,14 @@ const handleCalculate = async () => {
       return;
     }
 
-    payload = input as EnergyRateInput;
+    payload = {
+      latitude: Number(input.latitude!),
+      longitude: Number(input.longitude!),
+      contractedLoadMW: Number(input.contractedLoadMW!),
+      currency: (input.currency as 'CAD' | 'USD')!,
+      customerClass: (input.customerClass as 'Industrial' | 'Commercial')!,
+      retailAdder: input.retailAdder ?? 0,
+    } as EnergyRateInput;
   }
 
   try {
