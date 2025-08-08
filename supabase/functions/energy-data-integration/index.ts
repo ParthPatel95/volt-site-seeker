@@ -748,6 +748,13 @@ async function fetchAESOData() {
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=csv',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=csv',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=csv',
+        // JSON (often available but undocumented; try both schemes)
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=json',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=json',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=json',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=json',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=json',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=json',
       ];
 
       const proxy = (u: string) => u.replace(/^http:\/\//, 'https://r.jina.ai/http://').replace(/^https:\/\//, 'https://r.jina.ai/https://');
@@ -767,10 +774,39 @@ async function fetchAESOData() {
       }
 
       if (text) {
-        // If CSV, parse robustly by columns first
         let p: number | null = null;
-        const looksCsv = /\n/.test(text) && /,/.test(text.slice(0, 500));
-        if (looksCsv || /contentType=csv/i.test(usedUrl || '')) {
+        let jsonDetected = false;
+        let jsonSource: 'aeso_poolprice' | 'aeso_smp' | null = null;
+        const trimmed = text.trim();
+        const looksJson = /^\s*[\[{]/.test(trimmed) || /contentType=json/i.test(usedUrl || '') || /"Pool Price Report"|"System Marginal Price Report"/i.test(trimmed.slice(0, 2000));
+        if (looksJson) {
+          try {
+            const obj = JSON.parse(trimmed);
+            // Attempt to find pool price array first
+            const poolArr: any[] = (obj?.return?.['Pool Price Report']) || obj?.['Pool Price Report'] || [];
+            if (Array.isArray(poolArr) && poolArr.length) {
+              for (let i = poolArr.length - 1; i >= 0; i--) {
+                const n = parseFloat(String(poolArr[i]?.pool_price ?? poolArr[i]?.PoolPrice ?? ''));
+                if (!Number.isNaN(n)) { p = n; jsonSource = 'aeso_poolprice'; break; }
+              }
+            }
+            // Fallback to SMP array
+            if (p == null) {
+              const smpArr: any[] = (obj?.return?.['System Marginal Price Report']) || obj?.['System Marginal Price Report'] || [];
+              if (Array.isArray(smpArr) && smpArr.length) {
+                for (let i = smpArr.length - 1; i >= 0; i--) {
+                  const n = parseFloat(String(smpArr[i]?.system_marginal_price ?? smpArr[i]?.SMP ?? smpArr[i]?.smp ?? ''));
+                  if (!Number.isNaN(n)) { p = n; jsonSource = 'aeso_smp'; break; }
+                }
+              }
+            }
+            jsonDetected = p != null;
+          } catch (_) { /* not JSON, continue */ }
+        }
+
+        // If CSV, parse robustly by columns first
+        const looksCsv = !jsonDetected && /\n/.test(text) && /,/.test(text.slice(0, 500));
+        if (!jsonDetected && (looksCsv || /contentType=csv/i.test(usedUrl || ''))) {
           const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
           // Find header row (contains Pool Price or SMP)
           let headerIdx = -1;
@@ -790,8 +826,8 @@ async function fetchAESOData() {
           }
         }
 
-        // If not from CSV, try HTML/text candidates (handle $, CAD, C$)
-        if (p == null) {
+        // If not from JSON/CSV, try HTML/text candidates (handle $, CAD, C$)
+        if (p == null && !jsonDetected) {
           const pick = (src: string, re: RegExp) => {
             const arr: number[] = [];
             for (const m of src.matchAll(re)) {
@@ -813,6 +849,7 @@ async function fetchAESOData() {
 
         if (p != null) {
           const val = Math.round(p * 100) / 100;
+          const src = jsonDetected ? (jsonSource || (/PoolPriceReportServlet/i.test(usedUrl || '') ? 'aeso_poolprice' : 'aeso_smp')) : (/PoolPriceReportServlet/i.test(usedUrl || '') ? (looksCsv ? 'aeso_poolprice_csv' : 'aeso_poolprice') : (looksCsv ? 'aeso_smp_csv' : 'aeso_smp'));
           pricing = {
             current_price: val,
             average_price: Math.round(val * 0.85 * 100) / 100,
@@ -820,7 +857,7 @@ async function fetchAESOData() {
             off_peak_price: Math.round(val * 0.4 * 100) / 100,
             market_conditions: val > 100 ? 'high' : val > 50 ? 'normal' : 'low',
             timestamp: new Date().toISOString(),
-            source: /PoolPriceReportServlet/i.test(usedUrl || '') ? (looksCsv ? 'aeso_poolprice_csv' : 'aeso_poolprice') : (looksCsv ? 'aeso_smp_csv' : 'aeso_smp'),
+            source: src,
           };
           console.log('AESO pricing extracted from reports:', { source: pricing.source, url: usedUrl, value: val });
         }
@@ -837,7 +874,7 @@ async function fetchAESOData() {
   console.log('AESO subscription key presence', { primary: !!aesoPrimary, secondary: !!aesoSecondary, legacySub: !!aesoSubKey, legacyApi: !!aesoApiKey });
   
   // Try official AESO APIM Pool Price Date Range report exactly per docs (both keys are subscription keys)
-  if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey)) {
+  if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey || aesoPrimary || aesoSecondary)) {
     try {
       // Per AESO docs: use a date range (yesterday -> today)
       const now = new Date();
