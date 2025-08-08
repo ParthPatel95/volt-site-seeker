@@ -18,6 +18,7 @@ export function EnergyRateDetailsModal({
   onDownloadCSV: _onDownloadCSV,
   onDownloadPDF: _onDownloadPDF,
 }: EnergyRateDetailsModalProps) {
+  const hasHistory = results.monthlyData.length >= 2;
   const chartData = results.monthlyData.map((data) => ({
     month: data.month,
     'Energy Price': data.energyPrice,
@@ -25,6 +26,17 @@ export function EnergyRateDetailsModal({
     Riders: data.riders,
     Tax: data.tax,
     Total: data.total,
+  }));
+
+  const chartDataDetailed = results.monthlyData.map((d) => ({
+    month: d.month,
+    'Wholesale Energy': d.wholesaleEnergy ?? Math.max(0, d.energyPrice - (d.retailAdder ?? 0)),
+    'Retail Adder': d.retailAdder ?? 0,
+    Transmission: d.transmission ?? 0,
+    Distribution: d.distribution ?? 0,
+    'Demand Charge': d.demandCharge ?? 0,
+    Riders: d.riders ?? 0,
+    Tax: d.tax ?? 0,
   }));
 
   return (
@@ -89,6 +101,26 @@ export function EnergyRateDetailsModal({
         </CardContent>
       </Card>
 
+      {/* Live Pool Price */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Live Pool Price</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const latest = results.monthlyData[results.monthlyData.length - 1];
+            const live = typeof latest?.wholesaleEnergy === 'number'
+              ? latest.wholesaleEnergy
+              : Math.max(0, (latest?.energyPrice ?? 0) - (latest?.retailAdder ?? 0));
+            return (
+              <div className="text-sm">
+                Current pool price estimate: <span className="font-semibold">{Number(live).toFixed(2)} ¢/kWh</span>
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
       {/* Monthly Cost Breakdown */}
       <Card>
         <CardHeader>
@@ -96,25 +128,32 @@ export function EnergyRateDetailsModal({
         </CardHeader>
         <CardContent>
           <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis
-                  label={{
-                    value: `¢/kWh (${results.currency})`,
-                    angle: -90,
-                    position: 'insideLeft',
-                  }}
-                />
-                <Tooltip formatter={(value: any) => [`${value.toFixed(2)} ¢/kWh`, '']} />
-                <Legend />
-                <Bar dataKey="Energy Price" stackId="a" fill="#3b82f6" />
-                <Bar dataKey="T&D" stackId="a" fill="#10b981" />
-                <Bar dataKey="Riders" stackId="a" fill="#f59e0b" />
-                <Bar dataKey="Tax" stackId="a" fill="#ef4444" />
-              </BarChart>
-            </ResponsiveContainer>
+            {hasHistory ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartDataDetailed}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis
+                    label={{
+                      value: `¢/kWh (${results.currency})`,
+                      angle: -90,
+                      position: 'insideLeft',
+                    }}
+                  />
+                  <Tooltip formatter={(value: any) => [`${Number(value).toFixed(2)} ¢/kWh`, '']} />
+                  <Legend />
+                  <Bar dataKey="Wholesale Energy" stackId="a" fill="#2563eb" />
+                  <Bar dataKey="Retail Adder" stackId="a" fill="#60a5fa" />
+                  <Bar dataKey="Transmission" stackId="a" fill="#10b981" />
+                  <Bar dataKey="Distribution" stackId="a" fill="#34d399" />
+                  <Bar dataKey="Demand Charge" stackId="a" fill="#a3e635" />
+                  <Bar dataKey="Riders" stackId="a" fill="#f59e0b" />
+                  <Bar dataKey="Tax" stackId="a" fill="#ef4444" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-sm text-muted-foreground">Not enough historical data to render a chart.</div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -126,21 +165,25 @@ export function EnergyRateDetailsModal({
         </CardHeader>
         <CardContent>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis
-                  label={{
-                    value: `¢/kWh (${results.currency})`,
-                    angle: -90,
-                    position: 'insideLeft',
-                  }}
-                />
-                <Tooltip formatter={(value: any) => [`${value.toFixed(2)} ¢/kWh`, '']} />
-                <Line type="monotone" dataKey="Total" stroke="#3b82f6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+            {hasHistory ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis
+                    label={{
+                      value: `¢/kWh (${results.currency})`,
+                      angle: -90,
+                      position: 'insideLeft',
+                    }}
+                  />
+                  <Tooltip formatter={(value: any) => [`${Number(value).toFixed(2)} ¢/kWh`, '']} />
+                  <Line type="monotone" dataKey="Total" stroke="#3b82f6" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-sm text-muted-foreground">Not enough historical data to render a chart.</div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -218,8 +261,11 @@ export function EnergyRateDetailsModal({
               <TableHeader>
                 <TableRow>
                   <TableHead>Month</TableHead>
-                  <TableHead>Energy Price</TableHead>
-                  <TableHead>T&amp;D</TableHead>
+                  <TableHead>Wholesale Energy</TableHead>
+                  <TableHead>Retail Adder</TableHead>
+                  <TableHead>Transmission</TableHead>
+                  <TableHead>Distribution</TableHead>
+                  <TableHead>Demand</TableHead>
                   <TableHead>Riders</TableHead>
                   <TableHead>Tax</TableHead>
                   <TableHead>Total (¢/kWh)</TableHead>
@@ -230,12 +276,15 @@ export function EnergyRateDetailsModal({
                 {results.monthlyData.map((data, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{data.month}</TableCell>
-                    <TableCell>{data.energyPrice.toFixed(2)}</TableCell>
-                    <TableCell>{data.transmissionDistribution.toFixed(2)}</TableCell>
-                    <TableCell>{data.riders.toFixed(2)}</TableCell>
-                    <TableCell>{data.tax.toFixed(2)}</TableCell>
-                    <TableCell className="font-medium">{data.total.toFixed(2)}</TableCell>
-                    <TableCell className="font-medium">{data.totalMWh.toFixed(2)}</TableCell>
+                    <TableCell>{Number(data.wholesaleEnergy ?? Math.max(0, data.energyPrice - (data.retailAdder ?? 0))).toFixed(2)}</TableCell>
+                    <TableCell>{Number(data.retailAdder ?? 0).toFixed(2)}</TableCell>
+                    <TableCell>{Number(data.transmission ?? 0).toFixed(2)}</TableCell>
+                    <TableCell>{Number(data.distribution ?? 0).toFixed(2)}</TableCell>
+                    <TableCell>{Number(data.demandCharge ?? 0).toFixed(2)}</TableCell>
+                    <TableCell>{Number(data.riders ?? 0).toFixed(2)}</TableCell>
+                    <TableCell>{Number(data.tax ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="font-medium">{Number(data.total).toFixed(2)}</TableCell>
+                    <TableCell className="font-medium">{Number(data.totalMWh).toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -21,7 +21,7 @@ async function fetchLiveCurrentPriceCents(market: string): Promise<number | null
     const pricing = market === 'AESO' ? data?.aeso?.pricing : data?.ercot?.pricing;
     // The integration returns $/MWh numbers; convert to ¢/kWh when needed
     // If value looks like $/MWh (tens), use *0.1; if already looks like ¢/kWh (single digits), keep
-    const dollarsPerMWh = pricing?.average_price ?? pricing?.current_price;
+    const dollarsPerMWh = pricing?.current_price ?? pricing?.average_price;
     if (typeof dollarsPerMWh === 'number') {
       const centsPerKWh = dollarsPerMWh * 0.1; // $/MWh -> ¢/kWh
       return Math.round(centsPerKWh * 1000) / 1000; // keep 3 decimals
