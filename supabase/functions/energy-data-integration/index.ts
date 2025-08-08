@@ -445,18 +445,33 @@ async function fetchAESOData() {
         }
         return out;
       };
-      const candidates = [
-        // With or without dollar sign
-        ...candFrom(/Current\s+Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-        ...candFrom(/Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-        ...candFrom(/System\s+Marginal\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-        // With explicit units
-        ...candFrom(/\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-        ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi)
-      ].filter(v => v > 0 && v < 10000);
-      const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
-      if (currentPrice !== null) {
-        const p = Math.round(currentPrice * 100) / 100;
+      let foundPrice: number | null = null;
+      // Try table-adjacent TD pattern first (Pool/System Marginal Price label followed by value cell)
+      const tdMatch = htmlText.match(/Pool\s*Price[^<]*<\/td>\s*<td[^>]*>\s*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/i)
+        || htmlText.match(/System\s+Marginal\s+Price[^<]*<\/td>\s*<td[^>]*>\s*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/i);
+      if (tdMatch) {
+        foundPrice = parseFloat(tdMatch[1].replace(/,/g, ''));
+      }
+
+      // If not found via TD adjacency, fall back to flexible text patterns
+      if (foundPrice == null) {
+        const candidates = [
+          // With or without dollar sign
+          ...candFrom(/Current\s+Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...candFrom(/Pool\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...candFrom(/System\s+Marginal\s+Price[^0-9$]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          // With explicit units
+          ...candFrom(/\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+          ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi)
+        ].filter(v => v > 0 && v < 10000);
+        const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
+        if (currentPrice !== null) {
+          foundPrice = currentPrice;
+        }
+      }
+
+      if (foundPrice !== null) {
+        const p = Math.round(foundPrice * 100) / 100;
         pricing = {
           current_price: p,
           average_price: Math.round(p * 0.85 * 100) / 100,
@@ -466,7 +481,7 @@ async function fetchAESOData() {
           timestamp: new Date().toISOString(),
           source: 'aeso_csd'
         };
-        console.log('Real AESO pricing extracted:', pricing);
+        console.log('Real AESO pricing extracted (CSD HTML):', pricing);
         realDataFound = true;
       }
 
