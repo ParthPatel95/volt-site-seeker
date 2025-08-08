@@ -676,7 +676,7 @@ async function fetchAESOData() {
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
   
   // Try official AESO API via Azure APIM with multiple URL/header variants
-  if (!pricing && (aesoApiKey || aesoSubKey)) {
+  if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey)) {
     try {
       const today = new Date();
       const startDate = new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -759,7 +759,7 @@ async function fetchAESOData() {
   }
 
   // Provide fallback data if needed
-  if (!pricing) {
+  if (!pricing || Number(pricing.current_price) <= 0) {
     const currentHour = new Date().getHours();
     const basePrice = currentHour >= 7 && currentHour <= 22 ? 85 : 45;
     const randomVariation = (Math.random() - 0.5) * 20;

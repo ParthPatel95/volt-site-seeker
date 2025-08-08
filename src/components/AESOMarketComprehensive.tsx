@@ -211,10 +211,10 @@ export function AESOMarketComprehensive() {
             </CardHeader>
             <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
               <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                {currentPrice > 0 ? formatPrice(currentPrice).cad.split('/')[0] : 'CA$45.67'}
+                {formatPrice(currentPrice).cad.split('/')[0]}
               </div>
               <p className="text-xs text-blue-200 break-all leading-tight mt-1">
-                {currentPrice > 0 ? formatPrice(currentPrice).usd.split('/')[0] : '$33.45 USD'}/MWh
+                {formatPrice(currentPrice).usd.split('/')[0]}/MWh
               </p>
             </CardContent>
           </Card>
@@ -329,10 +329,10 @@ export function AESOMarketComprehensive() {
                         <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
                         <div className="space-y-1">
                           <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                            {currentPrice > 0 ? formatPrice(currentPrice).cad : 'CA$45.67'}/MWh
+                            {formatPrice(currentPrice).cad}/MWh
                           </p>
                           <p className="text-xs sm:text-sm lg:text-base text-muted-foreground break-all leading-tight">
-                            {currentPrice > 0 ? formatPrice(currentPrice).usd : '$33.45 USD'}/MWh
+                            {formatPrice(currentPrice).usd}/MWh
                           </p>
                         </div>
                         <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="text-xs">
@@ -342,11 +342,9 @@ export function AESOMarketComprehensive() {
                       <div className="space-y-2 min-w-0">
                         <p className="text-xs sm:text-sm text-muted-foreground">Average Price</p>
                         <div className="space-y-1">
-                          <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
-                            {pricing?.average_price 
-                              ? formatPrice(pricing.average_price).cad 
-                              : 'CA$47.89'}/MWh
-                          </p>
+                            <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
+                              {pricing?.average_price ? formatPrice(pricing.average_price).cad : '—'}/MWh
+                            </p>
                         </div>
                       </div>
                     </div>
