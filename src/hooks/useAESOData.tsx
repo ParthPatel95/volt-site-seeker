@@ -64,7 +64,18 @@ export const useAESOData = () => {
         }
 
         if (data?.success && data?.aeso) {
-          setPricing(data.aeso.pricing);
+          const p: any = data.aeso.pricing;
+          if (p) {
+            setPricing({
+              ...p,
+              current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
+              average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
+              peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
+              off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+            });
+          } else {
+            setPricing(null);
+          }
           setLoadData(data.aeso.loadData);
           setGenerationMix(data.aeso.generationMix);
           setConnectionStatus('connected');
@@ -111,7 +122,18 @@ export const useAESOData = () => {
       }
 
       if (data?.success && data?.aeso) {
-        setPricing(data.aeso.pricing);
+        const p: any = data.aeso.pricing;
+        if (p) {
+          setPricing({
+            ...p,
+            current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
+            average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
+            peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
+            off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+          });
+        } else {
+          setPricing(null);
+        }
         setLoadData(data.aeso.loadData);
         setGenerationMix(data.aeso.generationMix);
         setConnectionStatus('connected');
