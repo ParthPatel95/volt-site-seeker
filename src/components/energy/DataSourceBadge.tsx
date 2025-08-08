@@ -9,7 +9,7 @@ interface DataSourceBadgeProps {
 }
 
 const abbreviate = (s?: string) => {
-  if (!s) return 'unknown';
+  if (!s) return 'n/a';
   const map: Record<string, string> = {
     fallback: 'fallback',
     aeso_csd: 'csd',
@@ -21,6 +21,7 @@ const abbreviate = (s?: string) => {
     ercot_load_html: 'load',
     ercot_load_proxy: 'load(proxy)',
     ercot_api: 'api',
+    ercot_fuelmix: 'mix',
   };
   return map[s] ?? s;
 };
@@ -31,7 +32,7 @@ export const DataSourceBadge: React.FC<DataSourceBadgeProps> = ({
   mixSource,
   className = '',
 }) => {
-  const title = `pricing: ${pricingSource || 'unknown'}, load: ${loadSource || 'unknown'}, mix: ${mixSource || 'unknown'}`;
+  const title = `pricing: ${abbreviate(pricingSource)}, load: ${abbreviate(loadSource)}, mix: ${abbreviate(mixSource)}`;
   return (
     <Badge
       variant="outline"
