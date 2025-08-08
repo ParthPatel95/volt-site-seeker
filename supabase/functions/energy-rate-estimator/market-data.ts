@@ -32,6 +32,29 @@ async function fetchLiveCurrentPriceCents(market: string): Promise<number | null
   return null;
 }
 
+// Helper: fetch both live current and today's average price from energy-data-integration (converted to ¢/kWh)
+async function fetchLiveAndAverageCents(market: string): Promise<{ currentCents: number | null; averageCents: number | null }> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !anonKey) throw new Error('Missing Supabase env for function call');
+    const res = await fetch(`${supabaseUrl}/functions/v1/energy-data-integration`, {
+      headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}`, 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`integration status ${res.status}`);
+    const data = await res.json();
+    const pricing = market === 'AESO' ? data?.aeso?.pricing : data?.ercot?.pricing;
+    const toCents = (val: any) => typeof val === 'number' ? Math.round(val * 0.1 * 1000) / 1000 : null;
+    return {
+      currentCents: toCents(pricing?.current_price),
+      averageCents: toCents(pricing?.average_price)
+    };
+  } catch (e) {
+    console.error('fetchLiveAndAverageCents error:', e);
+    return { currentCents: null, averageCents: null };
+  }
+}
+
 // Helper: attempt to fetch AESO historical hourly/daily SPP/SMP and aggregate to monthly
 async function fetchAESOMonthlyAveragesCents(startISO: string, endISO: string): Promise<MarketData[]> {
   const results: MarketData[] = [];
@@ -96,12 +119,28 @@ export async function getMarketData(territory: Territory, _currency: string): Pr
     months = [];
   }
 
-  // Always ensure we have at least current month from live pricing (no synthetic randomness)
-  const currentCents = await fetchLiveCurrentPriceCents(territory.market);
+  // Pull live and average values from integration (one network call)
+  const { currentCents, averageCents } = await fetchLiveAndAverageCents(territory.market);
   const currentKey = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+  // If historical series missing, synthesize a flat 12‑month series using the integration's average price
+  if ((!months || months.length === 0) && (averageCents !== null || currentCents !== null)) {
+    const base = averageCents ?? currentCents!;
+    const synthetic: MarketData[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const dt = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      synthetic.push({
+        month: dt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        marketPrice: base
+      });
+    }
+    months = synthetic;
+  }
+
+  // Ensure current month uses the latest live price when available
   if (currentCents !== null) {
-    const existingIdx = months.findIndex(m => m.month === currentKey);
-    if (existingIdx >= 0) months[existingIdx] = { month: currentKey, marketPrice: currentCents };
+    const idx = months.findIndex(m => m.month === currentKey);
+    if (idx >= 0) months[idx] = { month: currentKey, marketPrice: currentCents };
     else months.push({ month: currentKey, marketPrice: currentCents });
   }
 
