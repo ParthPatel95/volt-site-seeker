@@ -834,132 +834,116 @@ async function fetchAESOData() {
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
   console.log('AESO keys present', { subKey: !!aesoSubKey, apiKey: !!aesoApiKey });
   
-  // Try official AESO API via APIM "Pool Price Report v1.1" (apimgw.aeso.ca)
+  // Try official AESO APIM Pool Price Date Range report exactly per docs
   if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey)) {
     try {
-      const start = new Date();
-      const startStr = start.toISOString().slice(0, 10);
-      const end = new Date(start.getTime() + 24*60*60*1000); // fetch through tomorrow to ensure inclusive range
-      const endStr = end.toISOString().slice(0, 10);
-      const urls = [
-        // apimgw domain variants
-        `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
-        `https://apimgw.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
-        // developer gateway variants
-        `https://developer-apim.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
-        `https://developer-apim.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
-        // api.aeso.ca domain variants (some tenants route here)
-        `https://api.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
-        `https://api.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
-        // path variants without "-api" (observed in docs)
-        `https://api.aeso.ca/public/poolprice/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
-        `https://api.aeso.ca/public/systemmarginalprice/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
+      // Per AESO docs: use a date range (yesterday -> today)
+      const now = new Date();
+      const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const startStr = startDate.toISOString().slice(0, 10);
+      const endStr = now.toISOString().slice(0, 10);
+
+      const apimHosts = [
+        'https://developer-apim.aeso.ca',
+        'https://apimgw.aeso.ca',
+      ];
+      const legacyHosts = [
+        'https://api.aeso.ca',
       ];
 
-      // Build combined URL list including query-param auth variants
-      const urlsAll = (() => {
-        const set = new Set<string>(urls);
-        if (aesoSubKey) {
-          urls.forEach(u => set.add(`${u}&subscription-key=${encodeURIComponent(aesoSubKey!)}`));
+      const tryFetchJson = async (url: string, headers: Record<string, string>) => {
+        console.log('AESO APIM attempt', { url, headers: Object.keys(headers) });
+        const res = await fetch(url, { headers: { ...headers, 'Accept': 'application/json', 'Cache-Control': 'no-cache', 'User-Agent': 'LovableEnergy/1.0' } });
+        const text = await res.text();
+        if (!res.ok) {
+          console.error('AESO APIM not OK', res.status, res.statusText, 'body:', text.slice(0, 300));
+          return null as any;
         }
-        if (aesoApiKey) {
-          // Some deployments accept API key in query too
-          urls.forEach(u => set.add(`${u}&x-api-key=${encodeURIComponent(aesoApiKey!)}`));
+        try {
+          const json = JSON.parse(text);
+          return json;
+        } catch (e) {
+          console.error('AESO APIM JSON parse error:', String(e).slice(0,200));
+          return null as any;
         }
-        return Array.from(set);
-      })();
-
-      const headerVariants = [
-        { 'Ocp-Apim-Subscription-Key': aesoSubKey, 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
-        { 'x-api-key': aesoApiKey, 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
-        { 'Ocp-Apim-Subscription-Key': aesoSubKey, 'x-api-key': aesoApiKey, 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
-      ].map(h => Object.fromEntries(Object.entries(h).filter(([_, v]) => !!v)) as Record<string, string>);
+      };
 
       let parsedPrice: number | null = null;
+      let parsedAvg: number | null = null;
+      let usedSource: string | null = null;
 
-      for (const url of urlsAll) {
-        for (const headers of headerVariants) {
-          try {
-            console.log('Trying AESO APIM URL:', url, 'with headers:', Object.keys(headers));
-            const res = await fetch(url, { headers: { ...headers, 'User-Agent': 'Mozilla/5.0 LovableEnergy/1.0' } });
-            if (!res.ok) {
-              const text = await res.text().catch(() => '');
-              console.error('AESO APIM not OK', res.status, res.statusText, 'body:', text?.slice(0, 200));
-              continue;
+      // 1) Pool Price (preferred)
+      for (const host of apimHosts) {
+        if (parsedPrice != null) break;
+        const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}${aesoSubKey ? `&subscription-key=${encodeURIComponent(aesoSubKey)}` : ''}`;
+        const json = await tryFetchJson(url, aesoSubKey ? { 'Ocp-Apim-Subscription-Key': aesoSubKey } : {});
+        if (!json) continue;
+
+        const arr: any[] = json?.return?.['Pool Price Report'] || json?.['Pool Price Report'] || [];
+        console.log('AESO PoolPrice JSON summary', { responseCode: json?.responseCode, count: Array.isArray(arr) ? arr.length : 0 });
+        if (Array.isArray(arr) && arr.length > 0) {
+          // Latest non-empty pool_price
+          for (let i = arr.length - 1; i >= 0; i--) {
+            const n = parseFloat(String(arr[i]?.pool_price ?? '')); if (!Number.isNaN(n)) { parsedPrice = n; break; }
+          }
+          // Average of numeric pool_price values in range
+          const nums = arr.map(r => parseFloat(String(r?.pool_price ?? ''))).filter(v => Number.isFinite(v));
+          if (nums.length) parsedAvg = nums.reduce((a,b)=>a+b,0)/nums.length;
+          usedSource = 'aeso_poolprice_api';
+        }
+      }
+
+      // 2) Legacy host using x-api-key
+      if (parsedPrice == null && aesoApiKey) {
+        for (const host of legacyHosts) {
+          const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`;
+          const json = await tryFetchJson(url, { 'x-api-key': aesoApiKey });
+          if (!json) continue;
+          const arr: any[] = json?.return?.['Pool Price Report'] || json?.['Pool Price Report'] || [];
+          console.log('AESO PoolPrice (legacy) JSON summary', { responseCode: json?.responseCode, count: Array.isArray(arr) ? arr.length : 0 });
+          if (Array.isArray(arr) && arr.length > 0) {
+            for (let i = arr.length - 1; i >= 0; i--) {
+              const n = parseFloat(String(arr[i]?.pool_price ?? '')); if (!Number.isNaN(n)) { parsedPrice = n; break; }
             }
-            const json = await res.json();
-
-            // Try known shapes first
-            const poolArr: any[] | null = (
-              json?.['Pool Price Report'] ||
-              json?.return?.['Pool Price Report'] ||
-              json?.Pool_Price_Report ||
-              null
-            );
-            if (Array.isArray(poolArr) && poolArr.length > 0) {
-              const last = poolArr[poolArr.length - 1];
-              const v = parseFloat(String(
-                last.pool_price ?? last.price ?? last.poolPrice ?? last.SMP ?? last.smp
-              ));
-              if (!Number.isNaN(v)) { parsedPrice = v; break; }
-            }
-
-            const smpArr: any[] | null = (
-              json?.['System Marginal Price Report'] ||
-              json?.return?.['System Marginal Price Report'] ||
-              json?.System_Marginal_Price_Report ||
-              null
-            );
-            if (Array.isArray(smpArr) && smpArr.length > 0) {
-              const last = smpArr[smpArr.length - 1];
-              const v = parseFloat(String(
-                last.system_marginal_price ?? last.SMP ?? last.smp ?? last.price
-              ));
-              if (!Number.isNaN(v)) { parsedPrice = v; break; }
-            }
-
-            // Fallback: scan entire payload for price-like fields
-            if (parsedPrice == null) {
-              const seen: WeakSet<object> = new WeakSet();
-              const hits: number[] = [];
-              const visit = (node: any) => {
-                if (!node || typeof node !== 'object') return;
-                if (seen.has(node)) return; seen.add(node);
-                if (Array.isArray(node)) { node.forEach(visit); return; }
-                const keys = Object.keys(node);
-                const get = (k: string) => (node as any)[k];
-                const pick = (...k: string[]) => k.find(x => keys.some(y => y.toLowerCase() === x.toLowerCase()));
-                const priceKey = pick('pool_price','system_marginal_price','smp','price','poolPrice');
-                if (priceKey) {
-                  const n = parseFloat(String(get(priceKey)));
-                  if (!Number.isNaN(n) && n >= 0 && n < 10000) hits.push(n);
-                }
-                keys.forEach(k => visit(get(k)));
-              };
-              visit(json);
-              if (hits.length) { parsedPrice = hits[hits.length - 1]; break; }
-            }
-
-            console.warn('AESO APIM pricing: unexpected response shape', JSON.stringify(json).slice(0,200));
-          } catch (innerErr) {
-            console.error('AESO APIM fetch variant failed:', innerErr);
+            const nums = arr.map(r => parseFloat(String(r?.pool_price ?? ''))).filter(v => Number.isFinite(v));
+            if (nums.length) parsedAvg = nums.reduce((a,b)=>a+b,0)/nums.length;
+            usedSource = 'aeso_poolprice_api_legacy';
+            if (parsedPrice != null) break;
           }
         }
-        if (parsedPrice != null) break;
+      }
+
+      // 3) As a final APIM fallback, try SMP date range (same date window)
+      if (parsedPrice == null) {
+        for (const host of apimHosts) {
+          if (parsedPrice != null) break;
+          const url = `${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}${aesoSubKey ? `&subscription-key=${encodeURIComponent(aesoSubKey)}` : ''}`;
+          const json = await tryFetchJson(url, aesoSubKey ? { 'Ocp-Apim-Subscription-Key': aesoSubKey } : {});
+          if (!json) continue;
+          const arr: any[] = json?.return?.['System Marginal Price Report'] || json?.['System Marginal Price Report'] || [];
+          console.log('AESO SMP JSON summary', { responseCode: json?.responseCode, count: Array.isArray(arr) ? arr.length : 0 });
+          if (Array.isArray(arr) && arr.length > 0) {
+            for (let i = arr.length - 1; i >= 0; i--) {
+              const n = parseFloat(String(arr[i]?.system_marginal_price ?? arr[i]?.SMP ?? arr[i]?.smp ?? '')); if (!Number.isNaN(n)) { parsedPrice = n; break; }
+            }
+            usedSource = 'aeso_smp_api';
+          }
+        }
       }
 
       if (parsedPrice != null && parsedPrice >= 0) {
         const p = Math.round(parsedPrice * 100) / 100;
+        const avg = parsedAvg != null ? Math.round(parsedAvg * 100) / 100 : Math.round(p * 0.85 * 100) / 100;
         pricing = {
           current_price: p,
-          average_price: Math.round(p * 0.85 * 100) / 100,
+          average_price: avg,
           peak_price: Math.round(p * 1.8 * 100) / 100,
           off_peak_price: Math.round(p * 0.4 * 100) / 100,
           market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
           timestamp: new Date().toISOString(),
-          source: 'aeso_api'
+          source: usedSource || 'aeso_api'
         };
-        console.log('AESO APIM pricing extracted:', pricing);
+        console.log('AESO APIM pricing extracted (final):', { source: pricing.source, current: p, avg });
       }
     } catch (apiError) {
       console.error('AESO APIM error (outer):', apiError);
