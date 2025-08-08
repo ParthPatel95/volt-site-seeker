@@ -728,10 +728,13 @@ async function fetchAESOData() {
       const baseUrls = [
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=html',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=html',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=csv',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=csv',
+        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=csv',
       ];
 
       const proxy = (u: string) => u.replace(/^http:\/\//, 'https://r.jina.ai/http://').replace(/^https:\/\//, 'https://r.jina.ai/https://');
