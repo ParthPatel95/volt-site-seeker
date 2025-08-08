@@ -631,73 +631,125 @@ async function fetchAESOData() {
       console.error('AESO CSD proxy fetch failed:', proxyErr);
     }
   }
+  
+  // Additional attempt: dedicated SMP (System Marginal Price) report if pricing still missing
+  if (!pricing) {
+    try {
+      console.log('Trying AESO SMP Report for pricing...');
+      const smpUrl = 'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html';
+      const smpRes = await fetch(smpUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      let smpText: string | null = null;
+      if (smpRes.ok) {
+        smpText = await smpRes.text();
+      } else {
+        // Proxy fallback
+        const smpProxy = 'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html';
+        const smpProxyRes = await fetch(smpProxy, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (smpProxyRes.ok) smpText = await smpProxyRes.text();
+      }
+      if (smpText) {
+        // Try to extract a $/MWh number near the word Price or SMP
+        const priceMatch = smpText.match(/(?:Pool|System)\s+(?:Marginal\s+)?Price[^0-9$]*\$?([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/i)
+          || smpText.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)\s*\/\s*MWh/i);
+        if (priceMatch) {
+          const p = parseFloat(priceMatch[1].replace(/,/g, ''));
+          if (!Number.isNaN(p) && p >= 0) {
+            pricing = {
+              current_price: Math.round(p * 100) / 100,
+              average_price: Math.round(p * 0.85 * 100) / 100,
+              peak_price: Math.round(p * 1.8 * 100) / 100,
+              off_peak_price: Math.round(p * 0.4 * 100) / 100,
+              market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
+              timestamp: new Date().toISOString(),
+              source: 'aeso_csd'
+            };
+            console.log('AESO SMP pricing extracted:', pricing);
+          }
+        }
+      }
+    } catch (smpErr) {
+      console.error('AESO SMP fetch failed:', smpErr);
+    }
+  }
 
   const aesoApiKey = Deno.env.get('AESO_API_KEY');
   const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
   
-  if (aesoApiKey && aesoSubKey && !pricing) {
+  // Try official AESO API via Azure APIM with multiple URL/header variants
+  if (!pricing && (aesoApiKey || aesoSubKey)) {
     try {
-      console.log('Trying AESO API with keys for pricing...');
-      const apiHeaders = {
-        'x-api-key': aesoApiKey,
-        'Ocp-Apim-Subscription-Key': aesoSubKey,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      };
+      const today = new Date();
+      const startDate = new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const endDate = today.toISOString().slice(0, 10);
+      const urls = [
+        `https://api.aeso.ca/report/v1.1/price/poolPrice/current`,
+        `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`,
+        `https://api.aeso.ca/report/v1.1/price/poolPrice`,
+      ];
 
-      const priceResponse = await fetch(
-        'https://api.aeso.ca/report/v1.1/price/poolPrice',
-        { headers: apiHeaders }
-      );
-      
-      if (priceResponse.ok) {
-        const json = await priceResponse.json();
-        // Handle multiple possible shapes the API may return
-        const reports: any = (
-          json?.return?.Pool_Price_Report ||
-          json?.return?.['Pool Price Report'] ||
-          json?.Pool_Price_Report ||
-          json?.['Pool Price Report'] ||
-          json?.data?.return?.Pool_Price_Report ||
-          json?.data?.return?.['Pool Price Report'] ||
-          (Array.isArray(json?.return) ? json.return : null)
-        );
+      const headerVariants = [
+        { 'Ocp-Apim-Subscription-Key': aesoSubKey, 'Accept': 'application/json' },
+        { 'x-api-key': aesoApiKey, 'Accept': 'application/json' },
+        { 'Ocp-Apim-Subscription-Key': aesoSubKey, 'x-api-key': aesoApiKey, 'Accept': 'application/json' },
+      ].map(h => Object.fromEntries(Object.entries(h).filter(([_, v]) => !!v)) as Record<string, string>);
 
-        if (Array.isArray(reports) && reports.length > 0) {
-          const latest = reports[reports.length - 1] || reports[0];
-          const priceKeys = [
-            'pool_price', 'poolPrice', 'price',
-            'system_marginal_price', 'System_Marginal_Price', 'SMP', 'smp'
-          ];
-          let price: number | null = null;
-          for (const k of priceKeys) {
-            if (latest && latest[k] != null) {
-              const v = parseFloat(String(latest[k]));
-              if (!Number.isNaN(v)) { price = v; break; }
+      let parsedPrice: number | null = null;
+
+      for (const url of urls) {
+        for (const headers of headerVariants) {
+          try {
+            console.log('Trying AESO API URL:', url, 'with headers:', Object.keys(headers));
+            const res = await fetch(url, { headers });
+            if (!res.ok) {
+              const text = await res.text().catch(() => '');
+              console.error('AESO API not OK', res.status, res.statusText, 'body:', text?.slice(0, 200));
+              continue;
             }
+            const json = await res.json();
+            const reports: any = (
+              json?.return?.Pool_Price_Report ||
+              json?.return?.['Pool Price Report'] ||
+              json?.Pool_Price_Report ||
+              json?.['Pool Price Report'] ||
+              json?.data?.return?.Pool_Price_Report ||
+              json?.data?.return?.['Pool Price Report'] ||
+              (Array.isArray(json?.return) ? json.return : null)
+            );
+            if (Array.isArray(reports) && reports.length > 0) {
+              const latest = reports[reports.length - 1] || reports[0];
+              const priceKeys = ['pool_price','poolPrice','price','system_marginal_price','System_Marginal_Price','SMP','smp'];
+              for (const k of priceKeys) {
+                if (latest && latest[k] != null) {
+                  const v = parseFloat(String(latest[k]));
+                  if (!Number.isNaN(v)) { parsedPrice = v; break; }
+                }
+              }
+              if (parsedPrice != null) break;
+            } else {
+              console.warn('AESO API pricing: unexpected response shape', JSON.stringify(json).slice(0,200));
+            }
+          } catch (innerErr) {
+            console.error('AESO API fetch variant failed:', innerErr);
           }
-          if (price != null && price >= 0) {
-            pricing = {
-              current_price: price,
-              average_price: Math.round(price * 0.85 * 100) / 100,
-              peak_price: Math.round(price * 1.8 * 100) / 100,
-              off_peak_price: Math.round(price * 0.4 * 100) / 100,
-              market_conditions: price > 100 ? 'high' : price > 50 ? 'normal' : 'low',
-              timestamp: new Date().toISOString(),
-              source: 'aeso_api'
-            };
-            realDataFound = true;
-          } else {
-            console.warn('AESO API pricing: latest object missing price fields', latest);
-          }
-        } else {
-          console.warn('AESO API pricing: unexpected response shape', json);
         }
-      } else {
-        console.error('AESO API pricing response not OK:', priceResponse.status, priceResponse.statusText);
+        if (parsedPrice != null) break;
+      }
+
+      if (parsedPrice != null && parsedPrice >= 0) {
+        const p = Math.round(parsedPrice * 100) / 100;
+        pricing = {
+          current_price: p,
+          average_price: Math.round(p * 0.85 * 100) / 100,
+          peak_price: Math.round(p * 1.8 * 100) / 100,
+          off_peak_price: Math.round(p * 0.4 * 100) / 100,
+          market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
+          timestamp: new Date().toISOString(),
+          source: 'aeso_api'
+        };
+        console.log('AESO API pricing extracted:', pricing);
       }
     } catch (apiError) {
-      console.error('AESO API error:', apiError);
+      console.error('AESO API error (outer):', apiError);
     }
   }
 
