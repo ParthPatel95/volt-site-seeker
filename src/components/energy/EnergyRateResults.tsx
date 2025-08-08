@@ -25,12 +25,18 @@ export interface EnergyRateResults {
 
 export interface MonthlyRateData {
   month: string;
-  energyPrice: number; // ¢/kWh
-  transmissionDistribution: number; // ¢/kWh
+  energyPrice: number; // ¢/kWh (includes retail adder)
+  transmissionDistribution: number; // ¢/kWh (legacy combined)
   riders: number; // ¢/kWh
   tax: number; // ¢/kWh
   total: number; // ¢/kWh
   totalMWh: number; // $/MWh
+  // New optional detailed breakdown
+  wholesaleEnergy?: number; // ¢/kWh
+  retailAdder?: number; // ¢/kWh
+  transmission?: number; // ¢/kWh
+  distribution?: number; // ¢/kWh
+  demandCharge?: number; // ¢/kWh
 }
 
 interface EnergyRateResultsProps {
@@ -105,7 +111,63 @@ export function EnergyRateResults({ results, input, onDownloadCSV, onDownloadPDF
         </CardContent>
       </Card>
 
-      {/* Monthly Breakdown Chart */}
+      {/* Rate Calculation Breakdown (averages over 12 months) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Rate Calculation Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const avg = (selector: (d: any) => number | undefined) => {
+              const vals = results.monthlyData.map(selector).filter((v): v is number => typeof v === 'number' && !isNaN(v));
+              if (!vals.length) return undefined;
+              return vals.reduce((a, b) => a + b, 0) / vals.length;
+            };
+            const breakdown = {
+              wholesaleEnergy: avg(d => d.wholesaleEnergy),
+              retailAdder: avg(d => d.retailAdder),
+              transmission: avg(d => d.transmission),
+              distribution: avg(d => d.distribution),
+              demandCharge: avg(d => d.demandCharge),
+              riders: avg(d => d.riders),
+              tax: avg(d => d.tax),
+              total: avg(d => d.total)
+            } as const;
+            const rows = [
+              { label: 'Wholesale Energy (Pool Price)', value: breakdown.wholesaleEnergy },
+              { label: 'Retail Adder', value: breakdown.retailAdder },
+              { label: 'Transmission', value: breakdown.transmission },
+              { label: 'Distribution (Volumetric Delivery)', value: breakdown.distribution },
+              { label: 'Demand Charge (allocated)', value: breakdown.demandCharge },
+              { label: 'Riders & Ancillaries', value: breakdown.riders },
+              { label: 'Taxes', value: breakdown.tax },
+              { label: 'All-In Total', value: breakdown.total }
+            ];
+            return (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Component</TableHead>
+                      <TableHead>Average (¢/kWh)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((r, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium">{r.label}</TableCell>
+                        <TableCell>{typeof r.value === 'number' ? r.value.toFixed(2) : '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
+      {/* Monthly Cost Breakdown */}
       <Card>
         <CardHeader>
           <CardTitle>Monthly Cost Breakdown</CardTitle>

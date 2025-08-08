@@ -24,7 +24,7 @@ export function EnergyRateIntelligence() {
   const [selectedMarket, setSelectedMarket] = useState('ERCOT');
   const [powerRequirement, setPowerRequirement] = useState(10);
   const [consumption, setConsumption] = useState(7200);
-  const [location, setLocation] = useState('TX');
+  
   
   const { 
     currentRates, 
@@ -73,7 +73,7 @@ export function EnergyRateIntelligence() {
       const result = await calculateCosts({
         monthly_consumption_mwh: consumption,
         peak_demand_mw: powerRequirement,
-        location: { state: location }
+        location: { state: selectedMarket === 'ERCOT' ? 'TX' : 'AB' }
       });
 
       // Generate mock calculations for display
@@ -186,15 +186,6 @@ export function EnergyRateIntelligence() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="min-w-0">
-              <label className="text-sm font-medium">State</label>
-              <Input 
-                value={location} 
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="TX"
-                className="w-full"
-              />
             </div>
           </div>
         </CardContent>

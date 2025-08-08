@@ -20,33 +20,36 @@ export async function calculateMonthlyCosts(
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     const hoursInMonth = daysInMonth * 24;
     
-    // Total energy consumption for the month
-    const monthlyMWh = contractedLoadMW * hoursInMonth * 0.98; // 98% load factor
+    // Total energy consumption for the month (24/7 operations -> 100% load factor)
+    const monthlyMWh = contractedLoadMW * hoursInMonth * 1.0; // 24/7 base load
     const monthlyKWh = monthlyMWh * 1000;
     
-    // 1. Energy Market Price (AESO Pool Price or hedged block price)
-    // Use real AESO trailing average or negotiated block pricing
-    const energyPrice = month.marketPrice + retailAdder; // ¢/kWh
-    const energyCost = energyPrice * monthlyKWh / 100; // Convert to dollars
+    // 1. Energy Market Price (wholesale) + retail adder (both in ¢/kWh)
+    const wholesaleEnergyCents = month.marketPrice; // ¢/kWh
+    const retailAdderCents = retailAdder || 0; // ¢/kWh
+    const energyPriceAllInCents = wholesaleEnergyCents + retailAdderCents; // ¢/kWh
+    const energyCost = energyPriceAllInCents * monthlyKWh / 100; // dollars
     
     // 2. Demand Charge (Rate 65: $7.1083/kW/month for transmission-connected)
     const demandChargeRate = tariffData.demandCharge; // $/kW/month
-    const demandCost = demandChargeRate * contractedLoadMW * 1000; // Convert MW to kW
+    const demandCost = demandChargeRate * contractedLoadMW * 1000; // Convert MW to kW -> dollars
     
-    // 3. Volumetric Delivery (Rate 65: 0.2604 ¢/kWh)
-    const volumetricDeliveryRate = tariffData.distribution; // ¢/kWh
-    const volumetricDeliveryCost = volumetricDeliveryRate * monthlyKWh / 100; // Convert to dollars
+    // 3. Distribution (Rate 65: volumetric delivery ¢/kWh)
+    const distributionCents = tariffData.distribution; // ¢/kWh
+    const distributionCost = distributionCents * monthlyKWh / 100; // dollars
     
-    // 4. Transmission (Rate 65: included in tariff)
-    const transmissionCost = tariffData.transmission * monthlyKWh / 100; // Convert to dollars
+    // 4. Transmission (¢/kWh)
+    const transmissionCents = tariffData.transmission; // ¢/kWh
+    const transmissionCost = transmissionCents * monthlyKWh / 100; // dollars
     
-    // 5. Riders and Ancillaries (Rate 65: ~0.3 ¢/kWh average)
-    const ridersCost = tariffData.riders * monthlyKWh / 100; // Convert to dollars
+    // 5. Riders and Ancillaries (¢/kWh)
+    const ridersCents = tariffData.riders; // ¢/kWh
+    const ridersCost = ridersCents * monthlyKWh / 100; // dollars
     
     // Subtotal before tax
-    const subtotal = energyCost + demandCost + volumetricDeliveryCost + transmissionCost + ridersCost;
+    const subtotal = energyCost + demandCost + distributionCost + transmissionCost + ridersCost;
     
-    // 6. GST/Tax (5% for Alberta, varies by region)
+    // 6. Taxes (GST 5% for Alberta by default, USD flows use 6.25% approx)
     let taxRate = 0.05; // Alberta GST
     if (currency === 'USD') {
       taxRate = 0.0625; // Approximate US tax rate
@@ -56,21 +59,29 @@ export async function calculateMonthlyCosts(
     // 7. Total cost
     const totalCost = subtotal + taxCost;
     
-    // Convert back to ¢/kWh for display
-    const energyPriceDisplay = (energyCost * 100) / monthlyKWh;
-    const transmissionDistributionDisplay = ((demandCost + volumetricDeliveryCost + transmissionCost) * 100) / monthlyKWh;
-    const ridersDisplay = (ridersCost * 100) / monthlyKWh;
-    const taxDisplay = (taxCost * 100) / monthlyKWh;
-    const totalDisplay = (totalCost * 100) / monthlyKWh;
+    // Convert to ¢/kWh for display and detailed breakdown
+    const energyCentsPerKWh = (energyCost * 100) / monthlyKWh; // includes retail adder
+    const demandCentsPerKWh = (demandCost * 100) / monthlyKWh;
+    const distributionCentsPerKWh = (distributionCost * 100) / monthlyKWh;
+    const transmissionCentsPerKWh = (transmissionCost * 100) / monthlyKWh;
+    const ridersCentsPerKWh = (ridersCost * 100) / monthlyKWh;
+    const taxCentsPerKWh = (taxCost * 100) / monthlyKWh;
+    const totalCentsPerKWh = (totalCost * 100) / monthlyKWh;
     
     monthlyData.push({
       month: month.month,
-      energyPrice: parseFloat(energyPriceDisplay.toFixed(3)),
-      transmissionDistribution: parseFloat(transmissionDistributionDisplay.toFixed(3)),
-      riders: parseFloat(ridersDisplay.toFixed(3)),
-      tax: parseFloat(taxDisplay.toFixed(3)),
-      total: parseFloat(totalDisplay.toFixed(3)),
-      totalMWh: parseFloat((totalDisplay * 10).toFixed(2)) // Convert ¢/kWh to $/MWh
+      energyPrice: parseFloat(energyCentsPerKWh.toFixed(3)),
+      transmissionDistribution: parseFloat(((demandCentsPerKWh + distributionCentsPerKWh + transmissionCentsPerKWh)).toFixed(3)),
+      riders: parseFloat(ridersCentsPerKWh.toFixed(3)),
+      tax: parseFloat(taxCentsPerKWh.toFixed(3)),
+      total: parseFloat(totalCentsPerKWh.toFixed(3)),
+      totalMWh: parseFloat((totalCentsPerKWh * 10).toFixed(2)), // Convert ¢/kWh to $/MWh
+      // New detailed fields
+      wholesaleEnergy: parseFloat(wholesaleEnergyCents.toFixed(3)),
+      retailAdder: parseFloat(retailAdderCents.toFixed(3)),
+      transmission: parseFloat(transmissionCentsPerKWh.toFixed(3)),
+      distribution: parseFloat(distributionCentsPerKWh.toFixed(3)),
+      demandCharge: parseFloat(demandCentsPerKWh.toFixed(3))
     });
   }
   
