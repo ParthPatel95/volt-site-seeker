@@ -72,13 +72,24 @@ export const useAESOData = () => {
               average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
               peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
               off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+              source: p?.source || 'aeso_api'
             });
+            setConnectionStatus('connected');
           } else {
-            setPricing(null);
+            const fallbackP: AESOPricing = {
+              current_price: 75,
+              average_price: 75,
+              peak_price: 85,
+              off_peak_price: 60,
+              market_conditions: 'normal',
+              timestamp: new Date().toISOString(),
+              source: 'fallback'
+            };
+            setPricing(fallbackP);
+            setConnectionStatus('fallback');
           }
           setLoadData(data.aeso.loadData);
           setGenerationMix(data.aeso.generationMix);
-          setConnectionStatus('connected');
         } else {
           console.error('AESO data fetch failed:', data?.error);
           setError(data?.error || 'Unknown error fetching AESO data');
@@ -130,13 +141,24 @@ export const useAESOData = () => {
             average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
             peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
             off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+            source: p?.source || 'aeso_api'
           });
+          setConnectionStatus('connected');
         } else {
-          setPricing(null);
+          const fallbackP: AESOPricing = {
+            current_price: 75,
+            average_price: 75,
+            peak_price: 85,
+            off_peak_price: 60,
+            market_conditions: 'normal',
+            timestamp: new Date().toISOString(),
+            source: 'fallback'
+          };
+          setPricing(fallbackP);
+          setConnectionStatus('fallback');
         }
         setLoadData(data.aeso.loadData);
         setGenerationMix(data.aeso.generationMix);
-        setConnectionStatus('connected');
       } else {
         setError(data?.error || 'Unknown error fetching AESO data');
         setConnectionStatus('fallback');
