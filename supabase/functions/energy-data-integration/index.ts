@@ -853,7 +853,6 @@ async function fetchAESOData() {
               visit(json);
               if (hits.length) { parsedPrice = hits[hits.length - 1]; break; }
             }
-            }
 
             console.warn('AESO APIM pricing: unexpected response shape', JSON.stringify(json).slice(0,200));
           } catch (innerErr) {
