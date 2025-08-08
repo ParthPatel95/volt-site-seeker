@@ -803,7 +803,7 @@ async function fetchAESOData() {
             }
             const json = await res.json();
 
-            // Pool Price variant
+            // Try known shapes first
             const poolArr: any[] | null = (
               json?.['Pool Price Report'] ||
               json?.return?.['Pool Price Report'] ||
@@ -818,7 +818,6 @@ async function fetchAESOData() {
               if (!Number.isNaN(v)) { parsedPrice = v; break; }
             }
 
-            // SMP variant
             const smpArr: any[] | null = (
               json?.['System Marginal Price Report'] ||
               json?.return?.['System Marginal Price Report'] ||
@@ -831,6 +830,29 @@ async function fetchAESOData() {
                 last.system_marginal_price ?? last.SMP ?? last.smp ?? last.price
               ));
               if (!Number.isNaN(v)) { parsedPrice = v; break; }
+            }
+
+            // Fallback: scan entire payload for price-like fields
+            if (parsedPrice == null) {
+              const seen: WeakSet<object> = new WeakSet();
+              const hits: number[] = [];
+              const visit = (node: any) => {
+                if (!node || typeof node !== 'object') return;
+                if (seen.has(node)) return; seen.add(node);
+                if (Array.isArray(node)) { node.forEach(visit); return; }
+                const keys = Object.keys(node);
+                const get = (k: string) => (node as any)[k];
+                const pick = (...k: string[]) => k.find(x => keys.some(y => y.toLowerCase() === x.toLowerCase()));
+                const priceKey = pick('pool_price','system_marginal_price','smp','price','poolPrice');
+                if (priceKey) {
+                  const n = parseFloat(String(get(priceKey)));
+                  if (!Number.isNaN(n) && n >= 0 && n < 10000) hits.push(n);
+                }
+                keys.forEach(k => visit(get(k)));
+              };
+              visit(json);
+              if (hits.length) { parsedPrice = hits[hits.length - 1]; break; }
+            }
             }
 
             console.warn('AESO APIM pricing: unexpected response shape', JSON.stringify(json).slice(0,200));
