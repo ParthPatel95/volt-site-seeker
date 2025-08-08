@@ -313,6 +313,52 @@ async function fetchERCOTData() {
     }
   }
 
+  // Try Fuel Mix dashboard (public) for real-time generation mix if still missing
+  if (!generationMix) {
+    try {
+      const fuelUrls = [
+        'https://www.ercot.com/gridmktinfo/dashboards/fuelmix',
+        'https://r.jina.ai/https://www.ercot.com/gridmktinfo/dashboards/fuelmix'
+      ];
+      let text: string | null = null;
+      for (const url of fuelUrls) {
+        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (res.ok) { text = await res.text(); break; }
+      }
+      if (text) {
+        const grab = (label: string) => {
+          const re = new RegExp(label + '[\\s\\S]*?([0-9][0-9,]*)\\s*MW', 'i');
+          const m = text.match(re);
+          return m ? parseFloat(m[1].replace(/,/g, '')) : 0;
+        };
+        const gas = grab('Natural\\s+Gas');
+        const wind = grab('Wind');
+        const solar = grab('Solar');
+        const nuclear = grab('Nuclear');
+        const coal = grab('Coal(?:\s+and\s+Lignite)?');
+        const hydro = grab('Hydro');
+        const other = grab('Other');
+        const total = [gas, wind, solar, nuclear, coal, hydro, other].reduce((a,b)=>a+(Number.isFinite(b)?b:0), 0);
+        if (total > 0) {
+          generationMix = {
+            total_generation_mw: Math.round(total),
+            natural_gas_mw: Math.round(gas || 0),
+            wind_mw: Math.round(wind || 0),
+            solar_mw: Math.round(solar || 0),
+            nuclear_mw: Math.round(nuclear || 0),
+            coal_mw: Math.round(coal || 0),
+            renewable_percentage: total > 0 ? (( (wind||0) + (solar||0) + (hydro||0) ) / total * 100) : 0,
+            timestamp: new Date().toISOString(),
+            source: 'ercot_fuelmix'
+          };
+          console.log('ERCOT generation from Fuel Mix dashboard:', generationMix);
+        }
+      }
+    } catch (fuelErr) {
+      console.error('ERCOT fuel mix scrape failed:', fuelErr);
+    }
+  }
+
   // Provide fallback data if needed
   if (!loadData) {
     const currentHour = new Date().getHours();
@@ -337,32 +383,11 @@ async function fetchERCOTData() {
     };
   }
   
-  if (!generationMix) {
-    const totalGeneration = loadData ? loadData.current_demand_mw * 1.03 : 45000;
-    const currentHour = new Date().getHours();
-    
-    let solarMW = 0;
-    if (currentHour >= 6 && currentHour <= 19) {
-      const solarFactor = Math.sin(((currentHour - 6) / 13) * Math.PI);
-      solarMW = totalGeneration * 0.12 * solarFactor;
-    }
-    
-    const windFactor = 0.2 + (Math.random() * 0.4);
-    const windMW = totalGeneration * 0.35 * windFactor;
-    const gasMW = totalGeneration - solarMW - windMW - (totalGeneration * 0.11);
-    
-    generationMix = {
-      total_generation_mw: Math.round(totalGeneration),
-      natural_gas_mw: Math.round(Math.max(0, gasMW)),
-      wind_mw: Math.round(windMW),
-      solar_mw: Math.round(solarMW),
-      nuclear_mw: Math.round(totalGeneration * 0.08),
-      coal_mw: Math.round(totalGeneration * 0.03),
-      renewable_percentage: Math.round(((windMW + solarMW) / totalGeneration * 100)),
-      timestamp: new Date().toISOString(),
-      source: 'fallback'
-    };
-  }
+  // Do not synthesize ERCOT generation mix; if unavailable, leave undefined to avoid showing fallback
+  // if (!generationMix) {
+  //   // intentionally no fallback
+  // }
+
 
   if (!pricing) {
     const currentHour = new Date().getHours();
