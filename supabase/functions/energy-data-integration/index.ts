@@ -734,31 +734,48 @@ async function fetchAESOData() {
       }
 
       if (text) {
-        // Extract likely $/MWh near SMP/Pool Price labels (handle $, units, or bare numbers)
-        const pick = (src: string, re: RegExp) => {
-          const arr: number[] = [];
-          for (const m of src.matchAll(re)) {
-            const v = parseFloat(String(m[1]).replace(/,/g, ''));
-            if (!Number.isNaN(v)) arr.push(v);
-          }
-          return arr;
-        };
-
-        const candidates = [
-          ...pick(text, /System\s+Marginal\s+Price[^$\n]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...pick(text, /Pool\s+Price[^$\n]*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-          ...pick(text, /\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-          ...pick(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|\$)?\s*\/?\s*MWh/gi),
-        ].filter(v => v > 0 && v < 10000);
-
+        // If CSV, parse robustly by columns first
         let p: number | null = null;
-        if (candidates.length) {
-          p = candidates[candidates.length - 1];
-        } else if (/contentType=csv/i.test(usedUrl || '')) {
-          // CSV fallback: grab the last numeric value on the line mentioning price
-          const line = text.split(/\r?\n/).reverse().find(l => /pool\s*price|system\s*marginal\s*price|SMP/i.test(l));
-          const m = line?.match(/([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/);
-          p = m ? parseFloat(m[1].replace(/,/g, '')) : null;
+        const looksCsv = /\n/.test(text) && /,/.test(text.slice(0, 500));
+        if (looksCsv || /contentType=csv/i.test(usedUrl || '')) {
+          const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+          // Find header row (contains Pool Price or SMP)
+          let headerIdx = -1;
+          for (let i = 0; i < Math.min(10, lines.length); i++) {
+            if (/pool\s*price|system\s*marginal\s*price|smp/i.test(lines[i])) { headerIdx = i; break; }
+          }
+          if (headerIdx >= 0) {
+            const headers = lines[headerIdx].split(',').map(s => s.replace(/"/g,'').trim());
+            const priceCol = headers.findIndex(h => /pool\s*price|system\s*marginal\s*price|smp/i.test(h));
+            // Walk from bottom to find the last numeric price
+            for (let i = lines.length - 1; i > headerIdx && p == null; i--) {
+              const cols = lines[i].split(',').map(s => s.replace(/"/g,'').trim());
+              const candidate = priceCol >= 0 ? cols[priceCol] : cols.find(c => /^(?:\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)$/.test(c));
+              const n = candidate ? parseFloat(candidate.replace(/,/g,'')) : NaN;
+              if (!Number.isNaN(n) && n >= 0 && n < 10000) p = n;
+            }
+          }
+        }
+
+        // If not from CSV, try HTML/text candidates (handle $, CAD, C$)
+        if (p == null) {
+          const pick = (src: string, re: RegExp) => {
+            const arr: number[] = [];
+            for (const m of src.matchAll(re)) {
+              const v = parseFloat(String(m[1]).replace(/,/g, ''));
+              if (!Number.isNaN(v)) arr.push(v);
+            }
+            return arr;
+          };
+
+          const candidates = [
+            ...pick(text, /System\s+Marginal\s+Price[^$C\n]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pick(text, /Pool\s+Price[^$C\n]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pick(text, /(?:C\$|\$)\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
+            ...pick(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi),
+          ].filter(v => v > 0 && v < 10000);
+
+          if (candidates.length) p = candidates[candidates.length - 1];
         }
 
         if (p != null) {
@@ -770,9 +787,9 @@ async function fetchAESOData() {
             off_peak_price: Math.round(val * 0.4 * 100) / 100,
             market_conditions: val > 100 ? 'high' : val > 50 ? 'normal' : 'low',
             timestamp: new Date().toISOString(),
-            source: usedUrl?.includes('PoolPriceReportServlet') ? 'aeso_poolprice' : 'aeso_smp',
+            source: /PoolPriceReportServlet/i.test(usedUrl || '') ? (looksCsv ? 'aeso_poolprice_csv' : 'aeso_poolprice') : (looksCsv ? 'aeso_smp_csv' : 'aeso_smp'),
           };
-          console.log('AESO pricing extracted from HTML:', { source: pricing.source, url: usedUrl, value: val });
+          console.log('AESO pricing extracted from reports:', { source: pricing.source, url: usedUrl, value: val });
         }
       }
     } catch (priceErr) {
@@ -916,9 +933,12 @@ async function fetchAESOData() {
   // This avoids showing simulated values when real parsing returns zero.
 
   // No synthetic fallback pricing for AESO; leave undefined to let UI show unavailable
-  // if (!pricing || Number(pricing.current_price) <= 0) {
-  //   console.warn('AESO pricing unavailable after all sources; leaving undefined');
-  // }
+  if (!pricing) {
+    console.warn('AESO pricing still undefined after all sources', {
+      haveLoad: !!loadData,
+      haveMix: !!generationMix
+    });
+  }
 
   if (!loadData) {
     const currentHour = new Date().getHours();
