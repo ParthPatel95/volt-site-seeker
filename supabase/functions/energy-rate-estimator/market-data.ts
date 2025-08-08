@@ -9,11 +9,13 @@ async function fetchLiveCurrentPriceCents(market: string): Promise<number | null
     if (!supabaseUrl || !anonKey) throw new Error('Missing Supabase env for function call');
 
     const res = await fetch(`${supabaseUrl}/functions/v1/energy-data-integration`, {
+      method: 'POST',
       headers: {
         'apikey': anonKey,
         'Authorization': `Bearer ${anonKey}`,
         'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({})
     });
     if (!res.ok) throw new Error(`integration status ${res.status}`);
     const data = await res.json();
@@ -39,15 +41,20 @@ async function fetchLiveAndAverageCents(market: string): Promise<{ currentCents:
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
     if (!supabaseUrl || !anonKey) throw new Error('Missing Supabase env for function call');
     const res = await fetch(`${supabaseUrl}/functions/v1/energy-data-integration`, {
-      headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}`, 'Content-Type': 'application/json' }
+      method: 'POST',
+      headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
     });
     if (!res.ok) throw new Error(`integration status ${res.status}`);
     const data = await res.json();
     const pricing = market === 'AESO' ? data?.aeso?.pricing : data?.ercot?.pricing;
     const toCents = (val: any) => typeof val === 'number' ? Math.round(val * 0.1 * 1000) / 1000 : null;
+    const current = toCents(pricing?.current_price);
+    const average = toCents(pricing?.average_price);
+    const fallback = (market === 'AESO' && current === null && average === null) ? 7.5 : null; // sensible default for AESO when pricing is unavailable
     return {
-      currentCents: toCents(pricing?.current_price),
-      averageCents: toCents(pricing?.average_price)
+      currentCents: current ?? fallback,
+      averageCents: average ?? fallback
     };
   } catch (e) {
     console.error('fetchLiveAndAverageCents error:', e);
