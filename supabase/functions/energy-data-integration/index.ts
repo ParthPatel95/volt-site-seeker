@@ -769,11 +769,18 @@ async function fetchAESOData() {
   // Try official AESO API via APIM "Pool Price Report v1.1" (apimgw.aeso.ca)
   if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey)) {
     try {
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const startStr = new Date().toISOString().slice(0, 10);
+      const endStr = startStr;
       const urls = [
-        `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${todayStr}`,
-        // Backup: System Marginal Price API v1.1 (same day)
-        `https://apimgw.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${todayStr}`,
+        // apimgw domain variants
+        `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
+        `https://apimgw.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
+        // api.aeso.ca domain variants (some tenants route here)
+        `https://api.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
+        `https://api.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
+        // path variants without "-api" (observed in docs)
+        `https://api.aeso.ca/public/poolprice/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`,
+        `https://api.aeso.ca/public/systemmarginalprice/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`,
       ];
 
       const headerVariants = [
