@@ -753,6 +753,11 @@ async function fetchAESOData() {
     }
   }
 
+  // If price parsed but zero/invalid, ignore to allow better sources or fallback
+  if (pricing && (!Number.isFinite(Number(pricing.current_price)) || Number(pricing.current_price) <= 0)) {
+    pricing = undefined as any;
+  }
+
   // Provide fallback data if needed
   if (!pricing) {
     const currentHour = new Date().getHours();
