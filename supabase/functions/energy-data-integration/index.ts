@@ -421,6 +421,7 @@ async function fetchAESOData() {
 
   let pricing, loadData, generationMix;
   let realDataFound = false;
+  const debug: any[] = [];
 
   // Try AESO's Current Supply and Demand report first
   try {
@@ -726,12 +727,24 @@ async function fetchAESOData() {
       console.log('Trying AESO SMP/Pool Price reports for pricing...');
 
       const baseUrls = [
+        // HTML direct
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=html',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=html',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=html',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=html',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html',
+        // Raw endpoints
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet',
+        // CSV
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=csv',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=csv',
+        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=csv',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=csv',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=csv',
         'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=csv',
