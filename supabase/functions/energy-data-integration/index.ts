@@ -411,26 +411,33 @@ async function fetchAESOData() {
       const htmlText = await csdResponse.text();
       console.log('AESO CSD data received, length:', htmlText.length);
 
-      // Extract Pool Price
-      const poolPriceMatch = htmlText.match(/Pool\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
-                             htmlText.match(/System\s+Marginal\s+Price[^$]*\$([0-9,]+\.?[0-9]*)/i) ||
-                             htmlText.match(/>Current\s+Pool\s+Price<[^$]*\$([0-9,]+\.?[0-9]*)/i);
-      
-      if (poolPriceMatch) {
-        const currentPrice = parseFloat(poolPriceMatch[1].replace(/,/g, ''));
-        if (currentPrice >= 0) {
-          pricing = {
-            current_price: currentPrice,
-            average_price: currentPrice * 0.85,
-            peak_price: currentPrice * 1.8,
-            off_peak_price: currentPrice * 0.4,
-            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'aeso_csd'
-          };
-          console.log('Real AESO pricing extracted:', pricing);
-          realDataFound = true;
+      // Extract Pool Price (robust parsing to avoid picking $0 like change deltas)
+      const candFrom = (re: RegExp) => {
+        const out: number[] = [];
+        for (const m of htmlText.matchAll(re)) {
+          const v = parseFloat(String(m[1]).replace(/,/g, ''));
+          if (!Number.isNaN(v)) out.push(v);
         }
+        return out;
+      };
+      const candidates = [
+        ...candFrom(/Current\s+Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+        ...candFrom(/Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+        ...candFrom(/System\s+Marginal\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi)
+      ].filter(v => v > 0 && v < 10000);
+      const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
+      if (currentPrice !== null) {
+        pricing = {
+          current_price: currentPrice,
+          average_price: currentPrice * 0.85,
+          peak_price: currentPrice * 1.8,
+          off_peak_price: currentPrice * 0.4,
+          market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+          timestamp: new Date().toISOString(),
+          source: 'aeso_csd'
+        };
+        console.log('Real AESO pricing extracted:', pricing);
+        realDataFound = true;
       }
 
       // Extract Alberta Internal Load
@@ -531,11 +538,23 @@ async function fetchAESOData() {
           return m ? parseFloat(m[1].replace(/,/g, '')) : null;
         };
 
-        // Pricing
+        // Pricing (robust): prefer values in lines mentioning Pool/System Marginal Price
         if (!pricing) {
-          const priceMatch = text.match(/(?:Pool|System)\s+(?:Marginal\s+)?Price[^0-9$]*\$?([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/i);
-          const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : null;
-          if (price !== null && price >= 0) {
+          const pickFrom = (text: string, re: RegExp) => {
+            const arr: number[] = [];
+            for (const m of text.matchAll(re)) {
+              const v = parseFloat(String(m[1]).replace(/,/g, ''));
+              if (!Number.isNaN(v)) arr.push(v);
+            }
+            return arr;
+          };
+          const cands = [
+            ...pickFrom(text, /Current\s+Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+            ...pickFrom(text, /System\s+Marginal\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi)
+          ].filter(v => v > 0 && v < 10000);
+          const price = cands.length ? cands[cands.length - 1] : null;
+          if (price !== null) {
             pricing = {
               current_price: price,
               average_price: price * 0.85,
@@ -549,8 +568,9 @@ async function fetchAESOData() {
           } else {
             // CSV heuristic: find a line with "Pool Price" and grab the first number
             const line = text.split(/\r?\n/).find(l => /pool\s*price/i.test(l));
-            const priceCsv = num(line || '');
-            if (priceCsv !== null && priceCsv >= 0) {
+            const m = line?.match(/([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/);
+            const priceCsv = m ? parseFloat(m[1].replace(/,/g, '')) : null;
+            if (priceCsv !== null && priceCsv > 0) {
               pricing = {
                 current_price: priceCsv,
                 average_price: priceCsv * 0.85,
@@ -648,23 +668,32 @@ async function fetchAESOData() {
         if (smpProxyRes.ok) smpText = await smpProxyRes.text();
       }
       if (smpText) {
-        // Try to extract a $/MWh number near the word Price or SMP
-        const priceMatch = smpText.match(/(?:Pool|System)\s+(?:Marginal\s+)?Price[^0-9$]*\$?([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/i)
-          || smpText.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)\s*\/\s*MWh/i);
-        if (priceMatch) {
-          const p = parseFloat(priceMatch[1].replace(/,/g, ''));
-          if (!Number.isNaN(p) && p >= 0) {
-            pricing = {
-              current_price: Math.round(p * 100) / 100,
-              average_price: Math.round(p * 0.85 * 100) / 100,
-              peak_price: Math.round(p * 1.8 * 100) / 100,
-              off_peak_price: Math.round(p * 0.4 * 100) / 100,
-              market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
-              timestamp: new Date().toISOString(),
-              source: 'aeso_csd'
-            };
-            console.log('AESO SMP pricing extracted:', pricing);
+        // Extract likely $/MWh near SMP labels, avoid picking $0 change values
+        const pick = (src: string, re: RegExp) => {
+          const arr: number[] = [];
+          for (const m of src.matchAll(re)) {
+            const v = parseFloat(String(m[1]).replace(/,/g, ''));
+            if (!Number.isNaN(v)) arr.push(v);
           }
+          return arr;
+        };
+        const cands = [
+          ...pick(smpText, /System\s+Marginal\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...pick(smpText, /Pool\s+Price[^$\n]*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
+          ...pick(smpText, /\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi)
+        ].filter(v => v > 0 && v < 10000);
+        const p = cands.length ? cands[cands.length - 1] : null;
+        if (p !== null) {
+          pricing = {
+            current_price: Math.round(p * 100) / 100,
+            average_price: Math.round(p * 0.85 * 100) / 100,
+            peak_price: Math.round(p * 1.8 * 100) / 100,
+            off_peak_price: Math.round(p * 0.4 * 100) / 100,
+            market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
+            timestamp: new Date().toISOString(),
+            source: 'aeso_csd'
+          };
+          console.log('AESO SMP pricing extracted:', pricing);
         }
       }
     } catch (smpErr) {
@@ -753,28 +782,13 @@ async function fetchAESOData() {
     }
   }
 
-  // If price parsed but zero/invalid, ignore to allow better sources or fallback
-  if (pricing && (!Number.isFinite(Number(pricing.current_price)) || Number(pricing.current_price) <= 0)) {
-    pricing = undefined as any;
-  }
+  // Keep parsed price as-is (even if 0). Do not force fallback here.
+  // This avoids showing simulated values when real parsing returns zero.
 
-  // Provide fallback data if needed
-  if (!pricing || Number(pricing.current_price) <= 0) {
-    const currentHour = new Date().getHours();
-    const basePrice = currentHour >= 7 && currentHour <= 22 ? 85 : 45;
-    const randomVariation = (Math.random() - 0.5) * 20;
-    const currentPrice = Math.max(20, basePrice + randomVariation);
-    
-    pricing = {
-      current_price: currentPrice,
-      average_price: currentPrice * 0.85,
-      peak_price: currentPrice * 1.8,
-      off_peak_price: currentPrice * 0.4,
-      market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-      timestamp: new Date().toISOString(),
-      source: 'fallback'
-    };
-  }
+  // No synthetic fallback pricing for AESO; leave undefined to let UI show unavailable
+  // if (!pricing || Number(pricing.current_price) <= 0) {
+  //   console.warn('AESO pricing unavailable after all sources; leaving undefined');
+  // }
 
   if (!loadData) {
     const currentHour = new Date().getHours();
