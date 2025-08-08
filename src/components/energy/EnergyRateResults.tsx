@@ -7,6 +7,7 @@ import { Download, FileText, TrendingUp } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { EnergyRateInput } from './EnergyRateInputTypes';
 
+
 export interface EnergyRateResults {
   monthlyData: MonthlyRateData[];
   averageAllInPrice: {
@@ -21,7 +22,14 @@ export interface EnergyRateResults {
   dataSourceUrls: string[];
   calculationDate: string;
   currency: 'CAD' | 'USD';
+  forecasts?: {
+    threeYear: MonthlyRateData[];
+    fiveYear: MonthlyRateData[];
+    methodology: string;
+    dataSourceUrls: string[];
+  };
 }
+
 
 export interface MonthlyRateData {
   month: string;
@@ -191,6 +199,7 @@ export function EnergyRateResults({ results, input, onDownloadCSV, onDownloadPDF
         </CardContent>
       </Card>
 
+
       {/* Trend Line Chart */}
       <Card>
         <CardHeader>
@@ -210,6 +219,48 @@ export function EnergyRateResults({ results, input, onDownloadCSV, onDownloadPDF
           </div>
         </CardContent>
       </Card>
+
+      {/* Projections */}
+      {results.forecasts && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Projections (3 Years and 5 Years)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-sm text-muted-foreground">{results.forecasts.methodology}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold mb-2">3-Year Projection</h4>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={results.forecasts.threeYear.map(d => ({ month: d.month, Total: d.total }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" hide={false} />
+                      <YAxis label={{ value: `¢/kWh (${results.currency})`, angle: -90, position: 'insideLeft' }} />
+                      <Tooltip formatter={(value: any) => [`${Number(value).toFixed(2)} ¢/kWh`, 'Total']} />
+                      <Line type="monotone" dataKey="Total" stroke="#16a34a" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">5-Year Projection</h4>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={results.forecasts.fiveYear.map(d => ({ month: d.month, Total: d.total }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" hide={false} />
+                      <YAxis label={{ value: `¢/kWh (${results.currency})`, angle: -90, position: 'insideLeft' }} />
+                      <Tooltip formatter={(value: any) => [`${Number(value).toFixed(2)} ¢/kWh`, 'Total']} />
+                      <Line type="monotone" dataKey="Total" stroke="#9333ea" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Detailed Monthly Table */}
       <Card>

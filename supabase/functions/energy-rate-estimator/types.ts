@@ -47,6 +47,7 @@ export interface MonthlyData {
 }
 
 
+
 export interface EnergyRateResults {
   monthlyData: MonthlyData[];
   averageAllInPrice: {
@@ -57,4 +58,11 @@ export interface EnergyRateResults {
   dataSourceUrls: string[];
   calculationDate: string;
   currency: string;
+  forecasts?: {
+    threeYear: MonthlyData[]; // 36 months forward
+    fiveYear: MonthlyData[];  // 60 months forward
+    methodology: string;
+    dataSourceUrls: string[];
+  };
 }
+
