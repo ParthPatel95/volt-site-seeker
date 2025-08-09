@@ -417,682 +417,160 @@ async function fetchERCOTData() {
 }
 
 async function fetchAESOData() {
-  console.log('Fetching AESO data...');
+  console.log('Fetching AESO data (APIM only)…');
 
-  let pricing, loadData, generationMix;
-  let realDataFound = false;
-  const debug: any[] = [];
+  // Always use official AESO APIM endpoints per documentation
+  // https://www.aeso.ca/market/market-and-system-reporting/aeso-application-programming-interface-api/
+  // Example endpoints used here:
+  // - https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice
+  // - https://apimgw.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice
+  // - https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad
 
-  // Try AESO's Current Supply and Demand report first
+  const apiKey =
+    Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
+    Deno.env.get('AESO_API_KEY') ||
+    Deno.env.get('AESO_SUB_KEY') ||
+    Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY') || '';
+
+  if (!apiKey) {
+    console.warn('AESO API key is missing. Configure AESO_SUBSCRIPTION_KEY_PRIMARY (preferred).');
+  }
+
+  const host = 'https://apimgw.aeso.ca';
+  const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const endDate = new Date().toISOString().slice(0, 10);
+
+  const withQuery = (url: string) => `${url}?startDate=${startDate}&endDate=${endDate}`;
+  const headers: Record<string, string> = {
+    'API-KEY': apiKey,
+    'Accept': 'application/json',
+    'Cache-Control': 'no-cache',
+    'User-Agent': 'LovableEnergy/1.0'
+  };
+
+  async function getJson(url: string) {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
+    try {
+      const res = await fetch(url, { headers, signal: ctrl.signal });
+      const text = await res.text();
+      if (!res.ok) {
+        console.error('AESO APIM not OK', res.status, res.statusText, 'for', url, 'body:', text.slice(0, 300));
+        return null as any;
+      }
+      try { return JSON.parse(text); } catch (e) {
+        console.error('AESO APIM JSON parse error:', String(e));
+        return null as any;
+      }
+    } catch (e) {
+      console.error('AESO APIM fetch error:', String(e));
+      return null as any;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  const [poolResp, smpResp, loadResp] = await Promise.allSettled([
+    getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`)),
+    getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`)),
+    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`))
+  ]);
+
+  let pricing: any | undefined;
+  let loadData: any | undefined;
+  let generationMix: any | undefined; // Not provided by these endpoints
+
+  // Pricing: prefer Pool Price; fallback to SMP
   try {
-    console.log('Trying AESO CSD Report for real-time data...');
-    const csdUrl = 'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet';
-    const csdResponse = await fetch(csdUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    
-    if (csdResponse.ok) {
-      const htmlText = await csdResponse.text();
-      console.log('AESO CSD data received, length:', htmlText.length);
+    const poolJson: any = poolResp.status === 'fulfilled' ? poolResp.value : null;
+    const smpJson: any = smpResp.status === 'fulfilled' ? smpResp.value : null;
 
-      // Extract Pool/System Marginal Price (accept $, units or plain numbers)
-      const candFrom = (re: RegExp) => {
-        const out: number[] = [];
-        for (const m of htmlText.matchAll(re)) {
-          const v = parseFloat(String(m[1]).replace(/,/g, ''));
-          if (!Number.isNaN(v)) out.push(v);
-        }
-        return out;
-      };
-      let foundPrice: number | null = null;
-      // Try table-adjacent TD pattern first (Pool/System Marginal Price label followed by value cell)
-      const tdMatch = htmlText.match(/Pool\s*Price[^<]*<\/td>\s*<td[^>]*>\s*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/i)
-        || htmlText.match(/System\s+Marginal\s+Price[^<]*<\/td>\s*<td[^>]*>\s*\$?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/i);
-      if (tdMatch) {
-        foundPrice = parseFloat(tdMatch[1].replace(/,/g, ''));
-      }
+    const poolArr: any[] = poolJson?.return?.['Pool Price Report'] || poolJson?.['Pool Price Report'] || [];
+    const smpArr: any[] = smpJson?.return?.['System Marginal Price Report'] || smpJson?.['System Marginal Price Report'] || [];
 
-      // If not found via TD adjacency, try near-label window scan and flexible patterns
-      if (foundPrice == null) {
-        // Scan a small window after common labels to catch values inside complex tables/spans
-        const labels = ['Pool Price', 'System Marginal Price', 'SMP'];
-        const numberRe = /(?:C\$|\$)?\s*([-+]?[0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[-+]?[0-9]+(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*(?:\/\s*MWh)?/i;
-        for (const label of labels) {
-          const m = htmlText.match(new RegExp(label + '[\\s\\S]{0,400}', 'i'));
-          if (m) {
-            const inWin = (m[0] || '').match(numberRe);
-            if (inWin) {
-              const n = parseFloat(inWin[1].replace(/,/g, ''));
-              if (!Number.isNaN(n)) { foundPrice = n; break; }
-            }
-          }
-        }
-
-        // Fallback to flexible text patterns across the whole document
-        if (foundPrice == null) {
-          const candidates = [
-            // With or without dollar sign (support C$ and $)
-            ...candFrom(/Current\s+Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...candFrom(/Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...candFrom(/System\s+Marginal\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            // With explicit units
-            ...candFrom(/\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-            ...candFrom(/C\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-            ...candFrom(/:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi)
-          ].filter(v => v > 0 && v < 10000);
-          const currentPrice = candidates.length ? candidates[candidates.length - 1] : null;
-          if (currentPrice !== null) {
-            foundPrice = currentPrice;
-          }
+    const pickLastNumber = (arr: any[], fields: string[]) => {
+      if (!Array.isArray(arr)) return null;
+      for (let i = arr.length - 1; i >= 0; i--) {
+        for (const f of fields) {
+          const n = parseFloat(String(arr[i]?.[f] ?? ''));
+          if (!Number.isNaN(n)) return n;
         }
       }
-
-      if (foundPrice !== null) {
-        const p = Math.round(foundPrice * 100) / 100;
-        pricing = {
-          current_price: p,
-          average_price: Math.round(p * 0.85 * 100) / 100,
-          peak_price: Math.round(p * 1.8 * 100) / 100,
-          off_peak_price: Math.round(p * 0.4 * 100) / 100,
-          market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
-          timestamp: new Date().toISOString(),
-          source: 'aeso_csd'
-        };
-        console.log('Real AESO pricing extracted (CSD HTML):', pricing);
-        realDataFound = true;
-      }
-
-      // Extract Alberta Internal Load
-      const loadMatch = htmlText.match(/Alberta\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
-                       htmlText.match(/Total\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
-                       htmlText.match(/System\s+Load[^0-9]*([0-9,]+)/i);
-      
-      if (loadMatch) {
-        const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
-        if (currentLoad > 0) {
-          loadData = {
-            current_demand_mw: currentLoad,
-            peak_forecast_mw: currentLoad * 1.3,
-            reserve_margin: 12.5,
-            capacity_margin: 15.0,
-            forecast_date: new Date().toISOString(),
-            timestamp: new Date().toISOString(),
-            source: 'aeso_csd'
-          };
-          console.log('Real AESO load extracted:', loadData);
-          realDataFound = true;
-        }
-      }
-
-      // Extract generation data
-      const gasMatch = htmlText.match(/GAS[^0-9]*([0-9,]+)/i);
-      const windMatch = htmlText.match(/WIND[^0-9]*([0-9,]+)/i);
-      const hydroMatch = htmlText.match(/HYDRO[^0-9]*([0-9,]+)/i);
-      const coalMatch = htmlText.match(/COAL[^0-9]*([0-9,]+)/i);
-      
-      if (gasMatch || windMatch || hydroMatch || coalMatch) {
-        const gasGen = gasMatch ? parseFloat(gasMatch[1].replace(/,/g, '')) : 0;
-        const windGen = windMatch ? parseFloat(windMatch[1].replace(/,/g, '')) : 0;
-        const hydroGen = hydroMatch ? parseFloat(hydroMatch[1].replace(/,/g, '')) : 0;
-        const coalGen = coalMatch ? parseFloat(coalMatch[1].replace(/,/g, '')) : 0;
-        const totalGen = gasGen + windGen + hydroGen + coalGen;
-        
-        if (totalGen > 0) {
-          generationMix = {
-            total_generation_mw: totalGen,
-            natural_gas_mw: gasGen,
-            wind_mw: windGen,
-            hydro_mw: hydroGen,
-            coal_mw: coalGen,
-            solar_mw: 0,
-            other_mw: 0,
-            renewable_percentage: ((windGen + hydroGen) / totalGen * 100),
-            timestamp: new Date().toISOString(),
-            source: 'aeso_csd'
-          };
-          console.log('Real AESO generation extracted:', generationMix);
-          realDataFound = true;
-        }
-      }
-    }
-  } catch (csdError) {
-    console.error('Error fetching AESO CSD data:', csdError);
-  }
-
-  // If CSD HTML failed, try via proxy reader (handles TLS issues)
-  if (!pricing || !loadData || !generationMix) {
-    try {
-      console.log('Trying AESO CSD via proxy...');
-
-      // Try multiple proxy variants (some endpoints are picky about contentType and scheme)
-      const proxyUrls = [
-        'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet?contentType=html',
-        'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet',
-      ];
-
-      let proxyText: string | null = null;
-      for (const url of proxyUrls) {
-        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (res.ok) {
-          proxyText = await res.text();
-          console.log('AESO CSD proxy data len:', proxyText.length, 'from', url);
-          break;
-        }
-      }
-
-      // As a last resort, try CSV via proxy and parse text
-      if (!proxyText) {
-        const csvUrl = 'https://r.jina.ai/http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet?contentType=csv';
-        const resCsv = await fetch(csvUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (resCsv.ok) {
-          proxyText = await resCsv.text();
-          console.log('AESO CSD proxy CSV len:', proxyText.length);
-        }
-      }
-
-      if (proxyText) {
-        const text = proxyText;
-
-        // Flexible number extractors that work on HTML or plain text
-        const num = (s: string | undefined | null) => {
-          if (!s) return null;
-          const m = s.match(/([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/);
-          return m ? parseFloat(m[1].replace(/,/g, '')) : null;
-        };
-
-        // Pricing (robust): prefer values near Pool/System Marginal Price, accept $, units or plain numbers
-        if (!pricing) {
-          const pickFrom = (text: string, re: RegExp) => {
-            const arr: number[] = [];
-            for (const m of text.matchAll(re)) {
-              const v = parseFloat(String(m[1]).replace(/,/g, ''));
-              if (!Number.isNaN(v)) arr.push(v);
-            }
-            return arr;
-          };
-          const cands = [
-            ...pickFrom(text, /Current\s+Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pickFrom(text, /Pool\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pickFrom(text, /System\s+Marginal\s+Price[^0-9$C]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pickFrom(text, /\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-            ...pickFrom(text, /C\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-            ...pickFrom(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi)
-          ].filter(v => v > 0 && v < 10000);
-          const price = cands.length ? cands[cands.length - 1] : null;
-          if (price !== null) {
-            const p = Math.round(price * 100) / 100;
-            pricing = {
-              current_price: p,
-              average_price: Math.round(p * 0.85 * 100) / 100,
-              peak_price: Math.round(p * 1.8 * 100) / 100,
-              off_peak_price: Math.round(p * 0.4 * 100) / 100,
-              market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
-              timestamp: new Date().toISOString(),
-              source: 'aeso_csd_proxy'
-            };
-            realDataFound = true;
-          } else {
-            // CSV heuristic: find a line with "Pool Price" (with or without units)
-            const line = text.split(/\r?\n/).find(l => /pool\s*price|system\s*marginal\s*price/i.test(l));
-            const m = line?.match(/([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/);
-            const priceCsv = m ? parseFloat(m[1].replace(/,/g, '')) : null;
-            if (priceCsv !== null && priceCsv > 0) {
-              const p = Math.round(priceCsv * 100) / 100;
-              pricing = {
-                current_price: p,
-                average_price: Math.round(p * 0.85 * 100) / 100,
-                peak_price: Math.round(p * 1.8 * 100) / 100,
-                off_peak_price: Math.round(p * 0.4 * 100) / 100,
-                market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
-                timestamp: new Date().toISOString(),
-                source: 'aeso_csd_proxy'
-              };
-              realDataFound = true;
-            }
-          }
-        }
-
-        // Load
-        if (!loadData) {
-          const loadMatch = text.match(/(?:Alberta|Total)\s+Internal\s+Load[^0-9]*([0-9,]+)/i) ||
-                            text.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
-                            text.match(/AIES\s+(?:Demand|Load)[^0-9]*([0-9,]+)/i);
-          const currentLoad = loadMatch ? parseFloat(loadMatch[1].replace(/,/g, '')) : null;
-
-          if (currentLoad && currentLoad > 0) {
-            loadData = {
-              current_demand_mw: currentLoad,
-              peak_forecast_mw: currentLoad * 1.3,
-              reserve_margin: 12.5,
-              capacity_margin: 15.0,
-              forecast_date: new Date().toISOString(),
-              timestamp: new Date().toISOString(),
-              source: 'aeso_csd_proxy'
-            };
-            realDataFound = true;
-          } else {
-            // CSV heuristic: find a line that looks like AIL/AIES load
-            const line = text.split(/\r?\n/).find(l => /(AIES|Alberta).*?(Load|Demand)/i.test(l));
-            const loadCsv = num(line || '');
-            if (loadCsv && loadCsv > 0) {
-              loadData = {
-                current_demand_mw: loadCsv,
-                peak_forecast_mw: loadCsv * 1.3,
-                reserve_margin: 12.5,
-                capacity_margin: 15.0,
-                forecast_date: new Date().toISOString(),
-                timestamp: new Date().toISOString(),
-                source: 'aeso_csd_proxy'
-              };
-              realDataFound = true;
-            }
-          }
-        }
-
-        // Generation (best-effort on text output)
-        if (!generationMix) {
-          const gas = num((text.match(/GAS[^0-9]*([0-9,]+)/i) || [])[1]);
-          const wind = num((text.match(/WIND[^0-9]*([0-9,]+)/i) || [])[1]);
-          const hydro = num((text.match(/HYDRO[^0-9]*([0-9,]+)/i) || [])[1]);
-          const coal = num((text.match(/COAL[^0-9]*([0-9,]+)/i) || [])[1]);
-          const vals = [gas, wind, hydro, coal].map(v => v || 0);
-          const totalGen = vals.reduce((a, b) => a + b, 0);
-          if (totalGen > 0) {
-            generationMix = {
-              total_generation_mw: totalGen,
-              natural_gas_mw: vals[0],
-              wind_mw: vals[1],
-              hydro_mw: vals[2],
-              coal_mw: vals[3],
-              solar_mw: 0,
-              other_mw: 0,
-              renewable_percentage: ((vals[1] + vals[2]) / totalGen * 100),
-              timestamp: new Date().toISOString(),
-              source: 'aeso_csd_proxy'
-            };
-            realDataFound = true;
-          }
-        }
-      }
-    } catch (proxyErr) {
-      console.error('AESO CSD proxy fetch failed:', proxyErr);
-    }
-  }
-  
-  // Additional attempt: dedicated SMP/Pool Price reports if pricing still missing
-  if (!pricing) {
-    try {
-      console.log('Trying AESO SMP/Pool Price reports for pricing...');
-
-      const baseUrls = [
-        // HTML direct
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=html',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=html',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=html',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=html',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=html',
-        // Raw endpoints
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet',
-        // CSV
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=csv',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=csv',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=csv',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=csv',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=csv',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=csv',
-        // JSON (often available but undocumented; try both schemes)
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=json',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=json',
-        'https://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=json',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/SMPriceReportServlet?contentType=json',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/PoolPriceReportServlet?contentType=json',
-        'http://ets.aeso.ca/ets_web/ip/Market/Reports/CSMPriceReportServlet?contentType=json',
-      ];
-
-      const proxy = (u: string) => u.replace(/^http:\/\//, 'https://r.jina.ai/http://').replace(/^https:\/\//, 'https://r.jina.ai/https://');
-      const tryUrls = [...baseUrls, ...baseUrls.map(proxy)];
-
-      let text: string | null = null;
-      let usedUrl: string | null = null;
-      for (const url of tryUrls) {
-        try {
-          const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-          if (res.ok) {
-            text = await res.text();
-            usedUrl = url;
-            break;
-          }
-        } catch (_) { /* keep trying */ }
-      }
-
-      if (text) {
-        let p: number | null = null;
-        let jsonDetected = false;
-        let jsonSource: 'aeso_poolprice' | 'aeso_smp' | null = null;
-        const trimmed = text.trim();
-        const looksJson = /^\s*[\[{]/.test(trimmed) || /contentType=json/i.test(usedUrl || '') || /"Pool Price Report"|"System Marginal Price Report"/i.test(trimmed.slice(0, 2000));
-        if (looksJson) {
-          try {
-            const obj = JSON.parse(trimmed);
-            // Attempt to find pool price array first
-            const poolArr: any[] = (obj?.return?.['Pool Price Report']) || obj?.['Pool Price Report'] || [];
-            if (Array.isArray(poolArr) && poolArr.length) {
-              for (let i = poolArr.length - 1; i >= 0; i--) {
-                const n = parseFloat(String(poolArr[i]?.pool_price ?? poolArr[i]?.PoolPrice ?? ''));
-                if (!Number.isNaN(n)) { p = n; jsonSource = 'aeso_poolprice'; break; }
-              }
-            }
-            // Fallback to SMP array
-            if (p == null) {
-              const smpArr: any[] = (obj?.return?.['System Marginal Price Report']) || obj?.['System Marginal Price Report'] || [];
-              if (Array.isArray(smpArr) && smpArr.length) {
-                for (let i = smpArr.length - 1; i >= 0; i--) {
-                  const n = parseFloat(String(smpArr[i]?.system_marginal_price ?? smpArr[i]?.SMP ?? smpArr[i]?.smp ?? ''));
-                  if (!Number.isNaN(n)) { p = n; jsonSource = 'aeso_smp'; break; }
-                }
-              }
-            }
-            jsonDetected = p != null;
-          } catch (_) { /* not JSON, continue */ }
-        }
-
-        // If CSV, parse robustly by columns first
-        const looksCsv = !jsonDetected && /\n/.test(text) && /,/.test(text.slice(0, 500));
-        if (!jsonDetected && (looksCsv || /contentType=csv/i.test(usedUrl || ''))) {
-          const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-          // Find header row (contains Pool Price or SMP)
-          let headerIdx = -1;
-          for (let i = 0; i < Math.min(10, lines.length); i++) {
-            if (/pool\s*price|system\s*marginal\s*price|\bSMP\b/i.test(lines[i])) { headerIdx = i; break; }
-          }
-          if (headerIdx >= 0) {
-            const headers = lines[headerIdx].split(',').map(s => s.replace(/"/g,'').trim());
-            const priceCol = headers.findIndex(h => /pool\s*price|system\s*marginal\s*price|\bSMP\b/i.test(h));
-            // Walk from bottom to find the last numeric price
-            for (let i = lines.length - 1; i > headerIdx && p == null; i--) {
-              const cols = lines[i].split(',').map(s => s.replace(/"/g,'').trim());
-              const candidate = priceCol >= 0 ? cols[priceCol] : cols.find(c => /^(?:\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)$/.test(c));
-              const n = candidate ? parseFloat(candidate.replace(/,/g,'')) : NaN;
-              if (!Number.isNaN(n) && n >= 0 && n < 10000) p = n;
-            }
-          } else {
-            // Heuristic CSV fallback: find the last line mentioning Pool Price or SMP and grab the last numeric token
-            for (let i = lines.length - 1; i >= 0 && p == null; i--) {
-              const line = lines[i];
-              if (!/(pool\s*price|system\s*marginal\s*price|\bSMP\b)/i.test(line)) continue;
-              const nums = Array.from(line.matchAll(/(?:C\$|\$)?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/g))
-                .map(m => parseFloat(m[1].replace(/,/g,'')))
-                .filter(v => Number.isFinite(v) && v >= 0 && v < 10000);
-              if (nums.length) { p = nums[nums.length - 1]; console.log('AESO CSV heuristic used on line', i); }
-            }
-            // Ultimate CSV fallback: scan bottom 50 lines for a plausible standalone number (avoid timestamps)
-            if (p == null) {
-              for (let i = lines.length - 1; i >= Math.max(0, lines.length - 50) && p == null; i--) {
-                const cols = lines[i].split(',').map(s => s.replace(/"/g,'').trim());
-                for (let j = cols.length - 1; j >= 0 && p == null; j--) {
-                  const c = cols[j];
-                  if (!/^[0-9.,]+$/.test(c)) continue;
-                  const n = parseFloat(c.replace(/,/g,''));
-                  if (Number.isFinite(n) && n >= 0 && n < 10000) { p = n; console.log('AESO CSV ultimate heuristic used on line', i, 'col', j); }
-                }
-              }
-            }
-          }
-        }
-
-        // If not from JSON/CSV, try HTML/text candidates (handle $, CAD, C$)
-        if (p == null && !jsonDetected) {
-          const pick = (src: string, re: RegExp) => {
-            const arr: number[] = [];
-            for (const m of src.matchAll(re)) {
-              const v = parseFloat(String(m[1]).replace(/,/g, ''));
-              if (!Number.isNaN(v)) arr.push(v);
-            }
-            return arr;
-          };
-
-          const candidates = [
-            ...pick(text, /System\s+Marginal\s+Price[^$C\n]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pick(text, /Pool\s+Price[^$C\n]*(?:C\$|\$)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/gi),
-            ...pick(text, /(?:C\$|\$)\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*\/\s*MWh/gi),
-            ...pick(text, /:\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CAD|C\$|\$)?\s*\/?\s*MWh/gi),
-          ].filter(v => v > 0 && v < 10000);
-
-          if (candidates.length) p = candidates[candidates.length - 1];
-        }
-
-        if (p != null) {
-          const val = Math.round(p * 100) / 100;
-          const src = jsonDetected ? (jsonSource || (/PoolPriceReportServlet/i.test(usedUrl || '') ? 'aeso_poolprice' : 'aeso_smp')) : (/PoolPriceReportServlet/i.test(usedUrl || '') ? (looksCsv ? 'aeso_poolprice_csv' : 'aeso_poolprice') : (looksCsv ? 'aeso_smp_csv' : 'aeso_smp'));
-          pricing = {
-            current_price: val,
-            average_price: Math.round(val * 0.85 * 100) / 100,
-            peak_price: Math.round(val * 1.8 * 100) / 100,
-            off_peak_price: Math.round(val * 0.4 * 100) / 100,
-            market_conditions: val > 100 ? 'high' : val > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: src,
-          };
-          console.log('AESO pricing extracted from reports:', { source: pricing.source, url: usedUrl, value: val });
-        }
-      }
-    } catch (priceErr) {
-      console.error('AESO SMP/Pool Price fetch failed:', priceErr);
-    }
-  }
-
-  const aesoPrimary = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY');
-  const aesoSecondary = Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY');
-  const aesoSubKey = Deno.env.get('AESO_SUB_KEY');
-  const aesoApiKey = Deno.env.get('AESO_API_KEY');
-  console.log('AESO subscription key presence', { primary: !!aesoPrimary, secondary: !!aesoSecondary, legacySub: !!aesoSubKey, legacyApi: !!aesoApiKey });
-  
-  // Try official AESO APIM Pool Price Date Range report exactly per docs (both keys are subscription keys)
-  if ((!pricing || Number(pricing.current_price) <= 0) && (aesoApiKey || aesoSubKey || aesoPrimary || aesoSecondary)) {
-    try {
-      // Per AESO docs: use a date range (yesterday -> today)
-      const now = new Date();
-      const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const startStr = startDate.toISOString().slice(0, 10);
-      const endStr = now.toISOString().slice(0, 10);
-
-      const apimHosts = [
-        'https://api.aeso.ca',
-        'https://apimgw.aeso.ca',
-        'https://developer-apim.aeso.ca',
-      ];
-
-      const uniq = (arr: string[]) => Array.from(new Set(arr.filter((v): v is string => !!v && v.trim().length > 0)));
-      const subKeys = uniq([aesoPrimary || '', aesoSecondary || '', aesoSubKey || '', aesoApiKey || '']);
-      console.log('AESO subscription keys (masked tails):', subKeys.map(k => `${k.slice(0,4)}…${k.slice(-4)}`));
-
-      const tryFetchJson = async (url: string, key: string, headerName: string | null, addQueryParam: boolean) => {
-        const finalUrl = addQueryParam
-          ? url + (url.includes('?') ? `&subscription-key=${encodeURIComponent(key)}` : `?subscription-key=${encodeURIComponent(key)}`)
-          : url;
-        const sanitized = finalUrl.replace(/(subscription-key=)[^&]+/i, '$1****');
-        console.log('AESO APIM attempt', { url: sanitized, header: headerName || 'query-param', keyTail: key.slice(-6) });
-        const ctrl = new AbortController();
-        const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
-        try {
-          const headers: Record<string, string> = {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'User-Agent': 'LovableEnergy/1.0',
-            'Connection': 'keep-alive'
-          };
-          if (headerName) headers[headerName] = key;
-
-          const res = await fetch(finalUrl, { headers, signal: ctrl.signal });
-          const text = await res.text();
-          if (!res.ok) {
-            console.error('AESO APIM not OK', res.status, res.statusText, 'body:', text.slice(0, 300));
-            return null as any;
-          }
-          try {
-            const json = JSON.parse(text);
-            return json;
-          } catch (e) {
-            console.error('AESO APIM JSON parse error:', String(e).slice(0,200));
-            return null as any;
-          }
-        } catch (e) {
-          console.error('AESO APIM fetch error:', String(e));
-          return null as any;
-        } finally {
-          clearTimeout(timeout);
-        }
-      };
-      let parsedPrice: number | null = null;
-      let parsedAvg: number | null = null;
-      let usedSource: string | null = null;
-
-      // 1) Pool Price (preferred): try each host/key/header variant and also query param
-      const headerNames: (string | null)[] = ['Ocp-Apim-Subscription-Key', 'X-API-Key', null];
-      const buildUrls = (host: string, kind: 'pool' | 'smp') => {
-        const baseApi = kind === 'pool' ? 'poolprice-api' : 'systemmarginalprice-api';
-        const altApi = kind === 'pool' ? 'poolprice' : 'systemmarginalprice';
-        const path = kind === 'pool' ? 'price/poolPrice' : 'price/systemMarginalPrice';
-        return [
-          `${host}/public/${baseApi}/v1.1/${path}?startDate=${startStr}&endDate=${endStr}`,
-          `${host}/public/${altApi}/v1.1/${path}?startDate=${startStr}&endDate=${endStr}`,
-          `${host}/report/v1.1/${path}?startDate=${startStr}&endDate=${endStr}`
-        ];
-      };
-
-      // Pool Price JSON
-      for (const host of apimHosts) {
-        if (parsedPrice != null) break;
-        for (const key of subKeys) {
-          if (parsedPrice != null) break;
-          for (const url of buildUrls(host, 'pool')) {
-            if (parsedPrice != null) break;
-            for (const headerName of headerNames) {
-              if (parsedPrice != null) break;
-              for (const addQuery of [false, true] as const) {
-                if (parsedPrice != null) break;
-                if (!headerName && !addQuery) continue; // must pass key somehow
-                const json = await tryFetchJson(url, key, headerName, addQuery);
-                if (!json) continue;
-                const arr: any[] = json?.return?.['Pool Price Report'] || json?.['Pool Price Report'] || [];
-                console.log('AESO PoolPrice JSON summary', { host, usedHeader: headerName || 'query-param', count: Array.isArray(arr) ? arr.length : 0 });
-                if (Array.isArray(arr) && arr.length > 0) {
-                  for (let i = arr.length - 1; i >= 0; i--) {
-                    const n = parseFloat(String(arr[i]?.pool_price ?? ''));
-                    if (!Number.isNaN(n)) { parsedPrice = n; break; }
-                  }
-                  const nums = arr.map(r => parseFloat(String(r?.pool_price ?? ''))).filter(v => Number.isFinite(v));
-                  if (nums.length) parsedAvg = nums.reduce((a,b)=>a+b,0)/nums.length;
-                  usedSource = 'aeso_poolprice_api';
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // 2) As a final APIM fallback, try SMP date range (same date window)
-      if (parsedPrice == null) {
-        for (const host of apimHosts) {
-          if (parsedPrice != null) break;
-          for (const key of subKeys) {
-            if (parsedPrice != null) break;
-            for (const url of buildUrls(host, 'smp')) {
-              if (parsedPrice != null) break;
-              for (const headerName of headerNames) {
-                if (parsedPrice != null) break;
-                for (const addQuery of [false, true] as const) {
-                  if (parsedPrice != null) break;
-                  if (!headerName && !addQuery) continue;
-                  const json = await tryFetchJson(url, key, headerName, addQuery);
-                  if (!json) continue;
-                  const arr: any[] = json?.return?.['System Marginal Price Report'] || json?.['System Marginal Price Report'] || [];
-                  console.log('AESO SMP JSON summary', { host, usedHeader: headerName || 'query-param', count: Array.isArray(arr) ? arr.length : 0 });
-                  if (Array.isArray(arr) && arr.length > 0) {
-                    for (let i = arr.length - 1; i >= 0; i--) {
-                      const n = parseFloat(String(arr[i]?.system_marginal_price ?? arr[i]?.SMP ?? arr[i]?.smp ?? ''));
-                      if (!Number.isNaN(n)) { parsedPrice = n; break; }
-                    }
-                    usedSource = 'aeso_smp_api';
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      if (parsedPrice != null && parsedPrice >= 0) {
-        const p = Math.round(parsedPrice * 100) / 100;
-        const avg = parsedAvg != null ? Math.round(parsedAvg * 100) / 100 : Math.round(p * 0.85 * 100) / 100;
-        pricing = {
-          current_price: p,
-          average_price: avg,
-          peak_price: Math.round(p * 1.8 * 100) / 100,
-          off_peak_price: Math.round(p * 0.4 * 100) / 100,
-          market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
-          timestamp: new Date().toISOString(),
-          source: usedSource || 'aeso_api'
-        };
-        console.log('AESO APIM pricing extracted (final):', { source: pricing.source, current: p, avg });
-      }
-    } catch (apiError) {
-      console.error('AESO APIM error (outer):', apiError);
-    }
-  }
-
-  // Keep parsed price as-is (even if 0). Do not force fallback here.
-  // This avoids showing simulated values when real parsing returns zero.
-
-  // No synthetic fallback pricing for AESO; leave undefined to let UI show unavailable
-  if (!pricing) {
-    console.warn('AESO pricing still undefined after all sources', {
-      haveLoad: !!loadData,
-      haveMix: !!generationMix
-    });
-  }
-
-  if (!loadData) {
-    const currentHour = new Date().getHours();
-    const baseLoad = currentHour >= 7 && currentHour <= 22 ? 12000 : 9500;
-    const randomVariation = (Math.random() - 0.5) * 1000;
-    const currentLoad = Math.max(8000, baseLoad + randomVariation);
-    
-    loadData = {
-      current_demand_mw: currentLoad,
-      peak_forecast_mw: currentLoad * 1.3,
-      reserve_margin: 12.5,
-      capacity_margin: 15.0,
-      forecast_date: new Date().toISOString(),
-      timestamp: new Date().toISOString(),
-      source: 'fallback'
+      return null;
     };
+
+    let current = pickLastNumber(poolArr, ['pool_price']);
+    let avg: number | null = null;
+    if (Array.isArray(poolArr) && poolArr.length) {
+      const nums = poolArr
+        .map(r => parseFloat(String(r?.pool_price ?? '')))
+        .filter((v) => Number.isFinite(v));
+      if (nums.length) avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+    }
+
+    // Fallback to SMP if Pool Price is unavailable
+    if (current == null) {
+      current = pickLastNumber(smpArr, ['system_marginal_price', 'SMP', 'smp']);
+    }
+
+    if (current != null) {
+      const p = Math.round(current * 100) / 100;
+      pricing = {
+        current_price: p,
+        average_price: avg != null ? Math.round(avg * 100) / 100 : Math.round(p * 0.85 * 100) / 100,
+        peak_price: Math.round(p * 1.8 * 100) / 100,
+        off_peak_price: Math.round(p * 0.4 * 100) / 100,
+        market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
+        timestamp: new Date().toISOString(),
+        source: current === pickLastNumber(poolArr, ['pool_price']) ? 'aeso_api_poolprice' : 'aeso_api_smp'
+      };
+    }
+  } catch (e) {
+    console.error('AESO pricing parse error:', e);
   }
 
-  if (!generationMix && loadData) {
-    const totalGeneration = loadData.current_demand_mw;
-    
-    generationMix = {
-      total_generation_mw: totalGeneration,
-      natural_gas_mw: totalGeneration * 0.45,
-      wind_mw: totalGeneration * 0.25,
-      solar_mw: totalGeneration * 0.08,
-      coal_mw: totalGeneration * 0.12,
-      hydro_mw: totalGeneration * 0.10,
-      renewable_percentage: 43.0,
-      timestamp: new Date().toISOString(),
-      source: 'fallback'
-    };
+  // Load (AIL): Actual Forecast Report
+  try {
+    const json: any = loadResp.status === 'fulfilled' ? loadResp.value : null;
+    const arr: any[] = json?.return?.['Actual Forecast Report'] || json?.['Actual Forecast Report'] || [];
+    if (Array.isArray(arr) && arr.length) {
+      // last non-null actual and forecast
+      let lastActual: number | null = null;
+      let lastTs: string | null = null;
+      let maxForecast: number | null = null;
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const a = parseFloat(String(arr[i]?.alberta_internal_load ?? arr[i]?.AIL ?? ''));
+        const f = parseFloat(String(arr[i]?.forecast_alberta_internal_load ?? arr[i]?.forecast_AIL ?? ''));
+        if (Number.isFinite(f)) {
+          maxForecast = maxForecast == null ? f : Math.max(maxForecast, f);
+        }
+        if (lastActual == null && Number.isFinite(a)) {
+          lastActual = a;
+          lastTs = String(arr[i]?.begin_datetime_utc || arr[i]?.begin_datetime_mpt || new Date().toISOString());
+        }
+        if (lastActual != null && maxForecast != null) break;
+      }
+      if (lastActual != null) {
+        loadData = {
+          current_demand_mw: Math.round(lastActual),
+          peak_forecast_mw: maxForecast != null ? Math.round(maxForecast) : Math.round(lastActual * 1.15),
+          reserve_margin: 12.5,
+          timestamp: lastTs || new Date().toISOString(),
+          source: 'aeso_api_actualforecast'
+        };
+      }
+    }
+  } catch (e) {
+    console.error('AESO load parse error:', e);
   }
 
-  console.log('AESO return summary', { pricingSource: pricing?.source, currentPrice: pricing?.current_price, loadSource: loadData?.source, mixSource: generationMix?.source });
+  // No synthetic fallbacks. If data is unavailable, fields remain undefined to avoid "estimated" labels.
+  console.log('AESO return summary (APIM)', {
+    pricingSource: pricing?.source,
+    currentPrice: pricing?.current_price,
+    loadSource: loadData?.source,
+    mixSource: generationMix?.source
+  });
+
   return { pricing, loadData, generationMix };
 }
