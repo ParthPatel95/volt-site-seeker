@@ -937,7 +937,7 @@ async function fetchAESOData() {
         if (parsedPrice != null) break;
         for (const key of subKeys) {
           if (parsedPrice != null) break;
-          const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}&subscription-key=${encodeURIComponent(key)}`;
+          const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`;
           const json = await tryFetchJson(url, key);
           if (!json) continue;
 
@@ -963,7 +963,7 @@ async function fetchAESOData() {
           if (parsedPrice != null) break;
           for (const key of subKeys) {
             if (parsedPrice != null) break;
-            const url = `${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}&subscription-key=${encodeURIComponent(key)}`;
+            const url = `${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`;
             const json = await tryFetchJson(url, key);
             if (!json) continue;
             const arr: any[] = json?.return?.['System Marginal Price Report'] || json?.['System Marginal Price Report'] || [];
