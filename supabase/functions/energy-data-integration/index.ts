@@ -963,7 +963,8 @@ async function fetchAESOData() {
         const path = kind === 'pool' ? 'price/poolPrice' : 'price/systemMarginalPrice';
         return [
           `${host}/public/${baseApi}/v1.1/${path}?startDate=${startStr}&endDate=${endStr}`,
-          `${host}/public/${altApi}/v1.1/${path}?startDate=${startStr}&endDate=${endStr}`
+          `${host}/public/${altApi}/v1.1/${path}?startDate=${startStr}&endDate=${endStr}`,
+          `${host}/report/v1.1/${path}?startDate=${startStr}&endDate=${endStr}`
         ];
       };
 
