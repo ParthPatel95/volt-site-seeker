@@ -811,17 +811,39 @@ async function fetchAESOData() {
           // Find header row (contains Pool Price or SMP)
           let headerIdx = -1;
           for (let i = 0; i < Math.min(10, lines.length); i++) {
-            if (/pool\s*price|system\s*marginal\s*price|smp/i.test(lines[i])) { headerIdx = i; break; }
+            if (/pool\s*price|system\s*marginal\s*price|\bSMP\b/i.test(lines[i])) { headerIdx = i; break; }
           }
           if (headerIdx >= 0) {
             const headers = lines[headerIdx].split(',').map(s => s.replace(/"/g,'').trim());
-            const priceCol = headers.findIndex(h => /pool\s*price|system\s*marginal\s*price|smp/i.test(h));
+            const priceCol = headers.findIndex(h => /pool\s*price|system\s*marginal\s*price|\bSMP\b/i.test(h));
             // Walk from bottom to find the last numeric price
             for (let i = lines.length - 1; i > headerIdx && p == null; i--) {
               const cols = lines[i].split(',').map(s => s.replace(/"/g,'').trim());
               const candidate = priceCol >= 0 ? cols[priceCol] : cols.find(c => /^(?:\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)$/.test(c));
               const n = candidate ? parseFloat(candidate.replace(/,/g,'')) : NaN;
               if (!Number.isNaN(n) && n >= 0 && n < 10000) p = n;
+            }
+          } else {
+            // Heuristic CSV fallback: find the last line mentioning Pool Price or SMP and grab the last numeric token
+            for (let i = lines.length - 1; i >= 0 && p == null; i--) {
+              const line = lines[i];
+              if (!/(pool\s*price|system\s*marginal\s*price|\bSMP\b)/i.test(line)) continue;
+              const nums = Array.from(line.matchAll(/(?:C\$|\$)?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)/g))
+                .map(m => parseFloat(m[1].replace(/,/g,'')))
+                .filter(v => Number.isFinite(v) && v >= 0 && v < 10000);
+              if (nums.length) { p = nums[nums.length - 1]; console.log('AESO CSV heuristic used on line', i); }
+            }
+            // Ultimate CSV fallback: scan bottom 50 lines for a plausible standalone number (avoid timestamps)
+            if (p == null) {
+              for (let i = lines.length - 1; i >= Math.max(0, lines.length - 50) && p == null; i--) {
+                const cols = lines[i].split(',').map(s => s.replace(/"/g,'').trim());
+                for (let j = cols.length - 1; j >= 0 && p == null; j--) {
+                  const c = cols[j];
+                  if (!/^[0-9.,]+$/.test(c)) continue;
+                  const n = parseFloat(c.replace(/,/g,''));
+                  if (Number.isFinite(n) && n >= 0 && n < 10000) { p = n; console.log('AESO CSV ultimate heuristic used on line', i, 'col', j); }
+                }
+              }
             }
           }
         }
