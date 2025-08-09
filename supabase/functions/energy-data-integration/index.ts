@@ -883,8 +883,9 @@ async function fetchAESOData() {
       const endStr = now.toISOString().slice(0, 10);
 
       const apimHosts = [
-        'https://developer-apim.aeso.ca',
+        'https://api.aeso.ca',
         'https://apimgw.aeso.ca',
+        'https://developer-apim.aeso.ca',
       ];
 
       const uniq = (arr: string[]) => Array.from(new Set(arr.filter((v): v is string => !!v && v.trim().length > 0)));
@@ -893,25 +894,36 @@ async function fetchAESOData() {
 
       const tryFetchJson = async (url: string, key: string) => {
         console.log('AESO APIM attempt', { url, header: 'Ocp-Apim-Subscription-Key', keyTail: key.slice(-6) });
-        const res = await fetch(url, {
-          headers: {
-            'Ocp-Apim-Subscription-Key': key,
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'User-Agent': 'LovableEnergy/1.0'
-          }
-        });
-        const text = await res.text();
-        if (!res.ok) {
-          console.error('AESO APIM not OK', res.status, res.statusText, 'body:', text.slice(0, 300));
-          return null as any;
-        }
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort('timeout'), 12000);
         try {
-          const json = JSON.parse(text);
-          return json;
+          const res = await fetch(url, {
+            headers: {
+              'Ocp-Apim-Subscription-Key': key,
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'User-Agent': 'LovableEnergy/1.0',
+              'Connection': 'keep-alive'
+            },
+            signal: ctrl.signal,
+          });
+          const text = await res.text();
+          if (!res.ok) {
+            console.error('AESO APIM not OK', res.status, res.statusText, 'body:', text.slice(0, 300));
+            return null as any;
+          }
+          try {
+            const json = JSON.parse(text);
+            return json;
+          } catch (e) {
+            console.error('AESO APIM JSON parse error:', String(e).slice(0,200));
+            return null as any;
+          }
         } catch (e) {
-          console.error('AESO APIM JSON parse error:', String(e).slice(0,200));
+          console.error('AESO APIM fetch error:', String(e));
           return null as any;
+        } finally {
+          clearTimeout(timeout);
         }
       };
 
@@ -924,7 +936,7 @@ async function fetchAESOData() {
         if (parsedPrice != null) break;
         for (const key of subKeys) {
           if (parsedPrice != null) break;
-          const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}&subscription-key=${encodeURIComponent(key)}`;
+          const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`;
           const json = await tryFetchJson(url, key);
           if (!json) continue;
 
@@ -950,7 +962,7 @@ async function fetchAESOData() {
           if (parsedPrice != null) break;
           for (const key of subKeys) {
             if (parsedPrice != null) break;
-            const url = `${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}&subscription-key=${encodeURIComponent(key)}`;
+            const url = `${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`;
             const json = await tryFetchJson(url, key);
             if (!json) continue;
             const arr: any[] = json?.return?.['System Marginal Price Report'] || json?.['System Marginal Price Report'] || [];
