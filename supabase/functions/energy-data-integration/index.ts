@@ -893,9 +893,10 @@ async function fetchAESOData() {
       console.log('AESO subscription keys (masked tails):', subKeys.map(k => `${k.slice(0,4)}…${k.slice(-4)}`));
 
       const tryFetchJson = async (url: string, key: string) => {
-        console.log('AESO APIM attempt', { url, header: 'Ocp-Apim-Subscription-Key', keyTail: key.slice(-6) });
+        const sanitized = url.replace(/(subscription-key=)[^&]+/i, '$1****');
+        console.log('AESO APIM attempt', { url: sanitized, header: 'Ocp-Apim-Subscription-Key', keyTail: key.slice(-6) });
         const ctrl = new AbortController();
-        const timeout = setTimeout(() => ctrl.abort('timeout'), 12000);
+        const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
         try {
           const res = await fetch(url, {
             headers: {
@@ -936,7 +937,7 @@ async function fetchAESOData() {
         if (parsedPrice != null) break;
         for (const key of subKeys) {
           if (parsedPrice != null) break;
-          const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`;
+          const url = `${host}/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}&subscription-key=${encodeURIComponent(key)}`;
           const json = await tryFetchJson(url, key);
           if (!json) continue;
 
@@ -962,7 +963,7 @@ async function fetchAESOData() {
           if (parsedPrice != null) break;
           for (const key of subKeys) {
             if (parsedPrice != null) break;
-            const url = `${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`;
+            const url = `${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}&subscription-key=${encodeURIComponent(key)}`;
             const json = await tryFetchJson(url, key);
             if (!json) continue;
             const arr: any[] = json?.return?.['System Marginal Price Report'] || json?.['System Marginal Price Report'] || [];
