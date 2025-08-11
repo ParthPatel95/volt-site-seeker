@@ -13,8 +13,13 @@ export async function calculateEnergyRates(input: EnergyRateInput): Promise<Resp
     const territory = await resolveTerritory(input.latitude, input.longitude);
     
     // 2. Get real market data (AESO pool prices, ERCOT prices, etc.)
-    const marketData = await getMarketData(territory, input.currency);
-    
+    const marketData = await getMarketData(territory, input.currency, true);
+    if (!marketData.length) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Real market data unavailable for the selected territory at this time. Please try again later.'
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
     // 3. Get real utility tariff data (Rate 65, industrial rates, etc.)
     const tariffData = await getTariffData(territory, input.customerClass);
     
@@ -51,9 +56,10 @@ export async function calculateEnergyRates(input: EnergyRateInput): Promise<Resp
     }
 
     const makeProjection = async (monthsAhead: number) => {
+      if (!energySeries.length) return [];
       const forecast: { month: string; marketPrice: number }[] = [];
       const baseDate = new Date();
-      const lastKnown = energySeries.length ? energySeries[energySeries.length - 1] : averageAllInPrice.centsPerKWh; // fallback to all-in if needed
+      const lastKnown = energySeries[energySeries.length - 1];
       let rolling = lastKnown;
       for (let i = 1; i <= monthsAhead; i++) {
         // Apply growth
@@ -106,7 +112,7 @@ export async function calculateEnergyRates(input: EnergyRateInput): Promise<Resp
       forecasts: {
         threeYear: projection3Y,
         fiveYear: projection5Y,
-        methodology: energySeries.length ? 'Energy component projected using CAGR from historical monthly series with seasonal adjustment; non-energy charges held constant.' : 'Insufficient historical series; projections use current energy price growth of 0% and current non-energy charges.',
+        methodology: energySeries.length ? 'Energy component projected using CAGR from historical monthly series with seasonal adjustment; non-energy charges held constant.' : 'Insufficient real historical data; projections omitted.',
         dataSourceUrls
       }
     };

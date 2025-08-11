@@ -51,10 +51,9 @@ async function fetchLiveAndAverageCents(market: string): Promise<{ currentCents:
     const toCents = (val: any) => typeof val === 'number' ? Math.round(val * 0.1 * 1000) / 1000 : null;
     const current = toCents(pricing?.current_price);
     const average = toCents(pricing?.average_price);
-    const fallback = (market === 'AESO' && current === null && average === null) ? 7.5 : null; // sensible default for AESO when pricing is unavailable
     return {
-      currentCents: current ?? fallback,
-      averageCents: average ?? fallback
+      currentCents: current,
+      averageCents: average
     };
   } catch (e) {
     console.error('fetchLiveAndAverageCents error:', e);
@@ -108,7 +107,7 @@ async function fetchAESOMonthlyAveragesCents(startISO: string, endISO: string): 
   return results; // possibly empty
 }
 
-export async function getMarketData(territory: Territory, _currency: string): Promise<MarketData[]> {
+export async function getMarketData(territory: Territory, _currency: string, requireRealData = false): Promise<MarketData[]> {
   console.log('Getting market data (live) for', territory.market);
 
   const now = new Date();
@@ -131,7 +130,7 @@ export async function getMarketData(territory: Territory, _currency: string): Pr
   const currentKey = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
   // If historical series missing, synthesize a flat 12‑month series using the integration's average price
-  if ((!months || months.length === 0) && (averageCents !== null || currentCents !== null)) {
+  if (!requireRealData && (!months || months.length === 0) && (averageCents !== null || currentCents !== null)) {
     const base = averageCents ?? currentCents!;
     const synthetic: MarketData[] = [];
     for (let i = 11; i >= 0; i--) {
