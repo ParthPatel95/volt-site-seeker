@@ -1,9 +1,10 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function AESOData() {
   const { pricing, loadData, generationMix, loading: loadingCore, connectionStatus: coreStatus, refetch: refetchCore } = useAESOData();
@@ -17,6 +18,16 @@ export default function AESOData() {
   } = useAESOMarketData();
 
   const loading = loadingCore || loadingMarket;
+  const [reports, setReports] = useState<any | null>(null);
+
+  const getCount = (x: any) => {
+    if (!x) return 0;
+    if (Array.isArray(x)) return x.length;
+    if (Array.isArray(x?.data)) return x.data.length;
+    if (Array.isArray(x?.['Interchange Outage Report'])) return x['Interchange Outage Report'].length;
+    if (Array.isArray(x?.['Actual Forecast Report'])) return x['Actual Forecast Report'].length;
+    return Object.keys(x).length;
+  };
 
   // SEO and meta tags
   useEffect(() => {
@@ -44,11 +55,29 @@ export default function AESOData() {
     canonical.setAttribute('href', `${window.location.origin}/app/aeso-data`);
   }, []);
 
-  const onRefresh = () => {
+  // Fetch extended AESO reports from edge function
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('aeso-market-data');
+        if (error) throw error;
+        setReports(data?.aeso?.reports || null);
+      } catch (e) {
+        console.error('Failed to load extended AESO reports', e);
+        setReports(null);
+      }
+    };
+    fetchReports();
+  }, []);
+
+  const onRefresh = async () => {
     refetchCore();
     refetchMarket();
+    try {
+      const { data } = await supabase.functions.invoke('aeso-market-data');
+      setReports(data?.aeso?.reports || null);
+    } catch {}
   };
-
   return (
     <main className="container mx-auto px-4 py-8">
       <header className="mb-8">
@@ -176,6 +205,29 @@ export default function AESOData() {
               </div>
             ) : (
               <p className="text-muted-foreground">No energy storage data.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Official AESO Reports (APIM)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {reports ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Energy Merit Order (60d delay)</span><span className="font-medium">{getCount(reports.energyMeritOrder)} rows</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">AIES Gen Capacity</span><span className="font-medium">{getCount(reports.aiesGenCapacity)} rows</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Asset List</span><span className="font-medium">{getCount(reports.assetList)} assets</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Intertie Outages</span><span className="font-medium">{getCount(reports.intertieOutages)} events</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Load Outage Forecast</span><span className="font-medium">{getCount(reports.loadOutageForecast)} rows</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Metered Volume (today)</span><span className="font-medium">{getCount(reports.meteredVolume)} rows</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Operating Reserve Offer Control (60d delay)</span><span className="font-medium">{getCount(reports.operatingReserveOfferControl)} rows</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Pool Participants</span><span className="font-medium">{getCount(reports.poolParticipants)} participants</span></div>
+                <p className="text-xs text-muted-foreground md:col-span-2">Requests per AESO documentation with Ocp-Apim-Subscription-Key.</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Reports unavailable or key missing.</p>
             )}
           </CardContent>
         </Card>
