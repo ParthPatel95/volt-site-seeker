@@ -107,35 +107,48 @@ export function useAESOMarketData() {
   };
 
   const getOperatingReserve = async () => {
-    const data = await fetchAESOMarketData('fetch_operating_reserve');
-    if (data?.loadData) {
-      // Generate operating reserve data based on current load
-      const totalReserve = Math.round(data.loadData.current_demand_mw * 0.12);
-      setOperatingReserve({
-        total_reserve_mw: totalReserve,
-        spinning_reserve_mw: Math.round(totalReserve * 0.6),
-        supplemental_reserve_mw: Math.round(totalReserve * 0.4),
-        timestamp: data.loadData.timestamp || new Date().toISOString()
-      });
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-market-data');
+      if (error) throw error;
+      const or = data?.aeso?.operatingReserve;
+      if (or) {
+        setOperatingReserve({
+          total_reserve_mw: Number(or.total_reserve_mw) || 0,
+          spinning_reserve_mw: Number(or.spinning_reserve_mw) || 0,
+          supplemental_reserve_mw: Number(or.supplemental_reserve_mw) || 0,
+          timestamp: or.timestamp || new Date().toISOString()
+        });
+        setConnectionStatus('connected');
+      }
+      return data?.aeso;
+    } catch (e) {
+      console.error('Operating reserve fetch error:', e);
+      setConnectionStatus('fallback');
+      return null;
     }
-    return data;
   };
-
   const getInterchange = async () => {
-    const data = await fetchAESOMarketData('fetch_interchange');
-    if (data?.loadData) {
-      // Generate interchange data based on current conditions
-      setInterchange({
-        alberta_british_columbia: Math.round((Math.random() - 0.5) * 1000),
-        alberta_saskatchewan: Math.round((Math.random() - 0.5) * 500),
-        alberta_montana: Math.round((Math.random() - 0.5) * 300),
-        total_net_interchange: Math.round((Math.random() - 0.5) * 800),
-        timestamp: data.loadData.timestamp || new Date().toISOString()
-      });
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-market-data');
+      if (error) throw error;
+      const ic = data?.aeso?.interchange;
+      if (ic) {
+        setInterchange({
+          alberta_british_columbia: Number(ic.alberta_british_columbia) || 0,
+          alberta_saskatchewan: Number(ic.alberta_saskatchewan) || 0,
+          alberta_montana: Number(ic.alberta_montana) || 0,
+          total_net_interchange: Number(ic.total_net_interchange) || 0,
+          timestamp: ic.timestamp || new Date().toISOString()
+        });
+        setConnectionStatus('connected');
+      }
+      return data?.aeso;
+    } catch (e) {
+      console.error('Interchange fetch error:', e);
+      setConnectionStatus('fallback');
+      return null;
     }
-    return data;
   };
-
   const getTransmissionConstraints = async () => {
     const data = await fetchAESOMarketData('fetch_transmission_constraints');
     if (data?.loadData) {
@@ -156,22 +169,27 @@ export function useAESOMarketData() {
   };
 
   const getEnergyStorage = async () => {
-    const data = await fetchAESOMarketData('fetch_energy_storage');
-    if (data?.generationMix) {
-      // Generate storage data based on renewables
-      const renewableMW = data.generationMix.wind_mw + data.generationMix.solar_mw;
-      const netStorage = Math.round((Math.random() - 0.5) * 200);
-      setEnergyStorage({
-        charging_mw: netStorage > 0 ? 0 : Math.abs(netStorage),
-        discharging_mw: netStorage > 0 ? netStorage : 0,
-        net_storage_mw: netStorage,
-        state_of_charge_percent: Math.round(50 + (Math.random() - 0.5) * 40),
-        timestamp: data.generationMix.timestamp || new Date().toISOString()
-      });
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-market-data');
+      if (error) throw error;
+      const es = data?.aeso?.energyStorage;
+      if (es) {
+        setEnergyStorage({
+          charging_mw: Number(es.charging_mw) || 0,
+          discharging_mw: Number(es.discharging_mw) || 0,
+          net_storage_mw: Number(es.net_storage_mw) || 0,
+          state_of_charge_percent: Number(es.state_of_charge_percent) || 0,
+          timestamp: es.timestamp || new Date().toISOString()
+        });
+        setConnectionStatus('connected');
+      }
+      return data?.aeso;
+    } catch (e) {
+      console.error('Energy storage fetch error:', e);
+      setConnectionStatus('fallback');
+      return null;
     }
-    return data;
   };
-
   // Auto-fetch all market data on component mount
   useEffect(() => {
     const fetchAllData = async () => {

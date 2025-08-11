@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { AESOMarketComprehensive } from '@/components/AESOMarketComprehensive';
 import EnergyRates from '@/pages/EnergyRates';
+import AESOData from '@/pages/AESOData';
 import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
