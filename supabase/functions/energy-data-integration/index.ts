@@ -567,8 +567,16 @@ async function fetchAESOData() {
   // No synthetic fallbacks. If data is unavailable, fields remain undefined to avoid "estimated" labels.
   // Fetch AESO generation mix using Current Supply Demand v2 (aggregated by fuel type)
   try {
-    const csdUrl = `${host}/public/currentsupplydemand-api/v2/csd/summary/current`;
-    const csdJson: any = await getJson(csdUrl);
+    const csdUrls = [
+      `${host}/public/currentsupplydemand-api/v1.1/csd/summary/current`,
+      `${host}/public/currentsupplydemand-api/v1/csd/summary/current`,
+      `${host}/public/currentsupplydemand-api/v2/csd/summary/current`,
+    ];
+    let csdJson: any = null;
+    for (const u of csdUrls) {
+      csdJson = await getJson(u);
+      if (csdJson) break;
+    }
     const root: any = csdJson?.return ?? csdJson ?? {};
 
     let items: any[] = [];
