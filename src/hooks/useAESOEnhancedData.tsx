@@ -247,7 +247,7 @@ export function useAESOEnhancedData() {
     timestamp: string;
   }>>([]);
   const { toast } = useToast();
-
+  void toast;
   const fetchAESOEnhancedData = async (dataType: string) => {
     setLoading(true);
     try {
@@ -394,13 +394,7 @@ export function useAESOEnhancedData() {
 
     if (newAlerts.length > 0) {
       setAlerts(prev => [...prev, ...newAlerts]);
-      newAlerts.forEach(alert => {
-        toast({
-          title: `Market Alert: ${alert.type}`,
-          description: alert.message,
-          variant: alert.severity === 'high' ? 'destructive' : 'default'
-        });
-      });
+      // Toast popups disabled per UX request
     }
   };
 

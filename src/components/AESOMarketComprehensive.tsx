@@ -191,75 +191,7 @@ export function AESOMarketComprehensive() {
           </Button>
         </div>
 
-        {/* Alerts Panel */}
-        {alerts.length > 0 && (
-          <div className="mb-4 sm:mb-6">
-            <AESOAlertsPanel 
-              alerts={alerts}
-              onDismissAlert={dismissAlert}
-              onClearAll={clearAllAlerts}
-            />
-          </div>
-        )}
 
-        {/* Real-time Market Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-blue-100 truncate pr-2">Current Price</CardTitle>
-              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-blue-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                {formatPrice(currentPrice).cad.split('/')[0]}
-              </div>
-              <p className="text-xs text-blue-200 break-all leading-tight mt-1">
-                {formatPrice(currentPrice).usd.split('/')[0]}/MWh
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-green-100 truncate pr-2">System Load</CardTitle>
-              <Gauge className="h-3 w-3 sm:h-4 sm:w-4 text-green-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : '10.8 GW'}
-              </div>
-              <p className="text-xs text-green-200 break-words leading-tight mt-1">Current demand</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-purple-100 truncate pr-2">Renewables</CardTitle>
-              <Wind className="h-3 w-3 sm:h-4 sm:w-4 text-purple-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
-                {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : '32.5%'}
-              </div>
-              <p className="text-xs text-purple-200 break-words leading-tight mt-1">Of total generation</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-orange-100 truncate pr-2">Market Stress</CardTitle>
-              <Brain className="h-3 w-3 sm:h-4 sm:w-4 text-orange-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
-                {getMarketStressValue()}
-              </div>
-              <p className="text-xs text-orange-200 break-words leading-tight mt-1">
-                {getMarketStressLevel()}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
@@ -669,6 +601,65 @@ export function AESOMarketComprehensive() {
             />
           </TabsContent>
         </Tabs>
+
+        {/* Real-time Market Overview (moved below tabs) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-blue-100 truncate pr-2">Current Price</CardTitle>
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-blue-200 flex-shrink-0" />
+            </CardHeader>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
+                {formatPrice(currentPrice).cad.split('/')[0]}
+              </div>
+              <p className="text-xs text-blue-200 break-all leading-tight mt-1">
+                {formatPrice(currentPrice).usd.split('/')[0]}/MWh
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-green-100 truncate pr-2">System Load</CardTitle>
+              <Gauge className="h-3 w-3 sm:h-4 sm:w-4 text-green-200 flex-shrink-0" />
+            </CardHeader>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
+                {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : '10.8 GW'}
+              </div>
+              <p className="text-xs text-green-200 break-words leading-tight mt-1">Current demand</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-purple-100 truncate pr-2">Renewables</CardTitle>
+              <Wind className="h-3 w-3 sm:h-4 sm:w-4 text-purple-200 flex-shrink-0" />
+            </CardHeader>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
+                {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : '32.5%'}
+              </div>
+              <p className="text-xs text-purple-200 break-words leading-tight mt-1">Of total generation</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-orange-100 truncate pr-2">Market Stress</CardTitle>
+              <Brain className="h-3 w-3 sm:h-4 sm:w-4 text-orange-200 flex-shrink-0" />
+            </CardHeader>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
+                {getMarketStressValue()}
+              </div>
+              <p className="text-xs text-orange-200 break-words leading-tight mt-1">
+                {getMarketStressLevel()}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
