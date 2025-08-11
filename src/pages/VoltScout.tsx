@@ -78,11 +78,11 @@ const VoltScout = () => {
           <div className="flex-1 min-w-0 overflow-auto p-2 sm:p-4 lg:p-6 custom-scrollbar">
             <div className="container-responsive">
               <Routes>
-              <Route index element={<Dashboard />} />
-              <Route path="aeso-market-hub" element={<AESOMarketComprehensive />} />
-              <Route path="energy-rates" element={<EnergyRates />} />
-              <Route path="industry-intelligence" element={<IndustryIntelligence />} />
-              <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
+               <Route index element={<Dashboard />} />
+               <Route path="aeso-market-hub" element={<AESOMarketComprehensive />} />
+               <Route path="aeso-data" element={<AESOData />} />
+               <Route path="energy-rates" element={<EnergyRates />} />
+               <Route path="industry-intelligence" element={<IndustryIntelligence />} />
               <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
               <Route path="power-infrastructure" element={<PowerInfrastructure />} />
               <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
