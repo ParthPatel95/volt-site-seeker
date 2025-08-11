@@ -569,16 +569,19 @@ async function fetchAESOData() {
   try {
     const csdUrls = [
       `${host}/public/currentsupplydemand-api/v1.1/csd/summary/current`,
+      `${host}/public/currentsupplydemand-api/v1.1/csd/summary`,
+      `${host}/public/currentsupplydemand-api/v1.1/summary/current`,
       `${host}/public/currentsupplydemand-api/v1/csd/summary/current`,
+      `${host}/public/currentsupplydemand-api/v1/csd/summary`,
       `${host}/public/currentsupplydemand-api/v2/csd/summary/current`,
     ];
     let csdJson: any = null;
+    let usedCsdUrl = '';
     for (const u of csdUrls) {
       csdJson = await getJson(u);
-      if (csdJson) break;
+      if (csdJson) { usedCsdUrl = u; break; }
     }
     const root: any = csdJson?.return ?? csdJson ?? {};
-
     let items: any[] = [];
     // Try common keys first
     for (const key of [
@@ -593,15 +596,30 @@ async function fetchAESOData() {
       const arr = root?.[key];
       if (Array.isArray(arr) && arr.length) { items = arr; break; }
     }
-    // Heuristic fallback: find an array of objects with a fuel label and numeric MW
+    // Heuristic fallback: find an array/object that looks like fuel mix
     if (!items.length && root && typeof root === 'object') {
+      // 1) Any array in root that has a fuel label + numeric MW
       for (const v of Object.values(root)) {
         if (Array.isArray(v) && v.length && typeof v[0] === 'object') {
           const sample = v[0] as any;
-          const hasType = ['fuel_type','fuelType','fuel','type'].some(k => k in sample);
-          const hasNum = ['net_generation','netGeneration','generation','value','mw','net_to_grid','ng','megawatts'].some(k => k in sample);
+          const hasType = ['fuel_type','fuelType','fuel','type','name','label'].some(k => k in sample);
+          const hasNum = ['net_generation','netGeneration','generation','value','mw','net_to_grid','ng','megawatts','gen','genMW','current_generation'].some(k => k in sample);
           if (hasType && hasNum) { items = v as any[]; break; }
         }
+      }
+      // 2) Object map form: by_fuel_type: { wind: 123, solar: 45, ... }
+      if (!items.length) {
+        for (const key of ['by_fuel_type','fuel_mix','fuelTypeData','generationByFuelType','fuel_type_map']) {
+          const m = (root as any)[key];
+          if (m && typeof m === 'object' && !Array.isArray(m)) {
+            const entries = Object.entries(m).map(([k, val]) => ({ fuel_type: k, value: val }));
+            if (entries.length) { items = entries as any[]; break; }
+          }
+        }
+      }
+      // Log top-level keys to help debug if still not found
+      if (!items.length) {
+        try { console.log('AESO CSD root keys:', Object.keys(root)); } catch {}
       }
     }
 
@@ -652,7 +670,8 @@ async function fetchAESOData() {
     pricingSource: pricing?.source,
     currentPrice: pricing?.current_price,
     loadSource: loadData?.source,
-    mixSource: generationMix?.source
+    mixSource: generationMix?.source,
+    mixUrl: typeof usedCsdUrl !== 'undefined' ? usedCsdUrl : undefined
   });
 
   return { pricing, loadData, generationMix };
