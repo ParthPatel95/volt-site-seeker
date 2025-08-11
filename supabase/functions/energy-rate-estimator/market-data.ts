@@ -65,24 +65,27 @@ async function fetchLiveAndAverageCents(market: string): Promise<{ currentCents:
 async function fetchAESOMonthlyAveragesCents(startISO: string, endISO: string): Promise<MarketData[]> {
   const results: MarketData[] = [];
   try {
-    // Try AESO public API v1.1 (requires AESO_SUB_KEY)
-    const apiKey = Deno.env.get('AESO_SUB_KEY') || Deno.env.get('AESO_API_KEY');
-    if (apiKey) {
-      const url = `https://api.aeso.ca/report/v1.1/price/spp?startDate=${encodeURIComponent(startISO)}&endDate=${encodeURIComponent(endISO)}&format=json`;
-      const res = await fetch(url, { headers: { 'x-api-key': apiKey } });
+    // Try AESO APIM Pool Price v1.1 first (requires subscription key)
+    const apimKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY')
+      || Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY')
+      || Deno.env.get('AESO_SUB_KEY')
+      || Deno.env.get('AESO_API_KEY');
+    if (apimKey) {
+      const apimUrl = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${encodeURIComponent(startISO)}&endDate=${encodeURIComponent(endISO)}`;
+      const res = await fetch(apimUrl, { headers: { 'Ocp-Apim-Subscription-Key': apimKey } });
       if (res.ok) {
         const json: any = await res.json();
-        const rows: any[] = json?.return ? json.return : (json?.data || []);
+        const rows: any[] = json?.['Pool Price Report'] || json?.return || (json?.data || []);
         if (Array.isArray(rows) && rows.length) {
           // Map by month -> { sum$/MWh, count }
           const bucket = new Map<string, { sum: number; count: number }>();
           for (const r of rows) {
             const ts = new Date(r?.begin_datetime_mpt || r?.begin_datetime_utc || r?.timestamp || r?.date || r?.time || Date.now());
             const key = ts.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-            const price = parseFloat(r?.spp || r?.smp || r?.pool_price || r?.price || r?.value);
+            const price = parseFloat(r?.pool_price ?? r?.spp ?? r?.smp ?? r?.price ?? r?.value);
             if (!Number.isFinite(price)) continue;
             const cur = bucket.get(key) || { sum: 0, count: 0 };
-            cur.sum += price; // price assumed $/MWh
+            cur.sum += price; // price is $/MWh
             cur.count += 1;
             bucket.set(key, cur);
           }
@@ -96,10 +99,10 @@ async function fetchAESOMonthlyAveragesCents(startISO: string, endISO: string): 
           return results;
         }
       } else {
-        console.error('AESO API spp status:', res.status);
+        console.error('AESO APIM poolprice status:', res.status);
       }
     } else {
-      console.warn('AESO API key not configured, skipping historical fetch');
+      console.warn('AESO subscription key not configured, skipping historical fetch');
     }
   } catch (e) {
     console.error('fetchAESOMonthlyAveragesCents error:', e);
