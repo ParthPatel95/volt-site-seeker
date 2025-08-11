@@ -565,6 +565,81 @@ async function fetchAESOData() {
   }
 
   // No synthetic fallbacks. If data is unavailable, fields remain undefined to avoid "estimated" labels.
+  // Fetch AESO generation mix using Current Supply Demand v2 (aggregated by fuel type)
+  try {
+    const csdUrl = `${host}/public/currentsupplydemand-api/v2/csd/summary/current`;
+    const csdJson: any = await getJson(csdUrl);
+    const root: any = csdJson?.return ?? csdJson ?? {};
+
+    let items: any[] = [];
+    // Try common keys first
+    for (const key of [
+      'generation_by_fuel_type',
+      'by_fuel_type',
+      'fuel_type_generation',
+      'fuel_type_data',
+      'fuel_mix',
+      'fuelTypeData',
+      'generationByFuelType'
+    ]) {
+      const arr = root?.[key];
+      if (Array.isArray(arr) && arr.length) { items = arr; break; }
+    }
+    // Heuristic fallback: find an array of objects with a fuel label and numeric MW
+    if (!items.length && root && typeof root === 'object') {
+      for (const v of Object.values(root)) {
+        if (Array.isArray(v) && v.length && typeof v[0] === 'object') {
+          const sample = v[0] as any;
+          const hasType = ['fuel_type','fuelType','fuel','type'].some(k => k in sample);
+          const hasNum = ['net_generation','netGeneration','generation','value','mw','net_to_grid','ng','megawatts'].some(k => k in sample);
+          if (hasType && hasNum) { items = v as any[]; break; }
+        }
+      }
+    }
+
+    const numFrom = (o: any) => {
+      for (const k of ['net_generation','netGeneration','generation','value','mw','net_to_grid','ng','megawatts']) {
+        const n = parseFloat(String(o?.[k] ?? ''));
+        if (Number.isFinite(n)) return n;
+      }
+      return 0;
+    };
+
+    let gas = 0, wind = 0, solar = 0, hydro = 0, nuclear = 0, coal = 0, biomass = 0, other = 0;
+    items.forEach((it) => {
+      const t = String(it?.fuel_type ?? it?.fuelType ?? it?.fuel ?? it?.type ?? '').toLowerCase();
+      const mw = numFrom(it);
+      if (!Number.isFinite(mw)) return;
+      if (t.includes('wind')) wind += mw;
+      else if (t.includes('solar')) solar += mw;
+      else if (t.includes('hydro') || t.includes('water')) hydro += mw;
+      else if (t.includes('gas') || t.includes('ng')) gas += mw;
+      else if (t.includes('nuclear')) nuclear += mw;
+      else if (t.includes('coal') || t.includes('lignite')) coal += mw;
+      else if (t.includes('biomass') || t.includes('bio')) biomass += mw;
+      else other += mw;
+    });
+
+    const total = gas + wind + solar + hydro + nuclear + coal + biomass + other;
+    if (total > 0) {
+      generationMix = {
+        total_generation_mw: Math.round(total),
+        natural_gas_mw: Math.round(gas),
+        wind_mw: Math.round(wind),
+        solar_mw: Math.round(solar),
+        nuclear_mw: Math.round(nuclear),
+        coal_mw: Math.round(coal),
+        hydro_mw: Math.round(hydro),
+        other_mw: Math.round(other + biomass),
+        renewable_percentage: total > 0 ? (((wind + solar + hydro + biomass) / total) * 100) : 0,
+        timestamp: new Date().toISOString(),
+        source: 'aeso_api_csd_v2'
+      };
+    }
+  } catch (e) {
+    console.error('AESO CSD v2 mix parse error:', e);
+  }
+
   console.log('AESO return summary (APIM)', {
     pricingSource: pricing?.source,
     currentPrice: pricing?.current_price,
