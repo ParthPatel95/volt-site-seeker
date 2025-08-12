@@ -28,10 +28,57 @@ interface ERCOTGenerationMix {
   source?: string;
 }
 
+// Additional ERCOT data types
+interface ERCOTZoneLMPs {
+  LZ_HOUSTON?: number;
+  LZ_NORTH?: number;
+  LZ_SOUTH?: number;
+  LZ_WEST?: number;
+  HB_HUBAVG?: number;
+  source?: string;
+}
+interface ERCOTORDC {
+  adder_per_mwh?: number;
+  source?: string;
+}
+interface ERCOTAncillary {
+  reg_up?: number;
+  reg_down?: number;
+  rrs?: number;
+  non_spin?: number;
+  frrs_up?: number;
+  frrs_down?: number;
+  source?: string;
+}
+interface ERCOTFrequency {
+  hz?: number;
+  source?: string;
+}
+interface ERCOTConstraints {
+  items?: { name: string; shadow_price: number }[];
+  source?: string;
+}
+interface ERCOTIntertieFlows {
+  imports_mw?: number;
+  exports_mw?: number;
+  net_mw?: number;
+  source?: string;
+}
+interface ERCOTWeatherZoneLoad {
+  [zone: string]: any;
+}
+
 export const useERCOTData = () => {
   const [pricing, setPricing] = useState<ERCOTPricing | null>(null);
   const [loadData, setLoadData] = useState<ERCOTLoadData | null>(null);
   const [generationMix, setGenerationMix] = useState<ERCOTGenerationMix | null>(null);
+  const [zoneLMPs, setZoneLMPs] = useState<ERCOTZoneLMPs | null>(null);
+  const [ordcAdder, setOrdcAdder] = useState<ERCOTORDC | null>(null);
+  const [ancillaryPrices, setAncillaryPrices] = useState<ERCOTAncillary | null>(null);
+  const [systemFrequency, setSystemFrequency] = useState<ERCOTFrequency | null>(null);
+  const [constraints, setConstraints] = useState<ERCOTConstraints | null>(null);
+  const [intertieFlows, setIntertieFlows] = useState<ERCOTIntertieFlows | null>(null);
+  const [weatherZoneLoad, setWeatherZoneLoad] = useState<ERCOTWeatherZoneLoad | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
@@ -56,6 +103,13 @@ export const useERCOTData = () => {
           setPricing(data.ercot.pricing);
           setLoadData(data.ercot.loadData);
           setGenerationMix(data.ercot.generationMix);
+          setZoneLMPs(data.ercot.zoneLMPs || null);
+          setOrdcAdder(data.ercot.ordcAdder || null);
+          setAncillaryPrices(data.ercot.ancillaryPrices || null);
+          setSystemFrequency(data.ercot.systemFrequency || null);
+          setConstraints(data.ercot.constraints || null);
+          setIntertieFlows(data.ercot.intertieFlows || null);
+          setWeatherZoneLoad(data.ercot.weatherZoneLoad || null);
         } else {
           console.error('ERCOT data fetch failed:', data?.error);
           setError(data?.error || 'Unknown error fetching ERCOT data');
@@ -99,6 +153,13 @@ export const useERCOTData = () => {
         setPricing(data.ercot.pricing);
         setLoadData(data.ercot.loadData);
         setGenerationMix(data.ercot.generationMix);
+        setZoneLMPs(data.ercot.zoneLMPs || null);
+        setOrdcAdder(data.ercot.ordcAdder || null);
+        setAncillaryPrices(data.ercot.ancillaryPrices || null);
+        setSystemFrequency(data.ercot.systemFrequency || null);
+        setConstraints(data.ercot.constraints || null);
+        setIntertieFlows(data.ercot.intertieFlows || null);
+        setWeatherZoneLoad(data.ercot.weatherZoneLoad || null);
       } else {
         setError(data?.error || 'Unknown error fetching ERCOT data');
       }
@@ -115,6 +176,13 @@ export const useERCOTData = () => {
     pricing,
     loadData,
     generationMix,
+    zoneLMPs,
+    ordcAdder,
+    ancillaryPrices,
+    systemFrequency,
+    constraints,
+    intertieFlows,
+    weatherZoneLoad,
     loading,
     error,
     refetch

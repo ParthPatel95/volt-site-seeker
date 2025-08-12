@@ -11,6 +11,14 @@ interface EnergyDataResponse {
     pricing?: any;
     loadData?: any;
     generationMix?: any;
+    // Extended ERCOT datasets
+    zoneLMPs?: any;            // LZ_HOUSTON, LZ_NORTH, LZ_SOUTH, LZ_WEST, HB_HUBAVG
+    ordcAdder?: any;           // ORDC/Price adder ($/MWh)
+    ancillaryPrices?: any;     // AS clearing prices (RegUp/Down, RRS, Non-Spin, etc.)
+    systemFrequency?: any;     // System frequency (Hz)
+    constraints?: any;         // Transmission constraints with shadow prices
+    intertieFlows?: any;       // Imports/Exports/Net (MW)
+    weatherZoneLoad?: any;     // Load by weather zone
   };
   aeso?: {
     pricing?: any;
@@ -73,8 +81,8 @@ async function fetchERCOTData() {
   console.log('Fetching ERCOT data...');
   
   let pricing, loadData, generationMix;
+  let zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad;
   let realDataFound = false;
-
   // Try ERCOT's real-time LMP data first
   try {
     console.log('Fetching ERCOT real-time LMP data...');
@@ -264,6 +272,163 @@ async function fetchERCOTData() {
     }
   }
 
+  // Real-Time System Conditions: frequency, ORDC adder, intertie flows
+  try {
+    console.log('Fetching ERCOT Real-Time System Conditions...');
+    const rtscUrls = [
+      'https://www.ercot.com/content/cdr/html/real_time_system_conditions.html',
+      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/real_time_system_conditions.html'
+    ];
+    let html: string | null = null;
+    for (const url of rtscUrls) {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (res.ok) { html = await res.text(); break; }
+    }
+    if (html) {
+      // Frequency
+      const freqMatch = html.match(/([5][9]\.[0-9]{2,})\s*Hz/i) || html.match(/Frequency[^0-9]*([5][9]\.[0-9]{2,})/i);
+      if (freqMatch) {
+        const hz = parseFloat(freqMatch[1]);
+        if (!Number.isNaN(hz) && hz > 58 && hz < 61) {
+          systemFrequency = { hz, timestamp: new Date().toISOString(), source: 'ercot_rtsc' };
+          console.log('ERCOT system frequency:', systemFrequency);
+        }
+      }
+      // ORDC adder (aka Price Adder)
+      const adderMatch = html.match(/(?:ORDC|Price\s*Adder|Adder)[^-$+]*([+-]?\$?\s*[0-9]+(?:\.[0-9]+)?)/i);
+      if (adderMatch) {
+        const num = parseFloat(adderMatch[1].replace(/[^0-9.-]/g, ''));
+        if (!Number.isNaN(num)) {
+          ordcAdder = { adder_per_mwh: num, timestamp: new Date().toISOString(), source: 'ercot_rtsc' };
+          console.log('ERCOT ORDC/Price Adder:', ordcAdder);
+        }
+      }
+      // Imports / Exports / Net Interchange
+      const impMatch = html.match(/Imports[^0-9-]*(-?[0-9,]+)\s*MW/i);
+      const expMatch = html.match(/Exports[^0-9-]*(-?[0-9,]+)\s*MW/i);
+      const netMatch = html.match(/Interchange[^0-9-]*(-?[0-9,]+)\s*MW/i) || html.match(/Net\s*(?:Interchange|Export)[^0-9-]*(-?[0-9,]+)\s*MW/i);
+      const imports = impMatch ? parseFloat(impMatch[1].replace(/,/g, '')) : undefined;
+      const exports = expMatch ? parseFloat(expMatch[1].replace(/,/g, '')) : undefined;
+      const net = netMatch ? parseFloat(netMatch[1].replace(/,/g, '')) : (imports !== undefined && exports !== undefined ? imports - exports : undefined);
+      if (imports !== undefined || exports !== undefined || net !== undefined) {
+        intertieFlows = { imports_mw: imports, exports_mw: exports, net_mw: net, timestamp: new Date().toISOString(), source: 'ercot_rtsc' };
+        console.log('ERCOT intertie flows:', intertieFlows);
+      }
+    }
+  } catch (e) {
+    console.error('ERCOT real-time system conditions fetch failed:', e);
+  }
+
+  // Ancillary services clearing prices
+  try {
+    console.log('Fetching ERCOT ancillary services prices...');
+    const urls = [
+      'https://www.ercot.com/content/cdr/html/current_as_prices.html',
+      'https://www.ercot.com/content/cdr/html/ancillary_services.html',
+      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/current_as_prices.html',
+      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/ancillary_services.html'
+    ];
+    let html: string | null = null;
+    for (const url of urls) {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (res.ok) { html = await res.text(); break; }
+    }
+    if (html) {
+      const pick = (names: string[]) => {
+        for (const n of names) {
+          const m = html.match(new RegExp(n + '[\\s\\S]*?([0-9]+(?:\\.[0-9]+)?)', 'i'));
+          if (m) return parseFloat(m[1]);
+        }
+        return undefined;
+      };
+      const regUp = pick(['Reg\\s*Up','REGUP','Regulation\\s*Up']);
+      const regDown = pick(['Reg\\s*Down','REGDN','Regulation\\s*Down']);
+      const rrs = pick(['RRS','Responsive\\s*Reserve']);
+      const nspin = pick(['NSPIN','Non[-\\s]*Spin']);
+      const frrsUp = pick(['FRRS\\s*Up','Fast\\s*RRS\\s*Up']);
+      const frrsDown = pick(['FRRS\\s*Down','Fast\\s*RRS\\s*Down']);
+      const values: Record<string, number> = {};
+      if (regUp !== undefined) values.reg_up = regUp;
+      if (regDown !== undefined) values.reg_down = regDown;
+      if (rrs !== undefined) values.rrs = rrs;
+      if (nspin !== undefined) values.non_spin = nspin;
+      if (frrsUp !== undefined) values.frrs_up = frrsUp;
+      if (frrsDown !== undefined) values.frrs_down = frrsDown;
+      if (Object.keys(values).length > 0) {
+        ancillaryPrices = { ...values, timestamp: new Date().toISOString(), source: 'ercot_as' };
+        console.log('ERCOT ancillary prices:', ancillaryPrices);
+      }
+    }
+  } catch (e) {
+    console.error('ERCOT ancillary price fetch failed:', e);
+  }
+
+  // Transmission constraints (shadow prices)
+  try {
+    console.log('Fetching ERCOT transmission constraints...');
+    const urls = [
+      'https://www.ercot.com/content/cdr/html/real_time_congestion.html',
+      'https://www.ercot.com/content/cdr/html/rt_congestion.html',
+      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/real_time_congestion.html',
+      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/rt_congestion.html'
+    ];
+    let html: string | null = null;
+    for (const url of urls) {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (res.ok) { html = await res.text(); break; }
+    }
+    if (html) {
+      const items: Array<{ name: string; shadow_price: number }> = [];
+      const rowRe = /<tr[^>]*>[\s\S]*?<td[^>]*>\s*([^<]+?)\s*<\/td>[\s\S]*?<td[^>]*>\s*([-$0-9.,]+)\s*<\/td>[\s\S]*?<\/tr>/gi;
+      let m: RegExpExecArray | null;
+      while ((m = rowRe.exec(html)) !== null) {
+        const name = m[1].trim();
+        const priceNum = parseFloat((m[2] || '').replace(/[^0-9.-]/g, ''));
+        if (name && Number.isFinite(priceNum)) items.push({ name, shadow_price: priceNum });
+      }
+      if (items.length > 0) {
+        constraints = { items: items.slice(0, 10), timestamp: new Date().toISOString(), source: 'ercot_congestion' };
+        console.log('ERCOT constraints:', constraints.items.length);
+      }
+    }
+  } catch (e) {
+    console.error('ERCOT constraints fetch failed:', e);
+  }
+
+  // Weather-zone load
+  try {
+    console.log('Fetching ERCOT weather zone load...');
+    const urls = [
+      'https://www.ercot.com/content/cdr/html/load_forecast_by_weather_zone.html',
+      'https://www.ercot.com/content/cdr/html/loadforecastbywzn.html',
+      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/load_forecast_by_weather_zone.html',
+      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/loadforecastbywzn.html'
+    ];
+    let html: string | null = null;
+    for (const url of urls) {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (res.ok) { html = await res.text(); break; }
+    }
+    if (html) {
+      const zones = ['Coast','East','Far\\s*West','North','North\\s*Central','South\\s*Central','South','West'];
+      const values: Record<string, number> = {};
+      for (const z of zones) {
+        const re = new RegExp(z + '[\\s\\S]*?([0-9,]+)\\s*MW','i');
+        const m = html.match(re);
+        if (m) {
+          const key = z.replace(/\\s+/g,' ').replace(/\\s/g, '_').toUpperCase();
+          values[key] = parseFloat(m[1].replace(/,/g, ''));
+        }
+      }
+      if (Object.keys(values).length > 0) {
+        weatherZoneLoad = { ...values, timestamp: new Date().toISOString(), source: 'ercot_wz' };
+        console.log('ERCOT weather zone load extracted:', Object.keys(values).length, 'zones');
+      }
+    }
+  } catch (e) {
+    console.error('ERCOT weather-zone load fetch failed:', e);
+  }
+
   // Try ERCOT API if available
   const ercotApiKey = Deno.env.get('ERCOT_API_KEY');
   if (ercotApiKey && !realDataFound) {
@@ -413,7 +578,7 @@ async function fetchERCOTData() {
     };
   }
 
-  return { pricing, loadData, generationMix };
+  return { pricing, loadData, generationMix, zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad };
 }
 
 async function fetchAESOData() {
