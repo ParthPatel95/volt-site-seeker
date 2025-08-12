@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { AESOMarketComprehensive } from '@/components/AESOMarketComprehensive';
 import EnergyRates from '@/pages/EnergyRates';
-import AESOData from '@/pages/AESOData';
+
 import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
 import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
@@ -80,7 +80,7 @@ const VoltScout = () => {
               <Routes>
                <Route index element={<Dashboard />} />
                <Route path="aeso-market-hub" element={<AESOMarketComprehensive />} />
-               <Route path="aeso-data" element={<AESOData />} />
+               
                <Route path="energy-rates" element={<EnergyRates />} />
                <Route path="industry-intelligence" element={<IndustryIntelligence />} />
               <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
