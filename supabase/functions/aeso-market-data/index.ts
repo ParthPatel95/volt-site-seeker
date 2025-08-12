@@ -22,7 +22,7 @@ async function fetchCSDSummary() {
   if (!key) throw new Error('Missing AESO subscription key');
 
   const url = 'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current';
-  const res = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': key } });
+  const res = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': key, 'x-api-key': key, 'Accept': 'application/json', 'User-Agent': 'LovableEnergy/1.0' } });
   if (!res.ok) throw new Error(`CSD summary status ${res.status}`);
   const json = await res.json();
   return json;
@@ -36,7 +36,12 @@ serve(async (req: Request) => {
 
   try {
     console.log('aeso-market-data: fetching CSD v2 summary...');
-    const csd = await fetchCSDSummary();
+    let csd: any = null;
+    try {
+      csd = await fetchCSDSummary();
+    } catch (err) {
+      console.error('CSD v2 summary fetch failed, continuing with reports only:', err);
+    }
 
     // Also fetch additional AESO APIM datasets per official docs
     const apimKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY')
@@ -69,7 +74,7 @@ serve(async (req: Request) => {
     let poolParticipants: any = null;
 
     if (apimKey) {
-      const headers = { 'Ocp-Apim-Subscription-Key': apimKey } as HeadersInit;
+      const headers = { 'Ocp-Apim-Subscription-Key': apimKey, 'x-api-key': apimKey, 'Accept': 'application/json', 'User-Agent': 'LovableEnergy/1.0' } as HeadersInit;
       // Energy Merit Order (60 days delay)
       try {
         const res = await fetch(`https://apimgw.aeso.ca/public/energymeritorder-api/v1/meritOrder/energy?startDate=${encodeURIComponent(d60ISO)}`, { headers });
