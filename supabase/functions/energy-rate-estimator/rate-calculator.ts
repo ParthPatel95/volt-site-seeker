@@ -13,7 +13,8 @@ export async function calculateEnergyRates(input: EnergyRateInput): Promise<Resp
     const territory = await resolveTerritory(input.latitude, input.longitude);
     
     // 2. Get real market data (AESO pool prices, ERCOT prices, etc.)
-    const marketData = await getMarketData(territory, input.currency, true);
+    // Use synthetic 12-month series fallback when historical data is unavailable so charts are populated
+    const marketData = await getMarketData(territory, input.currency, false);
     if (!marketData.length) {
       return new Response(JSON.stringify({
         success: false,
