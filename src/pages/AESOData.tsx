@@ -20,13 +20,28 @@ export default function AESOData() {
   const loading = loadingCore || loadingMarket;
   const [reports, setReports] = useState<any | null>(null);
 
-  const getCount = (x: any) => {
+  const getCount = (x: any): number => {
     if (!x) return 0;
     if (Array.isArray(x)) return x.length;
-    if (Array.isArray(x?.data)) return x.data.length;
-    if (Array.isArray(x?.['Interchange Outage Report'])) return x['Interchange Outage Report'].length;
-    if (Array.isArray(x?.['Actual Forecast Report'])) return x['Actual Forecast Report'].length;
-    return Object.keys(x).length;
+    if (typeof x === 'object') {
+      // Common wrappers
+      if (Array.isArray((x as any).data)) return (x as any).data.length;
+      // Try to find the largest nested array count (robust against unknown shapes)
+      const stack: any[] = [x];
+      let max = 0;
+      while (stack.length) {
+        const cur = stack.pop();
+        if (!cur) continue;
+        if (Array.isArray(cur)) {
+          max = Math.max(max, cur.length);
+          for (const v of cur) if (v && typeof v === 'object') stack.push(v);
+        } else if (typeof cur === 'object') {
+          for (const k of Object.keys(cur)) stack.push(cur[k]);
+        }
+      }
+      return max;
+    }
+    return 0;
   };
 
   // SEO and meta tags
