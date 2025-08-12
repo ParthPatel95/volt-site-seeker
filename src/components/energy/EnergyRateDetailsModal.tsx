@@ -18,7 +18,7 @@ export function EnergyRateDetailsModal({
   onDownloadCSV: _onDownloadCSV,
   onDownloadPDF: _onDownloadPDF,
 }: EnergyRateDetailsModalProps) {
-  const hasHistory = results.monthlyData.length >= 2;
+  const hasHistory = results.monthlyData.length >= 1;
   const chartData = results.monthlyData.map((data) => ({
     month: data.month,
     'Energy Price': data.energyPrice,
