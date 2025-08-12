@@ -104,11 +104,17 @@ serve(async (req: Request) => {
         else console.error('Asset List non-OK', res.status, res.statusText);
       } catch (e) { console.warn('Asset List fetch failed', e); }
 
-      // Intertie Outage Report (13 months window)
+      // Intertie Outage Report (13 months window) - try multiple known endpoints
       try {
-        const res = await fetch(`https://apimgw.aeso.ca/public/itc-api/v1/outage?startDate=${itcStartStr}&endDate=${itcEndStr}`, { headers });
-        if (res.ok) intertieOutages = await res.json();
-        else console.error('Intertie Outage non-OK', res.status, res.statusText);
+        const intertieUrls = [
+          `https://apimgw.aeso.ca/public/itc-api/v1/outage?startDate=${itcStartStr}&endDate=${itcEndStr}`,
+          `https://apimgw.aeso.ca/public/itc-api/v1/outageReport?startDate=${itcStartStr}&endDate=${itcEndStr}`
+        ];
+        for (const url of intertieUrls) {
+          const res = await fetch(url, { headers });
+          if (res.ok) { intertieOutages = await res.json(); break; }
+          else console.error('Intertie Outage non-OK', res.status, res.statusText, 'url:', url);
+        }
       } catch (e) { console.warn('Intertie Outage fetch failed', e); }
 
       // Load Outage Forecast (today)
