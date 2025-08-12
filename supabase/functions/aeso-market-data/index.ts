@@ -14,19 +14,53 @@ function toNumber(val: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-async function fetchCSDSummary() {
-  const key = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY')
+function getAPIMKey(): string | null {
+  return Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY')
     || Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY')
     || Deno.env.get('AESO_SUB_KEY')
-    || Deno.env.get('AESO_API_KEY');
+    || Deno.env.get('AESO_API_KEY')
+    || null;
+}
+
+function buildHeaders(key: string): HeadersInit {
+  return {
+    'Ocp-Apim-Subscription-Key': key,
+    'x-api-key': key,
+    'Accept': 'application/json',
+    'User-Agent': 'LovableEnergy/1.0'
+  } as HeadersInit;
+}
+
+async function fetchWithKey(url: string, key: string): Promise<Response> {
+  // First attempt: header only
+  let res = await fetch(url, { headers: buildHeaders(key) });
+  if (res.ok) return res;
+
+  // If unauthorized/forbidden, retry with subscription-key as query param too
+  if (res.status === 401 || res.status === 403) {
+    try {
+      const u = new URL(url);
+      if (!u.searchParams.has('subscription-key')) {
+        u.searchParams.set('subscription-key', key);
+      }
+      res = await fetch(u.toString(), { headers: buildHeaders(key) });
+      return res;
+    } catch (_) {
+      // Fallthrough to return original response
+    }
+  }
+  return res;
+}
+
+async function fetchCSDSummary() {
+  const key = getAPIMKey();
   if (!key) throw new Error('Missing AESO subscription key');
 
   const base = 'https://apimgw.aeso.ca/public/currentsupplydemand-api';
-  const headers = { 'Ocp-Apim-Subscription-Key': key, 'Accept': 'application/json', 'User-Agent': 'LovableEnergy/1.0' } as HeadersInit;
   // Try v2 then fall back to v1
   for (const ver of ['v2', 'v1']) {
     const url = `${base}/${ver}/csd/summary/current`;
-    const res = await fetch(url, { headers });
+    const res = await fetchWithKey(url, key);
     if (res.ok) {
       return await res.json();
     } else {
@@ -82,24 +116,23 @@ serve(async (req: Request) => {
     let poolParticipants: any = null;
 
     if (apimKey) {
-      const headers = { 'Ocp-Apim-Subscription-Key': apimKey, 'x-api-key': apimKey, 'Accept': 'application/json', 'User-Agent': 'LovableEnergy/1.0' } as HeadersInit;
       // Energy Merit Order (60 days delay)
       try {
-        const res = await fetch(`https://apimgw.aeso.ca/public/energymeritorder-api/v1/meritOrder/energy?startDate=${encodeURIComponent(d60ISO)}`, { headers });
+        const res = await fetchWithKey(`https://apimgw.aeso.ca/public/energymeritorder-api/v1/meritOrder/energy?startDate=${encodeURIComponent(d60ISO)}`, apimKey);
         if (res.ok) energyMeritOrder = await res.json();
         else console.error('EMO fetch non-OK', res.status, res.statusText);
       } catch (e) { console.warn('EMO fetch failed', e); }
 
       // AIES Gen Capacity (today)
       try {
-        const res = await fetch(`https://apimgw.aeso.ca/public/aiesgencapacity-api/v1/AIESGenCapacity?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, { headers });
+        const res = await fetchWithKey(`https://apimgw.aeso.ca/public/aiesgencapacity-api/v1/AIESGenCapacity?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) aiesGenCapacity = await res.json();
         else console.error('AIES Gen Capacity non-OK', res.status, res.statusText);
       } catch (e) { console.warn('AIES Gen Capacity fetch failed', e); }
 
       // Asset List
       try {
-        const res = await fetch('https://apimgw.aeso.ca/public/assetlist-api/v1/assetlist', { headers });
+        const res = await fetchWithKey('https://apimgw.aeso.ca/public/assetlist-api/v1/assetlist', apimKey);
         if (res.ok) assetList = await res.json();
         else console.error('Asset List non-OK', res.status, res.statusText);
       } catch (e) { console.warn('Asset List fetch failed', e); }
@@ -108,10 +141,13 @@ serve(async (req: Request) => {
       try {
         const intertieUrls = [
           `https://apimgw.aeso.ca/public/itc-api/v1/outage?startDate=${itcStartStr}&endDate=${itcEndStr}`,
-          `https://apimgw.aeso.ca/public/itc-api/v1/outageReport?startDate=${itcStartStr}&endDate=${itcEndStr}`
+          `https://apimgw.aeso.ca/public/itc-api/v1/outageReport?startDate=${itcStartStr}&endDate=${itcEndStr}`,
+          `https://apimgw.aeso.ca/public/itc-api/v1/intertieOutage?startDate=${itcStartStr}&endDate=${itcEndStr}`,
+          `https://apimgw.aeso.ca/public/itc-api/v1/intertie-outage?startDate=${itcStartStr}&endDate=${itcEndStr}`,
+          `https://apimgw.aeso.ca/public/itc-api/v1/intertie/outage?startDate=${itcStartStr}&endDate=${itcEndStr}`
         ];
         for (const url of intertieUrls) {
-          const res = await fetch(url, { headers });
+          const res = await fetchWithKey(url, apimKey);
           if (res.ok) { intertieOutages = await res.json(); break; }
           else console.error('Intertie Outage non-OK', res.status, res.statusText, 'url:', url);
         }
@@ -119,28 +155,28 @@ serve(async (req: Request) => {
 
       // Load Outage Forecast (today)
       try {
-        const res = await fetch(`https://apimgw.aeso.ca/public/loadoutageforecast-api/v1/loadOutageReport?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, { headers });
+        const res = await fetchWithKey(`https://apimgw.aeso.ca/public/loadoutageforecast-api/v1/loadOutageReport?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) loadOutageForecast = await res.json();
         else console.error('Load Outage Forecast non-OK', res.status, res.statusText);
       } catch (e) { console.warn('Load Outage Forecast fetch failed', e); }
 
       // Metered Volume (today, limited scope)
       try {
-        const res = await fetch(`https://apimgw.aeso.ca/public/meteredvolume-api/v1/meteredvolume/details?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, { headers });
+        const res = await fetchWithKey(`https://apimgw.aeso.ca/public/meteredvolume-api/v1/meteredvolume/details?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) meteredVolume = await res.json();
         else console.error('Metered Volume non-OK', res.status, res.statusText);
       } catch (e) { console.warn('Metered Volume fetch failed', e); }
 
       // Operating Reserve Offer Control (60 days delay)
       try {
-        const res = await fetch(`https://apimgw.aeso.ca/public/operatingreserveoffercontrol-api/v1/operatingReserveOfferControl?startDate=${encodeURIComponent(d60ISO)}&endDate=${encodeURIComponent(todayISO)}`, { headers });
+        const res = await fetchWithKey(`https://apimgw.aeso.ca/public/operatingreserveoffercontrol-api/v1/operatingReserveOfferControl?startDate=${encodeURIComponent(d60ISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) operatingReserveOfferControl = await res.json();
         else console.error('OR Offer Control non-OK', res.status, res.statusText);
       } catch (e) { console.warn('OR Offer Control fetch failed', e); }
 
       // Pool Participant list
       try {
-        const res = await fetch('https://apimgw.aeso.ca/public/poolparticipant-api/v1/poolparticipantlist', { headers });
+        const res = await fetchWithKey('https://apimgw.aeso.ca/public/poolparticipant-api/v1/poolparticipantlist', apimKey);
         if (res.ok) poolParticipants = await res.json();
         else console.error('Pool Participant non-OK', res.status, res.statusText);
       } catch (e) { console.warn('Pool Participant fetch failed', e); }
