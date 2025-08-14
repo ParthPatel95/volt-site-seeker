@@ -43,10 +43,10 @@ export default function RegulatoryIntelligence() {
   const [analysis, setAnalysis] = useState<ImpactAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
-    jurisdiction: '',
-    agency: '',
-    updateType: '',
-    impactLevel: ''
+    jurisdiction: 'all',
+    agency: 'all',
+    updateType: 'all',
+    impactLevel: 'all'
   });
   const { toast } = useToast();
 
@@ -199,7 +199,7 @@ export default function RegulatoryIntelligence() {
                   <SelectValue placeholder="Jurisdiction" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Jurisdictions</SelectItem>
+                  <SelectItem value="all">All Jurisdictions</SelectItem>
                   <SelectItem value="Texas">Texas</SelectItem>
                   <SelectItem value="Alberta">Alberta</SelectItem>
                   <SelectItem value="Federal">Federal</SelectItem>
@@ -211,7 +211,7 @@ export default function RegulatoryIntelligence() {
                   <SelectValue placeholder="Agency" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Agencies</SelectItem>
+                  <SelectItem value="all">All Agencies</SelectItem>
                   <SelectItem value="PUCT">PUCT</SelectItem>
                   <SelectItem value="AUC">AUC</SelectItem>
                   <SelectItem value="FERC">FERC</SelectItem>
@@ -224,7 +224,7 @@ export default function RegulatoryIntelligence() {
                   <SelectValue placeholder="Update Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="tariff">Tariff</SelectItem>
                   <SelectItem value="policy">Policy</SelectItem>
                   <SelectItem value="rule">Rule</SelectItem>
@@ -237,7 +237,7 @@ export default function RegulatoryIntelligence() {
                   <SelectValue placeholder="Impact Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Levels</SelectItem>
+                  <SelectItem value="all">All Levels</SelectItem>
                   <SelectItem value="critical">Critical</SelectItem>
                   <SelectItem value="high">High</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
