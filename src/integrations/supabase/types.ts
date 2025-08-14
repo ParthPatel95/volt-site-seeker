@@ -59,6 +59,42 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_targets: {
+        Row: {
+          acquisition_readiness_score: number | null
+          company_name: string
+          created_at: string
+          distress_signals: Json | null
+          financial_metrics: Json | null
+          id: string
+          industry: string | null
+          last_updated: string
+          market_cap: number | null
+        }
+        Insert: {
+          acquisition_readiness_score?: number | null
+          company_name: string
+          created_at?: string
+          distress_signals?: Json | null
+          financial_metrics?: Json | null
+          id?: string
+          industry?: string | null
+          last_updated?: string
+          market_cap?: number | null
+        }
+        Update: {
+          acquisition_readiness_score?: number | null
+          company_name?: string
+          created_at?: string
+          distress_signals?: Json | null
+          financial_metrics?: Json | null
+          id?: string
+          industry?: string | null
+          last_updated?: string
+          market_cap?: number | null
+        }
+        Relationships: []
+      }
       ai_company_analysis: {
         Row: {
           acquisition_readiness: number | null
@@ -144,6 +180,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      arbitrage_opportunities: {
+        Row: {
+          created_at: string
+          execution_window_end: string | null
+          execution_window_start: string | null
+          id: string
+          market_from: string
+          market_to: string
+          price_spread: number | null
+          profit_potential: number | null
+          risk_adjusted_return: number | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          execution_window_end?: string | null
+          execution_window_start?: string | null
+          id?: string
+          market_from: string
+          market_to: string
+          price_spread?: number | null
+          profit_potential?: number | null
+          risk_adjusted_return?: number | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          execution_window_end?: string | null
+          execution_window_start?: string | null
+          id?: string
+          market_from?: string
+          market_to?: string
+          price_spread?: number | null
+          profit_potential?: number | null
+          risk_adjusted_return?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      automated_due_diligence: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string | null
+          recommendations: Json | null
+          report_data: Json | null
+          report_type: string
+          risk_score: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          recommendations?: Json | null
+          report_data?: Json | null
+          report_type: string
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          recommendations?: Json | null
+          report_data?: Json | null
+          report_type?: string
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       brokers: {
         Row: {
@@ -713,6 +827,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dynamic_pricing: {
+        Row: {
+          asset_id: string | null
+          asset_type: string
+          base_price: number | null
+          created_at: string
+          dynamic_price: number | null
+          id: string
+          market_conditions: Json | null
+          pricing_factors: Json | null
+          valid_until: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          asset_type: string
+          base_price?: number | null
+          created_at?: string
+          dynamic_price?: number | null
+          id?: string
+          market_conditions?: Json | null
+          pricing_factors?: Json | null
+          valid_until?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          asset_type?: string
+          base_price?: number | null
+          created_at?: string
+          dynamic_price?: number | null
+          id?: string
+          market_conditions?: Json | null
+          pricing_factors?: Json | null
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       energy_cost_calculations: {
         Row: {
@@ -1400,6 +1550,39 @@ export type Database = {
           },
         ]
       }
+      predictive_models: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          expires_at: string
+          id: string
+          market: string
+          model_type: string
+          predictions: Json
+          updated_at: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          market: string
+          model_type: string
+          predictions: Json
+          updated_at?: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          market?: string
+          model_type?: string
+          predictions?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1582,6 +1765,48 @@ export type Database = {
           },
         ]
       }
+      regulatory_updates: {
+        Row: {
+          affected_sectors: string[] | null
+          agency: string
+          created_at: string
+          description: string | null
+          document_url: string | null
+          effective_date: string | null
+          id: string
+          impact_level: string | null
+          jurisdiction: string
+          title: string
+          update_type: string | null
+        }
+        Insert: {
+          affected_sectors?: string[] | null
+          agency: string
+          created_at?: string
+          description?: string | null
+          document_url?: string | null
+          effective_date?: string | null
+          id?: string
+          impact_level?: string | null
+          jurisdiction: string
+          title: string
+          update_type?: string | null
+        }
+        Update: {
+          affected_sectors?: string[] | null
+          agency?: string
+          created_at?: string
+          description?: string | null
+          document_url?: string | null
+          effective_date?: string | null
+          id?: string
+          impact_level?: string | null
+          jurisdiction?: string
+          title?: string
+          update_type?: string | null
+        }
+        Relationships: []
+      }
       report_templates: {
         Row: {
           category: string | null
@@ -1615,6 +1840,42 @@ export type Database = {
           name?: string
           template_config?: Json
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      risk_assessments: {
+        Row: {
+          assessment_type: string
+          created_at: string
+          id: string
+          recommendations: Json | null
+          risk_metrics: Json
+          risk_score: number | null
+          scenario_analysis: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_type: string
+          created_at?: string
+          id?: string
+          recommendations?: Json | null
+          risk_metrics: Json
+          risk_score?: number | null
+          scenario_analysis?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_type?: string
+          created_at?: string
+          id?: string
+          recommendations?: Json | null
+          risk_metrics?: Json
+          risk_score?: number | null
+          scenario_analysis?: Json | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1845,6 +2106,42 @@ export type Database = {
         }
         Relationships: []
       }
+      site_recommendations: {
+        Row: {
+          analysis_factors: Json | null
+          created_at: string
+          criteria_weights: Json | null
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          recommendation_reason: string | null
+          recommendation_score: number | null
+          user_id: string
+        }
+        Insert: {
+          analysis_factors?: Json | null
+          created_at?: string
+          criteria_weights?: Json | null
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          recommendation_reason?: string | null
+          recommendation_score?: number | null
+          user_id: string
+        }
+        Update: {
+          analysis_factors?: Json | null
+          created_at?: string
+          criteria_weights?: Json | null
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          recommendation_reason?: string | null
+          recommendation_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_scan_sessions: {
         Row: {
           city: string | null
@@ -2056,6 +2353,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trading_signals: {
+        Row: {
+          asset: string
+          confidence: number | null
+          created_at: string
+          id: string
+          market: string
+          metadata: Json | null
+          price_target: number | null
+          risk_level: string | null
+          signal_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          market: string
+          metadata?: Json | null
+          price_target?: number | null
+          risk_level?: string | null
+          signal_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          market?: string
+          metadata?: Json | null
+          price_target?: number | null
+          risk_level?: string | null
+          signal_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_alert_preferences: {
         Row: {
@@ -2400,6 +2739,36 @@ export type Database = {
           year_built?: number | null
           zip_code?: string | null
           zoning?: string | null
+        }
+        Relationships: []
+      }
+      voice_search_logs: {
+        Row: {
+          audio_duration_ms: number | null
+          created_at: string
+          id: string
+          search_query: string
+          search_results: Json | null
+          search_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          audio_duration_ms?: number | null
+          created_at?: string
+          id?: string
+          search_query: string
+          search_results?: Json | null
+          search_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          audio_duration_ms?: number | null
+          created_at?: string
+          id?: string
+          search_query?: string
+          search_results?: Json | null
+          search_type?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
