@@ -27,57 +27,18 @@ export const ArbitrageDetector: React.FC = () => {
   const scanArbitrageOpportunities = async () => {
     setLoading(true);
     try {
-      // Get current energy rates from both markets
-      const { data: ercotRates, error: ercotError } = await supabase
-        .from('energy_rates')
-        .select('*')
-        .eq('market_id', 'ercot')
-        .order('timestamp', { ascending: false })
-        .limit(1);
+      const { data, error } = await supabase.functions.invoke('trading-signals', {
+        body: { action: 'detect_arbitrage' }
+      });
 
-      const { data: aesoRates, error: aesoError } = await supabase
-        .from('energy_rates')
-        .select('*')
-        .eq('market_id', 'aeso')
-        .order('timestamp', { ascending: false })
-        .limit(1);
+      if (error) throw error;
 
-      if (ercotError || aesoError) {
-        throw new Error('Failed to fetch energy rates');
-      }
-
-      // Simulate arbitrage detection logic
-      const mockOpportunities: ArbitrageOpportunity[] = [
-        {
-          id: '1',
-          market_from: 'AESO (Alberta)',
-          market_to: 'ERCOT (Texas)',
-          price_spread: 15.25,
-          profit_potential: 45000,
-          risk_adjusted_return: 12.8,
-          execution_window_start: new Date().toISOString(),
-          execution_window_end: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-          status: 'active'
-        },
-        {
-          id: '2',
-          market_from: 'ERCOT (Texas)',
-          market_to: 'AESO (Alberta)',
-          price_spread: 8.75,
-          profit_potential: 22000,
-          risk_adjusted_return: 7.3,
-          execution_window_start: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          execution_window_end: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-          status: 'active'
-        }
-      ];
-
-      setOpportunities(mockOpportunities);
+      setOpportunities(data.opportunities || []);
       setLastUpdate(new Date().toLocaleString());
       
       toast({
         title: "Arbitrage Scan Complete",
-        description: `Found ${mockOpportunities.length} active opportunities`,
+        description: `Found ${data.opportunities?.length || 0} active opportunities`,
       });
     } catch (error) {
       console.error('Error scanning arbitrage opportunities:', error);

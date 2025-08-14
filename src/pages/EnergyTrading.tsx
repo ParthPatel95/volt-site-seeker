@@ -37,39 +37,20 @@ export default function EnergyTrading() {
   const fetchTradingSignals = async () => {
     setLoading(true);
     try {
-      // First try to generate mock signals for demo purposes
-      const mockSignals: TradingSignal[] = [
-        {
-          id: '1',
-          signal_type: 'buy' as const,
-          confidence_score: 0.85,
-          market_region: activeRegion,
-          predicted_price: 28.50,
-          current_price: 26.48,
-          recommendation: 'Strong upward momentum detected. Energy demand increasing with favorable grid conditions.',
-          risk_level: 'medium' as const,
-          expires_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          signal_type: 'hold' as const,
-          confidence_score: 0.72,
-          market_region: activeRegion,
-          predicted_price: 26.00,
-          current_price: 26.48,
-          recommendation: 'Market consolidation expected. Wait for clearer price direction before taking action.',
-          risk_level: 'low' as const,
-          expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-          created_at: new Date().toISOString()
+      const { data, error } = await supabase.functions.invoke('trading-signals', {
+        body: { 
+          action: 'get_signals',
+          market: activeRegion,
+          userId: (await supabase.auth.getUser()).data.user?.id
         }
-      ];
+      });
 
-      setSignals(mockSignals);
+      if (error) throw error;
+      setSignals(data.signals || []);
       
       toast({
         title: "Signals Updated",
-        description: `Loaded ${mockSignals.length} trading signals for ${activeRegion}`,
+        description: `Loaded ${data.signals?.length || 0} trading signals for ${activeRegion}`,
       });
     } catch (error) {
       console.error('Error fetching trading signals:', error);
@@ -86,18 +67,16 @@ export default function EnergyTrading() {
   const generatePredictions = async () => {
     setLoading(true);
     try {
-      // Generate mock prediction data for demo
-      const mockPrediction: PredictionData = {
-        price_forecast: [28.50, 29.20, 27.80, 30.10, 28.90, 26.40, 27.60, 29.80, 31.20, 28.30],
-        confidence_intervals: {
-          lower: [26.50, 27.20, 25.80, 28.10, 26.90, 24.40, 25.60, 27.80, 29.20, 26.30],
-          upper: [30.50, 31.20, 29.80, 32.10, 30.90, 28.40, 29.60, 31.80, 33.20, 30.30]
-        },
-        trend_direction: 'bullish' as const,
-        accuracy_score: 0.847
-      };
+      const { data, error } = await supabase.functions.invoke('predictive-analytics', {
+        body: { 
+          region: activeRegion, 
+          horizon_hours: 24, 
+          model_type: 'price_forecast' 
+        }
+      });
 
-      setPredictions(mockPrediction);
+      if (error) throw error;
+      setPredictions(data.prediction);
       
       toast({
         title: "Predictions Generated",
