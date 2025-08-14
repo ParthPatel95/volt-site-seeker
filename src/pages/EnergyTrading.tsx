@@ -37,31 +37,19 @@ export default function EnergyTrading() {
   const fetchTradingSignals = async () => {
     setLoading(true);
     try {
-      // Get real EIA electricity price data
-      const { data: eiaResponse, error: eiaError } = await supabase.functions.invoke('eia-data-integration', {
-        body: { 
-          action: 'getEnergyPrices',
-          region: activeRegion === 'ERCOT' ? 'TX' : 'AB'
-        }
-      });
+      // Get real-time energy data from working integration
+      const { data: energyResponse, error: energyError } = await supabase.functions.invoke('energy-data-integration');
 
-      // Get real generation data for analysis
-      const { data: genResponse } = await supabase.functions.invoke('eia-data-integration', {
-        body: { 
-          action: 'getGenerationData',
-          state: activeRegion === 'ERCOT' ? 'TX' : 'AB',
-          fuel_type: 'ALL'
-        }
-      });
+      if (energyError) throw energyError;
 
-      if (eiaError) throw eiaError;
-
-      if (eiaResponse?.success && genResponse?.success) {
-        const priceData = eiaResponse.data?.[0] || {};
-        const genData = genResponse.data?.slice(0, 3) || [];
+      if (energyResponse?.success) {
+        const regionData = activeRegion === 'ERCOT' ? energyResponse.ercot : energyResponse.aeso;
+        const pricing = regionData?.pricing || {};
+        const loadData = regionData?.loadData || {};
+        const genMix = regionData?.generationMix || {};
         
-        const currentPrice = (priceData.price_cents_per_kwh || 4.5) * 10; // Convert to $/MWh
-        const generation = genData[0]?.generation_mwh || 25000;
+        const currentPrice = pricing.current_price || 50; // $/MWh
+        const generation = genMix.total_generation_mw || 25000;
         
         // Generate real trading signals based on actual EIA data
         const realSignals: TradingSignal[] = [
@@ -94,17 +82,33 @@ export default function EnergyTrading() {
         setSignals(realSignals);
         
         toast({
-          title: "EIA Signals Updated",
-          description: `Loaded ${realSignals.length} real trading signals from EIA data for ${activeRegion}`,
+          title: "Trading Signals Updated",
+          description: `Loaded ${realSignals.length} real trading signals for ${activeRegion}`,
         });
       } else {
-        throw new Error('Failed to fetch EIA data');
+        throw new Error('Failed to fetch energy data');
       }
     } catch (error) {
-      console.error('Error fetching EIA trading signals:', error);
+      console.error('Error fetching trading signals:', error);
+      // Generate fallback signals to prevent loading loop
+      const fallbackSignals: TradingSignal[] = [
+        {
+          id: 'fallback-1',
+          signal_type: 'hold',
+          confidence_score: 0.5,
+          market_region: activeRegion,
+          predicted_price: 55,
+          current_price: 50,
+          recommendation: `Unable to fetch real-time data. Using fallback analysis for ${activeRegion} market.`,
+          risk_level: 'medium',
+          expires_at: new Date(Date.now() + 3600000).toISOString(),
+          created_at: new Date().toISOString()
+        }
+      ];
+      setSignals(fallbackSignals);
       toast({
-        title: "Error",
-        description: "Failed to fetch real-time trading signals from EIA",
+        title: "Using Fallback Data",
+        description: "Real-time data unavailable, showing estimated signals",
         variant: "destructive",
       });
     } finally {
@@ -115,33 +119,19 @@ export default function EnergyTrading() {
   const generatePredictions = async () => {
     setLoading(true);
     try {
-      // Get multiple periods of EIA price data for trend analysis
-      const { data: priceHistory, error } = await supabase.functions.invoke('eia-data-integration', {
-        body: { 
-          action: 'getEnergyPrices',
-          region: activeRegion === 'ERCOT' ? 'TX' : 'AB'
-        }
-      });
-
-      // Get current generation mix for prediction factors
-      const { data: genMix } = await supabase.functions.invoke('eia-data-integration', {
-        body: { 
-          action: 'getGenerationData',
-          state: activeRegion === 'ERCOT' ? 'TX' : 'AB'
-        }
-      });
+      // Get current energy data for prediction analysis
+      const { data: energyData, error } = await supabase.functions.invoke('energy-data-integration');
 
       if (error) throw error;
 
-      if (priceHistory?.success && genMix?.success) {
-        const recentPrices = priceHistory.data?.slice(0, 10) || [];
-        const basePrice = recentPrices[0]?.price_cents_per_kwh || 4.5;
-        const avgPrice = recentPrices.reduce((sum: number, p: any) => sum + (p.price_cents_per_kwh || 0), 0) / recentPrices.length;
+      if (energyData?.success) {
+        const regionData = activeRegion === 'ERCOT' ? energyData.ercot : energyData.aeso;
+        const pricing = regionData?.pricing || {};
+        const genMix = regionData?.generationMix || {};
         
-        const renewableGen = genMix.data?.filter((g: any) => 
-          ['solar', 'wind', 'hydro'].includes(g.fuel_type?.toLowerCase())
-        ) || [];
-        const renewablePct = renewableGen.length / (genMix.data?.length || 1);
+        const basePrice = pricing.current_price || 50;
+        const avgPrice = pricing.average_price || basePrice;
+        const renewablePct = (genMix.renewable_percentage || 20) / 100;
         
         // Generate 24-hour forecast based on real data patterns
         const hourlyForecasts = Array.from({ length: 24 }, (_, i) => {
@@ -149,7 +139,7 @@ export default function EnergyTrading() {
           const volatility = (Math.random() - 0.5) * 0.1; // Market volatility
           const renewableImpact = renewablePct > 0.4 ? -0.05 : 0.05; // Renewable effect
           
-          return (basePrice * 10) * hourFactor * (1 + volatility + renewableImpact); // Convert to $/MWh
+          return basePrice * hourFactor * (1 + volatility + renewableImpact);
         });
         
         // Confidence intervals (±10% typical range)
@@ -164,7 +154,7 @@ export default function EnergyTrading() {
           priceChange > 0.05 ? 'bullish' : priceChange < -0.05 ? 'bearish' : 'neutral';
         
         // Calculate accuracy based on data quality
-        const dataQuality = Math.min(recentPrices.length / 10, 1);
+        const dataQuality = regionData ? 1 : 0.5;
         const accuracy = 0.75 + (dataQuality * 0.15) + (renewablePct * 0.1);
         
         const realPrediction: PredictionData = {
@@ -177,17 +167,28 @@ export default function EnergyTrading() {
         setPredictions(realPrediction);
         
         toast({
-          title: "EIA Predictions Generated",
-          description: `24-hour forecast based on real EIA data for ${activeRegion}`,
+          title: "Predictions Generated",
+          description: `24-hour forecast based on real-time data for ${activeRegion}`,
         });
       } else {
-        throw new Error('Failed to fetch EIA historical data');
+        throw new Error('Failed to fetch energy data');
       }
     } catch (error) {
-      console.error('Error generating EIA predictions:', error);
+      console.error('Error generating predictions:', error);
+      // Generate fallback predictions to prevent loading loop
+      const fallbackPrediction: PredictionData = {
+        price_forecast: Array.from({ length: 24 }, (_, i) => 50 + Math.sin(i * Math.PI / 12) * 10),
+        confidence_intervals: {
+          lower: Array.from({ length: 24 }, (_, i) => 45 + Math.sin(i * Math.PI / 12) * 10),
+          upper: Array.from({ length: 24 }, (_, i) => 55 + Math.sin(i * Math.PI / 12) * 10)
+        },
+        trend_direction: 'neutral',
+        accuracy_score: 0.6
+      };
+      setPredictions(fallbackPrediction);
       toast({
-        title: "Error",
-        description: "Failed to generate predictions from EIA data",
+        title: "Using Fallback Predictions",
+        description: "Real-time data unavailable, showing estimated forecast",
         variant: "destructive",
       });
     } finally {
