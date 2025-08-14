@@ -11,14 +11,14 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// SEC EDGAR API for public company data and real estate assets
+// Enhanced SEC EDGAR API for comprehensive company data and filings
 async function fetchSECData(ticker: string, companyName: string) {
   if (!ticker) return null;
   
   try {
-    console.log(`Fetching SEC data for ticker: ${ticker}`);
+    console.log(`Fetching comprehensive SEC data for ticker: ${ticker}`);
     
-    // First try to get CIK from company ticker lookup
+    // Get company CIK from SEC company tickers
     const searchUrl = `https://www.sec.gov/files/company_tickers.json`;
     const searchResponse = await fetch(searchUrl, {
       headers: {
@@ -28,17 +28,19 @@ async function fetchSECData(ticker: string, companyName: string) {
     });
 
     if (!searchResponse.ok) {
-      console.log('SEC search failed, trying direct CIK approach');
+      console.log('SEC company tickers lookup failed');
       return null;
     }
 
     const companies = await searchResponse.json();
     let cik = null;
+    let companyData = null;
     
-    // Find CIK for the ticker
+    // Find CIK and basic company info
     for (const key in companies) {
       if (companies[key].ticker?.toLowerCase() === ticker.toLowerCase()) {
         cik = companies[key].cik_str.toString().padStart(10, '0');
+        companyData = companies[key];
         break;
       }
     }
@@ -48,24 +50,33 @@ async function fetchSECData(ticker: string, companyName: string) {
       return null;
     }
 
-    // Fetch recent SEC filings for real estate analysis
-    const realEstateAssets = await extractRealEstateFromSECFilings(cik, ticker);
-
-    // SEC EDGAR Company Facts API
-    const secUrl = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
+    // Fetch comprehensive company facts
+    const factsUrl = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
+    const submissionsUrl = `https://data.sec.gov/submissions/CIK${cik}.json`;
     
-    const response = await fetch(secUrl, {
-      headers: {
-        'User-Agent': 'VoltScout Corporate Intelligence (contact@voltscout.com)',
-        'Accept': 'application/json'
-      }
-    });
+    const [factsResponse, submissionsResponse] = await Promise.all([
+      fetch(factsUrl, {
+        headers: {
+          'User-Agent': 'VoltScout Corporate Intelligence (contact@voltscout.com)',
+          'Accept': 'application/json'
+        }
+      }),
+      fetch(submissionsUrl, {
+        headers: {
+          'User-Agent': 'VoltScout Corporate Intelligence (contact@voltscout.com)',
+          'Accept': 'application/json'
+        }
+      })
+    ]);
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log('SEC data fetched successfully');
+    let financialData = null;
+    let filingData = null;
+
+    // Process company facts (financial data)
+    if (factsResponse.ok) {
+      const data = await factsResponse.json();
+      console.log('SEC company facts fetched successfully');
       
-      // Extract key financial metrics
       const facts = data.facts?.['us-gaap'] || {};
       const revenues = facts.Revenues?.units?.USD || [];
       const assets = facts.Assets?.units?.USD || [];
@@ -73,36 +84,131 @@ async function fetchSECData(ticker: string, companyName: string) {
       const currentAssets = facts.AssetsCurrent?.units?.USD || [];
       const currentLiabilities = facts.LiabilitiesCurrent?.units?.USD || [];
       const propertyPlantEquipment = facts.PropertyPlantAndEquipmentNet?.units?.USD || [];
+      const longTermDebt = facts.LongTermDebt?.units?.USD || [];
+      const stockholdersEquity = facts.StockholdersEquity?.units?.USD || [];
+      const operatingIncome = facts.OperatingIncomeLoss?.units?.USD || [];
+      const netIncome = facts.NetIncomeLoss?.units?.USD || [];
       
-      const latestRevenue = revenues.length > 0 ? revenues[revenues.length - 1]?.val : null;
-      const latestAssets = assets.length > 0 ? assets[assets.length - 1]?.val : null;
-      const latestLiabilities = liabilities.length > 0 ? liabilities[liabilities.length - 1]?.val : null;
-      const latestCurrentAssets = currentAssets.length > 0 ? currentAssets[currentAssets.length - 1]?.val : null;
-      const latestCurrentLiabilities = currentLiabilities.length > 0 ? currentLiabilities[currentLiabilities.length - 1]?.val : null;
-      const latestPPE = propertyPlantEquipment.length > 0 ? propertyPlantEquipment[propertyPlantEquipment.length - 1]?.val : null;
+      // Get most recent annual data (10-K filings)
+      const getLatestAnnual = (data) => {
+        const annual = data.filter(item => item.form === '10-K' && item.fy);
+        return annual.length > 0 ? annual[annual.length - 1]?.val : null;
+      };
       
-      return {
-        ticker: data.cik,
-        industry: data.sic_description || null,
-        sector: data.category || null,
+      const latestRevenue = getLatestAnnual(revenues);
+      const latestAssets = getLatestAnnual(assets);
+      const latestLiabilities = getLatestAnnual(liabilities);
+      const latestCurrentAssets = getLatestAnnual(currentAssets);
+      const latestCurrentLiabilities = getLatestAnnual(currentLiabilities);
+      const latestPPE = getLatestAnnual(propertyPlantEquipment);
+      const latestLongTermDebt = getLatestAnnual(longTermDebt);
+      const latestEquity = getLatestAnnual(stockholdersEquity);
+      const latestOperatingIncome = getLatestAnnual(operatingIncome);
+      const latestNetIncome = getLatestAnnual(netIncome);
+      
+      financialData = {
         latest_revenue: latestRevenue,
         latest_assets: latestAssets,
         latest_liabilities: latestLiabilities,
         current_assets: latestCurrentAssets,
         current_liabilities: latestCurrentLiabilities,
         property_plant_equipment: latestPPE,
-        real_estate_assets: realEstateAssets,
-        debt_to_equity: latestLiabilities && latestAssets ? (latestLiabilities / (latestAssets - latestLiabilities)) : null,
+        long_term_debt: latestLongTermDebt,
+        stockholders_equity: latestEquity,
+        operating_income: latestOperatingIncome,
+        net_income: latestNetIncome,
+        // Calculate financial ratios
+        debt_to_equity: latestLongTermDebt && latestEquity ? (latestLongTermDebt / latestEquity) : null,
         current_ratio: latestCurrentAssets && latestCurrentLiabilities ? (latestCurrentAssets / latestCurrentLiabilities) : null,
-        source: 'SEC EDGAR'
+        profit_margin: latestNetIncome && latestRevenue ? (latestNetIncome / latestRevenue) : null,
+        return_on_assets: latestNetIncome && latestAssets ? (latestNetIncome / latestAssets) : null,
+        return_on_equity: latestNetIncome && latestEquity ? (latestNetIncome / latestEquity) : null
       };
-    } else {
-      console.log(`SEC API returned status: ${response.status}`);
     }
+
+    // Process recent filings and submissions
+    if (submissionsResponse.ok) {
+      const submissionData = await submissionsResponse.json();
+      console.log('SEC submissions data fetched successfully');
+      
+      const recent = submissionData.filings?.recent;
+      if (recent) {
+        const recentFilings = [];
+        const forms = recent.form || [];
+        const filingDates = recent.filingDate || [];
+        const accessionNumbers = recent.accessionNumber || [];
+        const primaryDocuments = recent.primaryDocument || [];
+        
+        // Get last 10 significant filings
+        for (let i = 0; i < Math.min(forms.length, 10); i++) {
+          if (['10-K', '10-Q', '8-K', 'DEF 14A', '13F-HR'].includes(forms[i])) {
+            recentFilings.push({
+              form: forms[i],
+              filing_date: filingDates[i],
+              accession_number: accessionNumbers[i],
+              primary_document: primaryDocuments[i],
+              filing_url: `https://www.sec.gov/Archives/edgar/data/${parseInt(cik)}/${accessionNumbers[i].replace(/-/g, '')}/${accessionNumbers[i]}-index.htm`
+            });
+          }
+        }
+        
+        filingData = {
+          recent_filings: recentFilings,
+          total_filings: forms.length,
+          company_name: submissionData.name,
+          sic: submissionData.sic,
+          sic_description: submissionData.sicDescription,
+          state_of_incorporation: submissionData.stateOfIncorporation,
+          business_address: submissionData.addresses?.business,
+          mailing_address: submissionData.addresses?.mailing
+        };
+      }
+    }
+
+    // Extract real estate assets from recent filings
+    const realEstateAssets = await extractRealEstateFromSECFilings(cik, ticker);
+    
+    return {
+      cik: cik,
+      ticker: ticker,
+      company_name: companyData?.title || companyName,
+      industry: filingData?.sic_description || null,
+      sector: determineSectorFromSIC(filingData?.sic) || null,
+      state_of_incorporation: filingData?.state_of_incorporation || null,
+      business_address: filingData?.business_address || null,
+      ...financialData,
+      real_estate_assets: realEstateAssets,
+      recent_filings: filingData?.recent_filings || [],
+      total_sec_filings: filingData?.total_filings || 0,
+      data_sources: {
+        sec: true,
+        edgar_facts: factsResponse.ok,
+        edgar_submissions: submissionsResponse.ok
+      },
+      source: 'SEC EDGAR Enhanced'
+    };
+    
   } catch (error) {
     console.error('SEC data fetch error:', error);
+    return null;
   }
-  return null;
+}
+
+// Helper function to determine sector from SIC code
+function determineSectorFromSIC(sic: number | null) {
+  if (!sic) return null;
+  
+  if (sic >= 1000 && sic <= 1499) return 'Mining and Oil & Gas';
+  if (sic >= 1500 && sic <= 1799) return 'Construction';
+  if (sic >= 2000 && sic <= 3999) return 'Manufacturing';
+  if (sic >= 4000 && sic <= 4999) return 'Transportation and Utilities';
+  if (sic >= 5000 && sic <= 5199) return 'Wholesale Trade';
+  if (sic >= 5200 && sic <= 5999) return 'Retail Trade';
+  if (sic >= 6000 && sic <= 6799) return 'Finance and Insurance';
+  if (sic >= 7000 && sic <= 8999) return 'Services';
+  if (sic >= 9000 && sic <= 9999) return 'Government';
+  
+  return 'Other';
 }
 
 // Extract real estate assets from SEC filings

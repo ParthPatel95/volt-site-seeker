@@ -235,7 +235,7 @@ export function CompanyDetailsModal({ company, open, onOpenChange }: CompanyDeta
             <CompanyRealEstateMap company={company} />
           </TabsContent>
 
-          <TabsContent value="intelligence" className="space-y-4">
+           <TabsContent value="intelligence" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
@@ -266,6 +266,41 @@ export function CompanyDetailsModal({ company, open, onOpenChange }: CompanyDeta
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center">
                     <FileText className="w-4 h-4 mr-2" />
+                    SEC Filings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(company as any).recent_filings && (company as any).recent_filings.length > 0 ? (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {(company as any).recent_filings.slice(0, 5).map((filing: any, index: number) => (
+                        <div key={index} className="border-l-2 border-blue-200 pl-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium">{filing.form}</p>
+                            <Badge variant="outline" className="text-xs">{filing.filing_date}</Badge>
+                          </div>
+                          {filing.filing_url && (
+                            <a 
+                              href={filing.filing_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              View Filing →
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No SEC filings available</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center">
+                    <FileText className="w-4 h-4 mr-2" />
                     Recent News
                   </CardTitle>
                 </CardHeader>
@@ -276,12 +311,45 @@ export function CompanyDetailsModal({ company, open, onOpenChange }: CompanyDeta
                         <div key={index} className="border-l-2 border-gray-200 pl-3">
                           <p className="text-xs font-medium">{news.title}</p>
                           <p className="text-xs text-muted-foreground">{news.source}</p>
+                          {news.url && (
+                            <a 
+                              href={news.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              Read more →
+                            </a>
+                          )}
                         </div>
                       ))}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">No recent news available</p>
                   )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    SEC Data Quality
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total SEC Filings</p>
+                    <p className="text-sm font-medium">{(company as any).total_sec_filings || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">CIK Number</p>
+                    <p className="text-sm font-medium font-mono">{(company as any).cik || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">State of Incorporation</p>
+                    <p className="text-sm font-medium">{(company as any).state_of_incorporation || 'N/A'}</p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
