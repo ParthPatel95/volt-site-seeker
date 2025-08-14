@@ -26,7 +26,11 @@ import {
   Activity,
   Bell,
   FileText,
-  Users
+  Users,
+  Mic,
+  ShieldCheck,
+  ArrowRightLeft,
+  Gavel
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -67,7 +71,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/reports', icon: BarChart3, label: 'Reports' },
     { path: '/app/users', icon: Users, label: 'User Management' },
     { path: '/app/realtime', icon: Activity, label: 'Real-Time Data' },
-    { path: '/app/integrations', icon: Settings, label: 'Integrations' }
+    { path: '/app/integrations', icon: Settings, label: 'Integrations' },
+    { path: '/app/energy-trading', icon: ArrowRightLeft, label: 'Energy Trading' },
+    { path: '/app/regulatory-intelligence', icon: Gavel, label: 'Regulatory Intel' },
+    { path: '/app/voice-search', icon: Mic, label: 'Voice Search' },
+    { path: '/app/risk-management', icon: ShieldCheck, label: 'Risk Management' },
+    { path: '/app/advanced-features', icon: Brain, label: 'Advanced Features' }
   ];
 
   const handleSignOut = async () => {

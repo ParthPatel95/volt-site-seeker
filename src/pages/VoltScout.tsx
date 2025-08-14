@@ -6,7 +6,12 @@ import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { AESOMarketComprehensive } from '@/components/AESOMarketComprehensive';
 import { ERCOTMarketComprehensive } from '@/components/ERCOTMarketComprehensive';
-import EnergyRates from '@/pages/EnergyRates';
+import EnergyRates from './EnergyRates';
+import EnergyTrading from './EnergyTrading';
+import RegulatoryIntelligence from './RegulatoryIntelligence';
+import VoiceSearch from './VoiceSearch';
+import RiskManagement from './RiskManagement';
+import AdvancedFeatures from './AdvancedFeatures';
 
 import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
 import { CorporateIntelligence } from '@/components/CorporateIntelligence';
@@ -101,9 +106,14 @@ const VoltScout = () => {
               <Route path="users" element={<UserManagementSystem />} />
               <Route path="realtime" element={<RealTimeMarketData />} />
               <Route path="integrations" element={<ExternalAPIIntegrations />} />
-              <Route path="settings" element={<AdminSettings />} />
-              {/* Redirect any unknown paths to dashboard */}
-              <Route path="*" element={<Navigate to="/app" replace />} />
+               <Route path="settings" element={<AdminSettings />} />
+               <Route path="energy-trading" element={<EnergyTrading />} />
+               <Route path="regulatory-intelligence" element={<RegulatoryIntelligence />} />
+               <Route path="voice-search" element={<VoiceSearch />} />
+               <Route path="risk-management" element={<RiskManagement />} />
+               <Route path="advanced-features" element={<AdvancedFeatures />} />
+               {/* Redirect any unknown paths to dashboard */}
+               <Route path="*" element={<Navigate to="/app" replace />} />
               </Routes>
             </div>
           </div>
