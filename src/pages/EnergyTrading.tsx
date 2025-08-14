@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +34,7 @@ export default function EnergyTrading() {
   const [activeRegion, setActiveRegion] = useState<'ERCOT' | 'AESO'>('ERCOT');
   const { toast } = useToast();
 
-  const fetchTradingSignals = async () => {
+  const fetchTradingSignals = useCallback(async () => {
     setLoading(true);
     try {
       // Get real-time energy data from working integration
@@ -114,7 +114,7 @@ export default function EnergyTrading() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeRegion]);
 
   const generatePredictions = async () => {
     setLoading(true);
@@ -198,7 +198,7 @@ export default function EnergyTrading() {
 
   useEffect(() => {
     fetchTradingSignals();
-  }, [activeRegion]);
+  }, [fetchTradingSignals]);
 
   const getSignalIcon = (type: string) => {
     switch (type) {
