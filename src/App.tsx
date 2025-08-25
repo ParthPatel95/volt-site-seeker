@@ -8,6 +8,7 @@ import { navItems } from "./nav-items";
 import { VoltMarket } from "./pages/VoltMarket";
 import { VoltMarketAuthProvider } from "./contexts/VoltMarketAuthContext";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import ComprehensiveTest from "./pages/ComprehensiveTest";
@@ -16,28 +17,30 @@ import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {navItems.map(({ to, page }) => (
-            <Route key={to} path={to} element={page} />
-          ))}
-          <Route path="/app/*" element={<VoltScout />} />
-          <Route path="/voltmarket/*" element={
-            <VoltMarketAuthProvider>
-              <VoltMarket />
-            </VoltMarketAuthProvider>
-          } />
-          <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {navItems.map(({ to, page }) => (
+              <Route key={to} path={to} element={page} />
+            ))}
+            <Route path="/app/*" element={<VoltScout />} />
+            <Route path="/voltmarket/*" element={
+              <VoltMarketAuthProvider>
+                <VoltMarket />
+              </VoltMarketAuthProvider>
+            } />
+            <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

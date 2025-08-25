@@ -53,7 +53,7 @@ export function ResponsivePageContainer({
     <ResponsiveContainer 
       maxWidth="full" 
       padding="md"
-      className={cn("min-h-screen", className)}
+      className={cn("min-h-screen safe-area-pt safe-area-pb", className)}
     >
       {children}
     </ResponsiveContainer>
@@ -68,7 +68,7 @@ export function ResponsiveSection({
   className?: string; 
 }) {
   return (
-    <section className={cn("space-y-4 sm:space-y-6", className)}>
+    <section className={cn("space-y-4 sm:space-y-6 px-4 sm:px-6 lg:px-8", className)}>
       {children}
     </section>
   );

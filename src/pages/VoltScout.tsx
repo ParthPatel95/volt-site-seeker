@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { AuthWrapper } from '@/components/AuthWrapper';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
@@ -74,9 +75,7 @@ const VoltScout = () => {
                 className="p-2 sm:p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors touch-target min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Open navigation menu"
               >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
           )}

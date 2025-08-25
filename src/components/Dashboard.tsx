@@ -80,12 +80,12 @@ export const Dashboard = () => {
     <ResponsivePageContainer className="min-h-screen bg-gradient-to-br from-background to-watt-light/10">
       <div className="space-y-8 animate-fade-in py-6">
         {/* Header with Wattbytes Branding */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8">
-          <div className="space-y-3">
-            <h1 className="text-4xl sm:text-5xl font-bold text-watt-primary leading-tight">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="space-y-2 sm:space-y-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-watt-primary leading-tight">
               WattBytes Energy Dashboard
             </h1>
-            <p className="text-muted-foreground flex items-center gap-2 text-base">
+            <p className="text-muted-foreground flex items-center gap-2 text-sm sm:text-base">
               <Clock className="w-4 h-4" />
               Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
@@ -94,15 +94,15 @@ export const Dashboard = () => {
             onClick={refreshData}
             disabled={isLoading}
             size="lg"
-            className="bg-watt-primary hover:bg-watt-primary/90 text-white shadow-watt-glow transition-all duration-300 hover:shadow-lg hover:scale-105 self-start sm:self-center"
+            className="bg-watt-primary hover:bg-watt-primary/90 text-white shadow-watt-glow transition-all duration-300 hover:shadow-lg hover:scale-105 self-start sm:self-center w-full sm:w-auto"
           >
-            <RefreshCw className={`w-5 h-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 sm:w-5 h-4 sm:h-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? 'Refreshing...' : 'Refresh Data'}
           </Button>
         </div>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* ERCOT Price Card */}
           <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-primary/5">
             <CardContent className="p-6">

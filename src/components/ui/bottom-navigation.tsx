@@ -22,7 +22,7 @@ export function BottomNavigation({ items, className }: BottomNavigationProps) {
     <div className={cn(
       "fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border",
       "flex items-center justify-around px-1 py-1 safe-area-pb",
-      "md:hidden shadow-lg", // Only show on mobile
+      "lg:hidden shadow-lg", // Only show on mobile and tablet
       className
     )}>
       {items.map((item) => (

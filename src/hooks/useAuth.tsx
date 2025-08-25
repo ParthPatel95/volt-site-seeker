@@ -40,25 +40,26 @@ export function useAuth() {
   useEffect(() => {
     let isMounted = true;
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!isMounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await checkApproval(session.user.id);
-      } else {
-        setIsApproved(false);
-      }
-      
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+    // Get initial session with error handling
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.warn('Session error:', error.message);
+          // Clear session if it's expired
+          if (error.message.includes('session_expired') || error.message.includes('Invalid Refresh Token')) {
+            await supabase.auth.signOut();
+            if (isMounted) {
+              setSession(null);
+              setUser(null);
+              setIsApproved(false);
+              setLoading(false);
+            }
+            return;
+          }
+        }
+        
         if (!isMounted) return;
         
         setSession(session);
@@ -66,6 +67,59 @@ export function useAuth() {
         
         if (session?.user) {
           await checkApproval(session.user.id);
+        } else {
+          setIsApproved(false);
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        if (isMounted) {
+          setSession(null);
+          setUser(null);
+          setIsApproved(false);
+          setLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Listen for auth changes with error handling
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
+        
+        // Handle sign out events explicitly
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setIsApproved(false);
+          setLoading(false);
+          return;
+        }
+        
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.warn('Token refresh failed, signing out');
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setIsApproved(false);
+          setLoading(false);
+          return;
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          try {
+            await checkApproval(session.user.id);
+          } catch (err) {
+            console.error('Error checking approval:', err);
+            setIsApproved(false);
+          }
         } else {
           setIsApproved(false);
         }

@@ -47,12 +47,12 @@ export const HeroSection = () => {
         </div>
         
         {/* Enhanced main heading with text shadow and glow effects */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 leading-tight">
+        <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 leading-tight">
           <span className="text-white drop-shadow-2xl">Turning </span>
           <span 
             className="text-electric-blue drop-shadow-2xl relative inline-block"
             style={{
-              textShadow: '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)'
+              textShadow: '0 0 20px hsl(var(--watt-primary) / 0.5), 0 0 40px hsl(var(--watt-primary) / 0.3)'
             }}
           >
             Power
@@ -62,7 +62,7 @@ export const HeroSection = () => {
           <span 
             className="text-neon-green drop-shadow-2xl relative inline-block"
             style={{
-              textShadow: '0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3)'
+              textShadow: '0 0 20px hsl(var(--watt-success) / 0.5), 0 0 40px hsl(var(--watt-success) / 0.3)'
             }}
           >
             Profit
