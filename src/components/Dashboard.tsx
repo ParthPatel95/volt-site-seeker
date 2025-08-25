@@ -21,59 +21,38 @@ import {
   ArrowDownRight,
   Clock
 } from 'lucide-react';
-import { useERCOTData } from '@/hooks/useERCOTData';
-import { useAESOData } from '@/hooks/useAESOData';
+import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
 import { ResponsivePageContainer, ResponsiveSection } from '@/components/ResponsiveContainer';
 import { DataSourceBadge } from '@/components/energy/DataSourceBadge';
 
 export const Dashboard = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
-  // Live data hooks with refetch functionality
   const { 
-    pricing: ercotPricing, 
-    loadData: ercotLoad, 
-    generationMix: ercotGeneration,
-    loading: ercotLoading,
-    refetch: refetchERCOT
-  } = useERCOTData();
-
-  const { 
-    pricing: aesoPricing, 
-    loadData: aesoLoad, 
-    generationMix: aesoGeneration,
-    loading: aesoLoading,
-    refetch: refetchAESO
-  } = useAESOData();
-  
-  const isLoading = ercotLoading || aesoLoading;
+    ercotPricing, 
+    ercotLoad, 
+    ercotGeneration,
+    aesoPricing, 
+    aesoLoad, 
+    aesoGeneration,
+    isLoading,
+    marketMetrics,
+    refreshData: refreshDataHook
+  } = useOptimizedDashboard();
 
   const refreshData = async () => {
     setLastUpdated(new Date());
-    await Promise.all([refetchERCOT(), refetchAESO()]);
+    await refreshDataHook();
   };
 
-  // Calculate market insights from real data
-  const getMarketTrend = (current: number, average: number) => {
-    const diff = ((current - average) / average) * 100;
+  // Get market trend with icon for UI
+  const getMarketTrendWithIcon = (trend: any) => {
+    if (!trend) return null;
     return {
-      direction: diff > 0 ? 'up' : 'down',
-      percentage: Math.abs(diff).toFixed(1),
-      color: diff > 0 ? 'text-red-600' : 'text-green-600',
-      icon: diff > 0 ? ArrowUpRight : ArrowDownRight
+      ...trend,
+      color: trend.isPositive ? 'text-watt-success' : 'text-watt-warning',
+      icon: trend.isPositive ? ArrowDownRight : ArrowUpRight
     };
-  };
-
-  const getTotalGeneration = () => {
-    const ercotTotal = ercotGeneration?.total_generation_mw || 0;
-    const aesoTotal = aesoGeneration?.total_generation_mw || 0;
-    return (ercotTotal + aesoTotal) / 1000; // Convert to GW
-  };
-
-  const getAverageRenewable = () => {
-    const ercotRenewable = ercotGeneration?.renewable_percentage || 0;
-    const aesoRenewable = aesoGeneration?.renewable_percentage || 0;
-    return ((ercotRenewable + aesoRenewable) / 2).toFixed(1);
   };
 
   if (isLoading) {
@@ -136,22 +115,23 @@ export const Dashboard = () => {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">per MWh</p>
-                  {ercotPricing && (
-                    <div className="flex items-center gap-1 mt-2">
-                      {(() => {
-                        const trend = getMarketTrend(ercotPricing.current_price, ercotPricing.average_price);
-                        const Icon = trend.icon;
-                        return (
-                          <>
-                            <Icon className={`w-3 h-3 ${trend.direction === 'up' ? 'text-watt-warning' : 'text-watt-success'}`} />
-                            <span className={`text-xs font-medium ${trend.direction === 'up' ? 'text-watt-warning' : 'text-watt-success'}`}>
-                              {trend.percentage}% vs avg
-                            </span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
+                   {marketMetrics.ercotTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.ercotTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
                 </div>
                 <div className="p-3 bg-watt-primary/10 rounded-xl group-hover:bg-watt-primary/20 transition-colors">
                   <Zap className="w-6 h-6 text-watt-primary" />
@@ -172,22 +152,23 @@ export const Dashboard = () => {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">per MWh</p>
-                  {aesoPricing && (
-                    <div className="flex items-center gap-1 mt-2">
-                      {(() => {
-                        const trend = getMarketTrend(aesoPricing.current_price, aesoPricing.average_price);
-                        const Icon = trend.icon;
-                        return (
-                          <>
-                            <Icon className={`w-3 h-3 ${trend.direction === 'up' ? 'text-watt-warning' : 'text-watt-success'}`} />
-                            <span className={`text-xs font-medium ${trend.direction === 'up' ? 'text-watt-warning' : 'text-watt-success'}`}>
-                              {trend.percentage}% vs avg
-                            </span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
+                   {marketMetrics.aesoTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.aesoTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
                 </div>
                 <div className="p-3 bg-watt-secondary/10 rounded-xl group-hover:bg-watt-secondary/20 transition-colors">
                   <Globe className="w-6 h-6 text-watt-secondary" />
@@ -202,11 +183,11 @@ export const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">Total Generation</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                    {(ercotGeneration && aesoGeneration) ? 
-                      `${getTotalGeneration().toFixed(1)} GW` : 
-                      <span className="text-muted-foreground">Loading...</span>
-                    }
+                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                     {marketMetrics.totalGeneration > 0 ? 
+                       `${marketMetrics.totalGeneration.toFixed(1)} GW` : 
+                       <span className="text-muted-foreground">Loading...</span>
+                     }
                   </p>
                   <p className="text-xs text-muted-foreground">Combined regions</p>
                 </div>
@@ -223,11 +204,11 @@ export const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">Renewable Mix</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                    {(ercotGeneration && aesoGeneration) ? 
-                      `${getAverageRenewable()}%` : 
-                      <span className="text-muted-foreground">Loading...</span>
-                    }
+                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                     {marketMetrics.averageRenewable !== '0.0' ? 
+                       `${marketMetrics.averageRenewable}%` : 
+                       <span className="text-muted-foreground">Loading...</span>
+                     }
                   </p>
                   <p className="text-xs text-muted-foreground">Average renewable</p>
                 </div>
@@ -248,9 +229,9 @@ export const Dashboard = () => {
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <MapPin className="w-6 h-6 text-watt-primary" />
                   <span className="text-watt-primary font-bold">ERCOT (Texas)</span>
-                  {ercotLoading && (
-                    <div className="w-5 h-5 border-2 border-watt-primary border-t-transparent rounded-full animate-spin" />
-                  )}
+                   {isLoading && (
+                     <div className="w-5 h-5 border-2 border-watt-primary border-t-transparent rounded-full animate-spin" />
+                   )}
                   <Badge 
                     variant={ercotPricing?.market_conditions === 'normal' ? 'default' : 'secondary'} 
                     className="ml-auto bg-watt-primary/10 text-watt-primary border-watt-primary/20"
@@ -337,9 +318,9 @@ export const Dashboard = () => {
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <MapPin className="w-6 h-6 text-watt-secondary" />
                   <span className="text-watt-secondary font-bold">AESO (Alberta)</span>
-                  {aesoLoading && (
-                    <div className="w-5 h-5 border-2 border-watt-secondary border-t-transparent rounded-full animate-spin" />
-                  )}
+                   {isLoading && (
+                     <div className="w-5 h-5 border-2 border-watt-secondary border-t-transparent rounded-full animate-spin" />
+                   )}
                   <Badge 
                     variant={aesoPricing?.market_conditions === 'low' ? 'default' : 'secondary'} 
                     className="ml-auto bg-watt-secondary/10 text-watt-secondary border-watt-secondary/20"
@@ -455,11 +436,11 @@ export const Dashboard = () => {
                 <p className="text-sm text-muted-foreground mt-1">Avg Price (USD/MWh)</p>
               </div>
               <div className="text-center p-6 bg-gradient-to-br from-watt-success/10 to-watt-success/5 rounded-xl border border-watt-success/20">
-                <p className="text-2xl font-bold text-watt-success">
-                  {(ercotGeneration && aesoGeneration) ? 
-                    `${getAverageRenewable()}%` : 
-                    'Loading...'
-                  }
+                 <p className="text-2xl font-bold text-watt-success">
+                   {marketMetrics.averageRenewable !== '0.0' ? 
+                     `${marketMetrics.averageRenewable}%` : 
+                     'Loading...'
+                   }
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">Renewable Generation</p>
               </div>

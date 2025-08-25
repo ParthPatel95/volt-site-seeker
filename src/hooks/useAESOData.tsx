@@ -119,7 +119,7 @@ export const useAESOData = () => {
 
     fetchData();
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = window.setInterval(fetchData, 300000); // 5 minutes
+    intervalRef.current = window.setInterval(fetchData, 600000); // 10 minutes
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
