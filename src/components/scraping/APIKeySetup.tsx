@@ -1,13 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Key, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export function APIKeySetup() {
+  const { toast } = useToast();
   const [apiKeys, setApiKeys] = useState({
     google_places: '',
     yelp: ''
@@ -16,6 +19,31 @@ export function APIKeySetup() {
     google_places: false,
     yelp: false
   });
+  const [loading, setLoading] = useState(false);
+
+  // Load existing API keys on component mount
+  useEffect(() => {
+    loadExistingKeys();
+  }, []);
+
+  const loadExistingKeys = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      for (const service of ['google_places', 'yelp']) {
+        const { data } = await supabase.functions.invoke('api-key-management', {
+          body: { action: 'retrieve', serviceName: service }
+        });
+
+        if (data?.success) {
+          setSaved(prev => ({ ...prev, [service]: true }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+    }
+  };
 
   const apiServices = [
     {
@@ -46,13 +74,50 @@ export function APIKeySetup() {
     }
   ];
 
-  const handleSaveKey = (service: string) => {
-    // In a real implementation, this would securely store the API key
-    // For now, we'll just mark it as saved
-    setSaved(prev => ({ ...prev, [service]: true }));
-    
-    // Store in localStorage for demo purposes
-    localStorage.setItem(`api_key_${service}`, apiKeys[service as keyof typeof apiKeys]);
+  const handleSaveKey = async (service: string) => {
+    const apiKey = apiKeys[service as keyof typeof apiKeys];
+    if (!apiKey) return;
+
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to save API keys securely.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data } = await supabase.functions.invoke('api-key-management', {
+        body: { 
+          action: 'store', 
+          serviceName: service, 
+          apiKey: apiKey 
+        }
+      });
+
+      if (data?.success) {
+        setSaved(prev => ({ ...prev, [service]: true }));
+        setApiKeys(prev => ({ ...prev, [service]: '' })); // Clear input for security
+        toast({
+          title: "API Key Saved",
+          description: "Your API key has been stored securely.",
+        });
+      } else {
+        throw new Error(data?.error || 'Failed to save API key');
+      }
+    } catch (error: any) {
+      console.error('Error saving API key:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save API key. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyChange = (service: string, value: string) => {
@@ -116,10 +181,10 @@ export function APIKeySetup() {
                 />
                 <Button
                   onClick={() => handleSaveKey(service.key)}
-                  disabled={!apiKeys[service.key as keyof typeof apiKeys] || saved[service.key as keyof typeof saved]}
+                  disabled={loading || !apiKeys[service.key as keyof typeof apiKeys] || saved[service.key as keyof typeof saved]}
                   variant={saved[service.key as keyof typeof saved] ? "outline" : "default"}
                 >
-                  {saved[service.key as keyof typeof saved] ? 'Saved' : 'Save'}
+                  {loading ? 'Saving...' : saved[service.key as keyof typeof saved] ? 'Saved' : 'Save'}
                 </Button>
               </div>
             </div>

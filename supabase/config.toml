@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.energy-data-integration]
 verify_jwt = false
+
+[functions.api-key-management]
+verify_jwt = true
