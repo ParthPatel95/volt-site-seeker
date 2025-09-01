@@ -107,25 +107,43 @@ export function useEnergyRateEstimator() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
-      if (data?.pdfData) {
-        // Create and download PDF file
-        const blob = new Blob([atob(data.pdfData)], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = data.filename || `energy-rate-analysis-${new Date().toISOString().slice(0, 10)}.html`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+      console.log('PDF response data:', data);
 
-        toast({
-          title: "PDF Downloaded",
-          description: "Energy rate report downloaded successfully"
-        });
+      if (data?.success && data?.pdfData) {
+        try {
+          // Decode base64 to get HTML content
+          const htmlContent = atob(data.pdfData);
+          const blob = new Blob([htmlContent], { type: 'text/html' });
+          const url = window.URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = data.filename || `energy-rate-analysis-${new Date().toISOString().slice(0, 10)}.html`;
+          document.body.appendChild(a);
+          a.click();
+          
+          // Clean up
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          }, 100);
+
+          toast({
+            title: "Report Downloaded",
+            description: "Energy rate report saved as HTML file (can be printed to PDF)"
+          });
+        } catch (downloadError) {
+          console.error('Download error:', downloadError);
+          throw new Error('Failed to process download');
+        }
+      } else {
+        throw new Error('No PDF data received from server');
       }
 
     } catch (error: any) {
