@@ -27,6 +27,7 @@ import {
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useAESOEnhancedData } from '@/hooks/useAESOEnhancedData';
+import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import { AESOMarketAnalyticsPanel } from './intelligence/AESOMarketAnalyticsPanel';
 import { AESOForecastPanel } from './intelligence/AESOForecastPanel';
 import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
@@ -56,9 +57,18 @@ export function AESOMarketComprehensive() {
     clearAllAlerts
   } = useAESOEnhancedData();
 
+  // AESO Market data hook for real market data
+  const {
+    operatingReserve,
+    interchange,
+    energyStorage,
+    loading: marketLoading,
+    refetch: refetchMarket
+  } = useAESOMarketData();
+
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
-  const loading = basicLoading || enhancedLoading;
+  const loading = basicLoading || enhancedLoading || marketLoading;
 
   const formatPrice = (cadPrice: number) => {
     if (!exchangeRate || !cadPrice) return { cad: 'Loading...', usd: 'Loading...' };
@@ -72,99 +82,29 @@ export function AESOMarketComprehensive() {
   const handleRefreshAll = () => {
     refetchBasic();
     refetchEnhanced();
+    refetchMarket();
   };
 
   // Use real market data when available
   const currentPrice = pricing?.current_price || 0;
   const priceTimestamp = pricing?.timestamp;
 
-  // Generate fallback data based on current real data
-  const getOperatingReserveData = () => {
-    const baseReserve = loadData?.current_demand_mw ? loadData.current_demand_mw * 0.12 : 1250;
-    return {
-      total_reserve_mw: Math.round(baseReserve),
-      spinning_reserve_mw: Math.round(baseReserve * 0.6),
-      supplemental_reserve_mw: Math.round(baseReserve * 0.4),
-      timestamp: new Date().toISOString()
-    };
-  };
-
-  const getInterchangeData = () => {
-    return {
-      alberta_british_columbia: -150 + Math.floor(Math.random() * 300),
-      alberta_saskatchewan: 75 + Math.floor(Math.random() * 100),
-      alberta_montana: -25 + Math.floor(Math.random() * 50),
-      total_net_interchange: -100 + Math.floor(Math.random() * 200),
-      timestamp: new Date().toISOString()
-    };
-  };
-
-  const getEnergyStorageData = () => {
-    // Base storage data on renewables generation
-    const renewableMW = (generationMix?.wind_mw || 0) + (generationMix?.solar_mw || 0) + (generationMix?.hydro_mw || 0);
-    const storageActivity = Math.round(renewableMW * 0.05); // 5% of renewable generation
-    return {
-      charging_mw: Math.max(0, storageActivity - 20),
-      discharging_mw: Math.max(0, 45 - storageActivity),
-      net_storage_mw: storageActivity - 20,
-      state_of_charge_percent: 65 + Math.floor(Math.random() * 30),
-      timestamp: new Date().toISOString()
-    };
-  };
-
-  const operatingReserveData = getOperatingReserveData();
-  const interchangeData = getInterchangeData();
-  const energyStorageData = getEnergyStorageData();
-
   // Intelligence helper functions
   const getMarketStressValue = () => {
     if (marketAnalytics?.market_stress_score) {
       return `${marketAnalytics.market_stress_score}/100`;
     }
-    return '60/100';
+    return null;
   };
 
   const getMarketStressLevel = () => {
-    const score = marketAnalytics?.market_stress_score || 55;
-    if (score > 70) return 'High Stress';
-    if (score > 40) return 'Moderate';
-    return 'Low Stress';
-  };
-
-  const getPricePredictionValue = () => {
-    if (marketAnalytics?.price_prediction?.next_hour_prediction) {
-      return `$${marketAnalytics.price_prediction.next_hour_prediction.toFixed(0)}`;
+    if (marketAnalytics?.market_stress_score) {
+      const score = marketAnalytics.market_stress_score;
+      if (score > 70) return 'High Stress';
+      if (score > 40) return 'Moderate';
+      return 'Low Stress';
     }
-    return '$46';
-  };
-
-  const getPricePredictionConfidence = () => {
-    if (marketAnalytics?.price_prediction?.confidence) {
-      return `${marketAnalytics.price_prediction.confidence}% confidence`;
-    }
-    return '85% confidence';
-  };
-
-  const getAssetOutagesValue = () => {
-    if (assetOutages?.total_outage_capacity_mw) {
-      return `${(assetOutages.total_outage_capacity_mw / 1000).toFixed(1)} GW`;
-    }
-    return '1.0 GW';
-  };
-
-  const getAssetOutagesCount = () => {
-    if (assetOutages?.total_outages) {
-      return `${assetOutages.total_outages} outages`;
-    }
-    return '6 outages';
-  };
-
-  const getInvestmentScoreValue = () => {
-    if (marketAnalytics?.investment_opportunities?.length) {
-      const highPriorityCount = marketAnalytics.investment_opportunities.filter(op => op.priority === 'high').length;
-      return `${highPriorityCount}/5`;
-    }
-    return '2/5';
+    return null;
   };
 
   return (
@@ -302,34 +242,34 @@ export function AESOMarketComprehensive() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2 min-w-0">
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Current Demand</p>
-                      <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                        {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '10.8'} GW
-                      </p>
-                      <p className="text-xs text-muted-foreground break-all">
-                        {loadData?.current_demand_mw?.toFixed(0) || '10,800'} MW
-                      </p>
+                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Current Demand</p>
+                       <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
+                         {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '—'} GW
+                       </p>
+                       <p className="text-xs text-muted-foreground break-all">
+                         {loadData?.current_demand_mw?.toFixed(0) || '—'} MW
+                       </p>
                     </div>
                     <div className="space-y-2 min-w-0">
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Peak Forecast</p>
-                      <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
-                        {loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '11.5'} GW
-                      </p>
-                      <p className="text-xs text-muted-foreground break-all">
-                        {loadData?.peak_forecast_mw?.toFixed(0) || '11,500'} MW
-                      </p>
+                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Peak Forecast</p>
+                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
+                         {loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '—'} GW
+                       </p>
+                       <p className="text-xs text-muted-foreground break-all">
+                         {loadData?.peak_forecast_mw?.toFixed(0) || '—'} MW
+                       </p>
                     </div>
                     <div className="space-y-2 min-w-0">
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Capacity Margin</p>
-                      <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
-                        {loadData?.capacity_margin?.toFixed(1) || '15.2'}%
-                      </p>
+                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Capacity Margin</p>
+                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
+                         {loadData?.capacity_margin?.toFixed(1) || '—'}%
+                       </p>
                     </div>
                     <div className="space-y-2 min-w-0">
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Reserve Margin</p>
-                      <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
-                        {loadData?.reserve_margin?.toFixed(1) || '12.8'}%
-                      </p>
+                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Reserve Margin</p>
+                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
+                         {loadData?.reserve_margin?.toFixed(1) || '—'}%
+                       </p>
                     </div>
                   </div>
                 </CardContent>
@@ -339,119 +279,125 @@ export function AESOMarketComprehensive() {
             {/* Additional Market Data */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Operating Reserve */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center min-w-0">
-                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-orange-600 flex-shrink-0" />
-                      <span className="text-sm sm:text-base truncate">Operating Reserve</span>
+              {operatingReserve && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center min-w-0">
+                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-orange-600 flex-shrink-0" />
+                        <span className="text-sm sm:text-base truncate">Operating Reserve</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                        Updated: {new Date(operatingReserve.timestamp).toLocaleTimeString()}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Total Reserve</span>
+                        <span className="font-semibold text-sm break-all">{operatingReserve.total_reserve_mw?.toFixed(0)} MW</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Spinning Reserve</span>
+                        <span className="font-semibold text-sm break-all">{operatingReserve.spinning_reserve_mw?.toFixed(0)} MW</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Supplemental Reserve</span>
+                        <span className="font-semibold text-sm break-all">{operatingReserve.supplemental_reserve_mw?.toFixed(0)} MW</span>
+                      </div>
                     </div>
-                    <Badge variant="outline" className="text-xs self-start sm:self-auto">
-                      Updated: {new Date(operatingReserveData.timestamp).toLocaleTimeString()}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">Total Reserve</span>
-                      <span className="font-semibold text-sm break-all">{operatingReserveData.total_reserve_mw?.toFixed(0)} MW</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">Spinning Reserve</span>
-                      <span className="font-semibold text-sm break-all">{operatingReserveData.spinning_reserve_mw?.toFixed(0)} MW</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">Supplemental Reserve</span>
-                      <span className="font-semibold text-sm break-all">{operatingReserveData.supplemental_reserve_mw?.toFixed(0)} MW</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Interchange */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center min-w-0">
-                      <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm sm:text-base truncate">Interchange</span>
-                    </div>
-                    <Badge variant="outline" className="text-xs self-start sm:self-auto">
-                      Updated: {new Date(interchangeData.timestamp).toLocaleTimeString()}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-BC</span>
-                      <span className={`font-semibold text-sm break-all ${interchangeData.alberta_british_columbia > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {interchangeData.alberta_british_columbia > 0 ? '+' : ''}{interchangeData.alberta_british_columbia} MW
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-SK</span>
-                      <span className={`font-semibold text-sm break-all ${interchangeData.alberta_saskatchewan > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {interchangeData.alberta_saskatchewan > 0 ? '+' : ''}{interchangeData.alberta_saskatchewan} MW
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-MT</span>
-                      <span className={`font-semibold text-sm break-all ${interchangeData.alberta_montana > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {interchangeData.alberta_montana > 0 ? '+' : ''}{interchangeData.alberta_montana} MW
-                      </span>
-                    </div>
-                    <div className="border-t pt-2">
+              {interchange && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center min-w-0">
+                        <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
+                        <span className="text-sm sm:text-base truncate">Interchange</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                        Updated: {new Date(interchange.timestamp).toLocaleTimeString()}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm font-medium truncate">Net Total</span>
-                        <span className={`font-bold text-sm break-all ${interchangeData.total_net_interchange > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {interchangeData.total_net_interchange > 0 ? '+' : ''}{interchangeData.total_net_interchange} MW
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-BC</span>
+                        <span className={`font-semibold text-sm break-all ${interchange.alberta_british_columbia > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {interchange.alberta_british_columbia > 0 ? '+' : ''}{interchange.alberta_british_columbia} MW
                         </span>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Energy Storage */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center min-w-0">
-                      <Battery className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600 flex-shrink-0" />
-                      <span className="text-sm sm:text-base truncate">Energy Storage</span>
-                    </div>
-                    <Badge variant="outline" className="text-xs self-start sm:self-auto">
-                      Updated: {new Date(energyStorageData.timestamp).toLocaleTimeString()}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">Charging</span>
-                      <span className="font-semibold text-sm text-green-600 break-all">{energyStorageData.charging_mw} MW</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">Discharging</span>
-                      <span className="font-semibold text-sm text-blue-600 break-all">{energyStorageData.discharging_mw} MW</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-muted-foreground truncate">Net Storage</span>
-                      <span className={`font-semibold text-sm break-all ${energyStorageData.net_storage_mw > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {energyStorageData.net_storage_mw > 0 ? '+' : ''}{energyStorageData.net_storage_mw} MW
-                      </span>
-                    </div>
-                    <div className="border-t pt-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm font-medium truncate">State of Charge</span>
-                        <span className="font-bold text-sm break-all">{energyStorageData.state_of_charge_percent}%</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-SK</span>
+                        <span className={`font-semibold text-sm break-all ${interchange.alberta_saskatchewan > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {interchange.alberta_saskatchewan > 0 ? '+' : ''}{interchange.alberta_saskatchewan} MW
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-MT</span>
+                        <span className={`font-semibold text-sm break-all ${interchange.alberta_montana > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {interchange.alberta_montana > 0 ? '+' : ''}{interchange.alberta_montana} MW
+                        </span>
+                      </div>
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs sm:text-sm font-medium truncate">Net Total</span>
+                          <span className={`font-bold text-sm break-all ${interchange.total_net_interchange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {interchange.total_net_interchange > 0 ? '+' : ''}{interchange.total_net_interchange} MW
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Energy Storage */}
+              {energyStorage && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center min-w-0">
+                        <Battery className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600 flex-shrink-0" />
+                        <span className="text-sm sm:text-base truncate">Energy Storage</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                        Updated: {new Date(energyStorage.timestamp).toLocaleTimeString()}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Charging</span>
+                        <span className="font-semibold text-sm text-green-600 break-all">{energyStorage.charging_mw} MW</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Discharging</span>
+                        <span className="font-semibold text-sm text-blue-600 break-all">{energyStorage.discharging_mw} MW</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Net Storage</span>
+                        <span className={`font-semibold text-sm break-all ${energyStorage.net_storage_mw > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {energyStorage.net_storage_mw > 0 ? '+' : ''}{energyStorage.net_storage_mw} MW
+                        </span>
+                      </div>
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs sm:text-sm font-medium truncate">State of Charge</span>
+                          <span className="font-bold text-sm break-all">{energyStorage.state_of_charge_percent}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
@@ -626,7 +572,7 @@ export function AESOMarketComprehensive() {
             </CardHeader>
             <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
               <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : '10.8 GW'}
+                {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : 'Loading...'}
               </div>
               <p className="text-xs text-green-200 break-words leading-tight mt-1">Current demand</p>
             </CardContent>
@@ -639,26 +585,28 @@ export function AESOMarketComprehensive() {
             </CardHeader>
             <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
               <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
-                {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : '32.5%'}
+                {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : 'Loading...'}
               </div>
               <p className="text-xs text-purple-200 break-words leading-tight mt-1">Of total generation</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-orange-100 truncate pr-2">Market Stress</CardTitle>
-              <Brain className="h-3 w-3 sm:h-4 sm:w-4 text-orange-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
-                {getMarketStressValue()}
-              </div>
-              <p className="text-xs text-orange-200 break-words leading-tight mt-1">
-                {getMarketStressLevel()}
-              </p>
-            </CardContent>
-          </Card>
+          {marketAnalytics?.market_stress_score && (
+            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="text-xs sm:text-sm font-medium text-orange-100 truncate pr-2">Market Stress</CardTitle>
+                <Brain className="h-3 w-3 sm:h-4 sm:w-4 text-orange-200 flex-shrink-0" />
+              </CardHeader>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
+                  {getMarketStressValue()}
+                </div>
+                <p className="text-xs text-orange-200 break-words leading-tight mt-1">
+                  {getMarketStressLevel()}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
