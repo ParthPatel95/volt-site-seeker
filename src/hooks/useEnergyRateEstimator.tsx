@@ -97,7 +97,9 @@ export function useEnergyRateEstimator() {
 
   const downloadPDF = async (results: EnergyRateResults, input: EnergyRateInput) => {
     try {
-      console.log('Generating PDF download...');
+      console.log('PDF download clicked - starting PDF generation...');
+      console.log('Results data:', results);
+      console.log('Input data:', input);
       
       const { data, error } = await supabase.functions.invoke('energy-rate-estimator', {
         body: {
@@ -106,6 +108,9 @@ export function useEnergyRateEstimator() {
           input
         }
       });
+      
+      console.log('Edge function response - data:', data);
+      console.log('Edge function response - error:', error);
 
       if (error) {
         console.error('Supabase function error:', error);
