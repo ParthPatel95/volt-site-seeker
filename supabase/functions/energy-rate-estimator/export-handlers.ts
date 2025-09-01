@@ -1,6 +1,11 @@
 
 import { EnergyRateResults, EnergyRateInput } from './types.ts';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 export async function exportCSV(results: EnergyRateResults, input: EnergyRateInput): Promise<Response> {
   console.log('Exporting detailed CSV with real rate breakdown...');
   
@@ -37,7 +42,10 @@ export async function exportCSV(results: EnergyRateResults, input: EnergyRateInp
     csvData
   }), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      ...corsHeaders,
+      'Content-Type': 'application/json' 
+    },
   });
 }
 
@@ -357,11 +365,18 @@ export async function exportPDF(results: EnergyRateResults, input: EnergyRateInp
   const blob = new Blob([pdfContent], { type: 'text/html' });
   const pdfUrl = `data:text/html;charset=utf-8,${encodeURIComponent(pdfContent)}`;
   
+  // Convert HTML to base64 for download
+  const base64 = btoa(unescape(encodeURIComponent(pdfContent)));
+  
   return new Response(JSON.stringify({
     success: true,
-    pdfUrl
+    pdfData: base64,
+    filename: `energy-rate-analysis-${new Date().toISOString().slice(0, 10)}.html`
   }), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      ...corsHeaders,
+      'Content-Type': 'application/json' 
+    },
   });
 }

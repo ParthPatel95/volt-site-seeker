@@ -1879,6 +1879,36 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_energy_calculations: {
+        Row: {
+          calculation_name: string
+          created_at: string
+          id: string
+          input_data: Json
+          results_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calculation_name: string
+          created_at?: string
+          id?: string
+          input_data: Json
+          results_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calculation_name?: string
+          created_at?: string
+          id?: string
+          input_data?: Json
+          results_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scraped_properties: {
         Row: {
           address: string

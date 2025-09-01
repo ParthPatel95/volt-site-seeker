@@ -1,6 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { EnergyRateEstimator } from '@/components/energy/EnergyRateEstimator';
+import { SavedCalculationsDashboard } from '@/components/energy/SavedCalculationsDashboard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function EnergyRates() {
   return (
@@ -16,7 +18,20 @@ export default function EnergyRates() {
           </p>
         </div>
         
-        <EnergyRateEstimator />
+        <Tabs defaultValue="calculator" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="calculator">New Calculation</TabsTrigger>
+            <TabsTrigger value="dashboard">Saved Calculations</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="calculator" className="mt-6">
+            <EnergyRateEstimator />
+          </TabsContent>
+          
+          <TabsContent value="dashboard" className="mt-6">
+            <SavedCalculationsDashboard />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

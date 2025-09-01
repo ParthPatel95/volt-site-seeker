@@ -109,13 +109,22 @@ export function useEnergyRateEstimator() {
 
       if (error) throw error;
 
-      if (data?.pdfUrl) {
-        // Open PDF in new tab
-        window.open(data.pdfUrl, '_blank');
+      if (data?.pdfData) {
+        // Create and download PDF file
+        const blob = new Blob([atob(data.pdfData)], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = data.filename || `energy-rate-analysis-${new Date().toISOString().slice(0, 10)}.html`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
 
         toast({
-          title: "PDF Generated",
-          description: "Energy rate report is ready for download"
+          title: "PDF Downloaded",
+          description: "Energy rate report downloaded successfully"
         });
       }
 

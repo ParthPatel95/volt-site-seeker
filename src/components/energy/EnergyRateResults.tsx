@@ -8,6 +8,8 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { EnergyRateInput } from './EnergyRateInputTypes';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EnergyRateDetailsModal } from './EnergyRateDetailsModal';
+import { SaveCalculationDialog } from './SaveCalculationDialog';
+import { useSavedEnergyCalculations } from '@/hooks/useSavedEnergyCalculations';
 
 
 export interface EnergyRateResults {
@@ -57,6 +59,7 @@ interface EnergyRateResultsProps {
 }
 
 export function EnergyRateResults({ results, input, onDownloadCSV, onDownloadPDF }: EnergyRateResultsProps) {
+  const { saveCalculation } = useSavedEnergyCalculations();
   const formatPrice = (value: number, currency: string = results.currency) => {
     return `${value.toFixed(2)} ¢/kWh (${currency})`;
   };
@@ -115,6 +118,9 @@ export function EnergyRateResults({ results, input, onDownloadCSV, onDownloadPDF
                   <FileText className="h-4 w-4 mr-2" />
                   Download PDF Report
                 </Button>
+                <SaveCalculationDialog
+                  onSave={(name) => saveCalculation(name, input, results)}
+                />
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button className="justify-start">View full breakdown</Button>
