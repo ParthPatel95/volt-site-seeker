@@ -149,15 +149,24 @@ export function EnhancedInteractiveMap({
       const isSelected = selectedSites.includes(site.id);
       const markerColor = getMarkerColor(site);
       
-      // Create custom marker element
+      // Create custom marker element using safe DOM manipulation
       const markerElement = document.createElement('div');
       markerElement.className = `relative cursor-pointer transition-all duration-200 ${isSelected ? 'scale-125' : 'hover:scale-110'}`;
-      markerElement.innerHTML = `
-        <div class="w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center" style="background-color: ${markerColor}">
-          <div class="w-2 h-2 bg-white rounded-full"></div>
-        </div>
-        ${isSelected ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white"></div>' : ''}
-      `;
+      
+      const markerIcon = document.createElement('div');
+      markerIcon.className = 'w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center';
+      markerIcon.style.backgroundColor = markerColor;
+      
+      const markerDot = document.createElement('div');
+      markerDot.className = 'w-2 h-2 bg-white rounded-full';
+      markerIcon.appendChild(markerDot);
+      markerElement.appendChild(markerIcon);
+      
+      if (isSelected) {
+        const selectedIndicator = document.createElement('div');
+        selectedIndicator.className = 'absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white';
+        markerElement.appendChild(selectedIndicator);
+      }
 
       // Create popup content
       const popupContent = `
@@ -282,22 +291,25 @@ export function EnhancedInteractiveMap({
       markerElement.className = 'cursor-pointer transition-all duration-200 hover:scale-110';
       
       if (cluster.count === 1) {
-        // Single site marker
+        // Single site marker using safe DOM manipulation
         const site = cluster.sites[0];
         const isSelected = selectedSites.includes(site.id);
         
-        markerElement.innerHTML = `
-          <div class="w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center ${isSelected ? 'scale-125' : ''}" style="background-color: ${markerColor}">
-            <div class="w-2 h-2 bg-white rounded-full"></div>
-          </div>
-        `;
+        const markerIcon = document.createElement('div');
+        markerIcon.className = `w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center ${isSelected ? 'scale-125' : ''}`;
+        markerIcon.style.backgroundColor = markerColor;
+        
+        const markerDot = document.createElement('div');
+        markerDot.className = 'w-2 h-2 bg-white rounded-full';
+        markerIcon.appendChild(markerDot);
+        markerElement.appendChild(markerIcon);
       } else {
-        // Cluster marker
-        markerElement.innerHTML = `
-          <div class="w-10 h-10 rounded-full border-3 border-white shadow-lg flex items-center justify-center text-white font-bold text-sm" style="background-color: ${markerColor}">
-            ${cluster.count}
-          </div>
-        `;
+        // Cluster marker using safe DOM manipulation
+        const clusterIcon = document.createElement('div');
+        clusterIcon.className = 'w-10 h-10 rounded-full border-3 border-white shadow-lg flex items-center justify-center text-white font-bold text-sm';
+        clusterIcon.style.backgroundColor = markerColor;
+        clusterIcon.textContent = cluster.count.toString();
+        markerElement.appendChild(clusterIcon);
       }
 
       const popupContent = cluster.count === 1 

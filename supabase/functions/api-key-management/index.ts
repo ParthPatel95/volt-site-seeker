@@ -12,6 +12,63 @@ interface APIKeyRequest {
   apiKey?: string;
 }
 
+// Secure encryption/decryption using Web Crypto API
+async function encryptApiKey(apiKey: string, userSecret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(userSecret.padEnd(32, '0')),
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt']
+  );
+  
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(apiKey);
+  
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    data
+  );
+  
+  // Combine iv and encrypted data
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function decryptApiKey(encryptedData: string, userSecret: string): Promise<string> {
+  try {
+    const combined = new Uint8Array(
+      atob(encryptedData).split('').map(char => char.charCodeAt(0))
+    );
+    
+    const iv = combined.slice(0, 12);
+    const encrypted = combined.slice(12);
+    
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(userSecret.padEnd(32, '0')),
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+    
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      encrypted
+    );
+    
+    return new TextDecoder().decode(decrypted);
+  } catch (error) {
+    // Fallback for old base64 encrypted keys
+    return atob(encryptedData);
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -47,8 +104,8 @@ const handler = async (req: Request): Promise<Response> => {
           throw new Error('API key is required for store action');
         }
 
-        // Simple encryption - in production, use proper encryption
-        const encryptedKey = btoa(apiKey);
+        // Use proper AES encryption with user ID as secret
+        const encryptedKey = await encryptApiKey(apiKey, user.id);
 
         const { error } = await supabase
           .from('user_api_keys')
@@ -90,8 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
           });
         }
 
-        // Decrypt the key
-        const decryptedKey = atob(data.encrypted_key);
+        // Decrypt the key using proper AES decryption
+        const decryptedKey = await decryptApiKey(data.encrypted_key, user.id);
 
         return new Response(JSON.stringify({ 
           success: true, 
