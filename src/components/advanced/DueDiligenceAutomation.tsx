@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -311,8 +311,50 @@ export const DueDiligenceAutomation: React.FC<DueDiligenceAutomationProps> = ({
     };
   };
 
-  // Use real report generation or fallback to mock data
-  const mockReport = generateEnhancedMockReport();
+  // Use real data from database for existing reports
+  const [currentReport, setCurrentReport] = useState<DueDiligenceReport | null>(null);
+  
+  useEffect(() => {
+    const fetchExistingReport = async () => {
+      if (propertyId) {
+        try {
+          const { data, error } = await supabase
+            .from('due_diligence_reports')
+            .select('*')
+            .eq('listing_id', propertyId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+          
+          if (!error && data) {
+            setCurrentReport({
+              id: data.id,
+              property_id: data.listing_id,
+              report_type: data.report_type as any,
+              status: 'completed',
+              executive_summary: data.executive_summary || 'No summary available',
+              key_findings: data.recommendations || [],
+              risk_assessment: typeof data.risk_assessment === 'object' && data.risk_assessment !== null 
+                ? data.risk_assessment as any 
+                : { overall_score: 5, risk_factors: [], mitigation_strategies: [] },
+              financial_analysis: typeof data.financial_analysis === 'object' && data.financial_analysis !== null 
+                ? data.financial_analysis as any 
+                : { valuation_range: { min: 0, max: 0 }, cash_flow_projection: [], roi_estimate: 0 },
+              technical_assessment: typeof data.power_infrastructure_assessment === 'object' && data.power_infrastructure_assessment !== null 
+                ? data.power_infrastructure_assessment as any 
+                : { infrastructure_grade: 'N/A', maintenance_issues: [], upgrade_requirements: [] },
+              legal_compliance: { permit_status: 'Unknown', regulatory_issues: [], environmental_concerns: [] },
+              created_at: data.created_at
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching existing report:', error);
+        }
+      }
+    };
+    
+    fetchExistingReport();
+  }, [propertyId]);
 
   return (
     <div className="space-y-6">
@@ -358,18 +400,22 @@ export const DueDiligenceAutomation: React.FC<DueDiligenceAutomationProps> = ({
                   Executive Summary
                 </CardTitle>
                 <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(mockReport.status)}>
-                    {mockReport.status}
+                  <Badge className={getStatusColor(currentReport?.status || 'generating')}>
+                    {currentReport?.status || 'No Report Available'}
                   </Badge>
-                  <Button size="sm" onClick={() => downloadReport(mockReport.id)} className="flex items-center gap-1">
-                    <Download className="w-3 h-3" />
-                    PDF
-                  </Button>
+                  {currentReport && (
+                    <Button size="sm" onClick={() => downloadReport(currentReport.id)} className="flex items-center gap-1">
+                      <Download className="w-3 h-3" />
+                      PDF
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">{mockReport.executive_summary}</p>
+              <p className="text-muted-foreground">
+                {currentReport?.executive_summary || 'No report available. Generate a new report to see detailed analysis.'}
+              </p>
             </CardContent>
           </Card>
 
@@ -386,32 +432,40 @@ export const DueDiligenceAutomation: React.FC<DueDiligenceAutomationProps> = ({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Overall Risk Score</span>
-                    <span className={`text-2xl font-bold ${getRiskColor(mockReport.risk_assessment.overall_score)}`}>
-                      {mockReport.risk_assessment.overall_score}/10
+                    <span className={`text-2xl font-bold ${getRiskColor(currentReport?.risk_assessment.overall_score || 0)}`}>
+                      {currentReport?.risk_assessment.overall_score || 'N/A'}/10
                     </span>
                   </div>
 
                   <div>
                     <h4 className="font-semibold mb-2">Key Risk Factors</h4>
                     <div className="space-y-1">
-                      {mockReport.risk_assessment.risk_factors.map((factor, index) => (
-                        <div key={index} className="flex items-start gap-2 text-sm">
-                          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <span>{factor}</span>
-                        </div>
-                      ))}
+                      {currentReport?.risk_assessment.risk_factors.length ? 
+                        currentReport.risk_assessment.risk_factors.map((factor, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>{factor}</span>
+                          </div>
+                        )) : (
+                          <div className="text-sm text-muted-foreground">No risk factors available</div>
+                        )
+                      }
                     </div>
                   </div>
 
                   <div>
                     <h4 className="font-semibold mb-2">Mitigation Strategies</h4>
                     <div className="space-y-1">
-                      {mockReport.risk_assessment.mitigation_strategies.map((strategy, index) => (
-                        <div key={index} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="w-3 h-3 text-green-500 mt-1 flex-shrink-0" />
-                          <span>{strategy}</span>
-                        </div>
-                      ))}
+                      {currentReport?.risk_assessment.mitigation_strategies.length ?
+                        currentReport.risk_assessment.mitigation_strategies.map((strategy, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm">
+                            <CheckCircle className="w-3 h-3 text-green-500 mt-1 flex-shrink-0" />
+                            <span>{strategy}</span>
+                          </div>
+                        )) : (
+                          <div className="text-sm text-muted-foreground">No mitigation strategies available</div>
+                        )
+                      }
                     </div>
                   </div>
                 </div>
@@ -431,26 +485,33 @@ export const DueDiligenceAutomation: React.FC<DueDiligenceAutomationProps> = ({
                   <div>
                     <div className="text-sm text-muted-foreground">Valuation Range</div>
                     <div className="font-semibold">
-                      {formatCurrency(mockReport.financial_analysis.valuation_range.min)} - {formatCurrency(mockReport.financial_analysis.valuation_range.max)}
+                      {currentReport?.financial_analysis.valuation_range ? 
+                        `${formatCurrency(currentReport.financial_analysis.valuation_range.min)} - ${formatCurrency(currentReport.financial_analysis.valuation_range.max)}` :
+                        'No valuation data available'
+                      }
                     </div>
                   </div>
 
                   <div>
                     <div className="text-sm text-muted-foreground">Expected ROI</div>
                     <div className="text-2xl font-bold text-green-600">
-                      {mockReport.financial_analysis.roi_estimate}%
+                      {currentReport?.financial_analysis.roi_estimate || 'N/A'}%
                     </div>
                   </div>
 
                   <div>
                     <div className="text-sm text-muted-foreground mb-2">5-Year Cash Flow Projection</div>
                     <div className="space-y-1">
-                      {mockReport.financial_analysis.cash_flow_projection.map((cashFlow, index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                          <span>Year {index + 1}</span>
-                          <span className="font-semibold">{formatCurrency(cashFlow)}</span>
-                        </div>
-                      ))}
+                      {currentReport?.financial_analysis.cash_flow_projection?.length ? 
+                        currentReport.financial_analysis.cash_flow_projection.map((cashFlow, index) => (
+                          <div key={index} className="flex justify-between text-sm">
+                            <span>Year {index + 1}</span>
+                            <span className="font-semibold">{formatCurrency(cashFlow)}</span>
+                          </div>
+                        )) : (
+                          <div className="text-sm text-muted-foreground">No cash flow projection available</div>
+                        )
+                      }
                     </div>
                   </div>
                 </div>
@@ -466,24 +527,32 @@ export const DueDiligenceAutomation: React.FC<DueDiligenceAutomationProps> = ({
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm">Infrastructure Grade</span>
-                    <Badge variant="secondary">{mockReport.technical_assessment.infrastructure_grade}</Badge>
+                    <Badge variant="secondary">{currentReport?.technical_assessment.infrastructure_grade || 'N/A'}</Badge>
                   </div>
 
                   <div>
                     <div className="text-sm font-medium mb-1">Maintenance Issues</div>
                     <div className="text-xs space-y-1">
-                      {mockReport.technical_assessment.maintenance_issues.map((issue, index) => (
-                        <div key={index}>• {issue}</div>
-                      ))}
+                      {currentReport?.technical_assessment.maintenance_issues?.length ?
+                        currentReport.technical_assessment.maintenance_issues.map((issue, index) => (
+                          <div key={index}>• {issue}</div>
+                        )) : (
+                          <div className="text-muted-foreground">No maintenance issues identified</div>
+                        )
+                      }
                     </div>
                   </div>
 
                   <div>
                     <div className="text-sm font-medium mb-1">Upgrade Requirements</div>
                     <div className="text-xs space-y-1">
-                      {mockReport.technical_assessment.upgrade_requirements.map((requirement, index) => (
-                        <div key={index}>• {requirement}</div>
-                      ))}
+                      {currentReport?.technical_assessment.upgrade_requirements?.length ?
+                        currentReport.technical_assessment.upgrade_requirements.map((requirement, index) => (
+                          <div key={index}>• {requirement}</div>
+                        )) : (
+                          <div className="text-muted-foreground">No upgrade requirements identified</div>
+                        )
+                      }
                     </div>
                   </div>
                 </div>
@@ -500,25 +569,33 @@ export const DueDiligenceAutomation: React.FC<DueDiligenceAutomationProps> = ({
                   <div className="flex justify-between">
                     <span className="text-sm">Permit Status</span>
                     <Badge className="bg-green-100 text-green-800">
-                      {mockReport.legal_compliance.permit_status}
+                      {currentReport?.legal_compliance.permit_status || 'Unknown'}
                     </Badge>
                   </div>
 
                   <div>
                     <div className="text-sm font-medium mb-1">Regulatory Issues</div>
                     <div className="text-xs space-y-1">
-                      {mockReport.legal_compliance.regulatory_issues.map((issue, index) => (
-                        <div key={index}>• {issue}</div>
-                      ))}
+                      {currentReport?.legal_compliance.regulatory_issues?.length ?
+                        currentReport.legal_compliance.regulatory_issues.map((issue, index) => (
+                          <div key={index}>• {issue}</div>
+                        )) : (
+                          <div className="text-muted-foreground">No regulatory issues identified</div>
+                        )
+                      }
                     </div>
                   </div>
 
                   <div>
                     <div className="text-sm font-medium mb-1">Environmental Concerns</div>
                     <div className="text-xs space-y-1">
-                      {mockReport.legal_compliance.environmental_concerns.map((concern, index) => (
-                        <div key={index}>• {concern}</div>
-                      ))}
+                      {currentReport?.legal_compliance.environmental_concerns?.length ?
+                        currentReport.legal_compliance.environmental_concerns.map((concern, index) => (
+                          <div key={index}>• {concern}</div>
+                        )) : (
+                          <div className="text-muted-foreground">No environmental concerns identified</div>
+                        )
+                      }
                     </div>
                   </div>
                 </div>
@@ -533,12 +610,18 @@ export const DueDiligenceAutomation: React.FC<DueDiligenceAutomationProps> = ({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {mockReport.key_findings.map((finding, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
-                    <span className="text-sm">{finding}</span>
-                  </div>
-                ))}
+                {currentReport?.key_findings?.length ?
+                  currentReport.key_findings.map((finding, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                      <span className="text-sm">{finding}</span>
+                    </div>
+                  )) : (
+                    <div className="text-muted-foreground text-center py-4">
+                      No key findings available. Generate a report to see detailed analysis.
+                    </div>
+                  )
+                }
               </div>
             </CardContent>
           </Card>

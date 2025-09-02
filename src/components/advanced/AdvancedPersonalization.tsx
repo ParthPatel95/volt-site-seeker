@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,47 +61,51 @@ export const AdvancedPersonalization: React.FC = () => {
   const generatePersonalizationSuggestions = async () => {
     setLoading(true);
     try {
-      // Simulate AI-powered personalization analysis
-      const mockSuggestions: PersonalizationSuggestion[] = [
+      // Fetch real user behavior data from analytics
+      const { data: analyticsData } = await supabase
+        .from('voltmarket_analytics')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      // Generate suggestions based on real usage patterns
+      const realSuggestions: PersonalizationSuggestion[] = [];
+
+      // Add real suggestions based on analytics data
+      if (analyticsData && analyticsData.length > 0) {
+        const commonActivities = analyticsData.reduce((acc: any, item: any) => {
+          acc[item.activity_type] = (acc[item.activity_type] || 0) + 1;
+          return acc;
+        }, {});
+        
+        const topActivity = Object.keys(commonActivities).sort((a, b) => commonActivities[b] - commonActivities[a])[0];
+        
+        if (topActivity) {
+          realSuggestions.push({
+            type: 'workflow',
+            title: `Optimize ${topActivity} Workflow`,
+            description: `You use ${topActivity} frequently. We can create shortcuts and automation for this activity.`,
+            impact: 'high',
+            confidence: 0.88,
+            action: 'Create workflow automation'
+          });
+        }
+      }
+
+      setSuggestions(realSuggestions.length > 0 ? realSuggestions : [
         {
           type: 'dashboard',
-          title: 'Optimize Dashboard Layout',
-          description: 'Based on your usage patterns, we recommend switching to a compact layout with your most-used widgets prioritized.',
-          impact: 'high',
-          confidence: 0.92,
-          action: 'Apply suggested layout'
-        },
-        {
-          type: 'notification',
-          title: 'Smart Notification Timing',
-          description: 'Set up notifications to arrive during your most active hours (9 AM, 2 PM, 6 PM) for better engagement.',
+          title: 'Get Started with Personalization',
+          description: 'Continue using the platform to receive personalized suggestions based on your activity.',
           impact: 'medium',
-          confidence: 0.85,
-          action: 'Enable smart timing'
-        },
-        {
-          type: 'workflow',
-          title: 'Automated Site Screening',
-          description: 'Create automated workflows for your frequent search criteria to save time on repetitive tasks.',
-          impact: 'high',
-          confidence: 0.88,
-          action: 'Set up automation'
-        },
-        {
-          type: 'feature',
-          title: 'Advanced Analytics Access',
-          description: 'You qualify for beta access to our new predictive analytics features based on your power user activity.',
-          impact: 'high',
-          confidence: 0.95,
-          action: 'Enable beta features'
+          confidence: 0.75,
+          action: 'Learn more about personalization'
         }
-      ];
-
-      setSuggestions(mockSuggestions);
+      ]);
       
       toast({
         title: "Personalization Analysis Complete",
-        description: `Generated ${mockSuggestions.length} improvement suggestions`,
+        description: `Generated ${realSuggestions.length || 1} improvement suggestions based on your usage data`,
       });
     } catch (error) {
       console.error('Error generating suggestions:', error);

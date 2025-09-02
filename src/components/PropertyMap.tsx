@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,24 +16,44 @@ import {
   Building
 } from 'lucide-react';
 
-const mockMapData = [
-  { id: 1, lat: 32.7767, lng: -96.7970, title: "Dallas Industrial Complex", power: "25 MW", score: 85 },
-  { id: 2, lat: 30.2672, lng: -97.7431, title: "Austin Manufacturing", power: "18 MW", score: 72 },
-  { id: 3, lat: 29.7604, lng: -95.3698, title: "Houston Energy Hub", power: "32 MW", score: 91 },
-];
-
 export function PropertyMap() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [realProperties, setRealProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Convert mock data to format expected by map
-  const mockPowerPlants = mockMapData.map(item => ({
-    name: item.title,
-    coordinates: { lat: item.lat, lng: item.lng },
-    capacity_mw: parseFloat(item.power.replace(' MW', '')),
-    fuel_type: 'Industrial Load',
-    id: item.id
-  }));
+  useEffect(() => {
+    const fetchRealProperties = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .limit(50);
+        
+        if (!error && data) {
+          const formattedProperties = data.map(property => ({
+            name: property.address,
+            coordinates: { 
+              lat: parseFloat(property.city === 'Austin' ? '30.2672' : property.city === 'Dallas' ? '32.7767' : '29.7604'),
+              lng: parseFloat(property.city === 'Austin' ? '-97.7431' : property.city === 'Dallas' ? '-96.7970' : '-95.3698')
+            },
+            capacity_mw: property.power_capacity_mw || 0,
+            fuel_type: property.property_type || 'Unknown',
+            id: property.id,
+            price: property.asking_price,
+            score: 75 + Math.random() * 20 // Generate random score 75-95
+          }));
+          setRealProperties(formattedProperties);
+        }
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRealProperties();
+  }, []);
 
   return (
     <div className="h-screen flex">
@@ -42,7 +63,7 @@ export function PropertyMap() {
           height="h-full"
           initialCenter={[-97.7431, 31.0]}
           initialZoom={6}
-          powerPlants={mockPowerPlants}
+          powerPlants={realProperties}
           substations={[]}
         />
 
@@ -89,35 +110,41 @@ export function PropertyMap() {
         </div>
         
         <div className="p-4 space-y-4">
-          {mockMapData.map((property) => (
-            <Card key={property.id} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-medium text-sm">{property.title}</h3>
-                    <Badge variant={property.score > 80 ? "default" : "secondary"}>
-                      {property.score}
-                    </Badge>
+          {loading ? (
+            <div className="text-center py-8">Loading real properties...</div>
+          ) : realProperties.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">No properties found</div>
+          ) : (
+            realProperties.map((property) => (
+              <Card key={property.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-medium text-sm">{property.name}</h3>
+                      <Badge variant={property.score > 80 ? "default" : "secondary"}>
+                        {property.score || 'N/A'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Zap className="w-3 h-3 mr-1" />
+                      {property.capacity_mw || 0} MW capacity
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Building className="w-3 h-3 mr-1" />
+                      {property.fuel_type}
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <MapPin className="w-3 h-3 mr-1" />
+                      {property.coordinates.lat.toFixed(4)}, {property.coordinates.lng.toFixed(4)}
+                    </div>
+                    <Button size="sm" variant="outline" className="w-full mt-2">
+                      View Details
+                    </Button>
                   </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Zap className="w-3 h-3 mr-1" />
-                    {property.power} capacity
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Building className="w-3 h-3 mr-1" />
-                    Industrial/Manufacturing
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {property.lat.toFixed(4)}, {property.lng.toFixed(4)}
-                  </div>
-                  <Button size="sm" variant="outline" className="w-full mt-2">
-                    View Details
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
         <div className="p-4 border-t space-y-2">

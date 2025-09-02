@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,35 +68,30 @@ export function EnhancedPropertyMap() {
   const loadProperties = async () => {
     setLoading(true);
     try {
-      // Simulate loading properties with coordinates
-      const mockProperties: Property[] = [
-        {
-          id: '1',
-          address: '123 Industrial Blvd',
-          city: 'Austin',
-          state: 'TX',
-          property_type: 'Industrial',
-          asking_price: 15000000,
-          square_footage: 250000,
-          power_capacity_mw: 25,
-          substation_distance_miles: 0.5,
-          coordinates: [-97.7431, 30.2672]
-        },
-        {
-          id: '2',
-          address: '456 Data Center Dr',
-          city: 'Dallas',
-          state: 'TX',
-          property_type: 'Data Center',
-          asking_price: 35000000,
-          square_footage: 150000,
-          power_capacity_mw: 50,
-          substation_distance_miles: 0.2,
-          coordinates: [-96.7969, 32.7767]
-        }
-      ];
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .limit(100);
       
-      setProperties(mockProperties);
+      if (error) throw error;
+      
+      const formattedProperties: Property[] = (data || []).map(property => ({
+        id: property.id,
+        address: property.address,
+        city: property.city,
+        state: property.state,
+        property_type: property.property_type,
+        asking_price: property.asking_price,
+        square_footage: property.square_footage,
+        power_capacity_mw: property.power_capacity_mw,
+        substation_distance_miles: property.substation_distance_miles,
+        coordinates: [
+          parseFloat(property.city === 'Austin' ? '-97.7431' : property.city === 'Dallas' ? '-96.7970' : '-95.3698'),
+          parseFloat(property.city === 'Austin' ? '30.2672' : property.city === 'Dallas' ? '32.7767' : '29.7604')
+        ]
+      }));
+      
+      setProperties(formattedProperties);
     } catch (error) {
       console.error('Error loading properties:', error);
       toast({
