@@ -110,8 +110,9 @@ export function useAESOMarketData() {
     try {
       const { data, error } = await supabase.functions.invoke('aeso-market-data');
       if (error) throw error;
-      const or = data?.aeso?.operatingReserve;
-      if (or) {
+      
+      if (data?.success && data?.aeso?.operatingReserve) {
+        const or = data.aeso.operatingReserve;
         setOperatingReserve({
           total_reserve_mw: Number(or.total_reserve_mw) || 0,
           spinning_reserve_mw: Number(or.spinning_reserve_mw) || 0,
@@ -119,20 +120,24 @@ export function useAESOMarketData() {
           timestamp: or.timestamp || new Date().toISOString()
         });
         setConnectionStatus('connected');
+        return data.aeso;
       }
-      return data?.aeso;
     } catch (e) {
       console.error('Operating reserve fetch error:', e);
-      setConnectionStatus('fallback');
-      return null;
     }
+    
+    // Data not available - set to null to hide the section
+    setOperatingReserve(null);
+    setConnectionStatus('fallback');
+    return null;
   };
   const getInterchange = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('aeso-market-data');
       if (error) throw error;
-      const ic = data?.aeso?.interchange;
-      if (ic) {
+      
+      if (data?.success && data?.aeso?.interchange) {
+        const ic = data.aeso.interchange;
         setInterchange({
           alberta_british_columbia: Number(ic.alberta_british_columbia) || 0,
           alberta_saskatchewan: Number(ic.alberta_saskatchewan) || 0,
@@ -141,13 +146,16 @@ export function useAESOMarketData() {
           timestamp: ic.timestamp || new Date().toISOString()
         });
         setConnectionStatus('connected');
+        return data.aeso;
       }
-      return data?.aeso;
     } catch (e) {
       console.error('Interchange fetch error:', e);
-      setConnectionStatus('fallback');
-      return null;
     }
+    
+    // Data not available - set to null to hide the section
+    setInterchange(null);
+    setConnectionStatus('fallback');
+    return null;
   };
   const getTransmissionConstraints = async () => {
     const data = await fetchAESOMarketData('fetch_transmission_constraints');
@@ -172,8 +180,9 @@ export function useAESOMarketData() {
     try {
       const { data, error } = await supabase.functions.invoke('aeso-market-data');
       if (error) throw error;
-      const es = data?.aeso?.energyStorage;
-      if (es) {
+      
+      if (data?.success && data?.aeso?.energyStorage) {
+        const es = data.aeso.energyStorage;
         setEnergyStorage({
           charging_mw: Number(es.charging_mw) || 0,
           discharging_mw: Number(es.discharging_mw) || 0,
@@ -182,13 +191,16 @@ export function useAESOMarketData() {
           timestamp: es.timestamp || new Date().toISOString()
         });
         setConnectionStatus('connected');
+        return data.aeso;
       }
-      return data?.aeso;
     } catch (e) {
       console.error('Energy storage fetch error:', e);
-      setConnectionStatus('fallback');
-      return null;
     }
+    
+    // Data not available - set to null to hide the section
+    setEnergyStorage(null);
+    setConnectionStatus('fallback');
+    return null;
   };
   // Auto-fetch all market data on component mount
   useEffect(() => {
