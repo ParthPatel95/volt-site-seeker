@@ -22,7 +22,8 @@ import {
   Target,
   BarChart3,
   Brain,
-  Factory
+  Factory,
+  Calendar
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -33,6 +34,7 @@ import { AESOForecastPanel } from './intelligence/AESOForecastPanel';
 import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
 import { AESOAlertsPanel } from './intelligence/AESOAlertsPanel';
 import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
+import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
 
 export function AESOMarketComprehensive() {
   // Basic AESO data hook
@@ -136,11 +138,16 @@ export function AESOMarketComprehensive() {
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(7, minmax(80px, 1fr))'}}>
+            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(8, minmax(80px, 1fr))'}}>
               <TabsTrigger value="market" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline truncate">Market Data</span>
                 <span className="sm:hidden truncate">Market</span>
+              </TabsTrigger>
+              <TabsTrigger value="historical" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden sm:inline truncate">Historical</span>
+                <span className="sm:hidden truncate">History</span>
               </TabsTrigger>
               <TabsTrigger value="generation" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Activity className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -399,6 +406,11 @@ export function AESOMarketComprehensive() {
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          {/* Historical Pricing Tab */}
+          <TabsContent value="historical" className="space-y-4 sm:space-y-6">
+            <AESOHistoricalPricing />
           </TabsContent>
 
           {/* Generation Tab */}
