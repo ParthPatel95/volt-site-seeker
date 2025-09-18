@@ -33,6 +33,8 @@ import {
   Activity
 } from 'lucide-react';
 import { useAESOHistoricalPricing } from '@/hooks/useAESOHistoricalPricing';
+import { PriceAlertsPanel } from './PriceAlertsPanel';
+import { PredictiveAnalytics } from './PredictiveAnalytics';
 
 export function AESOHistoricalPricing() {
   const { 
@@ -112,7 +114,7 @@ export function AESOHistoricalPricing() {
       </div>
 
       <Tabs defaultValue="monthly" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="monthly" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Last 30 Days</span>
@@ -132,6 +134,16 @@ export function AESOHistoricalPricing() {
             <Calculator className="w-4 h-4" />
             <span className="hidden sm:inline">Peak Shutdown</span>
             <span className="sm:hidden">Shutdown</span>
+          </TabsTrigger>
+          <TabsTrigger value="predictions" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            <span className="hidden sm:inline">Predictions</span>
+            <span className="sm:hidden">AI</span>
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            <span className="hidden sm:inline">Alerts</span>
+            <span className="sm:hidden">Alert</span>
           </TabsTrigger>
         </TabsList>
 
@@ -561,6 +573,20 @@ export function AESOHistoricalPricing() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Predictive Analytics Tab */}
+        <TabsContent value="predictions" className="space-y-4">
+          <PredictiveAnalytics 
+            predictions={monthlyData?.predictions}
+            patterns={monthlyData?.patterns}
+            currentPrice={monthlyData?.statistics?.average}
+          />
+        </TabsContent>
+
+        {/* Price Alerts Tab */}
+        <TabsContent value="alerts" className="space-y-4">
+          <PriceAlertsPanel />
         </TabsContent>
       </Tabs>
     </div>
