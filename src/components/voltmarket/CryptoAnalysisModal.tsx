@@ -302,7 +302,7 @@ export const CryptoAnalysisModal: React.FC<CryptoAnalysisModalProps> = ({
                           cy="50%"
                           outerRadius={80}
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}
                         >
                           {[
                             { name: 'Circulating', value: cryptoDetails.circulatingSupply },

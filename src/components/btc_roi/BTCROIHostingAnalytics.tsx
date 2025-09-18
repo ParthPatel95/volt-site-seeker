@@ -185,7 +185,7 @@ export const BTCROIHostingAnalytics: React.FC<BTCROIHostingAnalyticsProps> = ({ 
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+                      label={({ name, value }) => `${name}: ${Number(value).toFixed(1)}%`}
                     >
                       {costBreakdownData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
