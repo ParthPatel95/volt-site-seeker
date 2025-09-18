@@ -1583,6 +1583,42 @@ export type Database = {
         }
         Relationships: []
       }
+      price_alerts: {
+        Row: {
+          alert_type: string
+          condition: string
+          created_at: string
+          id: string
+          is_active: boolean
+          notification_method: string
+          threshold_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          condition: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notification_method?: string
+          threshold_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notification_method?: string
+          threshold_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

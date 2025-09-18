@@ -8,7 +8,7 @@ export interface HistoricalPricingData {
     peak: number;
     low: number;
     volatility: number;
-    trend?: 'up' | 'down';
+    trend?: 'up' | 'down' | 'stable';
   };
   chartData: Array<{
     date: string;
@@ -35,6 +35,18 @@ export interface HistoricalPricingData {
       peak: number;
     };
   };
+  predictions?: Array<{
+    hour: number;
+    predictedPrice: number;
+    confidence: number;
+  }>;
+  patterns?: Array<{
+    type: string;
+    description: string;
+    count?: number;
+    threshold?: number;
+  }>;
+  lastUpdated?: string;
 }
 
 export interface PeakAnalysisData {
