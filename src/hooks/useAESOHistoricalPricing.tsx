@@ -80,16 +80,7 @@ export function useAESOHistoricalPricing() {
       if (error) throw error;
 
       if (data.error) {
-        // Fallback to enhanced mock data if API fails
-        console.warn('Using fallback data:', data.fallbackData);
-        const enhancedMockData = generateEnhancedMockMonthlyData();
-        setMonthlyData(enhancedMockData);
-        
-        toast({
-          title: "Monthly data loaded (offline mode)",
-          description: "Using enhanced simulation data",
-          variant: "default",
-        });
+        throw new Error(data.error);
       } else {
         setMonthlyData(data);
         
@@ -101,14 +92,10 @@ export function useAESOHistoricalPricing() {
     } catch (error: any) {
       console.error('Error fetching monthly data:', error);
       
-      // Fallback to enhanced mock data
-      const enhancedMockData = generateEnhancedMockMonthlyData();
-      setMonthlyData(enhancedMockData);
-      
       toast({
-        title: "Data loaded (simulation)",
-        description: "Using enhanced pricing simulation",
-        variant: "default",
+        title: "Error loading data",
+        description: "Failed to fetch real-time pricing data. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoadingMonthly(false);
@@ -125,16 +112,7 @@ export function useAESOHistoricalPricing() {
       if (error) throw error;
 
       if (data.error) {
-        // Fallback to enhanced mock data if API fails
-        console.warn('Using fallback data:', data.fallbackData);
-        const enhancedMockData = generateEnhancedMockYearlyData();
-        setYearlyData(enhancedMockData);
-        
-        toast({
-          title: "Yearly data loaded (offline mode)",
-          description: "Using enhanced simulation data",
-          variant: "default",
-        });
+        throw new Error(data.error);
       } else {
         setYearlyData(data);
         
@@ -146,14 +124,10 @@ export function useAESOHistoricalPricing() {
     } catch (error: any) {
       console.error('Error fetching yearly data:', error);
       
-      // Fallback to enhanced mock data
-      const enhancedMockData = generateEnhancedMockYearlyData();
-      setYearlyData(enhancedMockData);
-      
       toast({
-        title: "Data loaded (simulation)",
-        description: "Using enhanced pricing simulation",
-        variant: "default",
+        title: "Error loading data",
+        description: "Failed to fetch real-time pricing data. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoadingYearly(false);
@@ -163,14 +137,32 @@ export function useAESOHistoricalPricing() {
   const analyzePeakShutdown = async (shutdownHours: number, priceThreshold: number) => {
     setLoadingPeakAnalysis(true);
     try {
-      // For now, we'll generate realistic mock analysis
-      // In a real implementation, this would call a Supabase function
-      const mockAnalysis = generateMockPeakAnalysis(shutdownHours, priceThreshold);
-      setPeakAnalysis(mockAnalysis);
+      // Use real historical data for peak analysis
+      if (!monthlyData) {
+        throw new Error('No historical data available for analysis. Please load monthly data first.');
+      }
+
+      const events = monthlyData.chartData
+        .filter(day => day.price > priceThreshold)
+        .map(day => ({
+          date: day.date,
+          price: day.price,
+          duration: shutdownHours,
+          savings: (day.price - priceThreshold * 0.7) * shutdownHours
+        }));
+
+      const analysis: PeakAnalysisData = {
+        totalShutdowns: events.length,
+        totalHours: events.length * shutdownHours,
+        averageSavings: events.length > 0 ? events.reduce((sum, e) => sum + e.savings, 0) / events.length : 0,
+        events
+      };
+
+      setPeakAnalysis(analysis);
       
       toast({
         title: "Peak analysis complete",
-        description: `Found ${mockAnalysis.totalShutdowns} potential shutdown events`,
+        description: `Found ${analysis.totalShutdowns} potential shutdown events based on real data`,
       });
     } catch (error: any) {
       console.error('Error analyzing peak shutdown:', error);
@@ -194,169 +186,5 @@ export function useAESOHistoricalPricing() {
     fetchMonthlyData,
     fetchYearlyData,
     analyzePeakShutdown,
-  };
-}
-
-// Enhanced mock data generators with realistic patterns
-function generateEnhancedMockMonthlyData(): HistoricalPricingData {
-  return generateMockMonthlyData();
-}
-
-function generateEnhancedMockYearlyData(): HistoricalPricingData {
-  return generateMockYearlyData();
-}
-
-// Mock data generators (replace with real API calls in production)
-function generateMockMonthlyData(): HistoricalPricingData {
-  const basePrice = 45;
-  const chartData = [];
-  const peakHours = [];
-  
-  for (let i = 30; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    
-    // Generate realistic price variations
-    const timeOfDay = date.getHours();
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    const isPeakHour = timeOfDay >= 16 && timeOfDay <= 20;
-    
-    let price = basePrice;
-    price += Math.random() * 40 - 20; // ±20 variation
-    if (isPeakHour && !isWeekend) price += 25; // Peak hour premium
-    if (isWeekend) price -= 10; // Weekend discount
-    price = Math.max(5, price); // Minimum price
-    
-    chartData.push({
-      date: date.toLocaleDateString(),
-      price: parseFloat(price.toFixed(2))
-    });
-    
-    // Track high price hours for peak analysis
-    if (price > 80) {
-      peakHours.push({
-        date: date.toLocaleDateString(),
-        hour: timeOfDay,
-        price: parseFloat(price.toFixed(2))
-      });
-    }
-  }
-  
-  const prices = chartData.map(d => d.price);
-  const average = prices.reduce((a, b) => a + b, 0) / prices.length;
-  const peak = Math.max(...prices);
-  const low = Math.min(...prices);
-  const volatility = (Math.sqrt(prices.reduce((acc, val) => acc + Math.pow(val - average, 2), 0) / prices.length) / average) * 100;
-  
-  // Generate hourly patterns
-  const hourlyPatterns = Array.from({ length: 24 }, (_, hour) => ({
-    hour,
-    averagePrice: basePrice + (hour >= 16 && hour <= 20 ? 20 : 0) + Math.random() * 10 - 5
-  }));
-  
-  // Generate distribution
-  const distribution = [
-    { range: '$0-25', hours: Math.floor(Math.random() * 50) },
-    { range: '$25-50', hours: Math.floor(Math.random() * 200) + 100 },
-    { range: '$50-75', hours: Math.floor(Math.random() * 150) + 75 },
-    { range: '$75-100', hours: Math.floor(Math.random() * 100) + 25 },
-    { range: '$100+', hours: Math.floor(Math.random() * 50) }
-  ];
-  
-  return {
-    statistics: { average, peak, low, volatility },
-    chartData,
-    peakHours: peakHours.sort((a, b) => b.price - a.price),
-    hourlyPatterns,
-    distribution
-  };
-}
-
-function generateMockYearlyData(): HistoricalPricingData {
-  const basePrice = 45;
-  const chartData = [];
-  const seasonalPatterns: { [key: string]: { average: number; peak: number } } = {};
-  
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  
-  const seasons = ['winter', 'spring', 'summer', 'fall'];
-  seasons.forEach(season => {
-    seasonalPatterns[season] = {
-      average: basePrice + Math.random() * 20 - 10,
-      peak: basePrice + Math.random() * 50 + 20
-    };
-  });
-  
-  months.forEach((month, index) => {
-    // Seasonal adjustments
-    let monthlyBase = basePrice;
-    if (index >= 11 || index <= 1) monthlyBase += 15; // Winter
-    if (index >= 5 && index <= 7) monthlyBase += 10; // Summer peak
-    
-    const average = monthlyBase + Math.random() * 20 - 10;
-    const peak = average + Math.random() * 40 + 20;
-    
-    chartData.push({
-      month,
-      average: parseFloat(average.toFixed(2)),
-      peak: parseFloat(peak.toFixed(2))
-    });
-  });
-  
-  const prices = chartData.map(d => d.average);
-  const overall = {
-    average: prices.reduce((a, b) => a + b, 0) / prices.length,
-    peak: Math.max(...chartData.map(d => d.peak)),
-    low: Math.min(...prices),
-    volatility: (Math.sqrt(prices.reduce((acc, val) => acc + Math.pow(val - (prices.reduce((a, b) => a + b, 0) / prices.length), 2), 0) / prices.length) / (prices.reduce((a, b) => a + b, 0) / prices.length)) * 100,
-    trend: prices[11] > prices[0] ? 'up' as const : 'down' as const
-  };
-  
-  return {
-    statistics: overall,
-    chartData,
-    seasonalPatterns
-  };
-}
-
-function generateMockPeakAnalysis(shutdownHours: number, priceThreshold: number): PeakAnalysisData {
-  const events = [];
-  let totalShutdowns = 0;
-  let totalHours = 0;
-  let totalSavings = 0;
-  
-  // Generate realistic peak events over 30 days
-  for (let i = 30; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    
-    // Random chance of peak pricing
-    if (Math.random() < 0.15) { // ~15% chance per day
-      const price = priceThreshold + Math.random() * 100; // Price above threshold
-      const savings = price - (priceThreshold * 0.7); // Savings compared to lower rate
-      
-      events.push({
-        date: date.toLocaleDateString(),
-        price: parseFloat(price.toFixed(2)),
-        duration: shutdownHours,
-        savings: parseFloat(savings.toFixed(2))
-      });
-      
-      totalShutdowns++;
-      totalHours += shutdownHours;
-      totalSavings += savings;
-    }
-  }
-  
-  const averageSavings = totalSavings / Math.max(1, totalShutdowns);
-  
-  return {
-    totalShutdowns,
-    totalHours,
-    averageSavings: parseFloat(averageSavings.toFixed(2)),
-    events: events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   };
 }

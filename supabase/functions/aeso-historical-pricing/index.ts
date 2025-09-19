@@ -69,7 +69,7 @@ serve(async (req) => {
     console.error('Error in aeso-historical-pricing function:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      fallbackData: generateFallbackData()
+      details: 'Failed to fetch real AESO market data. Please check API connectivity and try again.'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -79,25 +79,39 @@ serve(async (req) => {
 
 async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: string): Promise<HistoricalDataPoint[]> {
   try {
-    const formatDate = (date: Date) => date.toISOString().slice(0, 10);
+    const formatDate = (date: Date) => {
+      return date.toISOString().slice(0, 10).replace(/-/g, '');
+    };
     
-    const response = await fetch(
-      `https://apimgw.aeso.ca/public/price-api/v1/price/poolPrice?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`,
-      {
-        headers: apiKey ? {
-          'Ocp-Apim-Subscription-Key': apiKey
-        } : {}
+    // Use the correct AESO API endpoint format
+    const apiUrl = `https://apimgw.aeso.ca/public/price-api/v1/price/poolPrice?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
+    console.log(`Fetching from: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(apiKey ? { 'Ocp-Apim-Subscription-Key': apiKey } : {})
       }
-    );
+    });
     
     if (!response.ok) {
-      throw new Error(`AESO API error: ${response.status}`);
+      console.log(`API Response Status: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.log(`API Error Response: ${errorText}`);
+      throw new Error(`AESO API error: ${response.status} - ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log(`Fetched ${data.return?.['Pool Price']?.length || 0} price records`);
+    console.log(`API Response:`, JSON.stringify(data, null, 2));
     
-    return data.return?.['Pool Price'] || [];
+    const priceData = data.return?.['Pool Price'] || data.return?.poolPrice || data['Pool Price'] || data.poolPrice || [];
+    console.log(`Fetched ${priceData.length} price records`);
+    
+    if (priceData.length === 0) {
+      throw new Error('No price data returned from AESO API');
+    }
+    
+    return priceData;
   } catch (error) {
     console.error('Error fetching AESO data:', error);
     throw error;
@@ -358,12 +372,4 @@ function calculatePercentile(values: number[], percentile: number): number {
   const sorted = [...values].sort((a, b) => a - b);
   const index = Math.ceil((percentile / 100) * sorted.length) - 1;
   return sorted[index];
-}
-
-function generateFallbackData() {
-  return {
-    statistics: { average: 45, peak: 120, low: 15, volatility: 25, trend: 'stable' },
-    chartData: [],
-    message: 'Using fallback data - API temporarily unavailable'
-  };
 }
