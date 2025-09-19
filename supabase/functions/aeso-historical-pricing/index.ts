@@ -80,11 +80,11 @@ serve(async (req) => {
 async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: string): Promise<HistoricalDataPoint[]> {
   try {
     const formatDate = (date: Date) => {
-      return date.toISOString().slice(0, 10).replace(/-/g, '');
+      return date.toISOString().slice(0, 10); // Keep YYYY-MM-DD format
     };
     
-    // Use the correct AESO API endpoint format
-    const apiUrl = `https://apimgw.aeso.ca/public/price-api/v1/price/poolPrice?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
+    // Use the correct AESO API endpoint format (v1.1)
+    const apiUrl = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
     console.log(`Fetching from: ${apiUrl}`);
     
     const response = await fetch(apiUrl, {
@@ -104,6 +104,7 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
     const data = await response.json();
     console.log(`API Response:`, JSON.stringify(data, null, 2));
     
+    // Parse the response structure based on AESO API documentation
     const priceData = data.return?.['Pool Price'] || data.return?.poolPrice || data['Pool Price'] || data.poolPrice || [];
     console.log(`Fetched ${priceData.length} price records`);
     
