@@ -27,7 +27,12 @@ serve(async (req) => {
     const { timeframe } = await req.json();
     const apiKey = Deno.env.get('AESO_API_KEY');
     
-    console.log(`Fetching ${timeframe} historical pricing data from AESO`);
+    // Validate API key is available
+    if (!apiKey) {
+      throw new Error('AESO API key is not configured. Please configure the AESO_API_KEY secret.');
+    }
+    
+    console.log(`Fetching ${timeframe} historical pricing data from AESO with API key configured`);
     
     let historicalData: HistoricalDataPoint[] = [];
     
@@ -45,6 +50,11 @@ serve(async (req) => {
       startDate.setFullYear(endDate.getFullYear() - 1);
       
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+    }
+
+    // Validate we have data
+    if (!historicalData || historicalData.length === 0) {
+      throw new Error('No historical data available from AESO API');
     }
 
     // Process data for frontend consumption
@@ -67,9 +77,25 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in aeso-historical-pricing function:', error);
+    
+    // More specific error handling
+    let errorMessage = 'Failed to fetch AESO historical pricing data';
+    let details = error.message;
+    
+    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      errorMessage = 'AESO API authentication failed';
+      details = 'Invalid or missing API subscription key. Please verify your AESO API credentials.';
+    } else if (error.message.includes('404')) {
+      errorMessage = 'AESO API endpoint not found';
+      details = 'The requested AESO API endpoint is not available. Please check the API documentation.';
+    } else if (error.message.includes('API key')) {
+      errorMessage = 'AESO API key configuration error';
+      details = 'Please configure your AESO API key in the edge function secrets.';
+    }
+    
     return new Response(JSON.stringify({ 
-      error: error.message,
-      details: 'Failed to fetch real AESO market data. Please check API connectivity and try again.'
+      error: errorMessage,
+      details: details
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
