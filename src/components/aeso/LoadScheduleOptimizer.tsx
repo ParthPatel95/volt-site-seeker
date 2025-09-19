@@ -254,13 +254,15 @@ export function LoadScheduleOptimizer() {
                       textAnchor="end"
                       height={60}
                     />
-                    <YAxis />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Bar 
                       dataKey="totalCost" 
                       fill="#3b82f6" 
                       name="Total Cost ($/MWh)"
+                      yAxisId="left"
                     />
                     <Bar 
                       dataKey="recommendationScore" 
