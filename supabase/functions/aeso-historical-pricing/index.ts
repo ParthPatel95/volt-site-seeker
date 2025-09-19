@@ -122,7 +122,7 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
     const response = await fetch(apiUrl, {
       headers: {
         'Content-Type': 'application/json',
-        ...(apiKey ? { 'Ocp-Apim-Subscription-Key': apiKey } : {})
+        ...(apiKey ? { 'API-KEY': apiKey } : {})
       }
     });
     
