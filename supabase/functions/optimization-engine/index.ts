@@ -279,28 +279,66 @@ async function analyzeDemandResponse(params: any): Promise<Response> {
 
 // Helper functions
 async function generatePricingForecast(): Promise<number[]> {
-  // In production, this would fetch real forecast data
-  // For now, generate realistic hourly prices
-  const basePrice = 45;
+  try {
+    // Fetch real AESO historical pricing data for the last 24 hours
+    const subscriptionKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY');
+    
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    const startDate = yesterday.toISOString().split('T')[0];
+    const endDate = now.toISOString().split('T')[0];
+    
+    const response = await fetch(`https://apimgw.aeso.ca/public/poolprice/poolprice?startDate=${startDate}&endDate=${endDate}`, {
+      headers: {
+        'Ocp-Apim-Subscription-Key': subscriptionKey || '',
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const prices: number[] = [];
+      
+      // Extract last 24 hourly prices
+      const recent = data.slice(-24);
+      for (const priceData of recent) {
+        prices.push(parseFloat(priceData.price) || 45);
+      }
+      
+      // If we don't have 24 hours, pad with the last available price
+      while (prices.length < 24) {
+        prices.push(prices[prices.length - 1] || 45);
+      }
+      
+      console.log('Using real AESO pricing data for optimization');
+      return prices;
+    }
+  } catch (error) {
+    console.warn('Failed to fetch real AESO pricing data:', error);
+  }
+  
+  // Fallback: use enhanced realistic pricing based on Alberta market patterns
+  console.log('Using fallback pricing data based on Alberta market patterns');
   const prices = [];
+  const basePrice = 58.18; // Current AESO pool price
   
   for (let hour = 0; hour < 24; hour++) {
     let price = basePrice;
     
-    // Peak hours (4-8 PM)
-    if (hour >= 16 && hour <= 20) {
-      price += 30 + Math.random() * 40;
+    // Alberta market patterns: peak hours typically 6-10 AM and 5-9 PM
+    if ((hour >= 6 && hour <= 10) || (hour >= 17 && hour <= 21)) {
+      price *= 1.4 + Math.random() * 0.3; // 40-70% premium during peak
     }
-    // Off-peak overnight
-    else if (hour >= 23 || hour <= 6) {
-      price -= 15 + Math.random() * 20;
+    // Off-peak overnight (11 PM - 5 AM)
+    else if (hour >= 23 || hour <= 5) {
+      price *= 0.6 + Math.random() * 0.2; // 60-80% of base price
     }
-    // Standard hours
+    // Standard daytime hours
     else {
-      price += Math.random() * 20 - 10;
+      price *= 0.9 + Math.random() * 0.3; // 90-120% of base price
     }
     
-    prices.push(Math.max(5, price)); // Minimum $5/MWh
+    prices.push(Math.max(15, price)); // Minimum $15/MWh (typical Alberta floor)
   }
   
   return prices;
