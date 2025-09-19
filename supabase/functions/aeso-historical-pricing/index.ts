@@ -26,10 +26,10 @@ serve(async (req) => {
   try {
     const { timeframe } = await req.json();
     
-    // Try multiple possible API key environment variable names
-    const apiKey = Deno.env.get('AESO_API_KEY') || 
-                   Deno.env.get('AESO_SUB_KEY') || 
-                   Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
+    // Use same API key priority as energy-data-integration function
+    const apiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
+                   Deno.env.get('AESO_API_KEY') ||
+                   Deno.env.get('AESO_SUB_KEY') ||
                    Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY');
     
     // Validate API key is available
@@ -121,8 +121,10 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
     
     const response = await fetch(apiUrl, {
       headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey ? { 'API-KEY': apiKey } : {})
+        'API-KEY': apiKey,
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'User-Agent': 'LovableEnergy/1.0'
       }
     });
     
