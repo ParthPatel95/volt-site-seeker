@@ -25,14 +25,20 @@ serve(async (req) => {
 
   try {
     const { timeframe } = await req.json();
-    const apiKey = Deno.env.get('AESO_API_KEY');
+    
+    // Try multiple possible API key environment variable names
+    const apiKey = Deno.env.get('AESO_API_KEY') || 
+                   Deno.env.get('AESO_SUB_KEY') || 
+                   Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
+                   Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY');
     
     // Validate API key is available
     if (!apiKey) {
-      throw new Error('AESO API key is not configured. Please configure the AESO_API_KEY secret.');
+      console.error('No AESO API key found. Checked: AESO_API_KEY, AESO_SUB_KEY, AESO_SUBSCRIPTION_KEY_PRIMARY, AESO_SUBSCRIPTION_KEY_SECONDARY');
+      throw new Error('AESO API key is not configured. Please configure one of the AESO API key secrets.');
     }
     
-    console.log(`Fetching ${timeframe} historical pricing data from AESO with API key configured`);
+    console.log(`Fetching ${timeframe} historical pricing data from AESO with API key configured (length: ${apiKey?.length || 0})`);
     
     let historicalData: HistoricalDataPoint[] = [];
     
@@ -121,10 +127,17 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
     });
     
     if (!response.ok) {
-      console.log(`API Response Status: ${response.status} ${response.statusText}`);
+      console.error(`API Response Status: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
-      console.log(`API Error Response: ${errorText}`);
-      throw new Error(`AESO API error: ${response.status} - ${response.statusText}`);
+      console.error(`API Error Response: ${errorText}`);
+      
+      if (response.status === 401) {
+        throw new Error(`AESO API authentication failed (401). Please verify your API subscription key is correct and active. Response: ${errorText}`);
+      } else if (response.status === 403) {
+        throw new Error(`AESO API access forbidden (403). Your subscription key may not have access to this endpoint. Response: ${errorText}`);
+      } else {
+        throw new Error(`AESO API error: ${response.status} - ${response.statusText}. Response: ${errorText}`);
+      }
     }
     
     const data = await response.json();
