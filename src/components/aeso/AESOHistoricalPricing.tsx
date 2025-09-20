@@ -23,6 +23,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, 
+  TrendingDown,
   DollarSign, 
   Calendar,
   BarChart3,
@@ -383,6 +384,222 @@ export function AESOHistoricalPricing() {
 
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
+          {/* Energy Price Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <DollarSign className="w-4 h-4 text-green-600" />
+                  Average Price
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {monthlyData?.statistics?.average ? formatCurrency(monthlyData.statistics.average) : '—'}
+                </div>
+                <p className="text-xs text-muted-foreground">per MWh (30 days)</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <TrendingUp className="w-4 h-4 text-red-600" />
+                  Peak Price
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {monthlyData?.statistics?.peak ? formatCurrency(monthlyData.statistics.peak) : '—'}
+                </div>
+                <p className="text-xs text-muted-foreground">highest recorded</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <TrendingDown className="w-4 h-4 text-blue-600" />
+                  Low Price
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {monthlyData?.statistics?.low ? formatCurrency(monthlyData.statistics.low) : '—'}
+                </div>
+                <p className="text-xs text-muted-foreground">lowest recorded</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Activity className="w-4 h-4 text-purple-600" />
+                  Volatility
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {monthlyData?.statistics?.volatility ? `${monthlyData.statistics.volatility.toFixed(1)}%` : '—'}
+                </div>
+                <p className="text-xs text-muted-foreground">price variation</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Peak Hour Shutdown Analyzer */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-red-600" />
+                Peak Hour Shutdown Analyzer
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Calculate energy savings by shutting down operations during high price periods
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Strike Price Controls */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Strike Price (CA$/MWh)</label>
+                    <Select value={shutdownThreshold} onValueChange={setShutdownThreshold}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select strike price" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="40">$40/MWh</SelectItem>
+                        <SelectItem value="50">$50/MWh</SelectItem>
+                        <SelectItem value="75">$75/MWh</SelectItem>
+                        <SelectItem value="100">$100/MWh</SelectItem>
+                        <SelectItem value="150">$150/MWh</SelectItem>
+                        <SelectItem value="200">$200/MWh</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Shutdown when price exceeds this threshold
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium">Shutdown Duration (hours)</label>
+                    <Select value={analysisHours} onValueChange={setAnalysisHours}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 hour</SelectItem>
+                        <SelectItem value="2">2 hours</SelectItem>
+                        <SelectItem value="4">4 hours</SelectItem>
+                        <SelectItem value="6">6 hours</SelectItem>
+                        <SelectItem value="8">8 hours</SelectItem>
+                        <SelectItem value="12">12 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Duration per shutdown event
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button 
+                      onClick={handlePeakAnalysis}
+                      disabled={loadingPeakAnalysis || !monthlyData}
+                      className="w-full"
+                    >
+                      {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Savings'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Analysis Results */}
+                {peakAnalysis && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600">{peakAnalysis.totalShutdowns}</div>
+                      <p className="text-sm text-muted-foreground">Shutdown Events</p>
+                      <p className="text-xs text-muted-foreground">above ${shutdownThreshold}/MWh</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">{peakAnalysis.totalHours}</div>
+                      <p className="text-sm text-muted-foreground">Total Hours</p>
+                      <p className="text-xs text-muted-foreground">of shutdown</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {formatCurrency(peakAnalysis.averageSavings)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Avg Savings</p>
+                      <p className="text-xs text-muted-foreground">per shutdown event</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {peakAnalysis.totalShutdowns > 0 
+                          ? formatCurrency((monthlyData?.statistics?.average || 0) - 
+                              (peakAnalysis.events.reduce((sum, e) => sum + e.price, 0) / 
+                               Math.max(peakAnalysis.events.length, 1) - 
+                               (monthlyData?.statistics?.average || 0)) * 
+                              (peakAnalysis.totalHours / (30 * 24)))
+                          : formatCurrency(monthlyData?.statistics?.average || 0)
+                        }
+                      </div>
+                      <p className="text-sm text-muted-foreground">Effective Rate</p>
+                      <p className="text-xs text-muted-foreground">with shutdowns</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Shutdown Events Chart */}
+                {peakAnalysis && peakAnalysis.events.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-medium mb-3">Shutdown Events Timeline</h4>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ScatterChart data={peakAnalysis.events}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload[0]) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-white p-3 border rounded shadow">
+                                    <p className="font-medium">{data.date}</p>
+                                    <p className="text-red-600">Price: {formatCurrency(data.price)}/MWh</p>
+                                    <p className="text-green-600">Savings: {formatCurrency(data.savings)}</p>
+                                    <p className="text-blue-600">Duration: {data.duration}h</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Scatter 
+                            data={peakAnalysis.events} 
+                            fill="#ef4444"
+                            name="Shutdown Events"
+                          />
+                          <ReferenceLine 
+                            y={parseFloat(shutdownThreshold)} 
+                            stroke="#ef4444" 
+                            strokeDasharray="5 5"
+                            label="Strike Price"
+                          />
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Original Analytics Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Price Distribution */}
             <Card>
@@ -431,6 +648,12 @@ export function AESOHistoricalPricing() {
                           dataKey="averagePrice" 
                           stroke="#2563eb" 
                           name="Average Price"
+                        />
+                        <ReferenceLine 
+                          y={parseFloat(shutdownThreshold)} 
+                          stroke="#ef4444" 
+                          strokeDasharray="5 5"
+                          label="Strike Price"
                         />
                       </LineChart>
                     </ResponsiveContainer>
