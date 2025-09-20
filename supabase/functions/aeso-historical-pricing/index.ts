@@ -146,14 +146,26 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
     console.log(`API Response:`, JSON.stringify(data, null, 2));
     
     // Parse the response structure based on AESO API documentation
-    const priceData = data.return?.['Pool Price'] || data.return?.poolPrice || data['Pool Price'] || data.poolPrice || [];
+    // The API returns data in "Pool Price Report" array
+    const priceData = data.return?.['Pool Price Report'] || 
+                     data.return?.['Pool Price'] || 
+                     data.return?.poolPrice || 
+                     data['Pool Price Report'] || 
+                     data['Pool Price'] || 
+                     data.poolPrice || [];
     console.log(`Fetched ${priceData.length} price records`);
     
     if (priceData.length === 0) {
       throw new Error('No price data returned from AESO API');
     }
     
-    return priceData;
+    // Map AESO API response to our expected format
+    return priceData.map((item: any) => ({
+      datetime: item.begin_datetime_utc || item.begin_datetime_mpt || item.datetime,
+      price: parseFloat(item.pool_price || item.price || '0'),
+      forecast_begin: item.begin_datetime_utc || '',
+      forecast_end: item.forecast_pool_price || ''
+    }));
   } catch (error) {
     console.error('Error fetching AESO data:', error);
     throw error;
