@@ -148,7 +148,9 @@ export function useAESOHistoricalPricing() {
           date: day.date,
           price: day.price,
           duration: shutdownHours,
-          savings: (day.price - priceThreshold * 0.7) * shutdownHours
+          // Savings = (peak price - average price) * duration
+          // This represents what you would have paid vs baseline
+          savings: (day.price - (monthlyData.statistics?.average || 0)) * shutdownHours
         }));
 
       const analysis: PeakAnalysisData = {

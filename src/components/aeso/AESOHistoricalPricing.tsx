@@ -515,40 +515,78 @@ export function AESOHistoricalPricing() {
 
                 {/* Analysis Results */}
                 {peakAnalysis && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">{peakAnalysis.totalShutdowns}</div>
-                      <p className="text-sm text-muted-foreground">Shutdown Events</p>
-                      <p className="text-xs text-muted-foreground">above ${shutdownThreshold}/MWh</p>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600">{peakAnalysis.totalHours}</div>
-                      <p className="text-sm text-muted-foreground">Total Hours</p>
-                      <p className="text-xs text-muted-foreground">of shutdown</p>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {formatCurrency(peakAnalysis.averageSavings)}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">{peakAnalysis.totalShutdowns}</div>
+                        <p className="text-sm text-muted-foreground">Shutdown Events</p>
+                        <p className="text-xs text-muted-foreground">above ${shutdownThreshold}/MWh</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">Avg Savings</p>
-                      <p className="text-xs text-muted-foreground">per shutdown event</p>
+                      
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">{peakAnalysis.totalHours}</div>
+                        <p className="text-sm text-muted-foreground">Total Hours</p>
+                        <p className="text-xs text-muted-foreground">of shutdown</p>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {formatCurrency(peakAnalysis.averageSavings)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Avg Savings</p>
+                        <p className="text-xs text-muted-foreground">per shutdown event</p>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {peakAnalysis.totalShutdowns > 0 && monthlyData?.statistics?.average
+                            ? formatCurrency(
+                                // Calculate weighted average: 
+                                // (total hours - shutdown hours) * avg price / total hours
+                                monthlyData.statistics.average * 
+                                ((30 * 24 - peakAnalysis.totalHours) / (30 * 24))
+                              )
+                            : formatCurrency(monthlyData?.statistics?.average || 0)
+                          }
+                        </div>
+                        <p className="text-sm text-muted-foreground">Effective Rate</p>
+                        <p className="text-xs text-muted-foreground">with shutdowns</p>
+                      </div>
                     </div>
                     
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {peakAnalysis.totalShutdowns > 0 
-                          ? formatCurrency((monthlyData?.statistics?.average || 0) - 
-                              (peakAnalysis.events.reduce((sum, e) => sum + e.price, 0) / 
-                               Math.max(peakAnalysis.events.length, 1) - 
-                               (monthlyData?.statistics?.average || 0)) * 
-                              (peakAnalysis.totalHours / (30 * 24)))
-                          : formatCurrency(monthlyData?.statistics?.average || 0)
-                        }
+                    {/* Additional Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-blue-600">
+                          {((peakAnalysis.totalHours / (30 * 24)) * 100).toFixed(1)}%
+                        </div>
+                        <p className="text-sm text-muted-foreground">Downtime</p>
+                        <p className="text-xs text-muted-foreground">of total hours</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">Effective Rate</p>
-                      <p className="text-xs text-muted-foreground">with shutdowns</p>
+                      
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-green-600">
+                          {peakAnalysis.events.length > 0 
+                            ? formatCurrency(peakAnalysis.events.reduce((sum, e) => sum + e.savings, 0))
+                            : formatCurrency(0)
+                          }
+                        </div>
+                        <p className="text-sm text-muted-foreground">Total Savings</p>
+                        <p className="text-xs text-muted-foreground">30-day period</p>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-purple-600">
+                          {peakAnalysis.events.length > 0 && monthlyData?.statistics?.average
+                            ? (((monthlyData.statistics.average - 
+                                 (monthlyData.statistics.average * ((30 * 24 - peakAnalysis.totalHours) / (30 * 24)))) / 
+                                 monthlyData.statistics.average) * 100).toFixed(1)
+                            : '0'
+                          }%
+                        </div>
+                        <p className="text-sm text-muted-foreground">Cost Reduction</p>
+                        <p className="text-xs text-muted-foreground">vs baseline</p>
+                      </div>
                     </div>
                   </div>
                 )}
