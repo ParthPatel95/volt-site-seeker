@@ -1,5 +1,8 @@
 project_id = "ktgosplhknmnyagxrgbe"
 
+[functions.aeso-historical-pricing]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 
