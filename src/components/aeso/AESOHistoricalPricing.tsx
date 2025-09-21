@@ -541,16 +541,57 @@ export function AESOHistoricalPricing() {
                         <div className="text-2xl font-bold text-blue-600">
                           {peakAnalysis.totalShutdowns > 0 && monthlyData?.statistics?.average
                             ? formatCurrency(
-                                // Calculate weighted average: 
-                                // (total hours - shutdown hours) * avg price / total hours
+                                // Calculate actual energy price: operating hours * avg price / total hours
                                 monthlyData.statistics.average * 
                                 ((30 * 24 - peakAnalysis.totalHours) / (30 * 24))
                               )
                             : formatCurrency(monthlyData?.statistics?.average || 0)
                           }
                         </div>
-                        <p className="text-sm text-muted-foreground">Effective Rate</p>
-                        <p className="text-xs text-muted-foreground">with shutdowns</p>
+                        <p className="text-sm text-muted-foreground">Energy Price</p>
+                        <p className="text-xs text-muted-foreground">after shutdowns</p>
+                      </div>
+                    </div>
+                    
+                    {/* Energy Cost Comparison */}
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-lg">
+                      <h4 className="text-sm font-semibold mb-3 text-center">Energy Cost Impact Analysis</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
+                          <div className="text-lg font-bold text-gray-600">
+                            {formatCurrency(monthlyData?.statistics?.average || 0)}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Baseline Energy Price</p>
+                          <p className="text-xs text-muted-foreground">without shutdowns</p>
+                        </div>
+                        
+                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
+                          <div className="text-lg font-bold text-green-600">
+                            {peakAnalysis.totalShutdowns > 0 && monthlyData?.statistics?.average
+                              ? formatCurrency(
+                                  monthlyData.statistics.average * 
+                                  ((30 * 24 - peakAnalysis.totalHours) / (30 * 24))
+                                )
+                              : formatCurrency(monthlyData?.statistics?.average || 0)
+                            }
+                          </div>
+                          <p className="text-sm text-muted-foreground">Energy Price After Shutdown</p>
+                          <p className="text-xs text-muted-foreground">effective rate per MWh</p>
+                        </div>
+                        
+                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
+                          <div className="text-lg font-bold text-blue-600">
+                            {peakAnalysis.totalShutdowns > 0 && monthlyData?.statistics?.average
+                              ? formatCurrency(
+                                  monthlyData.statistics.average - 
+                                  (monthlyData.statistics.average * ((30 * 24 - peakAnalysis.totalHours) / (30 * 24)))
+                                )
+                              : formatCurrency(0)
+                            }
+                          </div>
+                          <p className="text-sm text-muted-foreground">Cost Savings</p>
+                          <p className="text-xs text-muted-foreground">per MWh avoided</p>
+                        </div>
                       </div>
                     </div>
                     
@@ -578,14 +619,12 @@ export function AESOHistoricalPricing() {
                       <div className="text-center">
                         <div className="text-xl font-bold text-purple-600">
                           {peakAnalysis.events.length > 0 && monthlyData?.statistics?.average
-                            ? (((monthlyData.statistics.average - 
-                                 (monthlyData.statistics.average * ((30 * 24 - peakAnalysis.totalHours) / (30 * 24)))) / 
-                                 monthlyData.statistics.average) * 100).toFixed(1)
+                            ? (((peakAnalysis.totalHours / (30 * 24)) * 100)).toFixed(1)
                             : '0'
                           }%
                         </div>
-                        <p className="text-sm text-muted-foreground">Cost Reduction</p>
-                        <p className="text-xs text-muted-foreground">vs baseline</p>
+                        <p className="text-sm text-muted-foreground">Energy Avoided</p>
+                        <p className="text-xs text-muted-foreground">% of consumption</p>
                       </div>
                     </div>
                   </div>
