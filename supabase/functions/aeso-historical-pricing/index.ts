@@ -160,12 +160,19 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
     }
     
     // Map AESO API response to our expected format
-    return priceData.map((item: any) => ({
-      datetime: item.begin_datetime_utc || item.begin_datetime_mpt || item.datetime,
-      price: parseFloat(item.pool_price || item.price || '0'),
-      forecast_begin: item.begin_datetime_utc || '',
-      forecast_end: item.forecast_pool_price || ''
-    }));
+    const mappedData = priceData.map((item: any) => {
+      const price = parseFloat(item.pool_price || item.price || '0');
+      console.log(`Raw price: ${item.pool_price}, Parsed: ${price}`);
+      return {
+        datetime: item.begin_datetime_utc || item.begin_datetime_mpt || item.datetime,
+        price: price,
+        forecast_begin: item.begin_datetime_utc || '',
+        forecast_end: item.forecast_pool_price || ''
+      };
+    });
+    
+    console.log(`Sample mapped data:`, mappedData.slice(0, 3));
+    return mappedData;
   } catch (error) {
     console.error('Error fetching AESO data:', error);
     throw error;
@@ -174,6 +181,8 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
 
 async function processHistoricalData(data: HistoricalDataPoint[], timeframe: string) {
   const prices = data.map(d => parseFloat(d.price.toString()));
+  console.log(`Processing ${prices.length} prices. Sample prices:`, prices.slice(0, 10));
+  console.log(`Price range: min=${Math.min(...prices)}, max=${Math.max(...prices)}, avg=${prices.reduce((a, b) => a + b, 0) / prices.length}`);
   
   if (prices.length === 0) {
     throw new Error('No historical data available');
