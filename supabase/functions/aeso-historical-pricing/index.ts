@@ -48,13 +48,15 @@ serve(async (req) => {
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - 30);
       
+      console.log(`Monthly date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     } else if (timeframe === 'yearly') {
-      // Fetch last 12 months of daily averages
+      // Fetch last 12 months of daily averages - use a smaller range to avoid extremely old data
       const endDate = new Date();
       const startDate = new Date();
-      startDate.setFullYear(endDate.getFullYear() - 1);
+      startDate.setMonth(endDate.getMonth() - 12);
       
+      console.log(`Yearly date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     }
 
@@ -180,12 +182,18 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: 
 }
 
 async function processHistoricalData(data: HistoricalDataPoint[], timeframe: string) {
-  const prices = data.map(d => parseFloat(d.price.toString()));
-  console.log(`Processing ${prices.length} prices. Sample prices:`, prices.slice(0, 10));
+  // Filter out extreme price spikes that are outliers (>$500/MWh) to focus on normal market conditions
+  const filteredData = data.filter(d => {
+    const price = parseFloat(d.price.toString());
+    return price >= 0 && price <= 500; // Remove extreme outliers
+  });
+  
+  const prices = filteredData.map(d => parseFloat(d.price.toString()));
+  console.log(`Processing ${prices.length} prices (filtered from ${data.length}). Sample prices:`, prices.slice(0, 10));
   console.log(`Price range: min=${Math.min(...prices)}, max=${Math.max(...prices)}, avg=${prices.reduce((a, b) => a + b, 0) / prices.length}`);
   
   if (prices.length === 0) {
-    throw new Error('No historical data available');
+    throw new Error('No valid historical data available after filtering');
   }
   
   const statistics = {
