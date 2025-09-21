@@ -88,7 +88,8 @@ const VoltScout = () => {
                <Route path="ercot-market-hub" element={<ERCOTMarketComprehensive />} />
                <Route path="energy-rates" element={<EnergyRates />} />
                <Route path="industry-intelligence" element={<IndustryIntelligence />} />
-              <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
+               <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
+               <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
               <Route path="power-infrastructure" element={<PowerInfrastructure />} />
               <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
               <Route path="data-management" element={<DataManagement />} />
