@@ -95,17 +95,15 @@ export function AESOHistoricalPricing() {
   const analyzeUptimeOptimized = (targetUptime: number, shutdownHoursPerEvent: number) => {
     if (!monthlyData) return null;
     
-    const adder = parseFloat(transmissionAdder);
-    
     // Calculate available shutdown hours based on uptime target and time period
     const daysInPeriod = parseInt(timePeriod);
     const totalHours = daysInPeriod * 24;
     const maxShutdownHours = totalHours * (1 - targetUptime / 100);
     
-    // Get all valid price points (≥4¢/kWh, no negatives) and add transmission adder
+    // Get all valid price points (≥4¢/kWh, no negatives)
     const validPrices = monthlyData.chartData
       .filter(day => day.price >= 4 && day.price > 0)
-      .map(day => ({ date: day.date, price: day.price + adder }))
+      .map(day => ({ date: day.date, price: day.price }))
       .sort((a, b) => b.price - a.price); // Sort highest to lowest
     
     // Select the most expensive periods that fit within shutdown budget
@@ -121,20 +119,19 @@ export function AESOHistoricalPricing() {
     
     if (selectedShutdowns.length === 0) return null;
     
-    // Calculate new average price excluding selected shutdown periods from ALL data (with adder)
+    // Calculate new average price excluding selected shutdown periods from ALL data
     const shutdownDates = new Set(selectedShutdowns.map(s => s.date));
     const remainingHours = monthlyData.chartData
       .filter(day => day.price > 0 && !shutdownDates.has(day.date));
     
     const newAveragePrice = remainingHours.length > 0 
-      ? (remainingHours.reduce((sum, day) => sum + day.price, 0) / remainingHours.length) + adder
-      : (monthlyData.statistics?.average || 0) + adder;
+      ? remainingHours.reduce((sum, day) => sum + day.price, 0) / remainingHours.length 
+      : monthlyData.statistics?.average || 0;
     
     // Calculate events with savings
     const events = selectedShutdowns.map(shutdown => ({
       date: shutdown.date,
       price: shutdown.price,
-      allInPrice: shutdown.price,
       duration: shutdownHoursPerEvent,
       savings: (shutdown.price - newAveragePrice) * shutdownHoursPerEvent
     }));
@@ -148,7 +145,7 @@ export function AESOHistoricalPricing() {
       events,
       newAveragePrice,
       totalSavings,
-      originalAverage: (monthlyData.statistics?.average || 0) + adder
+      originalAverage: monthlyData.statistics?.average || 0
     };
   };
 
@@ -157,31 +154,29 @@ export function AESOHistoricalPricing() {
     
     const threshold = parseFloat(shutdownThreshold);
     const shutdownHours = parseInt(analysisHours);
-    const adder = parseFloat(transmissionAdder);
     
     // Get all valid price points for the selected time period (≥4¢/kWh, no negatives)
     const validPrices = monthlyData.chartData
       .filter(day => day.price >= 4 && day.price > 0);
     
-    // Find shutdown events (prices above threshold, including adder)
+    // Find shutdown events (prices above threshold)
     const shutdownEvents = validPrices
-      .filter(day => (day.price + adder) >= threshold)
-      .map(day => ({ date: day.date, price: day.price + adder }));
+      .filter(day => day.price >= threshold)
+      .map(day => ({ date: day.date, price: day.price }));
     
-    // Calculate new average excluding shutdown periods (with adder)
+    // Calculate new average excluding shutdown periods
     const remainingPrices = validPrices
-      .filter(day => (day.price + adder) < threshold)
-      .map(day => day.price + adder);
+      .filter(day => day.price < threshold)
+      .map(day => day.price);
     
     const newAveragePrice = remainingPrices.length > 0 
       ? remainingPrices.reduce((sum, price) => sum + price, 0) / remainingPrices.length 
-      : adder;
+      : 0;
     
     // Calculate events with savings
     const events = shutdownEvents.map(event => ({
       date: event.date,
       price: event.price,
-      allInPrice: event.price,
       duration: shutdownHours,
       savings: (event.price - newAveragePrice) * shutdownHours
     }));
@@ -195,7 +190,7 @@ export function AESOHistoricalPricing() {
       events,
       newAveragePrice,
       totalSavings,
-      originalAverage: (monthlyData.statistics?.average || 0) + adder
+      originalAverage: monthlyData.statistics?.average || 0
     };
   };
 
@@ -840,24 +835,24 @@ export function AESOHistoricalPricing() {
                                 </tr>
                               </thead>
                               <tbody>
-                                 {currentAnalysis.events.map((event, index) => (
-                                   <tr key={index} className="border-b hover:bg-muted/50">
-                                     <td className="p-2 font-medium">{event.date}</td>
-                                     <td className="p-2 text-right font-medium text-red-600">
-                                       {formatCurrency((event.allInPrice || event.price) - parseFloat(transmissionAdder))}
-                                     </td>
-                                     <td className="p-2 text-right font-medium text-red-600">
-                                       {formatCurrency(event.allInPrice || event.price)}
-                                     </td>
-                                     <td className="p-2 text-right">
-                                       ${convertToUSD(event.allInPrice || event.price).toFixed(2)}
-                                     </td>
-                                     <td className="p-2 text-right">{event.duration}</td>
-                                     <td className="p-2 text-right font-medium text-green-600">
-                                       {formatCurrency(event.savings)}
-                                     </td>
-                                   </tr>
-                                 ))}
+                                {currentAnalysis.events.map((event, index) => (
+                                  <tr key={index} className="border-b hover:bg-muted/50">
+                                    <td className="p-2 font-medium">{event.date}</td>
+                                    <td className="p-2 text-right font-medium text-red-600">
+                                      {formatCurrency(event.price)}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      {formatCurrency(calculateAllInPrice(event.price))}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      ${convertToUSD(calculateAllInPrice(event.price)).toFixed(2)}
+                                    </td>
+                                    <td className="p-2 text-right">{event.duration}</td>
+                                    <td className="p-2 text-right font-medium text-green-600">
+                                      {formatCurrency(event.savings)}
+                                    </td>
+                                  </tr>
+                                ))}
                               </tbody>
                               <tfoot>
                                 <tr className="border-t-2 font-semibold bg-muted/30">
