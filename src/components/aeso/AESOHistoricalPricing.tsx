@@ -118,13 +118,12 @@ export function AESOHistoricalPricing() {
     console.log('Valid prices (first 10):', validPrices.slice(0, 10));
     console.log('Total valid price points:', validPrices.length);
     
-    // Calculate ORIGINAL average from all valid data
-    const originalAveragePrice = validPrices.length > 0 
-      ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length 
-      : 0;
+    // Use the TRUE original average from monthly statistics (includes ALL periods, even zeros)
+    // This is the correct baseline that represents what you actually pay on average
+    const originalAveragePrice = monthlyData.statistics?.average || 0;
     
-    console.log('Original calculated average:', originalAveragePrice);
-    console.log('Monthly data stats average:', monthlyData.statistics?.average);
+    console.log('TRUE original average from stats:', originalAveragePrice);
+    console.log('Filtered average (wrong baseline):', validPrices.length > 0 ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length : 0);
     
     // Select the most expensive periods that fit within shutdown budget
     const selectedShutdowns = [];
@@ -206,12 +205,12 @@ export function AESOHistoricalPricing() {
     console.log('Valid prices count:', validPrices.length);
     console.log('Valid prices sample:', validPrices.slice(0, 5));
     
-    // Calculate ORIGINAL average price from ALL valid periods (this is our baseline)
-    const originalAveragePrice = validPrices.length > 0 
-      ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length 
-      : monthlyData.statistics?.average || 0;
+    // Use the TRUE original average from monthly statistics (includes ALL periods, even zeros)
+    // This is the correct baseline that represents what you actually pay on average
+    const originalAveragePrice = monthlyData.statistics?.average || 0;
     
-    console.log('Original average price (baseline):', originalAveragePrice);
+    console.log('TRUE original average from stats:', originalAveragePrice);
+    console.log('Filtered average (wrong baseline):', validPrices.length > 0 ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length : 0);
     
     // Find shutdown events (prices above threshold)
     const shutdownEvents = validPrices
