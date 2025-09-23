@@ -119,14 +119,14 @@ export function AESOHistoricalPricing() {
     
     if (selectedShutdowns.length === 0) return null;
     
-    // Calculate new average price excluding selected shutdown periods
-    const remainingPrices = validPrices
-      .filter(point => !selectedShutdowns.find(s => s.date === point.date))
-      .map(point => point.price);
+    // Calculate new average price excluding selected shutdown periods from ALL data
+    const shutdownDates = new Set(selectedShutdowns.map(s => s.date));
+    const remainingHours = monthlyData.chartData
+      .filter(day => day.price > 0 && !shutdownDates.has(day.date));
     
-    const newAveragePrice = remainingPrices.length > 0 
-      ? remainingPrices.reduce((sum, price) => sum + price, 0) / remainingPrices.length 
-      : 0;
+    const newAveragePrice = remainingHours.length > 0 
+      ? remainingHours.reduce((sum, day) => sum + day.price, 0) / remainingHours.length 
+      : monthlyData.statistics?.average || 0;
     
     // Calculate events with savings
     const events = selectedShutdowns.map(shutdown => ({
