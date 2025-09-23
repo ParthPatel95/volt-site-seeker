@@ -57,11 +57,28 @@ export function AESOHistoricalPricing() {
   const [shutdownThreshold, setShutdownThreshold] = useState('100');
   const [uptimePercentage, setUptimePercentage] = useState('95');
   const [analysisMethod, setAnalysisMethod] = useState<'strike' | 'uptime'>('strike');
+  const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365'>('30');
+  const [transmissionAdder, setTransmissionAdder] = useState('11.63');
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
 
   useEffect(() => {
     fetchMonthlyData();
     fetchYearlyData();
+    fetchExchangeRate();
   }, []);
+
+  const fetchExchangeRate = async () => {
+    try {
+      const response = await fetch('https://api.exchangerate-api.io/v4/latest/CAD');
+      const data = await response.json();
+      if (data.rates?.USD) {
+        setExchangeRate(data.rates.USD);
+      }
+    } catch (error) {
+      console.error('Failed to fetch exchange rate:', error);
+      setExchangeRate(0.73); // Fallback rate
+    }
+  };
 
   const handlePeakAnalysis = () => {
     setAnalysisMethod('strike');
@@ -76,15 +93,19 @@ export function AESOHistoricalPricing() {
   const analyzeUptimeOptimized = (targetUptime: number, shutdownHoursPerEvent: number) => {
     if (!monthlyData) return;
     
-    // Calculate how many hours we can shut down
-    const totalHours = 30 * 24; // 720 hours in 30 days
+    // Calculate total hours based on selected time period
+    const daysInPeriod = parseInt(timePeriod);
+    const totalHours = daysInPeriod * 24;
     const maxShutdownHours = totalHours * (1 - targetUptime / 100);
     
-    // Create array of all price points with dates
-    const pricePoints = monthlyData.chartData.map(day => ({
-      date: day.date,
-      price: day.price
-    })).sort((a, b) => b.price - a.price); // Sort by price descending
+    // Create array of all price points with dates, filter out low prices
+    const pricePoints = monthlyData.chartData
+      .filter(day => day.price >= 4) // Don't shut down below 4¢/kWh
+      .map(day => ({
+        date: day.date,
+        price: day.price
+      }))
+      .sort((a, b) => b.price - a.price); // Sort by price descending
     
     // Take the most expensive periods that fit within our shutdown budget
     const selectedShutdowns = [];
@@ -96,7 +117,7 @@ export function AESOHistoricalPricing() {
           date: point.date,
           price: point.price,
           duration: shutdownHoursPerEvent,
-          savings: (point.price - (monthlyData.statistics?.average || 0)) * shutdownHoursPerEvent
+          savings: (point.price - calculateAverageAfterShutdown()) * shutdownHoursPerEvent
         });
         totalShutdownHours += shutdownHoursPerEvent;
       }
@@ -105,6 +126,31 @@ export function AESOHistoricalPricing() {
     // Use the lowest price from selected shutdowns as the threshold
     const effectiveThreshold = selectedShutdowns[selectedShutdowns.length - 1]?.price || 0;
     analyzePeakShutdown(shutdownHoursPerEvent, effectiveThreshold);
+  };
+
+  const calculateAverageAfterShutdown = (thresholdPrice?: number) => {
+    if (!monthlyData) return 0;
+    
+    const threshold = thresholdPrice || parseFloat(shutdownThreshold);
+    
+    // Filter out prices above threshold and below 4¢/kWh
+    const remainingPrices = monthlyData.chartData
+      .filter(day => day.price < threshold && day.price >= 4)
+      .map(day => day.price);
+    
+    if (remainingPrices.length === 0) return 0;
+    
+    return remainingPrices.reduce((sum, price) => sum + price, 0) / remainingPrices.length;
+  };
+
+  const calculateAllInPrice = (energyPrice: number) => {
+    const adder = parseFloat(transmissionAdder);
+    return energyPrice + adder;
+  };
+
+  const convertToUSD = (cadPrice: number) => {
+    if (!exchangeRate) return 0;
+    return cadPrice * exchangeRate;
   };
 
   const formatCurrency = (value: number) => `CA$${value.toFixed(2)}`;
@@ -497,7 +543,49 @@ export function AESOHistoricalPricing() {
               </p>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+                  <div className="space-y-6">
+                {/* Time Period and Adder Configuration */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label className="text-sm font-medium">Analysis Period</label>
+                    <Select value={timePeriod} onValueChange={(value: '30' | '90' | '180' | '365') => setTimePeriod(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">Last 30 days</SelectItem>
+                        <SelectItem value="90">Last 90 days</SelectItem>
+                        <SelectItem value="180">Last 180 days</SelectItem>
+                        <SelectItem value="365">Last year</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium">Transmission Adder ($/MWh)</label>
+                    <input
+                      type="number"
+                      value={transmissionAdder}
+                      onChange={(e) => setTransmissionAdder(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      step="0.01"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Transmission, DTS, and other fees
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium">Exchange Rate</label>
+                    <div className="text-sm font-medium text-green-600">
+                      {exchangeRate ? `1 CAD = ${exchangeRate.toFixed(4)} USD` : 'Loading...'}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Live rate from Google
+                    </p>
+                  </div>
+                </div>
+
                 {/* Analysis Method Selection */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {/* Method 1: Strike Price Analysis */}
@@ -509,41 +597,31 @@ export function AESOHistoricalPricing() {
                     <div className="space-y-3">
                       <div>
                         <label className="text-sm font-medium">Strike Price (CA$/MWh)</label>
-                        <Select value={shutdownThreshold} onValueChange={setShutdownThreshold}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select strike price" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="40">$40/MWh</SelectItem>
-                            <SelectItem value="50">$50/MWh</SelectItem>
-                            <SelectItem value="75">$75/MWh</SelectItem>
-                            <SelectItem value="100">$100/MWh</SelectItem>
-                            <SelectItem value="150">$150/MWh</SelectItem>
-                            <SelectItem value="200">$200/MWh</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <input
+                          type="number"
+                          value={shutdownThreshold}
+                          onChange={(e) => setShutdownThreshold(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          step="0.01"
+                          min="4"
+                        />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Shutdown when price exceeds this threshold
+                          Shutdown when price exceeds this threshold (min $4/MWh)
                         </p>
                       </div>
                       
                       <div>
                         <label className="text-sm font-medium">Shutdown Duration (hours)</label>
-                        <Select value={analysisHours} onValueChange={setAnalysisHours}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 hour</SelectItem>
-                            <SelectItem value="2">2 hours</SelectItem>
-                            <SelectItem value="4">4 hours</SelectItem>
-                            <SelectItem value="6">6 hours</SelectItem>
-                            <SelectItem value="8">8 hours</SelectItem>
-                            <SelectItem value="12">12 hours</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <input
+                          type="number"
+                          value={analysisHours}
+                          onChange={(e) => setAnalysisHours(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="1"
+                          max="24"
+                        />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Duration per shutdown event
+                          Duration per shutdown event (1-24 hours)
                         </p>
                       </div>
                       
@@ -567,41 +645,32 @@ export function AESOHistoricalPricing() {
                     <div className="space-y-3">
                       <div>
                         <label className="text-sm font-medium">Target Uptime (%)</label>
-                        <Select value={uptimePercentage} onValueChange={setUptimePercentage}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="80">80% Uptime</SelectItem>
-                            <SelectItem value="85">85% Uptime</SelectItem>
-                            <SelectItem value="90">90% Uptime</SelectItem>
-                            <SelectItem value="95">95% Uptime</SelectItem>
-                            <SelectItem value="98">98% Uptime</SelectItem>
-                            <SelectItem value="99">99% Uptime</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <input
+                          type="number"
+                          value={uptimePercentage}
+                          onChange={(e) => setUptimePercentage(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="50"
+                          max="99.9"
+                          step="0.1"
+                        />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Automatically shuts down during most expensive {100 - parseFloat(uptimePercentage)}% of hours
+                          Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage)).toFixed(1)}% of hours
                         </p>
                       </div>
                       
                       <div>
                         <label className="text-sm font-medium">Shutdown Duration (hours)</label>
-                        <Select value={analysisHours} onValueChange={setAnalysisHours}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 hour</SelectItem>
-                            <SelectItem value="2">2 hours</SelectItem>
-                            <SelectItem value="4">4 hours</SelectItem>
-                            <SelectItem value="6">6 hours</SelectItem>
-                            <SelectItem value="8">8 hours</SelectItem>
-                            <SelectItem value="12">12 hours</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <input
+                          type="number"
+                          value={analysisHours}
+                          onChange={(e) => setAnalysisHours(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="1"
+                          max="24"
+                        />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Duration per shutdown event
+                          Duration per shutdown event (1-24 hours)
                         </p>
                       </div>
                       
@@ -642,15 +711,7 @@ export function AESOHistoricalPricing() {
                       
                       <div className="text-center">
                         <div className="text-2xl font-bold text-blue-600">
-                          {peakAnalysis.totalShutdowns > 0 && monthlyData?.statistics?.average
-                            ? formatCurrency(
-                                // Calculate weighted average price excluding shutdown periods
-                                // Total cost without shutdowns / total operating hours
-                                (monthlyData.statistics.average * (30 * 24) - peakAnalysis.events.reduce((sum, e) => sum + (e.price * e.duration), 0)) / 
-                                (30 * 24 - peakAnalysis.totalHours)
-                              )
-                            : formatCurrency(monthlyData?.statistics?.average || 0)
-                          }
+                          {formatCurrency(calculateAverageAfterShutdown())}
                         </div>
                         <p className="text-sm text-muted-foreground">Energy Price</p>
                         <p className="text-xs text-muted-foreground">after shutdowns</p>
@@ -659,45 +720,38 @@ export function AESOHistoricalPricing() {
                     
                     {/* Energy Cost Comparison */}
                     <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-lg">
-                      <h4 className="text-sm font-semibold mb-3 text-center">Energy Cost Impact Analysis</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <h4 className="text-sm font-semibold mb-3 text-center">All-In Energy Cost Analysis (Including Transmission)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
                           <div className="text-lg font-bold text-gray-600">
                             {formatCurrency(monthlyData?.statistics?.average || 0)}
                           </div>
-                          <p className="text-sm text-muted-foreground">Baseline Energy Price</p>
-                          <p className="text-xs text-muted-foreground">without shutdowns</p>
+                          <p className="text-sm text-muted-foreground">Baseline Energy</p>
+                          <p className="text-xs text-muted-foreground">CAD/MWh (energy only)</p>
                         </div>
                         
                         <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
                           <div className="text-lg font-bold text-green-600">
-                            {peakAnalysis.totalShutdowns > 0 && monthlyData?.statistics?.average
-                              ? formatCurrency(
-                                  // Weighted average excluding shutdown hours
-                                  (monthlyData.statistics.average * (30 * 24) - peakAnalysis.events.reduce((sum, e) => sum + (e.price * e.duration), 0)) / 
-                                  (30 * 24 - peakAnalysis.totalHours)
-                                )
-                              : formatCurrency(monthlyData?.statistics?.average || 0)
-                            }
+                            {formatCurrency(calculateAverageAfterShutdown())}
                           </div>
-                          <p className="text-sm text-muted-foreground">Energy Price After Shutdown</p>
-                          <p className="text-xs text-muted-foreground">effective rate per MWh</p>
+                          <p className="text-sm text-muted-foreground">Energy After Shutdown</p>
+                          <p className="text-xs text-muted-foreground">CAD/MWh (energy only)</p>
                         </div>
                         
                         <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
                           <div className="text-lg font-bold text-blue-600">
-                            {peakAnalysis.totalShutdowns > 0 && monthlyData?.statistics?.average
-                              ? formatCurrency(
-                                  // Original average minus new weighted average = savings per MWh
-                                  monthlyData.statistics.average - 
-                                  ((monthlyData.statistics.average * (30 * 24) - peakAnalysis.events.reduce((sum, e) => sum + (e.price * e.duration), 0)) / 
-                                  (30 * 24 - peakAnalysis.totalHours))
-                                )
-                              : formatCurrency(0)
-                            }
+                            {formatCurrency(calculateAllInPrice(calculateAverageAfterShutdown()))}
                           </div>
-                          <p className="text-sm text-muted-foreground">Cost Savings</p>
-                          <p className="text-xs text-muted-foreground">per MWh avoided</p>
+                          <p className="text-sm text-muted-foreground">All-In Price (CAD)</p>
+                          <p className="text-xs text-muted-foreground">Energy + ${transmissionAdder}/MWh</p>
+                        </div>
+                        
+                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
+                          <div className="text-lg font-bold text-purple-600">
+                            ${convertToUSD(calculateAllInPrice(calculateAverageAfterShutdown())).toFixed(2)}
+                          </div>
+                          <p className="text-sm text-muted-foreground">All-In Price (USD)</p>
+                          <p className="text-xs text-muted-foreground">@ {exchangeRate?.toFixed(4)} CAD/USD</p>
                         </div>
                       </div>
                     </div>
