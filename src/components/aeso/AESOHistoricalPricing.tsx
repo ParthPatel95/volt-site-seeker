@@ -157,22 +157,24 @@ export function AESOHistoricalPricing() {
     console.log('New average price:', newAveragePrice);
     console.log('Price reduction:', originalAveragePrice - newAveragePrice);
     
-    // Calculate events with savings - convert back to individual shutdown events
+    // Calculate events with CORRECT savings logic
+    // Savings = what we AVOID paying by shutting down vs baseline (original average)
     const events = selectedShutdowns.map(shutdown => ({
       date: shutdown.date,
       price: shutdown.price,
-      duration: shutdownHoursPerEvent, // Use the configured shutdown duration
-      // Savings = (price during shutdown - new average) * hours
-      savings: (shutdown.price - newAveragePrice) * shutdownHoursPerEvent,
-      allInSavings: (calculateAllInPrice(shutdown.price) - calculateAllInPrice(newAveragePrice)) * shutdownHoursPerEvent
+      duration: shutdownHoursPerEvent,
+      // CORRECT: Savings = (shutdown price - original average) * hours
+      // This represents what we avoid paying by shutting down during expensive periods
+      savings: (shutdown.price - originalAveragePrice) * shutdownHoursPerEvent,
+      allInSavings: (calculateAllInPrice(shutdown.price) - calculateAllInPrice(originalAveragePrice)) * shutdownHoursPerEvent
     }));
     
     const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
     const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
     
     console.log('Events sample (first 3):', events.slice(0, 3));
-    console.log('Total energy savings:', totalSavings);
-    console.log('Total all-in savings:', totalAllInSavings);
+    console.log('Total energy savings (vs original baseline):', totalSavings);
+    console.log('Total all-in savings (vs original baseline):', totalAllInSavings);
     
     return {
       totalShutdowns: selectedShutdowns.length,
@@ -204,12 +206,12 @@ export function AESOHistoricalPricing() {
     console.log('Valid prices count:', validPrices.length);
     console.log('Valid prices sample:', validPrices.slice(0, 5));
     
-    // Calculate ORIGINAL weighted average (including ALL hours)
+    // Calculate ORIGINAL average price from ALL valid periods (this is our baseline)
     const originalAveragePrice = validPrices.length > 0 
       ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length 
       : monthlyData.statistics?.average || 0;
     
-    console.log('Original average price:', originalAveragePrice);
+    console.log('Original average price (baseline):', originalAveragePrice);
     
     // Find shutdown events (prices above threshold)
     const shutdownEvents = validPrices
@@ -219,7 +221,7 @@ export function AESOHistoricalPricing() {
     console.log('Shutdown events count:', shutdownEvents.length);
     console.log('Shutdown events sample:', shutdownEvents.slice(0, 5));
     
-    // Calculate NEW average excluding shutdown periods
+    // Calculate NEW average from remaining periods (for display only)
     const remainingPrices = validPrices
       .filter(day => day.price < threshold);
     
@@ -228,25 +230,27 @@ export function AESOHistoricalPricing() {
       : originalAveragePrice;
     
     console.log('Remaining prices count:', remainingPrices.length);
-    console.log('New average price:', newAveragePrice);
-    console.log('Price reduction:', originalAveragePrice - newAveragePrice);
+    console.log('New average price (display only):', newAveragePrice);
+    console.log('Price reduction from original:', originalAveragePrice - newAveragePrice);
     
-    // Calculate events with savings using the CORRECT baseline (new average vs each shutdown price)
+    // Calculate events with CORRECT savings logic
+    // Savings = what we AVOID paying by shutting down vs baseline (original average)
     const events = shutdownEvents.map(event => ({
       date: event.date,
       price: event.price,
       duration: shutdownHours,
-      // Savings = what we would have paid at shutdown price vs what we actually pay at new average
-      savings: (event.price - newAveragePrice) * shutdownHours,
-      allInSavings: (calculateAllInPrice(event.price) - calculateAllInPrice(newAveragePrice)) * shutdownHours
+      // CORRECT: Savings = (shutdown price - original average) * hours
+      // This represents what we avoid paying by shutting down during expensive periods
+      savings: (event.price - originalAveragePrice) * shutdownHours,
+      allInSavings: (calculateAllInPrice(event.price) - calculateAllInPrice(originalAveragePrice)) * shutdownHours
     }));
     
     const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
     const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
     
-    console.log('Events sample:', events.slice(0, 3));
-    console.log('Total energy savings:', totalSavings);
-    console.log('Total all-in savings:', totalAllInSavings);
+    console.log('Events sample (first 3):', events.slice(0, 3));
+    console.log('Total energy savings (vs original baseline):', totalSavings);
+    console.log('Total all-in savings (vs original baseline):', totalAllInSavings);
     
     return {
       totalShutdowns: shutdownEvents.length,
