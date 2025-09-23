@@ -31,7 +31,8 @@ import {
   AlertTriangle,
   Calculator,
   PieChart,
-  Activity
+  Activity,
+  Clock
 } from 'lucide-react';
 import { useAESOHistoricalPricing } from '@/hooks/useAESOHistoricalPricing';
 import { PriceAlertsPanel } from './PriceAlertsPanel';
@@ -800,16 +801,20 @@ export function AESOHistoricalPricing() {
                 </div>
 
                 {peakAnalysis && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-6">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <Card>
                         <CardContent className="pt-6">
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">
-                              {peakAnalysis.totalShutdowns}
+                            <div className="text-2xl font-bold text-blue-600">
+                              {((peakAnalysis.totalHours / (30 * 24)) * 100).toFixed(1)}%
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              Shutdown Events (30 days)
+                              Downtime
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              of total hours
                             </div>
                           </div>
                         </CardContent>
@@ -818,11 +823,14 @@ export function AESOHistoricalPricing() {
                       <Card>
                         <CardContent className="pt-6">
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {peakAnalysis.totalHours}h
+                            <div className="text-2xl font-bold text-green-600">
+                              {formatCurrency(peakAnalysis.events.reduce((sum, e) => sum + e.savings, 0))}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              Total Shutdown Hours
+                              Total Savings
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              30-day period
                             </div>
                           </div>
                         </CardContent>
@@ -832,17 +840,80 @@ export function AESOHistoricalPricing() {
                         <CardContent className="pt-6">
                           <div className="text-center">
                             <div className="text-2xl font-bold text-purple-600">
-                              {formatCurrency(peakAnalysis.averageSavings)}/MWh
+                              {((peakAnalysis.totalHours / (30 * 24)) * 100).toFixed(1)}%
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              Avg. Savings per Event
+                              Energy Avoided
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              % of consumption
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-600">
+                              {peakAnalysis.totalShutdowns}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Shutdown Events
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              30-day period
                             </div>
                           </div>
                         </CardContent>
                       </Card>
                     </div>
 
-                    {/* Shutdown Events Visualization */}
+                    {/* Energy Cost Impact Analysis */}
+                    {monthlyData && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <TrendingDown className="w-4 h-4 text-green-600" />
+                            Energy Cost Impact Analysis
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-muted-foreground">
+                                Baseline Energy Price
+                              </div>
+                              <div className="text-2xl font-bold">
+                                {formatCurrency(monthlyData.statistics.average)}/MWh
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-green-600">
+                                Effective Price After Shutdown
+                              </div>
+                              <div className="text-2xl font-bold text-green-600">
+                                {formatCurrency(
+                                  (monthlyData.chartData.reduce((sum, day) => 
+                                    day.price <= parseFloat(shutdownThreshold) ? sum + day.price : sum, 0
+                                  ) / monthlyData.chartData.filter(day => day.price <= parseFloat(shutdownThreshold)).length) || 0
+                                )}/MWh
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-purple-600">
+                                Cost Savings per MWh Avoided
+                              </div>
+                              <div className="text-2xl font-bold text-purple-600">
+                                {formatCurrency(peakAnalysis.averageSavings)}/MWh
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Shutdown Events Timeline */}
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -851,33 +922,140 @@ export function AESOHistoricalPricing() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-64">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <ScatterChart data={peakAnalysis.events}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="date" />
-                              <YAxis dataKey="price" />
-                              <Tooltip 
-                                content={({ payload }) => {
-                                  if (payload && payload[0]) {
-                                    const data = payload[0].payload;
-                                    return (
-                                      <div className="bg-background border rounded-lg p-3 shadow-lg">
-                                        <p className="font-medium">{data.date}</p>
-                                        <p>Price: {formatCurrency(data.price)}/MWh</p>
-                                        <p>Duration: {data.duration}h</p>
-                                        <p>Savings: {formatCurrency(data.savings)}/MWh</p>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                }}
-                              />
-                              <ReferenceLine y={parseFloat(shutdownThreshold)} stroke="#dc2626" strokeDasharray="5 5" />
-                              <Scatter dataKey="price" fill="#dc2626" />
-                            </ScatterChart>
-                          </ResponsiveContainer>
+                        <div className="h-80">
+                          {peakAnalysis.events.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <AreaChart 
+                                data={peakAnalysis.events.map((event, index) => ({
+                                  ...event,
+                                  dayIndex: index + 1,
+                                  timestamp: new Date(event.date).getTime()
+                                }))}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                  dataKey="date" 
+                                  tick={{ fontSize: 12 }}
+                                  angle={-45}
+                                  textAnchor="end"
+                                  height={80}
+                                />
+                                <YAxis 
+                                  label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }}
+                                />
+                                <Tooltip 
+                                  content={({ payload, label }) => {
+                                    if (payload && payload[0]) {
+                                      const data = payload[0].payload;
+                                      return (
+                                        <div className="bg-background border rounded-lg p-3 shadow-lg">
+                                          <p className="font-medium">{data.date}</p>
+                                          <p>Price: {formatCurrency(data.price)}/MWh</p>
+                                          <p>Duration: {data.duration}h</p>
+                                          <p>Savings: {formatCurrency(data.savings)}/MWh</p>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                                <ReferenceLine 
+                                  y={parseFloat(shutdownThreshold)} 
+                                  stroke="#dc2626" 
+                                  strokeDasharray="5 5"
+                                  label={{ value: "Strike Price", position: "top" }}
+                                />
+                                <Area 
+                                  type="monotone" 
+                                  dataKey="price" 
+                                  stroke="#dc2626" 
+                                  fill="#dc2626" 
+                                  fillOpacity={0.3}
+                                  name="Shutdown Price"
+                                />
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <p className="text-muted-foreground">No shutdown events found for the selected threshold</p>
+                            </div>
+                          )}
                         </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Shutdown Events Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-blue-600" />
+                          Detailed Shutdown Schedule
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          All shutdown events with timing, duration, and energy prices
+                        </p>
+                      </CardHeader>
+                      <CardContent>
+                        {peakAnalysis.events.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-2 font-medium">Date</th>
+                                  <th className="text-left p-2 font-medium">Day of Week</th>
+                                  <th className="text-right p-2 font-medium">Energy Price</th>
+                                  <th className="text-right p-2 font-medium">Duration</th>
+                                  <th className="text-right p-2 font-medium">Savings vs Avg</th>
+                                  <th className="text-right p-2 font-medium">Total Savings</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {peakAnalysis.events.map((event, index) => {
+                                  const eventDate = new Date(event.date);
+                                  const dayOfWeek = eventDate.toLocaleDateString('en-CA', { weekday: 'short' });
+                                  const totalSavings = event.savings * parseFloat(analysisHours);
+                                  
+                                  return (
+                                    <tr key={index} className="border-b hover:bg-muted/50">
+                                      <td className="p-2 font-mono">{event.date}</td>
+                                      <td className="p-2">{dayOfWeek}</td>
+                                      <td className="p-2 text-right font-mono text-red-600">
+                                        {formatCurrency(event.price)}/MWh
+                                      </td>
+                                      <td className="p-2 text-right">{event.duration}h</td>
+                                      <td className="p-2 text-right font-mono text-green-600">
+                                        {formatCurrency(event.savings)}/MWh
+                                      </td>
+                                      <td className="p-2 text-right font-mono text-green-600 font-semibold">
+                                        {formatCurrency(totalSavings)}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                              <tfoot>
+                                <tr className="border-t-2 font-semibold bg-muted/30">
+                                  <td colSpan={4} className="p-2 text-right">Total:</td>
+                                  <td className="p-2 text-right font-mono text-green-600">
+                                    {formatCurrency(peakAnalysis.averageSavings)}/MWh avg
+                                  </td>
+                                  <td className="p-2 text-right font-mono text-green-600 text-lg">
+                                    {formatCurrency(peakAnalysis.events.reduce((sum, e) => sum + (e.savings * parseFloat(analysisHours)), 0))}
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-muted-foreground">
+                              No shutdown events found for threshold of {formatCurrency(parseFloat(shutdownThreshold))}/MWh
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Try lowering the price threshold to find more events
+                            </p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
