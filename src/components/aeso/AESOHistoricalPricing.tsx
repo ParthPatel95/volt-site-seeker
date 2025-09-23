@@ -281,7 +281,7 @@ export function AESOHistoricalPricing() {
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Analytics</span>
+            <span className="hidden sm:inline">Uptime Analytics</span>
             <span className="sm:hidden">Stats</span>
           </TabsTrigger>
           <TabsTrigger value="predictions" className="flex items-center gap-2">
