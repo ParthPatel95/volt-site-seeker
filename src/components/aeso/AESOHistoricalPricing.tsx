@@ -128,15 +128,17 @@ export function AESOHistoricalPricing() {
       ? remainingHours.reduce((sum, day) => sum + day.price, 0) / remainingHours.length 
       : monthlyData.statistics?.average || 0;
     
-    // Calculate events with savings
+    // Calculate events with savings (energy cost savings only)
     const events = selectedShutdowns.map(shutdown => ({
       date: shutdown.date,
       price: shutdown.price,
       duration: shutdownHoursPerEvent,
-      savings: (shutdown.price - newAveragePrice) * shutdownHoursPerEvent
+      savings: (shutdown.price - newAveragePrice) * shutdownHoursPerEvent,
+      allInSavings: (calculateAllInPrice(shutdown.price) - calculateAllInPrice(newAveragePrice)) * shutdownHoursPerEvent
     }));
     
     const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
+    const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
     
     return {
       totalShutdowns: selectedShutdowns.length,
@@ -145,6 +147,7 @@ export function AESOHistoricalPricing() {
       events,
       newAveragePrice,
       totalSavings,
+      totalAllInSavings,
       originalAverage: monthlyData.statistics?.average || 0
     };
   };
@@ -173,15 +176,17 @@ export function AESOHistoricalPricing() {
       ? remainingPrices.reduce((sum, price) => sum + price, 0) / remainingPrices.length 
       : 0;
     
-    // Calculate events with savings
+    // Calculate events with savings (energy cost savings only)
     const events = shutdownEvents.map(event => ({
       date: event.date,
       price: event.price,
       duration: shutdownHours,
-      savings: (event.price - newAveragePrice) * shutdownHours
+      savings: (event.price - newAveragePrice) * shutdownHours,
+      allInSavings: (calculateAllInPrice(event.price) - calculateAllInPrice(newAveragePrice)) * shutdownHours
     }));
     
     const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
+    const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
     
     return {
       totalShutdowns: shutdownEvents.length,
@@ -190,6 +195,7 @@ export function AESOHistoricalPricing() {
       events,
       newAveragePrice,
       totalSavings,
+      totalAllInSavings,
       originalAverage: monthlyData.statistics?.average || 0
     };
   };
@@ -761,8 +767,8 @@ export function AESOHistoricalPricing() {
                         <div className="text-2xl font-bold text-green-600">
                           {formatCurrency(currentAnalysis.totalSavings || 0)}
                         </div>
-                        <p className="text-sm text-muted-foreground">Total Savings</p>
-                        <p className="text-xs text-muted-foreground">energy cost only</p>
+                        <p className="text-sm text-muted-foreground">Energy Savings</p>
+                        <p className="text-xs text-muted-foreground">(energy cost only)</p>
                       </div>
                       
                       <div className="text-center">
@@ -777,37 +783,39 @@ export function AESOHistoricalPricing() {
                     {/* Energy Cost Comparison */}
                     <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-lg">
                       <h4 className="text-sm font-semibold mb-3 text-center">All-In Energy Cost Analysis (Including ${transmissionAdder}/MWh Transmission)</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
                           <div className="text-lg font-bold text-gray-600">
-                            {formatCurrency(monthlyData?.statistics?.average || 0)}
+                            {formatCurrency(calculateAllInPrice(monthlyData?.statistics?.average || 0))}
                           </div>
-                          <p className="text-sm text-muted-foreground">Original Energy</p>
-                          <p className="text-xs text-muted-foreground">CAD/MWh (energy only)</p>
+                          <p className="text-sm text-muted-foreground">Original All-In Price</p>
+                          <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
                         </div>
                         
                         <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
                           <div className="text-lg font-bold text-green-600">
-                            {formatCurrency(currentAnalysis.newAveragePrice || 0)}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Energy After Shutdown</p>
-                          <p className="text-xs text-muted-foreground">CAD/MWh (energy only)</p>
-                        </div>
-                        
-                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
-                          <div className="text-lg font-bold text-blue-600">
                             {formatCurrency(calculateAllInPrice(currentAnalysis.newAveragePrice || 0))}
                           </div>
-                          <p className="text-sm text-muted-foreground">All-In Price (CAD)</p>
-                          <p className="text-xs text-muted-foreground">Energy + ${transmissionAdder}/MWh</p>
+                          <p className="text-sm text-muted-foreground">New All-In Price</p>
+                          <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded border-2 border-green-200 dark:border-green-800">
+                          <div className="text-xl font-bold text-green-600">
+                            {formatCurrency(currentAnalysis.totalSavings || 0)}
+                          </div>
+                          <p className="text-sm font-semibold">Energy-Only Savings</p>
+                          <p className="text-xs text-muted-foreground">Pool price difference only</p>
                         </div>
                         
-                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
-                          <div className="text-lg font-bold text-purple-600">
-                            ${convertToUSD(calculateAllInPrice(currentAnalysis.newAveragePrice || 0)).toFixed(2)}
+                        <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded border-2 border-blue-200 dark:border-blue-800">
+                          <div className="text-xl font-bold text-blue-600">
+                            {formatCurrency(currentAnalysis.totalAllInSavings || 0)}
                           </div>
-                          <p className="text-sm text-muted-foreground">All-In Price (USD)</p>
-                          <p className="text-xs text-muted-foreground">@ {exchangeRate?.toFixed(4)} CAD/USD</p>
+                          <p className="text-sm font-semibold">Total All-In Savings</p>
+                          <p className="text-xs text-muted-foreground">Including ${transmissionAdder}/MWh transmission</p>
                         </div>
                       </div>
                     </div>
@@ -831,7 +839,8 @@ export function AESOHistoricalPricing() {
                                   <th className="text-right p-2">All-In Price (CAD/MWh)</th>
                                   <th className="text-right p-2">All-In Price (USD/MWh)</th>
                                   <th className="text-right p-2">Duration (hrs)</th>
-                                  <th className="text-right p-2">Energy Savings (CAD)</th>
+                                   <th className="text-right p-2">Energy Savings (CAD)</th>
+                                   <th className="text-right p-2">All-In Savings (CAD)</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -848,9 +857,12 @@ export function AESOHistoricalPricing() {
                                       ${convertToUSD(calculateAllInPrice(event.price)).toFixed(2)}
                                     </td>
                                     <td className="p-2 text-right">{event.duration}</td>
-                                    <td className="p-2 text-right font-medium text-green-600">
-                                      {formatCurrency(event.savings)}
-                                    </td>
+                                     <td className="p-2 text-right font-medium text-green-600">
+                                       {formatCurrency(event.savings)}
+                                     </td>
+                                     <td className="p-2 text-right font-medium text-blue-600">
+                                       {formatCurrency(event.allInSavings || 0)}
+                                     </td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -860,10 +872,13 @@ export function AESOHistoricalPricing() {
                                   <td className="p-2 text-right">—</td>
                                   <td className="p-2 text-right">—</td>
                                   <td className="p-2 text-right">—</td>
-                                  <td className="p-2 text-right">{currentAnalysis.totalHours}</td>
-                                  <td className="p-2 text-right text-green-600">
-                                    {formatCurrency(currentAnalysis.totalSavings)}
-                                  </td>
+                                   <td className="p-2 text-right">{currentAnalysis.totalHours}</td>
+                                   <td className="p-2 text-right text-green-600">
+                                     {formatCurrency(currentAnalysis.totalSavings)}
+                                   </td>
+                                   <td className="p-2 text-right text-blue-600">
+                                     {formatCurrency(currentAnalysis.totalAllInSavings || 0)}
+                                   </td>
                                 </tr>
                               </tfoot>
                             </table>
