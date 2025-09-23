@@ -847,7 +847,7 @@ export function AESOHistoricalPricing() {
                           {formatCurrency(currentAnalysis.newAveragePrice || 0)}
                         </div>
                         <div className="text-sm font-medium text-blue-500">
-                          {formatCurrencyUSD(convertCADtoUSD(currentAnalysis.newAveragePrice || 0), 'USD')}
+                          {liveExchangeRate ? formatCurrencyUSD(convertCADtoUSD(currentAnalysis.newAveragePrice || 0), 'USD') : 'Loading USD...'}
                         </div>
                         <p className="text-sm text-muted-foreground">New Avg Price</p>
                         <p className="text-xs text-muted-foreground">energy only</p>
@@ -863,7 +863,7 @@ export function AESOHistoricalPricing() {
                             {formatCurrency(calculateAllInPrice(currentAnalysis.originalAverage || 0))}
                           </div>
                           <div className="text-sm font-medium text-gray-500">
-                            {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(currentAnalysis.originalAverage || 0)), 'USD')}
+                            {liveExchangeRate ? formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(currentAnalysis.originalAverage || 0)), 'USD') : 'Loading USD...'}
                           </div>
                           <p className="text-sm text-muted-foreground">Original All-In Price</p>
                           <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
@@ -874,7 +874,7 @@ export function AESOHistoricalPricing() {
                             {formatCurrency(calculateAllInPrice(currentAnalysis.newAveragePrice || 0))}
                           </div>
                           <div className="text-sm font-medium text-green-500">
-                            {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(currentAnalysis.newAveragePrice || 0)), 'USD')}
+                            {liveExchangeRate ? formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(currentAnalysis.newAveragePrice || 0)), 'USD') : 'Loading USD...'}
                           </div>
                           <p className="text-sm text-muted-foreground">New All-In Price</p>
                           <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
