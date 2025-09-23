@@ -220,9 +220,9 @@ export function AESOHistoricalPricing() {
     console.log('Shutdown events count:', shutdownEvents.length);
     console.log('Shutdown events sample:', shutdownEvents.slice(0, 5));
     
-    // Calculate NEW average from remaining periods (for display only)
-    const remainingPrices = validPrices
-      .filter(day => day.price < threshold);
+    // Calculate NEW average by REMOVING shutdown events from the dataset
+    const shutdownDates = new Set(shutdownEvents.map(s => s.date));
+    const remainingPrices = validPrices.filter(day => !shutdownDates.has(day.date));
     
     const newAveragePrice = remainingPrices.length > 0 
       ? remainingPrices.reduce((sum, day) => sum + day.price, 0) / remainingPrices.length 
