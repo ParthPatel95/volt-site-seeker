@@ -812,6 +812,66 @@ export function AESOHistoricalPricing() {
                       </div>
                     </div>
 
+                    {/* Detailed Shutdown Events Table */}
+                    {currentAnalysis.events && currentAnalysis.events.length > 0 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-orange-600" />
+                            Detailed Shutdown Events
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-2">Date</th>
+                                  <th className="text-right p-2">Energy Price (CAD/MWh)</th>
+                                  <th className="text-right p-2">All-In Price (CAD/MWh)</th>
+                                  <th className="text-right p-2">All-In Price (USD/MWh)</th>
+                                  <th className="text-right p-2">Duration (hrs)</th>
+                                  <th className="text-right p-2">Energy Savings (CAD)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {currentAnalysis.events.map((event, index) => (
+                                  <tr key={index} className="border-b hover:bg-muted/50">
+                                    <td className="p-2 font-medium">{event.date}</td>
+                                    <td className="p-2 text-right font-medium text-red-600">
+                                      {formatCurrency(event.price)}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      {formatCurrency(calculateAllInPrice(event.price))}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      ${convertToUSD(calculateAllInPrice(event.price)).toFixed(2)}
+                                    </td>
+                                    <td className="p-2 text-right">{event.duration}</td>
+                                    <td className="p-2 text-right font-medium text-green-600">
+                                      {formatCurrency(event.savings)}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                              <tfoot>
+                                <tr className="border-t-2 font-semibold bg-muted/30">
+                                  <td className="p-2">TOTALS</td>
+                                  <td className="p-2 text-right">—</td>
+                                  <td className="p-2 text-right">—</td>
+                                  <td className="p-2 text-right">—</td>
+                                  <td className="p-2 text-right">{currentAnalysis.totalHours}</td>
+                                  <td className="p-2 text-right text-green-600">
+                                    {formatCurrency(currentAnalysis.totalSavings)}
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
                     {/* Shutdown Schedule */}
                     {currentAnalysis.events && currentAnalysis.events.length > 0 && (
                       <Card>
