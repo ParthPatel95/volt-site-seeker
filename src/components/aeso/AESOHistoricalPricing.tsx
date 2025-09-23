@@ -119,20 +119,26 @@ export function AESOHistoricalPricing() {
     
     if (selectedShutdowns.length === 0) return null;
     
-    // Calculate new average price excluding selected shutdown periods from ALL data
+    // Calculate ORIGINAL weighted average (including ALL hours)
+    const allValidHours = monthlyData.chartData.filter(day => day.price > 0);
+    const originalAveragePrice = allValidHours.length > 0 
+      ? allValidHours.reduce((sum, day) => sum + day.price, 0) / allValidHours.length 
+      : monthlyData.statistics?.average || 0;
+    
+    // Calculate NEW weighted average excluding shutdown periods
     const shutdownDates = new Set(selectedShutdowns.map(s => s.date));
-    const remainingHours = monthlyData.chartData
-      .filter(day => day.price > 0 && !shutdownDates.has(day.date));
+    const remainingHours = allValidHours.filter(day => !shutdownDates.has(day.date));
     
     const newAveragePrice = remainingHours.length > 0 
       ? remainingHours.reduce((sum, day) => sum + day.price, 0) / remainingHours.length 
-      : monthlyData.statistics?.average || 0;
+      : originalAveragePrice;
     
-    // Calculate events with savings (energy cost savings only)
+    // Calculate events with savings using the CORRECT baseline (new average vs each shutdown price)
     const events = selectedShutdowns.map(shutdown => ({
       date: shutdown.date,
       price: shutdown.price,
       duration: shutdownHoursPerEvent,
+      // Savings = what we would have paid at shutdown price vs what we actually pay at new average
       savings: (shutdown.price - newAveragePrice) * shutdownHoursPerEvent,
       allInSavings: (calculateAllInPrice(shutdown.price) - calculateAllInPrice(newAveragePrice)) * shutdownHoursPerEvent
     }));
@@ -148,7 +154,7 @@ export function AESOHistoricalPricing() {
       newAveragePrice,
       totalSavings,
       totalAllInSavings,
-      originalAverage: monthlyData.statistics?.average || 0
+      originalAverage: originalAveragePrice  // Now this is the TRUE original average
     };
   };
 
@@ -162,25 +168,30 @@ export function AESOHistoricalPricing() {
     const validPrices = monthlyData.chartData
       .filter(day => day.price >= 4 && day.price > 0);
     
+    // Calculate ORIGINAL weighted average (including ALL hours)
+    const originalAveragePrice = validPrices.length > 0 
+      ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length 
+      : monthlyData.statistics?.average || 0;
+    
     // Find shutdown events (prices above threshold)
     const shutdownEvents = validPrices
       .filter(day => day.price >= threshold)
       .map(day => ({ date: day.date, price: day.price }));
     
-    // Calculate new average excluding shutdown periods
+    // Calculate NEW average excluding shutdown periods
     const remainingPrices = validPrices
-      .filter(day => day.price < threshold)
-      .map(day => day.price);
+      .filter(day => day.price < threshold);
     
     const newAveragePrice = remainingPrices.length > 0 
-      ? remainingPrices.reduce((sum, price) => sum + price, 0) / remainingPrices.length 
-      : 0;
+      ? remainingPrices.reduce((sum, day) => sum + day.price, 0) / remainingPrices.length 
+      : originalAveragePrice;
     
-    // Calculate events with savings (energy cost savings only)
+    // Calculate events with savings using the CORRECT baseline (new average vs each shutdown price)
     const events = shutdownEvents.map(event => ({
       date: event.date,
       price: event.price,
       duration: shutdownHours,
+      // Savings = what we would have paid at shutdown price vs what we actually pay at new average
       savings: (event.price - newAveragePrice) * shutdownHours,
       allInSavings: (calculateAllInPrice(event.price) - calculateAllInPrice(newAveragePrice)) * shutdownHours
     }));
@@ -196,7 +207,7 @@ export function AESOHistoricalPricing() {
       newAveragePrice,
       totalSavings,
       totalAllInSavings,
-      originalAverage: monthlyData.statistics?.average || 0
+      originalAverage: originalAveragePrice  // Now this is the TRUE original average
     };
   };
 
@@ -786,7 +797,7 @@ export function AESOHistoricalPricing() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
                           <div className="text-lg font-bold text-gray-600">
-                            {formatCurrency(calculateAllInPrice(monthlyData?.statistics?.average || 0))}
+                            {formatCurrency(calculateAllInPrice(currentAnalysis.originalAverage || 0))}
                           </div>
                           <p className="text-sm text-muted-foreground">Original All-In Price</p>
                           <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
