@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ import { LoadScheduleOptimizer } from './LoadScheduleOptimizer';
 import { CostBenefitCalculator } from './CostBenefitCalculator';
 
 export function AESOHistoricalPricing() {
+  const { convertCADtoUSD, formatCurrency: formatCurrencyUSD, exchangeRate: liveExchangeRate } = useCurrencyConversion();
   const { 
     monthlyData, 
     yearlyData, 
@@ -129,17 +131,21 @@ export function AESOHistoricalPricing() {
     const selectedShutdowns = [];
     let totalShutdownHours = 0;
     
-    // Each day represents 24 hours, so we need to account for this
-    for (const point of validPrices) {
-      const hoursThisDay = 24; // Each data point represents a full day
-      if (totalShutdownHours + hoursThisDay <= maxShutdownHours) {
-        selectedShutdowns.push(point);
-        totalShutdownHours += hoursThisDay;
-      }
+    // For uptime method: Calculate how many shutdown events we can have
+    // If user wants 1 hour shutdowns, we can have maxShutdownHours / shutdownHoursPerEvent events
+    const maxShutdownEvents = Math.floor(maxShutdownHours / shutdownHoursPerEvent);
+    
+    console.log('Max shutdown events we can have:', maxShutdownEvents);
+    console.log('Shutdown hours per event:', shutdownHoursPerEvent);
+    
+    // Take the most expensive days up to our limit
+    for (let i = 0; i < Math.min(validPrices.length, maxShutdownEvents); i++) {
+      selectedShutdowns.push(validPrices[i]);
+      totalShutdownHours += shutdownHoursPerEvent;
     }
     
     console.log('Selected shutdowns (first 5):', selectedShutdowns.slice(0, 5));
-    console.log('Total shutdown periods:', selectedShutdowns.length);
+    console.log('Total shutdown events:', selectedShutdowns.length);
     console.log('Total shutdown hours:', totalShutdownHours);
     
     if (selectedShutdowns.length === 0) return null;
@@ -177,12 +183,12 @@ export function AESOHistoricalPricing() {
     
     return {
       totalShutdowns: selectedShutdowns.length,
-      totalHours: selectedShutdowns.length * shutdownHoursPerEvent, // Total hours based on individual events
+      totalHours: totalShutdownHours,
       averageSavings: events.length > 0 ? totalSavings / events.length : 0,
       events,
       newAveragePrice,
-      totalSavings,
-      totalAllInSavings,
+      energySavings: totalSavings,
+      allInSavings: totalAllInSavings,
       originalAverage: originalAveragePrice
     };
   };
@@ -700,15 +706,15 @@ export function AESOHistoricalPricing() {
                     </p>
                   </div>
                   
-                  <div>
-                    <label className="text-sm font-medium">Exchange Rate</label>
-                    <div className="text-sm font-medium text-green-600">
-                      {exchangeRate ? `1 CAD = ${exchangeRate.toFixed(4)} USD` : 'Loading...'}
+                    <div>
+                      <label className="text-sm font-medium">Exchange Rate</label>
+                      <div className="text-sm font-medium text-green-600">
+                        {liveExchangeRate ? `1 CAD = ${liveExchangeRate.toFixed(4)} USD` : 'Loading...'}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Live rate from multiple sources
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Live rate from Google
-                    </p>
-                  </div>
                 </div>
 
                 {/* Analysis Method Selection */}
@@ -840,6 +846,9 @@ export function AESOHistoricalPricing() {
                         <div className="text-2xl font-bold text-blue-600">
                           {formatCurrency(currentAnalysis.newAveragePrice || 0)}
                         </div>
+                        <div className="text-sm font-medium text-blue-500">
+                          {formatCurrencyUSD(convertCADtoUSD(currentAnalysis.newAveragePrice || 0), 'USD')}
+                        </div>
                         <p className="text-sm text-muted-foreground">New Avg Price</p>
                         <p className="text-xs text-muted-foreground">energy only</p>
                       </div>
@@ -853,6 +862,9 @@ export function AESOHistoricalPricing() {
                           <div className="text-lg font-bold text-gray-600">
                             {formatCurrency(calculateAllInPrice(currentAnalysis.originalAverage || 0))}
                           </div>
+                          <div className="text-sm font-medium text-gray-500">
+                            {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(currentAnalysis.originalAverage || 0)), 'USD')}
+                          </div>
                           <p className="text-sm text-muted-foreground">Original All-In Price</p>
                           <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
                         </div>
@@ -860,6 +872,9 @@ export function AESOHistoricalPricing() {
                         <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
                           <div className="text-lg font-bold text-green-600">
                             {formatCurrency(calculateAllInPrice(currentAnalysis.newAveragePrice || 0))}
+                          </div>
+                          <div className="text-sm font-medium text-green-500">
+                            {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(currentAnalysis.newAveragePrice || 0)), 'USD')}
                           </div>
                           <p className="text-sm text-muted-foreground">New All-In Price</p>
                           <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
@@ -918,9 +933,9 @@ export function AESOHistoricalPricing() {
                                     <td className="p-2 text-right">
                                       {formatCurrency(calculateAllInPrice(event.price))}
                                     </td>
-                                    <td className="p-2 text-right">
-                                      ${convertToUSD(calculateAllInPrice(event.price)).toFixed(2)}
-                                    </td>
+                                     <td className="p-2 text-right">
+                                       {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(event.price)), 'USD')}
+                                     </td>
                                     <td className="p-2 text-right">{event.duration}</td>
                                      <td className="p-2 text-right font-medium text-green-600">
                                        {formatCurrency(event.savings)}
