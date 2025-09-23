@@ -95,50 +95,74 @@ export function AESOHistoricalPricing() {
   const analyzeUptimeOptimized = (targetUptime: number, shutdownHoursPerEvent: number) => {
     if (!monthlyData) return null;
     
+    console.log('=== UPTIME ANALYSIS DEBUG ===');
+    console.log('Target uptime:', targetUptime);
+    console.log('Shutdown hours per event:', shutdownHoursPerEvent);
+    console.log('Monthly data statistics:', monthlyData.statistics);
+    
     // Calculate available shutdown hours based on uptime target and time period
     const daysInPeriod = parseInt(timePeriod);
     const totalHours = daysInPeriod * 24;
     const maxShutdownHours = totalHours * (1 - targetUptime / 100);
     
-    // Get all valid price points (≥4¢/kWh, no negatives)
+    console.log('Days in period:', daysInPeriod);
+    console.log('Total hours:', totalHours);
+    console.log('Max shutdown hours allowed:', maxShutdownHours);
+    
+    // Get all valid price points (≥4¢/kWh, no negatives) - these represent daily averages
     const validPrices = monthlyData.chartData
       .filter(day => day.price >= 4 && day.price > 0)
       .map(day => ({ date: day.date, price: day.price }))
       .sort((a, b) => b.price - a.price); // Sort highest to lowest
     
+    console.log('Valid prices (first 10):', validPrices.slice(0, 10));
+    console.log('Total valid price points:', validPrices.length);
+    
+    // Calculate ORIGINAL average from all valid data
+    const originalAveragePrice = validPrices.length > 0 
+      ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length 
+      : 0;
+    
+    console.log('Original calculated average:', originalAveragePrice);
+    console.log('Monthly data stats average:', monthlyData.statistics?.average);
+    
     // Select the most expensive periods that fit within shutdown budget
     const selectedShutdowns = [];
     let totalShutdownHours = 0;
     
+    // Each day represents 24 hours, so we need to account for this
     for (const point of validPrices) {
-      if (totalShutdownHours + shutdownHoursPerEvent <= maxShutdownHours) {
+      const hoursThisDay = 24; // Each data point represents a full day
+      if (totalShutdownHours + hoursThisDay <= maxShutdownHours) {
         selectedShutdowns.push(point);
-        totalShutdownHours += shutdownHoursPerEvent;
+        totalShutdownHours += hoursThisDay;
       }
     }
     
+    console.log('Selected shutdowns (first 5):', selectedShutdowns.slice(0, 5));
+    console.log('Total shutdown periods:', selectedShutdowns.length);
+    console.log('Total shutdown hours:', totalShutdownHours);
+    
     if (selectedShutdowns.length === 0) return null;
     
-    // Calculate ORIGINAL weighted average (including ALL hours)
-    const allValidHours = monthlyData.chartData.filter(day => day.price > 0);
-    const originalAveragePrice = allValidHours.length > 0 
-      ? allValidHours.reduce((sum, day) => sum + day.price, 0) / allValidHours.length 
-      : monthlyData.statistics?.average || 0;
-    
-    // Calculate NEW weighted average excluding shutdown periods
+    // Calculate NEW average excluding shutdown periods
     const shutdownDates = new Set(selectedShutdowns.map(s => s.date));
-    const remainingHours = allValidHours.filter(day => !shutdownDates.has(day.date));
+    const remainingDays = validPrices.filter(day => !shutdownDates.has(day.date));
     
-    const newAveragePrice = remainingHours.length > 0 
-      ? remainingHours.reduce((sum, day) => sum + day.price, 0) / remainingHours.length 
+    const newAveragePrice = remainingDays.length > 0 
+      ? remainingDays.reduce((sum, day) => sum + day.price, 0) / remainingDays.length 
       : originalAveragePrice;
     
-    // Calculate events with savings using the CORRECT baseline (new average vs each shutdown price)
+    console.log('Remaining days after shutdown:', remainingDays.length);
+    console.log('New average price:', newAveragePrice);
+    console.log('Price reduction:', originalAveragePrice - newAveragePrice);
+    
+    // Calculate events with savings - convert back to individual shutdown events
     const events = selectedShutdowns.map(shutdown => ({
       date: shutdown.date,
       price: shutdown.price,
-      duration: shutdownHoursPerEvent,
-      // Savings = what we would have paid at shutdown price vs what we actually pay at new average
+      duration: shutdownHoursPerEvent, // Use the configured shutdown duration
+      // Savings = (price during shutdown - new average) * hours
       savings: (shutdown.price - newAveragePrice) * shutdownHoursPerEvent,
       allInSavings: (calculateAllInPrice(shutdown.price) - calculateAllInPrice(newAveragePrice)) * shutdownHoursPerEvent
     }));
@@ -146,37 +170,54 @@ export function AESOHistoricalPricing() {
     const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
     const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
     
+    console.log('Events sample (first 3):', events.slice(0, 3));
+    console.log('Total energy savings:', totalSavings);
+    console.log('Total all-in savings:', totalAllInSavings);
+    
     return {
       totalShutdowns: selectedShutdowns.length,
-      totalHours: totalShutdownHours,
+      totalHours: selectedShutdowns.length * shutdownHoursPerEvent, // Total hours based on individual events
       averageSavings: events.length > 0 ? totalSavings / events.length : 0,
       events,
       newAveragePrice,
       totalSavings,
       totalAllInSavings,
-      originalAverage: originalAveragePrice  // Now this is the TRUE original average
+      originalAverage: originalAveragePrice
     };
   };
 
   const calculateStrikePriceAnalysis = () => {
     if (!monthlyData) return null;
     
+    console.log('=== STRIKE PRICE ANALYSIS DEBUG ===');
+    
     const threshold = parseFloat(shutdownThreshold);
     const shutdownHours = parseInt(analysisHours);
+    
+    console.log('Shutdown threshold:', threshold);
+    console.log('Shutdown hours per event:', shutdownHours);
     
     // Get all valid price points for the selected time period (≥4¢/kWh, no negatives)
     const validPrices = monthlyData.chartData
       .filter(day => day.price >= 4 && day.price > 0);
+    
+    console.log('Valid prices count:', validPrices.length);
+    console.log('Valid prices sample:', validPrices.slice(0, 5));
     
     // Calculate ORIGINAL weighted average (including ALL hours)
     const originalAveragePrice = validPrices.length > 0 
       ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length 
       : monthlyData.statistics?.average || 0;
     
+    console.log('Original average price:', originalAveragePrice);
+    
     // Find shutdown events (prices above threshold)
     const shutdownEvents = validPrices
       .filter(day => day.price >= threshold)
       .map(day => ({ date: day.date, price: day.price }));
+    
+    console.log('Shutdown events count:', shutdownEvents.length);
+    console.log('Shutdown events sample:', shutdownEvents.slice(0, 5));
     
     // Calculate NEW average excluding shutdown periods
     const remainingPrices = validPrices
@@ -185,6 +226,10 @@ export function AESOHistoricalPricing() {
     const newAveragePrice = remainingPrices.length > 0 
       ? remainingPrices.reduce((sum, day) => sum + day.price, 0) / remainingPrices.length 
       : originalAveragePrice;
+    
+    console.log('Remaining prices count:', remainingPrices.length);
+    console.log('New average price:', newAveragePrice);
+    console.log('Price reduction:', originalAveragePrice - newAveragePrice);
     
     // Calculate events with savings using the CORRECT baseline (new average vs each shutdown price)
     const events = shutdownEvents.map(event => ({
@@ -198,6 +243,10 @@ export function AESOHistoricalPricing() {
     
     const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
     const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
+    
+    console.log('Events sample:', events.slice(0, 3));
+    console.log('Total energy savings:', totalSavings);
+    console.log('Total all-in savings:', totalAllInSavings);
     
     return {
       totalShutdowns: shutdownEvents.length,
@@ -213,7 +262,9 @@ export function AESOHistoricalPricing() {
 
   const calculateAllInPrice = (energyPrice: number) => {
     const adder = parseFloat(transmissionAdder);
-    return energyPrice + adder;
+    const result = energyPrice + adder;
+    console.log(`calculateAllInPrice: ${energyPrice} + ${adder} = ${result}`);
+    return result;
   };
 
   const convertToUSD = (cadPrice: number) => {
