@@ -55,6 +55,8 @@ export function AESOHistoricalPricing() {
 
   const [analysisHours, setAnalysisHours] = useState('4');
   const [shutdownThreshold, setShutdownThreshold] = useState('100');
+  const [uptimePercentage, setUptimePercentage] = useState('95');
+  const [analysisMethod, setAnalysisMethod] = useState<'strike' | 'uptime'>('strike');
 
   useEffect(() => {
     fetchMonthlyData();
@@ -62,7 +64,47 @@ export function AESOHistoricalPricing() {
   }, []);
 
   const handlePeakAnalysis = () => {
+    setAnalysisMethod('strike');
     analyzePeakShutdown(parseInt(analysisHours), parseFloat(shutdownThreshold));
+  };
+
+  const handleUptimeAnalysis = () => {
+    setAnalysisMethod('uptime');
+    analyzeUptimeOptimized(parseFloat(uptimePercentage), parseInt(analysisHours));
+  };
+
+  const analyzeUptimeOptimized = (targetUptime: number, shutdownHoursPerEvent: number) => {
+    if (!monthlyData) return;
+    
+    // Calculate how many hours we can shut down
+    const totalHours = 30 * 24; // 720 hours in 30 days
+    const maxShutdownHours = totalHours * (1 - targetUptime / 100);
+    
+    // Create array of all price points with dates
+    const pricePoints = monthlyData.chartData.map(day => ({
+      date: day.date,
+      price: day.price
+    })).sort((a, b) => b.price - a.price); // Sort by price descending
+    
+    // Take the most expensive periods that fit within our shutdown budget
+    const selectedShutdowns = [];
+    let totalShutdownHours = 0;
+    
+    for (const point of pricePoints) {
+      if (totalShutdownHours + shutdownHoursPerEvent <= maxShutdownHours) {
+        selectedShutdowns.push({
+          date: point.date,
+          price: point.price,
+          duration: shutdownHoursPerEvent,
+          savings: (point.price - (monthlyData.statistics?.average || 0)) * shutdownHoursPerEvent
+        });
+        totalShutdownHours += shutdownHoursPerEvent;
+      }
+    }
+    
+    // Use the lowest price from selected shutdowns as the threshold
+    const effectiveThreshold = selectedShutdowns[selectedShutdowns.length - 1]?.price || 0;
+    analyzePeakShutdown(shutdownHoursPerEvent, effectiveThreshold);
   };
 
   const formatCurrency = (value: number) => `CA$${value.toFixed(2)}`;
@@ -456,56 +498,121 @@ export function AESOHistoricalPricing() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* Strike Price Controls */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Strike Price (CA$/MWh)</label>
-                    <Select value={shutdownThreshold} onValueChange={setShutdownThreshold}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select strike price" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="40">$40/MWh</SelectItem>
-                        <SelectItem value="50">$50/MWh</SelectItem>
-                        <SelectItem value="75">$75/MWh</SelectItem>
-                        <SelectItem value="100">$100/MWh</SelectItem>
-                        <SelectItem value="150">$150/MWh</SelectItem>
-                        <SelectItem value="200">$200/MWh</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Shutdown when price exceeds this threshold
-                    </p>
+                {/* Analysis Method Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Method 1: Strike Price Analysis */}
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Strike Price Method
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium">Strike Price (CA$/MWh)</label>
+                        <Select value={shutdownThreshold} onValueChange={setShutdownThreshold}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select strike price" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="40">$40/MWh</SelectItem>
+                            <SelectItem value="50">$50/MWh</SelectItem>
+                            <SelectItem value="75">$75/MWh</SelectItem>
+                            <SelectItem value="100">$100/MWh</SelectItem>
+                            <SelectItem value="150">$150/MWh</SelectItem>
+                            <SelectItem value="200">$200/MWh</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Shutdown when price exceeds this threshold
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Shutdown Duration (hours)</label>
+                        <Select value={analysisHours} onValueChange={setAnalysisHours}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 hour</SelectItem>
+                            <SelectItem value="2">2 hours</SelectItem>
+                            <SelectItem value="4">4 hours</SelectItem>
+                            <SelectItem value="6">6 hours</SelectItem>
+                            <SelectItem value="8">8 hours</SelectItem>
+                            <SelectItem value="12">12 hours</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Duration per shutdown event
+                        </p>
+                      </div>
+                      
+                      <Button 
+                        onClick={handlePeakAnalysis}
+                        disabled={loadingPeakAnalysis || !monthlyData}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Strike Price'}
+                      </Button>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium">Shutdown Duration (hours)</label>
-                    <Select value={analysisHours} onValueChange={setAnalysisHours}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 hour</SelectItem>
-                        <SelectItem value="2">2 hours</SelectItem>
-                        <SelectItem value="4">4 hours</SelectItem>
-                        <SelectItem value="6">6 hours</SelectItem>
-                        <SelectItem value="8">8 hours</SelectItem>
-                        <SelectItem value="12">12 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Duration per shutdown event
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-end">
-                    <Button 
-                      onClick={handlePeakAnalysis}
-                      disabled={loadingPeakAnalysis || !monthlyData}
-                      className="w-full"
-                    >
-                      {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Savings'}
-                    </Button>
+
+                  {/* Method 2: Uptime Percentage Analysis */}
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Uptime Percentage Method
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium">Target Uptime (%)</label>
+                        <Select value={uptimePercentage} onValueChange={setUptimePercentage}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="80">80% Uptime</SelectItem>
+                            <SelectItem value="85">85% Uptime</SelectItem>
+                            <SelectItem value="90">90% Uptime</SelectItem>
+                            <SelectItem value="95">95% Uptime</SelectItem>
+                            <SelectItem value="98">98% Uptime</SelectItem>
+                            <SelectItem value="99">99% Uptime</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Automatically shuts down during most expensive {100 - parseFloat(uptimePercentage)}% of hours
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Shutdown Duration (hours)</label>
+                        <Select value={analysisHours} onValueChange={setAnalysisHours}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 hour</SelectItem>
+                            <SelectItem value="2">2 hours</SelectItem>
+                            <SelectItem value="4">4 hours</SelectItem>
+                            <SelectItem value="6">6 hours</SelectItem>
+                            <SelectItem value="8">8 hours</SelectItem>
+                            <SelectItem value="12">12 hours</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Duration per shutdown event
+                        </p>
+                      </div>
+                      
+                      <Button 
+                        onClick={handleUptimeAnalysis}
+                        disabled={loadingPeakAnalysis || !monthlyData}
+                        className="w-full"
+                      >
+                        {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Uptime Optimized'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -595,6 +702,19 @@ export function AESOHistoricalPricing() {
                       </div>
                     </div>
                     
+                    {/* Analysis Summary */}
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20 rounded-lg mb-4">
+                      <h4 className="text-sm font-semibold mb-2">
+                        {analysisMethod === 'strike' ? 'Strike Price Analysis' : 'Uptime Optimized Analysis'}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {analysisMethod === 'strike' 
+                          ? `Shutting down when prices exceed $${shutdownThreshold}/MWh for ${analysisHours} hours each time.`
+                          : `Maintaining ${uptimePercentage}% uptime by shutting down during the most expensive price periods.`
+                        }
+                      </p>
+                    </div>
+
                     {/* Additional Metrics */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                       <div className="text-center">
@@ -741,38 +861,56 @@ export function AESOHistoricalPricing() {
                       <h4 className="text-sm font-medium mb-3">Shutdown Events Timeline</h4>
                       <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                          <ScatterChart data={peakAnalysis.events}>
+                          <AreaChart data={peakAnalysis.events.map((event, index) => ({
+                            ...event,
+                            index: index + 1,
+                            formattedDate: new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                          }))}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
+                            <XAxis 
+                              dataKey="formattedDate" 
+                              tick={{ fontSize: 12 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={60}
+                            />
+                            <YAxis 
+                              label={{ value: 'Price ($/MWh)', angle: -90, position: 'insideLeft' }}
+                              tick={{ fontSize: 12 }}
+                            />
                             <Tooltip 
-                              content={({ active, payload }) => {
+                              content={({ active, payload, label }) => {
                                 if (active && payload && payload[0]) {
                                   const data = payload[0].payload;
                                   return (
-                                    <div className="bg-white p-3 border rounded shadow">
-                                      <p className="font-medium">{data.date}</p>
+                                    <div className="bg-white dark:bg-gray-800 p-3 border rounded shadow-lg">
+                                      <p className="font-medium">{label}</p>
                                       <p className="text-red-600">Price: {formatCurrency(data.price)}/MWh</p>
                                       <p className="text-green-600">Savings: {formatCurrency(data.savings)}</p>
                                       <p className="text-blue-600">Duration: {data.duration}h</p>
+                                      <p className="text-orange-600">Event #{data.index}</p>
                                     </div>
                                   );
                                 }
                                 return null;
                               }}
                             />
-                            <Scatter 
-                              data={peakAnalysis.events} 
-                              fill="#ef4444"
+                            <Area 
+                              type="monotone"
+                              dataKey="price" 
+                              fill="#ef4444" 
+                              fillOpacity={0.3}
+                              stroke="#ef4444"
+                              strokeWidth={2}
                               name="Shutdown Events"
                             />
                             <ReferenceLine 
                               y={parseFloat(shutdownThreshold)} 
                               stroke="#ef4444" 
                               strokeDasharray="5 5"
-                              label="Strike Price"
+                              label={{ value: `Strike Price: $${shutdownThreshold}`, position: "top" }}
                             />
-                          </ScatterChart>
+                          </AreaChart>
                         </ResponsiveContainer>
                       </div>
                     </div>
