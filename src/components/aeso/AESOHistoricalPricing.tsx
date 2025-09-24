@@ -817,22 +817,30 @@ export function AESOHistoricalPricing() {
                 {/* Analysis Results */}
                 {currentAnalysis && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-red-600">{currentAnalysis.totalShutdowns}</div>
-                        <p className="text-sm text-muted-foreground">Shutdown Events</p>
-                        <p className="text-xs text-muted-foreground">
-                          {analysisMethod === 'strike' 
-                            ? `above $${shutdownThreshold}/MWh` 
-                            : `for ${uptimePercentage}% uptime`}
-                        </p>
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">{currentAnalysis.totalHours}</div>
-                        <p className="text-sm text-muted-foreground">Total Hours</p>
-                        <p className="text-xs text-muted-foreground">of shutdown</p>
-                      </div>
+                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-muted/50 rounded-lg">
+                       <div className="text-center">
+                         <div className="text-2xl font-bold text-red-600">{currentAnalysis.totalShutdowns}</div>
+                         <p className="text-sm text-muted-foreground">Shutdown Events</p>
+                         <p className="text-xs text-muted-foreground">
+                           {analysisMethod === 'strike' 
+                             ? `above $${shutdownThreshold}/MWh` 
+                             : `for ${uptimePercentage}% uptime`}
+                         </p>
+                       </div>
+                       
+                       <div className="text-center">
+                         <div className="text-2xl font-bold text-orange-600">{currentAnalysis.totalHours}</div>
+                         <p className="text-sm text-muted-foreground">Total Hours</p>
+                         <p className="text-xs text-muted-foreground">of shutdown</p>
+                       </div>
+
+                       <div className="text-center">
+                         <div className="text-2xl font-bold text-blue-600">
+                           {((currentAnalysis.totalHours / (monthlyData?.chartData?.length ? monthlyData.chartData.length * 24 : 8760)) * 100).toFixed(1)}%
+                         </div>
+                         <p className="text-sm text-muted-foreground">Downtime</p>
+                         <p className="text-xs text-muted-foreground">percentage</p>
+                       </div>
                       
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
