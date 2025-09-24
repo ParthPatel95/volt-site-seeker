@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.api-key-management]
 verify_jwt = true
+
+[functions.realdata-verified-sites]
+verify_jwt = false
+
+[functions.idle-industry-scanner]
+verify_jwt = false
+
+[functions.enhanced-verified-scanner]
+verify_jwt = false
