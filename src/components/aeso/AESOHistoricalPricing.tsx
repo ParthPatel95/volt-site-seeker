@@ -67,6 +67,19 @@ export function AESOHistoricalPricing() {
     fetchExchangeRate();
   }, []);
 
+  // Re-run analysis when time period changes
+  useEffect(() => {
+    if (customAnalysisResult && monthlyData && yearlyData) {
+      if (analysisMethod === 'strike') {
+        const result = calculateStrikePriceAnalysis();
+        setCustomAnalysisResult(result);
+      } else if (analysisMethod === 'uptime') {
+        const result = analyzeUptimeOptimized(parseFloat(uptimePercentage), parseInt(analysisHours));
+        setCustomAnalysisResult(result);
+      }
+    }
+  }, [timePeriod, monthlyData, yearlyData]);
+
   const fetchExchangeRate = async () => {
     try {
       const response = await fetch('https://api.exchangerate-api.io/v4/latest/CAD');
@@ -95,24 +108,41 @@ export function AESOHistoricalPricing() {
   };
 
   const analyzeUptimeOptimized = (targetUptime: number, shutdownHoursPerEvent: number) => {
-    if (!monthlyData) return null;
+    // Select appropriate data source based on time period
+    const daysInPeriod = parseInt(timePeriod);
+    const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
+    
+    if (!sourceData) return null;
     
     console.log('=== UPTIME ANALYSIS DEBUG ===');
     console.log('Target uptime:', targetUptime);
     console.log('Shutdown hours per event:', shutdownHoursPerEvent);
-    console.log('Monthly data statistics:', monthlyData.statistics);
+    console.log('Days in period:', daysInPeriod);
+    console.log('Using data source:', daysInPeriod > 180 ? 'yearly' : 'monthly');
+    console.log('Source data statistics:', sourceData.statistics);
+    
+    // Filter data to exact time period requested
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setDate(now.getDate() - daysInPeriod);
+    
+    const filteredData = sourceData.chartData.filter(day => {
+      const dayDate = new Date(day.date);
+      return dayDate >= startDate && dayDate <= now;
+    });
+    
+    console.log('Total data points available:', sourceData.chartData.length);
+    console.log('Filtered data points for period:', filteredData.length);
     
     // Calculate available shutdown hours based on uptime target and time period
-    const daysInPeriod = parseInt(timePeriod);
     const totalHours = daysInPeriod * 24;
     const maxShutdownHours = totalHours * (1 - targetUptime / 100);
     
-    console.log('Days in period:', daysInPeriod);
     console.log('Total hours:', totalHours);
     console.log('Max shutdown hours allowed:', maxShutdownHours);
     
     // Get all valid price points (≥4¢/kWh, no negatives) - these represent daily averages
-    const validPrices = monthlyData.chartData
+    const validPrices = filteredData
       .filter(day => day.price >= 4 && day.price > 0)
       .map(day => ({ date: day.date, price: day.price }))
       .sort((a, b) => b.price - a.price); // Sort highest to lowest
@@ -120,9 +150,10 @@ export function AESOHistoricalPricing() {
     console.log('Valid prices (first 10):', validPrices.slice(0, 10));
     console.log('Total valid price points:', validPrices.length);
     
-    // Use the TRUE original average from monthly statistics (includes ALL periods, even zeros)
-    // This is the correct baseline that represents what you actually pay on average
-    const originalAveragePrice = monthlyData.statistics?.average || 0;
+    // Calculate the true average price for the filtered period
+    const originalAveragePrice = filteredData.length > 0 
+      ? filteredData.reduce((sum, day) => sum + day.price, 0) / filteredData.length 
+      : sourceData.statistics?.average || 0;
     
     console.log('TRUE original average from stats:', originalAveragePrice);
     console.log('Filtered average (wrong baseline):', validPrices.length > 0 ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length : 0);
@@ -194,9 +225,15 @@ export function AESOHistoricalPricing() {
   };
 
   const calculateStrikePriceAnalysis = () => {
-    if (!monthlyData) return null;
+    // Select appropriate data source based on time period
+    const daysInPeriod = parseInt(timePeriod);
+    const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
+    
+    if (!sourceData) return null;
     
     console.log('=== STRIKE PRICE ANALYSIS DEBUG ===');
+    console.log('Days in period:', daysInPeriod);
+    console.log('Using data source:', daysInPeriod > 180 ? 'yearly' : 'monthly');
     
     const threshold = parseFloat(shutdownThreshold);
     const shutdownHours = parseInt(analysisHours);
@@ -204,16 +241,30 @@ export function AESOHistoricalPricing() {
     console.log('Shutdown threshold:', threshold);
     console.log('Shutdown hours per event:', shutdownHours);
     
+    // Filter data to exact time period requested
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setDate(now.getDate() - daysInPeriod);
+    
+    const filteredData = sourceData.chartData.filter(day => {
+      const dayDate = new Date(day.date);
+      return dayDate >= startDate && dayDate <= now;
+    });
+    
+    console.log('Total data points available:', sourceData.chartData.length);
+    console.log('Filtered data points for period:', filteredData.length);
+    
     // Get all valid price points for the selected time period (≥4¢/kWh, no negatives)
-    const validPrices = monthlyData.chartData
+    const validPrices = filteredData
       .filter(day => day.price >= 4 && day.price > 0);
     
     console.log('Valid prices count:', validPrices.length);
     console.log('Valid prices sample:', validPrices.slice(0, 5));
     
-    // Use the TRUE original average from monthly statistics (includes ALL periods, even zeros)
-    // This is the correct baseline that represents what you actually pay on average
-    const originalAveragePrice = monthlyData.statistics?.average || 0;
+    // Calculate the true average price for the filtered period
+    const originalAveragePrice = filteredData.length > 0 
+      ? filteredData.reduce((sum, day) => sum + day.price, 0) / filteredData.length 
+      : sourceData.statistics?.average || 0;
     
     console.log('TRUE original average from stats:', originalAveragePrice);
     console.log('Filtered average (wrong baseline):', validPrices.length > 0 ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length : 0);
@@ -834,15 +885,18 @@ export function AESOHistoricalPricing() {
                          <p className="text-xs text-muted-foreground">of shutdown</p>
                        </div>
 
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">
-                            {currentAnalysis?.totalHours && monthlyData?.chartData?.length 
-                              ? ((currentAnalysis.totalHours / (monthlyData.chartData.length * 24)) * 100).toFixed(1)
-                              : '0.0'}%
-                          </div>
-                          <p className="text-sm text-muted-foreground">Downtime</p>
-                          <p className="text-xs text-muted-foreground">percentage</p>
-                        </div>
+                         <div className="text-center">
+                           <div className="text-2xl font-bold text-blue-600">
+                             {(() => {
+                               if (!currentAnalysis?.totalHours) return '0.0';
+                               const daysInPeriod = parseInt(timePeriod);
+                               const totalHoursInPeriod = daysInPeriod * 24;
+                               return ((currentAnalysis.totalHours / totalHoursInPeriod) * 100).toFixed(1);
+                             })()}%
+                           </div>
+                           <p className="text-sm text-muted-foreground">Downtime</p>
+                           <p className="text-xs text-muted-foreground">percentage</p>
+                         </div>
                       
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
