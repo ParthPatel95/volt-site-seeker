@@ -834,13 +834,15 @@ export function AESOHistoricalPricing() {
                          <p className="text-xs text-muted-foreground">of shutdown</p>
                        </div>
 
-                       <div className="text-center">
-                         <div className="text-2xl font-bold text-blue-600">
-                           {((currentAnalysis.totalHours / (monthlyData?.chartData?.length ? monthlyData.chartData.length * 24 : 8760)) * 100).toFixed(1)}%
-                         </div>
-                         <p className="text-sm text-muted-foreground">Downtime</p>
-                         <p className="text-xs text-muted-foreground">percentage</p>
-                       </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {currentAnalysis?.totalHours && monthlyData?.chartData?.length 
+                              ? ((currentAnalysis.totalHours / (monthlyData.chartData.length * 24)) * 100).toFixed(1)
+                              : '0.0'}%
+                          </div>
+                          <p className="text-sm text-muted-foreground">Downtime</p>
+                          <p className="text-xs text-muted-foreground">percentage</p>
+                        </div>
                       
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
