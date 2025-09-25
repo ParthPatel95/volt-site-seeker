@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,19 +86,21 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in aeso-historical-pricing function:', error);
     
-    // More specific error handling
+    // More specific error handling with proper type checking
     let errorMessage = 'Failed to fetch AESO historical pricing data';
-    let details = error.message;
+    let details = error instanceof Error ? error.message : 'Unknown error occurred';
     
-    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-      errorMessage = 'AESO API authentication failed';
-      details = 'Invalid or missing API subscription key. Please verify your AESO API credentials.';
-    } else if (error.message.includes('404')) {
-      errorMessage = 'AESO API endpoint not found';
-      details = 'The requested AESO API endpoint is not available. Please check the API documentation.';
-    } else if (error.message.includes('API key')) {
-      errorMessage = 'AESO API key configuration error';
-      details = 'Please configure your AESO API key in the edge function secrets.';
+    if (error instanceof Error) {
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        errorMessage = 'AESO API authentication failed';
+        details = 'Invalid or missing API subscription key. Please verify your AESO API credentials.';
+      } else if (error.message.includes('404')) {
+        errorMessage = 'AESO API endpoint not found';
+        details = 'The requested AESO API endpoint is not available. Please check the API documentation.';
+      } else if (error.message.includes('API key')) {
+        errorMessage = 'AESO API key configuration error';
+        details = 'Please configure your AESO API key in the edge function secrets.';
+      }
     }
     
     return new Response(JSON.stringify({ 
@@ -111,7 +113,7 @@ serve(async (req) => {
   }
 });
 
-async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey?: string): Promise<HistoricalDataPoint[]> {
+async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: string): Promise<HistoricalDataPoint[]> {
   try {
     const formatDate = (date: Date) => {
       return date.toISOString().slice(0, 10); // Keep YYYY-MM-DD format
@@ -204,11 +206,11 @@ async function processHistoricalData(data: HistoricalDataPoint[], timeframe: str
     trend: calculateTrend(prices)
   };
   
-  let chartData = [];
-  let peakHours = [];
-  let hourlyPatterns = [];
-  let distribution = [];
-  let seasonalPatterns = {};
+  let chartData: any[] = [];
+  let peakHours: any[] = [];
+  let hourlyPatterns: any[] = [];
+  let distribution: any[] = [];
+  let seasonalPatterns: any = {};
   
   if (timeframe === 'monthly') {
     // Process daily data for last 30 days
