@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       }
     } catch (error) {
       console.error('County records error:', error);
-      messages.push(`County Records: Error - ${error.message}`);
+      messages.push(`County Records: Error - ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     // Government APIs (NREL, EIA)
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     console.error('Free data integration error:', error);
     return new Response(JSON.stringify({
       error: 'Failed to fetch data',
-      details: error.message
+      details: error instanceof Error ? error.message : 'Unknown error'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500

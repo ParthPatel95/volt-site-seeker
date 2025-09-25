@@ -134,23 +134,13 @@ async function convertAltaLinkToProperties(data: AltaLinkResponse, location: str
         listing_url: `https://www.altalink.ca/projects/substation/${substation.id}`,
         description: `${substation.voltage_kv}kV transmission substation operated by ${substation.owner}. Capacity: ${substation.capacity_mva}MVA. Status: ${substation.status}`,
         square_footage: estimateSubstationFootprint(substation.capacity_mva),
-        asking_price: null,
+        asking_price: undefined,
         lot_size_acres: estimateSubstationLotSize(substation.capacity_mva),
-        year_built: substation.commissioning_date ? new Date(substation.commissioning_date).getFullYear() : null,
         
         // Additional metadata specific to transmission infrastructure
-        assessed_value: null,
-        market_value: null,
-        owner_name: substation.owner,
-        
-        // Custom fields for transmission data
-        voltage_level: `${substation.voltage_kv}kV`,
-        capacity_mva: substation.capacity_mva,
-        transmission_operator: 'AltaLink',
-        facility_type: 'transmission_substation',
         coordinates: {
-          latitude: substation.latitude,
-          longitude: substation.longitude
+          lat: substation.latitude,
+          lng: substation.longitude
         }
       };
 
@@ -250,19 +240,16 @@ function generateAlbertaFallbackData(location: string): PropertyData[] {
     listing_url: 'https://www.altalink.ca/transmission-system',
     description: `${sub.voltage} transmission substation with ${sub.capacity}MVA capacity. Operated by ${sub.operator}.`,
     square_footage: estimateSubstationFootprint(sub.capacity),
-    asking_price: null,
+    asking_price: undefined,
     lot_size_acres: estimateSubstationLotSize(sub.capacity),
-    year_built: null,
-    assessed_value: null,
-    market_value: null,
     owner_name: sub.operator,
     voltage_level: sub.voltage,
     capacity_mva: sub.capacity,
     transmission_operator: sub.operator,
     facility_type: 'transmission_substation',
     coordinates: {
-      latitude: sub.lat,
-      longitude: sub.lng
+      lat: sub.lat,
+      lng: sub.lng
     }
   }));
 }

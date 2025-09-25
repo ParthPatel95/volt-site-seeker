@@ -45,8 +45,8 @@ serve(async (req) => {
 
     const response: EnergyDataResponse = {
       success: true,
-      ercot: ercotResult.status === 'fulfilled' ? ercotResult.value : null,
-      aeso: aesoResult.status === 'fulfilled' ? aesoResult.value : null
+      ercot: ercotResult.status === 'fulfilled' ? ercotResult.value : undefined,
+      aeso: aesoResult.status === 'fulfilled' ? aesoResult.value : undefined
     };
 
     console.log('Energy data processing complete:', {

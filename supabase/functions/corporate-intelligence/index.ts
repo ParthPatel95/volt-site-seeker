@@ -90,8 +90,8 @@ async function fetchSECData(ticker: string, companyName: string) {
       const netIncome = facts.NetIncomeLoss?.units?.USD || [];
       
       // Get most recent annual data (10-K filings)
-      const getLatestAnnual = (data) => {
-        const annual = data.filter(item => item.form === '10-K' && item.fy);
+      const getLatestAnnual = (data: any[]) => {
+        const annual = data.filter((item: any) => item.form === '10-K' && item.fy);
         return annual.length > 0 ? annual[annual.length - 1]?.val : null;
       };
       
@@ -299,7 +299,7 @@ async function parseFilingForRealEstate(cik: string, accessionNumber: string, ti
 
 // Extract real estate locations and types from filing text
 function extractRealEstateFromText(text: string, ticker: string) {
-  const realEstateAssets = [];
+  const realEstateAssets: any[] = [];
   
   // Patterns to identify property types and locations
   const patterns = {
@@ -358,7 +358,7 @@ function mapPropertyType(internalType: string) {
     'retail': 'Office'
   };
   
-  return typeMapping[internalType] || 'Other Industrial Asset';
+  return typeMapping[internalType as keyof typeof typeMapping] || 'Other Industrial Asset';
 }
 
 // Extract approximate coordinates from location description

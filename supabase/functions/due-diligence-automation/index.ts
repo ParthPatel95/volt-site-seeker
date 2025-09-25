@@ -139,7 +139,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in due diligence automation:', error);
     return new Response(JSON.stringify({
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -451,7 +451,7 @@ Provide actionable recommendations for investors.`;
   });
 
   const result = await response.json();
-  const recommendations = result.choices[0].message.content.split('\n').filter(line => line.trim());
+  const recommendations = result.choices[0].message.content.split('\n').filter((line: string) => line.trim());
   
   return recommendations;
 }

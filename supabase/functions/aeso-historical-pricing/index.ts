@@ -377,7 +377,7 @@ function findPeakHours(data: HistoricalDataPoint[]) {
 }
 
 function calculateHourlyPatterns(data: HistoricalDataPoint[]) {
-  const hourlyData = new Array(24).fill(0).map(() => []);
+  const hourlyData: number[][] = new Array(24).fill(0).map(() => []);
   
   data.forEach(point => {
     const hour = new Date(point.datetime).getHours();
@@ -407,7 +407,7 @@ function calculatePriceDistribution(prices: number[]) {
 }
 
 function calculateSeasonalPatterns(data: HistoricalDataPoint[]) {
-  const seasonalData = { winter: [], spring: [], summer: [], fall: [] };
+  const seasonalData: { winter: number[], spring: number[], summer: number[], fall: number[] } = { winter: [], spring: [], summer: [], fall: [] };
   
   data.forEach(point => {
     const month = new Date(point.datetime).getMonth();

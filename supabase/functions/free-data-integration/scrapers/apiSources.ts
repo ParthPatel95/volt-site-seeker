@@ -49,7 +49,7 @@ export async function fetchGooglePlaces(request: FreeDataRequest): Promise<Scrap
     };
   } catch (error) {
     console.error('Google Places API error:', error);
-    return { properties: [], message: `Google Places API error: ${error.message}` };
+    return { properties: [], message: `Google Places API error: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
 }
 
@@ -105,7 +105,7 @@ export async function fetchYelpData(request: FreeDataRequest): Promise<ScrapingR
     };
   } catch (error) {
     console.error('Yelp API error:', error);
-    return { properties: [], message: `Yelp API error: ${error.message}` };
+    return { properties: [], message: `Yelp API error: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
 }
 
@@ -203,7 +203,7 @@ export async function fetchOpenStreetMapData(request: FreeDataRequest): Promise<
     };
   } catch (error) {
     console.error('OpenStreetMap API error:', error);
-    return { properties: [], message: `OpenStreetMap data error: ${error.message}` };
+    return { properties: [], message: `OpenStreetMap data error: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
 }
 
@@ -309,7 +309,7 @@ export async function fetchCensusData(request: FreeDataRequest): Promise<Scrapin
     console.error('Census API error:', error);
     return { 
       properties: [], 
-      message: `Census data error: ${error.message}` 
+      message: `Census data error: ${error instanceof Error ? error.message : 'Unknown error'}` 
     };
   }
 }

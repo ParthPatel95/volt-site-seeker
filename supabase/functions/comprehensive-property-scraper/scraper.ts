@@ -126,7 +126,7 @@ export async function scrapeSites(
         properties_found: 0,
         success: false,
         status: 'error',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }

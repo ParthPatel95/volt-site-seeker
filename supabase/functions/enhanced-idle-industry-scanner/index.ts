@@ -234,7 +234,7 @@ async function processComprehensiveScan(scanId: string, config: any) {
       .from('site_scan_sessions')
       .update({
         status: 'failed',
-        current_phase: `Error: ${error.message}`
+        current_phase: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
       })
       .eq('id', scanId);
   }

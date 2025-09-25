@@ -174,8 +174,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('=== CRYPTO DETAILS FUNCTION ERROR ===');
     console.error('Error details:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     // Return fallback data with error indication
     const fallbackResult = {
@@ -212,7 +212,7 @@ serve(async (req) => {
       fullyDilutedMarketCap: 0,
       dominance: 0,
       error: true,
-      errorMessage: error.message
+      errorMessage: error instanceof Error ? error.message : 'Unknown error'
     };
     
     return new Response(

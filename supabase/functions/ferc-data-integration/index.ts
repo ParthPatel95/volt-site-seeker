@@ -39,7 +39,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Failed to fetch FERC data' 
+        error: (error instanceof Error ? error.message : 'Unknown error') || 'Failed to fetch FERC data' 
       }),
       { 
         status: 500,
