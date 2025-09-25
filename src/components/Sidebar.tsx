@@ -62,13 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
     { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
-    { path: '/app/data-management', icon: Database, label: 'Data Management' },
-    { path: '/app/analytics', icon: Activity, label: 'GridBazaar Dashboard' },
     { path: '/app/advanced-analytics', icon: BarChart3, label: 'Advanced Analytics' },
-    { path: '/app/notifications', icon: Bell, label: 'Notifications' },
-    { path: '/app/global-search', icon: Search, label: 'Global Search' },
-    { path: '/app/documents', icon: FileText, label: 'Documents' },
-    { path: '/app/reports', icon: BarChart3, label: 'Reports' },
     { path: '/app/users', icon: Users, label: 'User Management' }
   ];
 
