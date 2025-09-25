@@ -1622,25 +1622,40 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          department: string | null
           email: string
           full_name: string
           id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          last_login: string | null
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
           created_at?: string
+          department?: string | null
           email: string
           full_name: string
           id: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_login?: string | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
           created_at?: string
+          department?: string | null
           email?: string
           full_name?: string
           id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_login?: string | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -2525,6 +2540,27 @@ export type Database = {
           service_name?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -4507,6 +4543,40 @@ export type Database = {
       clean_expired_verification_tokens: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_all_users_with_details: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          department: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          last_login: string
+          permissions: string[]
+          phone: string
+          roles: string[]
+          updated_at: string
+        }[]
+      }
+      get_user_details: {
+        Args: { user_id: string }
+        Returns: {
+          created_at: string
+          department: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          last_login: string
+          permissions: string[]
+          phone: string
+          roles: string[]
+          updated_at: string
+        }[]
       }
       has_role: {
         Args: {

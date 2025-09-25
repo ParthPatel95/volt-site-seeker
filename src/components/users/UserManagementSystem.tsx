@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Users, 
   UserPlus, 
@@ -24,7 +25,8 @@ import {
   Edit,
   Trash2,
   Lock,
-  Unlock
+  Unlock,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -38,13 +40,15 @@ interface User {
   email: string;
   full_name: string;
   phone?: string;
-  role: 'admin' | 'manager' | 'user' | 'viewer';
+  role: string;
   status: 'active' | 'inactive' | 'suspended';
   last_login?: string;
   created_at: string;
   permissions: string[];
   department?: string;
   is_verified: boolean;
+  roles: string[];
+  is_active: boolean;
 }
 
 interface Permission {
@@ -87,11 +91,12 @@ export function UserManagementSystem() {
     email: '',
     full_name: '',
     phone: '',
-    role: 'user' as User['role'],
+    role: 'user' as string,
     department: '',
     permissions: [] as string[]
   });
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   useEffect(() => {
     fetchUsers();
@@ -99,60 +104,30 @@ export function UserManagementSystem() {
 
   const fetchUsers = async () => {
     try {
-      // Simulate fetching users from database
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          email: 'admin@wattbyte.com',
-          full_name: 'System Administrator',
-          phone: '+1-555-0101',
-          role: 'admin',
-          status: 'active',
-          last_login: '2024-01-25T10:30:00Z',
-          created_at: '2024-01-01T00:00:00Z',
-          permissions: ['users.read', 'users.write', 'users.delete', 'analytics.read', 'analytics.export'],
-          department: 'IT',
-          is_verified: true
-        },
-        {
-          id: '2',
-          email: 'manager@wattbyte.com',
-          full_name: 'John Manager',
-          phone: '+1-555-0102',
-          role: 'manager',
-          status: 'active',
-          last_login: '2024-01-24T15:45:00Z',
-          created_at: '2024-01-05T00:00:00Z',
-          permissions: ['users.read', 'analytics.read', 'reports.read', 'reports.create'],
-          department: 'Operations',
-          is_verified: true
-        },
-        {
-          id: '3',
-          email: 'user@example.com',
-          full_name: 'Jane User',
-          role: 'user',
-          status: 'active',
-          last_login: '2024-01-23T09:15:00Z',
-          created_at: '2024-01-10T00:00:00Z',
-          permissions: ['listings.read', 'documents.read'],
-          department: 'Sales',
-          is_verified: false
-        },
-        {
-          id: '4',
-          email: 'viewer@example.com',
-          full_name: 'Bob Viewer',
-          role: 'viewer',
-          status: 'inactive',
-          created_at: '2024-01-15T00:00:00Z',
-          permissions: ['listings.read'],
-          department: 'Marketing',
-          is_verified: true
-        }
-      ];
-      setUsers(mockUsers);
+      setLoading(true);
+      const { data, error } = await supabase.rpc('get_all_users_with_details');
+      
+      if (error) throw error;
+      
+      const formattedUsers = data?.map((user: any) => ({
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name || 'Unknown User',
+        phone: user.phone,
+        role: user.roles?.[0] || 'user',
+        status: user.is_active ? 'active' : 'inactive',
+        last_login: user.last_login,
+        created_at: user.created_at,
+        permissions: user.permissions || [],
+        department: user.department,
+        is_verified: user.is_verified,
+        roles: user.roles || [],
+        is_active: user.is_active
+      })) || [];
+      
+      setUsers(formattedUsers);
     } catch (error: any) {
+      console.error('Error fetching users:', error);
       toast({
         title: "Error fetching users",
         description: error.message,
@@ -165,30 +140,71 @@ export function UserManagementSystem() {
 
   const createUser = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!userForm.email || !userForm.full_name) {
+      toast({
+        title: "Validation Error",
+        description: "Email and full name are required",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      const newUser: User = {
-        id: Date.now().toString(),
+      // First create the auth user
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userForm.email,
-        full_name: userForm.full_name,
-        phone: userForm.phone,
-        role: userForm.role,
-        status: 'active',
-        created_at: new Date().toISOString(),
-        permissions: userForm.permissions,
-        department: userForm.department,
-        is_verified: false
-      };
+        password: Math.random().toString(36).slice(-8), // Temporary password
+        email_confirm: true
+      });
 
-      setUsers(prev => [...prev, newUser]);
+      if (authError) throw authError;
+
+      // Create profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: userForm.email,
+          full_name: userForm.full_name,
+          phone: userForm.phone,
+          department: userForm.department,
+          role: 'analyst' // Default role from enum
+        });
+
+      if (profileError) throw profileError;
+
+      // Add role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: userForm.role
+        });
+
+      if (roleError) throw roleError;
+
+      // Add permissions
+      if (userForm.permissions.length > 0) {
+        const permissionInserts = userForm.permissions.map(permission => ({
+          user_id: authData.user.id,
+          permission
+        }));
+
+        const { error: permError } = await supabase
+          .from('user_permissions')
+          .insert(permissionInserts);
+
+        if (permError) throw permError;
+      }
       
       toast({
         title: "User created",
         description: `User "${userForm.full_name}" has been created successfully`
       });
 
-      // Reset form
+      // Reset form and refresh users
       setUserForm({
         email: '',
         full_name: '',
@@ -197,7 +213,10 @@ export function UserManagementSystem() {
         department: '',
         permissions: []
       });
+      
+      await fetchUsers();
     } catch (error: any) {
+      console.error('Error creating user:', error);
       toast({
         title: "Error creating user",
         description: error.message,
@@ -210,15 +229,26 @@ export function UserManagementSystem() {
 
   const updateUser = async (userId: string, updates: Partial<User>) => {
     try {
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, ...updates } : user
-      ));
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: updates.full_name,
+          phone: updates.phone,
+          department: updates.department,
+          is_active: updates.status === 'active'
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
       
       toast({
         title: "User updated",
         description: "User information has been updated successfully"
       });
+      
+      await fetchUsers();
     } catch (error: any) {
+      console.error('Error updating user:', error);
       toast({
         title: "Error updating user",
         description: error.message,
@@ -237,13 +267,19 @@ export function UserManagementSystem() {
 
   const deleteUser = async (userId: string) => {
     try {
-      setUsers(prev => prev.filter(user => user.id !== userId));
+      // Delete from auth.users (cascades to other tables)
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (error) throw error;
       
       toast({
         title: "User deleted",
         description: "User has been deleted successfully"
       });
+      
+      await fetchUsers();
     } catch (error: any) {
+      console.error('Error deleting user:', error);
       toast({
         title: "Error deleting user",
         description: error.message,
@@ -253,25 +289,68 @@ export function UserManagementSystem() {
   };
 
   const updateUserPermissions = async (userId: string, permissions: string[]) => {
-    await updateUser(userId, { permissions });
+    try {
+      // Delete existing permissions
+      await supabase
+        .from('user_permissions')
+        .delete()
+        .eq('user_id', userId);
+
+      // Insert new permissions
+      if (permissions.length > 0) {
+        const permissionInserts = permissions.map(permission => ({
+          user_id: userId,
+          permission
+        }));
+
+        const { error } = await supabase
+          .from('user_permissions')
+          .insert(permissionInserts);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Permissions updated",
+        description: "User permissions have been updated successfully"
+      });
+      
+      await fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating permissions:', error);
+      toast({
+        title: "Error updating permissions",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const resendInvitation = async (userId: string) => {
-    toast({
-      title: "Invitation sent",
-      description: "User invitation has been resent"
-    });
+    try {
+      // In a real implementation, you would send an email invitation
+      toast({
+        title: "Invitation sent",
+        description: "User invitation has been resent"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error sending invitation",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const matchesRole = roleFilter === 'all' || user.roles.includes(roleFilter);
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const getRoleColor = (role: User['role']) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'destructive';
       case 'manager': return 'warning';
@@ -281,7 +360,7 @@ export function UserManagementSystem() {
     }
   };
 
-  const getStatusColor = (status: User['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'success';
       case 'inactive': return 'secondary';
@@ -301,6 +380,17 @@ export function UserManagementSystem() {
     return categories;
   };
 
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Loading users...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -308,7 +398,7 @@ export function UserManagementSystem() {
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-muted-foreground">Manage users, roles, and permissions</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => {/* Handle add user */}}>
           <UserPlus className="w-4 h-4" />
           Add User
         </Button>
@@ -406,6 +496,7 @@ export function UserManagementSystem() {
                         <DropdownMenuItem 
                           onClick={() => deleteUser(user.id)}
                           className="text-destructive"
+                          disabled={user.id === currentUser?.id}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
@@ -478,7 +569,7 @@ export function UserManagementSystem() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm text-muted-foreground">
-                    Users with this role: {users.filter(u => u.role === role.value).length}
+                    Users with this role: {users.filter(u => u.roles.includes(role.value)).length}
                   </div>
                 </CardContent>
               </Card>
@@ -490,12 +581,15 @@ export function UserManagementSystem() {
           {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => (
             <Card key={category}>
               <CardHeader>
-                <CardTitle>{category} Permissions</CardTitle>
+                <CardTitle>{category}</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Permissions related to {category.toLowerCase()}
+                </p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {permissions.map((permission) => (
-                    <div key={permission.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={permission.id} className="flex items-center justify-between p-3 border rounded">
                       <div>
                         <div className="font-medium">{permission.name}</div>
                         <div className="text-sm text-muted-foreground">{permission.description}</div>
@@ -508,119 +602,121 @@ export function UserManagementSystem() {
           ))}
         </TabsContent>
 
-        <TabsContent value="create">
+        <TabsContent value="create" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                Create New User
-              </CardTitle>
+              <CardTitle>Create New User</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Add a new user to the system with roles and permissions
+              </p>
             </CardHeader>
             <CardContent>
               <form onSubmit={createUser} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="full-name">Full Name</Label>
-                    <Input
-                      id="full-name"
-                      value={userForm.full_name}
-                      onChange={(e) => setUserForm(prev => ({ ...prev, full_name: e.target.value }))}
-                      placeholder="Enter full name..."
-                      required
-                    />
-                  </div>
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={userForm.email}
                       onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="Enter email address..."
+                      placeholder="user@example.com"
                       required
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="phone">Phone (Optional)</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="full_name">Full Name</Label>
+                    <Input
+                      id="full_name"
+                      value={userForm.full_name}
+                      onChange={(e) => setUserForm(prev => ({ ...prev, full_name: e.target.value }))}
+                      placeholder="John Doe"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
                       value={userForm.phone}
                       onChange={(e) => setUserForm(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Enter phone number..."
+                      placeholder="+1-555-0123"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="department">Department (Optional)</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department</Label>
                     <Input
                       id="department"
                       value={userForm.department}
                       onChange={(e) => setUserForm(prev => ({ ...prev, department: e.target.value }))}
-                      placeholder="Enter department..."
+                      placeholder="IT"
                     />
                   </div>
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={userForm.role}
-                    onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value as User['role'] }))}
-                  >
+                  <Select value={userForm.role} onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value }))}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ROLES.map((role) => (
+                      {ROLES.map(role => (
                         <SelectItem key={role.value} value={role.value}>
-                          {role.label} - {role.description}
+                          {role.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label>Permissions</Label>
-                  <div className="space-y-4 mt-2">
-                    {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => (
-                      <div key={category}>
-                        <h4 className="font-medium text-sm mb-2">{category}</h4>
-                        <div className="space-y-2">
-                          {permissions.map((permission) => (
-                            <div key={permission.id} className="flex items-center space-x-2">
-                              <Switch
-                                checked={userForm.permissions.includes(permission.id)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setUserForm(prev => ({
-                                      ...prev,
-                                      permissions: [...prev.permissions, permission.id]
-                                    }));
-                                  } else {
-                                    setUserForm(prev => ({
-                                      ...prev,
-                                      permissions: prev.permissions.filter(p => p !== permission.id)
-                                    }));
-                                  }
-                                }}
-                              />
-                              <div>
-                                <div className="text-sm font-medium">{permission.name}</div>
-                                <div className="text-xs text-muted-foreground">{permission.description}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                  {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => (
+                    <div key={category} className="space-y-2">
+                      <h4 className="font-medium text-sm">{category}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-4">
+                        {permissions.map((permission) => (
+                          <div key={permission.id} className="flex items-center space-x-2">
+                            <Switch
+                              id={permission.id}
+                              checked={userForm.permissions.includes(permission.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setUserForm(prev => ({ 
+                                    ...prev, 
+                                    permissions: [...prev.permissions, permission.id] 
+                                  }));
+                                } else {
+                                  setUserForm(prev => ({ 
+                                    ...prev, 
+                                    permissions: prev.permissions.filter(p => p !== permission.id) 
+                                  }));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={permission.id} className="text-sm">
+                              {permission.name}
+                            </Label>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
 
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? 'Creating...' : 'Create User'}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating User...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Create User
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
