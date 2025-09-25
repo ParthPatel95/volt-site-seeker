@@ -214,11 +214,11 @@ Respond with valid JSON only:
           has_transmission_lines: false,
           has_switching_equipment: false,
           has_control_building: false,
-          has_security_fencing: false,
+          // has_security_fencing: false,
           voltage_indicators: [],
           confidence: 0
         },
-        reasoning: `Parse error: ${parseError.message}`
+        reasoning: `Parse error: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
       }
     }
   } catch (error) {
@@ -231,11 +231,11 @@ Respond with valid JSON only:
         has_transmission_lines: false,
         has_switching_equipment: false,
         has_control_building: false,
-        has_security_fencing: false,
+        // has_security_fencing: false,
         voltage_indicators: [],
         confidence: 0
       },
-      reasoning: `API error: ${error.message}`
+      reasoning: `API error: ${error instanceof Error ? error.message : 'Unknown error'}`
     }
   }
 }

@@ -847,15 +847,15 @@ function parseAPIResponse(data: any, config: CountyConfig, location: string): Pr
         zip_code: extractZipCode(record) || '',
         property_type: extractFieldValue(record, config.fields.property_type) || 'commercial',
         source: 'county_records',
-        listing_url: null,
+        listing_url: undefined,
         description: `Property record from ${config.name}`,
-        square_footage: parseNumeric(extractFieldValue(record, config.fields.square_footage)),
-        asking_price: null,
-        lot_size_acres: parseNumeric(extractFieldValue(record, config.fields.lot_size)),
-        year_built: parseNumeric(extractFieldValue(record, config.fields.year_built)),
-        assessed_value: parseNumeric(extractFieldValue(record, config.fields.assessed_value)),
-        market_value: parseNumeric(extractFieldValue(record, config.fields.market_value)),
-        owner_name: extractFieldValue(record, config.fields.owner)
+        square_footage: parseNumeric(extractFieldValue(record, config.fields.square_footage)) || undefined,
+        asking_price: undefined,
+        lot_size_acres: parseNumeric(extractFieldValue(record, config.fields.lot_size)) || undefined,
+        // year_built: parseNumeric(extractFieldValue(record, config.fields.year_built)) || undefined,
+        // assessed_value: parseNumeric(extractFieldValue(record, config.fields.assessed_value)) || undefined,
+        // market_value: parseNumeric(extractFieldValue(record, config.fields.market_value)) || undefined,
+        // owner_name: extractFieldValue(record, config.fields.owner)
       };
 
       if (property.address && property.address !== 'Address not available') {
@@ -918,9 +918,9 @@ async function parseHTMLResponse(html: string, config: CountyConfig, location: s
           source: 'county_records',
           listing_url: config.searchUrl,
           description: `Property found via web scraping from ${config.name}`,
-          square_footage: null,
-          asking_price: null,
-          lot_size_acres: null
+          square_footage: undefined,
+          asking_price: undefined,
+          lot_size_acres: undefined
         };
         properties.push(property);
       }
@@ -971,12 +971,12 @@ function extractPropertyFromCells(cells: string[], config: CountyConfig, locatio
         source: 'county_records',
         listing_url: config.searchUrl,
         description: `Property record from ${config.name}`,
-        square_footage: null,
-        asking_price: null,
-        lot_size_acres: null,
-        assessed_value: parseNumeric(assessedValue),
-        market_value: parseNumeric(marketValue),
-        owner_name: owner || null
+        square_footage: undefined,
+        asking_price: undefined,
+        lot_size_acres: undefined,
+        // assessed_value: parseNumeric(assessedValue) || undefined,
+        // market_value: parseNumeric(marketValue) || undefined,
+        // owner_name: owner || undefined
       };
     }
   } catch (error) {
@@ -1138,7 +1138,7 @@ export async function fetchCountyRecords(request: FreeDataRequest): Promise<Scra
       
     } catch (error) {
       console.error(`Error processing ${config.name}:`, error);
-      failedSources.push(`${config.name} (Error: ${error.message})`);
+      failedSources.push(`${config.name} (Error: ${error instanceof Error ? error.message : 'Unknown error'})`);
     }
   }
   

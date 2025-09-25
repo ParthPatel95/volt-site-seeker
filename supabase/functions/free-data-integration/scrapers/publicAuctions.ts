@@ -53,7 +53,7 @@ export async function scrapePublicAuctions(request: FreeDataRequest): Promise<Sc
           console.log(`${site.name} returned status ${response.status}`);
         }
       } catch (siteError) {
-        console.log(`Failed to access ${site.name}:`, siteError.message);
+        console.log(`Failed to access ${site.name}:`, siteError instanceof Error ? siteError.message : 'Unknown error');
       }
     }
 
@@ -67,7 +67,7 @@ export async function scrapePublicAuctions(request: FreeDataRequest): Promise<Sc
     console.error('Public auction scraping error:', error);
     return { 
       properties: [], 
-      message: `Public auction scraping failed: ${error.message}. Government auction sites typically have strong security measures.`
+      message: `Public auction scraping failed: ${error instanceof Error ? error.message : 'Unknown error'}. Government auction sites typically have strong security measures.`
     };
   }
 }
@@ -106,7 +106,7 @@ function parsePublicAuctionHTML(html: string, location: string, sourceUrl: strin
         
         if (titleMatch) {
           const title = titleMatch[1].trim();
-          const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : null;
+          const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : undefined;
           const itemLocation = locationMatch ? locationMatch[1].trim() : location;
           
           // Only add if we have meaningful property data
@@ -120,9 +120,9 @@ function parsePublicAuctionHTML(html: string, location: string, sourceUrl: strin
               source: 'public_auctions',
               listing_url: sourceUrl,
               description: `${siteName}: ${title}`,
-              square_footage: null,
+              square_footage: undefined,
               asking_price: price,
-              lot_size_acres: null,
+              lot_size_acres: undefined,
               auction_type: 'government_surplus'
             });
           }

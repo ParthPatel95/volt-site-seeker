@@ -32,11 +32,11 @@ export async function fetchGooglePlaces(request: FreeDataRequest): Promise<Scrap
       zip_code: extractZipCode(place.formatted_address),
       property_type: request.property_type || 'commercial',
       source: 'google_places',
-      listing_url: place.photos?.[0] ? `https://maps.google.com/place/${place.place_id}` : null,
+      listing_url: place.photos?.[0] ? `https://maps.google.com/place/${place.place_id}` : undefined,
       description: `${place.name} - ${place.types?.join(', ')}`,
-      square_footage: null,
-      asking_price: null,
-      lot_size_acres: null,
+      square_footage: undefined,
+      asking_price: undefined,
+      lot_size_acres: undefined,
       coordinates: {
         lat: place.geometry?.location?.lat,
         lng: place.geometry?.location?.lng
@@ -90,9 +90,9 @@ export async function fetchYelpData(request: FreeDataRequest): Promise<ScrapingR
       source: 'yelp',
       listing_url: business.url,
       description: `${business.name} - ${business.categories?.map((c: any) => c.title).join(', ')}`,
-      square_footage: null,
-      asking_price: null,
-      lot_size_acres: null,
+      square_footage: undefined,
+      asking_price: undefined,
+      lot_size_acres: undefined,
       coordinates: {
         lat: business.coordinates?.latitude,
         lng: business.coordinates?.longitude
@@ -187,9 +187,9 @@ export async function fetchOpenStreetMapData(request: FreeDataRequest): Promise<
         source: 'openstreetmap',
         listing_url: `https://www.openstreetmap.org/${element.type}/${element.id}`,
         description: `${tags.name || 'Commercial Property'} - ${tags.landuse || tags.building || 'Commercial use'}`,
-        square_footage: null,
-        asking_price: null,
-        lot_size_acres: null,
+        square_footage: undefined,
+        asking_price: undefined,
+        lot_size_acres: undefined,
         coordinates: center ? {
           lat: center.lat,
           lng: center.lon
@@ -289,9 +289,9 @@ export async function fetchCensusData(request: FreeDataRequest): Promise<Scrapin
         source: 'census',
         listing_url: `https://data.census.gov/cedsci/`,
         description: `${industry} - ${establishments} establishments, ${employees} employees`,
-        square_footage: null,
-        asking_price: null,
-        lot_size_acres: null,
+        square_footage: undefined,
+        asking_price: undefined,
+        lot_size_acres: undefined,
         census_data: {
           industry: industry,
           employees: employees,

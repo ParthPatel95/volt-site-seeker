@@ -58,7 +58,7 @@ export async function scrapeAuctionCom(request: FreeDataRequest): Promise<Scrapi
     console.error('Auction.com scraping error:', error);
     return { 
       properties: [], 
-      message: `Auction.com access failed: ${error.message}. This site has strong anti-scraping protection.`
+      message: `Auction.com access failed: ${error instanceof Error ? error.message : 'Unknown error'}. This site has strong anti-scraping protection.`
     };
   }
 }
@@ -98,8 +98,8 @@ function parseAuctionComHTML(html: string, location: string) {
         
         if (addressMatch) {
           const address = addressMatch[1].replace(/<[^>]*>/g, '').trim();
-          const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : null;
-          const auctionDate = dateMatches ? dateMatches[0] : null;
+          const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : undefined;
+          const auctionDate = dateMatches ? dateMatches[0] : undefined;
           
           // Only add if we have meaningful data
           if (address.length > 5 && !address.includes('undefined') && !address.includes('null')) {
@@ -112,9 +112,9 @@ function parseAuctionComHTML(html: string, location: string) {
               source: 'auction_com',
               listing_url: 'https://www.auction.com/',
               description: `Foreclosure auction property - ${address}`,
-              square_footage: null,
+              square_footage: undefined,
               asking_price: price,
-              lot_size_acres: null,
+              lot_size_acres: undefined,
               auction_date: auctionDate,
               auction_type: 'foreclosure'
             });

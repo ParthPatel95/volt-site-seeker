@@ -59,7 +59,7 @@ export async function scrapeBiggerPockets(request: FreeDataRequest): Promise<Scr
     console.error('BiggerPockets scraping error:', error);
     return { 
       properties: [], 
-      message: `BiggerPockets access failed: ${error.message}. This site likely has anti-scraping protection.`
+      message: `BiggerPockets access failed: ${error instanceof Error ? error.message : 'Unknown error'}. This site likely has anti-scraping protection.`
     };
   }
 }
@@ -99,8 +99,8 @@ function parseBiggerPocketsHTML(html: string, location: string) {
         
         if (addressMatch) {
           const address = addressMatch[1].replace(/<[^>]*>/g, '').trim();
-          const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : null;
-          const roi = roiMatch ? parseFloat(roiMatch[1]) : null;
+          const price = priceMatches ? parseInt(priceMatches[0].replace(/[$,]/g, '')) : undefined;
+          const roi = roiMatch ? parseFloat(roiMatch[1]) : undefined;
           
           // Only add if we have meaningful data
           if (address.length > 5 && !address.includes('undefined') && !address.includes('null')) {
@@ -113,9 +113,9 @@ function parseBiggerPocketsHTML(html: string, location: string) {
               source: 'biggerpockets',
               listing_url: 'https://www.biggerpockets.com/',
               description: `Investment property - ${address}${roi ? ` (${roi}% ROI)` : ''}`,
-              square_footage: null,
+              square_footage: undefined,
               asking_price: price,
-              lot_size_acres: null,
+              lot_size_acres: undefined,
               roi_estimate: roi
             });
           }
