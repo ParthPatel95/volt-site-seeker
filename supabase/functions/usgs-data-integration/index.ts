@@ -42,7 +42,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Failed to fetch USGS data' 
+        error: error instanceof Error ? error.message : 'Failed to fetch USGS data' 
       }),
       { 
         status: 500,

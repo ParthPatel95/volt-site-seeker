@@ -109,7 +109,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in trading signals:', error);
     return new Response(JSON.stringify({
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -281,9 +281,9 @@ async function analyzeMarketConditions(supabase: any, market: string) {
     };
   }
 
-  const prices = marketData.map(d => d.price_per_mwh);
+  const prices = marketData.map((d: any) => d.price_per_mwh);
   const currentPrice = prices[0];
-  const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const avgPrice = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
   const maxPrice = Math.max(...prices);
   const minPrice = Math.min(...prices);
   
@@ -316,9 +316,9 @@ async function detectArbitrageOpportunities(supabase: any) {
   const marketPrices: { [key: string]: number } = {};
   
   // Group by market and get latest price
-  allRates.forEach(rate => {
+  allRates.forEach((rate: any) => {
     const marketName = rate.energy_markets?.market_name || rate.market_id;
-    if (!marketPrices[marketName] || rate.timestamp > marketPrices[marketName].timestamp) {
+    if (!marketPrices[marketName] || rate.timestamp > (marketPrices[marketName] as any)?.timestamp) {
       marketPrices[marketName] = rate.price_per_mwh;
     }
   });
@@ -474,8 +474,9 @@ function calculatePortfolioPerformance(signals: any[]): any {
 function generateRebalancingSuggestions(signalTypes: any, riskTolerance: string): string[] {
   const suggestions = [];
   
-  const buyPercent = (signalTypes.buy || 0) / Object.values(signalTypes).reduce((a: any, b: any) => a + b, 0);
-  const sellPercent = (signalTypes.sell || 0) / Object.values(signalTypes).reduce((a: any, b: any) => a + b, 0);
+  const totalSignals = Object.values(signalTypes as any).reduce((a: any, b: any) => a + b, 0) as number;
+  const buyPercent = (signalTypes.buy || 0) / totalSignals;
+  const sellPercent = (signalTypes.sell || 0) / totalSignals;
   
   if (buyPercent > 0.7) {
     suggestions.push('Consider taking some profits - portfolio heavily weighted toward buy signals');

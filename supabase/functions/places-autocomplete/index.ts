@@ -92,7 +92,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Failed to get place suggestions' 
+        error: error instanceof Error ? error.message : 'Failed to get place suggestions' 
       }),
       {
         status: 500,

@@ -83,7 +83,11 @@ serve(async (req) => {
     
     const result: CapacityEstimationResult = {
       coordinates: { lat: latitude, lng: longitude },
-      estimatedCapacity: capacityEstimate.capacity,
+      estimatedCapacity: {
+        min: capacityEstimate.capacity?.min || 0,
+        max: capacityEstimate.capacity?.max || 0,
+        unit: "MW" as const
+      },
       substationType: capacityEstimate.type,
       detectionResults,
       observations,
@@ -103,7 +107,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Capacity estimation error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

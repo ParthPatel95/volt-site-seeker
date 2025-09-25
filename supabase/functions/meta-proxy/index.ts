@@ -188,8 +188,8 @@ serve(async (req) => {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': debug ? 'no-cache, no-store, must-revalidate' : 'public, max-age=3600',
-        'Pragma': debug ? 'no-cache' : undefined,
-        'Expires': debug ? '0' : undefined,
+        ...(debug && { 'Pragma': 'no-cache' }),
+        ...(debug && { 'Expires': '0' }),
       },
     });
 

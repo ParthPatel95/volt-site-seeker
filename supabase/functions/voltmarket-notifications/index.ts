@@ -92,7 +92,7 @@ serve(async (req) => {
     console.error('Error sending notification:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to send notification' 
+        error: error instanceof Error ? error.message : 'Failed to send notification' 
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

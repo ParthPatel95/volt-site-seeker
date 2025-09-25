@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Verification system error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
@@ -273,7 +273,8 @@ async function handleReviewVerification(req: Request, supabase: any, reviewerId:
     })
 
   // Start background process to send email notification
-  EdgeRuntime.waitUntil(sendVerificationStatusEmail(supabase, verification))
+  // Send verification status email asynchronously
+  sendVerificationStatusEmail(supabase, verification).catch(console.error)
 
   return new Response(
     JSON.stringify({ 

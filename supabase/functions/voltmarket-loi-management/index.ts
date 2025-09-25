@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('LOI management error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
@@ -152,7 +152,8 @@ async function handleCreateLOI(req: Request, supabase: any, userId: string) {
     })
 
   // Start background process to send email notification
-  EdgeRuntime.waitUntil(sendLOINotificationEmail(supabase, listing.created_by, loi, listing))
+  // Send notification email asynchronously
+  sendLOINotificationEmail(supabase, listing.created_by, loi, listing).catch(console.error)
 
   return new Response(
     JSON.stringify({ 
@@ -222,7 +223,8 @@ async function handleRespondToLOI(req: Request, supabase: any, userId: string) {
     })
 
   // Start background process to send email notification
-  EdgeRuntime.waitUntil(sendLOIResponseNotificationEmail(supabase, loi.buyer_id, updatedLoi, loi.listing))
+  // Send notification email asynchronously
+  sendLOIResponseNotificationEmail(supabase, loi.buyer_id, updatedLoi, loi.listing).catch(console.error)
 
   return new Response(
     JSON.stringify({ 

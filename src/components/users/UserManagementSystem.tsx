@@ -115,7 +115,7 @@ export function UserManagementSystem() {
         full_name: user.full_name || 'Unknown User',
         phone: user.phone,
         role: user.roles?.[0] || 'user',
-        status: user.is_active ? 'active' : 'inactive',
+        status: (user.is_active ? 'active' : 'inactive') as 'active' | 'inactive' | 'suspended',
         last_login: user.last_login,
         created_at: user.created_at,
         permissions: user.permissions || [],
@@ -180,7 +180,7 @@ export function UserManagementSystem() {
         .from('user_roles')
         .insert({
           user_id: authData.user.id,
-          role: userForm.role
+          role: userForm.role as 'admin' | 'viewer' | 'moderator' | 'user'
         });
 
       if (roleError) throw roleError;

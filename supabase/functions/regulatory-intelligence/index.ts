@@ -76,7 +76,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in regulatory intelligence:', error);
     return new Response(JSON.stringify({
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -140,11 +140,11 @@ async function analyzeRegulatoryImpact(supabase: any, jurisdiction?: string) {
       low: 0
     },
     sectorsAffected: new Set(),
-    upcomingChanges: [],
+    upcomingChanges: [] as any[],
     riskAssessment: 'Low regulatory risk environment'
   };
 
-  updates?.forEach(update => {
+  updates?.forEach((update: any) => {
     analysis.impactBreakdown[update.impact_level as keyof typeof analysis.impactBreakdown]++;
     update.affected_sectors?.forEach((sector: string) => analysis.sectorsAffected.add(sector));
     

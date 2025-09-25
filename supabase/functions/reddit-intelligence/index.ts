@@ -66,7 +66,7 @@ async function fetchRedditData(subreddit: string = 'energy', query?: string, tim
     });
     
     // Calculate overall sentiment
-    const overallSentiment = processedPosts.reduce((acc, post) => acc + post.sentiment_score, 0) / processedPosts.length;
+    const overallSentiment = processedPosts.reduce((acc: number, post: any) => acc + post.sentiment_score, 0) / processedPosts.length;
     
     return {
       success: true,
@@ -75,8 +75,8 @@ async function fetchRedditData(subreddit: string = 'energy', query?: string, tim
       timeframe: timeframe,
       post_count: processedPosts.length,
       overall_sentiment: overallSentiment,
-      average_score: processedPosts.reduce((acc, post) => acc + post.score, 0) / processedPosts.length,
-      total_engagement: processedPosts.reduce((acc, post) => acc + post.engagement_score, 0),
+      average_score: processedPosts.reduce((acc: number, post: any) => acc + post.score, 0) / processedPosts.length,
+      total_engagement: processedPosts.reduce((acc: number, post: any) => acc + post.engagement_score, 0),
       posts: processedPosts,
       source: 'Reddit API'
     };
@@ -212,7 +212,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error instanceof Error ? error.message : 'Unknown error' 
       }),
       {
         status: 500,
