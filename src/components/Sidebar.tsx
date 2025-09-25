@@ -69,14 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/global-search', icon: Search, label: 'Global Search' },
     { path: '/app/documents', icon: FileText, label: 'Documents' },
     { path: '/app/reports', icon: BarChart3, label: 'Reports' },
-    { path: '/app/users', icon: Users, label: 'User Management' },
-    { path: '/app/realtime', icon: Activity, label: 'Real-Time Data' },
-    { path: '/app/integrations', icon: Settings, label: 'Integrations' },
-    { path: '/app/energy-trading', icon: ArrowRightLeft, label: 'Energy Trading' },
-    { path: '/app/regulatory-intelligence', icon: Gavel, label: 'Regulatory Intel' },
-    { path: '/app/voice-search', icon: Mic, label: 'Voice Search' },
-    { path: '/app/risk-management', icon: ShieldCheck, label: 'Risk Management' },
-    { path: '/app/advanced-features', icon: Brain, label: 'Advanced Features' }
+    { path: '/app/users', icon: Users, label: 'User Management' }
   ];
 
   const handleSignOut = async () => {
