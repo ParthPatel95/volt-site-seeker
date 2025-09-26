@@ -39,12 +39,23 @@ export function AESOMarket() {
   const loading = basicLoading;
 
   const formatPrice = (cadPrice: number) => {
-    if (!exchangeRate) return { cad: `CA$${cadPrice.toFixed(2)}`, usd: 'Loading...' };
-    if (typeof cadPrice !== 'number' || !Number.isFinite(cadPrice)) return { cad: 'CA$0.00', usd: '$0.00 USD' };
-    const usdPrice = convertToUSD(cadPrice);
+    // Handle invalid price values
+    if (typeof cadPrice !== 'number' || !Number.isFinite(cadPrice)) {
+      return { cad: 'CA$0.00', usd: '$0.00 USD' };
+    }
+    
+    // Always show CAD price, handle USD conversion
+    const cadDisplay = `CA$${cadPrice.toFixed(2)}`;
+    let usdDisplay = 'Loading...';
+    
+    if (exchangeRate) {
+      const usdPrice = convertToUSD(cadPrice);
+      usdDisplay = `$${usdPrice.toFixed(2)} USD`;
+    }
+    
     return {
-      cad: `CA$${cadPrice.toFixed(2)}`,
-      usd: `$${usdPrice.toFixed(2)} USD`
+      cad: cadDisplay,
+      usd: usdDisplay
     };
   };
 
