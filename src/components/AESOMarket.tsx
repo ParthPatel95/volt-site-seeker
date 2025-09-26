@@ -60,6 +60,12 @@ export function AESOMarket() {
   // Use real market data when available
   const currentPrice = pricing?.current_price;
   const hasValidPrice = pricing && typeof pricing.current_price === 'number';
+  
+  // Debug logging
+  console.log('🔍 Debug - Pricing object:', pricing);
+  console.log('🔍 Debug - Current Price:', currentPrice);
+  console.log('🔍 Debug - Has Valid Price:', hasValidPrice);
+  console.log('🔍 Debug - Type of current_price:', typeof pricing?.current_price);
   const priceTimestamp = pricing?.timestamp;
 
   // Generate fallback data based on current real data
