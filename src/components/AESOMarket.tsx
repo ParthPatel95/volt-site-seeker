@@ -19,45 +19,22 @@ import {
   ArrowLeftRight,
   Shield
 } from 'lucide-react';
-import { useAESOData } from '@/hooks/useAESOData';
-import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
 
 export function AESOMarket() {
   const { 
-    pricing, 
-    loadData, 
-    generationMix, 
-    loading: basicLoading, 
-    refetch: refetchBasic 
-  } = useAESOData();
-
-  // Use only the basic AESO data for consistency
-  const basicPricing = pricing;
-
-  const { exchangeRate, convertToUSD } = useExchangeRate();
-
-  const loading = basicLoading;
-
-  const formatPrice = (cadPrice: number) => {
-    const cadDisplay = `CA$${cadPrice.toFixed(2)}`;
-    let usdDisplay = '$0.00 USD';
-    
-    if (exchangeRate) {
-      const usdPrice = convertToUSD(cadPrice);
-      usdDisplay = `$${usdPrice.toFixed(2)} USD`;
-    }
-    
-    return {
-      cad: cadDisplay,
-      usd: usdDisplay
-    };
-  };
+    aesoPricing: pricing, 
+    aesoLoad: loadData, 
+    aesoGeneration: generationMix, 
+    isLoading: loading, 
+    refreshData 
+  } = useOptimizedDashboard();
 
   const handleRefreshAll = () => {
-    refetchBasic();
+    refreshData();
   };
 
-  // Use real market data when available - always show data if we have any pricing object
+  // Use the same working logic as Dashboard
   const currentPrice = pricing?.current_price;
   const hasValidPrice = pricing !== null && pricing !== undefined;
   const priceTimestamp = pricing?.timestamp;
@@ -130,11 +107,9 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl lg:text-2xl font-bold break-all">
-              {hasValidPrice ? formatPrice(currentPrice).cad : 'Loading...'}
+              {hasValidPrice ? `CA$${currentPrice.toFixed(2)}` : 'Loading...'}
             </div>
-            <p className="text-xs text-blue-200 break-all">
-              {hasValidPrice ? formatPrice(currentPrice).usd : 'Loading...'}/MWh
-            </p>
+            <p className="text-xs text-blue-200 break-all">per MWh</p>
           </CardContent>
         </Card>
 
@@ -200,10 +175,7 @@ export function AESOMarket() {
                   <p className="text-sm text-muted-foreground">Current Price</p>
                   <div className="space-y-1">
                     <p className="text-lg sm:text-xl lg:text-2xl font-bold break-all leading-tight">
-                      {hasValidPrice ? `${formatPrice(currentPrice).cad}/MWh` : 'Loading...'}
-                    </p>
-                    <p className="text-sm sm:text-base lg:text-lg text-muted-foreground break-all leading-tight">
-                      {hasValidPrice ? `${formatPrice(currentPrice).usd}/MWh` : 'Loading...'}
+                      {hasValidPrice ? `CA$${currentPrice.toFixed(2)}/MWh` : 'Loading...'}
                     </p>
                   </div>
                   <Badge variant={(hasValidPrice && currentPrice > 60) ? 'destructive' : 'default'} className="text-xs">
@@ -214,7 +186,7 @@ export function AESOMarket() {
                   <p className="text-sm text-muted-foreground">Average Price</p>
                   <div className="space-y-1">
                     <p className="text-base sm:text-lg lg:text-xl font-semibold break-all leading-tight">
-                      {pricing?.average_price ? formatPrice(pricing.average_price).cad : '—'}/MWh
+                      {pricing?.average_price ? `CA$${pricing.average_price.toFixed(2)}/MWh` : '—'}
                     </p>
                   </div>
                 </div>
