@@ -205,10 +205,10 @@ export function AESOMarket() {
                   <p className="text-sm text-muted-foreground">Current Price</p>
                   <div className="space-y-1">
                     <p className="text-lg sm:text-xl lg:text-2xl font-bold break-all leading-tight">
-                      {formatPrice(currentPrice).cad}/MWh
+                      {typeof currentPrice === 'number' ? formatPrice(currentPrice).cad : 'Loading...'}/MWh
                     </p>
                     <p className="text-sm sm:text-base lg:text-lg text-muted-foreground break-all leading-tight">
-                      {formatPrice(currentPrice).usd}/MWh
+                      {typeof currentPrice === 'number' ? formatPrice(currentPrice).usd : 'Loading...'}/MWh
                     </p>
                   </div>
                   <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="text-xs">
