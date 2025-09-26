@@ -67,11 +67,13 @@ export const useAESOData = () => {
           const p: any = data.aeso.pricing;
           if (p) {
             setPricing({
-              ...p,
               current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
               average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
               peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
               off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+              market_conditions: p.market_conditions || 'normal',
+              timestamp: p.timestamp || new Date().toISOString(),
+              qa_metadata: p.qa_metadata,
               source: p?.source || 'aeso_api'
             });
             setConnectionStatus('connected');
@@ -148,11 +150,13 @@ export const useAESOData = () => {
         const p: any = data.aeso.pricing;
         if (p) {
           setPricing({
-            ...p,
             current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
             average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
             peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
             off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+            market_conditions: p.market_conditions || 'normal',
+            timestamp: p.timestamp || new Date().toISOString(),
+            qa_metadata: p.qa_metadata,
             source: p?.source || 'aeso_api'
           });
           setConnectionStatus('connected');

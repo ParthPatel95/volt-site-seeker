@@ -39,7 +39,8 @@ export function AESOMarket() {
   const loading = basicLoading;
 
   const formatPrice = (cadPrice: number) => {
-    if (!exchangeRate || !cadPrice) return { cad: 'Loading...', usd: 'Loading...' };
+    if (!exchangeRate) return { cad: `CA$${cadPrice.toFixed(2)}`, usd: 'Loading...' };
+    if (typeof cadPrice !== 'number' || !Number.isFinite(cadPrice)) return { cad: 'CA$0.00', usd: '$0.00 USD' };
     const usdPrice = convertToUSD(cadPrice);
     return {
       cad: `CA$${cadPrice.toFixed(2)}`,
