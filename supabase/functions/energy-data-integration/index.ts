@@ -492,28 +492,10 @@ async function fetchERCOTData() {
       }
       if (text) {
         const grab = (label: string) => {
-          // Try multiple patterns to capture generation data
-          const patterns = [
-            new RegExp(label + '[\\s\\S]*?([0-9][0-9,]*)\\s*MW', 'i'),
-            new RegExp(label + '[\\s\\S]*?([0-9]{1,2}[,.][0-9]{3})', 'i'),
-            new RegExp(label + '.*?([0-9]{3,})', 'i'),
-            new RegExp('([0-9][0-9,]+)\\s*MW[\\s\\S]*?' + label, 'i')
-          ];
-          
-          for (const pattern of patterns) {
-            const m = text.match(pattern);
-            if (m) {
-              const value = parseFloat(m[1].replace(/,/g, ''));
-              if (value > 100) { // Reasonable minimum for ERCOT generation
-                console.log(`Found ${label}: ${value} MW`);
-                return value;
-              }
-            }
-          }
-          console.log(`No valid data found for ${label}`);
-          return 0;
+          const re = new RegExp(label + '[\\s\\S]*?([0-9][0-9,]*)\\s*MW', 'i');
+          const m = text.match(re);
+          return m ? parseFloat(m[1].replace(/,/g, '')) : 0;
         };
-        
         const gas = grab('Natural\\s+Gas');
         const wind = grab('Wind');
         const solar = grab('Solar');
@@ -522,10 +504,7 @@ async function fetchERCOTData() {
         const hydro = grab('Hydro');
         const other = grab('Other');
         const total = [gas, wind, solar, nuclear, coal, hydro, other].reduce((a,b)=>a+(Number.isFinite(b)?b:0), 0);
-        
-        console.log(`Parsed ERCOT fuel mix - Total: ${total} MW (Gas: ${gas}, Wind: ${wind}, Solar: ${solar}, Nuclear: ${nuclear}, Coal: ${coal})`);
-        
-        if (total > 10000) { // Reasonable minimum for ERCOT total generation (should be 30k+ MW typically)
+        if (total > 0) {
           generationMix = {
             total_generation_mw: Math.round(total),
             natural_gas_mw: Math.round(gas || 0),
@@ -538,8 +517,6 @@ async function fetchERCOTData() {
             source: 'ercot_fuelmix'
           };
           console.log('ERCOT generation from Fuel Mix dashboard:', generationMix);
-        } else {
-          console.log('ERCOT fuel mix data appears invalid (total too low), will use fallback');
         }
       }
     } catch (fuelErr) {
@@ -571,64 +548,10 @@ async function fetchERCOTData() {
     };
   }
   
-  // Add proper fallback generation mix if real data unavailable
-  if (!generationMix) {
-    const currentHour = new Date().getHours();
-    const currentMonth = new Date().getMonth();
-    
-    // Realistic Texas generation mix based on typical patterns
-    let baseGas = 25000;      // Natural gas is primary in Texas
-    let baseWind = 8000;      // Texas leads in wind generation
-    let baseSolar = 4000;     // Growing solar capacity
-    let baseNuclear = 4000;   // Nuclear is baseload
-    let baseCoal = 8000;      // Coal still significant
-    let baseOther = 1000;     // Hydro and other
-    
-    // Time-of-day adjustments
-    if (currentHour >= 10 && currentHour <= 16) {
-      baseSolar *= 2.5; // Peak solar production
-      baseGas *= 0.8;   // Less gas needed during solar peak
-    } else if (currentHour >= 18 && currentHour <= 22) {
-      baseGas *= 1.3;   // Peak demand hours
-      baseSolar *= 0.1; // Minimal solar at night
-    } else {
-      baseSolar *= 0.1; // Minimal solar at night/early morning
-    }
-    
-    // Seasonal adjustments for summer cooling demand
-    if (currentMonth >= 5 && currentMonth <= 8) {
-      baseGas *= 1.4;   // More gas for peak cooling
-      baseCoal *= 1.2;  // Additional baseload
-    }
-    
-    // Add some realistic variation
-    const variation = 0.1;
-    const gasVariation = (Math.random() - 0.5) * variation;
-    const windVariation = (Math.random() - 0.5) * variation;
-    const solarVariation = (Math.random() - 0.5) * variation;
-    
-    const gas = Math.round(baseGas * (1 + gasVariation));
-    const wind = Math.round(baseWind * (1 + windVariation));
-    const solar = Math.round(baseSolar * (1 + solarVariation));
-    const nuclear = Math.round(baseNuclear);
-    const coal = Math.round(baseCoal);
-    const other = Math.round(baseOther);
-    const total = gas + wind + solar + nuclear + coal + other;
-    
-    generationMix = {
-      total_generation_mw: total,
-      natural_gas_mw: gas,
-      wind_mw: wind,
-      solar_mw: solar,
-      nuclear_mw: nuclear,
-      coal_mw: coal,
-      renewable_percentage: total > 0 ? ((wind + solar) / total * 100) : 0,
-      timestamp: new Date().toISOString(),
-      source: 'realistic_fallback'
-    };
-    
-    console.log('ERCOT generation fallback (realistic):', generationMix);
-  }
+  // Do not synthesize ERCOT generation mix; if unavailable, leave undefined to avoid showing fallback
+  // if (!generationMix) {
+  //   // intentionally no fallback
+  // }
 
 
   if (!pricing) {
