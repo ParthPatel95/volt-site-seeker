@@ -63,8 +63,8 @@ export function AESOMarket() {
     refetchBasic();
   };
 
-  // Use real market data when available
-  const currentPrice = pricing?.current_price || 0;
+  // Use real market data when available - check if pricing exists AND has valid current_price
+  const currentPrice = (pricing && typeof pricing.current_price === 'number') ? pricing.current_price : null;
   const priceTimestamp = pricing?.timestamp;
 
   // Generate fallback data based on current real data
@@ -135,10 +135,10 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl lg:text-2xl font-bold break-all">
-              {formatPrice(currentPrice).cad.split('/')[0]}
+              {currentPrice !== null ? formatPrice(currentPrice).cad.split('/')[0] : 'Loading...'}
             </div>
             <p className="text-xs text-blue-200 break-all">
-              {formatPrice(currentPrice).usd.split('/')[0]}/MWh
+              {currentPrice !== null ? formatPrice(currentPrice).usd.split('/')[0] : 'Loading...'}/MWh
             </p>
           </CardContent>
         </Card>
@@ -205,14 +205,14 @@ export function AESOMarket() {
                   <p className="text-sm text-muted-foreground">Current Price</p>
                   <div className="space-y-1">
                     <p className="text-lg sm:text-xl lg:text-2xl font-bold break-all leading-tight">
-                      {typeof currentPrice === 'number' ? formatPrice(currentPrice).cad : 'Loading...'}/MWh
+                      {currentPrice !== null ? formatPrice(currentPrice).cad : 'Loading...'}/MWh
                     </p>
                     <p className="text-sm sm:text-base lg:text-lg text-muted-foreground break-all leading-tight">
-                      {typeof currentPrice === 'number' ? formatPrice(currentPrice).usd : 'Loading...'}/MWh
+                      {currentPrice !== null ? formatPrice(currentPrice).usd : 'Loading...'}/MWh
                     </p>
                   </div>
-                  <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="text-xs">
-                    {currentPrice > 60 ? 'HIGH DEMAND' : 'NORMAL'}
+                  <Badge variant={(currentPrice !== null && currentPrice > 60) ? 'destructive' : 'default'} className="text-xs">
+                    {(currentPrice !== null && currentPrice > 60) ? 'HIGH DEMAND' : 'NORMAL'}
                   </Badge>
                 </div>
                 <div className="space-y-2 min-w-0">
