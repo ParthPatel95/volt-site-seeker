@@ -39,14 +39,8 @@ export function AESOMarket() {
   const loading = basicLoading;
 
   const formatPrice = (cadPrice: number) => {
-    // Handle invalid price values
-    if (typeof cadPrice !== 'number' || !Number.isFinite(cadPrice)) {
-      return { cad: 'CA$0.00', usd: '$0.00 USD' };
-    }
-    
-    // Always show CAD price, handle USD conversion
     const cadDisplay = `CA$${cadPrice.toFixed(2)}`;
-    let usdDisplay = 'Loading...';
+    let usdDisplay = '$0.00 USD';
     
     if (exchangeRate) {
       const usdPrice = convertToUSD(cadPrice);
@@ -63,8 +57,9 @@ export function AESOMarket() {
     refetchBasic();
   };
 
-  // Use real market data when available - check if pricing exists AND has valid current_price
-  const currentPrice = (pricing && typeof pricing.current_price === 'number') ? pricing.current_price : null;
+  // Use real market data when available
+  const currentPrice = pricing?.current_price;
+  const hasValidPrice = pricing && typeof pricing.current_price === 'number';
   const priceTimestamp = pricing?.timestamp;
 
   // Generate fallback data based on current real data
@@ -135,10 +130,10 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl lg:text-2xl font-bold break-all">
-              {currentPrice !== null ? formatPrice(currentPrice).cad.split('/')[0] : 'Loading...'}
+              {hasValidPrice ? formatPrice(currentPrice).cad : 'Loading...'}
             </div>
             <p className="text-xs text-blue-200 break-all">
-              {currentPrice !== null ? formatPrice(currentPrice).usd.split('/')[0] : 'Loading...'}/MWh
+              {hasValidPrice ? formatPrice(currentPrice).usd : 'Loading...'}/MWh
             </p>
           </CardContent>
         </Card>
@@ -205,14 +200,14 @@ export function AESOMarket() {
                   <p className="text-sm text-muted-foreground">Current Price</p>
                   <div className="space-y-1">
                     <p className="text-lg sm:text-xl lg:text-2xl font-bold break-all leading-tight">
-                      {currentPrice !== null ? formatPrice(currentPrice).cad : 'Loading...'}/MWh
+                      {hasValidPrice ? `${formatPrice(currentPrice).cad}/MWh` : 'Loading...'}
                     </p>
                     <p className="text-sm sm:text-base lg:text-lg text-muted-foreground break-all leading-tight">
-                      {currentPrice !== null ? formatPrice(currentPrice).usd : 'Loading...'}/MWh
+                      {hasValidPrice ? `${formatPrice(currentPrice).usd}/MWh` : 'Loading...'}
                     </p>
                   </div>
-                  <Badge variant={(currentPrice !== null && currentPrice > 60) ? 'destructive' : 'default'} className="text-xs">
-                    {(currentPrice !== null && currentPrice > 60) ? 'HIGH DEMAND' : 'NORMAL'}
+                  <Badge variant={(hasValidPrice && currentPrice > 60) ? 'destructive' : 'default'} className="text-xs">
+                    {(hasValidPrice && currentPrice > 60) ? 'HIGH DEMAND' : 'NORMAL'}
                   </Badge>
                 </div>
                 <div className="space-y-2 min-w-0">
