@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
 import { useAESOEnhancedData } from '@/hooks/useAESOEnhancedData';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import { AESOMarketAnalyticsPanel } from './intelligence/AESOMarketAnalyticsPanel';
@@ -37,14 +38,14 @@ import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
 import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
 
 export function AESOMarketComprehensive() {
-  // Basic AESO data hook
+  // Use working dashboard data source
   const { 
-    pricing, 
-    loadData, 
-    generationMix, 
-    loading: basicLoading, 
-    refetch: refetchBasic 
-  } = useAESOData();
+    aesoPricing: pricing, 
+    aesoLoad: loadData, 
+    aesoGeneration: generationMix, 
+    isLoading: basicLoading, 
+    refreshData 
+  } = useOptimizedDashboard();
 
   // Enhanced AESO data hook
   const {
@@ -73,22 +74,21 @@ export function AESOMarketComprehensive() {
   const loading = basicLoading || enhancedLoading || marketLoading;
 
   const formatPrice = (cadPrice: number) => {
-    if (!exchangeRate || !cadPrice) return { cad: 'Loading...', usd: 'Loading...' };
-    const usdPrice = convertToUSD(cadPrice);
     return {
       cad: `CA$${cadPrice.toFixed(2)}`,
-      usd: `$${usdPrice.toFixed(2)} USD`
+      usd: `CA$${cadPrice.toFixed(2)}`  // Remove USD conversion as requested
     };
   };
 
   const handleRefreshAll = () => {
-    refetchBasic();
+    refreshData();
     refetchEnhanced();
     refetchMarket();
   };
 
-  // Use real market data when available
-  const currentPrice = pricing?.current_price || 0;
+  // Use real market data when available - same logic as working Dashboard
+  const currentPrice = pricing?.current_price ?? 0;
+  const hasValidPrice = pricing !== null && pricing !== undefined;
   const priceTimestamp = pricing?.timestamp;
 
   // Intelligence helper functions
@@ -208,10 +208,7 @@ export function AESOMarketComprehensive() {
                         <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
                         <div className="space-y-1">
                           <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                            {formatPrice(currentPrice).cad}/MWh
-                          </p>
-                          <p className="text-xs sm:text-sm lg:text-base text-muted-foreground break-all leading-tight">
-                            {formatPrice(currentPrice).usd}/MWh
+                            {hasValidPrice ? `CA$${currentPrice.toFixed(2)}/MWh` : 'Loading...'}
                           </p>
                         </div>
                         <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="text-xs">
