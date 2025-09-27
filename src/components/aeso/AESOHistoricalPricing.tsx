@@ -191,17 +191,18 @@ export function AESOHistoricalPricing() {
     
     if (selectedShutdowns.length === 0) return null;
     
-    // Calculate NEW average excluding shutdown periods
+    // Calculate NEW average excluding shutdown periods - CORRECTED
+    // We need to exclude shutdown dates from ALL filtered data, not just validPrices
     const shutdownDates = new Set(selectedShutdowns.map(s => s.date));
-    const remainingDays = validPrices.filter(day => !shutdownDates.has(day.date));
+    const remainingDaysFromAllData = filteredData.filter(day => !shutdownDates.has(day.date));
     
-    const newAveragePrice = remainingDays.length > 0 
-      ? remainingDays.reduce((sum, day) => sum + day.price, 0) / remainingDays.length 
+    const newAveragePrice = remainingDaysFromAllData.length > 0 
+      ? remainingDaysFromAllData.reduce((sum, day) => sum + day.price, 0) / remainingDaysFromAllData.length 
       : originalAveragePrice;
     
-    console.log('Remaining days after shutdown:', remainingDays.length);
-    console.log('New average price:', newAveragePrice);
-    console.log('Price reduction:', originalAveragePrice - newAveragePrice);
+    console.log('Remaining days after shutdown (from all data):', remainingDaysFromAllData.length);
+    console.log('New average price (corrected):', newAveragePrice);
+    console.log('Price reduction (corrected):', originalAveragePrice - newAveragePrice);
     
     // Calculate events with CORRECT savings logic
     // Savings = what we AVOID paying by shutting down vs baseline (original average)
