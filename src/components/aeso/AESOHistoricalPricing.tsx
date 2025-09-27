@@ -102,17 +102,27 @@ export function AESOHistoricalPricing() {
   };
 
   const handleUptimeAnalysis = () => {
-    setAnalysisMethod('uptime');
-    const result = analyzeUptimeOptimized(parseFloat(uptimePercentage), parseInt(analysisHours));
-    setCustomAnalysisResult(result);
+    try {
+      setAnalysisMethod('uptime');
+      const result = analyzeUptimeOptimized(parseFloat(uptimePercentage), parseInt(analysisHours));
+      setCustomAnalysisResult(result);
+    } catch (error) {
+      console.error('Error in uptime analysis:', error);
+      // Show a user-friendly error message
+      setCustomAnalysisResult(null);
+    }
   };
 
   const analyzeUptimeOptimized = (targetUptime: number, shutdownHoursPerEvent: number) => {
-    // Select appropriate data source based on time period
-    const daysInPeriod = parseInt(timePeriod);
-    const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
-    
-    if (!sourceData) return null;
+    try {
+      // Select appropriate data source based on time period
+      const daysInPeriod = parseInt(timePeriod);
+      const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
+      
+      if (!sourceData || !sourceData.chartData || sourceData.chartData.length === 0) {
+        console.warn('No data available for uptime analysis');
+        return null;
+      }
     
     console.log('=== UPTIME ANALYSIS DEBUG ===');
     console.log('Target uptime:', targetUptime);
@@ -212,16 +222,20 @@ export function AESOHistoricalPricing() {
     console.log('Total energy savings (vs original baseline):', totalSavings);
     console.log('Total all-in savings (vs original baseline):', totalAllInSavings);
     
-    return {
-      totalShutdowns: selectedShutdowns.length,
-      totalHours: totalShutdownHours,
-      averageSavings: events.length > 0 ? totalSavings / events.length : 0,
-      events,
-      newAveragePrice,
-      energySavings: totalSavings,
-      allInSavings: totalAllInSavings,
-      originalAverage: originalAveragePrice
-    };
+      return {
+        totalShutdowns: selectedShutdowns.length,
+        totalHours: totalShutdownHours,
+        averageSavings: events.length > 0 ? totalSavings / events.length : 0,
+        events,
+        newAveragePrice,
+        energySavings: totalSavings,
+        allInSavings: totalAllInSavings,
+        originalAverage: originalAveragePrice
+      };
+    } catch (error) {
+      console.error('Error in analyzeUptimeOptimized:', error);
+      return null;
+    }
   };
 
   const calculateStrikePriceAnalysis = () => {
