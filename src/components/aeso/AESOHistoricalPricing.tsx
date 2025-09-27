@@ -269,8 +269,8 @@ export function AESOHistoricalPricing() {
         averageSavings: events.length > 0 ? totalSavings / events.length : 0,
         events,
         newAveragePrice,
-        energySavings: totalSavings,
-        allInSavings: totalAllInSavings,
+        totalSavings: totalSavings,  // Standardized field name
+        totalAllInSavings: totalAllInSavings,  // Standardized field name
         originalAverage: originalAveragePrice,
         actualUptimeAchieved: ((totalHours - totalShutdownHours) / totalHours * 100)
       };
@@ -333,16 +333,18 @@ export function AESOHistoricalPricing() {
     console.log('Shutdown events count:', shutdownEvents.length);
     console.log('Shutdown events sample:', shutdownEvents.slice(0, 5));
     
-    // Calculate NEW average by REMOVING shutdown events from the dataset
+    // Calculate NEW average by REMOVING shutdown events from ALL filtered data (not just validPrices)
     const shutdownDates = new Set(shutdownEvents.map(s => s.date));
-    const remainingPrices = validPrices.filter(day => !shutdownDates.has(day.date));
+    const remainingDays = filteredData.filter(day => !shutdownDates.has(day.date));
     
-    const newAveragePrice = remainingPrices.length > 0 
-      ? remainingPrices.reduce((sum, day) => sum + day.price, 0) / remainingPrices.length 
+    const newAveragePrice = remainingDays.length > 0 
+      ? remainingDays.reduce((sum, day) => sum + day.price, 0) / remainingDays.length 
       : originalAveragePrice;
     
-    console.log('Remaining prices count:', remainingPrices.length);
-    console.log('New average price (display only):', newAveragePrice);
+    console.log('Original filtered data count:', filteredData.length);
+    console.log('Shutdown events count:', shutdownEvents.length);
+    console.log('Remaining days count after shutdown:', remainingDays.length);
+    console.log('New average price (corrected from all data):', newAveragePrice);
     console.log('Price reduction from original:', originalAveragePrice - newAveragePrice);
     
     // Calculate events with CORRECT savings logic
