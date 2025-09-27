@@ -74,7 +74,7 @@ export function AESOHistoricalPricing() {
         const result = calculateStrikePriceAnalysis();
         setCustomAnalysisResult(result);
       } else if (analysisMethod === 'uptime') {
-        const result = analyzeUptimeOptimized(parseFloat(uptimePercentage), parseInt(analysisHours));
+        const result = analyzeUptimeOptimized(parseFloat(uptimePercentage));
         setCustomAnalysisResult(result);
       }
     }
@@ -104,7 +104,7 @@ export function AESOHistoricalPricing() {
   const handleUptimeAnalysis = () => {
     try {
       setAnalysisMethod('uptime');
-      const result = analyzeUptimeOptimized(parseFloat(uptimePercentage), parseInt(analysisHours));
+      const result = analyzeUptimeOptimized(parseFloat(uptimePercentage));
       setCustomAnalysisResult(result);
     } catch (error) {
       console.error('Error in uptime analysis:', error);
@@ -113,7 +113,7 @@ export function AESOHistoricalPricing() {
     }
   };
 
-  const analyzeUptimeOptimized = (targetUptime: number, shutdownHoursPerEvent: number) => {
+  const analyzeUptimeOptimized = (targetUptime: number) => {
     try {
       // Select appropriate data source based on time period
       const daysInPeriod = parseInt(timePeriod);
@@ -124,114 +124,129 @@ export function AESOHistoricalPricing() {
         return null;
       }
     
-    console.log('=== UPTIME ANALYSIS DEBUG ===');
-    console.log('Target uptime:', targetUptime);
-    console.log('Shutdown hours per event:', shutdownHoursPerEvent);
-    console.log('Days in period:', daysInPeriod);
-    console.log('Using data source:', daysInPeriod > 180 ? 'yearly' : 'monthly');
-    console.log('Source data statistics:', sourceData.statistics);
-    
-    // Filter data to exact time period requested
-    const now = new Date();
-    const startDate = new Date();
-    startDate.setDate(now.getDate() - daysInPeriod);
-    
-    const filteredData = sourceData.chartData.filter(day => {
-      const dayDate = new Date(day.date);
-      return dayDate >= startDate && dayDate <= now;
-    });
-    
-    console.log('Total data points available:', sourceData.chartData.length);
-    console.log('Filtered data points for period:', filteredData.length);
-    
-    // Calculate available shutdown hours based on uptime target and time period
-    const totalHours = daysInPeriod * 24;
-    const maxShutdownHours = totalHours * (1 - targetUptime / 100);
-    
-    console.log('Total hours:', totalHours);
-    console.log('Max shutdown hours allowed:', maxShutdownHours);
-    
-    // Get all valid price points (≥4¢/kWh, no negatives) - these represent daily averages
-    const validPrices = filteredData
-      .filter(day => day.price >= 4 && day.price > 0)
-      .map(day => ({ date: day.date, price: day.price }))
-      .sort((a, b) => b.price - a.price); // Sort highest to lowest
-    
-    console.log('Valid prices (first 10):', validPrices.slice(0, 10));
-    console.log('Total valid price points:', validPrices.length);
-    
-    // Calculate the true average price for the filtered period
-    const originalAveragePrice = filteredData.length > 0 
-      ? filteredData.reduce((sum, day) => sum + day.price, 0) / filteredData.length 
-      : sourceData.statistics?.average || 0;
-    
-    console.log('TRUE original average from stats:', originalAveragePrice);
-    console.log('Filtered average (wrong baseline):', validPrices.length > 0 ? validPrices.reduce((sum, day) => sum + day.price, 0) / validPrices.length : 0);
-    
-    // Select the most expensive periods that fit within shutdown budget
-    const selectedShutdowns = [];
-    let totalShutdownHours = 0;
-    
-    // For uptime method: Calculate how many shutdown events we can have
-    // If user wants 1 hour shutdowns, we can have maxShutdownHours / shutdownHoursPerEvent events
-    const maxShutdownEvents = Math.floor(maxShutdownHours / shutdownHoursPerEvent);
-    
-    console.log('Max shutdown events we can have:', maxShutdownEvents);
-    console.log('Shutdown hours per event:', shutdownHoursPerEvent);
-    
-    // Take the most expensive days up to our limit
-    for (let i = 0; i < Math.min(validPrices.length, maxShutdownEvents); i++) {
-      selectedShutdowns.push(validPrices[i]);
-      totalShutdownHours += shutdownHoursPerEvent;
-    }
-    
-    console.log('Selected shutdowns (first 5):', selectedShutdowns.slice(0, 5));
-    console.log('Total shutdown events:', selectedShutdowns.length);
-    console.log('Total shutdown hours:', totalShutdownHours);
-    
-    if (selectedShutdowns.length === 0) return null;
-    
-    // Calculate NEW average excluding shutdown periods - CORRECTED
-    // We need to exclude shutdown dates from ALL filtered data, not just validPrices
-    const shutdownDates = new Set(selectedShutdowns.map(s => s.date));
-    const remainingDaysFromAllData = filteredData.filter(day => !shutdownDates.has(day.date));
-    
-    const newAveragePrice = remainingDaysFromAllData.length > 0 
-      ? remainingDaysFromAllData.reduce((sum, day) => sum + day.price, 0) / remainingDaysFromAllData.length 
-      : originalAveragePrice;
-    
-    console.log('Remaining days after shutdown (from all data):', remainingDaysFromAllData.length);
-    console.log('New average price (corrected):', newAveragePrice);
-    console.log('Price reduction (corrected):', originalAveragePrice - newAveragePrice);
-    
-    // Calculate events with CORRECT savings logic
-    // Savings = what we AVOID paying by shutting down vs baseline (original average)
-    const events = selectedShutdowns.map(shutdown => ({
-      date: shutdown.date,
-      price: shutdown.price,
-      duration: shutdownHoursPerEvent,
-      // CORRECT: Savings = (shutdown price - original average) * hours
-      // This represents what we avoid paying by shutting down during expensive periods
-      savings: (shutdown.price - originalAveragePrice) * shutdownHoursPerEvent,
-      allInSavings: (calculateAllInPrice(shutdown.price) - calculateAllInPrice(originalAveragePrice)) * shutdownHoursPerEvent
-    }));
-    
-    const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
-    const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
-    
-    console.log('Events sample (first 3):', events.slice(0, 3));
-    console.log('Total energy savings (vs original baseline):', totalSavings);
-    console.log('Total all-in savings (vs original baseline):', totalAllInSavings);
-    
+      console.log('=== UPTIME PERCENTAGE ANALYSIS DEBUG ===');
+      console.log('Target uptime:', targetUptime);
+      console.log('Days in period:', daysInPeriod);
+      console.log('Using data source:', daysInPeriod > 180 ? 'yearly' : 'monthly');
+      console.log('Source data statistics:', sourceData.statistics);
+      
+      // Filter data to exact time period requested
+      const now = new Date();
+      const startDate = new Date();
+      startDate.setDate(now.getDate() - daysInPeriod);
+      
+      const filteredData = sourceData.chartData.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate >= startDate && dayDate <= now;
+      });
+      
+      console.log('Total data points available:', sourceData.chartData.length);
+      console.log('Filtered data points for period:', filteredData.length);
+      
+      // Calculate available shutdown hours based on uptime target and time period
+      const totalHours = daysInPeriod * 24;
+      const maxShutdownHours = totalHours * (1 - targetUptime / 100);
+      
+      console.log('Total hours in period:', totalHours);
+      console.log('Max shutdown hours allowed:', maxShutdownHours);
+      
+      // For uptime method: We need to work with hourly data, but we only have daily averages
+      // So we'll assume each day represents 24 hours at that average price
+      // Convert daily data to hourly data for more accurate uptime calculation
+      const hourlyData = [];
+      filteredData.forEach(day => {
+        // Add 24 hours for each day, all at the daily average price
+        for (let hour = 0; hour < 24; hour++) {
+          hourlyData.push({
+            date: day.date,
+            hour: hour,
+            price: day.price,
+            timestamp: `${day.date}T${hour.toString().padStart(2, '0')}:00:00`
+          });
+        }
+      });
+      
+      console.log('Total hourly data points:', hourlyData.length);
+      
+      // Get all valid price points (≥0, no negatives) and sort by price
+      const validHourlyPrices = hourlyData
+        .filter(hour => hour.price >= 0)
+        .sort((a, b) => b.price - a.price); // Sort highest to lowest
+      
+      console.log('Valid hourly prices (first 10):', validHourlyPrices.slice(0, 10));
+      console.log('Total valid hourly price points:', validHourlyPrices.length);
+      
+      // Calculate the true average price for all hours in the period
+      const originalAveragePrice = validHourlyPrices.length > 0 
+        ? validHourlyPrices.reduce((sum, hour) => sum + hour.price, 0) / validHourlyPrices.length 
+        : sourceData.statistics?.average || 0;
+      
+      console.log('Original average price per hour:', originalAveragePrice);
+      
+      // Select the most expensive hours up to our shutdown budget
+      const maxShutdownHoursInt = Math.floor(maxShutdownHours);
+      const selectedShutdownHours = validHourlyPrices.slice(0, maxShutdownHoursInt);
+      
+      console.log('Selected shutdown hours:', selectedShutdownHours.length);
+      console.log('Most expensive hours being shut down (first 5):', selectedShutdownHours.slice(0, 5));
+      
+      if (selectedShutdownHours.length === 0) return null;
+      
+      // Calculate NEW average excluding shutdown hours
+      const shutdownTimestamps = new Set(selectedShutdownHours.map(h => h.timestamp));
+      const remainingHours = validHourlyPrices.filter(hour => !shutdownTimestamps.has(hour.timestamp));
+      
+      const newAveragePrice = remainingHours.length > 0 
+        ? remainingHours.reduce((sum, hour) => sum + hour.price, 0) / remainingHours.length 
+        : originalAveragePrice;
+      
+      console.log('Remaining hours after shutdown:', remainingHours.length);
+      console.log('New average price during operation:', newAveragePrice);
+      console.log('Price reduction:', originalAveragePrice - newAveragePrice);
+      
+      // Group shutdown hours by day for better reporting
+      const shutdownsByDay: { [key: string]: any[] } = {};
+      selectedShutdownHours.forEach(hour => {
+        if (!shutdownsByDay[hour.date]) {
+          shutdownsByDay[hour.date] = [];
+        }
+        shutdownsByDay[hour.date].push(hour);
+      });
+      
+      // Create events grouped by day
+      const events = Object.entries(shutdownsByDay).map(([date, hours]: [string, any[]]) => {
+        const avgPriceForDay = hours.reduce((sum, h) => sum + h.price, 0) / hours.length;
+        const totalSavings = hours.reduce((sum, h) => sum + (h.price - originalAveragePrice), 0);
+        
+        return {
+          date: date,
+          price: avgPriceForDay,
+          duration: hours.length,
+          savings: totalSavings,
+          allInSavings: hours.reduce((sum, h) => sum + (calculateAllInPrice(h.price) - calculateAllInPrice(originalAveragePrice)), 0),
+          hoursShutdown: hours.map(h => h.hour).sort((a, b) => a - b)
+        };
+      });
+      
+      const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
+      const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
+      const totalShutdownHours = selectedShutdownHours.length;
+      
+      console.log('Events sample (first 3):', events.slice(0, 3));
+      console.log('Total energy savings:', totalSavings);
+      console.log('Total all-in savings:', totalAllInSavings);
+      console.log('Actual uptime achieved:', ((totalHours - totalShutdownHours) / totalHours * 100).toFixed(2) + '%');
+      
       return {
-        totalShutdowns: selectedShutdowns.length,
+        totalShutdowns: events.length,
         totalHours: totalShutdownHours,
         averageSavings: events.length > 0 ? totalSavings / events.length : 0,
         events,
         newAveragePrice,
         energySavings: totalSavings,
         allInSavings: totalAllInSavings,
-        originalAverage: originalAveragePrice
+        originalAverage: originalAveragePrice,
+        actualUptimeAchieved: ((totalHours - totalShutdownHours) / totalHours * 100)
       };
     } catch (error) {
       console.error('Error in analyzeUptimeOptimized:', error);
@@ -853,22 +868,7 @@ export function AESOHistoricalPricing() {
                           step="0.1"
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage)).toFixed(1)}% of hours
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium">Shutdown Duration (hours)</label>
-                        <input
-                          type="number"
-                          value={analysisHours}
-                          onChange={(e) => setAnalysisHours(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="1"
-                          max="24"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Duration per shutdown event (1-24 hours)
+                          Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage)).toFixed(1)}% of hours to maintain {uptimePercentage}% uptime
                         </p>
                       </div>
                       
