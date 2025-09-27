@@ -346,7 +346,10 @@ export function AESOHistoricalPricing() {
     return cadPrice * exchangeRate;
   };
 
-  const formatCurrency = (value: number) => `CA$${value.toFixed(2)}`;
+  const formatCurrency = (value: number | undefined | null) => {
+    if (typeof value !== 'number' || isNaN(value)) return 'CA$0.00';
+    return `CA$${value.toFixed(2)}`;
+  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
