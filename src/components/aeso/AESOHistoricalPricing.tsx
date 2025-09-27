@@ -150,91 +150,117 @@ export function AESOHistoricalPricing() {
       console.log('Total hours in period:', totalHours);
       console.log('Max shutdown hours allowed:', maxShutdownHours);
       
-      // For uptime method: We need to work with hourly data, but we only have daily averages
-      // So we'll assume each day represents 24 hours at that average price
-      // Convert daily data to hourly data for more accurate uptime calculation
-      const hourlyData = [];
-      filteredData.forEach(day => {
-        // Add 24 hours for each day, all at the daily average price
-        for (let hour = 0; hour < 24; hour++) {
-          hourlyData.push({
-            date: day.date,
-            hour: hour,
-            price: day.price,
-            timestamp: `${day.date}T${hour.toString().padStart(2, '0')}:00:00`
-          });
-        }
-      });
-      
-      console.log('Total hourly data points:', hourlyData.length);
+      // For uptime method: Since we only have daily data, we'll work with days but convert to hourly for uptime calculation
+      // We need to be more strategic about which days to shut down entirely vs partially
       
       // Get all valid price points (≥0, no negatives) and sort by price
-      const validHourlyPrices = hourlyData
-        .filter(hour => hour.price >= 0)
+      const validDailyPrices = filteredData
+        .filter(day => day.price >= 0)
         .sort((a, b) => b.price - a.price); // Sort highest to lowest
       
-      console.log('Valid hourly prices (first 10):', validHourlyPrices.slice(0, 10));
-      console.log('Total valid hourly price points:', validHourlyPrices.length);
+      console.log('Valid daily prices (first 10):', validDailyPrices.slice(0, 10));
+      console.log('Total valid daily price points:', validDailyPrices.length);
       
-      // Calculate the true average price for all hours in the period
-      const originalAveragePrice = validHourlyPrices.length > 0 
-        ? validHourlyPrices.reduce((sum, hour) => sum + hour.price, 0) / validHourlyPrices.length 
+      // Calculate the true average price for all days in the period
+      const originalAveragePrice = validDailyPrices.length > 0 
+        ? validDailyPrices.reduce((sum, day) => sum + day.price, 0) / validDailyPrices.length 
         : sourceData.statistics?.average || 0;
       
-      console.log('Original average price per hour:', originalAveragePrice);
+      console.log('Original average price per day:', originalAveragePrice);
+      console.log('Price range - highest:', validDailyPrices[0]?.price, 'lowest:', validDailyPrices[validDailyPrices.length - 1]?.price);
       
-      // Select the most expensive hours up to our shutdown budget
-      const maxShutdownHoursInt = Math.floor(maxShutdownHours);
-      const selectedShutdownHours = validHourlyPrices.slice(0, maxShutdownHoursInt);
+      // Calculate how many days we can shut down completely and partially
+      const maxShutdownDays = Math.floor(maxShutdownHours / 24);
+      const remainingShutdownHours = maxShutdownHours % 24;
       
-      console.log('Selected shutdown hours:', selectedShutdownHours.length);
-      console.log('Most expensive hours being shut down (first 5):', selectedShutdownHours.slice(0, 5));
+      console.log('Can shut down completely:', maxShutdownDays, 'days');
+      console.log('Plus partial shutdown of:', remainingShutdownHours, 'hours');
       
-      if (selectedShutdownHours.length === 0) return null;
+      // Select the most expensive days for complete shutdown
+      const completeShutdownDays = validDailyPrices.slice(0, maxShutdownDays);
       
-      // Calculate NEW average excluding shutdown hours
-      const shutdownTimestamps = new Set(selectedShutdownHours.map(h => h.timestamp));
-      const remainingHours = validHourlyPrices.filter(hour => !shutdownTimestamps.has(hour.timestamp));
+      // If we have remaining hours, select the next most expensive day for partial shutdown
+      const partialShutdownDay = maxShutdownDays < validDailyPrices.length && remainingShutdownHours > 0 
+        ? validDailyPrices[maxShutdownDays] 
+        : null;
       
-      const newAveragePrice = remainingHours.length > 0 
-        ? remainingHours.reduce((sum, hour) => sum + hour.price, 0) / remainingHours.length 
+      console.log('Complete shutdown days:', completeShutdownDays.length);
+      console.log('Partial shutdown day:', partialShutdownDay ? `${partialShutdownDay.date} (${remainingShutdownHours} hours)` : 'none');
+      console.log('Average price of complete shutdown days:', completeShutdownDays.length > 0 ? completeShutdownDays.reduce((sum, d) => sum + d.price, 0) / completeShutdownDays.length : 0);
+      
+      if (completeShutdownDays.length === 0 && !partialShutdownDay) return null;
+      
+      // Calculate NEW average excluding shutdown periods
+      const shutdownDates = new Set(completeShutdownDays.map(d => d.date));
+      if (partialShutdownDay) {
+        shutdownDates.add(partialShutdownDay.date);
+      }
+      
+      const remainingDays = validDailyPrices.filter(day => !shutdownDates.has(day.date));
+      
+      // For partial shutdown day, we need to account for only partial hours being shut down
+      let adjustedRemainingDays: any[] = [...remainingDays];
+      if (partialShutdownDay) {
+        // Add back the partial day with adjusted weight
+        const operationalHours = 24 - remainingShutdownHours;
+        const adjustedDay = {
+          ...partialShutdownDay,
+          price: partialShutdownDay.price,
+          weight: operationalHours / 24  // Weighted by operational hours
+        };
+        adjustedRemainingDays.push(adjustedDay);
+      }
+      
+      const newAveragePrice = adjustedRemainingDays.length > 0 
+        ? adjustedRemainingDays.reduce((sum, day) => sum + (day.price * (day.weight || 1)), 0) / 
+          adjustedRemainingDays.reduce((sum, day) => sum + (day.weight || 1), 0)
         : originalAveragePrice;
       
-      console.log('Remaining hours after shutdown:', remainingHours.length);
+      console.log('Remaining days after shutdown:', remainingDays.length);
       console.log('New average price during operation:', newAveragePrice);
       console.log('Price reduction:', originalAveragePrice - newAveragePrice);
       
-      // Group shutdown hours by day for better reporting
-      const shutdownsByDay: { [key: string]: any[] } = {};
-      selectedShutdownHours.forEach(hour => {
-        if (!shutdownsByDay[hour.date]) {
-          shutdownsByDay[hour.date] = [];
-        }
-        shutdownsByDay[hour.date].push(hour);
-      });
-      
-      // Create events grouped by day
-      const events = Object.entries(shutdownsByDay).map(([date, hours]: [string, any[]]) => {
-        const avgPriceForDay = hours.reduce((sum, h) => sum + h.price, 0) / hours.length;
-        const totalSavings = hours.reduce((sum, h) => sum + (h.price - originalAveragePrice), 0);
+      // Create events for complete shutdown days
+      const events = completeShutdownDays.map(day => {
+        const savingsForDay = (day.price - originalAveragePrice) * 24; // 24 hours of savings
+        const allInSavingsForDay = (calculateAllInPrice(day.price) - calculateAllInPrice(originalAveragePrice)) * 24;
         
         return {
-          date: date,
-          price: avgPriceForDay,
-          duration: hours.length,
-          savings: totalSavings,
-          allInSavings: hours.reduce((sum, h) => sum + (calculateAllInPrice(h.price) - calculateAllInPrice(originalAveragePrice)), 0),
-          hoursShutdown: hours.map(h => h.hour).sort((a, b) => a - b)
+          date: day.date,
+          price: day.price,
+          duration: 24,
+          savings: savingsForDay,
+          allInSavings: allInSavingsForDay,
+          hoursShutdown: Array.from({length: 24}, (_, i) => i) // All 24 hours
         };
       });
       
+      // Add partial shutdown day if exists
+      if (partialShutdownDay) {
+        const savingsForPartialDay = (partialShutdownDay.price - originalAveragePrice) * remainingShutdownHours;
+        const allInSavingsForPartialDay = (calculateAllInPrice(partialShutdownDay.price) - calculateAllInPrice(originalAveragePrice)) * remainingShutdownHours;
+        
+        events.push({
+          date: partialShutdownDay.date,
+          price: partialShutdownDay.price,
+          duration: remainingShutdownHours,
+          savings: savingsForPartialDay,
+          allInSavings: allInSavingsForPartialDay,
+          hoursShutdown: Array.from({length: remainingShutdownHours}, (_, i) => i) // First N hours
+        });
+      }
+      
       const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
       const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
-      const totalShutdownHours = selectedShutdownHours.length;
+      const totalShutdownHours = (completeShutdownDays.length * 24) + remainingShutdownHours;
       
-      console.log('Events sample (first 3):', events.slice(0, 3));
-      console.log('Total energy savings:', totalSavings);
-      console.log('Total all-in savings:', totalAllInSavings);
+      console.log('=== SAVINGS CALCULATION DEBUG ===');
+      console.log('Events:', events);
+      console.log('Total energy savings (should be positive):', totalSavings);
+      console.log('Total all-in savings (should be positive):', totalAllInSavings);
+      console.log('Complete shutdown days avg price:', completeShutdownDays.length > 0 ? completeShutdownDays.reduce((sum, d) => sum + d.price, 0) / completeShutdownDays.length : 0);
+      console.log('Original average price:', originalAveragePrice);
+      console.log('Expected avg savings per day:', completeShutdownDays.length > 0 ? (completeShutdownDays.reduce((sum, d) => sum + d.price, 0) / completeShutdownDays.length) - originalAveragePrice : 0);
       console.log('Actual uptime achieved:', ((totalHours - totalShutdownHours) / totalHours * 100).toFixed(2) + '%');
       
       return {
