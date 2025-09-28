@@ -283,7 +283,7 @@ export function AESOHistoricalPricing() {
   useEffect(() => {
     if (customAnalysisResult && monthlyData && yearlyData) {
       if (analysisMethod === 'strike') {
-        const result = calculateStrikePriceAnalysis();
+        const result = calculateUptimeOptimization();
         setCustomAnalysisResult(result);
       } else if (analysisMethod === 'uptime') {
         const result = analyzeUptimeOptimized(parseFloat(uptimePercentage));
@@ -307,7 +307,7 @@ export function AESOHistoricalPricing() {
 
   const handlePeakAnalysis = () => {
     setAnalysisMethod('strike');
-    const result = calculateStrikePriceAnalysis();
+    const result = calculateUptimeOptimization();
     setCustomAnalysisResult(result);
     // Also trigger the hook's analysis for compatibility
     analyzePeakShutdown(parseInt(analysisHours), parseFloat(shutdownThreshold));
@@ -679,27 +679,15 @@ export function AESOHistoricalPricing() {
     };
   };
 
-  // Enhanced Formula: Smart Duration Strike Price Analysis with Operational Constraints
-  const calculateStrikePriceAnalysis = () => {
+  // Simplified Uptime Optimization Analysis
+  const calculateUptimeOptimization = () => {
     const daysInPeriod = parseInt(timePeriod);
     const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
     
     if (!sourceData) return null;
     
-    // Enhanced: Operational constraints for strike price method (more lenient for demonstration)
-    const operationalConstraints = {
-      startupCostPerMW: 50,
-      shutdownCostPerMW: 25,
-      minimumShutdownDuration: 1, // Reduced from 2 to 1 hour
-      maximumShutdownsPerDay: 5, // Increased from 2 to 5 events per day
-      consecutivePriceThresholdMultiplier: 1.1 // Extend shutdown if prices stay 10% above threshold
-    };
-
-    console.log('=== ENHANCED STRIKE PRICE ANALYSIS ===');
+    console.log('=== UPTIME OPTIMIZATION ANALYSIS ===');
     console.log('Days in period:', daysInPeriod);
-    console.log('Operational constraints:', operationalConstraints);
-    
-    const threshold = parseFloat(shutdownThreshold);
     
     // Filter data to exact time period
     const now = new Date();
@@ -714,62 +702,82 @@ export function AESOHistoricalPricing() {
     console.log('Total data points available:', sourceData.chartData.length);
     console.log('Filtered data points for period:', filteredData.length);
     
-    // Enhanced: Convert to hourly data for better precision
+    // Convert to hourly data
     const hourlyData = generateSyntheticHourlyData(filteredData);
-    const rollingBaseline = calculateRollingBaseline(hourlyData, 30);
+    console.log('Total hourly data points:', hourlyData.length);
     
-    // Enhanced: Smart detection of price spike events with variable duration
-    const priceSpikes = detectSmartPriceSpikes(hourlyData, threshold, operationalConstraints, rollingBaseline);
+    // Calculate uptime/downtime parameters
+    const targetUptime = parseFloat(uptimePercentage) / 100; // Convert percentage to decimal
+    const totalHours = hourlyData.length;
+    const allowedDowntimeHours = Math.floor(totalHours * (1 - targetUptime));
     
-    console.log('Enhanced price spike detection:');
-    console.log('- Total hourly data points:', hourlyData.length);
-    console.log('- Price spikes detected:', priceSpikes.events.length);
-    console.log('- Average spike duration:', priceSpikes.averageDuration.toFixed(1), 'hours');
-    console.log('- Operational violations:', priceSpikes.violations.length);
+    console.log('Target uptime:', (targetUptime * 100).toFixed(1) + '%');
+    console.log('Total hours in period:', totalHours);
+    console.log('Allowed downtime hours:', allowedDowntimeHours);
     
-    // Calculate enhanced savings with operational costs
-    const enhancedSavings = calculateStrikePriceSavings(
-      priceSpikes, 
-      rollingBaseline, 
-      operationalConstraints
-    );
+    // Sort all hours by price (highest first) and take the top X hours for shutdown
+    const sortedHours = [...hourlyData].sort((a, b) => b.price - a.price);
+    const hoursToShutdown = sortedHours.slice(0, allowedDowntimeHours);
+    const hoursToKeepRunning = sortedHours.slice(allowedDowntimeHours);
     
-    console.log('=== ENHANCED STRIKE PRICE CALCULATION ===');
-    console.log('SMART DURATION RESULTS:');
-    console.log('1. Strike threshold:', threshold, '¢/kWh');
-    console.log('2. Variable shutdown durations (avg):', priceSpikes.averageDuration.toFixed(1), 'hours');
-    console.log('3. Rolling baseline price:', rollingBaseline.average.toFixed(3), '¢/kWh');
-    console.log('4. Smart events triggered:', priceSpikes.events.length);
-    console.log('5. Total operational hours saved:', priceSpikes.totalHours);
-    console.log('');
-    console.log('ENHANCED SAVINGS CALCULATION:');
-    console.log('Gross energy savings:', enhancedSavings.grossSavings.toFixed(3), '¢');
-    console.log('Operational costs:', enhancedSavings.operationalCosts.toFixed(3), '¢');
-    console.log('Net savings:', enhancedSavings.netSavings.toFixed(3), '¢');
-    console.log('Confidence level:', (enhancedSavings.confidenceLevel * 100).toFixed(1), '%');
-    console.log('');
-    console.log('SAMPLE EVENTS:');
-    priceSpikes.events.slice(0, 3).forEach((event: any, i: number) => {
-      console.log(`Event ${i+1}: ${event.date} ${event.startHour}:00-${event.endHour}:00, Duration: ${event.duration}h, Peak: ${event.peakPrice.toFixed(3)}¢/kWh`);
+    console.log('Hours to shutdown (highest prices):', hoursToShutdown.length);
+    console.log('Hours to keep running:', hoursToKeepRunning.length);
+    
+    // Calculate original and optimized metrics
+    const originalTotalCost = hourlyData.reduce((sum, hour) => sum + hour.price, 0);
+    const originalAvgPrice = originalTotalCost / totalHours;
+    
+    const optimizedTotalCost = hoursToKeepRunning.reduce((sum, hour) => sum + hour.price, 0);
+    const optimizedAvgPrice = optimizedTotalCost / hoursToKeepRunning.length;
+    
+    const totalSavings = hoursToShutdown.reduce((sum, hour) => sum + hour.price, 0);
+    const actualDowntimePercent = (allowedDowntimeHours / totalHours) * 100;
+    
+    // Price distribution analysis
+    const priceRanges = [
+      { min: 0, max: 10, label: '$0-$10' },
+      { min: 10, max: 20, label: '$10-$20' },
+      { min: 20, max: 30, label: '$20-$30' },
+      { min: 30, max: 40, label: '$30-$40' },
+      { min: 40, max: 50, label: '$40-$50' },
+      { min: 50, max: 100, label: '$50-$100' },
+      { min: 100, max: 1000, label: '$100+' }
+    ];
+    
+    const distributionData = priceRanges.map(range => {
+      const hoursInRange = hourlyData.filter(hour => 
+        hour.price >= range.min && hour.price < range.max
+      ).length;
+      const shutdownHoursInRange = hoursToShutdown.filter(hour => 
+        hour.price >= range.min && hour.price < range.max
+      ).length;
+      
+      return {
+        ...range,
+        totalHours: hoursInRange,
+        shutdownHours: shutdownHoursInRange,
+        keepRunningHours: hoursInRange - shutdownHoursInRange,
+        percentage: (hoursInRange / totalHours) * 100
+      };
     });
     
+    console.log('=== UPTIME OPTIMIZATION RESULTS ===');
+    console.log('Original average price:', originalAvgPrice.toFixed(3), '¢/kWh');
+    console.log('Optimized average price:', optimizedAvgPrice.toFixed(3), '¢/kWh');
+    console.log('Total energy savings:', totalSavings.toFixed(2), '¢');
+    console.log('Actual downtime:', actualDowntimePercent.toFixed(2), '%');
+    console.log('Price distribution:', distributionData);
+    
     return {
-      totalShutdowns: priceSpikes.events.length,
-      totalHours: priceSpikes.totalHours,
-      averageSavings: priceSpikes.events.length > 0 ? enhancedSavings.netSavings / priceSpikes.events.length : 0,
-      events: priceSpikes.events,
-      newAveragePrice: enhancedSavings.newAveragePrice,
-      totalSavings: enhancedSavings.netSavings || 0,
-      totalAllInSavings: enhancedSavings.netAllInSavings || 0,
-      originalAverage: rollingBaseline.average,
-      // Enhanced metrics
-      operationalCosts: enhancedSavings.operationalCosts || 0,
-      confidenceLevel: enhancedSavings.confidenceLevel || 0.5,
-      projectedROI: enhancedSavings.projectedROI || 0,
-      averageDuration: priceSpikes.averageDuration || 0,
-      monteCarloConfidenceInterval: enhancedSavings.monteCarloConfidenceInterval || { lower: 0, upper: 0 },
-      probabilityOfProfit: enhancedSavings.probabilityOfProfit || 0,
-      expectedValue: enhancedSavings.expectedValue || 0
+      shutdownEvents: allowedDowntimeHours > 0 ? 1 : 0, // Single optimization event
+      totalHours: allowedDowntimeHours,
+      downtimePercentage: actualDowntimePercent,
+      energySavings: totalSavings,
+      newAvgPrice: optimizedAvgPrice,
+      originalAvgPrice: originalAvgPrice,
+      hoursToShutdown: hoursToShutdown,
+      distributionData: distributionData,
+      hourlyData: hourlyData
     };
   };
 
@@ -1976,3 +1984,5 @@ export function AESOHistoricalPricing() {
     </div>
   );
 }
+
+export default AESOHistoricalPricing;
