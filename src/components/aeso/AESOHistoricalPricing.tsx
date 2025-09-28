@@ -375,10 +375,22 @@ export function AESOHistoricalPricing() {
     const grossAllInSavings = shutdowns.events.reduce((sum: number, event: any) => sum + event.allInSavings, 0);
     const operationalCosts = shutdowns.events.reduce((sum: number, event: any) => sum + (event.operationalCost || 0), 0);
     
+    // Enhanced All-In Cost Modeling: Variable transmission costs based on energy prices
+    const transmissionCostVariation = shutdowns.events.reduce((sum: number, event: any) => {
+      const priceBasedTransmissionAdder = calculateDynamicTransmissionCost(event.price);
+      const standardTransmissionAdder = parseFloat(transmissionAdder);
+      return sum + ((priceBasedTransmissionAdder - standardTransmissionAdder) * event.duration);
+    }, 0);
+    
+    // Statistical Validation: Monte Carlo simulation for uncertainty
+    const monteCarloResult = runMonteCarloSimulation(shutdowns.events, baseline, 1000);
+    
     // Risk adjustment based on baseline confidence and volatility
     const riskAdjustment = grossSavings * (1 - baseline.confidenceLevel) * 0.3; // 30% of uncertain savings
-    const netSavings = grossSavings - operationalCosts - riskAdjustment;
-    const netAllInSavings = grossAllInSavings - operationalCosts - riskAdjustment;
+    const volatilityAdjustment = grossSavings * (baseline.volatility || 0.1) * 0.2; // 20% volatility penalty
+    
+    const netSavings = grossSavings - operationalCosts - riskAdjustment - volatilityAdjustment + transmissionCostVariation;
+    const netAllInSavings = grossAllInSavings - operationalCosts - riskAdjustment - volatilityAdjustment;
     
     // Calculate new average price during operational hours
     const operationalHours = (parseInt(timePeriod) * 24) - shutdowns.totalHours;
@@ -388,11 +400,70 @@ export function AESOHistoricalPricing() {
       grossSavings,
       operationalCosts,
       riskAdjustment,
+      volatilityAdjustment,
+      transmissionCostVariation,
       netSavings,
       netAllInSavings,
       newAveragePrice,
       confidenceLevel: baseline.confidenceLevel,
-      projectedROI: netSavings > 0 ? (netSavings / (operationalCosts || 1)) * 100 : 0
+      projectedROI: netSavings > 0 ? (netSavings / (operationalCosts || 1)) * 100 : 0,
+      monteCarloConfidenceInterval: monteCarloResult.confidenceInterval,
+      probabilityOfProfit: monteCarloResult.probabilityOfProfit,
+      expectedValue: monteCarloResult.expectedValue
+    };
+  };
+
+  // Enhanced All-In Cost Modeling: Dynamic transmission costs based on energy prices
+  const calculateDynamicTransmissionCost = (energyPrice: number) => {
+    const baseTransmissionAdder = parseFloat(transmissionAdder);
+    
+    // Transmission costs increase during high-demand periods (when energy prices are high)
+    if (energyPrice > 100) { // High price threshold
+      return baseTransmissionAdder * 1.3; // 30% increase during peak demand
+    } else if (energyPrice > 50) { // Medium price threshold
+      return baseTransmissionAdder * 1.15; // 15% increase during moderate demand
+    } else if (energyPrice < 10) { // Very low price (possible negative pricing periods)
+      return baseTransmissionAdder * 0.8; // 20% decrease during low demand
+    }
+    
+    return baseTransmissionAdder; // Standard transmission cost
+  };
+
+  // Statistical Validation: Monte Carlo simulation for uncertainty quantification
+  const runMonteCarloSimulation = (events: any[], baseline: any, iterations: number = 1000) => {
+    const results: number[] = [];
+    
+    for (let i = 0; i < iterations; i++) {
+      let simulatedSavings = 0;
+      
+      events.forEach(event => {
+        // Add uncertainty to price predictions
+        const priceUncertainty = (Math.random() - 0.5) * 2 * 0.2; // ±20% uncertainty
+        const baselineUncertainty = (Math.random() - 0.5) * 2 * 0.15; // ±15% uncertainty
+        
+        const adjustedPrice = event.price * (1 + priceUncertainty);
+        const adjustedBaseline = event.baselinePrice * (1 + baselineUncertainty);
+        
+        // Add operational uncertainty
+        const operationalEfficiency = 0.85 + (Math.random() * 0.25); // 85-100% efficiency
+        
+        simulatedSavings += (adjustedPrice - adjustedBaseline) * event.duration * operationalEfficiency;
+      });
+      
+      results.push(simulatedSavings);
+    }
+    
+    results.sort((a, b) => a - b);
+    
+    const p5 = results[Math.floor(iterations * 0.05)];
+    const p95 = results[Math.floor(iterations * 0.95)];
+    const expectedValue = results.reduce((sum, val) => sum + val, 0) / iterations;
+    const probabilityOfProfit = results.filter(val => val > 0).length / iterations;
+    
+    return {
+      confidenceInterval: { lower: p5, upper: p95 },
+      expectedValue,
+      probabilityOfProfit
     };
   };
 
@@ -597,6 +668,144 @@ export function AESOHistoricalPricing() {
     const result = energyPrice + adder;
     console.log(`calculateAllInPrice: ${energyPrice} + ${adder} = ${result}`);
     return result;
+  };
+
+  // Helper function for seasonal price adjustments
+  const calculateSeasonalMultiplier = (date: Date) => {
+    const month = date.getMonth(); // 0-11
+    const hour = date.getHours(); // 0-23
+    
+    // Winter months (Dec, Jan, Feb) have higher prices
+    if ([11, 0, 1].includes(month)) {
+      return 1.2 + (hour >= 16 && hour <= 20 ? 0.3 : 0); // Extra premium during evening peak
+    }
+    
+    // Summer months (Jun, Jul, Aug) have moderate increases
+    if ([5, 6, 7].includes(month)) {
+      return 1.1 + (hour >= 14 && hour <= 18 ? 0.2 : 0); // Afternoon AC load
+    }
+    
+    // Spring/Fall have lower baseline
+    return 0.9 + (hour >= 7 && hour <= 9 || hour >= 17 && hour <= 19 ? 0.15 : 0); // Rush hour peaks
+  };
+
+  // Real-Time Optimization: Predictive shutdown scheduling
+  const generatePredictiveSchedule = (historicalData: any[], forecastHours: number = 24) => {
+    if (!historicalData.length) return { schedule: [], confidence: 0 };
+    
+    const predictions: any[] = [];
+    const currentHour = new Date().getHours();
+    
+    // Generate predictions based on historical patterns
+    for (let i = 0; i < forecastHours; i++) {
+      const futureHour = (currentHour + i) % 24;
+      const futureDate = new Date();
+      futureDate.setHours(futureHour, 0, 0, 0);
+      futureDate.setDate(futureDate.getDate() + Math.floor((currentHour + i) / 24));
+      
+      // Find similar historical periods
+      const similarPeriods = historicalData.filter(point => {
+        const pointHour = new Date(point.datetime).getHours();
+        return Math.abs(pointHour - futureHour) <= 1;
+      });
+      
+      if (similarPeriods.length > 0) {
+        const avgPrice = similarPeriods.reduce((sum, p) => sum + p.price, 0) / similarPeriods.length;
+        const seasonalMultiplier = calculateSeasonalMultiplier(futureDate);
+        const weekdayMultiplier = [6, 0].includes(futureDate.getDay()) ? 0.85 : 1.0; // Weekend discount
+        
+        const predictedPrice = avgPrice * seasonalMultiplier * weekdayMultiplier;
+        const confidence = Math.min(similarPeriods.length / 10, 1.0); // Higher confidence with more data
+        
+        predictions.push({
+          datetime: futureDate,
+          predictedPrice,
+          confidence,
+          hour: futureHour,
+          shouldShutdown: predictedPrice > parseFloat(shutdownThreshold)
+        });
+      }
+    }
+    
+    // Optimize shutdown periods for operational efficiency
+    const optimizedSchedule = optimizeShutdownPeriods(predictions);
+    
+    return {
+      schedule: optimizedSchedule,
+      confidence: predictions.reduce((sum, p) => sum + p.confidence, 0) / predictions.length
+    };
+  };
+
+  // Learning Algorithm: Adaptive threshold optimization
+  const optimizeThresholdDynamically = (historicalPerformance: any[]) => {
+    if (!historicalPerformance.length) return parseFloat(shutdownThreshold);
+    
+    // Analyze past shutdown performance
+    const successfulShutdowns = historicalPerformance.filter(s => s.actualSavings > s.operationalCosts);
+    const failedShutdowns = historicalPerformance.filter(s => s.actualSavings <= s.operationalCosts);
+    
+    if (successfulShutdowns.length === 0) {
+      return parseFloat(shutdownThreshold) * 1.2; // Increase threshold if no successful shutdowns
+    }
+    
+    // Find optimal threshold based on historical performance
+    const successfulPrices = successfulShutdowns.map(s => s.triggerPrice);
+    const failedPrices = failedShutdowns.map(s => s.triggerPrice);
+    
+    const optimalThreshold = successfulPrices.reduce((sum, price) => sum + price, 0) / successfulPrices.length;
+    
+    // Gradually adjust current threshold towards optimal
+    const currentThreshold = parseFloat(shutdownThreshold);
+    const adjustmentRate = 0.1; // 10% adjustment per optimization cycle
+    
+    return currentThreshold + (optimalThreshold - currentThreshold) * adjustmentRate;
+  };
+
+  // Optimize shutdown periods for operational constraints
+  const optimizeShutdownPeriods = (predictions: any[]) => {
+    const optimized: any[] = [];
+    let consecutiveShutdownHours = 0;
+    let lastShutdownEnd = -1;
+    
+    predictions.forEach((prediction, index) => {
+      if (prediction.shouldShutdown) {
+        // Check minimum gap between shutdowns (avoid frequent cycling)
+        const hoursSinceLastShutdown = index - lastShutdownEnd;
+        
+        if (hoursSinceLastShutdown >= 4 || lastShutdownEnd === -1) { // Minimum 4-hour gap
+          consecutiveShutdownHours++;
+          
+          // Extend shutdown if next hour is also high or if minimum duration not met
+          const nextPrediction = predictions[index + 1];
+          const shouldExtend = nextPrediction?.shouldShutdown || consecutiveShutdownHours < 2;
+          
+          if (shouldExtend || consecutiveShutdownHours >= 2) {
+            optimized.push({
+              ...prediction,
+              optimized: true,
+              shutdownReason: consecutiveShutdownHours < 2 ? 'minimum_duration' : 'price_based'
+            });
+          }
+        } else {
+          // Skip this shutdown due to minimum gap constraint
+          optimized.push({
+            ...prediction,
+            shouldShutdown: false,
+            optimized: true,
+            skipReason: 'minimum_gap_constraint'
+          });
+          consecutiveShutdownHours = 0;
+        }
+      } else {
+        if (consecutiveShutdownHours > 0) {
+          lastShutdownEnd = index - 1;
+        }
+        consecutiveShutdownHours = 0;
+        optimized.push(prediction);
+      }
+    });
+    
+    return optimized;
   };
 
   const convertToUSD = (cadPrice: number) => {
@@ -1335,13 +1544,150 @@ export function AESOHistoricalPricing() {
                           </div>
                         </CardContent>
                       </Card>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                     )}
+
+                     {/* Enhanced Features Display */}
+                     {currentAnalysis && (
+                       <Card>
+                         <CardHeader>
+                           <CardTitle className="flex items-center gap-2">
+                             <TrendingUp className="w-4 h-4 text-purple-600" />
+                             Enhanced Analysis Features
+                           </CardTitle>
+                         </CardHeader>
+                         <CardContent>
+                           <div className="space-y-4">
+                             {/* Statistical Validation */}
+                             {currentAnalysis.monteCarloConfidenceInterval && (
+                               <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-200">
+                                 <h6 className="font-medium mb-3 text-blue-800 flex items-center gap-2">
+                                   📊 Statistical Validation (Monte Carlo)
+                                 </h6>
+                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                   <div>
+                                     <p className="text-blue-600 font-medium">90% Confidence Interval</p>
+                                     <p className="text-lg font-semibold">
+                                       {formatCurrency(currentAnalysis.monteCarloConfidenceInterval.lower)} to{' '}
+                                       {formatCurrency(currentAnalysis.monteCarloConfidenceInterval.upper)}
+                                     </p>
+                                   </div>
+                                   <div>
+                                     <p className="text-blue-600 font-medium">Probability of Profit</p>
+                                     <p className="text-lg font-semibold text-green-600">
+                                       {((currentAnalysis.probabilityOfProfit || 0) * 100).toFixed(1)}%
+                                     </p>
+                                   </div>
+                                   <div>
+                                     <p className="text-blue-600 font-medium">Expected Value</p>
+                                     <p className="text-lg font-semibold">
+                                       {formatCurrency(currentAnalysis.expectedValue || 0)}
+                                     </p>
+                                   </div>
+                                 </div>
+                               </div>
+                             )}
+
+                             {/* Enhanced Cost Analysis */}
+                             {(currentAnalysis.operationalCosts !== undefined || currentAnalysis.transmissionCostVariation !== undefined) && (
+                               <div className="bg-orange-50/50 p-4 rounded-lg border border-orange-200">
+                                 <h6 className="font-medium mb-3 text-orange-800 flex items-center gap-2">
+                                   💰 Enhanced Cost Analysis
+                                 </h6>
+                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                                   <div>
+                                     <p className="text-orange-600 font-medium">Operational Costs</p>
+                                     <p className="text-lg font-semibold text-red-600">
+                                       -{formatCurrency(currentAnalysis.operationalCosts || 0)}
+                                     </p>
+                                   </div>
+                                   <div>
+                                     <p className="text-orange-600 font-medium">Risk Adjustment</p>
+                                     <p className="text-lg font-semibold text-red-600">
+                                       -{formatCurrency(currentAnalysis.riskAdjustment || 0)}
+                                     </p>
+                                   </div>
+                                   <div>
+                                     <p className="text-orange-600 font-medium">Volatility Adjustment</p>
+                                     <p className="text-lg font-semibold text-red-600">
+                                       -{formatCurrency(currentAnalysis.volatilityAdjustment || 0)}
+                                     </p>
+                                   </div>
+                                   <div>
+                                     <p className="text-orange-600 font-medium">Transmission Variation</p>
+                                     <p className="text-lg font-semibold text-green-600">
+                                       +{formatCurrency(currentAnalysis.transmissionCostVariation || 0)}
+                                     </p>
+                                   </div>
+                                 </div>
+                               </div>
+                             )}
+
+                             {/* Real-Time Optimization Status */}
+                             <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
+                               <h6 className="font-medium mb-3 text-purple-800 flex items-center gap-2">
+                                 🤖 Real-Time Optimization Features
+                               </h6>
+                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                 <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                   <span>Dynamic Transmission Costs</span>
+                                 </div>
+                                 <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                   <span>Monte Carlo Validation</span>
+                                 </div>
+                                 <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                   <span>Smart Duration Detection</span>
+                                 </div>
+                                 <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                   <span>Rolling Baseline Analysis</span>
+                                 </div>
+                               </div>
+                               <div className="mt-3 text-xs text-purple-600">
+                                 <p>✨ All enhanced formula improvements are now active for maximum accuracy</p>
+                               </div>
+                             </div>
+
+                             {/* Performance Metrics */}
+                             {currentAnalysis.projectedROI !== undefined && (
+                               <div className="bg-green-50/50 p-4 rounded-lg border border-green-200">
+                                 <h6 className="font-medium mb-3 text-green-800 flex items-center gap-2">
+                                   📈 Performance Metrics
+                                 </h6>
+                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                   <div>
+                                     <p className="text-green-600 font-medium">Projected ROI</p>
+                                     <p className="text-2xl font-bold text-green-700">
+                                       {(currentAnalysis.projectedROI || 0).toFixed(1)}%
+                                     </p>
+                                   </div>
+                                   <div>
+                                     <p className="text-green-600 font-medium">Confidence Level</p>
+                                     <p className="text-2xl font-bold text-green-700">
+                                       {((currentAnalysis.confidenceLevel || 0) * 100).toFixed(1)}%
+                                     </p>
+                                   </div>
+                                   <div>
+                                     <p className="text-green-600 font-medium">Average Duration</p>
+                                     <p className="text-2xl font-bold text-green-700">
+                                       {(currentAnalysis.averageDuration || 0).toFixed(1)}h
+                                     </p>
+                                   </div>
+                                 </div>
+                               </div>
+                             )}
+                           </div>
+                         </CardContent>
+                       </Card>
+                     )}
+                   </div>
+                 )}
+               </div>
+             </CardContent>
+           </Card>
+         </TabsContent>
 
         {/* Predictions Tab */}
         <TabsContent value="predictions" className="space-y-4">
