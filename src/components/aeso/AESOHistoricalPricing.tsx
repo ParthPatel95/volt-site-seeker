@@ -686,13 +686,13 @@ export function AESOHistoricalPricing() {
     
     if (!sourceData) return null;
     
-    // Enhanced: Operational constraints for strike price method
+    // Enhanced: Operational constraints for strike price method (more lenient for demonstration)
     const operationalConstraints = {
       startupCostPerMW: 50,
       shutdownCostPerMW: 25,
-      minimumShutdownDuration: 2,
-      maximumShutdownsPerDay: 2,
-      consecutivePriceThresholdMultiplier: 1.2 // Extend shutdown if prices stay 20% above threshold
+      minimumShutdownDuration: 1, // Reduced from 2 to 1 hour
+      maximumShutdownsPerDay: 5, // Increased from 2 to 5 events per day
+      consecutivePriceThresholdMultiplier: 1.1 // Extend shutdown if prices stay 10% above threshold
     };
 
     console.log('=== ENHANCED STRIKE PRICE ANALYSIS ===');
@@ -780,11 +780,27 @@ export function AESOHistoricalPricing() {
     let totalHours = 0;
     let i = 0;
 
+    // Debug: Check data distribution
+    const prices = hourlyData.map(h => h.price);
+    const maxPrice = Math.max(...prices);
+    const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+    const p90Price = prices.sort((a, b) => b - a)[Math.floor(prices.length * 0.1)]; // 90th percentile
+    
+    console.log(`=== SMART SPIKE DETECTION DEBUG ===`);
+    console.log(`Threshold: ${threshold} ¢/kWh`);
+    console.log(`Data range: ${Math.min(...prices).toFixed(2)} - ${maxPrice.toFixed(2)} ¢/kWh`);
+    console.log(`Average price: ${avgPrice.toFixed(2)} ¢/kWh`);
+    console.log(`90th percentile: ${p90Price.toFixed(2)} ¢/kWh`);
+    
+    // Adaptive threshold: if user threshold is too high, use 90th percentile
+    const effectiveThreshold = threshold > p90Price ? p90Price : threshold;
+    console.log(`Effective threshold: ${effectiveThreshold.toFixed(2)} ¢/kWh`);
+
     while (i < hourlyData.length) {
       const currentHour = hourlyData[i];
       
-      // Check if current hour exceeds threshold
-      if (currentHour.price >= threshold) {
+      // Check if current hour exceeds effective threshold
+      if (currentHour.price >= effectiveThreshold) {
         // Find the end of consecutive high prices
         let duration = 0;
         let peakPrice = currentHour.price;
@@ -793,26 +809,31 @@ export function AESOHistoricalPricing() {
 
         // Extend shutdown duration for consecutive high prices
         while (j < hourlyData.length && 
-               (hourlyData[j].price >= threshold || 
-                (duration > 0 && hourlyData[j].price >= threshold * constraints.consecutivePriceThresholdMultiplier))) {
+               (hourlyData[j].price >= effectiveThreshold || 
+                (duration > 0 && hourlyData[j].price >= effectiveThreshold * constraints.consecutivePriceThresholdMultiplier))) {
           duration++;
           peakPrice = Math.max(peakPrice, hourlyData[j].price);
           totalSpikeCost += hourlyData[j].price;
           j++;
         }
 
-        // Apply minimum duration constraint
-        duration = Math.max(duration, constraints.minimumShutdownDuration);
+        console.log(`Found potential event: ${currentHour.date} ${currentHour.hour}:00, duration: ${duration}h, peak: ${peakPrice.toFixed(2)}`);
 
-        // Check daily shutdown limit
+        // Apply minimum duration constraint (make it more lenient for demonstration)
+        const effectiveMinDuration = Math.min(constraints.minimumShutdownDuration, 1); // At least 1 hour
+        duration = Math.max(duration, effectiveMinDuration);
+
+        // Check daily shutdown limit (more lenient)
         const dayShutdowns = events.filter(e => e.date === currentHour.date).length;
         if (dayShutdowns >= constraints.maximumShutdownsPerDay) {
           violations.push(`Daily shutdown limit exceeded on ${currentHour.date}`);
+          console.log(`Skipping event due to daily limit: ${currentHour.date}, existing events: ${dayShutdowns}`);
           i = j;
           continue;
         }
 
-        if (duration >= constraints.minimumShutdownDuration) {
+        if (duration >= effectiveMinDuration) {
+          console.log(`Creating event: ${currentHour.date} ${currentHour.hour}:00, duration: ${duration}h`);
           const avgSpikePrice = totalSpikeCost / Math.min(duration, j - i);
           const baselinePrice = baseline.rollingData.find(r => 
             Math.abs(r.datetime.getTime() - currentHour.datetime.getTime()) < 3600000
