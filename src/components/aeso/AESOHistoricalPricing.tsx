@@ -265,7 +265,7 @@ export function AESOHistoricalPricing() {
   } = useAESOHistoricalPricing();
 
   const [analysisHours, setAnalysisHours] = useState('4');
-  const [shutdownThreshold, setShutdownThreshold] = useState('100');
+  const [shutdownThreshold, setShutdownThreshold] = useState('25');
   const [uptimePercentage, setUptimePercentage] = useState('95');
   const [analysisMethod, setAnalysisMethod] = useState<'strike' | 'uptime'>('strike');
   const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365'>('30');
@@ -385,17 +385,17 @@ export function AESOHistoricalPricing() {
       console.log('Operational constraint violations:', optimizedShutdowns.violations);
       
       // Calculate enhanced savings with operational costs
-      const enhancedSavings = calculateEnhancedSavings(
-        optimizedShutdowns, 
-        rollingBaseline, 
-        operationalConstraints
-      );
-      
-      console.log('=== ENHANCED SAVINGS CALCULATION ===');
-      console.log('Gross energy savings:', enhancedSavings.grossSavings.toFixed(3), '¢');
-      console.log('Operational costs:', enhancedSavings.operationalCosts.toFixed(3), '¢');
-      console.log('Net savings:', enhancedSavings.netSavings.toFixed(3), '¢');
-      console.log('Risk adjustment:', enhancedSavings.riskAdjustment.toFixed(3), '¢');
+    const enhancedSavings = calculateEnhancedSavings(
+      optimizedShutdowns, 
+      rollingBaseline, 
+      operationalConstraints
+    );
+    
+    console.log('=== ENHANCED SAVINGS CALCULATION ===');
+    console.log('Gross energy savings:', (enhancedSavings.grossSavings || 0).toFixed(3), '¢');
+    console.log('Operational costs:', (enhancedSavings.operationalCosts || 0).toFixed(3), '¢');
+    console.log('Net savings:', (enhancedSavings.netSavings || 0).toFixed(3), '¢');
+    console.log('Risk adjustment:', (enhancedSavings.riskAdjustment || 0).toFixed(3), '¢');
       
       return {
         totalShutdowns: optimizedShutdowns.events.length,
@@ -605,23 +605,23 @@ export function AESOHistoricalPricing() {
     const netAllInSavings = grossAllInSavings - operationalCosts - riskAdjustment - volatilityAdjustment;
     
     // Calculate new average price during operational hours
-    const operationalHours = (parseInt(timePeriod) * 24) - shutdowns.totalHours;
-    const newAveragePrice = baseline.average * (1 - (netSavings / (grossSavings || 1)) * 0.1);
+    const operationalHours = (parseInt(timePeriod) * 24) - (shutdowns.totalHours || 0);
+    const newAveragePrice = baseline.average * (1 - ((netSavings || 0) / (grossSavings || 1)) * 0.1);
     
     return {
-      grossSavings,
-      operationalCosts,
-      riskAdjustment,
-      volatilityAdjustment,
-      transmissionCostVariation,
-      netSavings,
-      netAllInSavings,
-      newAveragePrice,
-      confidenceLevel: baseline.confidenceLevel,
-      projectedROI: netSavings > 0 ? (netSavings / (operationalCosts || 1)) * 100 : 0,
+      grossSavings: grossSavings || 0,
+      operationalCosts: operationalCosts || 0,
+      riskAdjustment: riskAdjustment || 0,
+      volatilityAdjustment: volatilityAdjustment || 0,
+      transmissionCostVariation: transmissionCostVariation || 0,
+      netSavings: netSavings || 0,
+      netAllInSavings: netAllInSavings || 0,
+      newAveragePrice: newAveragePrice || baseline.average || 0,
+      confidenceLevel: baseline.confidenceLevel || 0.5,
+      projectedROI: (netSavings || 0) > 0 ? ((netSavings || 0) / (operationalCosts || 1)) * 100 : 0,
       monteCarloConfidenceInterval: monteCarloResult.confidenceInterval,
-      probabilityOfProfit: monteCarloResult.probabilityOfProfit,
-      expectedValue: monteCarloResult.expectedValue
+      probabilityOfProfit: monteCarloResult.probabilityOfProfit || 0,
+      expectedValue: monteCarloResult.expectedValue || 0
     };
   };
 
@@ -759,14 +759,17 @@ export function AESOHistoricalPricing() {
       averageSavings: priceSpikes.events.length > 0 ? enhancedSavings.netSavings / priceSpikes.events.length : 0,
       events: priceSpikes.events,
       newAveragePrice: enhancedSavings.newAveragePrice,
-      totalSavings: enhancedSavings.netSavings,
-      totalAllInSavings: enhancedSavings.netAllInSavings,
+      totalSavings: enhancedSavings.netSavings || 0,
+      totalAllInSavings: enhancedSavings.netAllInSavings || 0,
       originalAverage: rollingBaseline.average,
       // Enhanced metrics
-      operationalCosts: enhancedSavings.operationalCosts,
-      confidenceLevel: enhancedSavings.confidenceLevel,
-      projectedROI: enhancedSavings.projectedROI,
-      averageDuration: priceSpikes.averageDuration
+      operationalCosts: enhancedSavings.operationalCosts || 0,
+      confidenceLevel: enhancedSavings.confidenceLevel || 0.5,
+      projectedROI: enhancedSavings.projectedROI || 0,
+      averageDuration: priceSpikes.averageDuration || 0,
+      monteCarloConfidenceInterval: enhancedSavings.monteCarloConfidenceInterval || { lower: 0, upper: 0 },
+      probabilityOfProfit: enhancedSavings.probabilityOfProfit || 0,
+      expectedValue: enhancedSavings.expectedValue || 0
     };
   };
 
@@ -849,29 +852,35 @@ export function AESOHistoricalPricing() {
 
   // Enhanced: Calculate strike price savings with operational costs
   const calculateStrikePriceSavings = (spikes: any, baseline: any, constraints: any) => {
-    const grossSavings = spikes.events.reduce((sum: number, event: any) => sum + event.savings, 0);
-    const grossAllInSavings = spikes.events.reduce((sum: number, event: any) => sum + event.allInSavings, 0);
+    const grossSavings = spikes.events.reduce((sum: number, event: any) => sum + (event.savings || 0), 0);
+    const grossAllInSavings = spikes.events.reduce((sum: number, event: any) => sum + (event.allInSavings || 0), 0);
     const operationalCosts = spikes.events.reduce((sum: number, event: any) => sum + (event.operationalCost || 0), 0);
     
+    // Run Monte Carlo simulation for strike price analysis
+    const monteCarloResult = runMonteCarloSimulation(spikes.events, baseline);
+    
     // Risk adjustment based on baseline confidence
-    const riskAdjustment = grossSavings * (1 - baseline.confidenceLevel) * 0.25; // 25% of uncertain savings
+    const riskAdjustment = grossSavings * (1 - (baseline.confidenceLevel || 0.5)) * 0.25; // 25% of uncertain savings
     const netSavings = grossSavings - operationalCosts - riskAdjustment;
     const netAllInSavings = grossAllInSavings - operationalCosts - riskAdjustment;
     
     // Calculate new average price
-    const totalOperationalHours = (parseInt(timePeriod) * 24) - spikes.totalHours;
-    const savingsRatio = netSavings / (grossSavings || 1);
-    const newAveragePrice = baseline.average * (1 - savingsRatio * 0.15);
+    const totalOperationalHours = (parseInt(timePeriod) * 24) - (spikes.totalHours || 0);
+    const savingsRatio = (netSavings || 0) / (grossSavings || 1);
+    const newAveragePrice = (baseline.average || 0) * (1 - savingsRatio * 0.15);
     
     return {
-      grossSavings,
-      operationalCosts,
-      riskAdjustment,
-      netSavings,
-      netAllInSavings,
-      newAveragePrice,
-      confidenceLevel: baseline.confidenceLevel,
-      projectedROI: netSavings > 0 ? (netSavings / (operationalCosts || 1)) * 100 : 0
+      grossSavings: grossSavings || 0,
+      operationalCosts: operationalCosts || 0,
+      riskAdjustment: riskAdjustment || 0,
+      netSavings: netSavings || 0,
+      netAllInSavings: netAllInSavings || 0,
+      newAveragePrice: newAveragePrice || baseline.average || 0,
+      confidenceLevel: baseline.confidenceLevel || 0.5,
+      projectedROI: (netSavings || 0) > 0 ? ((netSavings || 0) / (operationalCosts || 1)) * 100 : 0,
+      monteCarloConfidenceInterval: monteCarloResult.confidenceInterval || { lower: 0, upper: 0 },
+      probabilityOfProfit: monteCarloResult.probabilityOfProfit || 0,
+      expectedValue: monteCarloResult.expectedValue || 0
     };
   };
 
