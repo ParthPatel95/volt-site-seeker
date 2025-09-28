@@ -254,14 +254,29 @@ export function AESOHistoricalPricing() {
       const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
       const totalShutdownHours = (completeShutdownDays.length * 24) + remainingShutdownHours;
       
-      console.log('=== SAVINGS CALCULATION DEBUG ===');
-      console.log('Events:', events);
-      console.log('Total energy savings (should be positive):', totalSavings);
-      console.log('Total all-in savings (should be positive):', totalAllInSavings);
-      console.log('Complete shutdown days avg price:', completeShutdownDays.length > 0 ? completeShutdownDays.reduce((sum, d) => sum + d.price, 0) / completeShutdownDays.length : 0);
-      console.log('Original average price:', originalAveragePrice);
-      console.log('Expected avg savings per day:', completeShutdownDays.length > 0 ? (completeShutdownDays.reduce((sum, d) => sum + d.price, 0) / completeShutdownDays.length) - originalAveragePrice : 0);
-      console.log('Actual uptime achieved:', ((totalHours - totalShutdownHours) / totalHours * 100).toFixed(2) + '%');
+      console.log('=== UPTIME PERCENTAGE CALCULATION DEBUG ===');
+      console.log('FORMULA VERIFICATION:');
+      console.log('1. Original dataset length:', filteredData.length);
+      console.log('2. Target uptime:', targetUptime + '%');
+      console.log('3. Hours to shut down:', (totalHours * (100 - targetUptime) / 100));
+      console.log('4. Complete shutdown days:', completeShutdownDays.length);
+      console.log('5. Remaining hours for partial day:', remainingShutdownHours);
+      console.log('6. Total shutdown hours achieved:', totalShutdownHours);
+      console.log('7. Actual uptime achieved:', ((totalHours - totalShutdownHours) / totalHours * 100).toFixed(2) + '%');
+      console.log('');
+      console.log('SAVINGS CALCULATION VERIFICATION:');
+      console.log('Original average price:', originalAveragePrice.toFixed(3), '¢/kWh');
+      console.log('Shutdown days average price:', completeShutdownDays.length > 0 ? (completeShutdownDays.reduce((sum, d) => sum + d.price, 0) / completeShutdownDays.length).toFixed(3) : 'N/A', '¢/kWh');
+      console.log('Expected savings per shutdown hour:', completeShutdownDays.length > 0 ? ((completeShutdownDays.reduce((sum, d) => sum + d.price, 0) / completeShutdownDays.length) - originalAveragePrice).toFixed(3) : 'N/A', '¢/kWh');
+      console.log('');
+      console.log('DETAILED EVENT SAVINGS:');
+      events.forEach((event, i) => {
+        console.log(`Event ${i+1}: ${event.date}, Price: ${event.price.toFixed(3)}¢/kWh, Hours: ${event.duration}, Energy Savings: ${event.savings.toFixed(3)}¢, All-in Savings: ${event.allInSavings.toFixed(3)}¢`);
+      });
+      console.log('');
+      console.log('TOTAL RESULTS:');
+      console.log('Total energy savings:', totalSavings.toFixed(3), '¢');
+      console.log('Total all-in savings:', totalAllInSavings.toFixed(3), '¢');
       
       return {
         totalShutdowns: events.length,
@@ -362,9 +377,23 @@ export function AESOHistoricalPricing() {
     const totalSavings = events.reduce((sum, event) => sum + event.savings, 0);
     const totalAllInSavings = events.reduce((sum, event) => sum + event.allInSavings, 0);
     
-    console.log('Events sample (first 3):', events.slice(0, 3));
-    console.log('Total energy savings (vs original baseline):', totalSavings);
-    console.log('Total all-in savings (vs original baseline):', totalAllInSavings);
+    console.log('=== STRIKE PRICE CALCULATION DEBUG ===');
+    console.log('FORMULA VERIFICATION:');
+    console.log('1. Shutdown threshold:', threshold, '¢/kWh');
+    console.log('2. Shutdown hours per event:', shutdownHours);
+    console.log('3. Original average price:', originalAveragePrice.toFixed(3), '¢/kWh');
+    console.log('4. Events triggering shutdowns:', shutdownEvents.length);
+    console.log('5. New average after removing shutdown days:', newAveragePrice.toFixed(3), '¢/kWh');
+    console.log('');
+    console.log('SAVINGS CALCULATION VERIFICATION:');
+    console.log('Expected savings per event = (shutdown_price - original_avg) × hours');
+    events.slice(0, 3).forEach((event, i) => {
+      console.log(`Event ${i+1}: (${event.price.toFixed(3)} - ${originalAveragePrice.toFixed(3)}) × ${shutdownHours} = ${event.savings.toFixed(3)}¢`);
+    });
+    console.log('');
+    console.log('TOTAL RESULTS:');
+    console.log('Total energy savings:', totalSavings.toFixed(3), '¢');
+    console.log('Total all-in savings:', totalAllInSavings.toFixed(3), '¢');
     
     return {
       totalShutdowns: shutdownEvents.length,
