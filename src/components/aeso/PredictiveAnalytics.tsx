@@ -119,7 +119,7 @@ export function PredictiveAnalytics({ predictions = [], patterns = [], currentPr
           {predictionData.length > 0 ? (
             <div className="space-y-4">
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer>
                   <LineChart data={predictionData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 

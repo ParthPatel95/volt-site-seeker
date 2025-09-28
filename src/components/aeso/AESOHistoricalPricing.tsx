@@ -1002,7 +1002,7 @@ export function AESOHistoricalPricing() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer>
                     <AreaChart data={monthlyData?.chartData || []}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
@@ -1104,7 +1104,7 @@ export function AESOHistoricalPricing() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer>
                     <LineChart data={yearlyData?.chartData || []}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
@@ -1511,7 +1511,7 @@ export function AESOHistoricalPricing() {
                         </CardHeader>
                         <CardContent>
                           <div className="h-64">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer>
                               <AreaChart data={currentAnalysis.events}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="date" />

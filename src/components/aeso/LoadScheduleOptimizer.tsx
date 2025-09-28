@@ -243,7 +243,7 @@ export function LoadScheduleOptimizer() {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer>
                   <BarChart data={result.scheduleOptions}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 

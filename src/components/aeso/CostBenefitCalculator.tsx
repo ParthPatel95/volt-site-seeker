@@ -289,7 +289,7 @@ export function CostBenefitCalculator() {
                   </CardHeader>
                   <CardContent>
                     <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer>
                         <PieChart>
                           <Pie
                             data={getStorageRevenueData()}
@@ -321,7 +321,7 @@ export function CostBenefitCalculator() {
                   </CardHeader>
                   <CardContent>
                     <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer>
                         <BarChart data={getROIVisualizationData().slice(0, 11)}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="year" />
