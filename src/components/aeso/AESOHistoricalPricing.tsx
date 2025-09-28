@@ -38,6 +38,218 @@ import { PredictiveAnalytics } from './PredictiveAnalytics';
 import { LoadScheduleOptimizer } from './LoadScheduleOptimizer';
 import { CostBenefitCalculator } from './CostBenefitCalculator';
 
+// Debug component to show all price data analysis
+function DebugPriceTable({ data, strikeThreshold, timePeriod }: { 
+  data: any; 
+  strikeThreshold: number; 
+  timePeriod: number; 
+}) {
+  if (!data?.chartData) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No price data available for analysis</p>
+      </div>
+    );
+  }
+
+  // Filter data to the exact time period
+  const now = new Date();
+  const startDate = new Date();
+  startDate.setDate(now.getDate() - timePeriod);
+  
+  const filteredData = data.chartData.filter((day: any) => {
+    const dayDate = new Date(day.date);
+    return dayDate >= startDate && dayDate <= now;
+  });
+
+  // Generate synthetic hourly data to show what we're analyzing
+  const generateSyntheticHourlyData = (dailyData: any[]) => {
+    const hourlyMultipliers = [
+      0.85, 0.82, 0.80, 0.78, 0.82, 0.90, // 0-5 AM (low demand)
+      1.05, 1.15, 1.20, 1.18, 1.12, 1.08, // 6-11 AM (morning ramp)
+      1.10, 1.15, 1.18, 1.22, 1.25, 1.35, // 12-5 PM (peak demand)
+      1.40, 1.30, 1.15, 1.05, 0.95, 0.88  // 6-11 PM (evening peak then decline)
+    ];
+
+    const hourlyData: any[] = [];
+    
+    dailyData.forEach(day => {
+      hourlyMultipliers.forEach((multiplier, hour) => {
+        const hourlyPrice = day.price * multiplier;
+        const isStrikePrice = hourlyPrice >= strikeThreshold;
+        
+        hourlyData.push({
+          date: day.date,
+          hour: hour,
+          datetime: new Date(`${day.date}T${hour.toString().padStart(2, '0')}:00:00`),
+          price: hourlyPrice,
+          dailyBasePrice: day.price,
+          multiplier: multiplier,
+          isStrikePrice,
+          timeSlot: `${hour.toString().padStart(2, '0')}:00`
+        });
+      });
+    });
+    
+    return hourlyData.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
+  };
+
+  const hourlyData = generateSyntheticHourlyData(filteredData);
+  const strikePriceEvents = hourlyData.filter(hour => hour.isStrikePrice);
+  const totalHours = hourlyData.length;
+  const strikeHours = strikePriceEvents.length;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+        <div>
+          <div className="text-sm font-medium">Total Hours Analyzed</div>
+          <div className="text-2xl font-bold">{totalHours.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="text-sm font-medium">Hours Above Threshold</div>
+          <div className="text-2xl font-bold text-red-600">{strikeHours}</div>
+        </div>
+        <div>
+          <div className="text-sm font-medium">Strike Price Rate</div>
+          <div className="text-2xl font-bold">{((strikeHours / totalHours) * 100).toFixed(2)}%</div>
+        </div>
+        <div>
+          <div className="text-sm font-medium">Current Threshold</div>
+          <div className="text-2xl font-bold">{strikeThreshold}¢/kWh</div>
+        </div>
+      </div>
+
+      {/* Sample of Highest Price Events */}
+      <div>
+        <h4 className="font-medium mb-3">Top 20 Highest Price Events (Above Threshold)</h4>
+        {strikePriceEvents.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2">Date</th>
+                  <th className="text-left p-2">Hour</th>
+                  <th className="text-left p-2">Price (¢/kWh)</th>
+                  <th className="text-left p-2">Daily Base</th>
+                  <th className="text-left p-2">Hour Multiplier</th>
+                  <th className="text-left p-2">Above Threshold</th>
+                  <th className="text-left p-2">Premium</th>
+                </tr>
+              </thead>
+              <tbody>
+                {strikePriceEvents
+                  .sort((a, b) => b.price - a.price)
+                  .slice(0, 20)
+                  .map((hour, index) => (
+                    <tr key={`${hour.date}-${hour.hour}`} className="border-b hover:bg-muted/30">
+                      <td className="p-2">{hour.date}</td>
+                      <td className="p-2">{hour.timeSlot}</td>
+                      <td className="p-2 font-mono">
+                        <span className="text-red-600 font-bold">
+                          {hour.price.toFixed(3)}¢
+                        </span>
+                      </td>
+                      <td className="p-2 font-mono">{hour.dailyBasePrice.toFixed(3)}¢</td>
+                      <td className="p-2">{hour.multiplier.toFixed(2)}x</td>
+                      <td className="p-2">
+                        <Badge variant="destructive">
+                          +{(hour.price - strikeThreshold).toFixed(3)}¢
+                        </Badge>
+                      </td>
+                      <td className="p-2 font-mono text-red-600">
+                        {(hour.price - strikeThreshold).toFixed(3)}¢
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground border rounded-lg">
+            <p className="text-lg font-medium">No prices above {strikeThreshold}¢/kWh found</p>
+            <p className="text-sm">Try lowering the strike threshold or check a different time period</p>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Daily Summary */}
+      <div>
+        <h4 className="font-medium mb-3">Last 10 Days Daily Summary</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-2">Date</th>
+                <th className="text-left p-2">Daily Avg (¢/kWh)</th>
+                <th className="text-left p-2">Peak Hour Price</th>
+                <th className="text-left p-2">Hours Above Threshold</th>
+                <th className="text-left p-2">Max Premium</th>
+                <th className="text-left p-2">Potential Savings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.slice(-10).map((day: any) => {
+                const dayHourlyData = hourlyData.filter(h => h.date === day.date);
+                const dayStrikeEvents = dayHourlyData.filter(h => h.isStrikePrice);
+                const maxPrice = Math.max(...dayHourlyData.map(h => h.price));
+                const maxPremium = Math.max(0, maxPrice - strikeThreshold);
+                const potentialSavings = dayStrikeEvents.reduce((sum, h) => sum + (h.price - strikeThreshold), 0);
+                
+                return (
+                  <tr key={day.date} className="border-b hover:bg-muted/30">
+                    <td className="p-2">{day.date}</td>
+                    <td className="p-2 font-mono">{day.price.toFixed(3)}¢</td>
+                    <td className="p-2 font-mono">
+                      <span className={maxPrice >= strikeThreshold ? 'text-red-600 font-bold' : ''}>
+                        {maxPrice.toFixed(3)}¢
+                      </span>
+                    </td>
+                    <td className="p-2">
+                      {dayStrikeEvents.length > 0 ? (
+                        <Badge variant="destructive">{dayStrikeEvents.length}/24</Badge>
+                      ) : (
+                        <span className="text-green-600">0/24</span>
+                      )}
+                    </td>
+                    <td className="p-2 font-mono">
+                      {maxPremium > 0 ? (
+                        <span className="text-red-600">+{maxPremium.toFixed(3)}¢</span>
+                      ) : (
+                        <span className="text-green-600">-</span>
+                      )}
+                    </td>
+                    <td className="p-2 font-mono">
+                      {potentialSavings > 0 ? (
+                        <span className="text-red-600">{potentialSavings.toFixed(2)}¢·h</span>
+                      ) : (
+                        <span className="text-green-600">0¢</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {strikeHours === 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-800 mb-2">💡 Debugging Suggestions:</h4>
+          <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
+            <li>Current threshold: {strikeThreshold}¢/kWh may be too high</li>
+            <li>Highest price found: {Math.max(...hourlyData.map(h => h.price)).toFixed(3)}¢/kWh</li>
+            <li>Try setting threshold to: {(Math.max(...hourlyData.map(h => h.price)) * 0.8).toFixed(1)}¢/kWh</li>
+            <li>Period analyzed: {timePeriod} days ({filteredData.length} days of data)</li>
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AESOHistoricalPricing() {
   const { convertCADtoUSD, formatCurrency: formatCurrencyUSD, exchangeRate: liveExchangeRate } = useCurrencyConversion();
   const { 
@@ -1683,7 +1895,29 @@ export function AESOHistoricalPricing() {
                        </Card>
                      )}
                    </div>
-                 )}
+                  )}
+
+                  {/* Debug Table - All Price Data Analysis */}
+                  {(monthlyData || yearlyData) && (
+                    <Card className="mt-6">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          🔍 Debug: Complete Price Analysis Table
+                          <Badge variant="outline">All {timePeriod} Days</Badge>
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Showing all price data analyzed with strike price threshold of {shutdownThreshold}¢/kWh
+                        </p>
+                      </CardHeader>
+                      <CardContent>
+                        <DebugPriceTable 
+                          data={parseInt(timePeriod) > 180 ? yearlyData : monthlyData}
+                          strikeThreshold={parseFloat(shutdownThreshold)}
+                          timePeriod={parseInt(timePeriod)}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
                </div>
              </CardContent>
            </Card>
