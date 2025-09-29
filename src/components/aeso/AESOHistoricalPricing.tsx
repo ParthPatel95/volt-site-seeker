@@ -876,19 +876,19 @@ export function AESOHistoricalPricing() {
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Average Price</span>
                     <span className="font-semibold">
-                      {monthlyData?.statistics?.average ? formatCurrency(monthlyData.statistics.average) : '—'}/MWh
+                      {monthlyData?.statistics?.average !== undefined ? formatCurrency(monthlyData.statistics.average) : '—'}/MWh
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Peak Price</span>
                     <span className="font-semibold text-red-600">
-                      {monthlyData?.statistics?.peak ? formatCurrency(monthlyData.statistics.peak) : '—'}/MWh
+                      {monthlyData?.statistics?.peak !== undefined ? formatCurrency(monthlyData.statistics.peak) : '—'}/MWh
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Low Price</span>
                     <span className="font-semibold text-green-600">
-                      {monthlyData?.statistics?.low ? formatCurrency(monthlyData.statistics.low) : '—'}/MWh
+                      {monthlyData?.statistics?.low !== undefined ? formatCurrency(monthlyData.statistics.low) : '—'}/MWh
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -981,19 +981,19 @@ export function AESOHistoricalPricing() {
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Average Price</span>
                     <span className="font-semibold">
-                      {yearlyData?.statistics?.average ? formatCurrency(yearlyData.statistics.average) : '—'}/MWh
+                      {yearlyData?.statistics?.average !== undefined ? formatCurrency(yearlyData.statistics.average) : '—'}/MWh
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Peak Price</span>
                     <span className="font-semibold text-red-600">
-                      {yearlyData?.statistics?.peak ? formatCurrency(yearlyData.statistics.peak) : '—'}/MWh
+                      {yearlyData?.statistics?.peak !== undefined ? formatCurrency(yearlyData.statistics.peak) : '—'}/MWh
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Low Price</span>
                     <span className="font-semibold text-green-600">
-                      {yearlyData?.statistics?.low ? formatCurrency(yearlyData.statistics.low) : '—'}/MWh
+                      {yearlyData?.statistics?.low !== undefined ? formatCurrency(yearlyData.statistics.low) : '—'}/MWh
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -1089,7 +1089,7 @@ export function AESOHistoricalPricing() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {monthlyData?.statistics?.average ? formatCurrency(monthlyData.statistics.average) : '—'}
+                  {monthlyData?.statistics?.average !== undefined ? formatCurrency(monthlyData.statistics.average) : '—'}
                 </div>
                 <p className="text-xs text-muted-foreground">per MWh (30 days)</p>
               </CardContent>
@@ -1104,7 +1104,7 @@ export function AESOHistoricalPricing() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {monthlyData?.statistics?.peak ? formatCurrency(monthlyData.statistics.peak) : '—'}
+                  {monthlyData?.statistics?.peak !== undefined ? formatCurrency(monthlyData.statistics.peak) : '—'}
                 </div>
                 <p className="text-xs text-muted-foreground">highest recorded</p>
               </CardContent>
@@ -1119,7 +1119,7 @@ export function AESOHistoricalPricing() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {monthlyData?.statistics?.low ? formatCurrency(monthlyData.statistics.low) : '—'}
+                  {monthlyData?.statistics?.low !== undefined ? formatCurrency(monthlyData.statistics.low) : '—'}
                 </div>
                 <p className="text-xs text-muted-foreground">lowest recorded</p>
               </CardContent>
