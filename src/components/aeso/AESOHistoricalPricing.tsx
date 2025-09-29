@@ -461,7 +461,8 @@ export function AESOHistoricalPricing() {
   // Simplified Uptime Optimization Analysis using REAL AESO data
   const calculateUptimeOptimization = () => {
     const daysInPeriod = parseInt(timePeriod);
-    const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
+    // Always use monthly data for consistency with the 30-day average price display
+    const sourceData = monthlyData;
     
     if (!sourceData || !sourceData.rawHourlyData) {
       console.warn('No raw hourly data available for optimization');
