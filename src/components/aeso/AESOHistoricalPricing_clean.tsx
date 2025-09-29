@@ -147,7 +147,7 @@ export function AESOAnalyticsDashboard() {
                 
                 <div>
                   <label className="text-sm font-medium">Analysis Period</label>
-                  <Select value={analyticsViewPeriod} onValueChange={setAnalyticsViewPeriod}>
+                  <Select value={analyticsViewPeriod} onValueChange={(value: any) => setAnalyticsViewPeriod(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
