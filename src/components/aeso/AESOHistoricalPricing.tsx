@@ -816,7 +816,7 @@ export function AESOHistoricalPricing() {
       </div>
 
       <Tabs defaultValue="monthly" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="monthly" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Last 30 Days</span>
@@ -846,11 +846,6 @@ export function AESOHistoricalPricing() {
             <Activity className="w-4 h-4" />
             <span className="hidden sm:inline">Scheduler</span>
             <span className="sm:hidden">Sched</span>
-          </TabsTrigger>
-          <TabsTrigger value="calculator" className="flex items-center gap-2">
-            <PieChart className="w-4 h-4" />
-            <span className="hidden sm:inline">ROI Calc</span>
-            <span className="sm:hidden">ROI</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1525,10 +1520,6 @@ export function AESOHistoricalPricing() {
           <LoadScheduleOptimizer />
         </TabsContent>
 
-        {/* Calculator Tab */}
-        <TabsContent value="calculator" className="space-y-4">
-          <CostBenefitCalculator />
-        </TabsContent>
       </Tabs>
     </div>
   );
