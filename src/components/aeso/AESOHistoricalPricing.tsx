@@ -845,11 +845,6 @@ export function AESOHistoricalPricing() {
             <span className="hidden sm:inline">Uptime Analytics</span>
             <span className="sm:hidden">Stats</span>
           </TabsTrigger>
-          <TabsTrigger value="predictions" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            <span className="hidden sm:inline">Predictions</span>
-            <span className="sm:hidden">AI</span>
-          </TabsTrigger>
           <TabsTrigger value="alerts" className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
             <span className="hidden sm:inline">Alerts</span>
@@ -1518,10 +1513,6 @@ export function AESOHistoricalPricing() {
            </Card>
          </TabsContent>
 
-        {/* Predictions Tab */}
-        <TabsContent value="predictions" className="space-y-4">
-          <PredictiveAnalytics />
-        </TabsContent>
 
         {/* Alerts Tab */}
         <TabsContent value="alerts" className="space-y-4">
