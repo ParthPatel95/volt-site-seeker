@@ -38,219 +38,6 @@ import { PredictiveAnalytics } from './PredictiveAnalytics';
 import { LoadScheduleOptimizer } from './LoadScheduleOptimizer';
 import { CostBenefitCalculator } from './CostBenefitCalculator';
 
-// Debug component to show all price data analysis
-function DebugPriceTable({ data, strikeThreshold, timePeriod }: { 
-  data: any; 
-  strikeThreshold: number; 
-  timePeriod: number; 
-}) {
-  if (!data?.chartData) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>No price data available for analysis</p>
-      </div>
-    );
-  }
-
-  // Filter data to the exact time period
-  const now = new Date();
-  const startDate = new Date();
-  startDate.setDate(now.getDate() - timePeriod);
-  
-  const filteredData = data.chartData.filter((day: any) => {
-    const dayDate = new Date(day.date);
-    return dayDate >= startDate && dayDate <= now;
-  });
-
-  // Generate synthetic hourly data using monthly baseline
-  const monthlyAverage = data.statistics.average;
-  const generateSyntheticHourlyData = (dailyData: any[], baseline: number) => {
-    const hourlyMultipliers = [
-      0.85, 0.82, 0.80, 0.78, 0.82, 0.90, // 0-5 AM (low demand)
-      1.05, 1.15, 1.20, 1.18, 1.12, 1.08, // 6-11 AM (morning ramp)
-      1.10, 1.15, 1.18, 1.22, 1.25, 1.35, // 12-5 PM (peak demand)
-      1.40, 1.30, 1.15, 1.05, 0.95, 0.88  // 6-11 PM (evening peak then decline)
-    ];
-
-    const hourlyData: any[] = [];
-    
-    dailyData.forEach(day => {
-      hourlyMultipliers.forEach((multiplier, hour) => {
-        // Use monthly average as baseline
-        const hourlyPrice = baseline * multiplier;
-        const isStrikePrice = hourlyPrice >= strikeThreshold;
-        
-        hourlyData.push({
-          date: day.date,
-          hour: hour,
-          datetime: new Date(`${day.date}T${hour.toString().padStart(2, '0')}:00:00`),
-          price: hourlyPrice,
-          dailyBasePrice: baseline,
-          multiplier: multiplier,
-          isStrikePrice,
-          timeSlot: `${hour.toString().padStart(2, '0')}:00`
-        });
-      });
-    });
-    
-    return hourlyData.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
-  };
-
-  const hourlyData = generateSyntheticHourlyData(filteredData, monthlyAverage);
-  const strikePriceEvents = hourlyData.filter(hour => hour.isStrikePrice);
-  const totalHours = hourlyData.length;
-  const strikeHours = strikePriceEvents.length;
-
-  return (
-    <div className="space-y-4">
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
-        <div>
-          <div className="text-sm font-medium">Total Hours Analyzed</div>
-          <div className="text-2xl font-bold">{totalHours.toLocaleString()}</div>
-        </div>
-        <div>
-          <div className="text-sm font-medium">Hours Above Threshold</div>
-          <div className="text-2xl font-bold text-red-600">{strikeHours}</div>
-        </div>
-        <div>
-          <div className="text-sm font-medium">Strike Price Rate</div>
-          <div className="text-2xl font-bold">{((strikeHours / totalHours) * 100).toFixed(2)}%</div>
-        </div>
-        <div>
-          <div className="text-sm font-medium">Current Threshold</div>
-          <div className="text-2xl font-bold">{strikeThreshold}¢/kWh</div>
-        </div>
-      </div>
-
-      {/* Sample of Highest Price Events */}
-      <div>
-        <h4 className="font-medium mb-3">Top 20 Highest Price Events (Above Threshold)</h4>
-        {strikePriceEvents.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Date</th>
-                  <th className="text-left p-2">Hour</th>
-                  <th className="text-left p-2">Price (¢/kWh)</th>
-                  <th className="text-left p-2">Daily Base</th>
-                  <th className="text-left p-2">Hour Multiplier</th>
-                  <th className="text-left p-2">Above Threshold</th>
-                  <th className="text-left p-2">Premium</th>
-                </tr>
-              </thead>
-              <tbody>
-                {strikePriceEvents
-                  .sort((a, b) => b.price - a.price)
-                  .slice(0, 20)
-                  .map((hour, index) => (
-                    <tr key={`${hour.date}-${hour.hour}`} className="border-b hover:bg-muted/30">
-                      <td className="p-2">{hour.date}</td>
-                      <td className="p-2">{hour.timeSlot}</td>
-                      <td className="p-2 font-mono">
-                        <span className="text-red-600 font-bold">
-                          {hour.price.toFixed(3)}¢
-                        </span>
-                      </td>
-                      <td className="p-2 font-mono">{hour.dailyBasePrice.toFixed(3)}¢</td>
-                      <td className="p-2">{hour.multiplier.toFixed(2)}x</td>
-                      <td className="p-2">
-                        <Badge variant="destructive">
-                          +{(hour.price - strikeThreshold).toFixed(3)}¢
-                        </Badge>
-                      </td>
-                      <td className="p-2 font-mono text-red-600">
-                        {(hour.price - strikeThreshold).toFixed(3)}¢
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground border rounded-lg">
-            <p className="text-lg font-medium">No prices above {strikeThreshold}¢/kWh found</p>
-            <p className="text-sm">Try lowering the strike threshold or check a different time period</p>
-          </div>
-        )}
-      </div>
-
-      {/* Recent Daily Summary */}
-      <div>
-        <h4 className="font-medium mb-3">Last 10 Days Daily Summary</h4>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-2">Date</th>
-                <th className="text-left p-2">Daily Avg (¢/kWh)</th>
-                <th className="text-left p-2">Peak Hour Price</th>
-                <th className="text-left p-2">Hours Above Threshold</th>
-                <th className="text-left p-2">Max Premium</th>
-                <th className="text-left p-2">Potential Savings</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.slice(-10).map((day: any) => {
-                const dayHourlyData = hourlyData.filter(h => h.date === day.date);
-                const dayStrikeEvents = dayHourlyData.filter(h => h.isStrikePrice);
-                const maxPrice = Math.max(...dayHourlyData.map(h => h.price));
-                const maxPremium = Math.max(0, maxPrice - strikeThreshold);
-                const potentialSavings = dayStrikeEvents.reduce((sum, h) => sum + (h.price - strikeThreshold), 0);
-                
-                return (
-                  <tr key={day.date} className="border-b hover:bg-muted/30">
-                    <td className="p-2">{day.date}</td>
-                    <td className="p-2 font-mono">{day.price.toFixed(3)}¢</td>
-                    <td className="p-2 font-mono">
-                      <span className={maxPrice >= strikeThreshold ? 'text-red-600 font-bold' : ''}>
-                        {maxPrice.toFixed(3)}¢
-                      </span>
-                    </td>
-                    <td className="p-2">
-                      {dayStrikeEvents.length > 0 ? (
-                        <Badge variant="destructive">{dayStrikeEvents.length}/24</Badge>
-                      ) : (
-                        <span className="text-green-600">0/24</span>
-                      )}
-                    </td>
-                    <td className="p-2 font-mono">
-                      {maxPremium > 0 ? (
-                        <span className="text-red-600">+{maxPremium.toFixed(3)}¢</span>
-                      ) : (
-                        <span className="text-green-600">-</span>
-                      )}
-                    </td>
-                    <td className="p-2 font-mono">
-                      {potentialSavings > 0 ? (
-                        <span className="text-red-600">{potentialSavings.toFixed(2)}¢·h</span>
-                      ) : (
-                        <span className="text-green-600">0¢</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {strikeHours === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-medium text-yellow-800 mb-2">💡 Debugging Suggestions:</h4>
-          <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
-            <li>Current threshold: {strikeThreshold}¢/kWh may be too high</li>
-            <li>Highest price found: {Math.max(...hourlyData.map(h => h.price)).toFixed(3)}¢/kWh</li>
-            <li>Try setting threshold to: {(Math.max(...hourlyData.map(h => h.price)) * 0.8).toFixed(1)}¢/kWh</li>
-            <li>Period analyzed: {timePeriod} days ({filteredData.length} days of data)</li>
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function AESOHistoricalPricing() {
   const { convertCADtoUSD, formatCurrency: formatCurrencyUSD, exchangeRate: liveExchangeRate } = useCurrencyConversion();
@@ -266,10 +53,7 @@ export function AESOHistoricalPricing() {
     analyzePeakShutdown
   } = useAESOHistoricalPricing();
 
-  const [analysisHours, setAnalysisHours] = useState('4');
-  const [shutdownThreshold, setShutdownThreshold] = useState('25');
   const [uptimePercentage, setUptimePercentage] = useState('95');
-  const [analysisMethod, setAnalysisMethod] = useState<'strike' | 'uptime'>('strike');
   const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365'>('30');
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
@@ -284,13 +68,8 @@ export function AESOHistoricalPricing() {
   // Re-run analysis when time period changes
   useEffect(() => {
     if (customAnalysisResult && monthlyData && yearlyData) {
-      if (analysisMethod === 'strike') {
-        const result = calculateUptimeOptimization();
-        setCustomAnalysisResult(result);
-      } else if (analysisMethod === 'uptime') {
-        const result = analyzeUptimeOptimized(parseFloat(uptimePercentage));
-        setCustomAnalysisResult(result);
-      }
+      const result = calculateUptimeOptimization();
+      setCustomAnalysisResult(result);
     }
   }, [timePeriod, monthlyData, yearlyData]);
 
@@ -307,17 +86,9 @@ export function AESOHistoricalPricing() {
     }
   };
 
-  const handlePeakAnalysis = () => {
-    setAnalysisMethod('strike');
-    const result = calculateUptimeOptimization();
-    setCustomAnalysisResult(result);
-    // Also trigger the hook's analysis for compatibility
-    analyzePeakShutdown(parseInt(analysisHours), parseFloat(shutdownThreshold));
-  };
 
   const handleUptimeAnalysis = () => {
     try {
-      setAnalysisMethod('uptime');
       const result = calculateUptimeOptimization();
       console.log('Uptime optimization result:', result);
       setCustomAnalysisResult(result);
@@ -992,124 +763,6 @@ export function AESOHistoricalPricing() {
     return 0.9 + (hour >= 7 && hour <= 9 || hour >= 17 && hour <= 19 ? 0.15 : 0); // Rush hour peaks
   };
 
-  // Real-Time Optimization: Predictive shutdown scheduling
-  const generatePredictiveSchedule = (historicalData: any[], forecastHours: number = 24) => {
-    if (!historicalData.length) return { schedule: [], confidence: 0 };
-    
-    const predictions: any[] = [];
-    const currentHour = new Date().getHours();
-    
-    // Generate predictions based on historical patterns
-    for (let i = 0; i < forecastHours; i++) {
-      const futureHour = (currentHour + i) % 24;
-      const futureDate = new Date();
-      futureDate.setHours(futureHour, 0, 0, 0);
-      futureDate.setDate(futureDate.getDate() + Math.floor((currentHour + i) / 24));
-      
-      // Find similar historical periods
-      const similarPeriods = historicalData.filter(point => {
-        const pointHour = new Date(point.datetime).getHours();
-        return Math.abs(pointHour - futureHour) <= 1;
-      });
-      
-      if (similarPeriods.length > 0) {
-        const avgPrice = similarPeriods.reduce((sum, p) => sum + p.price, 0) / similarPeriods.length;
-        const seasonalMultiplier = calculateSeasonalMultiplier(futureDate);
-        const weekdayMultiplier = [6, 0].includes(futureDate.getDay()) ? 0.85 : 1.0; // Weekend discount
-        
-        const predictedPrice = avgPrice * seasonalMultiplier * weekdayMultiplier;
-        const confidence = Math.min(similarPeriods.length / 10, 1.0); // Higher confidence with more data
-        
-        predictions.push({
-          datetime: futureDate,
-          predictedPrice,
-          confidence,
-          hour: futureHour,
-          shouldShutdown: predictedPrice > parseFloat(shutdownThreshold)
-        });
-      }
-    }
-    
-    // Optimize shutdown periods for operational efficiency
-    const optimizedSchedule = optimizeShutdownPeriods(predictions);
-    
-    return {
-      schedule: optimizedSchedule,
-      confidence: predictions.reduce((sum, p) => sum + p.confidence, 0) / predictions.length
-    };
-  };
-
-  // Learning Algorithm: Adaptive threshold optimization
-  const optimizeThresholdDynamically = (historicalPerformance: any[]) => {
-    if (!historicalPerformance.length) return parseFloat(shutdownThreshold);
-    
-    // Analyze past shutdown performance
-    const successfulShutdowns = historicalPerformance.filter(s => s.actualSavings > s.operationalCosts);
-    const failedShutdowns = historicalPerformance.filter(s => s.actualSavings <= s.operationalCosts);
-    
-    if (successfulShutdowns.length === 0) {
-      return parseFloat(shutdownThreshold) * 1.2; // Increase threshold if no successful shutdowns
-    }
-    
-    // Find optimal threshold based on historical performance
-    const successfulPrices = successfulShutdowns.map(s => s.triggerPrice);
-    const failedPrices = failedShutdowns.map(s => s.triggerPrice);
-    
-    const optimalThreshold = successfulPrices.reduce((sum, price) => sum + price, 0) / successfulPrices.length;
-    
-    // Gradually adjust current threshold towards optimal
-    const currentThreshold = parseFloat(shutdownThreshold);
-    const adjustmentRate = 0.1; // 10% adjustment per optimization cycle
-    
-    return currentThreshold + (optimalThreshold - currentThreshold) * adjustmentRate;
-  };
-
-  // Optimize shutdown periods for operational constraints
-  const optimizeShutdownPeriods = (predictions: any[]) => {
-    const optimized: any[] = [];
-    let consecutiveShutdownHours = 0;
-    let lastShutdownEnd = -1;
-    
-    predictions.forEach((prediction, index) => {
-      if (prediction.shouldShutdown) {
-        // Check minimum gap between shutdowns (avoid frequent cycling)
-        const hoursSinceLastShutdown = index - lastShutdownEnd;
-        
-        if (hoursSinceLastShutdown >= 4 || lastShutdownEnd === -1) { // Minimum 4-hour gap
-          consecutiveShutdownHours++;
-          
-          // Extend shutdown if next hour is also high or if minimum duration not met
-          const nextPrediction = predictions[index + 1];
-          const shouldExtend = nextPrediction?.shouldShutdown || consecutiveShutdownHours < 2;
-          
-          if (shouldExtend || consecutiveShutdownHours >= 2) {
-            optimized.push({
-              ...prediction,
-              optimized: true,
-              shutdownReason: consecutiveShutdownHours < 2 ? 'minimum_duration' : 'price_based'
-            });
-          }
-        } else {
-          // Skip this shutdown due to minimum gap constraint
-          optimized.push({
-            ...prediction,
-            shouldShutdown: false,
-            optimized: true,
-            skipReason: 'minimum_gap_constraint'
-          });
-          consecutiveShutdownHours = 0;
-        }
-      } else {
-        if (consecutiveShutdownHours > 0) {
-          lastShutdownEnd = index - 1;
-        }
-        consecutiveShutdownHours = 0;
-        optimized.push(prediction);
-      }
-    });
-    
-    return optimized;
-  };
 
   const convertToUSD = (cadPrice: number) => {
     if (!exchangeRate) return 0;
@@ -1139,11 +792,7 @@ export function AESOHistoricalPricing() {
 
   // Get current analysis result
   const getCurrentAnalysis = () => {
-    if (analysisMethod === 'uptime') {
-      return customAnalysisResult;
-    } else {
-      return customAnalysisResult || peakAnalysis;
-    }
+    return customAnalysisResult;
   };
 
   const currentAnalysis = getCurrentAnalysis();
@@ -1555,85 +1204,36 @@ export function AESOHistoricalPricing() {
                     </div>
                 </div>
 
-                {/* Analysis Method Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-lg space-y-4">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" />
-                      Strike Price Method
-                    </h4>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium">Strike Price (CA$/MWh)</label>
-                        <input
-                          type="number"
-                          value={shutdownThreshold}
-                          onChange={(e) => setShutdownThreshold(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          step="0.01"
-                          min="4"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Shutdown when price exceeds this threshold (min $4/MWh)
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium">Shutdown Duration (hours)</label>
-                        <input
-                          type="number"
-                          value={analysisHours}
-                          onChange={(e) => setAnalysisHours(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="1"
-                          max="24"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Duration per shutdown event (1-24 hours)
-                        </p>
-                      </div>
-                      
-                      <Button 
-                        onClick={handlePeakAnalysis}
-                        disabled={loadingPeakAnalysis || !monthlyData}
-                        className="w-full"
-                        variant="outline"
-                      >
-                        {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Strike Price'}
-                      </Button>
+                {/* Uptime Analysis Configuration */}
+                <div className="p-4 border rounded-lg space-y-4">
+                  <h4 className="font-medium text-sm flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Uptime Optimization Analysis
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium">Target Uptime (%)</label>
+                      <input
+                        type="number"
+                        value={uptimePercentage}
+                        onChange={(e) => setUptimePercentage(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="50"
+                        max="99.9"
+                        step="0.1"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage)).toFixed(1)}% of hours to maintain {uptimePercentage}% uptime
+                      </p>
                     </div>
-                  </div>
-
-                  <div className="p-4 border rounded-lg space-y-4">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Uptime Percentage Method
-                    </h4>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium">Target Uptime (%)</label>
-                        <input
-                          type="number"
-                          value={uptimePercentage}
-                          onChange={(e) => setUptimePercentage(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="50"
-                          max="99.9"
-                          step="0.1"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage)).toFixed(1)}% of hours to maintain {uptimePercentage}% uptime
-                        </p>
-                      </div>
-                      
-                      <Button 
-                        onClick={handleUptimeAnalysis}
-                        disabled={loadingPeakAnalysis || !monthlyData}
-                        className="w-full"
-                      >
-                        {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Uptime Optimized'}
-                      </Button>
-                    </div>
+                    
+                    <Button 
+                      onClick={handleUptimeAnalysis}
+                      disabled={loadingPeakAnalysis || !monthlyData}
+                      className="w-full"
+                    >
+                      {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Uptime Optimized'}
+                    </Button>
                   </div>
                 </div>
 
@@ -1645,9 +1245,7 @@ export function AESOHistoricalPricing() {
                          <div className="text-2xl font-bold text-red-600">{currentAnalysis.totalShutdowns}</div>
                          <p className="text-sm text-muted-foreground">Shutdown Events</p>
                          <p className="text-xs text-muted-foreground">
-                           {analysisMethod === 'strike' 
-                             ? `above $${shutdownThreshold}/MWh` 
-                             : `for ${uptimePercentage}% uptime`}
+                           for {uptimePercentage}% uptime
                          </p>
                        </div>
                        
@@ -1739,19 +1337,15 @@ export function AESOHistoricalPricing() {
                     {/* Detailed Shutdown Events Table */}
                     {currentAnalysis.events && currentAnalysis.events.length > 0 && (
                       <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-orange-600" />
-                            {analysisMethod === 'uptime' 
-                              ? `Removed Hours (${currentAnalysis.events.length} highest-priced hours)` 
-                              : 'Detailed Shutdown Events'}
-                          </CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {analysisMethod === 'uptime' 
-                              ? `These are the ${currentAnalysis.events.length} most expensive hours that were removed to achieve ${uptimePercentage}% uptime` 
-                              : `Shutdown events above $${shutdownThreshold}/MWh threshold`}
-                          </p>
-                        </CardHeader>
+                         <CardHeader>
+                           <CardTitle className="flex items-center gap-2">
+                             <Clock className="w-4 h-4 text-orange-600" />
+                             Removed Hours ({currentAnalysis.events.length} highest-priced hours)
+                           </CardTitle>
+                           <p className="text-sm text-muted-foreground mt-1">
+                             These are the {currentAnalysis.events.length} most expensive hours that were removed to achieve {uptimePercentage}% uptime
+                           </p>
+                         </CardHeader>
                         <CardContent>
                           <div className="overflow-x-auto max-h-[500px]">
                             <table className="w-full text-sm">
@@ -1760,14 +1354,10 @@ export function AESOHistoricalPricing() {
                                   <th className="text-left p-2">Date</th>
                                   <th className="text-left p-2">Time</th>
                                   <th className="text-right p-2">Energy Price<br/>(CAD/MWh)</th>
-                                  <th className="text-right p-2">All-In Price<br/>(CAD/MWh)</th>
-                                  <th className="text-right p-2">All-In Price<br/>(USD/MWh)</th>
-                                  {analysisMethod === 'uptime' && (
-                                    <>
-                                      <th className="text-right p-2">Daily Base</th>
-                                      <th className="text-right p-2">Hour Factor</th>
-                                    </>
-                                  )}
+                                   <th className="text-right p-2">All-In Price<br/>(CAD/MWh)</th>
+                                   <th className="text-right p-2">All-In Price<br/>(USD/MWh)</th>
+                                   <th className="text-right p-2">Daily Base</th>
+                                   <th className="text-right p-2">Hour Factor</th>
                                   <th className="text-right p-2">Duration</th>
                                   <th className="text-right p-2">Energy Saved<br/>(CAD)</th>
                                   <th className="text-right p-2">All-In Saved<br/>(CAD)</th>
@@ -1784,19 +1374,15 @@ export function AESOHistoricalPricing() {
                                     <td className="p-2 text-right">
                                       {formatCurrency(event.allInPrice || calculateAllInPrice(event.price))}
                                     </td>
-                                    <td className="p-2 text-right">
-                                      {formatCurrencyUSD(convertCADtoUSD(event.allInPrice || calculateAllInPrice(event.price)), 'USD')}
-                                    </td>
-                                    {analysisMethod === 'uptime' && (
-                                      <>
-                                        <td className="p-2 text-right text-xs text-muted-foreground">
-                                          {event.dailyBasePrice ? formatCurrency(event.dailyBasePrice) : '—'}
-                                        </td>
-                                        <td className="p-2 text-right text-xs text-muted-foreground">
-                                          {event.multiplier ? `${event.multiplier.toFixed(2)}x` : '—'}
-                                        </td>
-                                      </>
-                                    )}
+                                     <td className="p-2 text-right">
+                                       {formatCurrencyUSD(convertCADtoUSD(event.allInPrice || calculateAllInPrice(event.price)), 'USD')}
+                                     </td>
+                                     <td className="p-2 text-right text-xs text-muted-foreground">
+                                       {event.dailyBasePrice ? formatCurrency(event.dailyBasePrice) : '—'}
+                                     </td>
+                                     <td className="p-2 text-right text-xs text-muted-foreground">
+                                       {event.multiplier ? `${event.multiplier.toFixed(2)}x` : '—'}
+                                     </td>
                                     <td className="p-2 text-right">{event.duration}h</td>
                                     <td className="p-2 text-right font-medium text-green-600">
                                       {formatCurrency(event.savings)}
@@ -1809,7 +1395,7 @@ export function AESOHistoricalPricing() {
                               </tbody>
                               <tfoot className="sticky bottom-0 bg-background">
                                 <tr className="border-t-2 font-semibold bg-muted/30">
-                                  <td className="p-2" colSpan={analysisMethod === 'uptime' ? 7 : 5}>TOTALS</td>
+                                  <td className="p-2" colSpan={7}>TOTALS</td>
                                   <td className="p-2 text-right">{currentAnalysis.totalHours}h</td>
                                   <td className="p-2 text-right text-green-600">
                                     {formatCurrency(currentAnalysis.totalSavings)}
@@ -2010,27 +1596,6 @@ export function AESOHistoricalPricing() {
                    </div>
                   )}
 
-                  {/* Debug Table - All Price Data Analysis */}
-                  {(monthlyData || yearlyData) && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          🔍 Debug: Complete Price Analysis Table
-                          <Badge variant="outline">All {timePeriod} Days</Badge>
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          Showing all price data analyzed with strike price threshold of {shutdownThreshold}¢/kWh
-                        </p>
-                      </CardHeader>
-                      <CardContent>
-                        <DebugPriceTable 
-                          data={parseInt(timePeriod) > 180 ? yearlyData : monthlyData}
-                          strikeThreshold={parseFloat(shutdownThreshold)}
-                          timePeriod={parseInt(timePeriod)}
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
                </div>
              </CardContent>
            </Card>
