@@ -184,18 +184,13 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
 }
 
 async function processHistoricalData(data: HistoricalDataPoint[], timeframe: string) {
-  // Filter out extreme price spikes that are outliers (>$500/MWh) to focus on normal market conditions FOR STATISTICS ONLY
-  const filteredData = data.filter(d => {
-    const price = parseFloat(d.price.toString());
-    return price >= 0 && price <= 500; // Remove extreme outliers for statistics
-  });
-  
-  const prices = filteredData.map(d => parseFloat(d.price.toString()));
-  console.log(`Processing ${prices.length} prices (filtered from ${data.length}). Sample prices:`, prices.slice(0, 10));
+  // Use ALL price data including spikes to show true 30-day average
+  const prices = data.map(d => parseFloat(d.price.toString()));
+  console.log(`Processing ${prices.length} prices (including all spikes). Sample prices:`, prices.slice(0, 10));
   console.log(`Price range: min=${Math.min(...prices)}, max=${Math.max(...prices)}, avg=${prices.reduce((a, b) => a + b, 0) / prices.length}`);
   
   if (prices.length === 0) {
-    throw new Error('No valid historical data available after filtering');
+    throw new Error('No valid historical data available');
   }
   
   const statistics = {
