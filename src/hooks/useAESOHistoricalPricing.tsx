@@ -46,6 +46,12 @@ export interface HistoricalPricingData {
     count?: number;
     threshold?: number;
   }>;
+  rawHourlyData?: Array<{
+    datetime: string;
+    price: number;
+    date: string;
+    hour: number;
+  }>;
   lastUpdated?: string;
 }
 

@@ -224,13 +224,22 @@ async function processHistoricalData(data: HistoricalDataPoint[], timeframe: str
     seasonalPatterns = calculateSeasonalPatterns(data);
   }
   
+  // Return ALL raw hourly data for frontend use
+  const rawHourlyData = filteredData.map(d => ({
+    datetime: d.datetime,
+    price: parseFloat(d.price.toString()),
+    date: d.datetime.split('T')[0] || d.datetime.substring(0, 10),
+    hour: new Date(d.datetime).getUTCHours()
+  }));
+  
   return {
     statistics,
     chartData,
     peakHours,
     hourlyPatterns,
     distribution,
-    seasonalPatterns
+    seasonalPatterns,
+    rawHourlyData  // Add the actual hourly data
   };
 }
 

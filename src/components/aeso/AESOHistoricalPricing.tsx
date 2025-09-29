@@ -458,35 +458,25 @@ export function AESOHistoricalPricing() {
     };
   };
 
-  // Simplified Uptime Optimization Analysis
+  // Simplified Uptime Optimization Analysis using REAL AESO data
   const calculateUptimeOptimization = () => {
     const daysInPeriod = parseInt(timePeriod);
     const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
     
-    if (!sourceData) return null;
+    if (!sourceData || !sourceData.rawHourlyData) {
+      console.warn('No raw hourly data available for optimization');
+      return null;
+    }
     
-    console.log('=== UPTIME OPTIMIZATION ANALYSIS ===');
+    console.log('=== UPTIME OPTIMIZATION ANALYSIS (REAL AESO DATA) ===');
     console.log('Days in period:', daysInPeriod);
     
-    // Filter data to exact time period
-    const now = new Date();
-    const startDate = new Date();
-    startDate.setDate(now.getDate() - daysInPeriod);
-    
-    const filteredData = sourceData.chartData.filter(day => {
-      const dayDate = new Date(day.date);
-      return dayDate >= startDate && dayDate <= now;
-    });
-    
-    console.log('Total data points available:', sourceData.chartData.length);
-    console.log('Filtered data points for period:', filteredData.length);
-    
-    // Convert to hourly data using monthly average as baseline
-    const hourlyData = generateSyntheticHourlyData(filteredData, sourceData.statistics.average);
-    console.log('Total hourly data points:', hourlyData.length);
+    // Use REAL hourly data from AESO (no synthetic generation!)
+    const hourlyData = sourceData.rawHourlyData;
+    console.log('Total real hourly data points from AESO:', hourlyData.length);
     
     // Calculate uptime/downtime parameters
-    const targetUptime = parseFloat(uptimePercentage) / 100; // Convert percentage to decimal
+    const targetUptime = parseFloat(uptimePercentage) / 100;
     const totalHours = hourlyData.length;
     const allowedDowntimeHours = Math.floor(totalHours * (1 - targetUptime));
     
@@ -502,7 +492,7 @@ export function AESOHistoricalPricing() {
     console.log('Hours to shutdown (highest prices):', hoursToShutdown.length);
     console.log('Hours to keep running:', hoursToKeepRunning.length);
     
-    // Calculate original and optimized metrics
+    // Calculate original and optimized metrics using REAL prices
     const originalTotalCost = hourlyData.reduce((sum, hour) => sum + hour.price, 0);
     const originalAvgPrice = originalTotalCost / totalHours;
     
@@ -515,27 +505,26 @@ export function AESOHistoricalPricing() {
     const actualDowntimePercent = (allowedDowntimeHours / totalHours) * 100;
     
     // Comprehensive logging
-    console.log('=== CALCULATION VERIFICATION ===');
+    console.log('=== REAL DATA CALCULATION ===');
     console.log(`Total hours: ${totalHours}`);
     console.log(`Hours to shutdown: ${allowedDowntimeHours}`);
     console.log(`Hours to keep running: ${hoursToKeepRunning.length}`);
-    console.log(`Original total cost: ${originalTotalCost.toFixed(2)} (sum of all ${totalHours} hours)`);
-    console.log(`Original avg price: ${originalAvgPrice.toFixed(2)} CA$/MWh`);
-    console.log(`Optimized total cost: ${optimizedTotalCost.toFixed(2)} (sum of ${hoursToKeepRunning.length} running hours)`);
-    console.log(`Optimized avg price: ${optimizedAvgPrice.toFixed(2)} CA$/MWh`);
-    console.log(`Total savings: ${totalSavings.toFixed(2)} CA$ (sum of ${hoursToShutdown.length} shutdown hours)`);
-    console.log(`Avg price of shutdown hours: ${(totalSavings / allowedDowntimeHours).toFixed(2)} CA$/MWh`);
-    console.log(`Price reduction: ${(originalAvgPrice - optimizedAvgPrice).toFixed(2)} CA$/MWh`);
+    console.log(`Original total cost: ${originalTotalCost.toFixed(2)} CAD (sum of all ${totalHours} hours)`);
+    console.log(`Original avg price: ${originalAvgPrice.toFixed(2)} CAD/MWh`);
+    console.log(`Optimized total cost: ${optimizedTotalCost.toFixed(2)} CAD (sum of ${hoursToKeepRunning.length} running hours)`);
+    console.log(`Optimized avg price: ${optimizedAvgPrice.toFixed(2)} CAD/MWh`);
+    console.log(`Total savings: ${totalSavings.toFixed(2)} CAD (sum of ${hoursToShutdown.length} shutdown hours)`);
+    console.log(`Avg price of shutdown hours: ${(totalSavings / allowedDowntimeHours).toFixed(2)} CAD/MWh`);
+    console.log(`Price reduction: ${(originalAvgPrice - optimizedAvgPrice).toFixed(2)} CAD/MWh`);
     
     // Sanity check
     if (optimizedAvgPrice > originalAvgPrice) {
       console.error('❌ ERROR: Optimized price is HIGHER than original! This should never happen!');
-      console.error('This means we shut down during cheap hours instead of expensive hours.');
     } else {
       console.log('✅ Optimized price is lower than original - correct!');
     }
     
-    // Price distribution analysis
+    // Price distribution analysis using REAL data
     const priceRanges = [
       { min: 0, max: 10, label: '$0-10/MWh' },
       { min: 11, max: 20, label: '$11-20/MWh' },
@@ -560,14 +549,12 @@ export function AESOHistoricalPricing() {
       };
     });
     
-    console.log('=== UPTIME OPTIMIZATION RESULTS ===');
-    console.log('Original average price:', originalAvgPrice.toFixed(3), '¢/kWh');
-    console.log('Optimized average price:', optimizedAvgPrice.toFixed(3), '¢/kWh');
-    console.log('Total energy savings:', totalSavings.toFixed(2), '¢');
-    console.log('Actual downtime:', actualDowntimePercent.toFixed(2), '%');
-    console.log('Price distribution:', distributionData);
+    console.log('=== REAL PRICE DISTRIBUTION ===');
+    distributionData.forEach(d => {
+      console.log(`${d.range}: ${d.hours} hours (${d.percentage.toFixed(1)}%)`);
+    });
     
-    // Calculate all-in savings
+    // Calculate all-in savings (including transmission adder)
     const transmissionAdderValue = parseFloat(transmissionAdder);
     const totalAllInSavings = hoursToShutdown.reduce((sum, hour) => {
       const energyWithAdder = hour.price + transmissionAdderValue;
@@ -576,15 +563,13 @@ export function AESOHistoricalPricing() {
     
     // Format ALL shutdown hours for display (not just first 50)
     const events = hoursToShutdown.map((hour) => ({
-      date: `${hour.date}`,
+      date: hour.date,
       time: `${hour.hour.toString().padStart(2, '0')}:00`,
-      price: hour.price,
+      price: hour.price,  // Energy price ONLY, no adder
       allInPrice: hour.price + transmissionAdderValue,
       duration: 1,
-      savings: hour.price,
-      allInSavings: hour.price + transmissionAdderValue,
-      dailyBasePrice: hour.dailyBasePrice,
-      multiplier: hour.multiplier
+      savings: hour.price,  // Energy savings only
+      allInSavings: hour.price + transmissionAdderValue
     }));
     
     return {
@@ -595,9 +580,8 @@ export function AESOHistoricalPricing() {
       totalAllInSavings: totalAllInSavings,
       newAveragePrice: optimizedAvgPrice,
       originalAverage: originalAvgPrice,
-      hoursToShutdown: hoursToShutdown,
+      hourlyData: hourlyData,  // Real AESO data
       distributionData: distributionData,
-      hourlyData: hourlyData,
       events: events
     };
   };
@@ -1408,16 +1392,16 @@ export function AESOHistoricalPricing() {
                       </Card>
                     )}
 
-                    {/* Hourly Price Table */}
+                    {/* Hourly Price Table - REAL AESO ENERGY PRICES (NO ADDERS) */}
                     {customAnalysisResult?.hourlyData && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-blue-600" />
-                            All Hours in Selected Period ({customAnalysisResult.hourlyData.length} hours)
+                            All Hours - Real AESO Energy Prices ({customAnalysisResult.hourlyData.length} hours)
                           </CardTitle>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Complete breakdown of all hourly prices for the {timePeriod}-day period
+                            Actual hourly pool prices from AESO for the {timePeriod}-day period (energy only, transmission NOT included)
                           </p>
                         </CardHeader>
                         <CardContent>
@@ -1429,8 +1413,6 @@ export function AESOHistoricalPricing() {
                                   <th className="text-left p-2">Hour</th>
                                   <th className="text-right p-2">Energy Price<br/>(CAD/MWh)</th>
                                   <th className="text-right p-2">Energy Price<br/>(USD/MWh)</th>
-                                  <th className="text-right p-2">All-In Price<br/>(CAD/MWh)</th>
-                                  <th className="text-right p-2">All-In Price<br/>(USD/MWh)</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1444,12 +1426,6 @@ export function AESOHistoricalPricing() {
                                     <td className="p-2 text-right">
                                       {formatCurrencyUSD(convertCADtoUSD(hour.price), 'USD')}
                                     </td>
-                                    <td className="p-2 text-right font-medium">
-                                      {formatCurrency(calculateAllInPrice(hour.price))}
-                                    </td>
-                                    <td className="p-2 text-right">
-                                      {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(hour.price)), 'USD')}
-                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1459,16 +1435,16 @@ export function AESOHistoricalPricing() {
                       </Card>
                     )}
 
-                    {/* Price Range Distribution */}
+                    {/* Price Range Distribution - ENERGY ONLY */}
                     {customAnalysisResult?.distributionData && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
                             <BarChart3 className="w-4 h-4 text-purple-600" />
-                            Price Range Distribution
+                            Energy Price Distribution (Pool Price Only)
                           </CardTitle>
                           <p className="text-sm text-muted-foreground mt-1">
-                            How often prices fall within each range during the {timePeriod}-day period
+                            Real AESO pool price distribution for the {timePeriod}-day period (transmission NOT included)
                           </p>
                         </CardHeader>
                         <CardContent>
@@ -1509,6 +1485,7 @@ export function AESOHistoricalPricing() {
                                         <div className="bg-background border rounded-lg p-3 shadow-lg">
                                           <p className="font-medium">{data.range}</p>
                                           <p>{data.hours} hours ({data.percentage.toFixed(1)}%)</p>
+                                          <p className="text-xs text-muted-foreground">Energy price only</p>
                                         </div>
                                       );
                                     }
