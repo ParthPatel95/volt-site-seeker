@@ -28,6 +28,7 @@ import {
   Zap,
   AlertTriangle,
   Calculator,
+  CloudRain,
   PieChart,
   Activity,
   Clock
@@ -37,6 +38,7 @@ import { PriceAlertsPanel } from './PriceAlertsPanel';
 import { PredictiveAnalytics } from './PredictiveAnalytics';
 import { LoadScheduleOptimizer } from './LoadScheduleOptimizer';
 import { CostBenefitCalculator } from './CostBenefitCalculator';
+import { WeatherAnalysis } from '@/components/weather/WeatherAnalysis';
 
 
 export function AESOHistoricalPricing() {
@@ -829,7 +831,7 @@ export function AESOHistoricalPricing() {
       </div>
 
       <Tabs defaultValue="monthly" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="monthly" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Last 30 Days</span>
@@ -844,6 +846,11 @@ export function AESOHistoricalPricing() {
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Uptime Analytics</span>
             <span className="sm:hidden">Stats</span>
+          </TabsTrigger>
+          <TabsTrigger value="weather" className="flex items-center gap-2">
+            <CloudRain className="w-4 h-4" />
+            <span className="hidden sm:inline">Weather Analysis</span>
+            <span className="sm:hidden">Weather</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1503,7 +1510,10 @@ export function AESOHistoricalPricing() {
            </Card>
          </TabsContent>
 
-
+        {/* Weather Analysis Tab */}
+        <TabsContent value="weather" className="space-y-4">
+          <WeatherAnalysis />
+        </TabsContent>
 
       </Tabs>
     </div>
