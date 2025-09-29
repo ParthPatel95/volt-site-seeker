@@ -537,28 +537,25 @@ export function AESOHistoricalPricing() {
     
     // Price distribution analysis
     const priceRanges = [
-      { min: 0, max: 10, label: '$0-$10' },
-      { min: 10, max: 20, label: '$10-$20' },
-      { min: 20, max: 30, label: '$20-$30' },
-      { min: 30, max: 40, label: '$30-$40' },
-      { min: 40, max: 50, label: '$40-$50' },
-      { min: 50, max: 100, label: '$50-$100' },
-      { min: 100, max: 1000, label: '$100+' }
+      { min: 0, max: 10, label: '$0-10/MWh' },
+      { min: 11, max: 20, label: '$11-20/MWh' },
+      { min: 21, max: 30, label: '$21-30/MWh' },
+      { min: 31, max: 40, label: '$31-40/MWh' },
+      { min: 41, max: 50, label: '$41-50/MWh' },
+      { min: 51, max: 60, label: '$51-60/MWh' },
+      { min: 61, max: 70, label: '$61-70/MWh' },
+      { min: 71, max: 80, label: '$71-80/MWh' },
+      { min: 81, max: 10000, label: '$80+/MWh' }
     ];
     
     const distributionData = priceRanges.map(range => {
       const hoursInRange = hourlyData.filter(hour => 
-        hour.price >= range.min && hour.price < range.max
-      ).length;
-      const shutdownHoursInRange = hoursToShutdown.filter(hour => 
-        hour.price >= range.min && hour.price < range.max
+        hour.price >= range.min && hour.price <= range.max
       ).length;
       
       return {
-        ...range,
-        totalHours: hoursInRange,
-        shutdownHours: shutdownHoursInRange,
-        keepRunningHours: hoursInRange - shutdownHoursInRange,
+        range: range.label,
+        hours: hoursInRange,
         percentage: (hoursInRange / totalHours) * 100
       };
     });
@@ -1411,188 +1408,120 @@ export function AESOHistoricalPricing() {
                       </Card>
                     )}
 
-                    {/* Shutdown Schedule */}
-                    {currentAnalysis.events && currentAnalysis.events.length > 0 && (
+                    {/* Hourly Price Table */}
+                    {customAnalysisResult?.hourlyData && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-orange-600" />
-                            Shutdown Events Timeline
+                            <Clock className="w-4 h-4 text-blue-600" />
+                            All Hours in Selected Period ({customAnalysisResult.hourlyData.length} hours)
                           </CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Complete breakdown of all hourly prices for the {timePeriod}-day period
+                          </p>
                         </CardHeader>
                         <CardContent>
-                          <div className="h-64">
+                          <div className="overflow-x-auto max-h-[500px]">
+                            <table className="w-full text-sm">
+                              <thead className="sticky top-0 bg-background">
+                                <tr className="border-b">
+                                  <th className="text-left p-2">Date</th>
+                                  <th className="text-left p-2">Hour</th>
+                                  <th className="text-right p-2">Energy Price<br/>(CAD/MWh)</th>
+                                  <th className="text-right p-2">Energy Price<br/>(USD/MWh)</th>
+                                  <th className="text-right p-2">All-In Price<br/>(CAD/MWh)</th>
+                                  <th className="text-right p-2">All-In Price<br/>(USD/MWh)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {customAnalysisResult.hourlyData.map((hour: any, index: number) => (
+                                  <tr key={index} className="border-b hover:bg-muted/50">
+                                    <td className="p-2 font-medium">{hour.date}</td>
+                                    <td className="p-2">{hour.hour.toString().padStart(2, '0')}:00</td>
+                                    <td className="p-2 text-right font-medium">
+                                      {formatCurrency(hour.price)}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      {formatCurrencyUSD(convertCADtoUSD(hour.price), 'USD')}
+                                    </td>
+                                    <td className="p-2 text-right font-medium">
+                                      {formatCurrency(calculateAllInPrice(hour.price))}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(hour.price)), 'USD')}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Price Range Distribution */}
+                    {customAnalysisResult?.distributionData && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4 text-purple-600" />
+                            Price Range Distribution
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            How often prices fall within each range during the {timePeriod}-day period
+                          </p>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {customAnalysisResult.distributionData.map((range: any, index: number) => (
+                              <div key={index} className="space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium">{range.range}</span>
+                                  <div className="text-right">
+                                    <span className="font-bold text-lg">{range.percentage.toFixed(1)}%</span>
+                                    <span className="text-sm text-muted-foreground ml-2">
+                                      ({range.hours} hours)
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                  <div 
+                                    className="bg-gradient-to-r from-green-500 to-red-500 h-3 rounded-full transition-all"
+                                    style={{ width: `${range.percentage}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Distribution Chart */}
+                          <div className="h-64 mt-6">
                             <ResponsiveContainer>
-                              <AreaChart data={currentAnalysis.events}>
+                              <BarChart data={customAnalysisResult.distributionData}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="date" />
+                                <XAxis dataKey="range" angle={-45} textAnchor="end" height={80} />
                                 <YAxis />
                                 <Tooltip 
-                                  content={({ active, payload, label }) => {
+                                  content={({ active, payload }) => {
                                     if (active && payload && payload.length) {
                                       const data = payload[0].payload;
                                       return (
                                         <div className="bg-background border rounded-lg p-3 shadow-lg">
-                                          <p className="font-medium">{label}</p>
-                                          <p>Price: {formatCurrency(data.price)}/MWh</p>
-                                          <p>Duration: {data.duration} hours</p>
-                                          <p>Savings: {formatCurrency(data.savings)}</p>
+                                          <p className="font-medium">{data.range}</p>
+                                          <p>{data.hours} hours ({data.percentage.toFixed(1)}%)</p>
                                         </div>
                                       );
                                     }
                                     return null;
                                   }}
                                 />
-                                <Area 
-                                  type="monotone" 
-                                  dataKey="price" 
-                                  stroke="#dc2626" 
-                                  fill="#dc262620" 
-                                  name="Shutdown Price"
-                                />
-                              </AreaChart>
+                                <Bar dataKey="hours" fill="#8b5cf6" name="Hours in Range" />
+                              </BarChart>
                             </ResponsiveContainer>
                           </div>
                         </CardContent>
                       </Card>
-                     )}
-
-                     {/* Enhanced Features Display */}
-                     {currentAnalysis && (
-                       <Card>
-                         <CardHeader>
-                           <CardTitle className="flex items-center gap-2">
-                             <TrendingUp className="w-4 h-4 text-purple-600" />
-                             Enhanced Analysis Features
-                           </CardTitle>
-                         </CardHeader>
-                         <CardContent>
-                           <div className="space-y-4">
-                             {/* Statistical Validation */}
-                             {currentAnalysis.monteCarloConfidenceInterval && (
-                               <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-200">
-                                 <h6 className="font-medium mb-3 text-blue-800 flex items-center gap-2">
-                                   📊 Statistical Validation (Monte Carlo)
-                                 </h6>
-                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                   <div>
-                                     <p className="text-blue-600 font-medium">90% Confidence Interval</p>
-                                     <p className="text-lg font-semibold">
-                                       {formatCurrency(currentAnalysis.monteCarloConfidenceInterval.lower)} to{' '}
-                                       {formatCurrency(currentAnalysis.monteCarloConfidenceInterval.upper)}
-                                     </p>
-                                   </div>
-                                   <div>
-                                     <p className="text-blue-600 font-medium">Probability of Profit</p>
-                                     <p className="text-lg font-semibold text-green-600">
-                                       {((currentAnalysis.probabilityOfProfit || 0) * 100).toFixed(1)}%
-                                     </p>
-                                   </div>
-                                   <div>
-                                     <p className="text-blue-600 font-medium">Expected Value</p>
-                                     <p className="text-lg font-semibold">
-                                       {formatCurrency(currentAnalysis.expectedValue || 0)}
-                                     </p>
-                                   </div>
-                                 </div>
-                               </div>
-                             )}
-
-                             {/* Enhanced Cost Analysis */}
-                             {(currentAnalysis.operationalCosts !== undefined || currentAnalysis.transmissionCostVariation !== undefined) && (
-                               <div className="bg-orange-50/50 p-4 rounded-lg border border-orange-200">
-                                 <h6 className="font-medium mb-3 text-orange-800 flex items-center gap-2">
-                                   💰 Enhanced Cost Analysis
-                                 </h6>
-                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                                   <div>
-                                     <p className="text-orange-600 font-medium">Operational Costs</p>
-                                     <p className="text-lg font-semibold text-red-600">
-                                       -{formatCurrency(currentAnalysis.operationalCosts || 0)}
-                                     </p>
-                                   </div>
-                                   <div>
-                                     <p className="text-orange-600 font-medium">Risk Adjustment</p>
-                                     <p className="text-lg font-semibold text-red-600">
-                                       -{formatCurrency(currentAnalysis.riskAdjustment || 0)}
-                                     </p>
-                                   </div>
-                                   <div>
-                                     <p className="text-orange-600 font-medium">Volatility Adjustment</p>
-                                     <p className="text-lg font-semibold text-red-600">
-                                       -{formatCurrency(currentAnalysis.volatilityAdjustment || 0)}
-                                     </p>
-                                   </div>
-                                   <div>
-                                     <p className="text-orange-600 font-medium">Transmission Variation</p>
-                                     <p className="text-lg font-semibold text-green-600">
-                                       +{formatCurrency(currentAnalysis.transmissionCostVariation || 0)}
-                                     </p>
-                                   </div>
-                                 </div>
-                               </div>
-                             )}
-
-                             {/* Real-Time Optimization Status */}
-                             <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
-                               <h6 className="font-medium mb-3 text-purple-800 flex items-center gap-2">
-                                 🤖 Real-Time Optimization Features
-                               </h6>
-                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                 <div className="flex items-center gap-2">
-                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                   <span>Dynamic Transmission Costs</span>
-                                 </div>
-                                 <div className="flex items-center gap-2">
-                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                   <span>Monte Carlo Validation</span>
-                                 </div>
-                                 <div className="flex items-center gap-2">
-                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                   <span>Smart Duration Detection</span>
-                                 </div>
-                                 <div className="flex items-center gap-2">
-                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                   <span>Rolling Baseline Analysis</span>
-                                 </div>
-                               </div>
-                               <div className="mt-3 text-xs text-purple-600">
-                                 <p>✨ All enhanced formula improvements are now active for maximum accuracy</p>
-                               </div>
-                             </div>
-
-                             {/* Performance Metrics */}
-                             {currentAnalysis.projectedROI !== undefined && (
-                               <div className="bg-green-50/50 p-4 rounded-lg border border-green-200">
-                                 <h6 className="font-medium mb-3 text-green-800 flex items-center gap-2">
-                                   📈 Performance Metrics
-                                 </h6>
-                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                   <div>
-                                     <p className="text-green-600 font-medium">Projected ROI</p>
-                                     <p className="text-2xl font-bold text-green-700">
-                                       {(currentAnalysis.projectedROI || 0).toFixed(1)}%
-                                     </p>
-                                   </div>
-                                   <div>
-                                     <p className="text-green-600 font-medium">Confidence Level</p>
-                                     <p className="text-2xl font-bold text-green-700">
-                                       {((currentAnalysis.confidenceLevel || 0) * 100).toFixed(1)}%
-                                     </p>
-                                   </div>
-                                   <div>
-                                     <p className="text-green-600 font-medium">Average Duration</p>
-                                     <p className="text-2xl font-bold text-green-700">
-                                       {(currentAnalysis.averageDuration || 0).toFixed(1)}h
-                                     </p>
-                                   </div>
-                                 </div>
-                               </div>
-                             )}
-                           </div>
-                         </CardContent>
-                       </Card>
-                     )}
+                    )}
                    </div>
                   )}
 
