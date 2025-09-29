@@ -184,10 +184,10 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
 }
 
 async function processHistoricalData(data: HistoricalDataPoint[], timeframe: string) {
-  // Filter out extreme price spikes that are outliers (>$500/MWh) to focus on normal market conditions
+  // Filter out extreme price spikes that are outliers (>$500/MWh) to focus on normal market conditions FOR STATISTICS ONLY
   const filteredData = data.filter(d => {
     const price = parseFloat(d.price.toString());
-    return price >= 0 && price <= 500; // Remove extreme outliers
+    return price >= 0 && price <= 500; // Remove extreme outliers for statistics
   });
   
   const prices = filteredData.map(d => parseFloat(d.price.toString()));
@@ -224,13 +224,16 @@ async function processHistoricalData(data: HistoricalDataPoint[], timeframe: str
     seasonalPatterns = calculateSeasonalPatterns(data);
   }
   
-  // Return ALL raw hourly data for frontend use
-  const rawHourlyData = filteredData.map(d => ({
+  // Return ALL raw hourly data for frontend use (USE ORIGINAL DATA, NOT FILTERED)
+  // This includes ALL prices including high spikes like $999.99
+  const rawHourlyData = data.map(d => ({
     datetime: d.datetime,
     price: parseFloat(d.price.toString()),
     date: d.datetime.split('T')[0] || d.datetime.substring(0, 10),
     hour: new Date(d.datetime).getUTCHours()
   }));
+  
+  console.log(`Returning ${rawHourlyData.length} raw hourly data points`);
   
   return {
     statistics,
@@ -239,7 +242,7 @@ async function processHistoricalData(data: HistoricalDataPoint[], timeframe: str
     hourlyPatterns,
     distribution,
     seasonalPatterns,
-    rawHourlyData  // Add the actual hourly data
+    rawHourlyData  // Add the actual hourly data INCLUDING all price spikes
   };
 }
 
