@@ -58,6 +58,14 @@ serve(async (req) => {
       
       console.log(`Yearly date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+    } else if (timeframe === 'fiveyear') {
+      // Fetch last 5 years of hourly data
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setFullYear(endDate.getFullYear() - 5);
+      
+      console.log(`Five year date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     }
 
     // Validate we have data

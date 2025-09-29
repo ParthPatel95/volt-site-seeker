@@ -17,7 +17,9 @@ import {
   AreaChart,
   Area,
   BarChart,
-  Bar
+  Bar,
+  ScatterChart,
+  Scatter
 } from 'recharts';
 import { 
   TrendingUp, 
@@ -30,9 +32,13 @@ import {
   Calculator,
   PieChart,
   Activity,
-  Clock
+  Clock,
+  Settings,
+  Table
 } from 'lucide-react';
 import { useAESOHistoricalPricing } from '@/hooks/useAESOHistoricalPricing';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { PriceAlertsPanel } from './PriceAlertsPanel';
 import { PredictiveAnalytics } from './PredictiveAnalytics';
 import { LoadScheduleOptimizer } from './LoadScheduleOptimizer';
@@ -40,6 +46,7 @@ import { CostBenefitCalculator } from './CostBenefitCalculator';
 
 
 export function AESOHistoricalPricing() {
+  const { toast } = useToast();
   const { convertCADtoUSD, formatCurrency: formatCurrencyUSD, exchangeRate: liveExchangeRate } = useCurrencyConversion();
   const { 
     monthlyData, 
@@ -58,6 +65,13 @@ export function AESOHistoricalPricing() {
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
+  
+  // New state for 5-year analytics
+  const [fiveYearData, setFiveYearData] = useState<any | null>(null);
+  const [loadingFiveYear, setLoadingFiveYear] = useState(false);
+  const [analyticsViewPeriod, setAnalyticsViewPeriod] = useState<'monthly' | 'quarterly' | 'yearly' | 'all'>('yearly');
+  const [globalUptime, setGlobalUptime] = useState('95.0');
+  const [chartType, setChartType] = useState<'line' | 'bar' | 'area' | 'scatter'>('line');
 
   useEffect(() => {
     fetchMonthlyData();
@@ -455,7 +469,149 @@ export function AESOHistoricalPricing() {
       confidenceInterval: { lower: p5, upper: p95 },
       expectedValue,
       probabilityOfProfit
-    };
+  };
+
+  // Fetch 5-year historical data
+  const fetchFiveYearData = async () => {
+    setLoadingFiveYear(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+        body: { timeframe: 'fiveyear' }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      } else {
+        setFiveYearData(data);
+        
+        toast({
+          title: "5-year data loaded",
+          description: "Historical pricing data for 5 years updated",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching 5-year data:', error);
+      
+      toast({
+        title: "Error loading data",
+        description: "Failed to fetch 5-year pricing data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingFiveYear(false);
+    }
+  };
+
+  // Helper functions for analytics
+  const calculateOptimizedPrice = (originalPrice: number) => {
+    const downtimePercent = (100 - parseFloat(globalUptime)) / 100;
+    // Simulate removing the most expensive hours
+    return originalPrice * (1 - downtimePercent * 0.7); // Estimate 70% of downtime removes expensive hours
+  };
+
+  const calculateTotalHours = () => {
+    return fiveYearData?.rawHourlyData?.length || 0;
+  };
+
+  const calculateDowntimeHours = () => {
+    const totalHours = calculateTotalHours();
+    return Math.floor(totalHours * (100 - parseFloat(globalUptime)) / 100);
+  };
+
+  const calculateTotalSavings = () => {
+    if (!fiveYearData?.statistics?.average) return 0;
+    const originalPrice = fiveYearData.statistics.average;
+    const optimizedPrice = calculateOptimizedPrice(originalPrice);
+    const totalHours = calculateTotalHours();
+    return (originalPrice - optimizedPrice) * totalHours;
+  };
+
+  const getChartData = () => {
+    if (!fiveYearData?.rawHourlyData) return [];
+    
+    const data = fiveYearData.rawHourlyData;
+    const grouped: { [key: string]: any[] } = {};
+
+    // Group data by period
+    data.forEach((hour: any) => {
+      const date = new Date(hour.datetime);
+      let period = '';
+      
+      if (analyticsViewPeriod === 'monthly') {
+        period = date.toISOString().substring(0, 7); // YYYY-MM
+      } else if (analyticsViewPeriod === 'quarterly') {
+        const quarter = Math.floor(date.getMonth() / 3) + 1;
+        period = `${date.getFullYear()}-Q${quarter}`;
+      } else if (analyticsViewPeriod === 'yearly') {
+        period = date.getFullYear().toString();
+      } else {
+        period = date.toISOString().substring(0, 10); // YYYY-MM-DD
+      }
+      
+      if (!grouped[period]) grouped[period] = [];
+      grouped[period].push(hour);
+    });
+
+    return Object.entries(grouped).map(([period, hours]) => {
+      const originalPrice = hours.reduce((sum, h) => sum + h.price, 0) / hours.length;
+      const optimizedPrice = calculateOptimizedPrice(originalPrice);
+      const savings = originalPrice - optimizedPrice;
+      
+      return {
+        period,
+        originalPrice,
+        optimizedPrice,
+        savings
+      };
+    }).sort((a, b) => a.period.localeCompare(b.period));
+  };
+
+  const getTableData = () => {
+    const chartData = getChartData();
+    return chartData.map(row => ({
+      ...row,
+      downtimeHours: Math.floor((row.originalPrice / (row.originalPrice || 1)) * calculateDowntimeHours()),
+      totalSavings: row.savings * 730, // Approximate hours per period
+      improvement: ((row.savings / row.originalPrice) * 100)
+    }));
+  };
+
+  const getSeasonalData = () => {
+    if (!fiveYearData?.rawHourlyData) return [];
+    
+    const monthlyData: { [key: string]: { prices: number[], peaks: number[], lows: number[] } } = {};
+    
+    fiveYearData.rawHourlyData.forEach((hour: any) => {
+      const date = new Date(hour.datetime);
+      const month = date.toLocaleString('default', { month: 'short' });
+      
+      if (!monthlyData[month]) {
+        monthlyData[month] = { prices: [], peaks: [], lows: [] };
+      }
+      
+      monthlyData[month].prices.push(hour.price);
+      monthlyData[month].peaks.push(hour.price);
+      monthlyData[month].lows.push(hour.price);
+    });
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    return months.map(month => {
+      const data = monthlyData[month];
+      if (!data || data.prices.length === 0) {
+        return { month, avgPrice: 0, peakPrice: 0, lowPrice: 0 };
+      }
+      
+      return {
+        month,
+        avgPrice: data.prices.reduce((sum, p) => sum + p, 0) / data.prices.length,
+        peakPrice: Math.max(...data.peaks),
+        lowPrice: Math.min(...data.lows)
+      };
+    });
+  };
   };
 
   // Simplified Uptime Optimization Analysis using REAL AESO data
@@ -1229,8 +1385,196 @@ export function AESOHistoricalPricing() {
                   </div>
                 </div>
 
-                {/* Analysis Results */}
-                {currentAnalysis && (
+        {/* Analytics Tab - 5 Year Interactive Dashboard */}
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
+                Interactive 5-Year Pricing Dashboard
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Comprehensive historical analysis with uptime optimization across all time periods
+              </p>
+            </div>
+            <Button 
+              onClick={fetchFiveYearData} 
+              disabled={loadingFiveYear}
+              variant="outline"
+              size="sm"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              {loadingFiveYear ? 'Loading...' : 'Load 5-Year Data'}
+            </Button>
+          </div>
+
+          {fiveYearData ? (
+            <div className="space-y-6">
+              {/* Controls */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-purple-600" />
+                    Analysis Controls
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">View Period</label>
+                      <Select value={analyticsViewPeriod} onValueChange={setAnalyticsViewPeriod}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly View</SelectItem>
+                          <SelectItem value="quarterly">Quarterly View</SelectItem>
+                          <SelectItem value="yearly">Yearly View</SelectItem>
+                          <SelectItem value="all">Full 5-Year View</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Target Uptime (%)</label>
+                      <input
+                        type="number"
+                        value={globalUptime}
+                        onChange={(e) => setGlobalUptime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="80"
+                        max="99.9"
+                        step="0.1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Chart Type</label>
+                      <Select value={chartType} onValueChange={setChartType}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="line">Line Chart</SelectItem>
+                          <SelectItem value="bar">Bar Chart</SelectItem>
+                          <SelectItem value="area">Area Chart</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Key Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      Optimized Price
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">
+                      {fiveYearData?.statistics?.average ? formatCurrency(calculateOptimizedPrice(fiveYearData.statistics.average)) : '—'}
+                    </div>
+                    <p className="text-xs text-muted-foreground">@ {globalUptime}% uptime</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-orange-600" />
+                      Downtime Hours
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {calculateDowntimeHours().toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">hours avoided</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <DollarSign className="w-4 h-4 text-blue-600" />
+                      Total Savings
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {formatCurrency(calculateTotalSavings())}
+                    </div>
+                    <p className="text-xs text-muted-foreground">5-year period</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Activity className="w-4 h-4 text-purple-600" />
+                      Price Range
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-purple-600">
+                      {fiveYearData?.statistics?.low && fiveYearData?.statistics?.peak 
+                        ? formatCurrency(fiveYearData.statistics.peak - fiveYearData.statistics.low)
+                        : '—'}
+                    </div>
+                    <p className="text-xs text-muted-foreground">volatility range</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Interactive Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>5-Year Price Trends with Uptime Optimization</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Historical pricing analysis showing impact of {globalUptime}% uptime target
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={getChartData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="period" />
+                        <YAxis />
+                        <Tooltip formatter={(value: any) => [formatCurrency(value), '']} />
+                        <Legend />
+                        <Line type="monotone" dataKey="originalPrice" stroke="#ef4444" strokeWidth={2} name="Original Price" />
+                        <Line type="monotone" dataKey="optimizedPrice" stroke="#22c55e" strokeWidth={2} name="Optimized Price" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center space-y-4">
+                  <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto" />
+                  <h3 className="text-lg font-semibold">No 5-Year Data Loaded</h3>
+                  <p className="text-muted-foreground">
+                    Click "Load 5-Year Data" to fetch historical pricing data and begin analysis
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+export default AESOHistoricalPricing;
                   <div className="space-y-4">
                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-muted/50 rounded-lg">
                        <div className="text-center">
