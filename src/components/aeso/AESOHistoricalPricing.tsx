@@ -316,11 +316,11 @@ export function AESOHistoricalPricing() {
   const handleUptimeAnalysis = () => {
     try {
       setAnalysisMethod('uptime');
-      const result = analyzeUptimeOptimized(parseFloat(uptimePercentage));
+      const result = calculateUptimeOptimization();
+      console.log('Uptime optimization result:', result);
       setCustomAnalysisResult(result);
     } catch (error) {
       console.error('Error in uptime analysis:', error);
-      // Show a user-friendly error message
       setCustomAnalysisResult(null);
     }
   };
@@ -768,16 +768,34 @@ export function AESOHistoricalPricing() {
     console.log('Actual downtime:', actualDowntimePercent.toFixed(2), '%');
     console.log('Price distribution:', distributionData);
     
+    // Calculate all-in savings
+    const transmissionAdderValue = parseFloat(transmissionAdder);
+    const totalAllInSavings = hoursToShutdown.reduce((sum, hour) => {
+      const energyWithAdder = hour.price + transmissionAdderValue;
+      return sum + energyWithAdder;
+    }, 0);
+    
+    // Format events for display
+    const events = hoursToShutdown.slice(0, 50).map((hour) => ({
+      date: `${hour.date} ${hour.hour}:00`,
+      price: hour.price,
+      duration: 1,
+      savings: hour.price,
+      allInSavings: hour.price + transmissionAdderValue
+    }));
+    
     return {
-      shutdownEvents: allowedDowntimeHours > 0 ? 1 : 0, // Single optimization event
+      totalShutdowns: allowedDowntimeHours,
       totalHours: allowedDowntimeHours,
       downtimePercentage: actualDowntimePercent,
-      energySavings: totalSavings,
-      newAvgPrice: optimizedAvgPrice,
-      originalAvgPrice: originalAvgPrice,
+      totalSavings: totalSavings,
+      totalAllInSavings: totalAllInSavings,
+      newAveragePrice: optimizedAvgPrice,
+      originalAverage: originalAvgPrice,
       hoursToShutdown: hoursToShutdown,
       distributionData: distributionData,
-      hourlyData: hourlyData
+      hourlyData: hourlyData,
+      events: events
     };
   };
 
