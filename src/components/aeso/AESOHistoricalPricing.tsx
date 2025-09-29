@@ -346,7 +346,7 @@ export function AESOHistoricalPricing() {
       </div>
 
       <Tabs defaultValue="monthly" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="monthly" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Last 30 Days</span>
@@ -356,6 +356,11 @@ export function AESOHistoricalPricing() {
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Last 12 Months</span>
             <span className="sm:hidden">Year</span>
+          </TabsTrigger>
+          <TabsTrigger value="uptime" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            <span className="hidden sm:inline">Uptime Optimizer</span>
+            <span className="sm:hidden">Uptime</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -721,6 +726,228 @@ export function AESOHistoricalPricing() {
                   <p className="text-muted-foreground">
                     Fetching 12-month historical pricing data from AESO
                   </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Uptime Optimization Tab */}
+        <TabsContent value="uptime" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Uptime Control Panel */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-orange-500" />
+                  Advanced Uptime Optimization
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Optimize operational costs with strategic downtime scheduling
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Target Uptime (%)</label>
+                  <Select value={uptimePercentage} onValueChange={setUptimePercentage}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="90">90% (High Optimization)</SelectItem>
+                      <SelectItem value="92">92%</SelectItem>
+                      <SelectItem value="95">95% (Balanced)</SelectItem>
+                      <SelectItem value="97">97%</SelectItem>
+                      <SelectItem value="99">99% (High Availability)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Analysis Period</label>
+                  <Select value={timePeriod} onValueChange={(value: any) => setTimePeriod(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">30 Days</SelectItem>
+                      <SelectItem value="90">90 Days</SelectItem>
+                      <SelectItem value="180">180 Days</SelectItem>
+                      <SelectItem value="365">365 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Transmission Adder ($/MWh)</label>
+                  <Select value={transmissionAdder} onValueChange={setTransmissionAdder}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="8.50">$8.50/MWh (Low)</SelectItem>
+                      <SelectItem value="11.63">$11.63/MWh (Standard)</SelectItem>
+                      <SelectItem value="15.00">$15.00/MWh (High)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button 
+                  onClick={handleUptimeAnalysis} 
+                  className="w-full"
+                  size="lg"
+                >
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Run Advanced Analysis
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Results Panel */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="w-4 h-4 text-blue-500" />
+                  Optimization Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {currentAnalysis ? (
+                  <div className="space-y-6">
+                    {/* Key Metrics */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                          {formatCurrency(currentAnalysis.averageSavings || 0)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Avg. Savings/MWh</p>
+                        <p className="text-xs text-green-600">
+                          {currentAnalysis.percentageSavings?.toFixed(1)}% reduction
+                        </p>
+                      </div>
+
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {formatCurrency(currentAnalysis.totalSavings || 0)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Total Savings</p>
+                        <p className="text-xs text-blue-600">
+                          {timePeriod}-day period
+                        </p>
+                      </div>
+
+                      <div className="text-center p-4 bg-orange-50 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {currentAnalysis.downtimeHours || 0}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Downtime Hours</p>
+                        <p className="text-xs text-orange-600">
+                          {currentAnalysis.actualUptimePercentage?.toFixed(1)}% actual uptime
+                        </p>
+                      </div>
+
+                      <div className="text-center p-4 bg-purple-50 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {currentAnalysis.totalShutdowns || 0}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Shutdown Events</p>
+                        <p className="text-xs text-purple-600">
+                          Optimized schedule
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Metrics */}
+                    {currentAnalysis.operationalCosts && (
+                      <div className="space-y-3 pt-4 border-t">
+                        <h4 className="font-medium text-sm">Operational Analysis</h4>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Net Savings:</span>
+                            <span className="font-medium ml-2">
+                              {formatCurrency(currentAnalysis.netSavings || 0)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Op. Costs:</span>
+                            <span className="font-medium ml-2">
+                              {formatCurrency(currentAnalysis.operationalCosts.totalCost || 0)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Risk Assessment */}
+                    {currentAnalysis.riskMetrics && (
+                      <div className="space-y-3 pt-4 border-t">
+                        <h4 className="font-medium text-sm">Risk Assessment</h4>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={
+                              currentAnalysis.riskMetrics.riskLevel === 'Low' ? 'default' :
+                              currentAnalysis.riskMetrics.riskLevel === 'Medium' ? 'secondary' : 
+                              'destructive'
+                            }
+                          >
+                            {currentAnalysis.riskMetrics.riskLevel} Risk
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {currentAnalysis.riskMetrics.weeklyShutdownRate?.toFixed(1)} shutdowns/week
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Exchange Rate Info */}
+                    {liveExchangeRate && (
+                      <div className="pt-4 border-t text-sm text-muted-foreground">
+                        <p>USD Equivalent: {formatCurrencyUSD(convertCADtoUSD(currentAnalysis.totalSavings || 0), 'USD')}</p>
+                        <p>Exchange Rate: 1 CAD = {liveExchangeRate.toFixed(4)} USD</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Calculator className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-medium mb-2">Ready to Optimize</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Click "Run Advanced Analysis" to calculate optimal uptime strategy
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Data Requirements Notice */}
+          {(!monthlyData || !yearlyData) && (
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center space-y-4">
+                  <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
+                  <h3 className="text-lg font-semibold">Data Loading Required</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Please ensure both monthly and yearly data are loaded before running uptime optimization analysis.
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Button 
+                      onClick={fetchMonthlyData} 
+                      disabled={loadingMonthly}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {loadingMonthly ? 'Loading...' : 'Load Monthly Data'}
+                    </Button>
+                    <Button 
+                      onClick={fetchYearlyData} 
+                      disabled={loadingYearly}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {loadingYearly ? 'Loading...' : 'Load Yearly Data'}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
