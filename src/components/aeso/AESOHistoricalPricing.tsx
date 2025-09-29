@@ -845,16 +845,6 @@ export function AESOHistoricalPricing() {
             <span className="hidden sm:inline">Uptime Analytics</span>
             <span className="sm:hidden">Stats</span>
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            <span className="hidden sm:inline">Alerts</span>
-            <span className="sm:hidden">Alert</span>
-          </TabsTrigger>
-          <TabsTrigger value="scheduler" className="flex items-center gap-2">
-            <Activity className="w-4 h-4" />
-            <span className="hidden sm:inline">Scheduler</span>
-            <span className="sm:hidden">Sched</span>
-          </TabsTrigger>
         </TabsList>
 
         {/* Monthly Data Tab */}
@@ -1514,15 +1504,6 @@ export function AESOHistoricalPricing() {
          </TabsContent>
 
 
-        {/* Alerts Tab */}
-        <TabsContent value="alerts" className="space-y-4">
-          <PriceAlertsPanel />
-        </TabsContent>
-
-        {/* Scheduler Tab */}
-        <TabsContent value="scheduler" className="space-y-4">
-          <LoadScheduleOptimizer />
-        </TabsContent>
 
       </Tabs>
     </div>
