@@ -526,15 +526,18 @@ export function AESOHistoricalPricing() {
     
     // Price distribution analysis using REAL data
     const priceRanges = [
-      { min: 0, max: 10, label: '$0-10/MWh' },
-      { min: 11, max: 20, label: '$11-20/MWh' },
-      { min: 21, max: 30, label: '$21-30/MWh' },
-      { min: 31, max: 40, label: '$31-40/MWh' },
-      { min: 41, max: 50, label: '$41-50/MWh' },
-      { min: 51, max: 60, label: '$51-60/MWh' },
-      { min: 61, max: 70, label: '$61-70/MWh' },
-      { min: 71, max: 80, label: '$71-80/MWh' },
-      { min: 81, max: 10000, label: '$80+/MWh' }
+      { min: 0, max: 10, label: '$0-$10/MWh' },
+      { min: 11, max: 20, label: '$11-$20/MWh' },
+      { min: 21, max: 30, label: '$21-$30/MWh' },
+      { min: 31, max: 40, label: '$31-$40/MWh' },
+      { min: 41, max: 50, label: '$41-$50/MWh' },
+      { min: 51, max: 60, label: '$51-$60/MWh' },
+      { min: 61, max: 70, label: '$61-$70/MWh' },
+      { min: 71, max: 80, label: '$71-$80/MWh' },
+      { min: 81, max: 90, label: '$81-$90/MWh' },
+      { min: 91, max: 100, label: '$91-$100/MWh' },
+      { min: 101, max: 150, label: '$101-$150/MWh' },
+      { min: 151, max: 10000, label: '$151+/MWh' }
     ];
     
     const distributionData = priceRanges.map(range => {
