@@ -775,13 +775,17 @@ export function AESOHistoricalPricing() {
       return sum + energyWithAdder;
     }, 0);
     
-    // Format events for display
-    const events = hoursToShutdown.slice(0, 50).map((hour) => ({
-      date: `${hour.date} ${hour.hour}:00`,
+    // Format ALL shutdown hours for display (not just first 50)
+    const events = hoursToShutdown.map((hour) => ({
+      date: `${hour.date}`,
+      time: `${hour.hour.toString().padStart(2, '0')}:00`,
       price: hour.price,
+      allInPrice: hour.price + transmissionAdderValue,
       duration: 1,
       savings: hour.price,
-      allInSavings: hour.price + transmissionAdderValue
+      allInSavings: hour.price + transmissionAdderValue,
+      dailyBasePrice: hour.dailyBasePrice,
+      multiplier: hour.multiplier
     }));
     
     return {
@@ -1707,59 +1711,81 @@ export function AESOHistoricalPricing() {
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-orange-600" />
-                            Detailed Shutdown Events
+                            {analysisMethod === 'uptime' 
+                              ? `Removed Hours (${currentAnalysis.events.length} highest-priced hours)` 
+                              : 'Detailed Shutdown Events'}
                           </CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {analysisMethod === 'uptime' 
+                              ? `These are the ${currentAnalysis.events.length} most expensive hours that were removed to achieve ${uptimePercentage}% uptime` 
+                              : `Shutdown events above $${shutdownThreshold}/MWh threshold`}
+                          </p>
                         </CardHeader>
                         <CardContent>
-                          <div className="overflow-x-auto">
+                          <div className="overflow-x-auto max-h-[500px]">
                             <table className="w-full text-sm">
-                              <thead>
+                              <thead className="sticky top-0 bg-background">
                                 <tr className="border-b">
                                   <th className="text-left p-2">Date</th>
-                                  <th className="text-right p-2">Energy Price (CAD/MWh)</th>
-                                  <th className="text-right p-2">All-In Price (CAD/MWh)</th>
-                                  <th className="text-right p-2">All-In Price (USD/MWh)</th>
-                                  <th className="text-right p-2">Duration (hrs)</th>
-                                   <th className="text-right p-2">Energy Savings (CAD)</th>
-                                   <th className="text-right p-2">All-In Savings (CAD)</th>
+                                  <th className="text-left p-2">Time</th>
+                                  <th className="text-right p-2">Energy Price<br/>(CAD/MWh)</th>
+                                  <th className="text-right p-2">All-In Price<br/>(CAD/MWh)</th>
+                                  <th className="text-right p-2">All-In Price<br/>(USD/MWh)</th>
+                                  {analysisMethod === 'uptime' && (
+                                    <>
+                                      <th className="text-right p-2">Daily Base</th>
+                                      <th className="text-right p-2">Hour Factor</th>
+                                    </>
+                                  )}
+                                  <th className="text-right p-2">Duration</th>
+                                  <th className="text-right p-2">Energy Saved<br/>(CAD)</th>
+                                  <th className="text-right p-2">All-In Saved<br/>(CAD)</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {currentAnalysis.events.map((event, index) => (
                                   <tr key={index} className="border-b hover:bg-muted/50">
                                     <td className="p-2 font-medium">{event.date}</td>
+                                    <td className="p-2">{event.time || '—'}</td>
                                     <td className="p-2 text-right font-medium text-red-600">
                                       {formatCurrency(event.price)}
                                     </td>
                                     <td className="p-2 text-right">
-                                      {formatCurrency(calculateAllInPrice(event.price))}
+                                      {formatCurrency(event.allInPrice || calculateAllInPrice(event.price))}
                                     </td>
-                                     <td className="p-2 text-right">
-                                       {formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(event.price)), 'USD')}
-                                     </td>
-                                    <td className="p-2 text-right">{event.duration}</td>
-                                     <td className="p-2 text-right font-medium text-green-600">
-                                       {formatCurrency(event.savings)}
-                                     </td>
-                                     <td className="p-2 text-right font-medium text-blue-600">
-                                       {formatCurrency(event.allInSavings || 0)}
-                                     </td>
+                                    <td className="p-2 text-right">
+                                      {formatCurrencyUSD(convertCADtoUSD(event.allInPrice || calculateAllInPrice(event.price)), 'USD')}
+                                    </td>
+                                    {analysisMethod === 'uptime' && (
+                                      <>
+                                        <td className="p-2 text-right text-xs text-muted-foreground">
+                                          {event.dailyBasePrice ? formatCurrency(event.dailyBasePrice) : '—'}
+                                        </td>
+                                        <td className="p-2 text-right text-xs text-muted-foreground">
+                                          {event.multiplier ? `${event.multiplier.toFixed(2)}x` : '—'}
+                                        </td>
+                                      </>
+                                    )}
+                                    <td className="p-2 text-right">{event.duration}h</td>
+                                    <td className="p-2 text-right font-medium text-green-600">
+                                      {formatCurrency(event.savings)}
+                                    </td>
+                                    <td className="p-2 text-right font-medium text-blue-600">
+                                      {formatCurrency(event.allInSavings || 0)}
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
-                              <tfoot>
+                              <tfoot className="sticky bottom-0 bg-background">
                                 <tr className="border-t-2 font-semibold bg-muted/30">
-                                  <td className="p-2">TOTALS</td>
-                                  <td className="p-2 text-right">—</td>
-                                  <td className="p-2 text-right">—</td>
-                                  <td className="p-2 text-right">—</td>
-                                   <td className="p-2 text-right">{currentAnalysis.totalHours}</td>
-                                   <td className="p-2 text-right text-green-600">
-                                     {formatCurrency(currentAnalysis.totalSavings)}
-                                   </td>
-                                   <td className="p-2 text-right text-blue-600">
-                                     {formatCurrency(currentAnalysis.totalAllInSavings || 0)}
-                                   </td>
+                                  <td className="p-2" colSpan={analysisMethod === 'uptime' ? 7 : 5}>TOTALS</td>
+                                  <td className="p-2 text-right">{currentAnalysis.totalHours}h</td>
+                                  <td className="p-2 text-right text-green-600">
+                                    {formatCurrency(currentAnalysis.totalSavings)}
+                                  </td>
+                                  <td className="p-2 text-right text-blue-600">
+                                    {formatCurrency(currentAnalysis.totalAllInSavings || 0)}
+                                  </td>
                                 </tr>
                               </tfoot>
                             </table>
