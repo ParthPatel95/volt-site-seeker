@@ -62,8 +62,9 @@ function DebugPriceTable({ data, strikeThreshold, timePeriod }: {
     return dayDate >= startDate && dayDate <= now;
   });
 
-  // Generate synthetic hourly data to show what we're analyzing
-  const generateSyntheticHourlyData = (dailyData: any[]) => {
+  // Generate synthetic hourly data using monthly baseline
+  const monthlyAverage = data.statistics.average;
+  const generateSyntheticHourlyData = (dailyData: any[], baseline: number) => {
     const hourlyMultipliers = [
       0.85, 0.82, 0.80, 0.78, 0.82, 0.90, // 0-5 AM (low demand)
       1.05, 1.15, 1.20, 1.18, 1.12, 1.08, // 6-11 AM (morning ramp)
@@ -75,7 +76,8 @@ function DebugPriceTable({ data, strikeThreshold, timePeriod }: {
     
     dailyData.forEach(day => {
       hourlyMultipliers.forEach((multiplier, hour) => {
-        const hourlyPrice = day.price * multiplier;
+        // Use monthly average as baseline
+        const hourlyPrice = baseline * multiplier;
         const isStrikePrice = hourlyPrice >= strikeThreshold;
         
         hourlyData.push({
@@ -83,7 +85,7 @@ function DebugPriceTable({ data, strikeThreshold, timePeriod }: {
           hour: hour,
           datetime: new Date(`${day.date}T${hour.toString().padStart(2, '0')}:00:00`),
           price: hourlyPrice,
-          dailyBasePrice: day.price,
+          dailyBasePrice: baseline,
           multiplier: multiplier,
           isStrikePrice,
           timeSlot: `${hour.toString().padStart(2, '0')}:00`
@@ -94,7 +96,7 @@ function DebugPriceTable({ data, strikeThreshold, timePeriod }: {
     return hourlyData.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
   };
 
-  const hourlyData = generateSyntheticHourlyData(filteredData);
+  const hourlyData = generateSyntheticHourlyData(filteredData, monthlyAverage);
   const strikePriceEvents = hourlyData.filter(hour => hour.isStrikePrice);
   const totalHours = hourlyData.length;
   const strikeHours = strikePriceEvents.length;
@@ -360,7 +362,7 @@ export function AESOHistoricalPricing() {
       });
 
       // Enhanced: Convert daily data to synthetic hourly data using intraday curves
-      const hourlyData = generateSyntheticHourlyData(filteredData);
+      const hourlyData = generateSyntheticHourlyData(filteredData, sourceData.statistics.average);
       
       // Calculate rolling baseline with seasonal/weekly patterns
       const rollingBaseline = calculateRollingBaseline(hourlyData, 30); // 30-day rolling window
@@ -419,8 +421,8 @@ export function AESOHistoricalPricing() {
     }
   };
 
-  // Enhanced: Generate synthetic hourly data from daily prices using typical intraday curves
-  const generateSyntheticHourlyData = (dailyData: any[]) => {
+  // Enhanced: Generate synthetic hourly data using monthly baseline and hourly patterns
+  const generateSyntheticHourlyData = (dailyData: any[], monthlyAverage: number) => {
     // Typical AESO hourly price multipliers (based on historical patterns)
     const hourlyMultipliers = [
       0.85, 0.82, 0.80, 0.78, 0.82, 0.90, // 0-5 AM (low demand)
@@ -431,22 +433,28 @@ export function AESOHistoricalPricing() {
 
     const hourlyData: any[] = [];
     
+    console.log(`Generating hourly data using monthly baseline: $${monthlyAverage.toFixed(2)} CAD/MWh`);
+    
     dailyData.forEach(day => {
       hourlyMultipliers.forEach((multiplier, hour) => {
-        const hourlyPrice = day.price * multiplier;
+        // Use monthly average as baseline, not daily average
+        const hourlyPrice = monthlyAverage * multiplier;
         
         hourlyData.push({
           date: day.date,
           hour: hour,
           datetime: new Date(`${day.date}T${hour.toString().padStart(2, '0')}:00:00`),
           price: hourlyPrice,
-          dailyBasePrice: day.price,
+          dailyBasePrice: monthlyAverage,
           multiplier: multiplier,
           dayOfWeek: new Date(day.date).getDay(),
           isWeekend: [0, 6].includes(new Date(day.date).getDay())
         });
       });
     });
+    
+    const avgHourlyPrice = hourlyData.reduce((sum, h) => sum + h.price, 0) / hourlyData.length;
+    console.log(`Average of generated hourly prices: $${avgHourlyPrice.toFixed(2)} CAD/MWh (should be close to monthly avg)`);
     
     return hourlyData.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
   };
@@ -702,8 +710,8 @@ export function AESOHistoricalPricing() {
     console.log('Total data points available:', sourceData.chartData.length);
     console.log('Filtered data points for period:', filteredData.length);
     
-    // Convert to hourly data
-    const hourlyData = generateSyntheticHourlyData(filteredData);
+    // Convert to hourly data using monthly average as baseline
+    const hourlyData = generateSyntheticHourlyData(filteredData, sourceData.statistics.average);
     console.log('Total hourly data points:', hourlyData.length);
     
     // Calculate uptime/downtime parameters
