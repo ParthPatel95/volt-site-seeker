@@ -475,6 +475,12 @@ export function AESOHistoricalPricing() {
     const hourlyData = sourceData.rawHourlyData;
     console.log('Total real hourly data points from AESO:', hourlyData.length);
     
+    // Debug price data
+    const zeroPrices = hourlyData.filter(h => (h.price || 0) === 0);
+    const validPrices = hourlyData.filter(h => h.price != null && !isNaN(h.price));
+    console.log(`Zero price entries: ${zeroPrices.length}`);
+    console.log(`Valid price entries: ${validPrices.length}`);
+    
     // Calculate uptime/downtime parameters
     const targetUptime = parseFloat(uptimePercentage) / 100;
     const totalHours = hourlyData.length;
@@ -541,9 +547,11 @@ export function AESOHistoricalPricing() {
     ];
     
     const distributionData = priceRanges.map(range => {
-      const hoursInRange = hourlyData.filter(hour => 
-        hour.price >= range.min && hour.price <= range.max
-      ).length;
+      // Ensure we include zero prices correctly
+      const hoursInRange = hourlyData.filter(hour => {
+        const price = hour.price || 0; // Handle potential undefined/null prices
+        return price >= range.min && price <= range.max;
+      }).length;
       
       return {
         range: range.label,
@@ -552,7 +560,11 @@ export function AESOHistoricalPricing() {
       };
     });
     
-    console.log('=== REAL PRICE DISTRIBUTION ===');
+    console.log('=== REAL PRICE DISTRIBUTION DEBUG ===');
+    console.log(`Total hours for distribution: ${totalHours}`);
+    console.log(`Zero price hours: ${hourlyData.filter(h => (h.price || 0) === 0).length}`);
+    console.log(`Price range 0-10: ${hourlyData.filter(h => (h.price || 0) >= 0 && (h.price || 0) <= 10).length}`);
+    
     distributionData.forEach(d => {
       console.log(`${d.range}: ${d.hours} hours (${d.percentage.toFixed(1)}%)`);
     });
@@ -1434,7 +1446,7 @@ export function AESOHistoricalPricing() {
                     )}
 
                     {/* Price Range Distribution - ENERGY ONLY */}
-                    {customAnalysisResult?.distributionData && (
+                    {customAnalysisResult?.distributionData && customAnalysisResult.distributionData.length > 0 && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
