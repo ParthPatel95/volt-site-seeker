@@ -727,11 +727,34 @@ export function AESOHistoricalPricing() {
     const originalTotalCost = hourlyData.reduce((sum, hour) => sum + hour.price, 0);
     const originalAvgPrice = originalTotalCost / totalHours;
     
+    // Optimized cost is ONLY for the hours we keep running (excluding shutdown hours)
     const optimizedTotalCost = hoursToKeepRunning.reduce((sum, hour) => sum + hour.price, 0);
     const optimizedAvgPrice = optimizedTotalCost / hoursToKeepRunning.length;
     
+    // Total energy savings = sum of all shutdown hour prices
     const totalSavings = hoursToShutdown.reduce((sum, hour) => sum + hour.price, 0);
     const actualDowntimePercent = (allowedDowntimeHours / totalHours) * 100;
+    
+    // Comprehensive logging
+    console.log('=== CALCULATION VERIFICATION ===');
+    console.log(`Total hours: ${totalHours}`);
+    console.log(`Hours to shutdown: ${allowedDowntimeHours}`);
+    console.log(`Hours to keep running: ${hoursToKeepRunning.length}`);
+    console.log(`Original total cost: ${originalTotalCost.toFixed(2)} (sum of all ${totalHours} hours)`);
+    console.log(`Original avg price: ${originalAvgPrice.toFixed(2)} CA$/MWh`);
+    console.log(`Optimized total cost: ${optimizedTotalCost.toFixed(2)} (sum of ${hoursToKeepRunning.length} running hours)`);
+    console.log(`Optimized avg price: ${optimizedAvgPrice.toFixed(2)} CA$/MWh`);
+    console.log(`Total savings: ${totalSavings.toFixed(2)} CA$ (sum of ${hoursToShutdown.length} shutdown hours)`);
+    console.log(`Avg price of shutdown hours: ${(totalSavings / allowedDowntimeHours).toFixed(2)} CA$/MWh`);
+    console.log(`Price reduction: ${(originalAvgPrice - optimizedAvgPrice).toFixed(2)} CA$/MWh`);
+    
+    // Sanity check
+    if (optimizedAvgPrice > originalAvgPrice) {
+      console.error('❌ ERROR: Optimized price is HIGHER than original! This should never happen!');
+      console.error('This means we shut down during cheap hours instead of expensive hours.');
+    } else {
+      console.log('✅ Optimized price is lower than original - correct!');
+    }
     
     // Price distribution analysis
     const priceRanges = [
