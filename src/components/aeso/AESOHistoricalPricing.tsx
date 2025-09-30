@@ -1034,13 +1034,14 @@ export function AESOHistoricalPricing() {
                         </h4>
                         
                         <div className="overflow-x-auto rounded-lg border">
-                          <table className="w-full min-w-[500px]">
+                          <table className="w-full min-w-[600px]">
                             <thead className="bg-muted/50">
                               <tr>
                                 <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Monthly<br/>Cost</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1059,6 +1060,9 @@ export function AESOHistoricalPricing() {
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-amber-600 font-medium">
                                     {analysis.monthlyShutdownHours}h
+                                  </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-green-600 font-semibold">
+                                    CA${Number(analysis.monthlyCostCAD).toLocaleString()}
                                   </td>
                                 </tr>
                               ))}
@@ -1305,13 +1309,14 @@ export function AESOHistoricalPricing() {
                         </h4>
                         
                         <div className="overflow-x-auto rounded-lg border">
-                          <table className="w-full min-w-[500px]">
+                          <table className="w-full min-w-[600px]">
                             <thead className="bg-muted/50">
                               <tr>
                                 <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Monthly<br/>Cost</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1330,6 +1335,9 @@ export function AESOHistoricalPricing() {
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-amber-600 font-medium">
                                     {analysis.monthlyShutdownHours}h
+                                  </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-green-600 font-semibold">
+                                    CA${Number(analysis.monthlyCostCAD).toLocaleString()}
                                   </td>
                                 </tr>
                               ))}
