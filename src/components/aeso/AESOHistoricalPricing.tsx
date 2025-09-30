@@ -807,9 +807,9 @@ export function AESOHistoricalPricing() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
             Historical Pricing Analysis
           </h2>
@@ -817,7 +817,7 @@ export function AESOHistoricalPricing() {
             Advanced pricing analytics and peak shutdown optimization tools
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button 
             onClick={fetchMonthlyData} 
             disabled={loadingMonthly}
@@ -825,7 +825,8 @@ export function AESOHistoricalPricing() {
             size="sm"
           >
             <Calendar className="w-4 h-4 mr-2" />
-            Refresh Monthly
+            <span className="hidden sm:inline">Refresh Monthly</span>
+            <span className="sm:hidden">Monthly</span>
           </Button>
           <Button 
             onClick={fetchYearlyData} 
@@ -834,32 +835,29 @@ export function AESOHistoricalPricing() {
             size="sm"
           >
             <Calendar className="w-4 h-4 mr-2" />
-            Refresh Yearly
+            <span className="hidden sm:inline">Refresh Yearly</span>
+            <span className="sm:hidden">Yearly</span>
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="monthly" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="monthly" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            <span className="hidden sm:inline">Last 30 Days</span>
-            <span className="sm:hidden">Month</span>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 h-auto p-1">
+          <TabsTrigger value="monthly" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Calendar className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">Last 30 Days</span>
           </TabsTrigger>
-          <TabsTrigger value="yearly" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            <span className="hidden sm:inline">Last 12 Months</span>
-            <span className="sm:hidden">Year</span>
+          <TabsTrigger value="yearly" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Calendar className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">Last 12 Months</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Uptime Analytics</span>
-            <span className="sm:hidden">Stats</span>
+          <TabsTrigger value="analytics" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <BarChart3 className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">Uptime Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="weather" className="flex items-center gap-2">
-            <CloudRain className="w-4 h-4" />
-            <span className="hidden sm:inline">Weather Analysis</span>
-            <span className="sm:hidden">Weather</span>
+          <TabsTrigger value="weather" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <CloudRain className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">Weather Analysis</span>
           </TabsTrigger>
         </TabsList>
 
