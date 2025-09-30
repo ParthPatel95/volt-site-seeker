@@ -584,3 +584,164 @@ export async function checkDataAvailability(stationId: string, granularity: 'dai
     };
   }
 }
+
+/**
+ * Determine the appropriate comparison period based on data range
+ */
+export function getComparisonPeriod(startDate: string, endDate: string): 'daily' | 'weekly' | 'monthly' | 'yearly' {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays >= 365) return 'yearly';
+  if (diffDays >= 30) return 'monthly';
+  if (diffDays >= 7) return 'weekly';
+  return 'daily';
+}
+
+/**
+ * Aggregate weather data by time period for comparison
+ */
+export function aggregateWeatherData(weatherData: WeatherData[], period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
+  if (weatherData.length === 0) return [];
+
+  const grouped = new Map();
+
+  weatherData.forEach(data => {
+    const date = new Date(data.date);
+    let key: string;
+    
+    switch (period) {
+      case 'yearly':
+        key = date.getFullYear().toString();
+        break;
+      case 'monthly':
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        break;
+      case 'weekly':
+        // Get week number within the year
+        const startOfYear = new Date(date.getFullYear(), 0, 1);
+        const weekNum = Math.ceil(((date.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+        key = `${date.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+        break;
+      case 'daily':
+      default:
+        key = data.date.split(' ')[0]; // Take just the date part
+        break;
+    }
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        period: key,
+        temperatures: [],
+        maxTemperatures: [],
+        minTemperatures: [],
+        precipitations: [],
+        windSpeeds: [],
+        humidities: [],
+        count: 0,
+        dates: []
+      });
+    }
+
+    const group = grouped.get(key);
+    if (data.temperature !== null) group.temperatures.push(data.temperature);
+    if (data.maxTemperature !== null) group.maxTemperatures.push(data.maxTemperature);
+    if (data.minTemperature !== null) group.minTemperatures.push(data.minTemperature);
+    if (data.precipitation !== null) group.precipitations.push(data.precipitation);
+    if (data.windSpeed !== null) group.windSpeeds.push(data.windSpeed);
+    if (data.humidity !== null) group.humidities.push(data.humidity);
+    group.count++;
+    group.dates.push(data.date);
+  });
+
+  // Calculate aggregated values for each period
+  return Array.from(grouped.values()).map(group => {
+    const avgTemp = group.temperatures.length > 0 ? 
+      group.temperatures.reduce((sum, temp) => sum + temp, 0) / group.temperatures.length : null;
+    const maxTemp = group.maxTemperatures.length > 0 ? Math.max(...group.maxTemperatures) : 
+      (group.temperatures.length > 0 ? Math.max(...group.temperatures) : null);
+    const minTemp = group.minTemperatures.length > 0 ? Math.min(...group.minTemperatures) : 
+      (group.temperatures.length > 0 ? Math.min(...group.temperatures) : null);
+    const totalPrecip = group.precipitations.length > 0 ? 
+      group.precipitations.reduce((sum, precip) => sum + precip, 0) : null;
+    const avgWindSpeed = group.windSpeeds.length > 0 ? 
+      group.windSpeeds.reduce((sum, speed) => sum + speed, 0) / group.windSpeeds.length : null;
+    const avgHumidity = group.humidities.length > 0 ? 
+      group.humidities.reduce((sum, humidity) => sum + humidity, 0) / group.humidities.length : null;
+
+    return {
+      period: group.period,
+      averageTemperature: avgTemp,
+      maxTemperature: maxTemp,
+      minTemperature: minTemp,
+      totalPrecipitation: totalPrecip,
+      averageWindSpeed: avgWindSpeed,
+      averageHumidity: avgHumidity,
+      dataPoints: group.count,
+      periodLabel: formatPeriodLabel(group.period, period)
+    };
+  }).sort((a, b) => a.period.localeCompare(b.period));
+}
+
+/**
+ * Format period labels for display
+ */
+function formatPeriodLabel(period: string, periodType: 'daily' | 'weekly' | 'monthly' | 'yearly'): string {
+  switch (periodType) {
+    case 'yearly':
+      return period;
+    case 'monthly':
+      const [year, month] = period.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    case 'weekly':
+      const [weekYear, week] = period.split('-W');
+      return `${weekYear} Week ${week}`;
+    case 'daily':
+    default:
+      return new Date(period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+}
+
+/**
+ * Compare current period data with historical averages
+ */
+export function compareWithHistorical(currentData: WeatherData[], historicalData: WeatherData[]): {
+  temperatureDifference: number | null;
+  precipitationDifference: number | null;
+  significantChanges: string[];
+} {
+  const currentStats = calculateWeatherStatistics(currentData);
+  const historicalStats = calculateWeatherStatistics(historicalData);
+
+  if (!currentStats?.temperatureStats || !historicalStats?.temperatureStats) {
+    return {
+      temperatureDifference: null,
+      precipitationDifference: null,
+      significantChanges: ['Insufficient data for comparison']
+    };
+  }
+
+  const tempDiff = currentStats.temperatureStats.average - historicalStats.temperatureStats.average;
+  const precipDiff = currentStats.precipitationStats && historicalStats.precipitationStats 
+    ? currentStats.precipitationStats.total - historicalStats.precipitationStats.total
+    : null;
+
+  const changes: string[] = [];
+  
+  if (Math.abs(tempDiff) > 2) {
+    changes.push(`Temperature ${tempDiff > 0 ? 'warmer' : 'cooler'} by ${Math.abs(tempDiff).toFixed(1)}°C`);
+  }
+  
+  if (precipDiff !== null && Math.abs(precipDiff) > 10) {
+    changes.push(`Precipitation ${precipDiff > 0 ? 'higher' : 'lower'} by ${Math.abs(precipDiff).toFixed(1)}mm`);
+  }
+
+  return {
+    temperatureDifference: tempDiff,
+    precipitationDifference: precipDiff,
+    significantChanges: changes.length > 0 ? changes : ['No significant changes detected']
+  };
+}

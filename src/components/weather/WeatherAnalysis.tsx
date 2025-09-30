@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { CloudRain, Thermometer, Wind, Snowflake, MapPin, Calendar, Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchNearestWeatherStation, fetchWeatherData, checkDataAvailability, getMostRecentDataDate, getSuggestedDateRange, WeatherData, type WeatherStation } from '@/lib/weatherAPI';
+import { fetchNearestWeatherStation, fetchWeatherData, checkDataAvailability, getMostRecentDataDate, getSuggestedDateRange, getComparisonPeriod, aggregateWeatherData, compareWithHistorical, WeatherData, type WeatherStation } from '@/lib/weatherAPI';
 
 interface WeatherAnalysisProps {}
 
@@ -33,6 +33,8 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   const [station, setStation] = useState<WeatherStation | null>(null);
   const [loading, setLoading] = useState(false);
   const [dataAvailability, setDataAvailability] = useState<any>(null);
+  const [aggregatedData, setAggregatedData] = useState<any[]>([]);
+  const [comparisonPeriod, setComparisonPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
 
   const handleLocationSelect = (place: any) => {
     if (place?.coordinates) {
@@ -84,9 +86,15 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
       const availability = await checkDataAvailability(nearestStation.stationId, granularity);
       setDataAvailability(availability);
       
+      // Determine comparison period and aggregate data
+      const period = getComparisonPeriod(startDate, endDate);
+      setComparisonPeriod(period);
+      const aggregated = aggregateWeatherData(data, period);
+      setAggregatedData(aggregated);
+      
       toast({
         title: "Weather Data Loaded",
-        description: `Retrieved ${data.length} records from ${nearestStation.name}`,
+        description: `Retrieved ${data.length} records from ${nearestStation.name}. Comparing by ${period} periods.`,
       });
     } catch (error) {
       console.error('Weather fetch error:', error);
@@ -445,6 +453,191 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+          )}
+        </div>
+      )}
+
+      {/* Comparative Analysis Charts */}
+      {weatherData.length > 0 && aggregatedData.length > 0 && (
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-lg font-semibold text-foreground mb-2">
+              Comparative Analysis - {comparisonPeriod.charAt(0).toUpperCase() + comparisonPeriod.slice(1)} Comparison
+            </h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Data aggregated by {comparisonPeriod} periods for trend analysis
+            </p>
+          </div>
+
+          {aggregatedData.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Temperature Comparison */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Thermometer className="w-4 h-4 text-red-500" />
+                    Temperature Trends by {comparisonPeriod.charAt(0).toUpperCase() + comparisonPeriod.slice(1)}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={aggregatedData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="periodLabel"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value: number, name: string) => [
+                          `${value?.toFixed(1)}°C`, 
+                          name
+                        ]}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="averageTemperature" 
+                        stroke="#ef4444" 
+                        strokeWidth={2}
+                        name="Average Temperature"
+                      />
+                      {comparisonPeriod !== 'daily' && (
+                        <>
+                          <Line 
+                            type="monotone" 
+                            dataKey="maxTemperature" 
+                            stroke="#f97316" 
+                            strokeWidth={1}
+                            strokeDasharray="5 5"
+                            name="Max Temperature"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="minTemperature" 
+                            stroke="#3b82f6" 
+                            strokeWidth={1}
+                            strokeDasharray="5 5"
+                            name="Min Temperature"
+                          />
+                        </>
+                      )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Precipitation Comparison */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CloudRain className="w-4 h-4 text-blue-500" />
+                    Precipitation by {comparisonPeriod.charAt(0).toUpperCase() + comparisonPeriod.slice(1)}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={aggregatedData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="periodLabel"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value?.toFixed(1)}mm`, 'Total Precipitation']}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="totalPrecipitation" 
+                        fill="#3b82f6" 
+                        name={comparisonPeriod === 'daily' ? 'Daily Precipitation' : 'Total Precipitation'}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Wind Speed Comparison */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wind className="w-4 h-4 text-green-500" />
+                    Average Wind Speed by {comparisonPeriod.charAt(0).toUpperCase() + comparisonPeriod.slice(1)}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={aggregatedData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="periodLabel"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value?.toFixed(1)}km/h`, 'Average Wind Speed']}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="averageWindSpeed" 
+                        stroke="#10b981" 
+                        strokeWidth={2}
+                        name="Average Wind Speed"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Data Quality Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Data Quality Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Total Periods:</span>
+                        <span className="ml-2">{aggregatedData.length}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Comparison Type:</span>
+                        <span className="ml-2 capitalize">{comparisonPeriod}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Date Range:</span>
+                        <span className="ml-2">{startDate} to {endDate}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Total Records:</span>
+                        <span className="ml-2">{weatherData.length}</span>
+                      </div>
+                    </div>
+                    
+                    {aggregatedData.length > 0 && (
+                      <div className="mt-4 p-3 bg-muted rounded-lg">
+                        <h5 className="font-medium mb-2">Period Summary:</h5>
+                        <div className="text-sm space-y-1">
+                          <div>Highest Average Temperature: {Math.max(...aggregatedData.map(d => d.averageTemperature || -Infinity)).toFixed(1)}°C</div>
+                          <div>Lowest Average Temperature: {Math.min(...aggregatedData.map(d => d.averageTemperature || Infinity)).toFixed(1)}°C</div>
+                          <div>Total Precipitation: {aggregatedData.reduce((sum, d) => sum + (d.totalPrecipitation || 0), 0).toFixed(1)}mm</div>
+                          <div>Average Wind Speed: {(aggregatedData.reduce((sum, d) => sum + (d.averageWindSpeed || 0), 0) / aggregatedData.length).toFixed(1)}km/h</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       )}
