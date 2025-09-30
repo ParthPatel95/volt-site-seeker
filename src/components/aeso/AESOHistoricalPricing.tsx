@@ -1006,22 +1006,21 @@ export function AESOHistoricalPricing() {
                   // All-in cost includes transmission
                   const allInStrikePrice = strikePrice + transmissionCost;
                   
-                  // Calculate average energy cost for the operating hours
-                  // This is the blended cost during operational periods
-                  const operatingHours = 8760 * (uptime / 100);
-                  const nonOperatingHours = 8760 - operatingHours;
+                  // Monthly uptime calculation (target uptime for the month)
+                  const totalMonthlyHours = 30 * 24; // 720 hours per month
+                  const monthlyOperatingHours = totalMonthlyHours * (uptime / 100);
+                  const monthlyShutdownHours = totalMonthlyHours - monthlyOperatingHours;
                   
-                  // Estimate cost savings from avoided high-price hours
-                  const avgHighPricePremium = realBaseAverage * 0.3; // Estimate 30% premium during peak hours
-                  const avgOperatingPrice = realBaseAverage - (avgHighPricePremium * (nonOperatingHours / 8760));
+                  // Calculate average operating price (exclude highest price periods)
+                  const avgOperatingPrice = realBaseAverage * 0.9; // Slight reduction from avoiding peaks
                   
-                  // Monthly cost calculation (730 hours average per month)
-                  const monthlyMWh = 730 * (uptime / 100); // Adjusted for uptime
+                  // Monthly cost calculation (1 MW load)
+                  const monthlyMWh = monthlyOperatingHours; // 1 MW * operating hours
                   const monthlyCostCAD = (avgOperatingPrice + transmissionCost) * monthlyMWh;
                   const monthlyCostUSD = convertCADtoUSD ? convertCADtoUSD(monthlyCostCAD) : monthlyCostCAD * 0.72;
                   
                   // Savings vs 100% uptime
-                  const monthlyMWh100 = 730;
+                  const monthlyMWh100 = totalMonthlyHours; // 720 hours for full month
                   const monthlyCost100 = (realBaseAverage + transmissionCost) * monthlyMWh100;
                   const savingsVs100 = monthlyCost100 - monthlyCostCAD;
                   
@@ -1033,7 +1032,8 @@ export function AESOHistoricalPricing() {
                     monthlyCostCAD: monthlyCostCAD.toFixed(0),
                     monthlyCostUSD: monthlyCostUSD.toFixed(0),
                     savingsVs100: savingsVs100.toFixed(0),
-                    operatingHours: operatingHours.toFixed(0)
+                    monthlyOperatingHours: monthlyOperatingHours.toFixed(0),
+                    monthlyShutdownHours: monthlyShutdownHours.toFixed(0)
                   };
                 });
                 
@@ -1054,11 +1054,12 @@ export function AESOHistoricalPricing() {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="border-b">
-                                <th className="text-left py-2">Uptime</th>
-                                <th className="text-right py-2">Strike Price</th>
-                                <th className="text-right py-2">Avg Operating</th>
-                                <th className="text-right py-2">Monthly Cost</th>
-                                <th className="text-right py-2">Savings</th>
+                                <th className="text-left py-2 min-w-16">Uptime</th>
+                                <th className="text-right py-2 min-w-24">Strike Price</th>
+                                <th className="text-right py-2 min-w-20">Operating Hours</th>
+                                <th className="text-right py-2 min-w-20">Shutdown Hours</th>
+                                <th className="text-right py-2 min-w-32">Monthly Cost</th>
+                                <th className="text-right py-2 min-w-20">Savings</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1073,7 +1074,10 @@ export function AESOHistoricalPricing() {
                                     CA${analysis.strikePrice}/MWh
                                   </td>
                                   <td className="text-right py-2 font-mono text-xs">
-                                    CA${analysis.avgOperatingPrice}/MWh
+                                    {analysis.monthlyOperatingHours}h
+                                  </td>
+                                  <td className="text-right py-2 font-mono text-xs text-amber-600">
+                                    {analysis.monthlyShutdownHours}h
                                   </td>
                                   <td className="text-right py-2">
                                     <div className="font-mono text-green-600 text-xs">
@@ -1165,22 +1169,26 @@ export function AESOHistoricalPricing() {
                 // Generate 10 years of historical data with realistic trends
                 const historicalYears = Array.from({ length: 10 }, (_, i) => {
                   const year = currentYear - 9 + i;
-                  const yearIndex = i;
+                  const yearsFromStart = i;
                   
-                  // Simulate realistic AESO price trends over 10 years
-                  const baseInflation = 1.02; // 2% annual inflation
-                  const volatilityFactor = 0.8 + (Math.sin(yearIndex * 0.5) * 0.4); // Cyclical volatility
-                  const trendFactor = Math.pow(baseInflation, yearIndex) * volatilityFactor;
+                  // Base price 10 years ago (should be lower than current)
+                  const basePrice10YearsAgo = 15; // CAD/MWh starting point
                   
-                  // Add some realistic market shocks and low periods
-                  let shockFactor = 1;
-                  if (year === 2021) shockFactor = 1.8; // 2021 energy crisis
-                  if (year === 2020) shockFactor = 0.6; // 2020 low demand
-                  if (year === 2018) shockFactor = 1.4; // High demand year
+                  // Realistic annual growth rate for energy prices
+                  const yearlyGrowthRate = 0.08; // 8% annual growth
+                  const trendPrice = basePrice10YearsAgo * Math.pow(1 + yearlyGrowthRate, yearsFromStart);
                   
-                  const yearAverage = (currentAverage * 0.7 * trendFactor * shockFactor);
-                  const yearPeak = yearAverage * (1.5 + Math.random() * 0.5);
-                  const yearLow = yearAverage * (0.3 + Math.random() * 0.2);
+                  // Add market events and volatility
+                  let marketFactor = 1;
+                  if (year === 2020) marketFactor = 0.6; // COVID impact
+                  if (year === 2021) marketFactor = 1.4; // Energy crisis
+                  if (year === 2022) marketFactor = 1.8; // Peak energy crisis
+                  if (year === 2023) marketFactor = 1.2; // Normalization
+                  if (year === currentYear) marketFactor = currentAverage / trendPrice; // Match current data
+                  
+                  const yearAverage = trendPrice * marketFactor;
+                  const yearPeak = yearAverage * (3.5 + Math.random() * 1.5); // 3.5-5x average
+                  const yearLow = Math.max(0, yearAverage * (0.05 + Math.random() * 0.15)); // 5-20% of average
                   
                   return {
                     year,
@@ -1236,16 +1244,19 @@ export function AESOHistoricalPricing() {
                     </div>
                     
                     {/* Historical Trend Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-6">
                       {/* 10-Year Average Price Trend */}
                       <div>
                         <h4 className="font-semibold mb-3 text-sm">10-Year Average Price Trend</h4>
-                        <div className="h-64">
-                          <ResponsiveContainer>
+                        <div className="h-72">
+                          <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={historicalYears}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis dataKey="year" />
-                              <YAxis label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }} />
+                              <YAxis 
+                                label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }}
+                                tickFormatter={(value) => `${Math.round(value)}`}
+                              />
                               <Tooltip 
                                 formatter={(value, name) => [
                                   `CA$${Number(value).toFixed(2)}`,
