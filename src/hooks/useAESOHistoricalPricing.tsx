@@ -71,9 +71,11 @@ export function useAESOHistoricalPricing() {
   const [monthlyData, setMonthlyData] = useState<HistoricalPricingData | null>(null);
   const [yearlyData, setYearlyData] = useState<HistoricalPricingData | null>(null);
   const [peakAnalysis, setPeakAnalysis] = useState<PeakAnalysisData | null>(null);
+  const [historicalTenYearData, setHistoricalTenYearData] = useState<any | null>(null);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [loadingYearly, setLoadingYearly] = useState(false);
   const [loadingPeakAnalysis, setLoadingPeakAnalysis] = useState(false);
+  const [loadingHistoricalTenYear, setLoadingHistoricalTenYear] = useState(false);
   const { toast } = useToast();
 
   const fetchMonthlyData = async () => {
@@ -184,15 +186,52 @@ export function useAESOHistoricalPricing() {
     }
   };
 
+  const fetchHistoricalTenYearData = async () => {
+    setLoadingHistoricalTenYear(true);
+    try {
+      console.log('Fetching real 10-year AESO historical data...');
+      const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+        body: { timeframe: 'historical-10year' }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      } else {
+        console.log('10-year historical data received:', data);
+        setHistoricalTenYearData(data);
+        
+        toast({
+          title: "10-year data loaded",
+          description: `Real historical data from ${data.totalYears} years retrieved (${data.realDataYears} years with data)`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching 10-year historical data:', error);
+      
+      toast({
+        title: "Error loading 10-year data",
+        description: error.message || "Failed to fetch 10-year historical data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingHistoricalTenYear(false);
+    }
+  };
+
   return {
     monthlyData,
     yearlyData,
     peakAnalysis,
+    historicalTenYearData,
     loadingMonthly,
     loadingYearly,
     loadingPeakAnalysis,
+    loadingHistoricalTenYear,
     fetchMonthlyData,
     fetchYearlyData,
     analyzePeakShutdown,
+    fetchHistoricalTenYearData,
   };
 }

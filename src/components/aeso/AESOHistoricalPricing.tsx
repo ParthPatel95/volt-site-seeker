@@ -48,12 +48,15 @@ export function AESOHistoricalPricing() {
     monthlyData, 
     yearlyData, 
     peakAnalysis,
+    historicalTenYearData,
     loadingMonthly, 
     loadingYearly, 
     loadingPeakAnalysis,
+    loadingHistoricalTenYear,
     fetchMonthlyData,
     fetchYearlyData,
-    analyzePeakShutdown
+    analyzePeakShutdown,
+    fetchHistoricalTenYearData
   } = useAESOHistoricalPricing();
 
   const [uptimePercentage, setUptimePercentage] = useState('95');
@@ -61,8 +64,6 @@ export function AESOHistoricalPricing() {
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
-  const [loadingHistorical, setLoadingHistorical] = useState(false);
-  const [historicalData, setHistoricalData] = useState<any>(null);
 
   useEffect(() => {
     fetchMonthlyData();
@@ -92,16 +93,8 @@ export function AESOHistoricalPricing() {
   };
 
   const fetchRealHistoricalData = async () => {
-    setLoadingHistorical(true);
-    try {
-      // For now, use the existing yearly data as a placeholder
-      // TODO: Implement actual historical data fetching when edge function is ready
-      setHistoricalData(yearlyData);
-    } catch (error) {
-      console.error('Error fetching historical data:', error);
-    } finally {
-      setLoadingHistorical(false);
-    }
+    // Call the real API to fetch 10-year historical data
+    await fetchHistoricalTenYearData();
   };
 
 
@@ -1395,77 +1388,112 @@ export function AESOHistoricalPricing() {
                 </div>
                 <Button 
                   onClick={fetchRealHistoricalData} 
-                  disabled={loadingHistorical}
+                  disabled={loadingHistoricalTenYear}
                   variant="outline"
                   size="sm"
                 >
-                  {loadingHistorical ? "Fetching..." : "Refresh Data"}
+                  {loadingHistoricalTenYear ? "Fetching..." : "Refresh Data"}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {(() => {
-                if (!yearlyData?.chartData) return null;
+                // Show prompt to load data if not loaded yet
+                if (!historicalTenYearData && !loadingHistoricalTenYear) {
+                  return (
+                    <div className="p-8 text-center">
+                      <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                        <BarChart3 className="w-8 h-8 text-primary" />
+                      </div>
+                      <h4 className="text-lg font-semibold mb-2">Real 10-Year AESO Historical Data</h4>
+                      <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                        Click "Refresh Data" to fetch 10 years of real historical electricity pricing data directly from the AESO API.
+                      </p>
+                      <Button onClick={fetchRealHistoricalData} variant="default">
+                        Load Historical Data
+                      </Button>
+                    </div>
+                  );
+                }
                 
-                // Generate historical comparison data (simulated based on real AESO trends)
-                const currentYear = new Date().getFullYear();
-                const currentAverage = yearlyData?.statistics?.average || 60;
-                
-                // Generate 10 years of historical data with realistic trends (95% uptime basis)
-                const historicalYears = Array.from({ length: 10 }, (_, i) => {
-                  const year = currentYear - 9 + i;
-                  const yearsFromStart = i;
-                  
-                  // Base calculation on 95% uptime (meaning we avoid highest 5% of hours)
-                  // Current year adjusted for 95% uptime
-                  const current95UptimePrice = currentAverage * 0.92; // Slight reduction from avoiding peaks
-                  
-                  // Realistic historical progression - prices were generally lower
-                  let yearPrice;
-                  if (year <= 2016) yearPrice = 12; // Much lower historical prices
-                  else if (year <= 2018) yearPrice = 15; // Gradual increase
-                  else if (year === 2019) yearPrice = 18;
-                  else if (year === 2020) yearPrice = 14; // COVID drop
-                  else if (year === 2021) yearPrice = 25; // Recovery and inflation
-                  else if (year === 2022) yearPrice = 35; // Energy crisis
-                  else if (year === 2023) yearPrice = 32; // Normalization
-                  else yearPrice = current95UptimePrice; // Current year
-                  
-                  // Apply 95% uptime adjustment to all years
-                  const yearAverage = yearPrice * 0.95; // 95% uptime effect
-                  const yearPeak = yearAverage * (4.2 + Math.random() * 0.8); // 4.2-5x average
-                  const yearLow = Math.max(0.01, yearAverage * (0.02 + Math.random() * 0.08)); // 2-10% of average
-                  
-                  return {
-                    year,
-                    average: Math.round(yearAverage * 100) / 100,
-                    peak: Math.round(yearPeak * 100) / 100,
-                    low: Math.round(yearLow * 100) / 100,
-                    volatility: Math.round(((yearPeak - yearLow) / yearAverage) * 100 * 100) / 100,
-                    isCurrent: year === currentYear
-                  };
-                });
-                
-                // Calculate trend metrics based on 95% uptime prices
-                const tenYearAgoPrice = historicalYears[0].average;
-                const currentYearPrice = historicalYears[historicalYears.length - 1].average;
-                const priceIncrease = ((currentYearPrice - tenYearAgoPrice) / tenYearAgoPrice) * 100;
-                const averageVolatility = historicalYears.reduce((sum, year) => sum + year.volatility, 0) / historicalYears.length;
-                const tenYearAverage = historicalYears.reduce((sum, year) => sum + year.average, 0) / historicalYears.length;
-                const currentVsAverage = ((currentYearPrice - tenYearAverage) / tenYearAverage) * 100;
-                
-                return (
-                  <div className="space-y-6">
-                    {/* Loading State */}
-                    {loadingHistorical && (
+                // Show loading state
+                if (loadingHistoricalTenYear) {
+                  return (
+                    <div className="p-8">
                       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <div className="flex items-center gap-2">
                           <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
                           <span className="text-blue-800 font-medium">Fetching real AESO historical data...</span>
                         </div>
-                        <p className="text-blue-600 text-sm mt-1">This may take a moment as we retrieve 10 years of real market data</p>
+                        <p className="text-blue-600 text-sm mt-1">
+                          Retrieving 10 years of real market data from AESO API. This may take 30-60 seconds...
+                        </p>
                       </div>
-                    )}
+                    </div>
+                  );
+                }
+                
+                // Show error or no data state
+                if (!historicalTenYearData?.historicalYears || historicalTenYearData.historicalYears.length === 0) {
+                  return (
+                    <div className="p-8 text-center">
+                      <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+                      <h4 className="text-lg font-semibold mb-2">No Historical Data Available</h4>
+                      <p className="text-muted-foreground mb-4">
+                        Unable to retrieve historical data from AESO API. Please try again.
+                      </p>
+                      <Button onClick={fetchRealHistoricalData} variant="outline">
+                        Retry
+                      </Button>
+                    </div>
+                  );
+                }
+                
+                // Process real data from API
+                const historicalYears = historicalTenYearData.historicalYears
+                  .filter((y: any) => y.average !== null) // Only include years with data
+                  .map((y: any) => ({
+                    year: y.year,
+                    average: y.average,
+                    peak: y.peak,
+                    low: y.low,
+                    volatility: y.volatility,
+                    dataPoints: y.dataPoints,
+                    isReal: y.isReal
+                  }));
+                
+                if (historicalYears.length === 0) {
+                  return (
+                    <div className="p-8 text-center">
+                      <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No valid data points in historical dataset</p>
+                    </div>
+                  );
+                }
+                
+                // Calculate trend metrics from REAL DATA
+                const currentYear = new Date().getFullYear();
+                const currentYearData = historicalYears.find((y: any) => y.year === currentYear);
+                const tenYearAgoData = historicalYears[0];
+                const currentAverage = currentYearData?.average || historicalYears[historicalYears.length - 1].average;
+                const priceIncrease = ((currentAverage - tenYearAgoData.average) / tenYearAgoData.average) * 100;
+                const averageVolatility = historicalYears.reduce((sum: number, year: any) => sum + (year.volatility || 0), 0) / historicalYears.length;
+                const tenYearAverage = historicalYears.reduce((sum: number, year: any) => sum + year.average, 0) / historicalYears.length;
+                const currentVsAverage = ((currentAverage - tenYearAverage) / tenYearAverage) * 100;
+                
+                return (
+                  <div className="space-y-6">
+                    
+                    {/* Data Source Badge */}
+                    <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-green-800">
+                        Real AESO API Data • {historicalTenYearData.realDataYears} of {historicalTenYearData.totalYears} years with data
+                      </span>
+                      <span className="text-xs text-green-600 ml-auto">
+                        Last updated: {new Date(historicalTenYearData.lastUpdated).toLocaleTimeString()}
+                      </span>
+                    </div>
                     
                     {/* Historical Metrics Display */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1474,7 +1502,10 @@ export function AESOHistoricalPricing() {
                           <div className="text-2xl font-bold text-green-600">
                             {historicalYears.length}
                           </div>
-                          <p className="text-xs text-muted-foreground">Years of Analysis</p>
+                          <p className="text-xs text-muted-foreground">Years with Data</p>
+                          <p className="text-xs text-green-600 mt-1">
+                            {historicalYears.reduce((sum: number, y: any) => sum + y.dataPoints, 0).toLocaleString()} data points
+                          </p>
                         </CardContent>
                       </Card>
                       <Card>
@@ -1482,26 +1513,35 @@ export function AESOHistoricalPricing() {
                           <div className="text-2xl font-bold text-blue-600">
                             {priceIncrease.toFixed(1)}%
                           </div>
-                          <p className="text-xs text-muted-foreground">Historical Growth</p>
+                          <p className="text-xs text-muted-foreground">Price Growth</p>
+                          <p className="text-xs text-blue-600 mt-1">
+                            {tenYearAgoData.year} to {currentYear}
+                          </p>
                         </CardContent>
                       </Card>
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="text-2xl font-bold text-orange-600">
-                              {averageVolatility.toFixed(1)}%
-                            </div>
-                            <p className="text-xs text-muted-foreground">Avg Volatility</p>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="text-2xl font-bold text-purple-600">
-                              {currentAverage.toFixed(1)}
-                            </div>
-                            <p className="text-xs text-muted-foreground">Current Avg (CAD/MWh)</p>
-                          </CardContent>
-                        </Card>
-                      </div>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold text-orange-600">
+                            {averageVolatility.toFixed(0)}%
+                          </div>
+                          <p className="text-xs text-muted-foreground">Avg Volatility</p>
+                          <p className="text-xs text-orange-600 mt-1">
+                            10-year average
+                          </p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold text-purple-600">
+                            CA${currentAverage.toFixed(2)}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Current Year Avg</p>
+                          <p className="text-xs text-purple-600 mt-1">
+                            {currentVsAverage > 0 ? '+' : ''}{currentVsAverage.toFixed(1)}% vs 10yr avg
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
                     
                     {/* Historical Trend Charts */}
                     <div className="space-y-6">
@@ -1590,10 +1630,11 @@ export function AESOHistoricalPricing() {
                           <div>
                             <h5 className="font-semibold mb-2">Price Trend Analysis</h5>
                             <ul className="space-y-1 text-muted-foreground">
-                              <li>• 10-year compound annual growth rate: {(Math.pow(currentAverage / historicalYears[0].average, 1/10) - 1).toFixed(1)}%</li>
-                              <li>• Current prices are {Math.abs(currentVsAverage).toFixed(1)}% {currentVsAverage > 0 ? 'above' : 'below'} historical average</li>
-                              <li>• Peak volatility occurred in {historicalYears.reduce((max, year) => year.volatility > max.volatility ? year : max).year}</li>
-                              <li>• Most stable year was {historicalYears.reduce((min, year) => year.volatility < min.volatility ? year : min).year}</li>
+                              <li>• 10-year compound annual growth rate: {(Math.pow(currentAverage / tenYearAgoData.average, 1/10) - 1 * 100).toFixed(2)}%</li>
+                              <li>• Current prices are {Math.abs(currentVsAverage).toFixed(1)}% {currentVsAverage > 0 ? 'above' : 'below'} 10-year average</li>
+                              <li>• Peak volatility: {Math.max(...historicalYears.map((y: any) => y.volatility || 0)).toFixed(0)}% in {historicalYears.reduce((max: any, year: any) => (year.volatility || 0) > (max.volatility || 0) ? year : max).year}</li>
+                              <li>• Most stable year: {historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).year} ({historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).volatility?.toFixed(0)}% volatility)</li>
+                              <li>• Data sourced from AESO API with {historicalYears.reduce((sum: number, y: any) => sum + y.dataPoints, 0).toLocaleString()} total hourly price points</li>
                             </ul>
                           </div>
                           <div>
