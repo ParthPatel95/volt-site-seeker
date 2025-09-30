@@ -1168,17 +1168,17 @@ export function AESOHistoricalPricing() {
                           Uptime vs Monthly Cost Analysis
                         </h4>
                         
-                        <div className="h-72 rounded-lg border bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 p-4">
+                        <div className="h-80 rounded-lg border bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6">
                           <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={uptimeAnalysis} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                            <LineChart data={uptimeAnalysis} margin={{ top: 10, right: 30, left: 60, bottom: 50 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
                               <XAxis 
                                 dataKey="uptime" 
-                                label={{ value: 'Uptime (%)', position: 'insideBottom', offset: -10 }}
+                                label={{ value: 'Uptime (%)', position: 'insideBottom', offset: -15 }}
                                 tick={{ fontSize: 12 }}
                               />
                               <YAxis 
-                                label={{ value: 'Monthly Cost (CAD)', angle: -90, position: 'insideLeft' }}
+                                label={{ value: 'Monthly Cost (CAD)', angle: -90, position: 'insideLeft', offset: 10 }}
                                 tick={{ fontSize: 12 }}
                                 tickFormatter={(value) => `$${Math.round(value/1000)}k`}
                               />
