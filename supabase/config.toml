@@ -35,3 +35,6 @@ verify_jwt = true  # Requires authentication for user-specific chats
 
 [functions.meta-proxy]
 verify_jwt = true  # Requires authentication for proxy access
+
+[functions.user-management]
+verify_jwt = true  # Requires authentication - restricted to admin@voltscout.com

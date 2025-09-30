@@ -272,10 +272,20 @@ export function UserManagementSystem() {
 
   const deleteUser = async (userId: string) => {
     try {
-      // Delete from auth.users (cascades to other tables)
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { action: 'delete', userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       
       toast({
         title: "User deleted",
