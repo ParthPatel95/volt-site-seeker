@@ -191,7 +191,7 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
             </Select>
           </div>
            
-           <div className="lg:col-span-5 flex flex-wrap gap-2">
+           <div className="lg:col-span-5">
              <Button 
                onClick={fetchWeatherAnalysis} 
                disabled={loading || !location || !startDate || !endDate}
@@ -199,58 +199,6 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
              >
                <Download className="w-4 h-4" />
                {loading ? 'Analyzing...' : 'Analyze Weather Patterns'}
-             </Button>
-             
-             {/* Quick access buttons for common date ranges */}
-             <Button 
-               variant="outline" 
-               size="sm"
-               onClick={() => {
-                 const today = new Date();
-                 const sevenDaysAgo = new Date(today);
-                 sevenDaysAgo.setDate(today.getDate() - 7);
-                 const yesterday = new Date(today);
-                 yesterday.setDate(today.getDate() - 1);
-                 
-                 setStartDate(sevenDaysAgo.toISOString().split('T')[0]);
-                 setEndDate(yesterday.toISOString().split('T')[0]);
-               }}
-             >
-               Last 7 Days
-             </Button>
-             
-             <Button 
-               variant="outline" 
-               size="sm"
-               onClick={() => {
-                 const today = new Date();
-                 const thirtyDaysAgo = new Date(today);
-                 thirtyDaysAgo.setDate(today.getDate() - 30);
-                 const yesterday = new Date(today);
-                 yesterday.setDate(today.getDate() - 1);
-                 
-                 setStartDate(thirtyDaysAgo.toISOString().split('T')[0]);
-                 setEndDate(yesterday.toISOString().split('T')[0]);
-               }}
-             >
-               Last 30 Days
-             </Button>
-             
-             <Button 
-               variant="outline" 
-               size="sm"
-               onClick={() => {
-                 const today = new Date();
-                 const currentYear = today.getFullYear();
-                 const lastYear = currentYear - 1;
-                 const yesterday = new Date(today);
-                 yesterday.setDate(today.getDate() - 1);
-                 
-                 setStartDate(`${lastYear}-01-01`);
-                 setEndDate(yesterday.toISOString().split('T')[0]);
-               }}
-             >
-               Last Year
              </Button>
            </div>
         </CardContent>
