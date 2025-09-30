@@ -1077,17 +1077,15 @@ export function AESOHistoricalPricing() {
                 
                 return (
                   <div className="space-y-6">
-                    {/* Two-Column Layout */}
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                      {/* Strike Price Table */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg flex items-center gap-2">
-                          <Calculator className="w-5 h-5 text-orange-600" />
-                          Strike Prices & Monthly Costs (1 MW load)
-                        </h4>
-                        
-                        <div className="overflow-x-auto rounded-lg border">
-                          <table className="w-full min-w-[800px]">
+                    {/* Strike Price Table */}
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-lg flex items-center gap-2">
+                        <Calculator className="w-5 h-5 text-orange-600" />
+                        Strike Prices & Monthly Costs (1 MW load)
+                      </h4>
+                      
+                      <div className="overflow-x-auto rounded-lg border">
+                        <table className="w-full">
                             <thead className="bg-muted/50">
                               <tr>
                                 <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
@@ -1131,11 +1129,9 @@ export function AESOHistoricalPricing() {
                           </table>
                         </div>
                         
-                        <p className="text-xs text-muted-foreground">
-                          *Prices calculated by removing the most expensive hours during shutdowns. Strike Price = threshold above which to shut down. Avg Energy Price = actual cost during operating hours.
-                        </p>
-                      </div>
-                      
+                      <p className="text-xs text-muted-foreground">
+                        *Prices calculated by removing the most expensive hours during shutdowns. Strike Price = threshold above which to shut down. Avg Energy Price = actual cost during operating hours.
+                      </p>
                     </div>
                   </div>
                 );
