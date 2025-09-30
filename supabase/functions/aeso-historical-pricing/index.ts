@@ -60,34 +60,57 @@ serve(async (req) => {
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     } else if (timeframe === 'historical-10year') {
       // Fetch real 10-year historical data from AESO
+      // Note: AESO API may only have data from 2018 onwards
       console.log('Fetching 10-year real historical data from AESO API...');
-      const currentYear = new Date().getFullYear();
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
       const historicalYearsData = [];
       
-      // Fetch data for each of the past 10 years
-      for (let yearOffset = 9; yearOffset >= 0; yearOffset--) {
-        const year = currentYear - yearOffset;
-        const yearStartDate = new Date(year, 0, 1); // January 1st
-        const yearEndDate = new Date(year, 11, 31, 23, 59, 59); // December 31st
+      // Try to fetch data for each of the past 10 years
+      // Start from 2018 or 10 years ago, whichever is more recent
+      const startYear = Math.max(2018, currentYear - 9);
+      
+      for (let year = startYear; year <= currentYear; year++) {
+        // For current year, only fetch up to today
+        const isCurrentYear = year === currentYear;
+        const yearStartDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0)); // January 1st UTC
+        const yearEndDate = isCurrentYear 
+          ? new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59))
+          : new Date(Date.UTC(year, 11, 31, 23, 59, 59)); // December 31st UTC
         
         try {
-          console.log(`Fetching real AESO data for year ${year}...`);
+          console.log(`Fetching real AESO data for year ${year} (${yearStartDate.toISOString().slice(0, 10)} to ${yearEndDate.toISOString().slice(0, 10)})...`);
           const yearData = await fetchAESOHistoricalData(yearStartDate, yearEndDate, apiKey);
           
-          if (yearData.length > 0) {
-            const yearlyStats = processHistoricalData(yearData, 'yearly');
-            historicalYearsData.push({
-              year,
-              average: Math.round(yearlyStats.statistics.average * 100) / 100,
-              peak: Math.round(yearlyStats.statistics.peak * 100) / 100,
-              low: Math.round(yearlyStats.statistics.low * 100) / 100,
-              volatility: Math.round(yearlyStats.statistics.volatility * 100) / 100,
-              dataPoints: yearData.length,
-              isReal: true
-            });
-            console.log(`Year ${year}: Avg=${yearlyStats.statistics.average.toFixed(2)} CAD/MWh (${yearData.length} data points)`);
+          if (yearData && yearData.length > 0) {
+            console.log(`Received ${yearData.length} data points for year ${year}`);
+            const yearlyStats = await processHistoricalData(yearData, 'yearly');
+            
+            if (yearlyStats && yearlyStats.statistics) {
+              historicalYearsData.push({
+                year,
+                average: Math.round(yearlyStats.statistics.average * 100) / 100,
+                peak: Math.round(yearlyStats.statistics.peak * 100) / 100,
+                low: Math.round(yearlyStats.statistics.low * 100) / 100,
+                volatility: Math.round(yearlyStats.statistics.volatility * 100) / 100,
+                dataPoints: yearData.length,
+                isReal: true
+              });
+              console.log(`Year ${year}: Avg=$${yearlyStats.statistics.average.toFixed(2)} CAD/MWh (${yearData.length} data points)`);
+            } else {
+              console.warn(`No statistics calculated for year ${year}`);
+              historicalYearsData.push({
+                year,
+                average: null,
+                peak: null,
+                low: null,
+                volatility: null,
+                dataPoints: 0,
+                isReal: false
+              });
+            }
           } else {
-            console.log(`No data available for year ${year}`);
+            console.log(`No data available for year ${year} - API may not have historical data this far back`);
             historicalYearsData.push({
               year,
               average: null,
@@ -100,6 +123,8 @@ serve(async (req) => {
           }
         } catch (error) {
           console.error(`Error fetching data for year ${year}:`, error);
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          console.error(`Error details: ${errorMsg}`);
           historicalYearsData.push({
             year,
             average: null,
@@ -108,7 +133,7 @@ serve(async (req) => {
             volatility: null,
             dataPoints: 0,
             isReal: false,
-            error: error.message
+            error: errorMsg
           });
         }
       }
