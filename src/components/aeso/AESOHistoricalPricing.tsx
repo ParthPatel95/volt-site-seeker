@@ -904,6 +904,63 @@ export function AESOHistoricalPricing() {
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-blue-600" />
+                  Optimized Pricing by Uptime
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Strategic shutdown during peak prices - showing actual avg cost
+                </p>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  if (!monthlyData?.rawHourlyData) return <div className="text-sm text-muted-foreground">Loading data...</div>;
+                  
+                  const uptimeLevels = [85, 90, 95, 97];
+                  const transmissionCost = parseFloat(transmissionAdder) || 11.63;
+                  const hourlyPrices = monthlyData.rawHourlyData.map(h => h.price);
+                  
+                  const quickAnalysis = uptimeLevels.map(uptime => {
+                    const totalHours = hourlyPrices.length;
+                    const operatingHours = Math.floor(totalHours * (uptime / 100));
+                    const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
+                    const operatingPrices = sortedPrices.slice(0, operatingHours);
+                    const avgEnergyPrice = operatingPrices.reduce((sum, p) => sum + p, 0) / operatingHours;
+                    const allInPrice = avgEnergyPrice + transmissionCost;
+                    
+                    return {
+                      uptime,
+                      priceInCents: (allInPrice / 10).toFixed(2),
+                      avgEnergy: avgEnergyPrice.toFixed(2)
+                    };
+                  });
+                  
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {quickAnalysis.map((item) => (
+                        <div key={item.uptime} className="bg-muted/30 rounded-lg p-3 border border-border">
+                          <div className="text-xs text-muted-foreground mb-1">{item.uptime}% Uptime</div>
+                          <div className="text-xl font-bold text-blue-600">
+                            {item.priceInCents}¢
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            per kWh (all-in)
+                          </div>
+                          <div className="text-xs text-green-600 font-medium mt-1">
+                            CA${item.avgEnergy}/MWh
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-yellow-600" />
                   Peak Hours Analysis
                 </CardTitle>
