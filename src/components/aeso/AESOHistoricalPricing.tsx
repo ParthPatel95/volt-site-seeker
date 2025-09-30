@@ -47,7 +47,7 @@ export function AESOHistoricalPricing() {
   const { 
     monthlyData, 
     yearlyData, 
-    peakAnalysis, 
+    peakAnalysis,
     loadingMonthly, 
     loadingYearly, 
     loadingPeakAnalysis,
@@ -61,6 +61,8 @@ export function AESOHistoricalPricing() {
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
+  const [loadingHistorical, setLoadingHistorical] = useState(false);
+  const [historicalData, setHistoricalData] = useState<any>(null);
 
   useEffect(() => {
     fetchMonthlyData();
@@ -86,6 +88,19 @@ export function AESOHistoricalPricing() {
     } catch (error) {
       console.error('Failed to fetch exchange rate:', error);
       setExchangeRate(0.73); // Fallback rate
+    }
+  };
+
+  const fetchRealHistoricalData = async () => {
+    setLoadingHistorical(true);
+    try {
+      // For now, use the existing yearly data as a placeholder
+      // TODO: Implement actual historical data fetching when edge function is ready
+      setHistoricalData(yearlyData);
+    } catch (error) {
+      console.error('Error fetching historical data:', error);
+    } finally {
+      setLoadingHistorical(false);
     }
   };
 
@@ -1231,25 +1246,24 @@ export function AESOHistoricalPricing() {
                       </div>
                     )}
                     
-                    {/* Real Data Status */}
-                    {historicalData && (
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="text-2xl font-bold text-green-600">
-                              {realDataYears.length}
-                            </div>
-                            <p className="text-xs text-muted-foreground">Years of Real Data</p>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {tenYearGrowth.toFixed(1)}%
-                            </div>
-                            <p className="text-xs text-muted-foreground">Historical Growth</p>
-                          </CardContent>
-                        </Card>
+                    {/* Historical Metrics Display */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold text-green-600">
+                            {historicalYears.length}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Years of Analysis</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {priceIncrease.toFixed(1)}%
+                          </div>
+                          <p className="text-xs text-muted-foreground">Historical Growth</p>
+                        </CardContent>
+                      </Card>
                         <Card>
                           <CardContent className="p-4">
                             <div className="text-2xl font-bold text-orange-600">
@@ -1267,7 +1281,6 @@ export function AESOHistoricalPricing() {
                           </CardContent>
                         </Card>
                       </div>
-                    )}
                     
                     {/* Historical Trend Charts */}
                     <div className="space-y-6">
