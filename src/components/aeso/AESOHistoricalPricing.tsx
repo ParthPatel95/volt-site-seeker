@@ -960,11 +960,11 @@ export function AESOHistoricalPricing() {
                             </div>
                           </div>
                           <div className="mt-2 pt-2 border-t border-border/50">
-                            <div className="text-xs text-muted-foreground">Energy only:</div>
-                            <div className="text-xs font-medium">
-                              <span className="text-orange-600">CA${item.avgEnergyCAD}</span>
-                              <span className="text-muted-foreground mx-1">/</span>
-                              <span className="text-green-600">US${item.avgEnergyUSD}</span>
+                            <div className="text-xs text-muted-foreground mb-1">Energy only:</div>
+                            <div className="text-xs font-medium flex flex-wrap gap-x-1 items-center">
+                              <span className="text-orange-600 whitespace-nowrap">CA${item.avgEnergyCAD}</span>
+                              <span className="text-muted-foreground">/</span>
+                              <span className="text-green-600 whitespace-nowrap">US${item.avgEnergyUSD}</span>
                             </div>
                           </div>
                         </div>
