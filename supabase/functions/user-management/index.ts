@@ -40,11 +40,78 @@ Deno.serve(async (req) => {
       throw new Error('Only admin@voltscout.com can perform user management operations');
     }
 
-    const { action, userId } = await req.json();
+    const body = await req.json();
+    const { action, userId, email, password, full_name, phone, department, role, permissions } = body;
 
-    console.log(`User management action: ${action} for user: ${userId}`);
+    console.log(`User management action: ${action}`);
 
     switch (action) {
+      case 'create-user':
+        // Create auth user without email verification
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true, // Auto-confirm email
+          user_metadata: {
+            full_name
+          }
+        });
+
+        if (authError) {
+          throw authError;
+        }
+
+        // Create profile
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email,
+            full_name,
+            phone,
+            department,
+            role: 'analyst' // Default role from enum
+          });
+
+        if (profileError) {
+          throw profileError;
+        }
+
+        // Add role
+        const { error: roleError } = await supabaseAdmin
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: role as 'admin' | 'viewer' | 'moderator' | 'user'
+          });
+
+        if (roleError) {
+          throw roleError;
+        }
+
+        // Add permissions
+        if (permissions && permissions.length > 0) {
+          const permissionInserts = permissions.map((permission: string) => ({
+            user_id: authData.user.id,
+            permission
+          }));
+
+          const { error: permError } = await supabaseAdmin
+            .from('user_permissions')
+            .insert(permissionInserts);
+
+          if (permError) {
+            throw permError;
+          }
+        }
+
+        console.log(`Successfully created user: ${email}`);
+        
+        return new Response(
+          JSON.stringify({ success: true, user: authData.user }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+
       case 'delete':
         // Delete user from auth (this will cascade to profiles and related tables)
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);

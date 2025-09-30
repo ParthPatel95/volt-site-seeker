@@ -113,8 +113,10 @@ export function UserManagementSystem() {
     phone: '',
     role: 'user' as string,
     department: '',
-    permissions: [] as string[]
+    permissions: [] as string[],
+    password: ''
   });
+  const [activeTab, setActiveTab] = useState('users');
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
@@ -160,10 +162,19 @@ export function UserManagementSystem() {
 
   const createUser = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!userForm.email || !userForm.full_name) {
+    if (!userForm.email || !userForm.full_name || !userForm.password) {
       toast({
         title: "Validation Error",
-        description: "Email and full name are required",
+        description: "Email, full name, and password are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (userForm.password.length < 6) {
+      toast({
+        title: "Validation Error",
+        description: "Password must be at least 6 characters long",
         variant: "destructive"
       });
       return;
@@ -172,56 +183,33 @@ export function UserManagementSystem() {
     setLoading(true);
     
     try {
-      // Create auth user without email verification
-      const temporaryPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: userForm.email,
-        password: temporaryPassword,
-        email_confirm: true, // Auto-confirm email
-        user_metadata: {
-          full_name: userForm.full_name
-        }
-      });
+      // Create auth user without email verification using the edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
 
-      if (authError) throw authError;
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { 
+          action: 'create-user',
           email: userForm.email,
+          password: userForm.password,
           full_name: userForm.full_name,
           phone: userForm.phone,
           department: userForm.department,
-          role: 'analyst' // Default role from enum
-        });
+          role: userForm.role,
+          permissions: userForm.permissions
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
 
-      if (profileError) throw profileError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // Add role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: userForm.role as 'admin' | 'viewer' | 'moderator' | 'user'
-        });
+      const authData = data;
 
-      if (roleError) throw roleError;
-
-      // Add permissions
-      if (userForm.permissions.length > 0) {
-        const permissionInserts = userForm.permissions.map(permission => ({
-          user_id: authData.user.id,
-          permission
-        }));
-
-        const { error: permError } = await supabase
-          .from('user_permissions')
-          .insert(permissionInserts);
-
-        if (permError) throw permError;
-      }
       
       toast({
         title: "User created",
@@ -235,7 +223,8 @@ export function UserManagementSystem() {
         phone: '',
         role: 'user',
         department: '',
-        permissions: []
+        permissions: [],
+        password: ''
       });
       
       await fetchUsers();
@@ -540,13 +529,13 @@ export function UserManagementSystem() {
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-muted-foreground">Manage users, roles, and permissions</p>
         </div>
-        <Button className="gap-2" onClick={() => {/* Handle add user */}}>
+        <Button className="gap-2" onClick={() => setActiveTab('create')}>
           <UserPlus className="w-4 h-4" />
           Add User
         </Button>
       </div>
 
-      <Tabs defaultValue="users" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
@@ -775,6 +764,20 @@ export function UserManagementSystem() {
                       placeholder="John Doe"
                       required
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={userForm.password}
+                      onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="••••••••"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Minimum 6 characters
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
