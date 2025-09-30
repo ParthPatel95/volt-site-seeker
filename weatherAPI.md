@@ -160,11 +160,58 @@ GET https://api.weather.gc.ca/collections/climate-hourly/items?datetime=2024-07-
 - Cache results when possible
 - Consider implementing exponential backoff for errors
 
+### 4. Climate Normals (`climate-normals`)
+
+**Purpose**: Get 1981-2010 climate averages for comparison and context
+
+**Endpoint**: 
+```
+GET https://api.weather.gc.ca/collections/climate-normals/items?STN_ID=<station_id>
+```
+
+**Response Fields**:
+- Monthly temperature normals (January through December)
+- Annual precipitation, rainfall, and snowfall totals
+- Extreme maximum and minimum temperatures on record
+
+### 5. Climate Monthly (`climate-monthly`)
+
+**Purpose**: Get monthly weather summaries with extremes
+
+**Endpoint**:
+```
+GET https://api.weather.gc.ca/collections/climate-monthly/items?datetime=<start>/<end>&STN_ID=<station_id>
+```
+
+**Response Fields**:
+- `MEAN_TEMPERATURE`: Monthly mean temperature
+- `EXTREME_MAXIMUM_TEMPERATURE`: Highest temperature for the month
+- `EXTREME_MINIMUM_TEMPERATURE`: Lowest temperature for the month
+- `TOTAL_PRECIPITATION`: Total monthly precipitation
+- `DAYS_WITH_PRECIP`: Number of days with precipitation
+
+## Enhanced Library Functions
+
+The weatherAPI.ts library now includes:
+
+### New Functions
+- `fetchClimateNormals(stationId)`: Get historical climate averages (1981-2010)
+- `fetchMonthlyWeatherSummary(stationId, year)`: Get monthly summaries for a year
+- `calculateWeatherStatistics(weatherData)`: Calculate statistics from weather data
+
+### Enhanced Features
+- Better error handling and data validation
+- Support for quality flag checking on all data points
+- Comprehensive data type definitions for all API responses
+- Statistical analysis functions for weather data
+
 ## Future Enhancements
 
-The API also provides forecast collections:
-- `gdps-pressure-contours`: Pressure contours
-- `aqhi-forecasts`: Air quality health index forecasts
-- Additional forecast models available
+The API also provides additional collections that could be integrated:
+- `ahccd-annual`: Adjusted and homogenized annual climate data with trends
+- `ahccd-trends`: Long-term climate trend analysis
+- `hydrometric-stations`: Water level and flow monitoring stations
+- `hydrometric-realtime`: Real-time water data (last 30 days)
+- Forecast collections: `gdps-pressure-contours`, `aqhi-forecasts`
 
-These can be integrated after historical data implementation is complete.
+These can be integrated for specialized climate analysis and water monitoring applications.

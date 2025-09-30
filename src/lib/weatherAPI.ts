@@ -41,6 +41,51 @@ export interface WeatherData {
   visibility?: number | null; // Hourly only
 }
 
+export interface ClimateNormals {
+  stationId: string;
+  stationName: string;
+  province: string;
+  latitude: number;
+  longitude: number;
+  elevation: number;
+  // Temperature normals (°C)
+  januaryMeanTemp?: number | null;
+  februaryMeanTemp?: number | null;
+  marchMeanTemp?: number | null;
+  aprilMeanTemp?: number | null;
+  mayMeanTemp?: number | null;
+  juneMeanTemp?: number | null;
+  julyMeanTemp?: number | null;
+  augustMeanTemp?: number | null;
+  septemberMeanTemp?: number | null;
+  octoberMeanTemp?: number | null;
+  novemberMeanTemp?: number | null;
+  decemberMeanTemp?: number | null;
+  // Precipitation normals (mm)
+  totalPrecipitation?: number | null;
+  totalRainfall?: number | null;
+  totalSnowfall?: number | null;
+  // Extremes
+  extremeMaxTemp?: number | null;
+  extremeMinTemp?: number | null;
+}
+
+export interface MonthlyWeatherSummary {
+  stationId: string;
+  year: number;
+  month: number;
+  meanTemp?: number | null;
+  maxTemp?: number | null;
+  minTemp?: number | null;
+  totalPrecipitation?: number | null;
+  totalRainfall?: number | null;
+  totalSnowfall?: number | null;
+  snowOnGround?: number | null;
+  daysWithPrecip?: number | null;
+  extremeMaxTemp?: number | null;
+  extremeMinTemp?: number | null;
+}
+
 /**
  * Calculate distance between two coordinates using Haversine formula
  */
@@ -270,6 +315,136 @@ function isValidValue(value: any, flag: any): boolean {
 }
 
 /**
+ * Fetch climate normals (1981-2010 averages) for a specific station
+ * 
+ * @param stationId Weather station ID
+ * @returns Promise<ClimateNormals | null> Climate normal data
+ */
+export async function fetchClimateNormals(stationId: string): Promise<ClimateNormals | null> {
+  try {
+    const url = `${BASE_URL}/collections/climate-normals/items?STN_ID=${stationId}&limit=1`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Climate normals API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.features || data.features.length === 0) {
+      return null;
+    }
+    
+    const feature = data.features[0];
+    const props = feature.properties;
+    const coords = feature.geometry.coordinates;
+    
+    return {
+      stationId: props.STN_ID,
+      stationName: props.STATION_NAME || 'Unknown',
+      province: props.PROVINCE_CODE || 'Unknown',
+      latitude: coords[1],
+      longitude: coords[0],
+      elevation: props.ELEVATION || 0,
+      // Monthly temperature normals
+      januaryMeanTemp: props.JANUARY_MEAN_TEMPERATURE || null,
+      februaryMeanTemp: props.FEBRUARY_MEAN_TEMPERATURE || null,
+      marchMeanTemp: props.MARCH_MEAN_TEMPERATURE || null,
+      aprilMeanTemp: props.APRIL_MEAN_TEMPERATURE || null,
+      mayMeanTemp: props.MAY_MEAN_TEMPERATURE || null,
+      juneMeanTemp: props.JUNE_MEAN_TEMPERATURE || null,
+      julyMeanTemp: props.JULY_MEAN_TEMPERATURE || null,
+      augustMeanTemp: props.AUGUST_MEAN_TEMPERATURE || null,
+      septemberMeanTemp: props.SEPTEMBER_MEAN_TEMPERATURE || null,
+      octoberMeanTemp: props.OCTOBER_MEAN_TEMPERATURE || null,
+      novemberMeanTemp: props.NOVEMBER_MEAN_TEMPERATURE || null,
+      decemberMeanTemp: props.DECEMBER_MEAN_TEMPERATURE || null,
+      // Precipitation normals
+      totalPrecipitation: props.ANNUAL_PRECIPITATION || null,
+      totalRainfall: props.ANNUAL_RAINFALL || null,
+      totalSnowfall: props.ANNUAL_SNOWFALL || null,
+      // Temperature extremes
+      extremeMaxTemp: props.EXTREME_MAXIMUM_TEMPERATURE || null,
+      extremeMinTemp: props.EXTREME_MINIMUM_TEMPERATURE || null,
+    };
+  } catch (error) {
+    console.error('Error fetching climate normals:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch monthly weather summaries for a specific station and year
+ * 
+ * @param stationId Weather station ID
+ * @param year Target year (YYYY)
+ * @returns Promise<MonthlyWeatherSummary[]> Array of monthly summaries
+ */
+export async function fetchMonthlyWeatherSummary(
+  stationId: string,
+  year: number
+): Promise<MonthlyWeatherSummary[]> {
+  try {
+    const startDate = `${year}-01-01 00:00:00`;
+    const endDate = `${year}-12-31 23:59:59`;
+    const datetimeInterval = `${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`;
+    
+    const url = `${BASE_URL}/collections/climate-monthly/items?datetime=${datetimeInterval}&STN_ID=${stationId}&sortby=LOCAL_DATE&limit=12`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Monthly weather API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.features || data.features.length === 0) {
+      return [];
+    }
+    
+    const monthlyData: MonthlyWeatherSummary[] = [];
+    
+    for (const feature of data.features) {
+      const props = feature.properties;
+      const date = new Date(props.LOCAL_DATE);
+      
+      const summary: MonthlyWeatherSummary = {
+        stationId: props.STN_ID,
+        year: date.getFullYear(),
+        month: date.getMonth() + 1, // Convert to 1-12
+        meanTemp: isValidValue(props.MEAN_TEMPERATURE, props.MEAN_TEMPERATURE_FLAG) 
+          ? props.MEAN_TEMPERATURE : null,
+        maxTemp: isValidValue(props.EXTREME_MAXIMUM_TEMPERATURE, props.EXTREME_MAXIMUM_TEMPERATURE_FLAG) 
+          ? props.EXTREME_MAXIMUM_TEMPERATURE : null,
+        minTemp: isValidValue(props.EXTREME_MINIMUM_TEMPERATURE, props.EXTREME_MINIMUM_TEMPERATURE_FLAG) 
+          ? props.EXTREME_MINIMUM_TEMPERATURE : null,
+        totalPrecipitation: isValidValue(props.TOTAL_PRECIPITATION, props.TOTAL_PRECIPITATION_FLAG) 
+          ? props.TOTAL_PRECIPITATION : null,
+        totalRainfall: isValidValue(props.TOTAL_RAINFALL, props.TOTAL_RAINFALL_FLAG) 
+          ? props.TOTAL_RAINFALL : null,
+        totalSnowfall: isValidValue(props.TOTAL_SNOWFALL, props.TOTAL_SNOWFALL_FLAG) 
+          ? props.TOTAL_SNOWFALL : null,
+        snowOnGround: isValidValue(props.LAST_SNOW_GRND, props.LAST_SNOW_GRND_FLAG) 
+          ? props.LAST_SNOW_GRND : null,
+        daysWithPrecip: isValidValue(props.DAYS_WITH_PRECIP, props.DAYS_WITH_PRECIP_FLAG) 
+          ? props.DAYS_WITH_PRECIP : null,
+        extremeMaxTemp: isValidValue(props.EXTREME_MAXIMUM_TEMPERATURE, props.EXTREME_MAXIMUM_TEMPERATURE_FLAG) 
+          ? props.EXTREME_MAXIMUM_TEMPERATURE : null,
+        extremeMinTemp: isValidValue(props.EXTREME_MINIMUM_TEMPERATURE, props.EXTREME_MINIMUM_TEMPERATURE_FLAG) 
+          ? props.EXTREME_MINIMUM_TEMPERATURE : null,
+      };
+      
+      monthlyData.push(summary);
+    }
+    
+    return monthlyData;
+  } catch (error) {
+    console.error('Error fetching monthly weather summary:', error);
+    return [];
+  }
+}
+
+/**
  * Convert wind direction from degrees to compass direction
  * 
  * @param degrees Wind direction in degrees (0-360)
@@ -282,4 +457,41 @@ export function degreesToCompass(degrees: number): string {
   ];
   const index = Math.round(degrees / 22.5) % 16;
   return directions[index];
+}
+
+/**
+ * Calculate weather statistics from an array of weather data
+ * 
+ * @param weatherData Array of weather observations
+ * @returns Object with calculated statistics
+ */
+export function calculateWeatherStatistics(weatherData: WeatherData[]) {
+  if (weatherData.length === 0) {
+    return null;
+  }
+
+  const validTemps = weatherData
+    .map(d => d.temperature)
+    .filter((temp): temp is number => temp !== null);
+  
+  const validPrecip = weatherData
+    .map(d => d.precipitation)
+    .filter((precip): precip is number => precip !== null);
+
+  return {
+    temperatureStats: validTemps.length > 0 ? {
+      average: validTemps.reduce((sum, temp) => sum + temp, 0) / validTemps.length,
+      minimum: Math.min(...validTemps),
+      maximum: Math.max(...validTemps),
+      dataPoints: validTemps.length
+    } : null,
+    precipitationStats: validPrecip.length > 0 ? {
+      total: validPrecip.reduce((sum, precip) => sum + precip, 0),
+      average: validPrecip.reduce((sum, precip) => sum + precip, 0) / validPrecip.length,
+      maximum: Math.max(...validPrecip),
+      daysWithPrecipitation: validPrecip.filter(p => p > 0).length,
+      dataPoints: validPrecip.length
+    } : null,
+    totalObservations: weatherData.length
+  };
 }
