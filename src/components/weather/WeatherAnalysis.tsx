@@ -27,7 +27,20 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   const handleLocationSelect = (place: any) => {
     if (place?.coordinates) {
       setLocation({ lat: place.coordinates.lat, lng: place.coordinates.lng });
-      setLocationName(place.address || '');
+      setLocationName(place.address || place.coordinates.lat + ', ' + place.coordinates.lng);
+    }
+  };
+
+  const handleCoordinateInput = (value: string) => {
+    setLocationName(value);
+    // Parse coordinates if entered directly (format: lat, lng)
+    const coordMatch = value.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]);
+      const lng = parseFloat(coordMatch[2]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        setLocation({ lat, lng });
+      }
     }
   };
 
@@ -111,12 +124,11 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2">
             <Label htmlFor="location">Location</Label>
-            <GooglePlacesInput
+            <Input
               value={locationName}
-              onChange={handleLocationSelect}
-              placeholder="Enter city or coordinates"
+              onChange={(e) => handleCoordinateInput(e.target.value)}
+              placeholder="Enter city or coordinates (e.g., 53.7989, -112.8970)"
               className="w-full"
-              acceptCoordinates={true}
             />
           </div>
           
@@ -160,7 +172,7 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              {loading ? 'Fetching...' : 'Get Weather Data'}
+              {loading ? 'Analyzing...' : 'Analyze Weather Patterns'}
             </Button>
           </div>
         </CardContent>
