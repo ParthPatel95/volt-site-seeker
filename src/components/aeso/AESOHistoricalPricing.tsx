@@ -1034,11 +1034,12 @@ export function AESOHistoricalPricing() {
                         </h4>
                         
                         <div className="overflow-x-auto rounded-lg border">
-                          <table className="w-full min-w-[600px]">
+                          <table className="w-full min-w-[700px]">
                             <thead className="bg-muted/50">
                               <tr>
                                 <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Final Price<br/>(¢/kWh)</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Monthly<br/>Cost</th>
@@ -1054,6 +1055,9 @@ export function AESOHistoricalPricing() {
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold">
                                     CA${analysis.strikePrice}/MWh
+                                  </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-blue-600">
+                                    {(parseFloat(analysis.allInStrikePrice) / 10).toFixed(2)}¢
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm">
                                     {analysis.monthlyOperatingHours}h
@@ -1309,11 +1313,12 @@ export function AESOHistoricalPricing() {
                         </h4>
                         
                         <div className="overflow-x-auto rounded-lg border">
-                          <table className="w-full min-w-[600px]">
+                          <table className="w-full min-w-[700px]">
                             <thead className="bg-muted/50">
                               <tr>
                                 <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Final Price<br/>(¢/kWh)</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Monthly<br/>Cost</th>
@@ -1329,6 +1334,9 @@ export function AESOHistoricalPricing() {
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold">
                                     CA${analysis.strikePrice}/MWh
+                                  </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-blue-600">
+                                    {(parseFloat(analysis.allInStrikePrice) / 10).toFixed(2)}¢
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm">
                                     {analysis.monthlyOperatingHours}h
