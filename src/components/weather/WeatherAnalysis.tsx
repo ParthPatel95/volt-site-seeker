@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { CloudRain, Thermometer, Wind, Snowflake, MapPin, Calendar, Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchNearestWeatherStation, fetchWeatherData, WeatherData, type WeatherStation } from '@/lib/weatherAPI';
+import { fetchNearestWeatherStation, fetchWeatherData, checkDataAvailability, getMostRecentDataDate, getSuggestedDateRange, WeatherData, type WeatherStation } from '@/lib/weatherAPI';
 
 interface WeatherAnalysisProps {}
 
@@ -17,12 +17,22 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   const { toast } = useToast();
   const [location, setLocation] = useState<{lat: number; lng: number} | null>(null);
   const [locationName, setLocationName] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // Set default dates - yesterday as end date (most recent data), 30 days back as start
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30); // 30 days ago
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 1); // Yesterday (most recent data available)
+    return date.toISOString().split('T')[0];
+  });
   const [granularity, setGranularity] = useState<'daily' | 'hourly'>('daily');
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [station, setStation] = useState<WeatherStation | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dataAvailability, setDataAvailability] = useState<any>(null);
 
   const handleLocationSelect = (place: any) => {
     if (place?.coordinates) {
@@ -70,6 +80,10 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
       
       setWeatherData(data);
       
+      // Check data availability for this station
+      const availability = await checkDataAvailability(nearestStation.stationId, granularity);
+      setDataAvailability(availability);
+      
       toast({
         title: "Weather Data Loaded",
         description: `Retrieved ${data.length} records from ${nearestStation.name}`,
@@ -78,7 +92,7 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
       console.error('Weather fetch error:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch weather data. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to fetch weather data. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -142,15 +156,19 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
             />
           </div>
           
-          <div>
-            <Label htmlFor="endDate">End Date</Label>
-            <Input
-              id="endDate"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
+           <div>
+             <Label htmlFor="endDate">End Date</Label>
+             <Input
+               id="endDate"
+               type="date"
+               value={endDate}
+               max={new Date(Date.now() - 86400000).toISOString().split('T')[0]} // Yesterday (most recent data)
+               onChange={(e) => setEndDate(e.target.value)}
+             />
+             <p className="text-xs text-muted-foreground mt-1">
+               Latest data is typically 1-2 days behind
+             </p>
+           </div>
           
           <div>
             <Label htmlFor="granularity">Granularity</Label>
@@ -164,17 +182,69 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
               </SelectContent>
             </Select>
           </div>
-          
-          <div className="lg:col-span-5 flex gap-2">
-            <Button 
-              onClick={fetchWeatherAnalysis} 
-              disabled={loading || !location || !startDate || !endDate}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              {loading ? 'Analyzing...' : 'Analyze Weather Patterns'}
-            </Button>
-          </div>
+           
+           <div className="lg:col-span-5 flex flex-wrap gap-2">
+             <Button 
+               onClick={fetchWeatherAnalysis} 
+               disabled={loading || !location || !startDate || !endDate}
+               className="flex items-center gap-2"
+             >
+               <Download className="w-4 h-4" />
+               {loading ? 'Analyzing...' : 'Analyze Weather Patterns'}
+             </Button>
+             
+             {/* Quick access buttons for common date ranges */}
+             <Button 
+               variant="outline" 
+               size="sm"
+               onClick={() => {
+                 const today = new Date();
+                 const sevenDaysAgo = new Date(today);
+                 sevenDaysAgo.setDate(today.getDate() - 7);
+                 const yesterday = new Date(today);
+                 yesterday.setDate(today.getDate() - 1);
+                 
+                 setStartDate(sevenDaysAgo.toISOString().split('T')[0]);
+                 setEndDate(yesterday.toISOString().split('T')[0]);
+               }}
+             >
+               Last 7 Days
+             </Button>
+             
+             <Button 
+               variant="outline" 
+               size="sm"
+               onClick={() => {
+                 const today = new Date();
+                 const thirtyDaysAgo = new Date(today);
+                 thirtyDaysAgo.setDate(today.getDate() - 30);
+                 const yesterday = new Date(today);
+                 yesterday.setDate(today.getDate() - 1);
+                 
+                 setStartDate(thirtyDaysAgo.toISOString().split('T')[0]);
+                 setEndDate(yesterday.toISOString().split('T')[0]);
+               }}
+             >
+               Last 30 Days
+             </Button>
+             
+             <Button 
+               variant="outline" 
+               size="sm"
+               onClick={() => {
+                 const today = new Date();
+                 const currentYear = today.getFullYear();
+                 const lastYear = currentYear - 1;
+                 const yesterday = new Date(today);
+                 yesterday.setDate(today.getDate() - 1);
+                 
+                 setStartDate(`${lastYear}-01-01`);
+                 setEndDate(yesterday.toISOString().split('T')[0]);
+               }}
+             >
+               Last Year
+             </Button>
+           </div>
         </CardContent>
       </Card>
 
@@ -188,11 +258,30 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
                 <p className="text-sm text-muted-foreground">
                   Station ID: {station.stationId} | Elevation: {station.elevation}m
                 </p>
-                {station.dataStartDate && station.dataEndDate && (
-                  <p className="text-sm text-muted-foreground">
-                    Data available: {new Date(station.dataStartDate).getFullYear()} - {new Date(station.dataEndDate).getFullYear()}
-                  </p>
-                )}
+               {station.dataStartDate && station.dataEndDate && (
+                 <p className="text-sm text-muted-foreground">
+                   Data available: {new Date(station.dataStartDate).getFullYear()} - {new Date(station.dataEndDate).getFullYear()}
+                 </p>
+               )}
+               {dataAvailability && (
+                 <div className="flex flex-wrap gap-2 mt-2">
+                   <span className={`px-2 py-1 rounded-full text-xs ${
+                     dataAvailability.hasRecentData ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                   }`}>
+                     {dataAvailability.hasRecentData ? 'Recent data available' : 'Limited recent data'}
+                   </span>
+                   {dataAvailability.lastRecordDate && (
+                     <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                       Latest: {new Date(dataAvailability.lastRecordDate).toLocaleDateString()}
+                     </span>
+                   )}
+                   {dataAvailability.dataLatency !== null && (
+                     <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                       {dataAvailability.dataLatency} days behind
+                     </span>
+                   )}
+                 </div>
+               )}
               </div>
               <div className="text-right text-sm text-muted-foreground">
                 <p>{station.latitude.toFixed(4)}°N, {station.longitude.toFixed(4)}°W</p>

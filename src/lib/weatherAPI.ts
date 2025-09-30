@@ -102,10 +102,40 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 /**
+ * Get the most recent date with available data (typically 1-2 days behind current date)
+ * 
+ * @returns string Date in YYYY-MM-DD format
+ */
+export function getMostRecentDataDate(): string {
+  const date = new Date();
+  date.setDate(date.getDate() - 1); // Yesterday - most weather data is 1 day behind
+  return date.toISOString().split('T')[0];
+}
+
+/**
+ * Get suggested date range for accessing current data
+ * 
+ * @param daysBack Number of days to go back from most recent data
+ * @returns Object with startDate and endDate
+ */
+export function getSuggestedDateRange(daysBack: number = 30): { startDate: string; endDate: string } {
+  const endDate = getMostRecentDataDate();
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - daysBack);
+  
+  return {
+    startDate: startDate.toISOString().split('T')[0],
+    endDate
+  };
+}
+
+/**
  * Find the nearest weather station to given coordinates
  * 
  * @param latitude Target latitude
  * @param longitude Target longitude
+ * @param startDate Start date for data availability check (optional)
+ * @param endDate End date for data availability check (optional)
  * @param radiusKm Search radius in kilometers (default: 100)
  * @returns Promise<WeatherStation> Nearest weather station
  */
@@ -199,6 +229,7 @@ export async function fetchNearestWeatherStation(
 
 /**
  * Fetch weather data for a specific station and date range
+ * Automatically handles data availability and provides helpful error messages
  * 
  * @param stationId Weather station ID
  * @param startDate Start date in YYYY-MM-DD format
@@ -213,6 +244,20 @@ export async function fetchWeatherData(
   granularity: 'daily' | 'hourly' = 'daily'
 ): Promise<WeatherData[]> {
   try {
+    // Validate date range
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    const mostRecent = new Date(getMostRecentDataDate());
+    
+    if (end > mostRecent) {
+      console.warn(`End date ${endDate} is beyond most recent available data. Using ${getMostRecentDataDate()} instead.`);
+      endDate = getMostRecentDataDate();
+    }
+    
+    if (start > end) {
+      throw new Error('Start date must be before end date');
+    }
     // Format datetime for API (ISO 8601 interval)
     const startDateTime = `${startDate} 00:00:00`;
     const endDateTime = `${endDate} 23:59:59`;
@@ -223,8 +268,13 @@ export async function fetchWeatherData(
     
     const url = `${BASE_URL}/collections/${collection}/items?datetime=${datetimeInterval}&STN_ID=${stationId}&sortby=LOCAL_DATE&limit=10000`;
     
+    console.log(`Fetching ${granularity} weather data for station ${stationId} from ${startDate} to ${endDate}`);
+    
     const response = await fetch(url);
     if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`No ${granularity} data available for station ${stationId} in the requested date range. Try adjusting your date range or granularity.`);
+      }
       throw new Error(`Weather data API error: ${response.status} ${response.statusText}`);
     }
     
@@ -494,4 +544,43 @@ export function calculateWeatherStatistics(weatherData: WeatherData[]) {
     } : null,
     totalObservations: weatherData.length
   };
+}
+
+/**
+ * Check data availability for a station across different date ranges
+ * 
+ * @param stationId Weather station ID
+ * @param granularity 'daily' or 'hourly'
+ * @returns Promise with data availability information
+ */
+export async function checkDataAvailability(stationId: string, granularity: 'daily' | 'hourly' = 'daily') {
+  try {
+    const recentRange = getSuggestedDateRange(7); // Last 7 days
+    const monthRange = getSuggestedDateRange(30); // Last 30 days
+    
+    // Check recent data availability
+    const recentData = await fetchWeatherData(stationId, recentRange.startDate, recentRange.endDate, granularity);
+    const monthlyData = await fetchWeatherData(stationId, monthRange.startDate, monthRange.endDate, granularity);
+    
+    return {
+      hasRecentData: recentData.length > 0,
+      recentDataCount: recentData.length,
+      monthlyDataCount: monthlyData.length,
+      lastRecordDate: recentData.length > 0 ? recentData[recentData.length - 1].date : null,
+      mostRecentPossible: getMostRecentDataDate(),
+      dataLatency: recentData.length > 0 ? 
+        Math.floor((new Date().getTime() - new Date(recentData[recentData.length - 1].date).getTime()) / (1000 * 60 * 60 * 24)) : null
+    };
+  } catch (error) {
+    console.error('Error checking data availability:', error);
+    return {
+      hasRecentData: false,
+      recentDataCount: 0,
+      monthlyDataCount: 0,
+      lastRecordDate: null,
+      mostRecentPossible: getMostRecentDataDate(),
+      dataLatency: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
 }
