@@ -56,8 +56,8 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
 
     setLoading(true);
     try {
-      // Find nearest weather station
-      const nearestStation = await fetchNearestWeatherStation(location.lat, location.lng);
+      // Find nearest weather station with data in the requested date range
+      const nearestStation = await fetchNearestWeatherStation(location.lat, location.lng, startDate, endDate);
       setStation(nearestStation);
 
       // Fetch weather data
@@ -188,6 +188,11 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
                 <p className="text-sm text-muted-foreground">
                   Station ID: {station.stationId} | Elevation: {station.elevation}m
                 </p>
+                {station.dataStartDate && station.dataEndDate && (
+                  <p className="text-sm text-muted-foreground">
+                    Data available: {new Date(station.dataStartDate).getFullYear()} - {new Date(station.dataEndDate).getFullYear()}
+                  </p>
+                )}
               </div>
               <div className="text-right text-sm text-muted-foreground">
                 <p>{station.latitude.toFixed(4)}°N, {station.longitude.toFixed(4)}°W</p>

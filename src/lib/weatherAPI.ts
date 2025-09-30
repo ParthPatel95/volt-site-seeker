@@ -18,6 +18,8 @@ export interface WeatherStation {
   longitude: number;
   elevation: number;
   distance?: number; // Distance from query point in km
+  dataStartDate?: string; // First available date for data
+  dataEndDate?: string; // Last available date for data
 }
 
 export interface WeatherData {
@@ -65,6 +67,8 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 export async function fetchNearestWeatherStation(
   latitude: number, 
   longitude: number, 
+  startDate?: string,
+  endDate?: string,
   radiusKm: number = 100
 ): Promise<WeatherStation> {
   try {
@@ -92,7 +96,7 @@ export async function fetchNearestWeatherStation(
       throw new Error('No weather stations found in the specified area');
     }
     
-    // Find the nearest station
+    // Find the nearest station with data in the requested date range
     let nearestStation: WeatherStation | null = null;
     let minDistance = Infinity;
     
@@ -102,6 +106,20 @@ export async function fetchNearestWeatherStation(
       
       // Skip stations without required data
       if (!props.STN_ID || !props.STATION_NAME || !coords) continue;
+      
+      // Check if station has daily data available
+      if (!props.DLY_FIRST_DATE || !props.DLY_LAST_DATE) continue;
+      
+      // If date range is specified, check if station has data in that range
+      if (startDate && endDate) {
+        const stationStart = new Date(props.DLY_FIRST_DATE);
+        const stationEnd = new Date(props.DLY_LAST_DATE);
+        const requestStart = new Date(startDate);
+        const requestEnd = new Date(endDate);
+        
+        // Skip stations that don't overlap with requested date range
+        if (stationEnd < requestStart || stationStart > requestEnd) continue;
+      }
       
       const stationLat = coords[1];
       const stationLon = coords[0];
@@ -116,13 +134,15 @@ export async function fetchNearestWeatherStation(
           latitude: stationLat,
           longitude: stationLon,
           elevation: props.ELEVATION || 0,
-          distance: distance
+          distance: distance,
+          dataStartDate: props.DLY_FIRST_DATE,
+          dataEndDate: props.DLY_LAST_DATE
         };
       }
     }
     
     if (!nearestStation) {
-      throw new Error('No valid weather stations found');
+      throw new Error(`No weather stations found with data coverage in the specified area. Try expanding your search radius or adjusting your date range.`);
     }
     
     return nearestStation;
