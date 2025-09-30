@@ -58,6 +58,75 @@ serve(async (req) => {
       
       console.log(`Yearly date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+    } else if (timeframe === 'historical-10year') {
+      // Fetch real 10-year historical data from AESO
+      console.log('Fetching 10-year real historical data from AESO API...');
+      const currentYear = new Date().getFullYear();
+      const historicalYearsData = [];
+      
+      // Fetch data for each of the past 10 years
+      for (let yearOffset = 9; yearOffset >= 0; yearOffset--) {
+        const year = currentYear - yearOffset;
+        const yearStartDate = new Date(year, 0, 1); // January 1st
+        const yearEndDate = new Date(year, 11, 31, 23, 59, 59); // December 31st
+        
+        try {
+          console.log(`Fetching real AESO data for year ${year}...`);
+          const yearData = await fetchAESOHistoricalData(yearStartDate, yearEndDate, apiKey);
+          
+          if (yearData.length > 0) {
+            const yearlyStats = processHistoricalData(yearData, 'yearly');
+            historicalYearsData.push({
+              year,
+              average: Math.round(yearlyStats.statistics.average * 100) / 100,
+              peak: Math.round(yearlyStats.statistics.peak * 100) / 100,
+              low: Math.round(yearlyStats.statistics.low * 100) / 100,
+              volatility: Math.round(yearlyStats.statistics.volatility * 100) / 100,
+              dataPoints: yearData.length,
+              isReal: true
+            });
+            console.log(`Year ${year}: Avg=${yearlyStats.statistics.average.toFixed(2)} CAD/MWh (${yearData.length} data points)`);
+          } else {
+            console.log(`No data available for year ${year}`);
+            historicalYearsData.push({
+              year,
+              average: null,
+              peak: null,
+              low: null,
+              volatility: null,
+              dataPoints: 0,
+              isReal: false
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching data for year ${year}:`, error);
+          historicalYearsData.push({
+            year,
+            average: null,
+            peak: null,
+            low: null,
+            volatility: null,
+            dataPoints: 0,
+            isReal: false,
+            error: error.message
+          });
+        }
+      }
+      
+      return new Response(
+        JSON.stringify({
+          historicalYears: historicalYearsData,
+          totalYears: historicalYearsData.length,
+          realDataYears: historicalYearsData.filter(y => y.isReal).length,
+          lastUpdated: new Date().toISOString()
+        }), 
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
     }
 
     // Validate we have data

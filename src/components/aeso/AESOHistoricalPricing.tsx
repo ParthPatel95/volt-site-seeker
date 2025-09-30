@@ -1150,13 +1150,22 @@ export function AESOHistoricalPricing() {
           {/* Historical 10-Year Comparison Analysis */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-purple-600" />
-                10-Year Historical Comparison & Trend Analysis
-              </CardTitle>
-               <p className="text-sm text-muted-foreground">
-                Compare current 12-month performance against historical data at 95% uptime levels
-               </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">10-Year Real AESO Historical Data Analysis</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Real historical price data from AESO API (95% uptime analysis)
+                  </p>
+                </div>
+                <Button 
+                  onClick={fetchRealHistoricalData} 
+                  disabled={loadingHistorical}
+                  variant="outline"
+                  size="sm"
+                >
+                  {loadingHistorical ? "Fetching..." : "Refresh Data"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {(() => {
@@ -1211,41 +1220,54 @@ export function AESOHistoricalPricing() {
                 
                 return (
                   <div className="space-y-6">
-                    {/* Key Metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold text-blue-600">
-                            {priceIncrease.toFixed(1)}%
-                          </div>
-                          <p className="text-xs text-muted-foreground">10-Year Price Growth</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold text-orange-600">
-                            {averageVolatility.toFixed(1)}%
-                          </div>
-                          <p className="text-xs text-muted-foreground">Average Volatility</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className={`text-2xl font-bold ${currentVsAverage > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {currentVsAverage > 0 ? '+' : ''}{currentVsAverage.toFixed(1)}%
-                          </div>
-                          <p className="text-xs text-muted-foreground">vs 10-Yr Average</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold text-purple-600">
-                            {tenYearAverage.toFixed(1)}
-                          </div>
-                          <p className="text-xs text-muted-foreground">10-Yr Avg (CA$/MWh)</p>
-                        </CardContent>
-                      </Card>
-                    </div>
+                    {/* Loading State */}
+                    {loadingHistorical && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                          <span className="text-blue-800 font-medium">Fetching real AESO historical data...</span>
+                        </div>
+                        <p className="text-blue-600 text-sm mt-1">This may take a moment as we retrieve 10 years of real market data</p>
+                      </div>
+                    )}
+                    
+                    {/* Real Data Status */}
+                    {historicalData && (
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-green-600">
+                              {realDataYears.length}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Years of Real Data</p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {tenYearGrowth.toFixed(1)}%
+                            </div>
+                            <p className="text-xs text-muted-foreground">Historical Growth</p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-orange-600">
+                              {averageVolatility.toFixed(1)}%
+                            </div>
+                            <p className="text-xs text-muted-foreground">Avg Volatility</p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-purple-600">
+                              {currentAverage.toFixed(1)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Current Avg (CAD/MWh)</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
                     
                     {/* Historical Trend Charts */}
                     <div className="space-y-6">
