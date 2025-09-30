@@ -65,18 +65,19 @@ const ROLES = [
   { value: 'viewer', label: 'Viewer', description: 'Read-only access' }
 ];
 
-const PERMISSIONS: Permission[] = [
-  { id: 'users.read', name: 'View Users', description: 'Can view user information', category: 'Users' },
-  { id: 'users.write', name: 'Manage Users', description: 'Can create and edit users', category: 'Users' },
-  { id: 'users.delete', name: 'Delete Users', description: 'Can delete user accounts', category: 'Users' },
-  { id: 'analytics.read', name: 'View Analytics', description: 'Can view analytics dashboards', category: 'Analytics' },
-  { id: 'analytics.export', name: 'Export Analytics', description: 'Can export analytics data', category: 'Analytics' },
-  { id: 'reports.read', name: 'View Reports', description: 'Can view generated reports', category: 'Reports' },
-  { id: 'reports.create', name: 'Create Reports', description: 'Can create new reports', category: 'Reports' },
-  { id: 'listings.read', name: 'View Listings', description: 'Can view all listings', category: 'Listings' },
-  { id: 'listings.write', name: 'Manage Listings', description: 'Can create and edit listings', category: 'Listings' },
-  { id: 'documents.read', name: 'View Documents', description: 'Can view documents', category: 'Documents' },
-  { id: 'documents.write', name: 'Manage Documents', description: 'Can upload and manage documents', category: 'Documents' }
+// Feature permissions based on actual navigation items
+const FEATURE_PERMISSIONS: Permission[] = [
+  { id: 'feature.dashboard', name: 'Dashboard', description: 'Access to main dashboard', category: 'Features' },
+  { id: 'feature.aeso-market-hub', name: 'AESO Market Hub', description: 'Access to AESO Market Hub', category: 'Features' },
+  { id: 'feature.ercot-market-hub', name: 'ERCOT Market Hub', description: 'Access to ERCOT Market Hub', category: 'Features' },
+  { id: 'feature.energy-rates', name: 'Energy Rates', description: 'Access to Energy Rates', category: 'Features' },
+  { id: 'feature.industry-intelligence', name: 'Industry Intelligence', description: 'Access to Industry Intelligence', category: 'Features' },
+  { id: 'feature.corporate-intelligence', name: 'Corporate Intelligence', description: 'Access to Corporate Intelligence', category: 'Features' },
+  { id: 'feature.idle-industry-scanner', name: 'Idle Industry Scanner', description: 'Access to Idle Industry Scanner', category: 'Features' },
+  { id: 'feature.power-infrastructure', name: 'Power Infrastructure', description: 'Access to Power Infrastructure', category: 'Features' },
+  { id: 'feature.btc-roi-lab', name: 'BTC Mining ROI Lab', description: 'Access to BTC Mining ROI Lab', category: 'Features' },
+  { id: 'feature.advanced-analytics', name: 'Advanced Analytics', description: 'Access to Advanced Analytics', category: 'Features' },
+  { id: 'feature.user-management', name: 'User Management', description: 'Access to User Management (Admin Only)', category: 'Features' }
 ];
 
 export function UserManagementSystem() {
@@ -152,11 +153,15 @@ export function UserManagementSystem() {
     setLoading(true);
     
     try {
-      // First create the auth user
+      // Create auth user without email verification
+      const temporaryPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userForm.email,
-        password: Math.random().toString(36).slice(-8), // Temporary password
-        email_confirm: true
+        password: temporaryPassword,
+        email_confirm: true, // Auto-confirm email
+        user_metadata: {
+          full_name: userForm.full_name
+        }
       });
 
       if (authError) throw authError;
@@ -371,7 +376,7 @@ export function UserManagementSystem() {
 
   const getPermissionsByCategory = () => {
     const categories: { [key: string]: Permission[] } = {};
-    PERMISSIONS.forEach(permission => {
+    FEATURE_PERMISSIONS.forEach(permission => {
       if (!categories[permission.category]) {
         categories[permission.category] = [];
       }
@@ -379,6 +384,24 @@ export function UserManagementSystem() {
     });
     return categories;
   };
+
+  // Only allow admin@voltscout.com to access user management
+  if (currentUser?.email !== 'admin@voltscout.com') {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              You don't have permission to access User Management. This feature is restricted to administrators only.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

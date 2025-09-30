@@ -33,6 +33,7 @@ import {
   Gavel
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -50,21 +51,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsOpen
 }) => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const { hasPermission } = usePermissions();
 
   const navigationItems = [
-    { path: '/app', icon: Home, label: 'Dashboard' },
-    { path: '/app/aeso-market-hub', icon: MapPin, label: 'AESO Market Hub' },
-    { path: '/app/ercot-market-hub', icon: Zap, label: 'ERCOT Market Hub' },
-    { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates' },
-    { path: '/app/industry-intelligence', icon: TrendingUp, label: 'Industry Intelligence' },
-    { path: '/app/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence' },
-    { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner' },
-    { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure' },
-    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab' },
-    { path: '/app/advanced-analytics', icon: BarChart3, label: 'Advanced Analytics' },
-    { path: '/app/users', icon: Users, label: 'User Management' }
+    { path: '/app', icon: Home, label: 'Dashboard', permission: 'feature.dashboard' },
+    { path: '/app/aeso-market-hub', icon: MapPin, label: 'AESO Market Hub', permission: 'feature.aeso-market-hub' },
+    { path: '/app/ercot-market-hub', icon: Zap, label: 'ERCOT Market Hub', permission: 'feature.ercot-market-hub' },
+    { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates', permission: 'feature.energy-rates' },
+    { path: '/app/industry-intelligence', icon: TrendingUp, label: 'Industry Intelligence', permission: 'feature.industry-intelligence' },
+    { path: '/app/corporate-intelligence', icon: Building2, label: 'Corporate Intelligence', permission: 'feature.corporate-intelligence' },
+    { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner', permission: 'feature.idle-industry-scanner' },
+    { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure', permission: 'feature.power-infrastructure' },
+    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab', permission: 'feature.btc-roi-lab' },
+    { path: '/app/advanced-analytics', icon: BarChart3, label: 'Advanced Analytics', permission: 'feature.advanced-analytics' },
+    { path: '/app/users', icon: Users, label: 'User Management', permission: 'feature.user-management' }
   ];
+
+  // Filter navigation items based on user permissions
+  const filteredNavigationItems = navigationItems.filter(item => 
+    hasPermission(item.permission)
+  );
 
   const handleSignOut = async () => {
     await signOut();
@@ -132,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <nav className={`flex-1 p-1 sm:p-2 space-y-0.5 sm:space-y-1 overflow-y-auto min-w-0 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
-        {navigationItems.map((item) => {
+        {filteredNavigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
           
