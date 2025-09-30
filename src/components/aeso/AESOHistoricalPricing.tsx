@@ -966,6 +966,197 @@ export function AESOHistoricalPricing() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Strike Price Analysis Section - 30 Day */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-orange-600" />
+                    Strike Price Analysis by Uptime Level
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Energy costs and strike prices for different operational uptime percentages over the last 30 days
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                if (!monthlyData?.chartData || !monthlyData?.statistics) return (
+                  <div className="flex items-center justify-center h-32 text-muted-foreground">
+                    <div className="text-center">
+                      <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>Loading real AESO market data...</p>
+                    </div>
+                  </div>
+                );
+                
+                // Use REAL AESO data
+                const uptimeLevels = [85, 90, 95, 97];
+                const realBaseAverage = monthlyData.statistics.average;
+                const transmissionCost = parseFloat(transmissionAdder) || 11.63;
+                
+                const uptimeAnalysis = uptimeLevels.map(uptime => {
+                  const uptimeMultiplier = uptime / 100;
+                  
+                  const strikePrice = realBaseAverage / uptimeMultiplier;
+                  const allInStrikePrice = strikePrice + transmissionCost;
+                  
+                  const totalMonthlyHours = 30 * 24;
+                  const monthlyOperatingHours = totalMonthlyHours * (uptime / 100);
+                  const monthlyShutdownHours = totalMonthlyHours - monthlyOperatingHours;
+                  
+                  const avgOperatingPrice = realBaseAverage * 0.9;
+                  const monthlyMWh = monthlyOperatingHours;
+                  const monthlyCostCAD = (avgOperatingPrice + transmissionCost) * monthlyMWh;
+                  
+                  return {
+                    uptime,
+                    strikePrice: strikePrice.toFixed(2),
+                    allInStrikePrice: allInStrikePrice.toFixed(2),
+                    monthlyOperatingHours: monthlyOperatingHours.toFixed(0),
+                    monthlyShutdownHours: monthlyShutdownHours.toFixed(0),
+                    monthlyCostCAD: monthlyCostCAD.toFixed(0)
+                  };
+                });
+                
+                return (
+                  <div className="space-y-6">
+                    {/* Two-Column Layout */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                      {/* Strike Price Table */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg flex items-center gap-2">
+                          <Calculator className="w-5 h-5 text-orange-600" />
+                          Strike Prices & Monthly Costs (1 MW load)
+                        </h4>
+                        
+                        <div className="overflow-x-auto rounded-lg border">
+                          <table className="w-full min-w-[500px]">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {uptimeAnalysis.map((analysis, index) => (
+                                <tr key={analysis.uptime} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+                                  <td className="py-3 px-3 sm:px-4">
+                                    <Badge variant={analysis.uptime >= 95 ? 'default' : 'secondary'} className="font-medium text-xs">
+                                      {analysis.uptime}%
+                                    </Badge>
+                                  </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold">
+                                    CA${analysis.strikePrice}/MWh
+                                  </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm">
+                                    {analysis.monthlyOperatingHours}h
+                                  </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-amber-600 font-medium">
+                                    {analysis.monthlyShutdownHours}h
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground">
+                          *Based on real 30-day AESO average of CA${realBaseAverage.toFixed(2)}/MWh + transmission CA${transmissionAdder}/MWh
+                        </p>
+                      </div>
+                      
+                      {/* Uptime vs Cost Visualization */}
+                      <div className="space-y-6">
+                        <h4 className="font-semibold text-lg flex items-center gap-2">
+                          <BarChart3 className="w-5 h-5 text-blue-600" />
+                          Uptime vs Monthly Cost Analysis
+                        </h4>
+                        
+                        {/* Chart Container with explicit labels */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-center">
+                            <div className="w-full max-w-5xl">
+                              {/* Y-axis label */}
+                              <div className="flex items-center gap-4">
+                                <div className="writing-mode-vertical text-sm font-medium text-muted-foreground whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                                  Monthly Cost (CAD)
+                                </div>
+                                
+                                {/* Chart */}
+                                <div className="flex-1 rounded-lg border bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6">
+                                  <div className="w-full h-[400px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <LineChart data={uptimeAnalysis} margin={{ top: 20, right: 30, left: 60, bottom: 70 }}>
+                                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                        <XAxis 
+                                          dataKey="uptime" 
+                                          tick={{ fontSize: 12 }}
+                                          tickLine={{ stroke: 'currentColor' }}
+                                        />
+                                        <YAxis 
+                                          tick={{ fontSize: 12 }}
+                                          tickFormatter={(value) => `$${Math.round(value/1000)}k`}
+                                          tickLine={{ stroke: 'currentColor' }}
+                                        />
+                                        <Tooltip 
+                                          formatter={(value) => [`CA$${Number(value).toLocaleString()}`, 'Monthly Cost']}
+                                          labelFormatter={(label) => `${label}% Uptime`}
+                                          contentStyle={{ 
+                                            backgroundColor: 'hsl(var(--background))',
+                                            border: '1px solid hsl(var(--border))',
+                                            borderRadius: '8px',
+                                            fontSize: '12px'
+                                          }}
+                                        />
+                                        <Line 
+                                          type="monotone" 
+                                          dataKey="monthlyCostCAD" 
+                                          stroke="hsl(221, 83%, 53%)" 
+                                          strokeWidth={3}
+                                          dot={{ fill: 'hsl(221, 83%, 53%)', r: 5, strokeWidth: 2, stroke: '#ffffff' }}
+                                          activeDot={{ r: 7 }}
+                                        />
+                                      </LineChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* X-axis label */}
+                              <div className="text-center text-sm font-medium text-muted-foreground mt-2 pr-12">
+                                Uptime (%)
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm text-muted-foreground">
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Strike price = threshold above which to shut down
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Higher uptime = higher strike price (shut down less)
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Costs based on real AESO market average
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Yearly Data Tab - Completely Redesigned */}
