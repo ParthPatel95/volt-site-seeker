@@ -34,6 +34,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface User {
   id: string;
@@ -88,6 +96,17 @@ export function UserManagementSystem() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: '',
+    email: '',
+    full_name: '',
+    phone: '',
+    role: 'user' as string,
+    department: '',
+    permissions: [] as string[],
+    status: 'active' as 'active' | 'inactive' | 'suspended'
+  });
   const [userForm, setUserForm] = useState({
     email: '',
     full_name: '',
@@ -232,30 +251,99 @@ export function UserManagementSystem() {
     }
   };
 
-  const updateUser = async (userId: string, updates: Partial<User>) => {
+  const openEditDialog = (user: User) => {
+    setEditForm({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      phone: user.phone || '',
+      role: user.role,
+      department: user.department || '',
+      permissions: user.permissions,
+      status: user.status
+    });
+    setShowEditDialog(true);
+  };
+
+  const updateUser = async () => {
     try {
-      const { error } = await supabase
+      setLoading(true);
+
+      // Update profile
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          full_name: updates.full_name,
-          phone: updates.phone,
-          department: updates.department,
-          is_active: updates.status === 'active'
+          full_name: editForm.full_name,
+          phone: editForm.phone,
+          department: editForm.department,
+          is_active: editForm.status === 'active'
         })
-        .eq('id', userId);
+        .eq('id', editForm.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update role
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', editForm.id);
+
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: editForm.id,
+          role: editForm.role as 'admin' | 'viewer' | 'moderator' | 'user'
+        });
+
+      if (roleError) throw roleError;
+
+      // Update permissions
+      await updateUserPermissions(editForm.id, editForm.permissions);
       
       toast({
         title: "User updated",
         description: "User information has been updated successfully"
       });
       
+      setShowEditDialog(false);
       await fetchUsers();
     } catch (error: any) {
       console.error('Error updating user:', error);
       toast({
         title: "Error updating user",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetUserPassword = async (userId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { action: 'reset-password', userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Password reset",
+        description: "A password reset email has been sent to the user"
+      });
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Error resetting password",
         description: error.message,
         variant: "destructive"
       });
@@ -266,8 +354,29 @@ export function UserManagementSystem() {
     const user = users.find(u => u.id === userId);
     if (!user) return;
 
-    const newStatus = user.status === 'active' ? 'inactive' : 'active';
-    await updateUser(userId, { status: newStatus });
+    try {
+      const newStatus = user.status === 'active' ? 'inactive' : 'active';
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: newStatus === 'active' })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: `User ${newStatus === 'active' ? 'activated' : 'deactivated'}`,
+        description: "User status has been updated successfully"
+      });
+
+      await fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error updating status",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const deleteUser = async (userId: string) => {
@@ -504,8 +613,8 @@ export function UserManagementSystem() {
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditDialog(user)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
@@ -756,6 +865,153 @@ export function UserManagementSystem() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user details, permissions, and role
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  value={editForm.email}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-full-name">Full Name</Label>
+                <Input
+                  id="edit-full-name"
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="+1-555-0123"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-department">Department</Label>
+                <Input
+                  id="edit-department"
+                  value={editForm.department}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
+                  placeholder="IT"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Role</Label>
+                <Select value={editForm.role} onValueChange={(value) => setEditForm(prev => ({ ...prev, role: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map(role => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select value={editForm.status} onValueChange={(value: any) => setEditForm(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <Button 
+                variant="outline" 
+                onClick={() => resetUserPassword(editForm.id)}
+                className="w-full"
+              >
+                <Lock className="w-4 h-4 mr-2" />
+                Send Password Reset Email
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Permissions</Label>
+              {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => (
+                <div key={category} className="space-y-2">
+                  <h4 className="font-medium text-sm">{category}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-4">
+                    {permissions.map((permission) => (
+                      <div key={permission.id} className="flex items-center space-x-2">
+                        <Switch
+                          id={`edit-${permission.id}`}
+                          checked={editForm.permissions.includes(permission.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setEditForm(prev => ({ 
+                                ...prev, 
+                                permissions: [...prev.permissions, permission.id] 
+                              }));
+                            } else {
+                              setEditForm(prev => ({ 
+                                ...prev, 
+                                permissions: prev.permissions.filter(p => p !== permission.id) 
+                              }));
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`edit-${permission.id}`} className="text-sm">
+                          {permission.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={updateUser} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

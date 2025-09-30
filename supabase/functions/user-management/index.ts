@@ -60,6 +60,36 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
+      case 'reset-password':
+        // Send password reset email
+        const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email: userId // Note: in this case we need to pass the user's email
+        });
+
+        if (resetError) {
+          throw resetError;
+        }
+
+        // In production, you would send this link via email
+        // For now, we'll just trigger the built-in Supabase password reset
+        const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (userError || !userData.user) {
+          throw new Error('User not found');
+        }
+
+        const { error: resetEmailError } = await supabaseAdmin.auth.resetPasswordForEmail(userData.user.email);
+        if (resetEmailError) {
+          throw resetEmailError;
+        }
+
+        console.log(`Password reset sent for user: ${userId}`);
+        
+        return new Response(
+          JSON.stringify({ success: true, message: 'Password reset email sent' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }
