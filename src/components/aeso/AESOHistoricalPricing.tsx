@@ -1123,31 +1123,31 @@ export function AESOHistoricalPricing() {
                           Strike Prices & Monthly Costs (1 MW load)
                         </h4>
                         
-                        <div className="overflow-hidden rounded-lg border">
-                          <table className="w-full">
+                        <div className="overflow-x-auto rounded-lg border">
+                          <table className="w-full min-w-[500px]">
                             <thead className="bg-muted/50">
                               <tr>
-                                <th className="text-left py-3 px-4 font-semibold text-sm">Uptime</th>
-                                <th className="text-right py-3 px-4 font-semibold text-sm">Strike Price</th>
-                                <th className="text-right py-3 px-4 font-semibold text-sm">Operating<br/>Hours</th>
-                                <th className="text-right py-3 px-4 font-semibold text-sm">Shutdown<br/>Hours</th>
+                                <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
                               </tr>
                             </thead>
                             <tbody>
                               {uptimeAnalysis.map((analysis, index) => (
                                 <tr key={analysis.uptime} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                                  <td className="py-3 px-4">
-                                    <Badge variant={analysis.uptime >= 95 ? 'default' : 'secondary'} className="font-medium">
+                                  <td className="py-3 px-3 sm:px-4">
+                                    <Badge variant={analysis.uptime >= 95 ? 'default' : 'secondary'} className="font-medium text-xs">
                                       {analysis.uptime}%
                                     </Badge>
                                   </td>
-                                  <td className="text-right py-3 px-4 font-mono text-sm font-semibold">
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold">
                                     CA${analysis.strikePrice}/MWh
                                   </td>
-                                  <td className="text-right py-3 px-4 font-mono text-sm">
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm">
                                     {analysis.monthlyOperatingHours}h
                                   </td>
-                                  <td className="text-right py-3 px-4 font-mono text-sm text-amber-600 font-medium">
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-amber-600 font-medium">
                                     {analysis.monthlyShutdownHours}h
                                   </td>
                                 </tr>
@@ -1162,57 +1162,83 @@ export function AESOHistoricalPricing() {
                       </div>
                       
                       {/* Uptime vs Cost Visualization */}
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <h4 className="font-semibold text-lg flex items-center gap-2">
                           <BarChart3 className="w-5 h-5 text-blue-600" />
                           Uptime vs Monthly Cost Analysis
                         </h4>
                         
-                        <div className="h-80 rounded-lg border bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 p-8">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={uptimeAnalysis} margin={{ top: 15, right: 40, left: 80, bottom: 60 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-                              <XAxis 
-                                dataKey="uptime" 
-                                label={{ value: 'Uptime (%)', position: 'insideBottom', offset: -20 }}
-                                tick={{ fontSize: 12 }}
-                                height={60}
-                              />
-                              <YAxis 
-                                label={{ value: 'Monthly Cost (CAD)', angle: -90, position: 'insideLeft', offset: 0 }}
-                                tick={{ fontSize: 12 }}
-                                width={80}
-                                tickFormatter={(value) => `$${Math.round(value/1000)}k`}
-                              />
-                              <Tooltip 
-                                formatter={(value, name) => [
-                                  `CA$${Number(value).toLocaleString()}`,
-                                  'Monthly Cost'
-                                ]}
-                                labelFormatter={(label) => `${label}% Uptime`}
-                                contentStyle={{ 
-                                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                                  border: '1px solid #e0e7ff',
-                                  borderRadius: '8px',
-                                  fontSize: '12px'
-                                }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="monthlyCostCAD" 
-                                stroke="#2563eb" 
-                                strokeWidth={4}
-                                dot={{ fill: '#2563eb', r: 6, strokeWidth: 2, stroke: '#ffffff' }}
-                                activeDot={{ r: 8, fill: '#1d4ed8' }}
-                              />
-                            </LineChart>
-                          </ResponsiveContainer>
+                        {/* Chart Container with explicit labels */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-center">
+                            <div className="w-full max-w-5xl">
+                              {/* Y-axis label */}
+                              <div className="flex items-center gap-4">
+                                <div className="writing-mode-vertical text-sm font-medium text-muted-foreground whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                                  Monthly Cost (CAD)
+                                </div>
+                                
+                                {/* Chart */}
+                                <div className="flex-1 rounded-lg border bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6">
+                                  <div className="w-full h-[400px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <LineChart data={uptimeAnalysis} margin={{ top: 20, right: 30, left: 60, bottom: 70 }}>
+                                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                        <XAxis 
+                                          dataKey="uptime" 
+                                          tick={{ fontSize: 12 }}
+                                          tickLine={{ stroke: 'currentColor' }}
+                                        />
+                                        <YAxis 
+                                          tick={{ fontSize: 12 }}
+                                          tickFormatter={(value) => `$${Math.round(value/1000)}k`}
+                                          tickLine={{ stroke: 'currentColor' }}
+                                        />
+                                        <Tooltip 
+                                          formatter={(value) => [`CA$${Number(value).toLocaleString()}`, 'Monthly Cost']}
+                                          labelFormatter={(label) => `${label}% Uptime`}
+                                          contentStyle={{ 
+                                            backgroundColor: 'hsl(var(--background))',
+                                            border: '1px solid hsl(var(--border))',
+                                            borderRadius: '8px',
+                                            fontSize: '12px'
+                                          }}
+                                        />
+                                        <Line 
+                                          type="monotone" 
+                                          dataKey="monthlyCostCAD" 
+                                          stroke="hsl(221, 83%, 53%)" 
+                                          strokeWidth={3}
+                                          dot={{ fill: 'hsl(221, 83%, 53%)', r: 5, strokeWidth: 2, stroke: '#ffffff' }}
+                                          activeDot={{ r: 7 }}
+                                        />
+                                      </LineChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* X-axis label */}
+                              <div className="text-center text-sm font-medium text-muted-foreground mt-2 pr-12">
+                                Uptime (%)
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         
-                        <div className="grid grid-cols-3 gap-3 text-center text-xs text-muted-foreground">
-                          <div>• Strike price = threshold above which to shut down</div>
-                          <div>• Higher uptime = higher strike price (shut down less)</div>
-                          <div>• Costs based on real AESO market average</div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm text-muted-foreground">
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Strike price = threshold above which to shut down
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Higher uptime = higher strike price (shut down less)
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Costs based on real AESO market average
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1245,77 +1271,92 @@ export function AESOHistoricalPricing() {
                 ) : (
                   <>
                     {/* Main Chart */}
-                    <div className="h-96 rounded-lg border bg-gradient-to-br from-gray-50/50 to-blue-50/50 dark:from-gray-950/20 dark:to-blue-950/20 p-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={yearlyData?.chartData || []} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-                          <XAxis 
-                            dataKey="month" 
-                            tick={{ fontSize: 12 }}
-                            axisLine={{ stroke: '#6b7280' }}
-                          />
-                          <YAxis 
-                            label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }}
-                            tick={{ fontSize: 12 }}
-                            tickFormatter={(value) => `$${Math.round(value)}`}
-                            axisLine={{ stroke: '#6b7280' }}
-                          />
-                          <Tooltip 
-                            content={({ active, payload, label }) => {
-                              if (!active || !payload || !payload.length) return null;
-                              return (
-                                <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                                  <p className="font-semibold text-sm">{label}</p>
-                                  {payload.map((entry, index) => (
-                                    <p key={index} style={{ color: entry.color }} className="text-sm">
-                                      {entry.name}: CA${Number(entry.value).toFixed(2)}/MWh
-                                    </p>
-                                  ))}
-                                </div>
-                              );
-                            }}
-                          />
-                          <Legend 
-                            wrapperStyle={{ paddingTop: '20px' }}
-                            iconType="line"
-                          />
-                          
-                          {/* Average Price Line */}
-                          <Line 
-                            type="monotone" 
-                            dataKey="average" 
-                            stroke="#2563eb" 
-                            name="Average Price"
-                            strokeWidth={3}
-                            dot={{ fill: '#2563eb', r: 4, strokeWidth: 2, stroke: '#ffffff' }}
-                            activeDot={{ r: 6, fill: '#1d4ed8' }}
-                          />
-                          
-                          {/* Peak Price Line */}
-                          <Line 
-                            type="monotone" 
-                            dataKey="peak" 
-                            stroke="#dc2626" 
-                            name="Peak Price"
-                            strokeWidth={2}
-                            strokeDasharray="8 4"
-                            dot={{ fill: '#dc2626', r: 3, strokeWidth: 2, stroke: '#ffffff' }}
-                            activeDot={{ r: 5, fill: '#b91c1c' }}
-                          />
-                          
-                          {/* 95% Uptime Strike Price - Single Reference Line */}
-                          <Line 
-                            type="monotone" 
-                            dataKey={() => (yearlyData?.statistics?.average || 60) * 1.075}
-                            stroke="#f59e0b" 
-                            name="95% Uptime Strike"
-                            strokeWidth={2}
-                            strokeDasharray="12 6"
-                            dot={false}
-                            activeDot={false}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                    <div className="w-full">
+                      <div className="flex items-center gap-4">
+                        <div className="hidden sm:block writing-mode-vertical text-sm font-medium text-muted-foreground whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                          Price (CA$/MWh)
+                        </div>
+                        
+                        <div className="flex-1 rounded-lg border bg-gradient-to-br from-gray-50/50 to-blue-50/50 dark:from-gray-950/20 dark:to-blue-950/20 p-4 sm:p-6">
+                          <div className="w-full h-[350px] sm:h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={yearlyData?.chartData || []} margin={{ top: 10, right: 10, left: 10, bottom: 50 }}>
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis 
+                                  dataKey="month" 
+                                  tick={{ fontSize: 11 }}
+                                  angle={-45}
+                                  textAnchor="end"
+                                  height={80}
+                                />
+                                <YAxis 
+                                  tick={{ fontSize: 11 }}
+                                  tickFormatter={(value) => `$${Math.round(value)}`}
+                                  width={50}
+                                />
+                                <Tooltip 
+                                  content={({ active, payload, label }) => {
+                                    if (!active || !payload || !payload.length) return null;
+                                    return (
+                                      <div className="bg-background border border-border rounded-lg shadow-lg p-3">
+                                        <p className="font-semibold text-sm mb-1">{label}</p>
+                                        {payload.map((entry, index) => (
+                                          <p key={index} style={{ color: entry.color }} className="text-xs">
+                                            {entry.name}: CA${Number(entry.value).toFixed(2)}/MWh
+                                          </p>
+                                        ))}
+                                      </div>
+                                    );
+                                  }}
+                                />
+                                <Legend 
+                                  wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }}
+                                  iconType="line"
+                                />
+                                
+                                {/* Average Price Line */}
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="average" 
+                                  stroke="hsl(221, 83%, 53%)" 
+                                  name="Average Price"
+                                  strokeWidth={2.5}
+                                  dot={{ fill: 'hsl(221, 83%, 53%)', r: 3, strokeWidth: 2, stroke: '#ffffff' }}
+                                  activeDot={{ r: 5 }}
+                                />
+                                
+                                {/* Peak Price Line */}
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="peak" 
+                                  stroke="hsl(0, 72%, 51%)" 
+                                  name="Peak Price"
+                                  strokeWidth={2}
+                                  strokeDasharray="6 3"
+                                  dot={{ fill: 'hsl(0, 72%, 51%)', r: 2, strokeWidth: 2, stroke: '#ffffff' }}
+                                  activeDot={{ r: 4 }}
+                                />
+                                
+                                {/* 95% Uptime Strike Price - Single Reference Line */}
+                                <Line 
+                                  type="monotone" 
+                                  dataKey={() => (yearlyData?.statistics?.average || 60) * 1.075}
+                                  stroke="hsl(38, 92%, 50%)" 
+                                  name="95% Uptime Strike"
+                                  strokeWidth={2}
+                                  strokeDasharray="8 4"
+                                  dot={false}
+                                  activeDot={false}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-center text-sm font-medium text-muted-foreground mt-2">
+                        Month
+                      </div>
                     </div>
 
                     {/* Seasonal Analysis */}
