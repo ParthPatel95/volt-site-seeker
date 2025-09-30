@@ -1074,15 +1074,12 @@ export function AESOHistoricalPricing() {
                 );
                 
                 // Use REAL AESO data
-                const uptimeLevels = [85, 90, 95, 96, 98];
+                const uptimeLevels = [85, 90, 95, 97];
                 const realBaseAverage = yearlyData.statistics.average;
                 const transmissionCost = parseFloat(transmissionAdder) || 11.63;
                 
                 const uptimeAnalysis = uptimeLevels.map(uptime => {
-                  const uptimeMultiplier = uptime === 85 ? 0.85 : 
-                                         uptime === 90 ? 0.90 : 
-                                         uptime === 95 ? 0.95 : 
-                                         uptime === 96 ? 0.96 : 0.98;
+                  const uptimeMultiplier = uptime / 100;
                   
                   const strikePrice = realBaseAverage / uptimeMultiplier;
                   const allInStrikePrice = strikePrice + transmissionCost;
