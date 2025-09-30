@@ -1,31 +1,37 @@
 project_id = "ktgosplhknmnyagxrgbe"
 
+# Public data endpoints - no authentication required
 [functions.aeso-historical-pricing]
 verify_jwt = false
 
 [functions.crypto-details]
 verify_jwt = false
 
-[functions.verify-email]
-verify_jwt = false
-
-[functions.voltmarket-chat]
-verify_jwt = false
-
-[functions.meta-proxy]
-verify_jwt = false
-
 [functions.energy-data-integration]
 verify_jwt = false
 
+[functions.get-mapbox-config]
+verify_jwt = false
+
+# Authentication required endpoints
 [functions.api-key-management]
 verify_jwt = true
 
 [functions.realdata-verified-sites]
-verify_jwt = false
+verify_jwt = true
 
 [functions.idle-industry-scanner]
-verify_jwt = false
+verify_jwt = true
 
 [functions.enhanced-verified-scanner]
-verify_jwt = false
+verify_jwt = true
+
+# Special endpoints - review these for your use case
+[functions.verify-email]
+verify_jwt = false  # Must be public for email verification to work
+
+[functions.voltmarket-chat]
+verify_jwt = true  # Requires authentication for user-specific chats
+
+[functions.meta-proxy]
+verify_jwt = true  # Requires authentication for proxy access

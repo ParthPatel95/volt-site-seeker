@@ -11,19 +11,10 @@ import {
   Layers,
   ZoomIn,
   ZoomOut,
-  Navigation
+  Navigation,
+  AlertCircle
 } from 'lucide-react';
-
-// Mapbox public token - using the token from Supabase secrets
-const getMapboxToken = () => {
-  // For now, return the hardcoded token, but in production this should come from env
-  return 'pk.eyJ1Ijoidm9sdHNjb3V0IiwiYSI6ImNtYnpqeWtmeDF5YjkycXB2MzQ3YWk0YzIifQ.YkeTxxJcGkgHTpt9miLk6A';
-};
-
-// Initialize mapbox
-if (typeof window !== 'undefined') {
-  mapboxgl.accessToken = getMapboxToken();
-}
+import { useMapboxConfig } from '@/hooks/useMapboxConfig';
 
 interface MapboxMapProps {
   height?: string;
@@ -48,9 +39,13 @@ export function EnhancedMapboxMap({
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentStyle, setCurrentStyle] = useState(mapStyle);
+  const { accessToken, loading: configLoading, error: configError } = useMapboxConfig();
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || !accessToken) return;
+
+    // Set Mapbox access token
+    mapboxgl.accessToken = accessToken;
 
     // Initialize map
     map.current = new mapboxgl.Map({
@@ -87,7 +82,7 @@ export function EnhancedMapboxMap({
     return () => {
       map.current?.remove();
     };
-  }, []);
+  }, [accessToken]);
 
   // Update map style when changed
   useEffect(() => {
@@ -169,6 +164,19 @@ export function EnhancedMapboxMap({
     }
   };
 
+  // Show configuration error
+  if (configError) {
+    return (
+      <div className={`w-full ${height} rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center`}>
+        <div className="text-center p-4">
+          <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-500" />
+          <p className="text-sm text-red-600 dark:text-red-400">Failed to load Mapbox configuration</p>
+          <p className="text-xs text-gray-500 mt-1">{configError}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       {/* Map Container */}
@@ -223,11 +231,13 @@ export function EnhancedMapboxMap({
       </div>
 
       {/* Loading Indicator */}
-      {!isLoaded && (
+      {(configLoading || !isLoaded) && (
         <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
           <div className="text-center">
             <Map className="w-8 h-8 mx-auto mb-2 animate-pulse" />
-            <p className="text-sm text-gray-600">Loading Mapbox...</p>
+            <p className="text-sm text-gray-600">
+              {configLoading ? 'Loading configuration...' : 'Loading Mapbox...'}
+            </p>
           </div>
         </div>
       )}
