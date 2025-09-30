@@ -976,36 +976,6 @@ export function AESOHistoricalPricing() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-yellow-600" />
-                  Peak Hours Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {monthlyData?.peakHours && (
-                  <div className="space-y-3">
-                    <div className="text-sm text-muted-foreground">
-                      Most expensive hours in the last 30 days:
-                    </div>
-                    {monthlyData.peakHours.slice(0, 5).map((peak, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                        <div>
-                          <span className="font-medium">{peak.date}</span>
-                          <span className="text-sm text-muted-foreground ml-2">{peak.hour}:00</span>
-                        </div>
-                        <Badge variant="destructive">
-                          {formatCurrency(peak.price)}/MWh
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
           <Card>
             <CardHeader>
