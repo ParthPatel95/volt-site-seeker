@@ -993,29 +993,38 @@ export function AESOHistoricalPricing() {
                   </div>
                 );
                 
-                // Use REAL AESO data
+                // Use REAL AESO data with strategic shutdown calculation
                 const uptimeLevels = [85, 90, 95, 97];
-                const realBaseAverage = monthlyData.statistics.average;
                 const transmissionCost = parseFloat(transmissionAdder) || 11.63;
                 
+                // Get all hourly prices from the raw data
+                const hourlyPrices = monthlyData.rawHourlyData?.map(h => h.price) || [];
+                
                 const uptimeAnalysis = uptimeLevels.map(uptime => {
-                  const uptimeMultiplier = uptime / 100;
-                  
-                  const strikePrice = realBaseAverage / uptimeMultiplier;
-                  const allInStrikePrice = strikePrice + transmissionCost;
-                  
-                  const totalMonthlyHours = 30 * 24;
-                  const monthlyOperatingHours = totalMonthlyHours * (uptime / 100);
+                  const totalMonthlyHours = hourlyPrices.length || 720;
+                  const monthlyOperatingHours = Math.floor(totalMonthlyHours * (uptime / 100));
                   const monthlyShutdownHours = totalMonthlyHours - monthlyOperatingHours;
                   
-                  const avgOperatingPrice = realBaseAverage * 0.9;
+                  // Sort prices and remove the most expensive hours (strategic shutdown)
+                  const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
+                  const operatingHourPrices = sortedPrices.slice(0, monthlyOperatingHours);
+                  
+                  // Calculate actual average energy price during operating hours
+                  const avgEnergyPrice = operatingHourPrices.reduce((sum, price) => sum + price, 0) / monthlyOperatingHours;
+                  
+                  // Strike price is the threshold above which we shut down
+                  const strikePrice = sortedPrices[monthlyOperatingHours - 1] || avgEnergyPrice;
+                  const allInStrikePrice = strikePrice + transmissionCost;
+                  
+                  // Monthly cost calculation
                   const monthlyMWh = monthlyOperatingHours;
-                  const monthlyCostCAD = (avgOperatingPrice + transmissionCost) * monthlyMWh;
+                  const monthlyCostCAD = (avgEnergyPrice + transmissionCost) * monthlyMWh;
                   
                   return {
                     uptime,
                     strikePrice: strikePrice.toFixed(2),
                     allInStrikePrice: allInStrikePrice.toFixed(2),
+                    avgEnergyPrice: avgEnergyPrice.toFixed(2),
                     monthlyOperatingHours: monthlyOperatingHours.toFixed(0),
                     monthlyShutdownHours: monthlyShutdownHours.toFixed(0),
                     monthlyCostCAD: monthlyCostCAD.toFixed(0)
@@ -1034,12 +1043,13 @@ export function AESOHistoricalPricing() {
                         </h4>
                         
                         <div className="overflow-x-auto rounded-lg border">
-                          <table className="w-full min-w-[700px]">
+                          <table className="w-full min-w-[800px]">
                             <thead className="bg-muted/50">
                               <tr>
                                 <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Final Price<br/>(¢/kWh)</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price<br/>(Threshold)</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Avg Energy<br/>Price</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">All-In<br/>(¢/kWh)</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Monthly<br/>Cost</th>
@@ -1053,11 +1063,14 @@ export function AESOHistoricalPricing() {
                                       {analysis.uptime}%
                                     </Badge>
                                   </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold">
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-orange-600">
                                     CA${analysis.strikePrice}/MWh
                                   </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-green-600">
+                                    CA${analysis.avgEnergyPrice}/MWh
+                                  </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-blue-600">
-                                    {(parseFloat(analysis.allInStrikePrice) / 10).toFixed(2)}¢
+                                    {((parseFloat(analysis.avgEnergyPrice) + parseFloat(transmissionAdder)) / 10).toFixed(2)}¢
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm">
                                     {analysis.monthlyOperatingHours}h
@@ -1075,7 +1088,7 @@ export function AESOHistoricalPricing() {
                         </div>
                         
                         <p className="text-xs text-muted-foreground">
-                          *Based on real 30-day AESO average of CA${realBaseAverage.toFixed(2)}/MWh + transmission CA${transmissionAdder}/MWh
+                          *Prices calculated by removing the most expensive hours during shutdowns. Strike Price = threshold above which to shut down. Avg Energy Price = actual cost during operating hours.
                         </p>
                       </div>
                       
@@ -1272,31 +1285,42 @@ export function AESOHistoricalPricing() {
                   </div>
                 );
                 
-                // Use REAL AESO data
+                // Use REAL AESO data with strategic shutdown calculation
                 const uptimeLevels = [85, 90, 95, 97];
-                const realBaseAverage = yearlyData.statistics.average;
                 const transmissionCost = parseFloat(transmissionAdder) || 11.63;
                 
+                // Get all hourly prices from the raw data (12 months worth)
+                const hourlyPrices = yearlyData.rawHourlyData?.map(h => h.price) || [];
+                
                 const uptimeAnalysis = uptimeLevels.map(uptime => {
-                  const uptimeMultiplier = uptime / 100;
-                  
-                  const strikePrice = realBaseAverage / uptimeMultiplier;
-                  const allInStrikePrice = strikePrice + transmissionCost;
-                  
-                  const totalMonthlyHours = 30 * 24;
-                  const monthlyOperatingHours = totalMonthlyHours * (uptime / 100);
+                  const totalMonthlyHours = hourlyPrices.length || 8760;
+                  const monthlyOperatingHours = Math.floor(totalMonthlyHours * (uptime / 100));
                   const monthlyShutdownHours = totalMonthlyHours - monthlyOperatingHours;
                   
-                  const avgOperatingPrice = realBaseAverage * 0.9;
-                  const monthlyMWh = monthlyOperatingHours;
-                  const monthlyCostCAD = (avgOperatingPrice + transmissionCost) * monthlyMWh;
+                  // Sort prices and remove the most expensive hours (strategic shutdown)
+                  const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
+                  const operatingHourPrices = sortedPrices.slice(0, monthlyOperatingHours);
+                  
+                  // Calculate actual average energy price during operating hours
+                  const avgEnergyPrice = operatingHourPrices.reduce((sum, price) => sum + price, 0) / monthlyOperatingHours;
+                  
+                  // Strike price is the threshold above which we shut down
+                  const strikePrice = sortedPrices[monthlyOperatingHours - 1] || avgEnergyPrice;
+                  const allInStrikePrice = strikePrice + transmissionCost;
+                  
+                  // Monthly cost calculation (normalized to 30 days)
+                  const normalizedHours = 720; // 30 days * 24 hours
+                  const normalizedOperatingHours = normalizedHours * (uptime / 100);
+                  const monthlyMWh = normalizedOperatingHours;
+                  const monthlyCostCAD = (avgEnergyPrice + transmissionCost) * monthlyMWh;
                   
                   return {
                     uptime,
                     strikePrice: strikePrice.toFixed(2),
                     allInStrikePrice: allInStrikePrice.toFixed(2),
-                    monthlyOperatingHours: monthlyOperatingHours.toFixed(0),
-                    monthlyShutdownHours: monthlyShutdownHours.toFixed(0),
+                    avgEnergyPrice: avgEnergyPrice.toFixed(2),
+                    monthlyOperatingHours: normalizedOperatingHours.toFixed(0),
+                    monthlyShutdownHours: (normalizedHours - normalizedOperatingHours).toFixed(0),
                     monthlyCostCAD: monthlyCostCAD.toFixed(0)
                   };
                 });
@@ -1313,12 +1337,13 @@ export function AESOHistoricalPricing() {
                         </h4>
                         
                         <div className="overflow-x-auto rounded-lg border">
-                          <table className="w-full min-w-[700px]">
+                          <table className="w-full min-w-[800px]">
                             <thead className="bg-muted/50">
                               <tr>
                                 <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Final Price<br/>(¢/kWh)</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price<br/>(Threshold)</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Avg Energy<br/>Price</th>
+                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">All-In<br/>(¢/kWh)</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
                                 <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Monthly<br/>Cost</th>
@@ -1332,11 +1357,14 @@ export function AESOHistoricalPricing() {
                                       {analysis.uptime}%
                                     </Badge>
                                   </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold">
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-orange-600">
                                     CA${analysis.strikePrice}/MWh
                                   </td>
+                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-green-600">
+                                    CA${analysis.avgEnergyPrice}/MWh
+                                  </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-blue-600">
-                                    {(parseFloat(analysis.allInStrikePrice) / 10).toFixed(2)}¢
+                                    {((parseFloat(analysis.avgEnergyPrice) + parseFloat(transmissionAdder)) / 10).toFixed(2)}¢
                                   </td>
                                   <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm">
                                     {analysis.monthlyOperatingHours}h
@@ -1354,7 +1382,7 @@ export function AESOHistoricalPricing() {
                         </div>
                         
                         <p className="text-xs text-muted-foreground">
-                          *Based on real 12-month AESO average of CA${realBaseAverage.toFixed(2)}/MWh + transmission CA${transmissionAdder}/MWh
+                          *Prices calculated by removing the most expensive hours during shutdowns. Strike Price = threshold above which to shut down. Avg Energy Price = actual cost during operating hours.
                         </p>
                       </div>
                       
