@@ -908,7 +908,7 @@ export function AESOHistoricalPricing() {
                   Optimized Pricing by Uptime
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Strategic shutdown during peak prices - showing actual avg cost
+                  Strategic shutdown during peak prices - showing actual avg cost in CAD & USD
                 </p>
               </CardHeader>
               <CardContent>
@@ -929,8 +929,10 @@ export function AESOHistoricalPricing() {
                     
                     return {
                       uptime,
-                      priceInCents: (allInPrice / 10).toFixed(2),
-                      avgEnergy: avgEnergyPrice.toFixed(2)
+                      priceInCentsCAD: (allInPrice / 10).toFixed(2),
+                      priceInCentsUSD: (convertCADtoUSD(allInPrice) / 10).toFixed(2),
+                      avgEnergyCAD: avgEnergyPrice.toFixed(2),
+                      avgEnergyUSD: convertCADtoUSD(avgEnergyPrice).toFixed(2)
                     };
                   });
                   
@@ -939,14 +941,31 @@ export function AESOHistoricalPricing() {
                       {quickAnalysis.map((item) => (
                         <div key={item.uptime} className="bg-muted/30 rounded-lg p-3 border border-border">
                           <div className="text-xs text-muted-foreground mb-1">{item.uptime}% Uptime</div>
-                          <div className="text-xl font-bold text-blue-600">
-                            {item.priceInCents}¢
+                          <div className="space-y-1">
+                            <div>
+                              <div className="text-lg font-bold text-blue-600">
+                                {item.priceInCentsCAD}¢
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                CAD per kWh
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold text-green-600">
+                                {item.priceInCentsUSD}¢
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                USD per kWh
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            per kWh (all-in)
-                          </div>
-                          <div className="text-xs text-green-600 font-medium mt-1">
-                            CA${item.avgEnergy}/MWh
+                          <div className="mt-2 pt-2 border-t border-border/50">
+                            <div className="text-xs text-muted-foreground">Energy only:</div>
+                            <div className="text-xs font-medium">
+                              <span className="text-orange-600">CA${item.avgEnergyCAD}</span>
+                              <span className="text-muted-foreground mx-1">/</span>
+                              <span className="text-green-600">US${item.avgEnergyUSD}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
