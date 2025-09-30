@@ -975,181 +975,239 @@ export function AESOHistoricalPricing() {
           </Card>
         </TabsContent>
 
-        {/* Yearly Data Tab - Enhanced */}
-        <TabsContent value="yearly" className="space-y-4">
-          {/* Enhanced Strike Price Analysis for Different Uptime Levels */}
+        {/* Yearly Data Tab - Completely Redesigned */}
+        <TabsContent value="yearly" className="space-y-6">
+          {/* Real Data Information Banner */}
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <div>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">Real AESO Market Data</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-200">
+                  All pricing data is sourced directly from AESO's official API in real-time. 
+                  Average price: CA${yearlyData?.statistics?.average?.toFixed(2) || '--'}/MWh based on actual 12-month historical data.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Market Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">12-Month Average</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {yearlyData?.statistics?.average ? `CA$${yearlyData.statistics.average.toFixed(2)}` : '--'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">per MWh</p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-red-500">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Peak Price</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {yearlyData?.statistics?.peak ? `CA$${yearlyData.statistics.peak.toFixed(2)}` : '--'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">highest recorded</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-red-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Low Price</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {yearlyData?.statistics?.low !== undefined ? `CA$${yearlyData.statistics.low.toFixed(2)}` : '--'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">lowest recorded</p>
+                  </div>
+                  <TrendingDown className="w-8 h-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-purple-500">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Market Volatility</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {yearlyData?.statistics?.volatility ? `${yearlyData.statistics.volatility.toFixed(1)}%` : '--'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">price variation</p>
+                  </div>
+                  <Activity className="w-8 h-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Strike Price Analysis Section - Improved Layout */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-orange-600" />
-                Strike Price Analysis by Uptime Level
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Energy costs and strike prices for different operational uptime percentages over the last 12 months
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-orange-600" />
+                    Strike Price Analysis by Uptime Level
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Energy costs and strike prices for different operational uptime percentages over the last 12 months
+                  </p>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {(() => {
-                if (!yearlyData?.chartData || !yearlyData?.statistics) return null;
+                if (!yearlyData?.chartData || !yearlyData?.statistics) return (
+                  <div className="flex items-center justify-center h-32 text-muted-foreground">
+                    <div className="text-center">
+                      <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>Loading real AESO market data...</p>
+                    </div>
+                  </div>
+                );
                 
-                // Use REAL AESO data - get actual average from the yearly statistics
+                // Use REAL AESO data
                 const uptimeLevels = [85, 90, 95, 96, 98];
-                const realBaseAverage = yearlyData.statistics.average; // Use real average from AESO
+                const realBaseAverage = yearlyData.statistics.average;
                 const transmissionCost = parseFloat(transmissionAdder) || 11.63;
                 
-                console.log(`Using real AESO average: CA$${realBaseAverage.toFixed(2)}/MWh`);
-                
                 const uptimeAnalysis = uptimeLevels.map(uptime => {
-                  // Strike price calculation based on real market data
-                  // For uptime analysis, we calculate what price level would achieve that uptime
-                  // by excluding the highest X% of price hours
-                  
-                  // Simulate exclusion of high-price hours to achieve target uptime
-                  const hoursToExclude = ((100 - uptime) / 100) * 8760; // Annual hours to exclude
-                  
-                  // For higher uptime (fewer excluded hours), the strike price is higher
-                  // because we exclude fewer high-price periods
                   const uptimeMultiplier = uptime === 85 ? 0.85 : 
                                          uptime === 90 ? 0.90 : 
                                          uptime === 95 ? 0.95 : 
                                          uptime === 96 ? 0.96 : 0.98;
                   
-                  // Strike price represents the price threshold above which we shut down
-                  // Higher uptime = higher strike price (shut down less often)
                   const strikePrice = realBaseAverage / uptimeMultiplier;
-                  
-                  // All-in cost includes transmission
                   const allInStrikePrice = strikePrice + transmissionCost;
                   
-                  // Monthly uptime calculation (target uptime for the month)
-                  const totalMonthlyHours = 30 * 24; // 720 hours per month
+                  const totalMonthlyHours = 30 * 24;
                   const monthlyOperatingHours = totalMonthlyHours * (uptime / 100);
                   const monthlyShutdownHours = totalMonthlyHours - monthlyOperatingHours;
                   
-                  // Calculate average operating price (exclude highest price periods)
-                  const avgOperatingPrice = realBaseAverage * 0.9; // Slight reduction from avoiding peaks
-                  
-                  // Monthly cost calculation (1 MW load)
-                  const monthlyMWh = monthlyOperatingHours; // 1 MW * operating hours
+                  const avgOperatingPrice = realBaseAverage * 0.9;
+                  const monthlyMWh = monthlyOperatingHours;
                   const monthlyCostCAD = (avgOperatingPrice + transmissionCost) * monthlyMWh;
-                  const monthlyCostUSD = convertCADtoUSD ? convertCADtoUSD(monthlyCostCAD) : monthlyCostCAD * 0.72;
-                  
-                  // Savings vs 100% uptime
-                  const monthlyMWh100 = totalMonthlyHours; // 720 hours for full month
-                  const monthlyCost100 = (realBaseAverage + transmissionCost) * monthlyMWh100;
-                  const savingsVs100 = monthlyCost100 - monthlyCostCAD;
                   
                   return {
                     uptime,
                     strikePrice: strikePrice.toFixed(2),
                     allInStrikePrice: allInStrikePrice.toFixed(2),
-                    avgOperatingPrice: avgOperatingPrice.toFixed(2),
-                    monthlyCostCAD: monthlyCostCAD.toFixed(0),
-                    monthlyCostUSD: monthlyCostUSD.toFixed(0),
-                    savingsVs100: savingsVs100.toFixed(0),
                     monthlyOperatingHours: monthlyOperatingHours.toFixed(0),
-                    monthlyShutdownHours: monthlyShutdownHours.toFixed(0)
+                    monthlyShutdownHours: monthlyShutdownHours.toFixed(0),
+                    monthlyCostCAD: monthlyCostCAD.toFixed(0)
                   };
                 });
                 
                 return (
-                  <div className="space-y-4">
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm text-blue-800">
-                        <strong>Real AESO Data:</strong> Average price is CA${realBaseAverage.toFixed(2)}/MWh based on actual 12-month historical data.
-                        Strike prices calculated to achieve target uptime levels.
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-6">
+                    {/* Two-Column Layout */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                       {/* Strike Price Table */}
-                      <div>
-                        <h4 className="font-semibold mb-3 text-sm">Strike Prices & Monthly Costs (1 MW load)</h4>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left py-2 min-w-16">Uptime</th>
-                                <th className="text-right py-2 min-w-24">Strike Price</th>
-                                <th className="text-right py-2 min-w-20">Operating Hours</th>
-                                <th className="text-right py-2 min-w-20">Shutdown Hours</th>
-                                <th className="text-right py-2 min-w-32">Monthly Cost</th>
-                                <th className="text-right py-2 min-w-20">Savings</th>
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg flex items-center gap-2">
+                          <Calculator className="w-5 h-5 text-orange-600" />
+                          Strike Prices & Monthly Costs (1 MW load)
+                        </h4>
+                        
+                        <div className="overflow-hidden rounded-lg border">
+                          <table className="w-full">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                <th className="text-left py-3 px-4 font-semibold text-sm">Uptime</th>
+                                <th className="text-right py-3 px-4 font-semibold text-sm">Strike Price</th>
+                                <th className="text-right py-3 px-4 font-semibold text-sm">Operating<br/>Hours</th>
+                                <th className="text-right py-3 px-4 font-semibold text-sm">Shutdown<br/>Hours</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {uptimeAnalysis.map((analysis) => (
-                                <tr key={analysis.uptime} className="border-b">
-                                  <td className="py-2">
-                                    <Badge variant={analysis.uptime >= 95 ? 'default' : 'secondary'}>
+                              {uptimeAnalysis.map((analysis, index) => (
+                                <tr key={analysis.uptime} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+                                  <td className="py-3 px-4">
+                                    <Badge variant={analysis.uptime >= 95 ? 'default' : 'secondary'} className="font-medium">
                                       {analysis.uptime}%
                                     </Badge>
                                   </td>
-                                  <td className="text-right py-2 font-mono text-xs">
+                                  <td className="text-right py-3 px-4 font-mono text-sm font-semibold">
                                     CA${analysis.strikePrice}/MWh
                                   </td>
-                                  <td className="text-right py-2 font-mono text-xs">
+                                  <td className="text-right py-3 px-4 font-mono text-sm">
                                     {analysis.monthlyOperatingHours}h
                                   </td>
-                                  <td className="text-right py-2 font-mono text-xs text-amber-600">
+                                  <td className="text-right py-3 px-4 font-mono text-sm text-amber-600 font-medium">
                                     {analysis.monthlyShutdownHours}h
-                                  </td>
-                                  <td className="text-right py-2">
-                                    <div className="font-mono text-green-600 text-xs">
-                                      CA${analysis.monthlyCostCAD}
-                                    </div>
-                                    <div className="font-mono text-xs text-muted-foreground">
-                                      ${analysis.monthlyCostUSD} USD
-                                    </div>
-                                  </td>
-                                  <td className="text-right py-2">
-                                    <div className="font-mono text-blue-600 text-xs">
-                                      CA${analysis.savingsVs100}
-                                    </div>
                                   </td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2">
+                        
+                        <p className="text-xs text-muted-foreground">
                           *Based on real 12-month AESO average of CA${realBaseAverage.toFixed(2)}/MWh + transmission CA${transmissionAdder}/MWh
                         </p>
                       </div>
                       
                       {/* Uptime vs Cost Visualization */}
-                      <div>
-                        <h4 className="font-semibold mb-3 text-sm">Uptime vs Monthly Cost Analysis</h4>
-                        <div className="h-64">
-                          <ResponsiveContainer>
-                            <LineChart data={uptimeAnalysis}>
-                              <CartesianGrid strokeDasharray="3 3" />
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg flex items-center gap-2">
+                          <BarChart3 className="w-5 h-5 text-blue-600" />
+                          Uptime vs Monthly Cost Analysis
+                        </h4>
+                        
+                        <div className="h-72 rounded-lg border bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 p-4">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={uptimeAnalysis} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
                               <XAxis 
                                 dataKey="uptime" 
-                                label={{ value: 'Uptime (%)', position: 'insideBottom', offset: -5 }}
+                                label={{ value: 'Uptime (%)', position: 'insideBottom', offset: -10 }}
+                                tick={{ fontSize: 12 }}
                               />
                               <YAxis 
                                 label={{ value: 'Monthly Cost (CAD)', angle: -90, position: 'insideLeft' }}
+                                tick={{ fontSize: 12 }}
+                                tickFormatter={(value) => `$${Math.round(value/1000)}k`}
                               />
                               <Tooltip 
                                 formatter={(value, name) => [
-                                  name === 'monthlyCostCAD' ? `CA$${value}` : value,
-                                  name === 'monthlyCostCAD' ? 'Monthly Cost' : name
+                                  `CA$${Number(value).toLocaleString()}`,
+                                  'Monthly Cost'
                                 ]}
                                 labelFormatter={(label) => `${label}% Uptime`}
+                                contentStyle={{ 
+                                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                                  border: '1px solid #e0e7ff',
+                                  borderRadius: '8px',
+                                  fontSize: '12px'
+                                }}
                               />
                               <Line 
                                 type="monotone" 
                                 dataKey="monthlyCostCAD" 
                                 stroke="#2563eb" 
-                                strokeWidth={3}
-                                name="Monthly Cost (CAD)"
-                                dot={{ fill: '#2563eb', r: 4 }}
+                                strokeWidth={4}
+                                dot={{ fill: '#2563eb', r: 6, strokeWidth: 2, stroke: '#ffffff' }}
+                                activeDot={{ r: 8, fill: '#1d4ed8' }}
                               />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
-                        <div className="mt-3 text-xs text-muted-foreground space-y-1">
+                        
+                        <div className="grid grid-cols-3 gap-3 text-center text-xs text-muted-foreground">
                           <div>• Strike price = threshold above which to shut down</div>
                           <div>• Higher uptime = higher strike price (shut down less)</div>
                           <div>• Costs based on real AESO market average</div>
@@ -1159,6 +1217,126 @@ export function AESOHistoricalPricing() {
                   </div>
                 );
               })()}
+            </CardContent>
+          </Card>
+
+          {/* 12-Month Price Trend - Completely Redesigned */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-600" />
+                12-Month Price Trend Analysis
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Monthly average and peak prices with 95% uptime strike price reference
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {loadingYearly ? (
+                  <div className="flex items-center justify-center h-80">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Loading real AESO market data...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Main Chart */}
+                    <div className="h-96 rounded-lg border bg-gradient-to-br from-gray-50/50 to-blue-50/50 dark:from-gray-950/20 dark:to-blue-950/20 p-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={yearlyData?.chartData || []} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
+                          <XAxis 
+                            dataKey="month" 
+                            tick={{ fontSize: 12 }}
+                            axisLine={{ stroke: '#6b7280' }}
+                          />
+                          <YAxis 
+                            label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }}
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(value) => `$${Math.round(value)}`}
+                            axisLine={{ stroke: '#6b7280' }}
+                          />
+                          <Tooltip 
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              return (
+                                <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                                  <p className="font-semibold text-sm">{label}</p>
+                                  {payload.map((entry, index) => (
+                                    <p key={index} style={{ color: entry.color }} className="text-sm">
+                                      {entry.name}: CA${Number(entry.value).toFixed(2)}/MWh
+                                    </p>
+                                  ))}
+                                </div>
+                              );
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{ paddingTop: '20px' }}
+                            iconType="line"
+                          />
+                          
+                          {/* Average Price Line */}
+                          <Line 
+                            type="monotone" 
+                            dataKey="average" 
+                            stroke="#2563eb" 
+                            name="Average Price"
+                            strokeWidth={3}
+                            dot={{ fill: '#2563eb', r: 4, strokeWidth: 2, stroke: '#ffffff' }}
+                            activeDot={{ r: 6, fill: '#1d4ed8' }}
+                          />
+                          
+                          {/* Peak Price Line */}
+                          <Line 
+                            type="monotone" 
+                            dataKey="peak" 
+                            stroke="#dc2626" 
+                            name="Peak Price"
+                            strokeWidth={2}
+                            strokeDasharray="8 4"
+                            dot={{ fill: '#dc2626', r: 3, strokeWidth: 2, stroke: '#ffffff' }}
+                            activeDot={{ r: 5, fill: '#b91c1c' }}
+                          />
+                          
+                          {/* 95% Uptime Strike Price - Single Reference Line */}
+                          <Line 
+                            type="monotone" 
+                            dataKey={() => (yearlyData?.statistics?.average || 60) * 1.075}
+                            stroke="#f59e0b" 
+                            name="95% Uptime Strike"
+                            strokeWidth={2}
+                            strokeDasharray="12 6"
+                            dot={false}
+                            activeDot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Seasonal Analysis */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {yearlyData?.seasonalPatterns && Object.entries(yearlyData.seasonalPatterns).map(([season, data]) => (
+                        <Card key={season} className="text-center">
+                          <CardContent className="p-4">
+                            <h4 className="font-semibold capitalize text-sm text-muted-foreground">{season}</h4>
+                            <div className="mt-2">
+                              <p className="text-lg font-bold text-blue-600">
+                                CA${data.average?.toFixed(2) || '--'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">Avg: CA${data.average?.toFixed(2) || '--'}/MWh</p>
+                              <p className="text-xs text-muted-foreground">Peak: CA${data.peak?.toFixed(2) || '--'}/MWh</p>
+                              <p className="text-xs text-muted-foreground">95% Strike: CA${((data.average || 0) * 1.075).toFixed(2)}/MWh</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -1390,138 +1568,6 @@ export function AESOHistoricalPricing() {
                   </div>
                 );
               })()}
-            </CardContent>
-          </Card>
-
-          {/* Enhanced Current Year Analysis */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  Current 12-Month Statistics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Average Price</span>
-                    <span className="font-semibold">
-                      {yearlyData?.statistics?.average !== undefined ? formatCurrency(yearlyData.statistics.average) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Peak Price</span>
-                    <span className="font-semibold text-red-600">
-                      {yearlyData?.statistics?.peak !== undefined ? formatCurrency(yearlyData.statistics.peak) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Low Price</span>
-                    <span className="font-semibold text-green-600">
-                      {yearlyData?.statistics?.low !== undefined ? formatCurrency(yearlyData.statistics.low) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Trend</span>
-                    <Badge variant={yearlyData?.statistics?.trend === 'up' ? 'destructive' : 'default'}>
-                      {yearlyData?.statistics?.trend === 'up' ? 'Increasing' : 'Decreasing'}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">95% Uptime Strike</span>
-                    <span className="font-semibold text-blue-600">
-                      {yearlyData?.statistics?.average ? formatCurrency(yearlyData.statistics.average * 1.075) : '—'}/MWh
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-purple-600" />
-                  Seasonal Patterns & Forecasting
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {yearlyData?.seasonalPatterns && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(yearlyData.seasonalPatterns).map(([season, data]: [string, any]) => (
-                      <div key={season} className="p-3 bg-muted/50 rounded">
-                        <div className="font-medium capitalize">{season}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Avg: {formatCurrency(data.average)}/MWh
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Peak: {formatCurrency(data.peak)}/MWh
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          95% Strike: {formatCurrency(data.average * 1.075)}/MWh
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-600" />
-                Enhanced 12-Month Price Trend with Pattern Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                {loadingYearly ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : (
-                  <ResponsiveContainer>
-                    <LineChart data={yearlyData?.chartData || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="average" 
-                        stroke="#2563eb" 
-                        name="Average Price"
-                        strokeWidth={3}
-                        dot={{ fill: '#2563eb', r: 3 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="peak" 
-                        stroke="#dc2626" 
-                        name="Peak Price"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                      />
-                      {/* Add 95% uptime strike price line */}
-                      {yearlyData?.chartData?.map((_, index) => (
-                        <Line 
-                          key={`strike-${index}`}
-                          type="monotone" 
-                          dataKey={() => (yearlyData?.statistics?.average || 60) * 1.075}
-                          stroke="#f59e0b" 
-                          name="95% Uptime Strike"
-                          strokeWidth={2}
-                          strokeDasharray="10 5"
-                          dot={false}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
