@@ -119,6 +119,20 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Add user to VoltScout approved users
+          const { error: approvalError } = await supabaseAdmin
+            .from('voltscout_approved_users')
+            .insert({
+              user_id: authData.user.id,
+              approved_by: user.id, // The admin who created the user
+              notes: `User created by admin via user management`
+            });
+
+          if (approvalError) {
+            console.error('Approval insert error:', approvalError);
+            throw approvalError;
+          }
+
           console.log(`Successfully created user: ${email}`);
           
           return new Response(
