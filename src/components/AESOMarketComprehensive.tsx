@@ -175,7 +175,7 @@ export function AESOMarketComprehensive() {
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(7, minmax(80px, 1fr))'}}>
+            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(6, minmax(80px, 1fr))'}}>
               <TabsTrigger value="market" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline truncate">Market Data</span>
@@ -201,15 +201,10 @@ export function AESOMarketComprehensive() {
                 <span className="hidden lg:inline truncate">Forecasts</span>
                 <span className="lg:hidden truncate">Cast</span>
               </TabsTrigger>
-              <TabsTrigger value="outages" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
+              <TabsTrigger value="outages-alerts" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Outages</span>
-                <span className="lg:hidden truncate">Out</span>
-              </TabsTrigger>
-              <TabsTrigger value="alerts" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Alerts</span>
-                <span className="lg:hidden truncate">Alt</span>
+                <span className="hidden lg:inline truncate">Outages & Alerts</span>
+                <span className="lg:hidden truncate">Alerts</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -564,19 +559,23 @@ export function AESOMarketComprehensive() {
             />
           </TabsContent>
 
-          <TabsContent value="outages">
-            <AESOOutagesPanel 
-              assetOutages={assetOutages}
-              loading={enhancedLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value="alerts">
-            <AESOAlertsPanel 
-              alerts={alerts}
-              onDismissAlert={dismissAlert}
-              onClearAll={clearAllAlerts}
-            />
+          <TabsContent value="outages-alerts" className="space-y-4 sm:space-y-6">
+            {/* Alerts Section */}
+            <div>
+              <AESOAlertsPanel 
+                alerts={alerts}
+                onDismissAlert={dismissAlert}
+                onClearAll={clearAllAlerts}
+              />
+            </div>
+            
+            {/* Outages Section */}
+            <div>
+              <AESOOutagesPanel 
+                assetOutages={assetOutages}
+                loading={enhancedLoading}
+              />
+            </div>
           </TabsContent>
         </Tabs>
 
