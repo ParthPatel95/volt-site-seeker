@@ -295,88 +295,84 @@ async function fetchAESOHistoricalDataInChunks(startDate: Date, endDate: Date, a
 async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: string): Promise<HistoricalDataPoint[]> {
   try {
     const formatDate = (date: Date) => {
-      return date.toISOString().slice(0, 10); // Keep YYYY-MM-DD format
+      return date.toISOString().slice(0, 10); // YYYY-MM-DD format
     };
     
-    // Fetch pool price data (always available for historical ranges)
+    // According to AESO API docs: Pool Price API v1.1
+    // Endpoint: /public/poolprice-api/v1.1/price/poolPrice
+    // Max range: 1 year (366 days)
+    // Header: API-KEY (not Ocp-Apim-Subscription-Key)
     const apiUrl = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
     console.log(`Fetching pool prices from: ${apiUrl}`);
     
     const response = await fetch(apiUrl, {
       headers: {
         'API-KEY': apiKey,
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache',
-        'User-Agent': 'LovableEnergy/1.0'
+        'Accept': 'application/json'
       }
     });
     
     if (!response.ok) {
-      console.error(`API Response Status: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
-      console.error(`API Error Response: ${errorText}`);
+      console.error(`Pool Price API error (${response.status}): ${errorText}`);
       
       if (response.status === 401) {
-        throw new Error(`AESO API authentication failed (401). Please verify your API subscription key is correct and active. Response: ${errorText}`);
+        throw new Error('AESO API authentication failed. Please verify your API key.');
       } else if (response.status === 403) {
-        throw new Error(`AESO API access forbidden (403). Your subscription key may not have access to this endpoint. Response: ${errorText}`);
+        throw new Error('AESO API access forbidden. Your API key may not have access to this endpoint.');
+      } else if (response.status === 400) {
+        throw new Error('Invalid date range. Please ensure dates are in YYYY-MM-DD format and within allowed limits.');
       } else {
-        throw new Error(`AESO API error: ${response.status} - ${response.statusText}. Response: ${errorText}`);
+        throw new Error(`AESO Pool Price API error: ${response.status}`);
       }
     }
     
     const data = await response.json();
+    console.log('Pool Price API response structure:', Object.keys(data));
     
-    // Parse the response structure based on AESO API documentation
-    const priceData = data.return?.['Pool Price Report'] || 
-                     data.return?.['Pool Price'] || 
-                     data.return?.poolPrice || 
-                     data['Pool Price Report'] || 
-                     data['Pool Price'] || 
-                     data.poolPrice || [];
-    console.log(`Fetched ${priceData.length} price records`);
+    // AESO API response format: { "return": { "Pool Price Report": [...] } }
+    const priceData = data.return?.['Pool Price Report'] || [];
+    console.log(`Received ${priceData.length} price records`);
     
     if (priceData.length === 0) {
-      throw new Error('No price data returned from AESO API');
+      console.warn('No price data in response');
+      return [];
     }
     
-    // Map AESO API response to our expected format
-    const mappedData = priceData.map((item: any) => {
-      const price = parseFloat(item.pool_price || item.price || '0');
-      return {
-        datetime: item.begin_datetime_utc || item.begin_datetime_mpt || item.datetime,
-        price: price,
-        forecast_begin: item.begin_datetime_utc || '',
-        forecast_end: item.forecast_pool_price || ''
-      };
-    });
+    // Transform to internal format
+    const mappedData: HistoricalDataPoint[] = priceData.map((item: any) => ({
+      datetime: item.begin_datetime_utc,
+      price: parseFloat(item.pool_price || '0'),
+      forecast_begin: item.begin_datetime_utc || '',
+      forecast_end: item.forecast_pool_price || ''
+    }));
     
-    // Try to fetch AIL (Alberta Internal Load) data for the same period
-    // Note: This API may only support recent data, not full historical ranges
+    // Enrich with AIL (load) data if date range allows
     const daysDiff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
     
-    if (daysDiff <= 31) {
-      // Only attempt to fetch AIL/generation for shorter ranges (≤31 days)
-      console.log(`Date range is ${daysDiff} days - attempting to fetch AIL and generation data`);
-      
+    if (daysDiff <= 366) {
+      // Try to fetch AIL data for ranges up to 1 year
+      console.log(`Date range is ${daysDiff.toFixed(0)} days - attempting to fetch AIL data`);
       try {
         await enrichWithAILData(mappedData, startDate, endDate, apiKey);
       } catch (err) {
-        console.log('Could not fetch AIL data:', err instanceof Error ? err.message : 'Unknown error');
+        console.log('Could not fetch AIL data (this is normal for historical periods):', err instanceof Error ? err.message : 'Unknown error');
       }
     } else {
-      console.log(`Date range is ${daysDiff} days - skipping AIL/generation data (only available for recent periods)`);
+      console.log(`Date range is ${daysDiff.toFixed(0)} days - skipping AIL data (exceeds API limit)`);
     }
     
-    console.log(`Sample mapped data:`, mappedData.slice(0, 3));
     return mappedData;
   } catch (error) {
-    console.error('Error fetching AESO data:', error);
+    console.error('Error in fetchAESOHistoricalData:', error);
     throw error;
   }
 }
 
-// Enrich price data with AIL (load) information
+// Enrich price data with AIL (Alberta Internal Load) information
+// According to AESO API docs: Actual Forecast Report API v1
+// Endpoint: /public/actualforecast-api/v1/load/albertaInternalLoad
+// Requires: startDate and endDate query parameters
 async function enrichWithAILData(
   priceData: HistoricalDataPoint[],
   startDate: Date,
@@ -384,8 +380,10 @@ async function enrichWithAILData(
   apiKey: string
 ): Promise<void> {
   try {
-    // Fetch Alberta Internal Load data
-    const ailUrl = `https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad`;
+    const formatDate = (date: Date) => date.toISOString().slice(0, 10);
+    
+    // AESO Actual Forecast API - requires startDate and endDate
+    const ailUrl = `https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
     console.log(`Fetching AIL data from: ${ailUrl}`);
     
     const response = await fetch(ailUrl, {
@@ -401,35 +399,51 @@ async function enrichWithAILData(
     }
     
     const ailData = await response.json();
+    console.log('AIL API response structure:', Object.keys(ailData));
+    
+    // AESO API response format: { "return": { "Actual Forecast Report": [...] } }
     const ailRecords = ailData.return?.['Actual Forecast Report'] || [];
+    console.log(`Received ${ailRecords.length} AIL records`);
     
-    console.log(`Fetched ${ailRecords.length} AIL records`);
+    if (ailRecords.length === 0) {
+      console.log('No AIL data available for this period');
+      return;
+    }
     
-    // Create a map of timestamp to AIL value
-    const ailMap = new Map<string, number>();
+    // Build timestamp-to-AIL map for efficient lookup
+    const ailMap = new Map<string, { ail: number; generation: number }>();
+    
     for (const record of ailRecords) {
-      const timestamp = record.begin_datetime_utc || record.begin_datetime_mpt;
+      const timestamp = record.begin_datetime_utc;
       const ailValue = parseFloat(record.alberta_internal_load || '0');
-      if (timestamp && ailValue) {
-        ailMap.set(timestamp, ailValue);
+      
+      if (timestamp && ailValue > 0) {
+        // Note: Generation data is not available in Actual Forecast API
+        // It would require Current Supply Demand API which only provides real-time data
+        ailMap.set(timestamp, { 
+          ail: ailValue,
+          generation: 0 // Not available in historical data
+        });
       }
     }
     
     // Enrich price data with AIL values
     let matchedCount = 0;
     for (const item of priceData) {
-      const ailValue = ailMap.get(item.datetime);
-      if (ailValue) {
-        (item as any).ail = ailValue;
+      const loadData = ailMap.get(item.datetime);
+      if (loadData) {
+        (item as any).ail = loadData.ail;
+        (item as any).generation = loadData.generation;
         matchedCount++;
       }
     }
     
-    console.log(`Matched ${matchedCount} out of ${priceData.length} records with AIL data`);
+    console.log(`Successfully enriched ${matchedCount} out of ${priceData.length} records with AIL data`);
     
   } catch (error) {
-    console.error('Error fetching AIL data:', error);
-    // Don't throw - AIL data is optional enhancement
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error fetching AIL data:', errorMsg);
+    // Don't throw - AIL data is optional
   }
 }
 
