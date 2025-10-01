@@ -61,19 +61,19 @@ Deno.serve(async (req) => {
           throw authError;
         }
 
-        // Create profile
+        // Update profile (trigger already created it, so we update instead of insert)
         const { error: profileError } = await supabaseAdmin
           .from('profiles')
-          .insert({
-            id: authData.user.id,
-            email,
+          .update({
             full_name,
             phone,
             department,
             role: 'analyst' // Default role from enum
-          });
+          })
+          .eq('id', authData.user.id);
 
         if (profileError) {
+          console.error('Profile update error:', profileError);
           throw profileError;
         }
 
@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
           });
 
         if (roleError) {
+          console.error('Role insert error:', roleError);
           throw roleError;
         }
 
@@ -101,6 +102,7 @@ Deno.serve(async (req) => {
             .insert(permissionInserts);
 
           if (permError) {
+            console.error('Permissions insert error:', permError);
             throw permError;
           }
         }
