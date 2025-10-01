@@ -145,15 +145,13 @@ export class HistoricalDataService {
     }
 
     // For custom date range, the edge function returns the raw AESO data
-    // Transform it to our format
+    // Transform it to our format with AIL and generation data
     if (Array.isArray(data)) {
       return data.map((point: any) => ({
-        ts: point.datetime || point.begin_datetime_utc || point.timestamp,
+        ts: point.ts || point.datetime || point.begin_datetime_utc || point.timestamp,
         price: point.price || 0,
-        // Note: AESO pool price API doesn't provide generation/AIL in hourly data
-        // These would need to come from separate API calls if needed
-        generation: 0,
-        ail: 0,
+        generation: point.generation || 0,
+        ail: point.ail || 0,
       }));
     }
 
