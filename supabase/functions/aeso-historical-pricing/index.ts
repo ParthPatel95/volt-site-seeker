@@ -189,9 +189,14 @@ serve(async (req) => {
       const transformedData = historicalData.map(d => ({
         ts: d.datetime,
         price: d.price,
-        generation: 0, // Not available in pool price API
-        ail: 0 // Not available in pool price API
+        generation: (d as any).generation || 0, // Generation data if available
+        ail: (d as any).ail || 0 // AIL data if available
       }));
+      
+      // Count how many records have AIL data
+      const ailCount = transformedData.filter(d => d.ail > 0).length;
+      console.log(`AIL data available for ${ailCount} out of ${transformedData.length} records`);
+      
       return new Response(JSON.stringify(transformedData), {
         headers: { 
           ...corsHeaders, 
@@ -293,9 +298,9 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
       return date.toISOString().slice(0, 10); // Keep YYYY-MM-DD format
     };
     
-    // Use the correct AESO API endpoint format (v1.1)
+    // Fetch pool price data (always available for historical ranges)
     const apiUrl = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
-    console.log(`Fetching from: ${apiUrl}`);
+    console.log(`Fetching pool prices from: ${apiUrl}`);
     
     const response = await fetch(apiUrl, {
       headers: {
@@ -321,10 +326,8 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
     }
     
     const data = await response.json();
-    console.log(`API Response:`, JSON.stringify(data, null, 2));
     
     // Parse the response structure based on AESO API documentation
-    // The API returns data in "Pool Price Report" array
     const priceData = data.return?.['Pool Price Report'] || 
                      data.return?.['Pool Price'] || 
                      data.return?.poolPrice || 
@@ -340,7 +343,6 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
     // Map AESO API response to our expected format
     const mappedData = priceData.map((item: any) => {
       const price = parseFloat(item.pool_price || item.price || '0');
-      console.log(`Raw price: ${item.pool_price}, Parsed: ${price}`);
       return {
         datetime: item.begin_datetime_utc || item.begin_datetime_mpt || item.datetime,
         price: price,
@@ -349,11 +351,85 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
       };
     });
     
+    // Try to fetch AIL (Alberta Internal Load) data for the same period
+    // Note: This API may only support recent data, not full historical ranges
+    const daysDiff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+    
+    if (daysDiff <= 31) {
+      // Only attempt to fetch AIL/generation for shorter ranges (≤31 days)
+      console.log(`Date range is ${daysDiff} days - attempting to fetch AIL and generation data`);
+      
+      try {
+        await enrichWithAILData(mappedData, startDate, endDate, apiKey);
+      } catch (err) {
+        console.log('Could not fetch AIL data:', err instanceof Error ? err.message : 'Unknown error');
+      }
+    } else {
+      console.log(`Date range is ${daysDiff} days - skipping AIL/generation data (only available for recent periods)`);
+    }
+    
     console.log(`Sample mapped data:`, mappedData.slice(0, 3));
     return mappedData;
   } catch (error) {
     console.error('Error fetching AESO data:', error);
     throw error;
+  }
+}
+
+// Enrich price data with AIL (load) information
+async function enrichWithAILData(
+  priceData: HistoricalDataPoint[],
+  startDate: Date,
+  endDate: Date,
+  apiKey: string
+): Promise<void> {
+  try {
+    // Fetch Alberta Internal Load data
+    const ailUrl = `https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad`;
+    console.log(`Fetching AIL data from: ${ailUrl}`);
+    
+    const response = await fetch(ailUrl, {
+      headers: {
+        'API-KEY': apiKey,
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      console.log(`AIL API returned ${response.status} - data may not be available for this period`);
+      return;
+    }
+    
+    const ailData = await response.json();
+    const ailRecords = ailData.return?.['Actual Forecast Report'] || [];
+    
+    console.log(`Fetched ${ailRecords.length} AIL records`);
+    
+    // Create a map of timestamp to AIL value
+    const ailMap = new Map<string, number>();
+    for (const record of ailRecords) {
+      const timestamp = record.begin_datetime_utc || record.begin_datetime_mpt;
+      const ailValue = parseFloat(record.alberta_internal_load || '0');
+      if (timestamp && ailValue) {
+        ailMap.set(timestamp, ailValue);
+      }
+    }
+    
+    // Enrich price data with AIL values
+    let matchedCount = 0;
+    for (const item of priceData) {
+      const ailValue = ailMap.get(item.datetime);
+      if (ailValue) {
+        (item as any).ail = ailValue;
+        matchedCount++;
+      }
+    }
+    
+    console.log(`Matched ${matchedCount} out of ${priceData.length} records with AIL data`);
+    
+  } catch (error) {
+    console.error('Error fetching AIL data:', error);
+    // Don't throw - AIL data is optional enhancement
   }
 }
 

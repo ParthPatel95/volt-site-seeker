@@ -218,9 +218,13 @@ export function AdvancedAnalytics() {
           <Alert className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
             <AlertTriangle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-sm">
-              <strong>Real AESO Data:</strong> All pricing data is fetched directly from AESO's official API. 
-              Note: Generation and AIL metrics require additional API calls and may not be available for extended date ranges due to API rate limits.
-              All displayed prices are actual historical pool prices from the Alberta electricity market.
+              <strong>Real AESO Data:</strong> All pricing data is fetched directly from AESO's official Pool Price API. 
+              {filteredData.some(d => d.ail > 0) ? (
+                <span> AIL (load) data is included for this date range.</span>
+              ) : (
+                <span> Note: AIL and generation data are only available for recent periods (last 31 days) due to API limitations.</span>
+              )}
+              {' '}All displayed prices are actual historical pool prices from the Alberta electricity market.
             </AlertDescription>
           </Alert>
 
@@ -260,9 +264,11 @@ export function AdvancedAnalytics() {
               <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-sm">
-                  <strong>Correlation Analysis Unavailable:</strong> Generation and AIL data are not included in this date range. 
-                  The AESO pool price API provides only pricing data. For generation mix and load data across extended periods, 
-                  separate API calls would be required which may exceed rate limits.
+                  <strong>Correlation Analysis Unavailable:</strong> Generation and AIL data are only available for recent periods (last 31 days). 
+                  For extended historical analysis, the AESO API provides pool price data only. 
+                  {((new Date(filters.endDate).getTime() - new Date(filters.startDate).getTime()) / (1000 * 60 * 60 * 24)) <= 31 && (
+                    <span> Try refreshing or check back later if data is still being loaded.</span>
+                  )}
                 </AlertDescription>
               </Alert>
             )}
