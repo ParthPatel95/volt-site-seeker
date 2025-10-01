@@ -59,17 +59,17 @@ serve(async (req) => {
       console.log(`Yearly date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     } else if (timeframe === 'historical-10year') {
-      // Fetch real 10-year historical data from AESO
-      console.log('Fetching 10-year real historical data from AESO API...');
+      // Fetch real 8-year historical data from AESO
+      console.log('Fetching 8-year real historical data from AESO API...');
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       const historicalYearsData = [];
       
-      // Fetch data for each of the past 10 years (including current year)
-      // This will fetch 10 complete years of data: 2016-2025 = 10 years
-      const startYear = currentYear - 9;
+      // Fetch data for each of the past 8 years (including current year)
+      // This will fetch 8 complete years of data
+      const startYear = currentYear - 7;
       
-      console.log(`Will attempt to fetch data for years ${startYear} to ${currentYear} (10 years total)`);
+      console.log(`Will attempt to fetch data for years ${startYear} to ${currentYear} (8 years total)`);
       
       for (let year = startYear; year <= currentYear; year++) {
         // For current year, only fetch up to today
@@ -142,7 +142,7 @@ serve(async (req) => {
         }
       }
       
-      console.log(`Completed fetching 10-year data. Total years in response: ${historicalYearsData.length}, Years with real data: ${historicalYearsData.filter(y => y.isReal).length}`);
+      console.log(`Completed fetching 8-year data. Total years in response: ${historicalYearsData.length}, Years with real data: ${historicalYearsData.filter(y => y.isReal).length}`);
       
       return new Response(
         JSON.stringify({

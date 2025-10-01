@@ -189,7 +189,7 @@ export function useAESOHistoricalPricing() {
   const fetchHistoricalTenYearData = async () => {
     setLoadingHistoricalTenYear(true);
     try {
-      console.log('Fetching real 10-year AESO historical data...');
+      console.log('Fetching real 8-year AESO historical data...');
       const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
         body: { timeframe: 'historical-10year' }
       });
@@ -199,20 +199,20 @@ export function useAESOHistoricalPricing() {
       if (data.error) {
         throw new Error(data.error);
       } else {
-        console.log('10-year historical data received:', data);
+        console.log('8-year historical data received:', data);
         setHistoricalTenYearData(data);
         
         toast({
-          title: "10-year data loaded",
+          title: "8-year data loaded",
           description: `Real historical data from ${data.totalYears} years retrieved (${data.realDataYears} years with data)`,
         });
       }
     } catch (error: any) {
-      console.error('Error fetching 10-year historical data:', error);
+      console.error('Error fetching 8-year historical data:', error);
       
       toast({
-        title: "Error loading 10-year data",
-        description: error.message || "Failed to fetch 10-year historical data. Please try again.",
+        title: "Error loading 8-year data",
+        description: error.message || "Failed to fetch 8-year historical data. Please try again.",
         variant: "destructive",
       });
     } finally {

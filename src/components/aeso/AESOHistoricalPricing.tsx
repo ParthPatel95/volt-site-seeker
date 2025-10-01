@@ -93,7 +93,7 @@ export function AESOHistoricalPricing() {
   };
 
   const fetchRealHistoricalData = async () => {
-    // Call the real API to fetch 10-year historical data
+    // Call the real API to fetch 8-year historical data
     await fetchHistoricalTenYearData();
   };
 
@@ -1481,12 +1481,12 @@ export function AESOHistoricalPricing() {
             </CardContent>
           </Card>
 
-          {/* Historical 10-Year Comparison Analysis */}
+          {/* Historical 8-Year Comparison Analysis */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">10-Year Real AESO Historical Data Analysis</h3>
+                  <h3 className="text-lg font-semibold">8-Year Real AESO Historical Data Analysis</h3>
                   <p className="text-sm text-muted-foreground">
                     Real historical price data from AESO API (95% uptime analysis)
                   </p>
@@ -1510,9 +1510,9 @@ export function AESOHistoricalPricing() {
                       <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                         <BarChart3 className="w-8 h-8 text-primary" />
                       </div>
-                      <h4 className="text-lg font-semibold mb-2">Real 10-Year AESO Historical Data</h4>
+                      <h4 className="text-lg font-semibold mb-2">Real 8-Year AESO Historical Data</h4>
                       <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                        Click "Refresh Data" to fetch 10 years of real historical electricity pricing data directly from the AESO API.
+                        Click "Refresh Data" to fetch 8 years of real historical electricity pricing data directly from the AESO API.
                       </p>
                       <Button onClick={fetchRealHistoricalData} variant="default">
                         Load Historical Data
@@ -1531,7 +1531,7 @@ export function AESOHistoricalPricing() {
                           <span className="text-blue-800 font-medium">Fetching real AESO historical data...</span>
                         </div>
                         <p className="text-blue-600 text-sm mt-1">
-                          Retrieving 10 years of real market data from AESO API. This may take 30-60 seconds...
+                          Retrieving 8 years of real market data from AESO API. This may take 30-60 seconds...
                         </p>
                       </div>
                     </div>
@@ -1631,7 +1631,7 @@ export function AESOHistoricalPricing() {
                           </div>
                           <p className="text-xs text-muted-foreground">Avg Volatility</p>
                           <p className="text-xs text-orange-600 mt-1">
-                            10-year average
+                            8-year average
                           </p>
                         </CardContent>
                       </Card>
@@ -1650,9 +1650,9 @@ export function AESOHistoricalPricing() {
                     
                     {/* Historical Trend Charts */}
                     <div className="space-y-6">
-                      {/* 10-Year Average Price Trend */}
+                      {/* 8-Year Average Price Trend */}
                       <div>
-                        <h4 className="font-semibold mb-3 text-sm">10-Year Average Price Trend</h4>
+                        <h4 className="font-semibold mb-3 text-sm">8-Year Average Price Trend</h4>
                         <div className="h-72">
                           <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={historicalYears}>
@@ -1740,10 +1740,10 @@ export function AESOHistoricalPricing() {
                                 <div>
                                   <h6 className="font-medium mb-2 text-sm">Long-Term Growth Metrics</h6>
                                   <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                    <li>• 10-year CAGR: <span className="font-semibold text-foreground">{(Math.pow(currentAverage / tenYearAgoData.average, 1/10) - 1 * 100).toFixed(2)}%</span></li>
-                                    <li>• Total price increase: <span className="font-semibold text-foreground">{priceIncrease.toFixed(1)}%</span> over decade</li>
-                                    <li>• Current vs 10-year avg: <span className={`font-semibold ${currentVsAverage > 0 ? 'text-red-600' : 'text-green-600'}`}>{Math.abs(currentVsAverage).toFixed(1)}% {currentVsAverage > 0 ? 'above' : 'below'}</span></li>
-                                    <li>• Average yearly variance: <span className="font-semibold text-foreground">{(priceIncrease / 10).toFixed(2)}%</span></li>
+                                    <li>• 8-year CAGR: <span className="font-semibold text-foreground">{(Math.pow(currentAverage / tenYearAgoData.average, 1/8) - 1 * 100).toFixed(2)}%</span></li>
+                                    <li>• Total price increase: <span className="font-semibold text-foreground">{priceIncrease.toFixed(1)}%</span> over period</li>
+                                    <li>• Current vs 8-year avg: <span className={`font-semibold ${currentVsAverage > 0 ? 'text-red-600' : 'text-green-600'}`}>{Math.abs(currentVsAverage).toFixed(1)}% {currentVsAverage > 0 ? 'above' : 'below'}</span></li>
+                                    <li>• Average yearly variance: <span className="font-semibold text-foreground">{(priceIncrease / 8).toFixed(2)}%</span></li>
                                   </ul>
                                 </div>
                                 
