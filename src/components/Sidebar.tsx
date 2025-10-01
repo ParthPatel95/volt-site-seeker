@@ -30,10 +30,12 @@ import {
   Mic,
   ShieldCheck,
   ArrowRightLeft,
-  Gavel
+  Gavel,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
+import { toast } from 'sonner';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -68,10 +70,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/users', icon: Users, label: 'User Management', permission: 'feature.user-management' }
   ];
 
-  // Filter navigation items based on user permissions
-  const filteredNavigationItems = navigationItems.filter(item => 
-    hasPermission(item.permission)
-  );
+  const handleNavClick = (e: React.MouseEvent, item: typeof navigationItems[0]) => {
+    if (!hasPermission(item.permission)) {
+      e.preventDefault();
+      toast.error('Access Restricted', {
+        description: 'Please contact admin to gain access to this feature.'
+      });
+    } else if (isMobile) {
+      setIsOpen(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -139,24 +147,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <nav className={`flex-1 p-1 sm:p-2 space-y-0.5 sm:space-y-1 overflow-y-auto min-w-0 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
-        {filteredNavigationItems.map((item) => {
+        {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
+          const hasAccess = hasPermission(item.permission);
           
           return (
             <Link
               key={item.path}
               to={item.path}
-              onClick={() => isMobile && setIsOpen(false)}
+              onClick={(e) => handleNavClick(e, item)}
               className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg transition-colors group ${
                 isActive 
                   ? 'bg-accent text-accent-foreground ring-1 ring-primary/20' 
                   : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-              } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
+              } ${!hasAccess ? 'opacity-60' : ''} ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
               title={isCollapsed && !isMobile ? item.label : ''}
             >
               <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-              {(!isCollapsed || isMobile) && <span className="font-medium text-xs sm:text-sm truncate">{item.label}</span>}
+              {(!isCollapsed || isMobile) && (
+                <>
+                  <span className="font-medium text-xs sm:text-sm truncate flex-1">{item.label}</span>
+                  {!hasAccess && <Lock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-muted-foreground" />}
+                </>
+              )}
             </Link>
           );
         })}
