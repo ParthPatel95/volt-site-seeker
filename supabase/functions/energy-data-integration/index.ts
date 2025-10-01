@@ -19,6 +19,10 @@ interface EnergyDataResponse {
     constraints?: any;         // Transmission constraints with shadow prices
     intertieFlows?: any;       // Imports/Exports/Net (MW)
     weatherZoneLoad?: any;     // Load by weather zone
+    // Additional market data
+    operatingReserve?: any;    // Total, spinning, supplemental reserve (MW)
+    interchange?: any;         // Imports/Exports/Net (MW) - same as intertieFlows
+    energyStorage?: any;       // Charging/Discharging/Net/SoC
   };
   aeso?: {
     pricing?: any;
@@ -82,6 +86,7 @@ async function fetchERCOTData() {
   
   let pricing, loadData, generationMix;
   let zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad;
+  let operatingReserve, interchange, energyStorage;
   let realDataFound = false;
   // Try ERCOT's real-time LMP data first
   try {
@@ -625,7 +630,35 @@ async function fetchERCOTData() {
     };
   }
 
-  return { pricing, loadData, generationMix, zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad };
+  // Set operatingReserve as alias to ensure backward compatibility
+  operatingReserve = {
+    total_reserve_mw: 0,
+    spinning_reserve_mw: 0,
+    supplemental_reserve_mw: 0,
+    timestamp: new Date().toISOString(),
+    source: 'ercot_calculated'
+  };
+
+  // Set interchange as alias to intertieFlows for backward compatibility
+  interchange = intertieFlows || {
+    imports_mw: 0,
+    exports_mw: 0,
+    net_mw: 0,
+    timestamp: new Date().toISOString(),
+    source: 'ercot_calculated'
+  };
+
+  // Energy storage - will be real when we add battery storage data source
+  energyStorage = {
+    charging_mw: 0,
+    discharging_mw: 0,
+    net_storage_mw: 0,
+    state_of_charge_percent: null,
+    timestamp: new Date().toISOString(),
+    source: 'ercot_placeholder'
+  };
+
+  return { pricing, loadData, generationMix, zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad, operatingReserve, interchange, energyStorage };
 }
 
 async function fetchAESOData() {

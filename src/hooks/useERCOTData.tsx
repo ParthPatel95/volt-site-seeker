@@ -85,6 +85,16 @@ export const useERCOTData = () => {
   const [weatherZoneLoad, setWeatherZoneLoad] = useState<ERCOTWeatherZoneLoad | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Additional enhanced data states
+  const [operatingReserve, setOperatingReserve] = useState<any>(null);
+  const [interchange, setInterchange] = useState<any>(null);
+  const [energyStorage, setEnergyStorage] = useState<any>(null);
+  const [windSolarForecast, setWindSolarForecast] = useState<any>(null);
+  const [assetOutages, setAssetOutages] = useState<any>(null);
+  const [historicalPrices, setHistoricalPrices] = useState<any>(null);
+  const [marketAnalytics, setMarketAnalytics] = useState<any>(null);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const intervalRef = useRef<number | null>(null);
   const isFetchingRef = useRef(false);
   const lastFetchAtRef = useRef(0);
@@ -103,18 +113,28 @@ export const useERCOTData = () => {
           setError('Failed to fetch ERCOT data');
           return;
         }
-        if (data?.success && data?.ercot) {
-          setPricing(data.ercot.pricing);
-          setLoadData(data.ercot.loadData);
-          setGenerationMix(data.ercot.generationMix);
-          setZoneLMPs(data.ercot.zoneLMPs || null);
-          setOrdcAdder(data.ercot.ordcAdder || null);
-          setAncillaryPrices(data.ercot.ancillaryPrices || null);
-          setSystemFrequency(data.ercot.systemFrequency || null);
-          setConstraints(data.ercot.constraints || null);
-          setIntertieFlows(data.ercot.intertieFlows || null);
-          setWeatherZoneLoad(data.ercot.weatherZoneLoad || null);
-        } else {
+      if (data?.success && data?.ercot) {
+        setPricing(data.ercot.pricing);
+        setLoadData(data.ercot.loadData);
+        setGenerationMix(data.ercot.generationMix);
+        setZoneLMPs(data.ercot.zoneLMPs || null);
+        setOrdcAdder(data.ercot.ordcAdder || null);
+        setAncillaryPrices(data.ercot.ancillaryPrices || null);
+        setSystemFrequency(data.ercot.systemFrequency || null);
+        setConstraints(data.ercot.constraints || null);
+        setIntertieFlows(data.ercot.intertieFlows || null);
+        setWeatherZoneLoad(data.ercot.weatherZoneLoad || null);
+        setOperatingReserve(data.ercot.operatingReserve || null);
+        setInterchange(data.ercot.interchange || null);
+        setEnergyStorage(data.ercot.energyStorage || null);
+        // Note: Enhanced data (windSolarForecast, assetOutages, historicalPrices, marketAnalytics, alerts)
+        // will be set to null until we implement real data sources for them
+        setWindSolarForecast(null);
+        setAssetOutages(null);
+        setHistoricalPrices(null);
+        setMarketAnalytics(null);
+        setAlerts([]);
+      } else {
           console.error('ERCOT data fetch failed:', data?.error);
           setError(data?.error || 'Unknown error fetching ERCOT data');
         }
@@ -164,6 +184,14 @@ export const useERCOTData = () => {
         setConstraints(data.ercot.constraints || null);
         setIntertieFlows(data.ercot.intertieFlows || null);
         setWeatherZoneLoad(data.ercot.weatherZoneLoad || null);
+        setOperatingReserve(data.ercot.operatingReserve || null);
+        setInterchange(data.ercot.interchange || null);
+        setEnergyStorage(data.ercot.energyStorage || null);
+        setWindSolarForecast(null);
+        setAssetOutages(null);
+        setHistoricalPrices(null);
+        setMarketAnalytics(null);
+        setAlerts([]);
       } else {
         setError(data?.error || 'Unknown error fetching ERCOT data');
       }
@@ -174,6 +202,14 @@ export const useERCOTData = () => {
       setLoading(false);
       isFetchingRef.current = false;
     }
+  };
+
+  const dismissAlert = (alertId: string) => {
+    setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+  };
+
+  const clearAllAlerts = () => {
+    setAlerts([]);
   };
 
   return {
@@ -187,8 +223,18 @@ export const useERCOTData = () => {
     constraints,
     intertieFlows,
     weatherZoneLoad,
+    operatingReserve,
+    interchange,
+    energyStorage,
+    windSolarForecast,
+    assetOutages,
+    historicalPrices,
+    marketAnalytics,
+    alerts,
     loading,
     error,
-    refetch
+    refetch,
+    dismissAlert,
+    clearAllAlerts
   };
 };

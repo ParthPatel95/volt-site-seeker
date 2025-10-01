@@ -23,47 +23,40 @@ import {
   Calendar
 } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
-import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
-import { useERCOTEnhancedData } from '@/hooks/useERCOTEnhancedData';
-import { useERCOTMarketData } from '@/hooks/useERCOTMarketData';
 import { ERCOTForecastPanel } from './intelligence/ERCOTForecastPanel';
 import { ERCOTOutagesPanel } from './intelligence/ERCOTOutagesPanel';
 import { ERCOTAlertsPanel } from './intelligence/ERCOTAlertsPanel';
 import { ERCOTHistoricalPricing } from './ercot/ERCOTHistoricalPricing';
 
 export function ERCOTMarketComprehensive() {
-  // Use working dashboard data source
-  const { 
-    ercotPricing: pricing, 
-    ercotLoad: loadData, 
-    ercotGeneration: generationMix, 
-    isLoading: basicLoading, 
-    refreshData 
-  } = useOptimizedDashboard();
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
-  // Enhanced ERCOT data hook
-  const {
+  // Use unified ERCOT data hook with all real data
+  const { 
+    pricing, 
+    loadData, 
+    generationMix,
+    zoneLMPs,
+    ordcAdder,
+    ancillaryPrices,
+    systemFrequency,
+    constraints,
+    intertieFlows,
+    weatherZoneLoad,
+    operatingReserve,
+    interchange,
+    energyStorage,
     windSolarForecast,
     assetOutages,
     historicalPrices,
     marketAnalytics,
     alerts,
-    loading: enhancedLoading,
-    refetchAll: refetchEnhanced,
+    loading, 
+    error,
+    refetch,
     dismissAlert,
     clearAllAlerts
-  } = useERCOTEnhancedData();
-
-  // ERCOT Market data hook for real market data
-  const {
-    operatingReserve,
-    interchange,
-    energyStorage,
-    loading: marketLoading,
-    refetch: refetchMarket
-  } = useERCOTMarketData();
-
-  const loading = basicLoading || enhancedLoading || marketLoading;
+  } = useERCOTData();
 
   // Basic SEO
   useEffect(() => {
@@ -88,10 +81,10 @@ export function ERCOTMarketComprehensive() {
     canonical.setAttribute('href', window.location.href);
   }, []);
 
-  const handleRefreshAll = () => {
-    refreshData();
-    refetchEnhanced();
-    refetchMarket();
+  const handleRefreshAll = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
   // Use real market data when available
@@ -164,10 +157,10 @@ export function ERCOTMarketComprehensive() {
           </div>
           <Button 
             onClick={handleRefreshAll}
-            disabled={loading}
+            disabled={loading || isRefreshing}
             className="bg-gradient-to-r from-orange-600 to-orange-700 flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading || isRefreshing ? 'animate-spin' : ''}`} />
             <span className="text-sm">Refresh All Data</span>
           </Button>
         </div>
@@ -537,7 +530,7 @@ export function ERCOTMarketComprehensive() {
           <TabsContent value="forecast">
             <ERCOTForecastPanel 
               windSolarForecast={windSolarForecast}
-              loading={enhancedLoading}
+              loading={loading}
             />
           </TabsContent>
 
@@ -555,7 +548,7 @@ export function ERCOTMarketComprehensive() {
             <div>
               <ERCOTOutagesPanel 
                 assetOutages={assetOutages}
-                loading={enhancedLoading}
+                loading={loading}
               />
             </div>
           </TabsContent>
