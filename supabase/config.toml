@@ -4,6 +4,12 @@ project_id = "ktgosplhknmnyagxrgbe"
 [functions.aeso-historical-pricing]
 verify_jwt = false
 
+[functions.aeso-advanced-analytics]
+verify_jwt = false
+
+[functions.aeso-market-data]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

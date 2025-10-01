@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { TransmissionConstraintChart } from './TransmissionConstraintChart';
+import { ForecastAccuracyChart } from './ForecastAccuracyChart';
+import { StoragePerformanceChart } from './StoragePerformanceChart';
+import { MarketSharePieChart } from './MarketSharePieChart';
 
 interface TransmissionConstraint {
   constraint_name: string;
@@ -174,6 +178,7 @@ export function AESOAdvancedAnalytics() {
 
         {/* Transmission Constraints Tab */}
         <TabsContent value="transmission" className="space-y-4">
+          <TransmissionConstraintChart constraints={transmissionConstraints} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -231,6 +236,7 @@ export function AESOAdvancedAnalytics() {
 
         {/* 7-Day Forecast Tab */}
         <TabsContent value="forecast" className="space-y-4">
+          <ForecastAccuracyChart forecast={sevenDayForecast} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -272,6 +278,7 @@ export function AESOAdvancedAnalytics() {
 
         {/* Market Participants Tab */}
         <TabsContent value="participants" className="space-y-4">
+          <MarketSharePieChart participants={marketParticipants} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -353,6 +360,7 @@ export function AESOAdvancedAnalytics() {
 
         {/* Storage Tab */}
         <TabsContent value="storage" className="space-y-4">
+          <StoragePerformanceChart storage={storageMetrics} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
