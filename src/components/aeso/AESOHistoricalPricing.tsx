@@ -1507,9 +1507,6 @@ export function AESOHistoricalPricing() {
                                   CA${data.uptime95Price?.toFixed(2) || '--'}
                                 </p>
                                 <p className="text-xs font-medium text-green-600">95% Uptime Price</p>
-                                <p className="text-xs text-green-600">
-                                  Saves CA${((data.average || 0) - (data.uptime95Price || 0)).toFixed(2)}/MWh
-                                </p>
                               </div>
                             </div>
                           </CardContent>
