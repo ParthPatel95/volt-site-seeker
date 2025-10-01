@@ -1,0 +1,174 @@
+/* Print styles for Advanced Analytics */
+@media print {
+  /* Hide non-essential elements */
+  .print\\:hidden,
+  header,
+  nav,
+  footer,
+  button:not(.print\\:block),
+  .sidebar,
+  [role="navigation"] {
+    display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+    font-size: 10pt;
+  }
+
+  /* Container */
+  #advanced-analytics-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Header */
+  #advanced-analytics-container > div:first-child {
+    page-break-after: avoid;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #333;
+    padding-bottom: 0.5rem;
+  }
+
+  #advanced-analytics-container h3 {
+    font-size: 16pt;
+    margin: 0;
+  }
+
+  #advanced-analytics-container p {
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* Cards */
+  [class*="Card"] {
+    border: 1px solid #ddd !important;
+    background: white !important;
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+    box-shadow: none !important;
+  }
+
+  /* Card headers */
+  [class*="CardHeader"] {
+    border-bottom: 1px solid #eee;
+    padding: 0.5rem;
+    background: #f9f9f9 !important;
+  }
+
+  [class*="CardTitle"] {
+    font-size: 12pt;
+    color: #333 !important;
+  }
+
+  /* Card content */
+  [class*="CardContent"] {
+    padding: 0.75rem;
+  }
+
+  /* Charts */
+  svg {
+    max-height: 300px !important;
+  }
+
+  /* Prevent chart splitting */
+  #chart-yearly-trend,
+  #chart-monthly-heatmap,
+  #chart-time-series,
+  #chart-duration-curve,
+  #chart-correlation,
+  #chart-rolling-stats,
+  #chart-on-off-peak {
+    page-break-inside: avoid;
+  }
+
+  /* Two-column charts side by side if space allows */
+  .grid.lg\\:grid-cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  /* Alerts */
+  [class*="Alert"] {
+    border: 1px solid #f59e0b !important;
+    background: #fef3c7 !important;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    page-break-inside: avoid;
+    font-size: 9pt;
+  }
+
+  /* Hide alert dismiss buttons */
+  [class*="Alert"] button {
+    display: none !important;
+  }
+
+  /* Remove shadows and decorations */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure dark mode colors don't affect print */
+  * {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Exception for colored elements that need their color */
+  [class*="text-blue"],
+  [class*="text-green"],
+  [class*="text-orange"],
+  [class*="text-red"],
+  [class*="text-purple"],
+  [class*="text-amber"],
+  [class*="text-indigo"] {
+    color: inherit !important;
+  }
+
+  /* Table styles if any */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 0.25rem 0.5rem;
+    text-align: left;
+    font-size: 9pt;
+  }
+
+  th {
+    background: #f0f0f0 !important;
+    font-weight: bold;
+  }
+
+  /* Links */
+  a {
+    color: #000 !important;
+    text-decoration: none;
+  }
+
+  /* Page breaks */
+  h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* Hide controls */
+  #advanced-analytics-container > [class*="Card"]:first-of-type {
+    display: none !important;
+  }
+}

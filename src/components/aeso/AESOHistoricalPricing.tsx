@@ -40,6 +40,7 @@ import { PredictiveAnalytics } from './PredictiveAnalytics';
 import { LoadScheduleOptimizer } from './LoadScheduleOptimizer';
 import { CostBenefitCalculator } from './CostBenefitCalculator';
 import { WeatherAnalysis } from '@/components/weather/WeatherAnalysis';
+import { AdvancedAnalytics } from '@/components/historical/AdvancedAnalytics';
 
 
 export function AESOHistoricalPricing() {
@@ -860,7 +861,7 @@ export function AESOHistoricalPricing() {
       </div>
 
       <Tabs defaultValue="monthly" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 h-auto p-1">
           <TabsTrigger value="monthly" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Calendar className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm whitespace-nowrap">Last 30 Days</span>
@@ -872,6 +873,10 @@ export function AESOHistoricalPricing() {
           <TabsTrigger value="analytics" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BarChart3 className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm whitespace-nowrap">Uptime Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="historical" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Activity className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">Historical</span>
           </TabsTrigger>
           <TabsTrigger value="weather" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <CloudRain className="w-4 h-4 flex-shrink-0" />
@@ -2291,12 +2296,17 @@ export function AESOHistoricalPricing() {
            </Card>
          </TabsContent>
 
-        {/* Weather Analysis Tab */}
-        <TabsContent value="weather" className="space-y-4">
-          <WeatherAnalysis />
-        </TabsContent>
+         {/* Historical Analytics Tab */}
+         <TabsContent value="historical" className="space-y-4">
+           <AdvancedAnalytics />
+         </TabsContent>
 
-      </Tabs>
+         {/* Weather Analysis Tab */}
+         <TabsContent value="weather" className="space-y-4">
+           <WeatherAnalysis />
+         </TabsContent>
+
+       </Tabs>
     </div>
   );
 }
