@@ -178,20 +178,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer */}
       <div className={`p-1 sm:p-2 border-t border-slate-700 space-y-0.5 sm:space-y-1 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
-        <Link
-          to="/app/settings"
-          onClick={() => isMobile && setIsOpen(false)}
-          className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg transition-colors ${
-            location.pathname === '/app/settings'
-              ? 'bg-accent text-accent-foreground' 
-              : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-          } ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
-          title={isCollapsed && !isMobile ? 'Settings' : ''}
-        >
-          <Settings className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-          {(!isCollapsed || isMobile) && <span className="font-medium text-xs sm:text-sm">Settings</span>}
-        </Link>
-        
         <Button
           variant="ghost"
           onClick={handleSignOut}
