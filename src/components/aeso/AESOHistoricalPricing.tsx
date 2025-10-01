@@ -1818,9 +1818,9 @@ export function AESOHistoricalPricing() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {monthlyData?.statistics?.average !== undefined ? formatCurrency(monthlyData.statistics.average) : '—'}
+                  {yearlyData?.statistics?.average !== undefined ? formatCurrency(yearlyData.statistics.average) : '—'}
                 </div>
-                <p className="text-xs text-muted-foreground">per MWh (30 days)</p>
+                <p className="text-xs text-muted-foreground">per MWh (12 months)</p>
               </CardContent>
             </Card>
 
@@ -1833,9 +1833,9 @@ export function AESOHistoricalPricing() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {monthlyData?.statistics?.peak !== undefined ? formatCurrency(monthlyData.statistics.peak) : '—'}
+                  {yearlyData?.statistics?.peak !== undefined ? formatCurrency(yearlyData.statistics.peak) : '—'}
                 </div>
-                <p className="text-xs text-muted-foreground">highest recorded</p>
+                <p className="text-xs text-muted-foreground">highest (12 months)</p>
               </CardContent>
             </Card>
 
@@ -1848,9 +1848,9 @@ export function AESOHistoricalPricing() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {monthlyData?.statistics?.low !== undefined ? formatCurrency(monthlyData.statistics.low) : '—'}
+                  {yearlyData?.statistics?.low !== undefined ? formatCurrency(yearlyData.statistics.low) : '—'}
                 </div>
-                <p className="text-xs text-muted-foreground">lowest recorded</p>
+                <p className="text-xs text-muted-foreground">lowest (12 months)</p>
               </CardContent>
             </Card>
 
@@ -1863,9 +1863,9 @@ export function AESOHistoricalPricing() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {monthlyData?.statistics?.volatility ? `${monthlyData.statistics.volatility.toFixed(1)}%` : '—'}
+                  {yearlyData?.statistics?.volatility ? `${yearlyData.statistics.volatility.toFixed(1)}%` : '—'}
                 </div>
-                <p className="text-xs text-muted-foreground">price variation</p>
+                <p className="text-xs text-muted-foreground">12-month variation</p>
               </CardContent>
             </Card>
           </div>
