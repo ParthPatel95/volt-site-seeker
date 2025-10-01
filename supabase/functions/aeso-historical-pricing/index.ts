@@ -24,7 +24,7 @@ serve(async (req) => {
   }
 
   try {
-    const { timeframe } = await req.json();
+    const { timeframe, startDate: customStartDate, endDate: customEndDate } = await req.json();
     
     // Use same API key priority as energy-data-integration function
     const apiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
@@ -42,7 +42,14 @@ serve(async (req) => {
     
     let historicalData: HistoricalDataPoint[] = [];
     
-    if (timeframe === 'monthly') {
+    if (timeframe === 'custom' && customStartDate && customEndDate) {
+      // Custom date range for advanced analytics (up to 20 years)
+      const startDate = new Date(customStartDate);
+      const endDate = new Date(customEndDate);
+      
+      console.log(`Custom date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+    } else if (timeframe === 'monthly') {
       // Fetch last 30 days of hourly data
       const endDate = new Date();
       const startDate = new Date();
@@ -165,7 +172,18 @@ serve(async (req) => {
       throw new Error('No historical data available from AESO API');
     }
 
-    // Process data for frontend consumption
+    // For custom timeframe, return raw data directly without processing
+    if (timeframe === 'custom') {
+      console.log(`Returning ${historicalData.length} raw data points for custom date range`);
+      return new Response(JSON.stringify(historicalData), {
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }
+      });
+    }
+
+    // Process data for frontend consumption (for monthly/yearly timeframes)
     const processedData = await processHistoricalData(historicalData, timeframe);
     
     // Add predictive analytics

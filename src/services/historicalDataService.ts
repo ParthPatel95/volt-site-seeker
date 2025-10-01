@@ -144,33 +144,20 @@ export class HistoricalDataService {
       }));
     }
 
-    // Fallback: generate hourly data from daily data
-    if (data.chartData) {
-      const hourlyData: HourlyDataPoint[] = [];
-      const hourlyMultipliers = [
-        0.85, 0.82, 0.80, 0.78, 0.82, 0.90,
-        1.05, 1.15, 1.20, 1.18, 1.12, 1.08,
-        1.10, 1.15, 1.18, 1.22, 1.25, 1.35,
-        1.40, 1.30, 1.15, 1.05, 0.95, 0.88
-      ];
-
-      data.chartData.forEach((day: any) => {
-        hourlyMultipliers.forEach((multiplier, hour) => {
-          const date = new Date(day.date);
-          date.setHours(hour, 0, 0, 0);
-          
-          hourlyData.push({
-            ts: date.toISOString(),
-            price: (day.price || data.statistics?.average || 50) * multiplier,
-            generation: 8000 + Math.random() * 2000, // Synthetic
-            ail: 7500 + Math.random() * 1500, // Synthetic
-          });
-        });
-      });
-
-      return hourlyData;
+    // For custom date range, the edge function returns the raw AESO data
+    // Transform it to our format
+    if (Array.isArray(data)) {
+      return data.map((point: any) => ({
+        ts: point.datetime || point.begin_datetime_utc || point.timestamp,
+        price: point.price || 0,
+        // Note: AESO pool price API doesn't provide generation/AIL in hourly data
+        // These would need to come from separate API calls if needed
+        generation: 0,
+        ail: 0,
+      }));
     }
 
+    console.warn('No valid data format found in AESO response');
     return [];
   }
 

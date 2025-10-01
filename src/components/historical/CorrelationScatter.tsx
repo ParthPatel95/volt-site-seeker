@@ -15,6 +15,13 @@ export function CorrelationScatter({ data, unit }: Props) {
   const [mode, setMode] = React.useState<'ail' | 'generation'>('ail');
 
   const { chartData, correlation } = useMemo(() => {
+    // Check if we have valid generation/AIL data
+    const hasValidData = data.some(d => mode === 'ail' ? d.ail > 0 : d.generation > 0);
+    
+    if (!hasValidData) {
+      return { chartData: [], correlation: 0 };
+    }
+
     // Downsample for performance (max 2000 points)
     const step = Math.max(1, Math.ceil(data.length / 2000));
     const sampled = data.filter((_, i) => i % step === 0);
@@ -37,6 +44,26 @@ export function CorrelationScatter({ data, unit }: Props) {
     }
     return `$${value.toFixed(2)}`;
   };
+
+  const hasValidData = chartData.length > 0;
+
+  if (!hasValidData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-red-600" />
+            Price Correlation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Generation and AIL data not available for this date range. These metrics require additional AESO API calls.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

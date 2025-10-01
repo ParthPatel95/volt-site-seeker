@@ -205,6 +205,16 @@ export function AdvancedAnalytics() {
       {/* Charts */}
       {!loading && filteredData.length > 0 && (
         <div className="space-y-6 print:space-y-4">
+          {/* Data Info Banner */}
+          <Alert className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
+            <AlertTriangle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-sm">
+              <strong>Real AESO Data:</strong> All pricing data is fetched directly from AESO's official API. 
+              Note: Generation and AIL metrics require additional API calls and may not be available for extended date ranges due to API rate limits.
+              All displayed prices are actual historical pool prices from the Alberta electricity market.
+            </AlertDescription>
+          </Alert>
+
           {/* Yearly Trend */}
           <div id="chart-yearly-trend">
             <YearlyTrendChart data={yearlyData} unit={filters.unit} />
@@ -233,9 +243,20 @@ export function AdvancedAnalytics() {
               <DurationCurveChart data={durationCurve} unit={filters.unit} />
             </div>
             
-            <div id="chart-correlation">
-              <CorrelationScatter data={filteredData} unit={filters.unit} />
-            </div>
+            {filteredData.some(d => d.ail > 0 || d.generation > 0) ? (
+              <div id="chart-correlation">
+                <CorrelationScatter data={filteredData} unit={filters.unit} />
+              </div>
+            ) : (
+              <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-sm">
+                  <strong>Correlation Analysis Unavailable:</strong> Generation and AIL data are not included in this date range. 
+                  The AESO pool price API provides only pricing data. For generation mix and load data across extended periods, 
+                  separate API calls would be required which may exceed rate limits.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           {/* Rolling Stats */}

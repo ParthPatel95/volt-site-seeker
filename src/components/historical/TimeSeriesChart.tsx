@@ -142,6 +142,7 @@ export function TimeSeriesChart({ hourlyData, dailyData, granularity, unit, show
                   dot={false}
                   strokeDasharray="5 5"
                   name="AIL"
+                  connectNulls
                 />
               )}
               {showGeneration && (
@@ -154,6 +155,7 @@ export function TimeSeriesChart({ hourlyData, dailyData, granularity, unit, show
                   dot={false}
                   strokeDasharray="3 3"
                   name="Generation"
+                  connectNulls
                 />
               )}
             </LineChart>
