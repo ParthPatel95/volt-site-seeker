@@ -1731,25 +1731,70 @@ export function AESOHistoricalPricing() {
                         <CardTitle className="text-base">Market Intelligence & Insights</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-6">
                           <div>
-                            <h5 className="font-semibold mb-2">Price Trend Analysis</h5>
-                            <ul className="space-y-1 text-muted-foreground">
-                              <li>• 10-year compound annual growth rate: {(Math.pow(currentAverage / tenYearAgoData.average, 1/10) - 1 * 100).toFixed(2)}%</li>
-                              <li>• Current prices are {Math.abs(currentVsAverage).toFixed(1)}% {currentVsAverage > 0 ? 'above' : 'below'} 10-year average</li>
-                              <li>• Peak volatility: {Math.max(...historicalYears.map((y: any) => y.volatility || 0)).toFixed(0)}% in {historicalYears.reduce((max: any, year: any) => (year.volatility || 0) > (max.volatility || 0) ? year : max).year}</li>
-                              <li>• Most stable year: {historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).year} ({historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).volatility?.toFixed(0)}% volatility)</li>
-                              <li>• Data sourced from AESO API with {historicalYears.reduce((sum: number, y: any) => sum + y.dataPoints, 0).toLocaleString()} total hourly price points</li>
-                            </ul>
-                          </div>
-                          <div>
-                            <h5 className="font-semibold mb-2">Strategic Recommendations</h5>
-                            <ul className="space-y-1 text-muted-foreground">
-                              <li>• Consider {currentVsAverage > 20 ? 'demand response' : 'fixed pricing'} strategies</li>
-                              <li>• Optimal uptime target: {currentVsAverage > 10 ? '90-95%' : '95-98%'} based on current market</li>
-                              <li>• Price volatility suggests {averageVolatility > 50 ? 'active' : 'passive'} management approach</li>
-                              <li>• Historical patterns indicate {priceIncrease > 30 ? 'continued growth' : 'market maturation'}</li>
-                            </ul>
+                            <h5 className="font-semibold mb-3 text-base">Comprehensive Price Trend Analysis</h5>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-4">
+                                <div>
+                                  <h6 className="font-medium mb-2 text-sm">Long-Term Growth Metrics</h6>
+                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
+                                    <li>• 10-year CAGR: <span className="font-semibold text-foreground">{(Math.pow(currentAverage / tenYearAgoData.average, 1/10) - 1 * 100).toFixed(2)}%</span></li>
+                                    <li>• Total price increase: <span className="font-semibold text-foreground">{priceIncrease.toFixed(1)}%</span> over decade</li>
+                                    <li>• Current vs 10-year avg: <span className={`font-semibold ${currentVsAverage > 0 ? 'text-red-600' : 'text-green-600'}`}>{Math.abs(currentVsAverage).toFixed(1)}% {currentVsAverage > 0 ? 'above' : 'below'}</span></li>
+                                    <li>• Average yearly variance: <span className="font-semibold text-foreground">{(priceIncrease / 10).toFixed(2)}%</span></li>
+                                  </ul>
+                                </div>
+                                
+                                <div>
+                                  <h6 className="font-medium mb-2 text-sm">Volatility Analysis</h6>
+                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
+                                    <li>• Current volatility: <span className="font-semibold text-foreground">{averageVolatility.toFixed(1)}%</span></li>
+                                    <li>• Peak volatility: <span className="font-semibold text-red-600">{Math.max(...historicalYears.map((y: any) => y.volatility || 0)).toFixed(0)}%</span> in {historicalYears.reduce((max: any, year: any) => (year.volatility || 0) > (max.volatility || 0) ? year : max).year}</li>
+                                    <li>• Most stable period: <span className="font-semibold text-green-600">{historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).year}</span> ({historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).volatility?.toFixed(0)}% volatility)</li>
+                                    <li>• Market stability trend: <span className="font-semibold text-foreground">{averageVolatility > 50 ? 'High variability' : 'Moderate stability'}</span></li>
+                                  </ul>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-4">
+                                <div>
+                                  <h6 className="font-medium mb-2 text-sm">Price Range Insights</h6>
+                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
+                                    <li>• Highest annual average: <span className="font-semibold text-foreground">{formatCurrency(Math.max(...historicalYears.map((y: any) => y.average)))}</span></li>
+                                    <li>• Lowest annual average: <span className="font-semibold text-foreground">{formatCurrency(Math.min(...historicalYears.map((y: any) => y.average)))}</span></li>
+                                    <li>• Peak-to-trough spread: <span className="font-semibold text-foreground">{formatCurrency(Math.max(...historicalYears.map((y: any) => y.average)) - Math.min(...historicalYears.map((y: any) => y.average)))}</span></li>
+                                    <li>• Price ceiling threshold: <span className="font-semibold text-foreground">{formatCurrency(Math.max(...historicalYears.map((y: any) => y.peak)))}</span></li>
+                                  </ul>
+                                </div>
+                                
+                                <div>
+                                  <h6 className="font-medium mb-2 text-sm">Data Quality & Coverage</h6>
+                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
+                                    <li>• Total data points: <span className="font-semibold text-foreground">{historicalYears.reduce((sum: number, y: any) => sum + y.dataPoints, 0).toLocaleString()}</span> hourly records</li>
+                                    <li>• Years analyzed: <span className="font-semibold text-foreground">{historicalYears.length}</span> complete periods</li>
+                                    <li>• Data source: <span className="font-semibold text-foreground">AESO Real-Time API</span></li>
+                                    <li>• Update frequency: <span className="font-semibold text-foreground">Hourly automated sync</span></li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4 pt-4 border-t border-border">
+                              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                                <Activity className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <p>
+                                  <span className="font-medium text-foreground">Market Context:</span> {
+                                    currentVsAverage > 20 
+                                      ? 'Current prices significantly elevated above historical norms, indicating strong demand or constrained supply conditions.' 
+                                      : currentVsAverage > 0 
+                                      ? 'Prices moderately above historical average, suggesting balanced market conditions with slight upward pressure.' 
+                                      : 'Current prices below historical average, potentially indicating favorable market conditions or increased supply.'
+                                  }
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
