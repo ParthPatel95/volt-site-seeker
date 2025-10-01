@@ -1486,7 +1486,10 @@ export function AESOHistoricalPricing() {
                               </p>
                               <p className="text-xs text-muted-foreground">Avg: CA${data.average?.toFixed(2) || '--'}/MWh</p>
                               <p className="text-xs text-muted-foreground">Peak: CA${data.peak?.toFixed(2) || '--'}/MWh</p>
-                              <p className="text-xs text-muted-foreground">95% Strike: CA${((data.average || 0) * 1.075).toFixed(2)}/MWh</p>
+                              <p className="text-xs text-green-600 font-medium">95% Uptime: CA${data.uptime95Price?.toFixed(2) || '--'}/MWh</p>
+                              <p className="text-xs text-muted-foreground">
+                                (saves CA${((data.average || 0) - (data.uptime95Price || 0)).toFixed(2)}/MWh)
+                              </p>
                             </div>
                           </CardContent>
                         </Card>

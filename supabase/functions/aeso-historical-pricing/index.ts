@@ -529,9 +529,23 @@ function calculateSeasonalPatterns(data: HistoricalDataPoint[]) {
   const patterns: any = {};
   Object.entries(seasonalData).forEach(([season, prices]) => {
     if (prices.length > 0) {
+      const average = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+      const peak = Math.max(...prices);
+      
+      // Calculate 95% uptime price (remove top 5% highest prices)
+      const sortedPrices = [...prices].sort((a, b) => b - a); // Sort descending
+      const numToRemove = Math.floor(prices.length * 0.05); // Top 5%
+      const uptime95Prices = sortedPrices.slice(numToRemove); // Keep bottom 95%
+      const uptime95Average = uptime95Prices.length > 0 
+        ? uptime95Prices.reduce((a: number, b: number) => a + b, 0) / uptime95Prices.length
+        : average;
+      
+      console.log(`${season}: avg=${average.toFixed(2)}, 95% uptime avg=${uptime95Average.toFixed(2)} (removed ${numToRemove} highest hours from ${prices.length} total)`);
+      
       patterns[season] = {
-        average: Math.round((prices.reduce((a: number, b: number) => a + b, 0) / prices.length) * 100) / 100,
-        peak: Math.round(Math.max(...prices) * 100) / 100
+        average: Math.round(average * 100) / 100,
+        peak: Math.round(peak * 100) / 100,
+        uptime95Price: Math.round(uptime95Average * 100) / 100
       };
     }
   });

@@ -33,6 +33,7 @@ export interface HistoricalPricingData {
     [key: string]: {
       average: number;
       peak: number;
+      uptime95Price?: number;
     };
   };
   predictions?: Array<{
