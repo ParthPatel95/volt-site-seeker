@@ -472,8 +472,8 @@ export function AESOHistoricalPricing() {
   // Simplified Uptime Optimization Analysis using REAL AESO data
   const calculateUptimeOptimization = () => {
     const daysInPeriod = parseInt(timePeriod);
-    // Always use monthly data for consistency with the 30-day average price display
-    const sourceData = monthlyData;
+    // Use appropriate data source based on selected time period
+    const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
     
     if (!sourceData || !sourceData.rawHourlyData) {
       console.warn('No raw hourly data available for optimization');
@@ -482,10 +482,22 @@ export function AESOHistoricalPricing() {
     
     console.log('=== UPTIME OPTIMIZATION ANALYSIS (REAL AESO DATA) ===');
     console.log('Days in period:', daysInPeriod);
+    console.log('Using data source:', daysInPeriod > 180 ? 'yearlyData (12 months)' : 'monthlyData (30 days)');
     
     // Use REAL hourly data from AESO (no synthetic generation!)
-    const hourlyData = sourceData.rawHourlyData;
+    // Filter to the exact time period requested
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setDate(now.getDate() - daysInPeriod);
+    
+    const filteredHourlyData = sourceData.rawHourlyData.filter(hour => {
+      const hourDate = new Date(hour.datetime || hour.date);
+      return hourDate >= startDate && hourDate <= now;
+    });
+    
+    const hourlyData = filteredHourlyData.length > 0 ? filteredHourlyData : sourceData.rawHourlyData;
     console.log('Total real hourly data points from AESO:', hourlyData.length);
+    console.log('Filtered to time period:', filteredHourlyData.length > 0 ? 'yes' : 'no (using all available data)');
     
     // Debug price data
     const zeroPrices = hourlyData.filter(h => (h.price || 0) === 0);
@@ -525,7 +537,7 @@ export function AESOHistoricalPricing() {
     // Comprehensive logging
     console.log('=== REAL DATA CALCULATION ===');
     console.log(`Total hours: ${totalHours}`);
-    console.log(`Hours to shutdown: ${allowedDowntimeHours}`);
+    console.log(`Hours to shutdown (top ${(100 - targetUptime * 100).toFixed(1)}% highest prices): ${allowedDowntimeHours}`);
     console.log(`Hours to keep running: ${hoursToKeepRunning.length}`);
     console.log(`Original total cost: ${originalTotalCost.toFixed(2)} CAD (sum of all ${totalHours} hours)`);
     console.log(`Original avg price: ${originalAvgPrice.toFixed(2)} CAD/MWh`);
@@ -534,12 +546,17 @@ export function AESOHistoricalPricing() {
     console.log(`Total savings: ${totalSavings.toFixed(2)} CAD (sum of ${hoursToShutdown.length} shutdown hours)`);
     console.log(`Avg price of shutdown hours: ${(totalSavings / allowedDowntimeHours).toFixed(2)} CAD/MWh`);
     console.log(`Price reduction: ${(originalAvgPrice - optimizedAvgPrice).toFixed(2)} CAD/MWh`);
+    console.log(`Percent reduction: ${((1 - optimizedAvgPrice / originalAvgPrice) * 100).toFixed(2)}%`);
     
-    // Sanity check
-    if (optimizedAvgPrice > originalAvgPrice) {
-      console.error('❌ ERROR: Optimized price is HIGHER than original! This should never happen!');
+    // Sanity check - CRITICAL validation
+    if (optimizedAvgPrice >= originalAvgPrice) {
+      console.error('❌ ERROR: Optimized price is NOT LOWER than original!');
+      console.error('This indicates a calculation error. Debugging info:');
+      console.error('Top 3 highest prices being shut down:', hoursToShutdown.slice(0, 3).map(h => h.price));
+      console.error('Top 3 lowest prices being kept:', hoursToKeepRunning.slice(-3).map(h => h.price));
+      return null; // Return null to prevent showing incorrect data
     } else {
-      console.log('✅ Optimized price is lower than original - correct!');
+      console.log('✅ Validation passed: Optimized price is lower than original');
     }
     
     // Price distribution analysis using REAL data
