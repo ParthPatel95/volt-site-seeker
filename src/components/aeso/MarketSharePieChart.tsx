@@ -36,7 +36,7 @@ export function MarketSharePieChart({ participants }: Props) {
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+              label={({ name, value }: any) => `${name}: ${Number(value).toFixed(1)}%`}
               outerRadius={80}
               fill="#8884d8"
               dataKey="value"
@@ -45,7 +45,7 @@ export function MarketSharePieChart({ participants }: Props) {
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
+            <Tooltip formatter={(value: any) => `${Number(value).toFixed(1)}%`} />
             <Legend />
           </PieChart>
         </ResponsiveContainer>
