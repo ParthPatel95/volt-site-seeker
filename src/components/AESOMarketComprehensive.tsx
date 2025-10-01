@@ -175,7 +175,7 @@ export function AESOMarketComprehensive() {
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(6, minmax(80px, 1fr))'}}>
+            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(5, minmax(80px, 1fr))'}}>
               <TabsTrigger value="market" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline truncate">Market Data</span>
@@ -190,11 +190,6 @@ export function AESOMarketComprehensive() {
                 <Activity className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden lg:inline truncate">Generation</span>
                 <span className="lg:hidden truncate">Gen</span>
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Analytics</span>
-                <span className="lg:hidden truncate">Data</span>
               </TabsTrigger>
               <TabsTrigger value="forecast" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Wind className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -541,15 +536,6 @@ export function AESOMarketComprehensive() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Intelligence Tabs */}
-          <TabsContent value="analytics">
-            <AESOMarketAnalyticsPanel 
-              marketAnalytics={marketAnalytics}
-              historicalPrices={historicalPrices}
-              loading={enhancedLoading}
-            />
           </TabsContent>
 
           <TabsContent value="forecast">
