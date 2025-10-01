@@ -175,7 +175,7 @@ export function AESOMarketComprehensive() {
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(8, minmax(80px, 1fr))'}}>
+            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(7, minmax(80px, 1fr))'}}>
               <TabsTrigger value="market" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline truncate">Market Data</span>
@@ -205,11 +205,6 @@ export function AESOMarketComprehensive() {
                 <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden lg:inline truncate">Outages</span>
                 <span className="lg:hidden truncate">Out</span>
-              </TabsTrigger>
-              <TabsTrigger value="investment" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <Target className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Investment</span>
-                <span className="lg:hidden truncate">Inv</span>
               </TabsTrigger>
               <TabsTrigger value="alerts" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -572,14 +567,6 @@ export function AESOMarketComprehensive() {
           <TabsContent value="outages">
             <AESOOutagesPanel 
               assetOutages={assetOutages}
-              loading={enhancedLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value="investment">
-            <AESOInvestmentPanel 
-              marketAnalytics={marketAnalytics}
-              historicalPrices={historicalPrices}
               loading={enhancedLoading}
             />
           </TabsContent>
