@@ -745,12 +745,27 @@ async function fetchAESOData() {
     };
 
     let current = pickLastNumber(poolArr, ['pool_price']);
+    // Calculate average over longer period for more accurate market representation
     let avg: number | null = null;
-    if (Array.isArray(poolArr) && poolArr.length) {
+    if (Array.isArray(poolArr) && poolArr.length > 24) {
+      // Use last 7 days of data for better average calculation
+      const last7DaysData = poolArr.slice(-168); // 7 days * 24 hours
+      const nums = last7DaysData
+        .map(r => parseFloat(String(r?.pool_price ?? '')))
+        .filter((v) => Number.isFinite(v));
+      if (nums.length) {
+        avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+        console.log(`AESO average calculated from ${nums.length} hours (7 days): ${avg.toFixed(2)} $/MWh`);
+      }
+    } else if (Array.isArray(poolArr) && poolArr.length) {
+      // Fallback to available data if less than 7 days
       const nums = poolArr
         .map(r => parseFloat(String(r?.pool_price ?? '')))
         .filter((v) => Number.isFinite(v));
-      if (nums.length) avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+      if (nums.length) {
+        avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+        console.log(`AESO average calculated from ${nums.length} hours: ${avg.toFixed(2)} $/MWh`);
+      }
     }
 
     // Fallback to SMP if Pool Price is unavailable
