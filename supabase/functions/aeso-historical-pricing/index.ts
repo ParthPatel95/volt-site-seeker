@@ -66,8 +66,10 @@ serve(async (req) => {
       const historicalYearsData = [];
       
       // Fetch data for each of the past 10 years (including current year)
-      // This will fetch 10 complete years of data
+      // This will fetch 10 complete years of data: 2016-2025 = 10 years
       const startYear = currentYear - 9;
+      
+      console.log(`Will attempt to fetch data for years ${startYear} to ${currentYear} (10 years total)`);
       
       for (let year = startYear; year <= currentYear; year++) {
         // For current year, only fetch up to today
@@ -109,7 +111,8 @@ serve(async (req) => {
               });
             }
           } else {
-            console.log(`No data available for year ${year} - API may not have historical data this far back`);
+            console.log(`No data available for year ${year} - AESO API may not have historical data this far back`);
+            // Still add the year to show in the UI that we attempted to fetch it
             historicalYearsData.push({
               year,
               average: null,
@@ -117,13 +120,15 @@ serve(async (req) => {
               low: null,
               volatility: null,
               dataPoints: 0,
-              isReal: false
+              isReal: false,
+              noData: true  // Flag to indicate API had no data for this year
             });
           }
         } catch (error) {
           console.error(`Error fetching data for year ${year}:`, error);
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
           console.error(`Error details: ${errorMsg}`);
+          // Still add the year to show we attempted it
           historicalYearsData.push({
             year,
             average: null,
@@ -136,6 +141,8 @@ serve(async (req) => {
           });
         }
       }
+      
+      console.log(`Completed fetching 10-year data. Total years in response: ${historicalYearsData.length}, Years with real data: ${historicalYearsData.filter(y => y.isReal).length}`);
       
       return new Response(
         JSON.stringify({
