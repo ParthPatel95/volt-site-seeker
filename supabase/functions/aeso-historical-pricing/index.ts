@@ -60,15 +60,14 @@ serve(async (req) => {
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     } else if (timeframe === 'historical-10year') {
       // Fetch real 10-year historical data from AESO
-      // Note: AESO API may only have data from 2018 onwards
       console.log('Fetching 10-year real historical data from AESO API...');
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       const historicalYearsData = [];
       
-      // Try to fetch data for each of the past 10 years
-      // Start from 2018 or 10 years ago, whichever is more recent
-      const startYear = Math.max(2018, currentYear - 9);
+      // Fetch data for each of the past 10 years (including current year)
+      // This will fetch 10 complete years of data
+      const startYear = currentYear - 9;
       
       for (let year = startYear; year <= currentYear; year++) {
         // For current year, only fetch up to today
