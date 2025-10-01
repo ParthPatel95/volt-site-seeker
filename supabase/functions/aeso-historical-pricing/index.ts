@@ -183,9 +183,16 @@ serve(async (req) => {
     }
 
     // For custom timeframe, return raw data directly without processing
+    // Transform to match expected format with ts, price, generation, ail
     if (timeframe === 'custom') {
       console.log(`Returning ${historicalData.length} raw data points for custom date range`);
-      return new Response(JSON.stringify(historicalData), {
+      const transformedData = historicalData.map(d => ({
+        ts: d.datetime,
+        price: d.price,
+        generation: 0, // Not available in pool price API
+        ail: 0 // Not available in pool price API
+      }));
+      return new Response(JSON.stringify(transformedData), {
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
