@@ -508,42 +508,62 @@ async function fetchERCOTData() {
         if (res.ok) { text = await res.text(); break; }
       }
       if (text) {
+        // Updated pattern to extract generation data from format like "Natural Gas\n\n39,466 MW(60.2%)"
         const grab = (label: string) => {
-          // Updated regex to handle comma-separated numbers like "39,466 MW"
-          const re = new RegExp(label + '[\\s\\S]*?([0-9,]+)\\s*MW', 'i');
-          const m = text.match(re);
-          if (m) {
-            const val = parseFloat(m[1].replace(/,/g, ''));
-            // Validate it's a reasonable MW value (> 0 and < 100,000 MW)
-            return (val > 0 && val < 100000) ? val : 0;
+          // More flexible regex that looks for label followed by MW value with optional newlines/spaces
+          const patterns = [
+            // Pattern 1: Label followed by MW and percentage: "Wind\n\n7,560 MW(11.5%)"
+            new RegExp(label + '[\\s\\S]{0,50}?([0-9,]+)\\s*MW\\s*\\(', 'i'),
+            // Pattern 2: Label followed by just MW: "Wind 7,560 MW"
+            new RegExp(label + '[\\s\\S]{0,50}?([0-9,]+)\\s*MW', 'i'),
+            // Pattern 3: In a table row format
+            new RegExp(label + '[\\s\\S]{0,100}?<[^>]*>\\s*([0-9,]+)\\s*MW', 'i')
+          ];
+          
+          for (const re of patterns) {
+            const m = text.match(re);
+            if (m && m[1]) {
+              const val = parseFloat(m[1].replace(/,/g, ''));
+              // Validate it's a reasonable MW value
+              if (!isNaN(val) && val >= 0 && val < 100000) {
+                console.log(`Extracted ${label}: ${val} MW`);
+                return val;
+              }
+            }
           }
+          console.log(`Could not extract ${label}`);
           return 0;
         };
+        
         const gas = grab('Natural\\s+Gas');
         const wind = grab('Wind');
         const solar = grab('Solar');
         const nuclear = grab('Nuclear');
         const coal = grab('Coal(?:\\s+and\\s+Lignite)?');
         const hydro = grab('Hydro');
-        const other = grab('(?:Power\\s+Storage|Other)');
-        const total = [gas, wind, solar, nuclear, coal, hydro, other].reduce((a,b)=>a+(Number.isFinite(b)?b:0), 0);
+        const storage = grab('Power\\s+Storage');
+        const other = grab('Other');
+        
+        const total = gas + wind + solar + nuclear + coal + hydro + storage + other;
+        
+        console.log('ERCOT fuel mix totals:', { gas, wind, solar, nuclear, coal, hydro, storage, other, total });
         
         // Only accept if total is reasonable for ERCOT (> 30,000 MW typical)
         if (total > 30000) {
           generationMix = {
             total_generation_mw: Math.round(total),
-            natural_gas_mw: Math.round(gas || 0),
-            wind_mw: Math.round(wind || 0),
-            solar_mw: Math.round(solar || 0),
-            nuclear_mw: Math.round(nuclear || 0),
-            coal_mw: Math.round(coal || 0),
-            renewable_percentage: total > 0 ? (( (wind||0) + (solar||0) + (hydro||0) ) / total * 100) : 0,
+            natural_gas_mw: Math.round(gas),
+            wind_mw: Math.round(wind),
+            solar_mw: Math.round(solar),
+            nuclear_mw: Math.round(nuclear),
+            coal_mw: Math.round(coal),
+            renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
             timestamp: new Date().toISOString(),
             source: 'ercot_fuelmix'
           };
-          console.log('ERCOT generation from Fuel Mix dashboard:', generationMix);
+          console.log('✅ ERCOT generation from Fuel Mix dashboard extracted successfully');
         } else {
-          console.log('ERCOT fuel mix total too low:', total, '- rejecting data');
+          console.log('❌ ERCOT fuel mix total too low:', total, 'MW - rejecting data');
         }
       }
     } catch (fuelErr) {
