@@ -1452,12 +1452,28 @@ export function AESOHistoricalPricing() {
                                   activeDot={{ r: 4 }}
                                 />
                                 
-                                {/* 95% Uptime Strike Price - Single Reference Line */}
+                                {/* 95% Uptime Strike Price - Using Real Calculated Data */}
                                 <Line 
                                   type="monotone" 
-                                  dataKey={() => (yearlyData?.statistics?.average || 60) * 1.075}
+                                  dataKey={(entry) => {
+                                    // Get the month name from the entry
+                                    const monthName = entry.month;
+                                    // Map month name to season
+                                    let season = 'spring';
+                                    if (monthName?.includes('Jan') || monthName?.includes('Feb') || monthName?.includes('Dec')) {
+                                      season = 'winter';
+                                    } else if (monthName?.includes('Mar') || monthName?.includes('Apr') || monthName?.includes('May')) {
+                                      season = 'spring';
+                                    } else if (monthName?.includes('Jun') || monthName?.includes('Jul') || monthName?.includes('Aug')) {
+                                      season = 'summer';
+                                    } else if (monthName?.includes('Sep') || monthName?.includes('Oct') || monthName?.includes('Nov')) {
+                                      season = 'fall';
+                                    }
+                                    // Return the uptime95Price for this season, or fallback
+                                    return yearlyData?.seasonalPatterns?.[season]?.uptime95Price || entry.average || 60;
+                                  }}
                                   stroke="hsl(38, 92%, 50%)" 
-                                  name="95% Uptime Strike"
+                                  name="95% Uptime Price"
                                   strokeWidth={2}
                                   strokeDasharray="8 4"
                                   dot={false}
@@ -1481,15 +1497,20 @@ export function AESOHistoricalPricing() {
                           <CardContent className="p-4">
                             <h4 className="font-semibold capitalize text-sm text-muted-foreground">{season}</h4>
                             <div className="mt-2">
-                              <p className="text-lg font-bold text-blue-600">
+                              <p className="text-2xl font-bold text-blue-600">
                                 CA${data.average?.toFixed(2) || '--'}
                               </p>
-                              <p className="text-xs text-muted-foreground">Avg: CA${data.average?.toFixed(2) || '--'}/MWh</p>
+                              <p className="text-xs text-muted-foreground mt-1">Full Avg: CA${data.average?.toFixed(2) || '--'}/MWh</p>
                               <p className="text-xs text-muted-foreground">Peak: CA${data.peak?.toFixed(2) || '--'}/MWh</p>
-                              <p className="text-xs text-green-600 font-medium">95% Uptime: CA${data.uptime95Price?.toFixed(2) || '--'}/MWh</p>
-                              <p className="text-xs text-muted-foreground">
-                                (saves CA${((data.average || 0) - (data.uptime95Price || 0)).toFixed(2)}/MWh)
-                              </p>
+                              <div className="mt-2 pt-2 border-t border-border">
+                                <p className="text-lg font-bold text-green-600">
+                                  CA${data.uptime95Price?.toFixed(2) || '--'}
+                                </p>
+                                <p className="text-xs font-medium text-green-600">95% Uptime Price</p>
+                                <p className="text-xs text-green-600">
+                                  Saves CA${((data.average || 0) - (data.uptime95Price || 0)).toFixed(2)}/MWh
+                                </p>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
