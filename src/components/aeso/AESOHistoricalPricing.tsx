@@ -2249,11 +2249,17 @@ export function AESOHistoricalPricing() {
                           </div>
                           
                           {/* Distribution Chart */}
-                          <div className="h-64 mt-6">
+                          <div className="h-96 mt-6">
                             <ResponsiveContainer>
-                              <BarChart data={customAnalysisResult.distributionData}>
+                              <BarChart data={customAnalysisResult.distributionData} margin={{ bottom: 100 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="range" angle={-45} textAnchor="end" height={80} />
+                                <XAxis 
+                                  dataKey="range" 
+                                  angle={-45} 
+                                  textAnchor="end" 
+                                  height={120}
+                                  interval={0}
+                                />
                                 <YAxis />
                                 <Tooltip 
                                   content={({ active, payload }) => {
