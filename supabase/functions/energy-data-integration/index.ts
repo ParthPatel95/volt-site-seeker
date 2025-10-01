@@ -195,10 +195,10 @@ async function fetchERCOTData() {
     }
   }
 
-  // Try ERCOT's system load data
+  // Try ERCOT's real-time system conditions for load data
   try {
     console.log('Fetching ERCOT system load data...');
-    const loadUrl = 'https://www.ercot.com/content/cdr/html/CURRENT_DASL_OP_HSL.html';
+    const loadUrl = 'https://www.ercot.com/content/cdr/html/real_time_system_conditions.html';
     const loadResponse = await fetch(loadUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -209,29 +209,36 @@ async function fetchERCOTData() {
       const loadHtml = await loadResponse.text();
       console.log('ERCOT load data length:', loadHtml.length);
       
-      // Extract current system load
+      // Extract Actual System Demand from the table
       let currentLoadVal: number | null = null;
-      const loadMatch = loadHtml.match(/Current[^0-9]*([0-9,]+)/i) ||
-                       loadHtml.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
-                       loadHtml.match(/System\s+Demand[^0-9]*([0-9,]+)/i) ||
-                       loadHtml.match(/([0-9,]+)\s*MW\s*(?:Current|Actual)/i);
-      if (loadMatch) {
-        currentLoadVal = parseFloat(loadMatch[1].replace(/,/g, ''));
+      
+      // Try to match "Actual System Demand | 63215" format from the table
+      const demandMatch = loadHtml.match(/Actual\s+System\s+Demand[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>/i);
+      if (demandMatch) {
+        currentLoadVal = parseFloat(demandMatch[1].replace(/,/g, ''));
+        console.log('Extracted Actual System Demand:', currentLoadVal);
       }
-      // Table-based fallback: capture number in the next TD after a label cell
+      
+      // Fallback patterns
       if (!currentLoadVal) {
-        const rowNumMatch = loadHtml.match(/<tr[^>]*>[\s\S]*?(?:Current|System)[\s\S]*?(?:Demand|Load)[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>[\s\S]*?<\/tr>/i);
-        if (rowNumMatch) {
-          currentLoadVal = parseFloat(rowNumMatch[1].replace(/,/g, ''));
+        const loadMatch = loadHtml.match(/(?:Current|Actual)\s+(?:System\s+)?(?:Load|Demand)[^0-9]*([0-9,]+)/i) ||
+                         loadHtml.match(/<td[^>]*>\s*([0-9,]+)\s*<\/td>[\s\S]*?(?:MW|MWh)/i);
+        if (loadMatch) {
+          const val = parseFloat(loadMatch[1].replace(/,/g, ''));
+          // Only accept values in reasonable ERCOT range (20,000 - 90,000 MW)
+          if (val >= 20000 && val <= 90000) {
+            currentLoadVal = val;
+          }
         }
       }
-      if (currentLoadVal && currentLoadVal > 0) {
+      
+      if (currentLoadVal && currentLoadVal >= 20000) {
         loadData = {
           current_demand_mw: currentLoadVal,
           peak_forecast_mw: currentLoadVal * 1.15,
           reserve_margin: 15.0,
           timestamp: new Date().toISOString(),
-          source: 'ercot_load_html'
+          source: 'ercot_rtsc'
         };
         console.log('Real ERCOT load extracted:', loadData);
         realDataFound = true;
@@ -245,18 +252,28 @@ async function fetchERCOTData() {
   if (!loadData) {
     try {
       console.log('Fetching ERCOT load via proxy...');
-      const proxyLoadUrl = 'https://r.jina.ai/http://www.ercot.com/content/cdr/html/CURRENT_DASL_OP_HSL.html';
+      const proxyLoadUrl = 'https://r.jina.ai/https://www.ercot.com/content/cdr/html/real_time_system_conditions.html';
       const proxiedLoad = await fetch(proxyLoadUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (proxiedLoad.ok) {
         const loadHtml = await proxiedLoad.text();
         let currentLoadVal: number | null = null;
-        const loadMatch = loadHtml.match(/Current[^0-9]*([0-9,]+)/i) ||
-                         loadHtml.match(/System\s+Load[^0-9]*([0-9,]+)/i) ||
-                         loadHtml.match(/System\s+Demand[^0-9]*([0-9,]+)/i) ||
-                         loadHtml.match(/([0-9,]+)\s*MW\s*(?:Current|Actual)/i) ||
-                         loadHtml.match(/<tr[^>]*>[\s\S]*?(?:Current|System)[\s\S]*?(?:Demand|Load)[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>[\s\S]*?<\/tr>/i);
-        if (loadMatch) currentLoadVal = parseFloat(loadMatch[1].replace(/,/g, ''));
-        if (currentLoadVal && currentLoadVal > 0) {
+        
+        // Match Actual System Demand
+        const demandMatch = loadHtml.match(/Actual\s+System\s+Demand[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>/i);
+        if (demandMatch) {
+          currentLoadVal = parseFloat(demandMatch[1].replace(/,/g, ''));
+        }
+        
+        // Fallback with range validation
+        if (!currentLoadVal) {
+          const loadMatch = loadHtml.match(/(?:Current|Actual)\s+(?:System\s+)?(?:Load|Demand)[^0-9]*([0-9,]+)/i);
+          if (loadMatch) {
+            const val = parseFloat(loadMatch[1].replace(/,/g, ''));
+            if (val >= 20000 && val <= 90000) currentLoadVal = val;
+          }
+        }
+        
+        if (currentLoadVal && currentLoadVal >= 20000) {
           loadData = {
             current_demand_mw: currentLoadVal,
             peak_forecast_mw: currentLoadVal * 1.15,
@@ -492,19 +509,27 @@ async function fetchERCOTData() {
       }
       if (text) {
         const grab = (label: string) => {
-          const re = new RegExp(label + '[\\s\\S]*?([0-9][0-9,]*)\\s*MW', 'i');
+          // Updated regex to handle comma-separated numbers like "39,466 MW"
+          const re = new RegExp(label + '[\\s\\S]*?([0-9,]+)\\s*MW', 'i');
           const m = text.match(re);
-          return m ? parseFloat(m[1].replace(/,/g, '')) : 0;
+          if (m) {
+            const val = parseFloat(m[1].replace(/,/g, ''));
+            // Validate it's a reasonable MW value (> 0 and < 100,000 MW)
+            return (val > 0 && val < 100000) ? val : 0;
+          }
+          return 0;
         };
         const gas = grab('Natural\\s+Gas');
         const wind = grab('Wind');
         const solar = grab('Solar');
         const nuclear = grab('Nuclear');
-        const coal = grab('Coal(?:\s+and\s+Lignite)?');
+        const coal = grab('Coal(?:\\s+and\\s+Lignite)?');
         const hydro = grab('Hydro');
-        const other = grab('Other');
+        const other = grab('(?:Power\\s+Storage|Other)');
         const total = [gas, wind, solar, nuclear, coal, hydro, other].reduce((a,b)=>a+(Number.isFinite(b)?b:0), 0);
-        if (total > 0) {
+        
+        // Only accept if total is reasonable for ERCOT (> 30,000 MW typical)
+        if (total > 30000) {
           generationMix = {
             total_generation_mw: Math.round(total),
             natural_gas_mw: Math.round(gas || 0),
@@ -517,6 +542,8 @@ async function fetchERCOTData() {
             source: 'ercot_fuelmix'
           };
           console.log('ERCOT generation from Fuel Mix dashboard:', generationMix);
+        } else {
+          console.log('ERCOT fuel mix total too low:', total, '- rejecting data');
         }
       }
     } catch (fuelErr) {
