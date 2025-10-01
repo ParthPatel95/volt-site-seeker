@@ -47,72 +47,88 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'create-user':
-        // Create auth user without email verification
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true, // Auto-confirm email
-          user_metadata: {
-            full_name
+        try {
+          // Check if user already exists
+          const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
+          const userExists = existingUser?.users.some(u => u.email === email);
+          
+          if (userExists) {
+            throw new Error(`User with email ${email} already exists`);
           }
-        });
 
-        if (authError) {
-          throw authError;
-        }
-
-        // Update profile (trigger already created it, so we update instead of insert)
-        const { error: profileError } = await supabaseAdmin
-          .from('profiles')
-          .update({
-            full_name,
-            phone,
-            department,
-            role: 'analyst' // Default role from enum
-          })
-          .eq('id', authData.user.id);
-
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-          throw profileError;
-        }
-
-        // Add role
-        const { error: roleError } = await supabaseAdmin
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: role as 'admin' | 'viewer' | 'moderator' | 'user'
+          // Create auth user without email verification
+          const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true, // Auto-confirm email
+            user_metadata: {
+              full_name
+            }
           });
 
-        if (roleError) {
-          console.error('Role insert error:', roleError);
-          throw roleError;
-        }
-
-        // Add permissions
-        if (permissions && permissions.length > 0) {
-          const permissionInserts = permissions.map((permission: string) => ({
-            user_id: authData.user.id,
-            permission
-          }));
-
-          const { error: permError } = await supabaseAdmin
-            .from('user_permissions')
-            .insert(permissionInserts);
-
-          if (permError) {
-            console.error('Permissions insert error:', permError);
-            throw permError;
+          if (authError) {
+            throw authError;
           }
-        }
 
-        console.log(`Successfully created user: ${email}`);
-        
-        return new Response(
-          JSON.stringify({ success: true, user: authData.user }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+          // Wait a bit for the trigger to create the profile
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // Update profile (trigger already created it)
+          const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .update({
+              full_name,
+              phone,
+              department,
+              role: 'analyst' // Default role from enum
+            })
+            .eq('id', authData.user.id);
+
+          if (profileError) {
+            console.error('Profile update error:', profileError);
+            // Don't throw - profile might not exist yet due to trigger timing
+          }
+
+          // Add role
+          const { error: roleError } = await supabaseAdmin
+            .from('user_roles')
+            .insert({
+              user_id: authData.user.id,
+              role: role as 'admin' | 'viewer' | 'moderator' | 'user'
+            });
+
+          if (roleError) {
+            console.error('Role insert error:', roleError);
+            throw roleError;
+          }
+
+          // Add permissions
+          if (permissions && permissions.length > 0) {
+            const permissionInserts = permissions.map((permission: string) => ({
+              user_id: authData.user.id,
+              permission
+            }));
+
+            const { error: permError } = await supabaseAdmin
+              .from('user_permissions')
+              .insert(permissionInserts);
+
+            if (permError) {
+              console.error('Permissions insert error:', permError);
+              throw permError;
+            }
+          }
+
+          console.log(`Successfully created user: ${email}`);
+          
+          return new Response(
+            JSON.stringify({ success: true, user: authData.user }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          console.error('Error creating user:', error);
+          throw error;
+        }
 
       case 'delete':
         // Delete user from auth (this will cascade to profiles and related tables)
