@@ -79,7 +79,16 @@ export function AdvancedAnalytics() {
       setWarnings(prev => [...prev, ...monthWarnings]);
     } catch (err: any) {
       console.error('Error loading data:', err);
-      setError(err.message || 'Failed to load data');
+      const errorMessage = err.message || 'Failed to load data';
+      
+      // Add more context to the error
+      if (errorMessage.includes('366 days')) {
+        setError('AESO API limit: The system is automatically fetching data in smaller chunks. Please try again.');
+      } else if (errorMessage.includes('rate limit')) {
+        setError('API rate limit reached. Please wait a moment and try again.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

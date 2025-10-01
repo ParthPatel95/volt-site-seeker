@@ -48,7 +48,17 @@ serve(async (req) => {
       const endDate = new Date(customEndDate);
       
       console.log(`Custom date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-      historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      
+      // AESO API limit: 366 days per request
+      // Chunk the request into yearly batches
+      const yearsDiff = (endDate.getTime() - startDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+      
+      if (yearsDiff > 1) {
+        console.log(`Date range spans ${yearsDiff.toFixed(1)} years - fetching in chunks...`);
+        historicalData = await fetchAESOHistoricalDataInChunks(startDate, endDate, apiKey);
+      } else {
+        historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      }
     } else if (timeframe === 'monthly') {
       // Fetch last 30 days of hourly data
       const endDate = new Date();
@@ -230,6 +240,45 @@ serve(async (req) => {
     });
   }
 });
+
+// Fetch AESO data in chunks to handle API's 366-day limit
+async function fetchAESOHistoricalDataInChunks(startDate: Date, endDate: Date, apiKey: string): Promise<HistoricalDataPoint[]> {
+  const allData: HistoricalDataPoint[] = [];
+  const chunkSizeMonths = 11; // Fetch ~11 months at a time to stay under 366 days
+  
+  let currentStart = new Date(startDate);
+  
+  while (currentStart < endDate) {
+    // Calculate chunk end (11 months from current start, or endDate, whichever is earlier)
+    const currentEnd = new Date(currentStart);
+    currentEnd.setMonth(currentEnd.getMonth() + chunkSizeMonths);
+    
+    if (currentEnd > endDate) {
+      currentEnd.setTime(endDate.getTime());
+    }
+    
+    console.log(`Fetching chunk: ${currentStart.toISOString().slice(0, 10)} to ${currentEnd.toISOString().slice(0, 10)}`);
+    
+    try {
+      const chunkData = await fetchAESOHistoricalData(currentStart, currentEnd, apiKey);
+      allData.push(...chunkData);
+      console.log(`  ✓ Fetched ${chunkData.length} data points for this chunk`);
+    } catch (error) {
+      console.error(`  ✗ Error fetching chunk: ${error.message}`);
+      // Continue with next chunk even if one fails
+    }
+    
+    // Move to next chunk (start from day after current end)
+    currentStart = new Date(currentEnd);
+    currentStart.setDate(currentStart.getDate() + 1);
+    
+    // Small delay to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
+  console.log(`Total data points fetched across all chunks: ${allData.length}`);
+  return allData;
+}
 
 async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: string): Promise<HistoricalDataPoint[]> {
   try {
