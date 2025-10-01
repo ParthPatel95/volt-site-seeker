@@ -561,7 +561,8 @@ export function AESOHistoricalPricing() {
     
     // Price distribution analysis using REAL data
     const priceRanges = [
-      { min: 0, max: 10, label: '$0-$10/MWh' },
+      { min: 0, max: 0, label: '$0/MWh' },
+      { min: 1, max: 10, label: '$1-$10/MWh' },
       { min: 11, max: 20, label: '$11-$20/MWh' },
       { min: 21, max: 30, label: '$21-$30/MWh' },
       { min: 31, max: 40, label: '$31-$40/MWh' },
