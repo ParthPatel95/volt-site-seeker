@@ -48,6 +48,7 @@ serve(async (req) => {
       outage_events: outageData,
       storage_metrics: storageData,
       grid_stability: gridStabilityData,
+      regional_prices: generateRegionalPrices(),
       timestamp: new Date().toISOString()
     };
 
@@ -568,4 +569,37 @@ function generateMockGridStability() {
     system_inertia: 35.4,
     stability_score: 87.5
   };
+}
+
+function generateRegionalPrices() {
+  return [
+    {
+      region: 'Calgary',
+      current_price: 28.50,
+      average_price: 32.20,
+      peak_price: 45.80,
+      price_trend: 'stable'
+    },
+    {
+      region: 'Edmonton',
+      current_price: 26.30,
+      average_price: 30.15,
+      peak_price: 42.50,
+      price_trend: 'decreasing'
+    },
+    {
+      region: 'Central',
+      current_price: 31.20,
+      average_price: 33.80,
+      peak_price: 48.90,
+      price_trend: 'increasing'
+    },
+    {
+      region: 'South',
+      current_price: 29.40,
+      average_price: 31.60,
+      peak_price: 44.20,
+      price_trend: 'stable'
+    }
+  ];
 }
