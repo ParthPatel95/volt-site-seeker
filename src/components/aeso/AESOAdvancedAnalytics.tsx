@@ -344,6 +344,41 @@ export function AESOAdvancedAnalytics() {
         {/* Transmission Constraints Tab */}
         <TabsContent value="transmission" className="space-y-4">
           <TransmissionConstraintChart constraints={transmissionConstraints} />
+          
+          {/* Severity Alert Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-red-600">
+                    {transmissionConstraints.filter(c => c.status === 'critical').length}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">Critical Constraints</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-yellow-600">
+                    {transmissionConstraints.filter(c => c.status === 'warning').length}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">Warning Level</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">
+                    {transmissionConstraints.filter(c => c.status === 'normal').length}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">Normal Operations</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -402,6 +437,59 @@ export function AESOAdvancedAnalytics() {
         {/* 7-Day Forecast Tab */}
         <TabsContent value="forecast" className="space-y-4">
           <ForecastAccuracyChart forecast={sevenDayForecast} />
+          
+          {/* Forecast Insights */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Avg Confidence</p>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {sevenDayForecast.length > 0 
+                      ? (sevenDayForecast.reduce((acc, f) => acc + f.confidence_level, 0) / sevenDayForecast.length).toFixed(1)
+                      : '0'}%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Peak Demand</p>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {sevenDayForecast.length > 0
+                      ? Math.max(...sevenDayForecast.map(f => f.demand_forecast_mw / 1000)).toFixed(1)
+                      : '0'} GW
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Avg Wind</p>
+                  <div className="text-2xl font-bold text-green-600">
+                    {sevenDayForecast.length > 0
+                      ? (sevenDayForecast.reduce((acc, f) => acc + f.wind_forecast_mw, 0) / sevenDayForecast.length / 1000).toFixed(1)
+                      : '0'} GW
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Price Range</p>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {sevenDayForecast.length > 0
+                      ? `$${Math.min(...sevenDayForecast.map(f => f.price_forecast)).toFixed(0)}-${Math.max(...sevenDayForecast.map(f => f.price_forecast)).toFixed(0)}`
+                      : '$0'}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -444,6 +532,44 @@ export function AESOAdvancedAnalytics() {
         {/* Market Participants Tab */}
         <TabsContent value="participants" className="space-y-4">
           <MarketSharePieChart participants={marketParticipants} />
+          
+          {/* Market Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Total Capacity</p>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {marketParticipants.reduce((acc, p) => acc + p.total_capacity_mw, 0).toFixed(0)} MW
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Available Now</p>
+                  <div className="text-2xl font-bold text-green-600">
+                    {marketParticipants.reduce((acc, p) => acc + p.available_capacity_mw, 0).toFixed(0)} MW
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Utilization</p>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {marketParticipants.reduce((acc, p) => acc + p.total_capacity_mw, 0) > 0
+                      ? ((marketParticipants.reduce((acc, p) => acc + p.available_capacity_mw, 0) / 
+                         marketParticipants.reduce((acc, p) => acc + p.total_capacity_mw, 0)) * 100).toFixed(1)
+                      : '0'}%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -481,6 +607,49 @@ export function AESOAdvancedAnalytics() {
 
         {/* Outages Tab */}
         <TabsContent value="outages" className="space-y-4">
+          {/* Outage Impact Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-red-600" />
+                  <p className="text-sm text-muted-foreground">Total Outages</p>
+                  <div className="text-2xl font-bold">{outageEvents.length}</div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Forced Outages</p>
+                  <div className="text-2xl font-bold text-red-600">
+                    {outageEvents.filter(o => o.outage_type === 'forced').length}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Total Impact</p>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {outageEvents.reduce((acc, o) => acc + o.capacity_mw, 0).toFixed(0)} MW
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">High Impact</p>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {outageEvents.filter(o => o.impact_level === 'high').length}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -526,6 +695,53 @@ export function AESOAdvancedAnalytics() {
         {/* Storage Tab */}
         <TabsContent value="storage" className="space-y-4">
           <StoragePerformanceChart storage={storageMetrics} />
+          
+          {/* Storage Efficiency Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Total Capacity</p>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {storageMetrics.reduce((acc, s) => acc + s.capacity_mw, 0).toFixed(0)} MW
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Avg State of Charge</p>
+                  <div className="text-2xl font-bold text-green-600">
+                    {storageMetrics.length > 0
+                      ? (storageMetrics.reduce((acc, s) => acc + s.state_of_charge_percent, 0) / storageMetrics.length).toFixed(1)
+                      : '0'}%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Net Flow</p>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {(storageMetrics.reduce((acc, s) => acc + s.charging_mw - s.discharging_mw, 0)).toFixed(1)} MW
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Total Cycles Today</p>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {storageMetrics.reduce((acc, s) => acc + s.cycles_today, 0)}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -578,6 +794,32 @@ export function AESOAdvancedAnalytics() {
 
         {/* Grid Stability Tab */}
         <TabsContent value="stability" className="space-y-4">
+          {/* Grid Reliability Score */}
+          {gridStability && (
+            <Card className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950 dark:to-green-950">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <Shield className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                  <h3 className="text-lg font-semibold mb-2">Grid Reliability Score</h3>
+                  <div className="text-5xl font-bold text-blue-600 mb-2">
+                    {gridStability.stability_score.toFixed(1)}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {gridStability.stability_score >= 85 ? 'Excellent' : 
+                     gridStability.stability_score >= 70 ? 'Good' : 
+                     gridStability.stability_score >= 60 ? 'Fair' : 'Poor'} Grid Health
+                  </p>
+                  <div className="mt-4 w-full bg-secondary rounded-full h-3">
+                    <div 
+                      className="h-3 rounded-full bg-gradient-to-r from-green-500 to-blue-500"
+                      style={{ width: `${gridStability.stability_score}%` }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
