@@ -111,6 +111,7 @@ export function AESOAdvancedAnalytics() {
   const fetchAdvancedAnalytics = async () => {
     setLoading(true);
     try {
+      console.log('🔄 Fetching AESO advanced analytics...');
       const { data, error } = await supabase.functions.invoke('aeso-advanced-analytics', {
         body: { action: 'fetch_all' }
       });
@@ -118,6 +119,15 @@ export function AESOAdvancedAnalytics() {
       if (error) throw error;
 
       if (data) {
+        console.log('✅ Advanced analytics data received:', {
+          transmissionConstraints: data.transmission_constraints?.length || 0,
+          forecast: data.seven_day_forecast?.length || 0,
+          participants: data.market_participants?.length || 0,
+          outages: data.outage_events?.length || 0,
+          storage: data.storage_metrics?.length || 0,
+          gridStability: data.grid_stability ? 'Yes' : 'No'
+        });
+        
         setTransmissionConstraints(data.transmission_constraints || []);
         setSevenDayForecast(data.seven_day_forecast || []);
         setMarketParticipants(data.market_participants || []);
@@ -125,9 +135,14 @@ export function AESOAdvancedAnalytics() {
         setStorageMetrics(data.storage_metrics || []);
         setGridStability(data.grid_stability || null);
         setLastUpdated(new Date());
+        
+        toast({
+          title: 'Data Loaded',
+          description: 'Advanced analytics updated successfully'
+        });
       }
     } catch (error: any) {
-      console.error('Error fetching advanced analytics:', error);
+      console.error('❌ Error fetching advanced analytics:', error);
       toast({
         title: 'Error Loading Data',
         description: error.message || 'Failed to fetch advanced analytics data',
@@ -147,6 +162,7 @@ export function AESOAdvancedAnalytics() {
   };
 
   const exportToJSON = () => {
+    console.log('📥 Exporting data to JSON...');
     const exportData = {
       timestamp: new Date().toISOString(),
       transmission_constraints: transmissionConstraints,
@@ -166,6 +182,7 @@ export function AESOAdvancedAnalytics() {
     link.click();
     URL.revokeObjectURL(url);
     
+    console.log('✅ JSON export completed');
     toast({
       title: 'Export Successful',
       description: 'Data exported to JSON file'
@@ -173,6 +190,7 @@ export function AESOAdvancedAnalytics() {
   };
 
   const exportToCSV = () => {
+    console.log('📥 Exporting forecast data to CSV...');
     // Export forecast data as CSV (most useful for analysis)
     const headers = ['Date', 'Demand (MW)', 'Wind (MW)', 'Solar (MW)', 'Price ($/MWh)', 'Confidence (%)'];
     const rows = sevenDayForecast.map(f => [
@@ -197,6 +215,7 @@ export function AESOAdvancedAnalytics() {
     link.click();
     URL.revokeObjectURL(url);
     
+    console.log('✅ CSV export completed');
     toast({
       title: 'Export Successful',
       description: 'Forecast data exported to CSV file'
