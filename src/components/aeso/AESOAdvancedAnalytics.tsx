@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Cable, 
@@ -11,7 +12,10 @@ import {
   MapPin,
   Shield,
   Activity,
-  Zap
+  Zap,
+  RefreshCw,
+  Download,
+  Clock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -77,6 +81,8 @@ interface GridStabilityMetrics {
 export function AESOAdvancedAnalytics() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   
   // State for all analytics data
   const [transmissionConstraints, setTransmissionConstraints] = useState<TransmissionConstraint[]>([]);
@@ -88,7 +94,19 @@ export function AESOAdvancedAnalytics() {
 
   useEffect(() => {
     fetchAdvancedAnalytics();
-  }, []);
+    
+    // Auto-refresh every 5 minutes if enabled
+    let interval: NodeJS.Timeout;
+    if (autoRefresh) {
+      interval = setInterval(() => {
+        fetchAdvancedAnalytics();
+      }, 5 * 60 * 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoRefresh]);
 
   const fetchAdvancedAnalytics = async () => {
     setLoading(true);
@@ -106,6 +124,7 @@ export function AESOAdvancedAnalytics() {
         setOutageEvents(data.outage_events || []);
         setStorageMetrics(data.storage_metrics || []);
         setGridStability(data.grid_stability || null);
+        setLastUpdated(new Date());
       }
     } catch (error: any) {
       console.error('Error fetching advanced analytics:', error);
@@ -117,6 +136,71 @@ export function AESOAdvancedAnalytics() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleManualRefresh = () => {
+    toast({
+      title: 'Refreshing Data',
+      description: 'Fetching latest analytics...'
+    });
+    fetchAdvancedAnalytics();
+  };
+
+  const exportToJSON = () => {
+    const exportData = {
+      timestamp: new Date().toISOString(),
+      transmission_constraints: transmissionConstraints,
+      seven_day_forecast: sevenDayForecast,
+      market_participants: marketParticipants,
+      outage_events: outageEvents,
+      storage_metrics: storageMetrics,
+      grid_stability: gridStability
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `aeso-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: 'Export Successful',
+      description: 'Data exported to JSON file'
+    });
+  };
+
+  const exportToCSV = () => {
+    // Export forecast data as CSV (most useful for analysis)
+    const headers = ['Date', 'Demand (MW)', 'Wind (MW)', 'Solar (MW)', 'Price ($/MWh)', 'Confidence (%)'];
+    const rows = sevenDayForecast.map(f => [
+      new Date(f.date).toLocaleDateString(),
+      f.demand_forecast_mw.toFixed(0),
+      f.wind_forecast_mw.toFixed(0),
+      f.solar_forecast_mw.toFixed(0),
+      f.price_forecast.toFixed(2),
+      f.confidence_level.toFixed(1)
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    const dataBlob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `aeso-forecast-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: 'Export Successful',
+      description: 'Forecast data exported to CSV file'
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -148,6 +232,53 @@ export function AESOAdvancedAnalytics() {
 
   return (
     <div className="space-y-6">
+      {/* Header with controls */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Activity className="w-6 h-6 text-primary" />
+              <div>
+                <h2 className="text-xl font-semibold">Advanced Analytics</h2>
+                {lastUpdated && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToCSV}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToJSON}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                JSON
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="transmission" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
           <TabsTrigger value="transmission" className="text-xs sm:text-sm">
