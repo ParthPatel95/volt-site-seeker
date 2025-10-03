@@ -24,6 +24,7 @@ import { ForecastAccuracyChart } from './ForecastAccuracyChart';
 import { StoragePerformanceChart } from './StoragePerformanceChart';
 import { MarketSharePieChart } from './MarketSharePieChart';
 import { RegionalPriceChart } from './RegionalPriceChart';
+import { UptimePricingTool } from './UptimePricingTool';
 
 interface TransmissionConstraint {
   constraint_name: string;
@@ -41,6 +42,10 @@ interface ForecastData {
   solar_forecast_mw: number;
   price_forecast: number;
   price_forecast_high_demand?: number;
+  price_at_90_uptime?: number;
+  price_at_92_uptime?: number;
+  price_at_95_uptime?: number;
+  price_at_97_uptime?: number;
   confidence_level: number;
 }
 
@@ -437,6 +442,7 @@ export function AESOAdvancedAnalytics() {
 
         {/* 7-Day Forecast Tab */}
         <TabsContent value="forecast" className="space-y-4">
+          <UptimePricingTool forecast={sevenDayForecast} />
           <ForecastAccuracyChart forecast={sevenDayForecast} />
           
           {/* Forecast Insights */}
