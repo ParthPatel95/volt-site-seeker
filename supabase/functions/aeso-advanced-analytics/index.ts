@@ -89,7 +89,7 @@ async function fetchTransmissionConstraints(apiKey: string) {
 
     if (!response.ok) {
       console.error(`Transmission constraints API error: ${response.status}`);
-      return generateMockTransmissionConstraints();
+      return [];
     }
 
     const data = await response.json();
@@ -141,10 +141,10 @@ async function fetchTransmissionConstraints(apiKey: string) {
       });
     }
 
-    return constraints.length > 0 ? constraints : generateMockTransmissionConstraints();
+    return constraints;
   } catch (error) {
     console.error('Error fetching transmission constraints:', error);
-    return generateMockTransmissionConstraints();
+    return [];
   }
 }
 
@@ -172,7 +172,7 @@ async function fetchSevenDayForecast(apiKey: string) {
 
     if (!response.ok) {
       console.error(`Forecast API error: ${response.status}`);
-      return generateMockSevenDayForecast();
+      return [];
     }
 
     const data = await response.json();
@@ -218,13 +218,13 @@ async function fetchSevenDayForecast(apiKey: string) {
         };
       });
       
-      return forecastData.length > 0 ? forecastData : generateMockSevenDayForecast();
+      return forecastData;
     }
 
-    return generateMockSevenDayForecast();
+    return [];
   } catch (error) {
     console.error('Error fetching 7-day forecast:', error);
-    return generateMockSevenDayForecast();
+    return [];
   }
 }
 
@@ -246,7 +246,7 @@ async function fetchMarketParticipants(apiKey: string) {
 
     if (!response.ok) {
       console.error(`Pool participant API error: ${response.status}`);
-      return generateMockMarketParticipants();
+      return [];
     }
 
     const data = await response.json();
@@ -268,13 +268,13 @@ async function fetchMarketParticipants(apiKey: string) {
         p.market_share_percent = totalCapacity > 0 ? (p.total_capacity_mw / totalCapacity) * 100 : 0;
       });
       
-      return participants.length > 0 ? participants : generateMockMarketParticipants();
+      return participants;
     }
 
-    return generateMockMarketParticipants();
+    return [];
   } catch (error) {
     console.error('Error fetching market participants:', error);
-    return generateMockMarketParticipants();
+    return [];
   }
 }
 
@@ -296,7 +296,7 @@ async function fetchOutageEvents(apiKey: string) {
 
     if (!response.ok) {
       console.error(`Outage API error: ${response.status}`);
-      return generateMockOutageEvents();
+      return [];
     }
 
     const data = await response.json();
@@ -316,10 +316,10 @@ async function fetchOutageEvents(apiKey: string) {
       return outages;
     }
 
-    return generateMockOutageEvents();
+    return [];
   } catch (error) {
     console.error('Error fetching outage events:', error);
-    return generateMockOutageEvents();
+    return [];
   }
 }
 
@@ -340,7 +340,7 @@ async function fetchStorageMetrics(apiKey: string) {
 
     if (!response.ok) {
       console.error(`Storage metrics API error: ${response.status}`);
-      return generateMockStorageMetrics();
+      return [];
     }
 
     const data = await response.json();
@@ -360,10 +360,10 @@ async function fetchStorageMetrics(apiKey: string) {
       }];
     }
 
-    return generateMockStorageMetrics();
+    return [];
   } catch (error) {
     console.error('Error fetching storage metrics:', error);
-    return generateMockStorageMetrics();
+    return [];
   }
 }
 
@@ -384,7 +384,7 @@ async function fetchGridStability(apiKey: string) {
 
     if (!response.ok) {
       console.error(`Grid stability API error: ${response.status}`);
-      return generateMockGridStability();
+      return null;
     }
 
     const data = await response.json();
@@ -405,167 +405,6 @@ async function fetchGridStability(apiKey: string) {
     };
   } catch (error) {
     console.error('Error fetching grid stability:', error);
-    return generateMockGridStability();
+    return null;
   }
-}
-
-// Mock data generators (used when API data is unavailable)
-function generateMockTransmissionConstraints() {
-  return [
-    {
-      constraint_name: 'Calgary-Red Deer 240kV',
-      limit_mw: 800,
-      flow_mw: 720,
-      utilization_percent: 90,
-      status: 'warning',
-      region: 'Central Alberta'
-    },
-    {
-      constraint_name: 'Edmonton-Fort McMurray 500kV',
-      limit_mw: 1200,
-      flow_mw: 980,
-      utilization_percent: 81.7,
-      status: 'normal',
-      region: 'Northern Alberta'
-    },
-    {
-      constraint_name: 'AB-BC Intertie',
-      limit_mw: 1000,
-      flow_mw: 450,
-      utilization_percent: 45,
-      status: 'normal',
-      region: 'Border'
-    }
-  ];
-}
-
-function generateMockSevenDayForecast() {
-  const forecast = [];
-  const baseDate = new Date();
-  
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(baseDate);
-    date.setDate(date.getDate() + i);
-    
-    forecast.push({
-      date: date.toISOString(),
-      demand_forecast_mw: 10000 + Math.random() * 2000,
-      wind_forecast_mw: 1500 + Math.random() * 1000,
-      solar_forecast_mw: 300 + Math.random() * 200,
-      price_forecast: 30 + Math.random() * 40,
-      confidence_level: 80 + Math.random() * 15
-    });
-  }
-  
-  return forecast;
-}
-
-function generateMockMarketParticipants() {
-  return [
-    {
-      participant_name: 'Capital Power',
-      total_capacity_mw: 4500,
-      available_capacity_mw: 4200,
-      generation_type: 'Natural Gas & Coal',
-      market_share_percent: 28.5
-    },
-    {
-      participant_name: 'TransAlta',
-      total_capacity_mw: 3800,
-      available_capacity_mw: 3600,
-      generation_type: 'Hydro & Gas',
-      market_share_percent: 24.2
-    },
-    {
-      participant_name: 'ENMAX',
-      total_capacity_mw: 2100,
-      available_capacity_mw: 1950,
-      generation_type: 'Natural Gas',
-      market_share_percent: 13.4
-    },
-    {
-      participant_name: 'Wind Operators (Combined)',
-      total_capacity_mw: 2800,
-      available_capacity_mw: 1400,
-      generation_type: 'Wind',
-      market_share_percent: 17.8
-    },
-    {
-      participant_name: 'Other Generators',
-      total_capacity_mw: 2500,
-      available_capacity_mw: 2300,
-      generation_type: 'Mixed',
-      market_share_percent: 16.1
-    }
-  ];
-}
-
-function generateMockOutageEvents() {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const nextWeek = new Date(now);
-  nextWeek.setDate(nextWeek.getDate() + 7);
-  
-  return [
-    {
-      asset_name: 'Genesee Unit 3',
-      outage_type: 'planned',
-      capacity_mw: 450,
-      start_time: tomorrow.toISOString(),
-      end_time: nextWeek.toISOString(),
-      status: 'scheduled',
-      impact_level: 'high'
-    },
-    {
-      asset_name: 'Keephills Unit 2',
-      outage_type: 'forced',
-      capacity_mw: 395,
-      start_time: now.toISOString(),
-      end_time: tomorrow.toISOString(),
-      status: 'active',
-      impact_level: 'high'
-    },
-    {
-      asset_name: 'Battle River Unit 4',
-      outage_type: 'planned',
-      capacity_mw: 155,
-      start_time: now.toISOString(),
-      end_time: tomorrow.toISOString(),
-      status: 'active',
-      impact_level: 'medium'
-    }
-  ];
-}
-
-function generateMockStorageMetrics() {
-  return [
-    {
-      facility_name: 'GridBattery Calgary',
-      capacity_mw: 20,
-      state_of_charge_percent: 65,
-      charging_mw: 5,
-      discharging_mw: 0,
-      cycles_today: 2
-    },
-    {
-      facility_name: 'Edmonton Energy Storage',
-      capacity_mw: 10,
-      state_of_charge_percent: 85,
-      charging_mw: 0,
-      discharging_mw: 3,
-      cycles_today: 1
-    }
-  ];
-}
-
-function generateMockGridStability() {
-  return {
-    timestamp: new Date().toISOString(),
-    frequency_hz: 60.002,
-    spinning_reserve_mw: 750,
-    supplemental_reserve_mw: 500,
-    system_inertia: 35.4,
-    stability_score: 87.5
-  };
 }
