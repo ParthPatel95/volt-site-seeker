@@ -119,6 +119,16 @@ export function AdvancedAnalytics() {
     ? calculateOnOffPeakStats(filteredData, filters.onPeakStart, filters.onPeakEnd)
     : null;
 
+  // Debug logging
+  console.log('📊 Advanced Analytics Data:', {
+    filteredDataCount: filteredData.length,
+    dailyDataCount: dailyData.length,
+    durationCurvePoints: durationCurve.length,
+    rollingStatsPoints: rollingStats.length,
+    firstDurationPoint: durationCurve[0],
+    firstRollingPoint: rollingStats[0]
+  });
+
   const handleExportCSV = () => {
     exportToCSV(filteredData, filters, `aeso-data-${filters.startDate}-to-${filters.endDate}.csv`);
   };
