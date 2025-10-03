@@ -23,7 +23,6 @@ import { TransmissionConstraintChart } from './TransmissionConstraintChart';
 import { ForecastAccuracyChart } from './ForecastAccuracyChart';
 import { StoragePerformanceChart } from './StoragePerformanceChart';
 import { MarketSharePieChart } from './MarketSharePieChart';
-import { RegionalPriceChart } from './RegionalPriceChart';
 
 interface TransmissionConstraint {
   constraint_name: string;
@@ -79,13 +78,6 @@ interface GridStabilityMetrics {
   stability_score: number;
 }
 
-interface RegionalPrice {
-  region: string;
-  current_price: number;
-  average_price: number;
-  peak_price: number;
-  price_trend: string;
-}
 
 export function AESOAdvancedAnalytics() {
   const { toast } = useToast();
@@ -100,7 +92,6 @@ export function AESOAdvancedAnalytics() {
   const [outageEvents, setOutageEvents] = useState<OutageEvent[]>([]);
   const [storageMetrics, setStorageMetrics] = useState<StorageMetrics[]>([]);
   const [gridStability, setGridStability] = useState<GridStabilityMetrics | null>(null);
-  const [regionalPrices, setRegionalPrices] = useState<RegionalPrice[]>([]);
 
   useEffect(() => {
     fetchAdvancedAnalytics();
@@ -144,7 +135,6 @@ export function AESOAdvancedAnalytics() {
         setOutageEvents(data.outage_events || []);
         setStorageMetrics(data.storage_metrics || []);
         setGridStability(data.grid_stability || null);
-        setRegionalPrices(data.regional_prices || []);
         setLastUpdated(new Date());
         
         toast({
@@ -310,7 +300,7 @@ export function AESOAdvancedAnalytics() {
       </Card>
 
       <Tabs defaultValue="transmission" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
           <TabsTrigger value="transmission" className="text-xs sm:text-sm">
             <Cable className="w-4 h-4 mr-1" />
             Transmission
@@ -334,10 +324,6 @@ export function AESOAdvancedAnalytics() {
           <TabsTrigger value="stability" className="text-xs sm:text-sm">
             <Shield className="w-4 h-4 mr-1" />
             Grid Stability
-          </TabsTrigger>
-          <TabsTrigger value="regional" className="text-xs sm:text-sm">
-            <MapPin className="w-4 h-4 mr-1" />
-            Regional Prices
           </TabsTrigger>
         </TabsList>
 
@@ -887,47 +873,6 @@ export function AESOAdvancedAnalytics() {
               ) : (
                 <p className="text-muted-foreground text-center py-8">No grid stability data available</p>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Regional Prices Tab */}
-        <TabsContent value="regional" className="space-y-4">
-          <RegionalPriceChart regionalPrices={regionalPrices} />
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <MapPin className="w-5 h-5 mr-2 text-green-600" />
-                Regional Price Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {regionalPrices.map((region, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold">{region.region}</h3>
-                      <Badge variant={region.price_trend === 'increasing' ? 'destructive' : 'secondary'}>
-                        {region.price_trend}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Current</p>
-                        <p className="font-semibold">${region.current_price.toFixed(2)}/MWh</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Average</p>
-                        <p className="font-semibold">${region.average_price.toFixed(2)}/MWh</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Peak</p>
-                        <p className="font-semibold">${region.peak_price.toFixed(2)}/MWh</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
