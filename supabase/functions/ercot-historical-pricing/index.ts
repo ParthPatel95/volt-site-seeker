@@ -39,8 +39,9 @@ serve(async (req) => {
 
     // Fetch historical DAM Settlement Point Prices from ERCOT
     // Using the Day-Ahead Market (DAM) Settlement Point Prices API
+    // Endpoint structure based on ERCOT API documentation
     const sppResponse = await fetch(
-      `https://api.ercot.com/api/public-reports/np4-190-cd/dam_hourly_lmp`,
+      `https://api.ercot.com/api/public-reports/np4-190-cd`,
       {
         headers: { 
           'Ocp-Apim-Subscription-Key': ercotApiKey,
@@ -56,18 +57,75 @@ serve(async (req) => {
     }
 
     const sppData = await sppResponse.json();
-    console.log('✅ ERCOT historical pricing data received:', sppData?.data?.length || 0, 'records');
+    console.log('✅ ERCOT API response structure:', {
+      hasEmbedded: !!sppData._embedded,
+      productsCount: sppData._embedded?.products?.length || 0
+    });
 
-    // Process the data - ERCOT API returns data in specific format
-    const rawData = Array.isArray(sppData) ? sppData : (sppData?.data || []);
+    // Extract the artifact endpoint from the response
+    const product = sppData._embedded?.products?.[0];
+    const artifactEndpoint = product?.artifacts?.[0]?._links?.endpoint?.href;
+    
+    if (!artifactEndpoint) {
+      console.error('No artifact endpoint found in product data');
+      throw new Error('Could not find data endpoint in ERCOT API response');
+    }
+
+    console.log('📊 Fetching data from artifact endpoint:', artifactEndpoint);
+    
+    // Fetch the actual pricing data
+    const dataResponse = await fetch(artifactEndpoint, {
+      headers: { 
+        'Ocp-Apim-Subscription-Key': ercotApiKey,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!dataResponse.ok) {
+      const errorText = await dataResponse.text();
+      console.error('ERCOT data fetch error:', dataResponse.status, errorText);
+      throw new Error(`Failed to fetch pricing data: ${dataResponse.status}`);
+    }
+
+    const pricingData = await dataResponse.json();
+    console.log('✅ ERCOT pricing data received:', {
+      dataLength: pricingData?.data?.length || 0,
+      firstRecord: pricingData?.data?.[0]
+    });
+
+    // Process the data - filter for time period and Hub Average
+    const now = new Date();
+    const rawData = pricingData?.data || [];
     const hourlyData = rawData
-      .filter((item: any) => item.SettlementPoint === 'HB_HUBAVG') // Focus on Hub Average
+      .filter((item: any) => {
+        // Filter by settlement point
+        const settlementPoint = item.SettlementPoint || item.settlementPoint || item.settlement_point;
+        if (settlementPoint !== 'HB_HUBAVG') return false;
+        
+        // Filter by date range if applicable
+        const itemDate = new Date(item.DeliveryDate || item.deliveryDate || item.delivery_date);
+        const daysDiff = (now.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (period === '30days') return daysDiff <= 30;
+        if (period === '12months') return daysDiff <= 365;
+        if (period === '10years') return daysDiff <= 3650;
+        
+        return true;
+      })
       .map((item: any) => ({
-        timestamp: item.DeliveryDate || item.DeliveryHour || item.OperDay,
-        price: parseFloat(item.SettlementPointPrice || item.LMP || item.Price) || 0,
+        timestamp: item.DeliveryDate || item.deliveryDate || item.delivery_date || item.OperDay,
+        price: parseFloat(
+          item.SettlementPointPrice || 
+          item.settlementPointPrice || 
+          item.settlement_point_price ||
+          item.LMP || 
+          item.Price
+        ) || 0,
         demand: parseFloat(item.SystemLoad || item.Load) || undefined
       }))
-      .filter((item: any) => item.price > 0); // Remove invalid data
+      .filter((item: any) => item.price > 0 && item.timestamp); // Remove invalid data
+    
+    console.log('📈 Processed data points:', hourlyData.length);
 
     // Calculate statistics
     const prices = hourlyData.map((d: any) => d.price).filter((p: number) => p > 0);
