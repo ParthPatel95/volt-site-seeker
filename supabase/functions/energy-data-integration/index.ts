@@ -460,26 +460,33 @@ async function fetchERCOTData() {
         'Content-Type': 'application/json'
       };
 
-      // Try generation data
+      // Try generation data - ERCOT Actual System Load by Fuel Type
       const generationResponse = await fetch(
-        'https://api.ercot.com/api/public-reports/np4-732-cd/fuel_mix_report',
+        'https://api.ercot.com/api/public-reports/np4-732-cd/act_sys_load_by_fueltype',
         { headers: apiHeaders }
       );
 
       if (generationResponse.ok) {
-        const generationData = await generationResponse.json();
-        if (generationData && Array.isArray(generationData) && generationData.length > 0) {
-          const latestGeneration = generationData[generationData.length - 1];
+        const genData = await generationResponse.json();
+        const rawData = Array.isArray(genData) ? genData : (genData?.data || []);
+        
+        if (rawData.length > 0) {
+          // Get the most recent record
+          const latest = rawData[rawData.length - 1];
           
-          const gasGeneration = parseFloat(latestGeneration.Natural_Gas || latestGeneration.Gas || 0);
-          const windGeneration = parseFloat(latestGeneration.Wind || 0);
-          const solarGeneration = parseFloat(latestGeneration.Solar || 0);
-          const nuclearGeneration = parseFloat(latestGeneration.Nuclear || 0);
-          const coalGeneration = parseFloat(latestGeneration.Coal || 0);
+          // Parse generation values with multiple possible field names
+          const gasGeneration = parseFloat(latest.NaturalGas || latest.Natural_Gas || latest.Gas || 0);
+          const windGeneration = parseFloat(latest.Wind || latest.WindPower || 0);
+          const solarGeneration = parseFloat(latest.Solar || latest.SolarPower || 0);
+          const nuclearGeneration = parseFloat(latest.Nuclear || 0);
+          const coalGeneration = parseFloat(latest.Coal || latest.CoalAndLignite || 0);
+          const hydroGeneration = parseFloat(latest.Hydro || 0);
+          const otherGeneration = parseFloat(latest.Other || 0);
           
-          const totalGeneration = gasGeneration + windGeneration + solarGeneration + nuclearGeneration + coalGeneration;
+          const totalGeneration = gasGeneration + windGeneration + solarGeneration + 
+                                 nuclearGeneration + coalGeneration + hydroGeneration + otherGeneration;
           
-          if (totalGeneration > 0) {
+          if (totalGeneration > 1000) { // Sanity check - should be > 1000 MW
             generationMix = {
               total_generation_mw: totalGeneration,
               natural_gas_mw: gasGeneration,
@@ -487,13 +494,18 @@ async function fetchERCOTData() {
               solar_mw: solarGeneration,
               nuclear_mw: nuclearGeneration,
               coal_mw: coalGeneration,
-              renewable_percentage: ((windGeneration + solarGeneration) / totalGeneration * 100),
+              hydro_mw: hydroGeneration,
+              other_mw: otherGeneration,
+              renewable_percentage: ((windGeneration + solarGeneration + hydroGeneration) / totalGeneration * 100),
               timestamp: new Date().toISOString(),
-              source: 'ercot_api'
+              source: 'ercot_api_fuel_type'
             };
-            console.log('Real ERCOT generation extracted:', generationMix);
+            console.log('✅ ERCOT generation from API:', generationMix);
+            realDataFound = true;
           }
         }
+      } else {
+        console.error('ERCOT generation API failed:', generationResponse.status, await generationResponse.text());
       }
     } catch (apiError) {
       console.error('Error calling ERCOT API:', apiError);
@@ -549,12 +561,12 @@ async function fetchERCOTData() {
         const storage = grab('Power\\s+Storage');
         const other = grab('Other');
         
-        const total = gas + wind + solar + nuclear + coal + hydro + storage + other;
+        const total = gas + wind + solar + nuclear + coal + hydro + other;
         
-        console.log('ERCOT fuel mix totals:', { gas, wind, solar, nuclear, coal, hydro, storage, other, total });
+        console.log('ERCOT fuel mix totals:', { gas, wind, solar, nuclear, coal, hydro, other, total });
         
-        // Only accept if total is reasonable for ERCOT (> 30,000 MW typical)
-        if (total > 30000) {
+        // Only accept if total is reasonable for ERCOT (> 10,000 MW minimum)
+        if (total > 10000) {
           generationMix = {
             total_generation_mw: Math.round(total),
             natural_gas_mw: Math.round(gas),
@@ -562,13 +574,16 @@ async function fetchERCOTData() {
             solar_mw: Math.round(solar),
             nuclear_mw: Math.round(nuclear),
             coal_mw: Math.round(coal),
+            hydro_mw: Math.round(hydro),
+            other_mw: Math.round(other),
             renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
             timestamp: new Date().toISOString(),
             source: 'ercot_fuelmix'
           };
           console.log('✅ ERCOT generation from Fuel Mix dashboard extracted successfully');
+          realDataFound = true;
         } else {
-          console.log('❌ ERCOT fuel mix total too low:', total, 'MW - rejecting data');
+          console.warn('⚠️ ERCOT fuel mix total too low:', total, 'MW - will try other sources');
         }
       }
     } catch (fuelErr) {

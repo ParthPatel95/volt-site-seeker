@@ -20,23 +20,32 @@ serve(async (req) => {
       throw new Error('ERCOT API key is not configured');
     }
 
-    // Fetch data from ERCOT APIs
+    // Fetch data from ERCOT APIs  
     const [
       transmissionConstraintsRes,
       forecastRes,
       outagesRes
     ] = await Promise.allSettled([
-      // Transmission constraints from ERCOT
-      fetch('https://api.ercot.com/api/public-reports/np4-190-cd/shdw_prices_binding_transmission_constraints', {
-        headers: { 'Ocp-Apim-Subscription-Key': ercotApiKey }
+      // Transmission constraints - Shadow Prices
+      fetch('https://api.ercot.com/api/public-reports/np4-191-cd/shdw_prices_bnd_trns_const', {
+        headers: { 
+          'Ocp-Apim-Subscription-Key': ercotApiKey,
+          'Accept': 'application/json'
+        }
       }),
-      // 7-day forecast data
-      fetch('https://api.ercot.com/api/public-reports/np3-565-cd/lf_by_model_weather_zone', {
-        headers: { 'Ocp-Apim-Subscription-Key': ercotApiKey }
+      // 7-day load forecast by weather zone
+      fetch('https://api.ercot.com/api/public-reports/np3-565-cd/lf_by_model_study_area', {
+        headers: { 
+          'Ocp-Apim-Subscription-Key': ercotApiKey,
+          'Accept': 'application/json'
+        }
       }),
-      // Outage data
-      fetch('https://api.ercot.com/api/public-reports/np3-233-cd/unplanned_resource_outages', {
-        headers: { 'Ocp-Apim-Subscription-Key': ercotApiKey }
+      // Outage data - Unplanned Resource Outages
+      fetch('https://api.ercot.com/api/public-reports/np3-233-cd/unplan_res_outages', {
+        headers: { 
+          'Ocp-Apim-Subscription-Key': ercotApiKey,
+          'Accept': 'application/json'
+        }
       })
     ]);
 
@@ -44,70 +53,104 @@ serve(async (req) => {
     let transmissionConstraints = [];
     if (transmissionConstraintsRes.status === 'fulfilled' && transmissionConstraintsRes.value.ok) {
       const data = await transmissionConstraintsRes.value.json();
-      console.log('✅ Transmission constraints data received');
+      const rawData = Array.isArray(data) ? data : (data?.data || []);
+      console.log('✅ Transmission constraints data received:', rawData.length, 'records');
       
-      transmissionConstraints = (data?.data || []).slice(0, 10).map((item: any) => ({
-        constraint_name: item.ConstraintName || 'Unknown',
-        limit_mw: parseFloat(item.ConstraintLimit) || 0,
-        flow_mw: parseFloat(item.ActualFlow) || 0,
-        utilization_percent: parseFloat(item.ConstraintLimit) > 0 
-          ? ((parseFloat(item.ActualFlow) || 0) / parseFloat(item.ConstraintLimit)) * 100 
-          : 0,
+      transmissionConstraints = rawData.slice(0, 15).map((item: any) => ({
+        constraint_name: item.ConstraintName || item.Constraint || 'Unknown',
+        limit_mw: parseFloat(item.Limit || item.MaxFlow || item.ConstraintLimit) || 0,
+        flow_mw: parseFloat(item.ActualFlow || item.Flow) || 0,
+        shadow_price: parseFloat(item.ShadowPrice || item.Price) || 0,
+        utilization_percent: (() => {
+          const limit = parseFloat(item.Limit || item.MaxFlow || item.ConstraintLimit) || 0;
+          const flow = parseFloat(item.ActualFlow || item.Flow) || 0;
+          return limit > 0 ? (flow / limit) * 100 : 0;
+        })(),
         status: (() => {
-          const util = parseFloat(item.ConstraintLimit) > 0 
-            ? ((parseFloat(item.ActualFlow) || 0) / parseFloat(item.ConstraintLimit)) * 100 
-            : 0;
+          const limit = parseFloat(item.Limit || item.MaxFlow || item.ConstraintLimit) || 0;
+          const flow = parseFloat(item.ActualFlow || item.Flow) || 0;
+          const util = limit > 0 ? (flow / limit) * 100 : 0;
           if (util > 90) return 'critical';
           if (util > 75) return 'warning';
           return 'normal';
         })(),
-        region: item.ContingencyName || 'ERCOT'
+        region: item.ContingencyName || item.Region || 'ERCOT'
       }));
+    } else if (transmissionConstraintsRes.status === 'fulfilled') {
+      const errorText = await transmissionConstraintsRes.value.text();
+      console.error('Transmission constraints API error:', transmissionConstraintsRes.value.status, errorText);
     }
 
     // Process 7-day forecast
     let sevenDayForecast = [];
     if (forecastRes.status === 'fulfilled' && forecastRes.value.ok) {
       const data = await forecastRes.value.json();
-      console.log('✅ Forecast data received');
+      const rawData = Array.isArray(data) ? data : (data?.data || []);
+      console.log('✅ Forecast data received:', rawData.length, 'records');
       
-      // Generate 7-day forecast based on current patterns
-      const now = new Date();
-      sevenDayForecast = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(now);
-        date.setDate(date.getDate() + i);
+      // Process actual forecast data from ERCOT
+      const forecastByDate: Record<string, any> = {};
+      rawData.forEach((item: any) => {
+        const dateStr = (item.DeliveryDate || item.OperDay || '').split('T')[0];
+        if (!dateStr) return;
         
-        return {
-          date: date.toISOString(),
-          demand_forecast_mw: 45000 + Math.random() * 30000,
-          wind_forecast_mw: 5000 + Math.random() * 15000,
-          solar_forecast_mw: 2000 + Math.random() * 8000,
-          price_forecast: 30 + Math.random() * 40,
-          confidence_level: 75 + Math.random() * 20
-        };
+        if (!forecastByDate[dateStr]) {
+          forecastByDate[dateStr] = {
+            date: item.DeliveryDate || item.OperDay,
+            demand_values: [],
+            systemLoad: 0,
+            count: 0
+          };
+        }
+        
+        const loadValue = parseFloat(item.SystemTotal || item.LoadForecast || item.TotalLoad || 0);
+        if (loadValue > 0) {
+          forecastByDate[dateStr].demand_values.push(loadValue);
+          forecastByDate[dateStr].systemLoad += loadValue;
+          forecastByDate[dateStr].count++;
+        }
       });
+      
+      sevenDayForecast = Object.entries(forecastByDate)
+        .slice(0, 7)
+        .map(([dateStr, data]: [string, any]) => ({
+          date: data.date,
+          demand_forecast_mw: data.count > 0 ? Math.round(data.systemLoad / data.count) : 50000,
+          peak_demand_mw: data.demand_values.length > 0 ? Math.max(...data.demand_values) : undefined,
+          min_demand_mw: data.demand_values.length > 0 ? Math.min(...data.demand_values) : undefined,
+          confidence_level: data.count > 0 ? Math.min(95, 70 + data.count) : 70
+        }));
+    } else if (forecastRes.status === 'fulfilled') {
+      const errorText = await forecastRes.value.text();
+      console.error('Forecast API error:', forecastRes.value.status, errorText);
     }
 
     // Process outages
     let outageEvents = [];
     if (outagesRes.status === 'fulfilled' && outagesRes.value.ok) {
       const data = await outagesRes.value.json();
-      console.log('✅ Outage data received');
+      const rawData = Array.isArray(data) ? data : (data?.data || []);
+      console.log('✅ Outage data received:', rawData.length, 'records');
       
-      outageEvents = (data?.data || []).slice(0, 15).map((item: any) => ({
-        asset_name: item.Unit || 'Unknown Unit',
-        outage_type: item.OutageType?.toLowerCase().includes('forced') ? 'forced' : 'planned',
-        capacity_mw: parseFloat(item.OutageMW) || 0,
-        start_time: item.ActualOutageStartTime || new Date().toISOString(),
-        end_time: item.ExpectedReturnTime || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        status: item.Status || 'active',
+      outageEvents = rawData.slice(0, 20).map((item: any) => ({
+        asset_name: item.UnitName || item.Unit || item.Resource || 'Unknown Unit',
+        outage_type: (item.OutageType || item.Type || '').toLowerCase().includes('forced') ? 'forced' : 
+                     (item.OutageType || item.Type || '').toLowerCase().includes('planned') ? 'planned' : 'unplanned',
+        capacity_mw: parseFloat(item.Capacity || item.OutageMW || item.MW) || 0,
+        start_time: item.OutageStartTime || item.ActualOutageStartTime || item.StartTime || new Date().toISOString(),
+        end_time: item.OutageEndTime || item.ExpectedReturnTime || item.EndTime || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        status: item.Status || item.OutageStatus || 'active',
+        fuel_type: item.FuelType || item.Fuel || undefined,
         impact_level: (() => {
-          const mw = parseFloat(item.OutageMW) || 0;
+          const mw = parseFloat(item.Capacity || item.OutageMW || item.MW) || 0;
           if (mw > 500) return 'high';
           if (mw > 100) return 'medium';
           return 'low';
         })()
       }));
+    } else if (outagesRes.status === 'fulfilled') {
+      const errorText = await outagesRes.value.text();
+      console.error('Outage API error:', outagesRes.value.status, errorText);
     }
 
     // Generate market participants data (static for now as ERCOT doesn't have direct API)

@@ -37,28 +37,37 @@ serve(async (req) => {
         break;
     }
 
-    // Fetch historical Settlement Point Prices (SPP) from ERCOT
-    // Using the 60-day Settlement Point Price API
+    // Fetch historical DAM Settlement Point Prices from ERCOT
+    // Using the Day-Ahead Market (DAM) Settlement Point Prices API
     const sppResponse = await fetch(
-      `https://api.ercot.com/api/public-reports/np6-788-cd/60d_spp_hrly_avrg_lmp`,
+      `https://api.ercot.com/api/public-reports/np4-190-cd/dam_hourly_lmp`,
       {
-        headers: { 'Ocp-Apim-Subscription-Key': ercotApiKey }
+        headers: { 
+          'Ocp-Apim-Subscription-Key': ercotApiKey,
+          'Accept': 'application/json'
+        }
       }
     );
 
     if (!sppResponse.ok) {
-      throw new Error('Failed to fetch ERCOT historical pricing data');
+      const errorText = await sppResponse.text();
+      console.error('ERCOT API error:', sppResponse.status, errorText);
+      throw new Error(`Failed to fetch ERCOT historical pricing data: ${sppResponse.status}`);
     }
 
     const sppData = await sppResponse.json();
-    console.log('✅ ERCOT historical pricing data received');
+    console.log('✅ ERCOT historical pricing data received:', sppData?.data?.length || 0, 'records');
 
-    // Process the data
-    const hourlyData = (sppData?.data || []).map((item: any) => ({
-      timestamp: item.DeliveryDate || item.OperDay,
-      price: parseFloat(item.SettlementPointPrice || item.LMP) || 0,
-      demand: parseFloat(item.Load) || undefined
-    }));
+    // Process the data - ERCOT API returns data in specific format
+    const rawData = Array.isArray(sppData) ? sppData : (sppData?.data || []);
+    const hourlyData = rawData
+      .filter((item: any) => item.SettlementPoint === 'HB_HUBAVG') // Focus on Hub Average
+      .map((item: any) => ({
+        timestamp: item.DeliveryDate || item.DeliveryHour || item.OperDay,
+        price: parseFloat(item.SettlementPointPrice || item.LMP || item.Price) || 0,
+        demand: parseFloat(item.SystemLoad || item.Load) || undefined
+      }))
+      .filter((item: any) => item.price > 0); // Remove invalid data
 
     // Calculate statistics
     const prices = hourlyData.map((d: any) => d.price).filter((p: number) => p > 0);
