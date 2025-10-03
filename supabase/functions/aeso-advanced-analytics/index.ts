@@ -191,27 +191,16 @@ async function fetchSevenDayForecast(apiKey: string) {
           dailyForecasts.set(date, {
             demands: [],
             ails: [],
-            prices: [],
-            hourlyData: [] // Track all hourly data for uptime calculations
+            prices: []
           });
         }
         
         const dayData = dailyForecasts.get(date);
         if (item.forecast_ail) dayData.demands.push(item.forecast_ail);
-        if (item.forecast_pool_price) {
-          dayData.prices.push(item.forecast_pool_price);
-          // Store complete hourly data
-          if (item.forecast_ail) {
-            dayData.hourlyData.push({
-              price: item.forecast_pool_price,
-              demand: item.forecast_ail,
-              timestamp: item.begin_datetime_mpt || item.begin_datetime_utc
-            });
-          }
-        }
+        if (item.forecast_pool_price) dayData.prices.push(item.forecast_pool_price);
       });
       
-      // Calculate daily averages with uptime-based pricing scenarios
+      // Calculate daily averages
       const forecastData = Array.from(dailyForecasts.entries()).slice(0, 7).map(([date, values]: [string, any]) => {
         const avgDemand = values.demands.length > 0 
           ? values.demands.reduce((a: number, b: number) => a + b, 0) / values.demands.length 
@@ -220,59 +209,16 @@ async function fetchSevenDayForecast(apiKey: string) {
           ? values.prices.reduce((a: number, b: number) => a + b, 0) / values.prices.length
           : 50;
         
-        // Sort hourly data by demand (descending) to simulate availability constraints
-        const sortedHourly = [...values.hourlyData].sort((a: any, b: any) => b.demand - a.demand);
-        
-        // Calculate prices at different uptime levels
-        // Lower uptime = more hours at peak demand = higher average price
-        const calculateUptimePrice = (uptimePercent: number) => {
-          if (sortedHourly.length === 0) return avgPrice;
-          
-          // At lower uptime, we miss more peak hours, so we pay higher prices during remaining hours
-          const hoursDown = Math.floor(sortedHourly.length * (1 - uptimePercent / 100));
-          if (hoursDown === 0) return avgPrice;
-          
-          // The hours we're "down" are the highest demand hours (most expensive)
-          const missedHours = sortedHourly.slice(0, hoursDown);
-          const missedPrice = missedHours.reduce((sum: number, h: any) => sum + h.price, 0) / missedHours.length;
-          
-          // When down during expensive hours, we buy at those high prices
-          // Weight the impact: lower uptime = more exposure to peak prices
-          const downtimeImpact = (100 - uptimePercent) / 100;
-          return avgPrice + (missedPrice - avgPrice) * downtimeImpact;
-        };
-        
-        // Calculate price forecast based on high-demand hours
-        const highDemandPrices = values.hourlyData
-          .filter((item: any) => item.demand > avgDemand * 0.9)
-          .map((item: any) => item.price);
-        
-        const uptimeAdjustedPrice = highDemandPrices.length > 0
-          ? highDemandPrices.reduce((a: number, b: number) => a + b, 0) / highDemandPrices.length
-          : avgPrice;
-        
         return {
           date: new Date(date).toISOString(),
           demand_forecast_mw: avgDemand,
-          wind_forecast_mw: avgDemand * 0.18,
-          solar_forecast_mw: avgDemand * 0.03,
+          wind_forecast_mw: avgDemand * 0.18, // Estimate ~18% from wind
+          solar_forecast_mw: avgDemand * 0.03, // Estimate ~3% from solar
           price_forecast: avgPrice,
-          price_forecast_high_demand: uptimeAdjustedPrice,
-          price_at_90_uptime: calculateUptimePrice(90),
-          price_at_92_uptime: calculateUptimePrice(92),
-          price_at_95_uptime: calculateUptimePrice(95),
-          price_at_97_uptime: calculateUptimePrice(97),
-          hourly_prices: sortedHourly.map((h: any) => ({
-            hour: new Date(h.timestamp).getHours(),
-            price: h.price,
-            demand: h.demand,
-            timestamp: h.timestamp
-          })),
           confidence_level: 85
         };
       });
       
-      console.log('Successfully processed 7-day forecast with uptime-based pricing scenarios');
       return forecastData.length > 0 ? forecastData : generateMockSevenDayForecast();
     }
 
@@ -495,7 +441,6 @@ function generateMockTransmissionConstraints() {
 }
 
 function generateMockSevenDayForecast() {
-  console.log('Generating mock forecast data with uptime pricing...');
   const forecast = [];
   const baseDate = new Date();
   
@@ -503,72 +448,15 @@ function generateMockSevenDayForecast() {
     const date = new Date(baseDate);
     date.setDate(date.getDate() + i);
     
-    const basePrice = 30 + Math.random() * 40;
-    const avgDemand = 10000 + Math.random() * 2000;
-    
-    // Generate hourly data for the day
-    const hourlyPrices = [];
-    for (let hour = 0; hour < 24; hour++) {
-      // Peak hours (7-9 AM, 4-8 PM) have higher prices
-      const isPeakHour = (hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 20);
-      const hourMultiplier = isPeakHour ? 1.3 + Math.random() * 0.4 : 0.7 + Math.random() * 0.3;
-      const demandMultiplier = isPeakHour ? 1.2 : 0.85;
-      
-      hourlyPrices.push({
-        hour,
-        price: basePrice * hourMultiplier,
-        demand: avgDemand * demandMultiplier,
-        timestamp: new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour).toISOString()
-      });
-    }
-    
-    // Calculate uptime prices based on hourly data
-    const sortedHourly = [...hourlyPrices].sort((a, b) => b.demand - a.demand);
-    
-    const calculateUptimePrice = (uptimePercent: number) => {
-      const hoursDown = Math.floor(24 * (1 - uptimePercent / 100));
-      if (hoursDown === 0) return basePrice;
-      
-      const missedHours = sortedHourly.slice(0, hoursDown);
-      const missedPrice = missedHours.reduce((sum, h) => sum + h.price, 0) / missedHours.length;
-      
-      const downtimeImpact = (100 - uptimePercent) / 100;
-      return basePrice + (missedPrice - basePrice) * downtimeImpact * 1.5;
-    };
-    
-    // Calculate high demand price
-    const highDemandPrices = hourlyPrices
-      .filter(item => item.demand > avgDemand * 0.9)
-      .map(item => item.price);
-    
-    const uptimeAdjustedPrice = highDemandPrices.length > 0
-      ? highDemandPrices.reduce((a, b) => a + b, 0) / highDemandPrices.length
-      : basePrice;
-    
     forecast.push({
       date: date.toISOString(),
-      demand_forecast_mw: avgDemand,
+      demand_forecast_mw: 10000 + Math.random() * 2000,
       wind_forecast_mw: 1500 + Math.random() * 1000,
       solar_forecast_mw: 300 + Math.random() * 200,
-      price_forecast: basePrice,
-      price_forecast_high_demand: uptimeAdjustedPrice,
-      price_at_90_uptime: calculateUptimePrice(90),
-      price_at_92_uptime: calculateUptimePrice(92),
-      price_at_95_uptime: calculateUptimePrice(95),
-      price_at_97_uptime: calculateUptimePrice(97),
-      hourly_prices: hourlyPrices,
+      price_forecast: 30 + Math.random() * 40,
       confidence_level: 80 + Math.random() * 15
     });
   }
-  
-  console.log('Mock forecast generated with uptime data:', forecast.map(f => ({
-    date: f.date,
-    base: f.price_forecast.toFixed(2),
-    p90: f.price_at_90_uptime?.toFixed(2),
-    p92: f.price_at_92_uptime?.toFixed(2),
-    p95: f.price_at_95_uptime?.toFixed(2),
-    p97: f.price_at_97_uptime?.toFixed(2)
-  })));
   
   return forecast;
 }
