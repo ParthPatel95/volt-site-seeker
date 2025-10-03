@@ -40,6 +40,7 @@ interface ForecastData {
   wind_forecast_mw: number;
   solar_forecast_mw: number;
   price_forecast: number;
+  price_forecast_high_demand?: number;
   confidence_level: number;
 }
 
@@ -439,7 +440,7 @@ export function AESOAdvancedAnalytics() {
           <ForecastAccuracyChart forecast={sevenDayForecast} />
           
           {/* Forecast Insights */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center">
@@ -488,6 +489,19 @@ export function AESOAdvancedAnalytics() {
                 </div>
               </CardContent>
             </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Peak Load Price</p>
+                  <div className="text-2xl font-bold text-red-600">
+                    {sevenDayForecast.length > 0 && sevenDayForecast.some(f => f.price_forecast_high_demand)
+                      ? `$${(sevenDayForecast.reduce((sum, f) => sum + (f.price_forecast_high_demand || f.price_forecast), 0) / sevenDayForecast.length).toFixed(0)}`
+                      : '$0'}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">High demand</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
           
           <Card>
@@ -508,7 +522,7 @@ export function AESOAdvancedAnalytics() {
                       </div>
                       <Badge variant="outline">CA${forecast.price_forecast.toFixed(2)}/MWh</Badge>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Demand</p>
                         <p className="font-semibold">{(forecast.demand_forecast_mw / 1000).toFixed(1)} GW</p>
@@ -521,6 +535,12 @@ export function AESOAdvancedAnalytics() {
                         <p className="text-muted-foreground">Solar</p>
                         <p className="font-semibold">{forecast.solar_forecast_mw.toFixed(0)} MW</p>
                       </div>
+                      {forecast.price_forecast_high_demand && (
+                        <div>
+                          <p className="text-muted-foreground">Peak Load Price</p>
+                          <p className="font-semibold text-orange-600">${forecast.price_forecast_high_demand.toFixed(2)}/MWh</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

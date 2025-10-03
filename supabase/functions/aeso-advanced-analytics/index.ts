@@ -191,16 +191,26 @@ async function fetchSevenDayForecast(apiKey: string) {
           dailyForecasts.set(date, {
             demands: [],
             ails: [],
-            prices: []
+            prices: [],
+            pricesWithAvailability: [] // Track prices with generation availability context
           });
         }
         
         const dayData = dailyForecasts.get(date);
         if (item.forecast_ail) dayData.demands.push(item.forecast_ail);
-        if (item.forecast_pool_price) dayData.prices.push(item.forecast_pool_price);
+        if (item.forecast_pool_price) {
+          dayData.prices.push(item.forecast_pool_price);
+          // Correlate price with demand/availability
+          if (item.forecast_ail) {
+            dayData.pricesWithAvailability.push({
+              price: item.forecast_pool_price,
+              demand: item.forecast_ail
+            });
+          }
+        }
       });
       
-      // Calculate daily averages
+      // Calculate daily averages with availability-adjusted pricing
       const forecastData = Array.from(dailyForecasts.entries()).slice(0, 7).map(([date, values]: [string, any]) => {
         const avgDemand = values.demands.length > 0 
           ? values.demands.reduce((a: number, b: number) => a + b, 0) / values.demands.length 
@@ -209,16 +219,28 @@ async function fetchSevenDayForecast(apiKey: string) {
           ? values.prices.reduce((a: number, b: number) => a + b, 0) / values.prices.length
           : 50;
         
+        // Calculate price forecast based on high-demand (low availability) hours
+        // High demand hours indicate lower generation availability relative to load
+        const highDemandPrices = values.pricesWithAvailability
+          .filter((item: any) => item.demand > avgDemand * 0.9)
+          .map((item: any) => item.price);
+        
+        const uptimeAdjustedPrice = highDemandPrices.length > 0
+          ? highDemandPrices.reduce((a: number, b: number) => a + b, 0) / highDemandPrices.length
+          : avgPrice;
+        
         return {
           date: new Date(date).toISOString(),
           demand_forecast_mw: avgDemand,
           wind_forecast_mw: avgDemand * 0.18, // Estimate ~18% from wind
           solar_forecast_mw: avgDemand * 0.03, // Estimate ~3% from solar
           price_forecast: avgPrice,
+          price_forecast_high_demand: uptimeAdjustedPrice, // Price during peak demand (limited availability)
           confidence_level: 85
         };
       });
       
+      console.log('Successfully processed 7-day forecast with availability-adjusted pricing');
       return forecastData.length > 0 ? forecastData : generateMockSevenDayForecast();
     }
 
