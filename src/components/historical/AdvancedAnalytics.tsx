@@ -22,7 +22,11 @@ import { RollingStatsChart } from './RollingStatsChart';
 import { OnOffPeakComparison } from './OnOffPeakComparison';
 import { exportToCSV, printReport } from '@/utils/exportUtils';
 
-export function AdvancedAnalytics() {
+interface AdvancedAnalyticsProps {
+  marketType?: 'aeso' | 'ercot';
+}
+
+export function AdvancedAnalytics({ marketType = 'aeso' }: AdvancedAnalyticsProps = {}) {
   const [filters, setFilters] = useState<AnalyticsFilters>({
     startDate: getDefaultStartDate(),
     endDate: getDefaultEndDate(),
@@ -60,10 +64,11 @@ export function AdvancedAnalytics() {
       const startDate = new Date(filters.startDate);
       const endDate = new Date(filters.endDate);
 
-      // Fetch data
+      // Fetch data based on market type
       const { data, warnings: fetchWarnings } = await historicalDataService.getHistoricalData({
         startDate,
         endDate,
+        marketType,
       });
 
       setRawData(data);
@@ -150,7 +155,10 @@ export function AdvancedAnalytics() {
             Advanced Historical Analytics
           </h3>
           <p className="text-sm text-muted-foreground">
-            Up to 20 years of hourly AESO data with uptime filtering
+            {marketType === 'ercot' 
+              ? 'Up to 10 years of ERCOT hourly pricing data with uptime filtering'
+              : 'Up to 20 years of hourly AESO data with uptime filtering'
+            }
           </p>
         </div>
         
@@ -228,13 +236,13 @@ export function AdvancedAnalytics() {
           <Alert className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
             <AlertTriangle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-sm">
-              <strong>Real AESO Data:</strong> All pricing data is fetched directly from AESO's official Pool Price API. 
+              <strong>Real {marketType === 'ercot' ? 'ERCOT' : 'AESO'} Data:</strong> All pricing data is fetched directly from {marketType === 'ercot' ? "ERCOT's official Settlement Point Price API" : "AESO's official Pool Price API"}. 
               {filteredData.some(d => d.ail > 0) ? (
-                <span> AIL (load) data is included for this date range.</span>
+                <span> {marketType === 'ercot' ? 'Load' : 'AIL (load)'} data is included for this date range.</span>
               ) : (
-                <span> Note: AIL and generation data are only available for recent periods (last 31 days) due to API limitations.</span>
+                <span> Note: {marketType === 'ercot' ? 'Load' : 'AIL'} and generation data are only available for recent periods due to API limitations.</span>
               )}
-              {' '}All displayed prices are actual historical pool prices from the Alberta electricity market.
+              {' '}All displayed prices are actual historical {marketType === 'ercot' ? 'LMP prices from the Texas' : 'pool prices from the Alberta'} electricity market.
             </AlertDescription>
           </Alert>
 

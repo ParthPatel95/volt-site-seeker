@@ -10,6 +10,7 @@ export interface HourlyDataPoint {
 export interface DateRange {
   startDate: Date;
   endDate: Date;
+  marketType?: 'aeso' | 'ercot';
 }
 
 const MAX_YEARS = 20;
@@ -21,22 +22,24 @@ export class HistoricalDataService {
   private lastFetch: DateRange | null = null;
 
   /**
-   * Fetch historical AESO data for a date range (max 20 years)
+   * Fetch historical AESO or ERCOT data for a date range (max 20 years)
    */
   async getHistoricalData(range: DateRange): Promise<{
     data: HourlyDataPoint[];
     warnings: string[];
   }> {
     const warnings: string[] = [];
+    const marketType = range.marketType || 'aeso';
+    const maxYears = marketType === 'ercot' ? 10 : 20;
 
     // Validate and clamp date range
-    const { startDate, endDate, clamped } = this.validateAndClampRange(range);
+    const { startDate, endDate, clamped } = this.validateAndClampRange(range, maxYears);
     if (clamped) {
-      warnings.push(`Your selection exceeds 20 years; showing the most recent 20-year window.`);
+      warnings.push(`Your selection exceeds ${maxYears} years; showing the most recent ${maxYears}-year window.`);
     }
 
-    // Check for provisional data
-    if (this.isProvisionalPeriod(startDate, endDate)) {
+    // Check for provisional data (AESO only)
+    if (marketType === 'aeso' && this.isProvisionalPeriod(startDate, endDate)) {
       warnings.push(`⚠️ Apr–Jul 2025 data are provisional and subject to revision.`);
     }
 
@@ -45,13 +48,13 @@ export class HistoricalDataService {
       return { data: this.cachedData!, warnings };
     }
 
-    // Fetch data from AESO via edge function
+    // Fetch data from AESO/ERCOT via edge function
     try {
-      const data = await this.fetchFromAESO(startDate, endDate);
+      const data = await this.fetchFromAESO(startDate, endDate, marketType);
       
       // Cache the result
       this.cachedData = data;
-      this.lastFetch = { startDate, endDate };
+      this.lastFetch = { startDate, endDate, marketType };
 
       return { data, warnings };
     } catch (error) {
@@ -61,9 +64,9 @@ export class HistoricalDataService {
   }
 
   /**
-   * Validate date range and clamp to 20 years if necessary
+   * Validate date range and clamp to max years if necessary
    */
-  private validateAndClampRange(range: DateRange): {
+  private validateAndClampRange(range: DateRange, maxYears: number = MAX_YEARS): {
     startDate: Date;
     endDate: Date;
     clamped: boolean;
@@ -80,10 +83,10 @@ export class HistoricalDataService {
     // Calculate year difference
     const yearsDiff = (endDate.getTime() - startDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
 
-    if (yearsDiff > MAX_YEARS) {
-      // Clamp to most recent 20 years
+    if (yearsDiff > maxYears) {
+      // Clamp to most recent max years
       startDate = new Date(endDate);
-      startDate.setFullYear(startDate.getFullYear() - MAX_YEARS);
+      startDate.setFullYear(startDate.getFullYear() - maxYears);
       clamped = true;
     }
 
@@ -107,16 +110,19 @@ export class HistoricalDataService {
 
     return (
       this.lastFetch.startDate.getTime() === startDate.getTime() &&
-      this.lastFetch.endDate.getTime() === endDate.getTime()
+      this.lastFetch.endDate.getTime() === endDate.getTime() &&
+      this.lastFetch.marketType === (this.lastFetch.marketType || 'aeso')
     );
   }
 
   /**
-   * Fetch data from AESO API via edge function
+   * Fetch data from AESO or ERCOT API via edge function
    */
-  private async fetchFromAESO(startDate: Date, endDate: Date): Promise<HourlyDataPoint[]> {
-    // Call the existing edge function for historical data
-    const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+  private async fetchFromAESO(startDate: Date, endDate: Date, marketType: 'aeso' | 'ercot' = 'aeso'): Promise<HourlyDataPoint[]> {
+    const functionName = marketType === 'ercot' ? 'ercot-historical-pricing' : 'aeso-historical-pricing';
+    
+    // Call the appropriate edge function for historical data
+    const { data, error } = await supabase.functions.invoke(functionName, {
       body: {
         timeframe: 'custom',
         startDate: startDate.toISOString(),
