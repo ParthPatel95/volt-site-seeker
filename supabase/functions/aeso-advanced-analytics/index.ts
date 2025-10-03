@@ -224,17 +224,22 @@ async function fetchSevenDayForecast(apiKey: string) {
         const sortedHourly = [...values.hourlyData].sort((a: any, b: any) => b.demand - a.demand);
         
         // Calculate prices at different uptime levels
-        // Higher uptime = fewer high-demand hours = lower average price
+        // Lower uptime = more hours at peak demand = higher average price
         const calculateUptimePrice = (uptimePercent: number) => {
-          const hoursAtCapacity = Math.floor(sortedHourly.length * (1 - uptimePercent / 100));
-          if (hoursAtCapacity === 0 || sortedHourly.length === 0) return avgPrice;
+          if (sortedHourly.length === 0) return avgPrice;
           
-          // Price during constrained hours (when we're not at full uptime)
-          const constrainedHours = sortedHourly.slice(0, hoursAtCapacity);
-          const constrainedPrice = constrainedHours.reduce((sum: number, h: any) => sum + h.price, 0) / constrainedHours.length;
+          // At lower uptime, we miss more peak hours, so we pay higher prices during remaining hours
+          const hoursDown = Math.floor(sortedHourly.length * (1 - uptimePercent / 100));
+          if (hoursDown === 0) return avgPrice;
           
-          // Blend with average price based on uptime
-          return (constrainedPrice * (1 - uptimePercent / 100)) + (avgPrice * (uptimePercent / 100));
+          // The hours we're "down" are the highest demand hours (most expensive)
+          const missedHours = sortedHourly.slice(0, hoursDown);
+          const missedPrice = missedHours.reduce((sum: number, h: any) => sum + h.price, 0) / missedHours.length;
+          
+          // When down during expensive hours, we buy at those high prices
+          // Weight the impact: lower uptime = more exposure to peak prices
+          const downtimeImpact = (100 - uptimePercent) / 100;
+          return avgPrice + (missedPrice - avgPrice) * downtimeImpact;
         };
         
         // Calculate price forecast based on high-demand hours
@@ -257,6 +262,12 @@ async function fetchSevenDayForecast(apiKey: string) {
           price_at_92_uptime: calculateUptimePrice(92),
           price_at_95_uptime: calculateUptimePrice(95),
           price_at_97_uptime: calculateUptimePrice(97),
+          hourly_prices: sortedHourly.map((h: any) => ({
+            hour: new Date(h.timestamp).getHours(),
+            price: h.price,
+            demand: h.demand,
+            timestamp: h.timestamp
+          })),
           confidence_level: 85
         };
       });

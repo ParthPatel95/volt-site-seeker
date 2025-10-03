@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Activity } from 'lucide-react';
+import { TrendingUp, Activity, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface HourlyPrice {
+  hour: number;
+  price: number;
+  demand: number;
+  timestamp: string;
+}
 
 interface ForecastData {
   date: string;
@@ -11,6 +19,7 @@ interface ForecastData {
   price_at_92_uptime?: number;
   price_at_95_uptime?: number;
   price_at_97_uptime?: number;
+  hourly_prices?: HourlyPrice[];
 }
 
 interface Props {
@@ -18,6 +27,8 @@ interface Props {
 }
 
 export function UptimePricingTool({ forecast }: Props) {
+  const [expandedDay, setExpandedDay] = useState<number | null>(null);
+  
   const uptimeLevels = [
     { level: 90, key: 'price_at_90_uptime' as const, color: 'text-red-600' },
     { level: 92, key: 'price_at_92_uptime' as const, color: 'text-orange-600' },
@@ -73,18 +84,33 @@ export function UptimePricingTool({ forecast }: Props) {
               day[key] !== undefined && !isNaN(day[key] as number)
             );
 
+            const isExpanded = expandedDay === index;
+            const hasHourlyData = day.hourly_prices && day.hourly_prices.length > 0;
+
             return (
               <Card key={index} className="border-l-4 border-l-blue-500">
                 <CardContent className="pt-4">
                   <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold">
-                        {new Date(day.date).toLocaleDateString('en-US', { 
-                          weekday: 'long',
-                          month: 'short', 
-                          day: 'numeric' 
-                        })}
-                      </h4>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold">
+                          {new Date(day.date).toLocaleDateString('en-US', { 
+                            weekday: 'long',
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </h4>
+                        {hasHourlyData && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedDay(isExpanded ? null : index)}
+                            className="ml-2"
+                          >
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </Button>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         Demand: {(day.demand_forecast_mw / 1000).toFixed(1)} GW
                       </p>
@@ -122,6 +148,45 @@ export function UptimePricingTool({ forecast }: Props) {
                     <p className="text-sm text-muted-foreground text-center py-2">
                       Uptime pricing data not available for this day
                     </p>
+                  )}
+
+                  {/* Hourly Breakdown */}
+                  {isExpanded && hasHourlyData && (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        <h5 className="font-semibold text-sm">24-Hour Price Breakdown</h5>
+                      </div>
+                      <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-64 overflow-y-auto">
+                        {day.hourly_prices!.map((hourData, idx) => {
+                          const avgPrice = day.price_forecast;
+                          const isPeak = hourData.price > avgPrice * 1.2;
+                          const isLow = hourData.price < avgPrice * 0.8;
+                          
+                          return (
+                            <div 
+                              key={idx} 
+                              className={`p-2 rounded-lg border ${
+                                isPeak ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800' :
+                                isLow ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' :
+                                'bg-muted/30 border-border'
+                              }`}
+                            >
+                              <p className="text-xs font-medium text-muted-foreground">
+                                {hourData.hour.toString().padStart(2, '0')}:00
+                              </p>
+                              <p className={`text-sm font-bold ${
+                                isPeak ? 'text-red-600' :
+                                isLow ? 'text-green-600' :
+                                'text-foreground'
+                              }`}>
+                                ${hourData.price.toFixed(2)}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
