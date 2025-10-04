@@ -14,7 +14,7 @@ serve(async (req) => {
     const { period = '30days', analysis, shutdownHours, priceThreshold } = await req.json();
     console.log(`🔄 Fetching ERCOT historical pricing for period: ${period}`);
     
-    const ercotApiKey = Deno.env.get('ERCOT_API_KEY');
+    const ercotApiKey = Deno.env.get('ERCOT_API_KEY')?.trim();
     
     if (!ercotApiKey) {
       console.error('❌ No ERCOT API key found');
