@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, Plus, FileText, Download, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Upload, Plus, FileText, Download, Link as LinkIcon, Trash2, ExternalLink } from 'lucide-react';
 import { DocumentUploadDialog } from './DocumentUploadDialog';
+import { CreateLinkDialog } from './CreateLinkDialog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +11,8 @@ import { format } from 'date-fns';
 
 export function DocumentsTab() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [createLinkDialogOpen, setCreateLinkDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
 
   const { data: documents, isLoading, refetch } = useQuery({
@@ -136,7 +139,15 @@ export function DocumentsTab() {
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedDocument({ id: doc.id, name: doc.file_name });
+                      setCreateLinkDialogOpen(true);
+                    }}
+                  >
                     <LinkIcon className="w-3 h-3 mr-1" />
                     Create Link
                   </Button>
@@ -177,6 +188,16 @@ export function DocumentsTab() {
         onOpenChange={setUploadDialogOpen}
         onSuccess={() => refetch()}
       />
+
+      {selectedDocument && (
+        <CreateLinkDialog
+          open={createLinkDialogOpen}
+          onOpenChange={setCreateLinkDialogOpen}
+          documentId={selectedDocument.id}
+          documentName={selectedDocument.name}
+          onSuccess={() => refetch()}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield } from 'lucide-react';
 import { DocumentsTab } from '@/components/secure-share/DocumentsTab';
+import { LinksManagement } from '@/components/secure-share/LinksManagement';
 import { BundlesTab } from '@/components/secure-share/BundlesTab';
 import { AnalyticsTab } from '@/components/secure-share/AnalyticsTab';
 import { SettingsTab } from '@/components/secure-share/SettingsTab';
@@ -29,8 +30,9 @@ export default function SecureShare() {
 
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-[600px] grid-cols-4">
+          <TabsList className="grid w-full max-w-[800px] grid-cols-5">
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="links">Links</TabsTrigger>
             <TabsTrigger value="bundles">Bundles</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -38,6 +40,18 @@ export default function SecureShare() {
 
           <TabsContent value="documents" className="space-y-4">
             <DocumentsTab />
+          </TabsContent>
+
+          <TabsContent value="links" className="space-y-4">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold">Secure Links</h2>
+                <p className="text-muted-foreground">
+                  Manage and track all secure share links
+                </p>
+              </div>
+              <LinksManagement />
+            </div>
           </TabsContent>
 
           <TabsContent value="bundles" className="space-y-4">
