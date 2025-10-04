@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
+import ViewDocument from "./pages/ViewDocument";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
               </VoltMarketAuthProvider>
             } />
             <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
+            <Route path="/view/:token" element={<ViewDocument />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
