@@ -98,7 +98,7 @@ export function CreateLinkDialog({
       if (error) throw error;
 
       const baseUrl = window.location.origin;
-      const shareUrl = `${baseUrl}/share/${linkToken}`;
+      const shareUrl = `${baseUrl}/view/${linkToken}`;
       setGeneratedLink(shareUrl);
 
       toast({
