@@ -17,9 +17,11 @@ serve(async (req) => {
     const ercotApiKey = Deno.env.get('ERCOT_API_KEY');
     
     if (!ercotApiKey) {
-      console.error('No ERCOT API key found');
+      console.error('❌ No ERCOT API key found');
       throw new Error('ERCOT API key is not configured');
     }
+    
+    console.log('✅ ERCOT API key found, length:', ercotApiKey.length);
 
     // Calculate date range based on period
     const endDate = new Date();
@@ -39,15 +41,18 @@ serve(async (req) => {
 
     // Fetch historical DAM Settlement Point Prices from ERCOT
     // Using the correct API endpoint from ERCOT Public API
+    const apiHeaders = {
+      'Ocp-Apim-Subscription-Key': ercotApiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    
+    const endpoint = 'https://api.ercot.com/api/public-reports/np4-190-cd/dam_stlmnt_pnt_prices';
+    console.log('📡 Calling ERCOT API endpoint:', endpoint);
+    
     const sppResponse = await fetch(
-      `https://api.ercot.com/api/public-reports/np4-190-cd/dam_stlmnt_pnt_prices?size=5000`,
-      {
-        method: 'GET',
-        headers: { 
-          'Ocp-Apim-Subscription-Key': ercotApiKey,
-          'Accept': 'application/json'
-        }
-      }
+      `${endpoint}?size=5000`,
+      { headers: apiHeaders }
     );
 
     if (!sppResponse.ok) {
