@@ -43,7 +43,7 @@ export function LinksManagement() {
   });
 
   const handleCopyLink = (token: string) => {
-    const shareUrl = `${window.location.origin}/share/${token}`;
+    const shareUrl = `${window.location.origin}/view/${token}`;
     navigator.clipboard.writeText(shareUrl);
     toast({
       title: 'Link copied',
