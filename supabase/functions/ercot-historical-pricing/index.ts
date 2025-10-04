@@ -22,6 +22,7 @@ serve(async (req) => {
     }
     
     console.log('✅ ERCOT API key found, length:', ercotApiKey.length);
+    console.log('🔑 API key starts with:', ercotApiKey.substring(0, 8) + '...');
 
     // Calculate date range based on period
     const endDate = new Date();
@@ -49,11 +50,15 @@ serve(async (req) => {
     
     const endpoint = 'https://api.ercot.com/api/public-reports/np4-190-cd/dam_stlmnt_pnt_prices';
     console.log('📡 Calling ERCOT API endpoint:', endpoint);
+    console.log('📋 Headers:', Object.keys(apiHeaders));
     
     const sppResponse = await fetch(
       `${endpoint}?size=5000`,
       { headers: apiHeaders }
     );
+    
+    console.log('📥 Response status:', sppResponse.status);
+    console.log('📥 Response headers:', Object.fromEntries(sppResponse.headers.entries()));
 
     if (!sppResponse.ok) {
       const errorText = await sppResponse.text();
