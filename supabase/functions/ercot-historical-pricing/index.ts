@@ -43,95 +43,98 @@ serve(async (req) => {
         break;
     }
 
-    // Fetch historical DAM Settlement Point Prices from ERCOT
-    // Using the same URL pattern as the working energy-data-integration function
-    const apiHeaders = {
-      'Ocp-Apim-Subscription-Key': ercotApiKey,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    };
+    // ERCOT API endpoints are returning 404. Instead, scrape historical data from ERCOT website
+    // This matches the working approach in energy-data-integration function
+    console.log('📊 Fetching ERCOT historical pricing from public website...');
     
-    // Use the same endpoint structure that works in energy-data-integration
-    // Format: /api/public-reports/{report-id}/{artifact-name}
-    const endpoint = 'https://api.ercot.com/api/public-reports/np4-190-cd/dam_spp';
-    console.log('📡 Calling ERCOT API endpoint:', endpoint);
-    console.log('📋 Using subscription key starting with:', ercotApiKey.substring(0, 8) + '...');
-    
-    const sppResponse = await fetch(
-      `${endpoint}?size=10000`,
-      { headers: apiHeaders }
-    );
-    
-    console.log('📥 Response status:', sppResponse.status);
-
-    if (!sppResponse.ok) {
-      const errorText = await sppResponse.text();
-      console.error('❌ ERCOT API error:', sppResponse.status, errorText);
-      console.error('❌ This usually means:');
-      console.error('   1. API key not subscribed to "ERCOT Public API" product at https://apiexplorer.ercot.com');
-      console.error('   2. API key is invalid or has been regenerated');
-      console.error('   3. Endpoint URL is incorrect');
-      console.error('💡 Please verify your API key is subscribed to the Public API product in ERCOT API Explorer');
-      throw new Error(`Failed to fetch ERCOT historical pricing data: ${sppResponse.status} - ${errorText}`);
-    }
-
-    const sppData = await sppResponse.json();
-    console.log('✅ ERCOT historical pricing data received:', {
-      dataLength: sppData?.data?.length || 0,
-      hasReportMetadata: !!sppData?.report,
-      sampleRecord: sppData?.data?.[0]
+    // Fetch DAM Settlement Point Prices from ERCOT's public display
+    const damSppUrl = 'https://www.ercot.com/content/cdr/html/dam_spp.html';
+    const damResponse = await fetch(damSppUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
     });
-
-    // Process the data - filter for time period and Hub Average
+    
+    if (!damResponse.ok) {
+      console.error('❌ Failed to fetch DAM SPP page:', damResponse.status);
+      throw new Error(`Failed to fetch ERCOT historical pricing: ${damResponse.status}`);
+    }
+    
+    const htmlContent = await damResponse.text();
+    console.log('✅ Fetched DAM SPP HTML, length:', htmlContent.length);
+    
+    // Parse the HTML to extract HB_HUBAVG prices
+    const hourlyData: any[] = [];
+    const rows = htmlContent.match(/<tr[^>]*>.*?<\/tr>/gs) || [];
+    
+    console.log('📋 Found', rows.length, 'table rows');
+    
+    for (const row of rows) {
+      // Extract cells from row
+      const cells = row.match(/<td[^>]*>(.*?)<\/td>/gs) || [];
+      if (cells.length < 3) continue;
+      
+      // Parse cell contents
+      const cellValues = cells.map(cell => 
+        cell.replace(/<[^>]*>/g, '').trim()
+      );
+      
+      // Look for rows with date, hour, and HB_HUBAVG price
+      if (cellValues.length >= 3) {
+        const dateStr = cellValues[0];
+        const hourStr = cellValues[1];
+        const priceStr = cellValues.find((val, idx) => {
+          // HB_HUBAVG is typically in column 3-5
+          return idx >= 2 && !isNaN(parseFloat(val)) && parseFloat(val) > 0;
+        });
+        
+        if (dateStr && hourStr && priceStr) {
+          const price = parseFloat(priceStr);
+          if (!isNaN(price) && price > 0) {
+            // Create timestamp from date and hour
+            try {
+              const dateParts = dateStr.split('/');
+              if (dateParts.length === 3) {
+                const month = parseInt(dateParts[0]) - 1;
+                const day = parseInt(dateParts[1]);
+                const year = parseInt(dateParts[2]);
+                const hour = parseInt(hourStr) - 1; // Hour ending format
+                
+                const timestamp = new Date(year, month, day, hour);
+                
+                hourlyData.push({
+                  timestamp: timestamp.toISOString(),
+                  price: price,
+                  hour: parseInt(hourStr)
+                });
+              }
+            } catch (e) {
+              // Skip invalid dates
+            }
+          }
+        }
+      }
+    }
+    
+    console.log('✅ Extracted', hourlyData.length, 'historical price points');
+    
+    // Filter by period
     const now = new Date();
-    const rawData = sppData?.data || [];
+    const filteredData = hourlyData.filter((item: any) => {
+      const itemDate = new Date(item.timestamp);
+      const daysDiff = (now.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      if (period === '30days') return daysDiff <= 30 && daysDiff >= 0;
+      if (period === '12months') return daysDiff <= 365 && daysDiff >= 0;
+      if (period === '10years') return daysDiff <= 3650 && daysDiff >= 0;
+      
+      return true;
+    });
     
-    console.log('📊 Processing raw data, first few records:', rawData.slice(0, 3));
-    
-    const hourlyData = rawData
-      .filter((item: any) => {
-        // Filter by settlement point - check multiple possible field names
-        const settlementPoint = item.settlementPoint || item.SettlementPoint || item.settlement_point || item.SETTLEMENT_POINT;
-        if (settlementPoint !== 'HB_HUBAVG') return false;
-        
-        // Filter by date range if applicable
-        const itemDate = new Date(item.deliveryDate || item.DeliveryDate || item.delivery_date || item.DELIVERY_DATE || item.operDay);
-        const daysDiff = (now.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24);
-        
-        if (period === '30days') return daysDiff <= 30 && daysDiff >= 0;
-        if (period === '12months') return daysDiff <= 365 && daysDiff >= 0;
-        if (period === '10years') return daysDiff <= 3650 && daysDiff >= 0;
-        
-        return true;
-      })
-      .map((item: any) => {
-        // Extract hour ending
-        const hourEnding = item.hourEnding || item.HourEnding || item.hour_ending || item.HOUR_ENDING || 0;
-        
-        // Create timestamp from delivery date and hour
-        const deliveryDate = item.deliveryDate || item.DeliveryDate || item.delivery_date || item.DELIVERY_DATE;
-        const timestamp = new Date(deliveryDate);
-        timestamp.setHours(hourEnding - 1); // Hour ending means the hour just completed
-        
-        return {
-          timestamp: timestamp.toISOString(),
-          price: parseFloat(
-            item.settlementPointPrice || 
-            item.SettlementPointPrice || 
-            item.settlement_point_price ||
-            item.SETTLEMENT_POINT_PRICE ||
-            item.price ||
-            item.Price
-          ) || 0,
-          hour: hourEnding
-        };
-      })
-      .filter((item: any) => item.price > 0 && item.timestamp); // Remove invalid data
-    
-    console.log('📈 Processed data points:', hourlyData.length);
+    console.log('📈 Filtered to', filteredData.length, 'data points for period:', period);
 
-    // Calculate statistics
-    const prices = hourlyData.map((d: any) => d.price).filter((p: number) => p > 0);
+    // Calculate statistics from filtered data
+    const prices = filteredData.map((d: any) => d.price).filter((p: number) => p > 0);
     const sortedPrices = [...prices].sort((a, b) => a - b);
     
     const statistics = {
@@ -143,24 +146,24 @@ serve(async (req) => {
       percentile95: sortedPrices[Math.floor(sortedPrices.length * 0.95)]
     };
 
-    // Chart data - last 100 points for visualization
-    const chartData = hourlyData.slice(-100).map((d: any) => ({
+    // Chart data - use filtered data
+    const chartData = filteredData.slice(-100).map((d: any) => ({
       time: new Date(d.timestamp).toLocaleString(),
       price: d.price
     }));
 
-    // Peak hours analysis
-    const hourlyPattern = calculateHourlyPattern(hourlyData);
+    // Peak hours analysis from filtered data
+    const hourlyPattern = calculateHourlyPattern(filteredData);
     const peakHours = hourlyPattern
       .sort((a, b) => b.avgPrice - a.avgPrice)
       .slice(0, 5)
-      .map(h => ({ ...h, count: hourlyData.filter((d: any) => new Date(d.timestamp).getHours() === h.hour).length }));
+      .map(h => ({ ...h, count: filteredData.filter((d: any) => new Date(d.timestamp).getHours() === h.hour).length }));
 
     // Price distribution
     const distribution = calculateDistribution(prices);
 
-    // Seasonal pattern
-    const seasonalPattern = calculateSeasonalPattern(hourlyData);
+    // Seasonal pattern from filtered data
+    const seasonalPattern = calculateSeasonalPattern(filteredData);
 
     // Predictions (simple trend-based)
     const recentPrices = prices.slice(-24);
@@ -170,12 +173,12 @@ serve(async (req) => {
       confidence: 75
     };
 
-    // Patterns
+    // Patterns from filtered data
     const peakHourIndices = [14, 15, 16, 17, 18, 19];
-    const peakPrices = hourlyData
+    const peakPrices = filteredData
       .filter((d: any) => peakHourIndices.includes(new Date(d.timestamp).getHours()))
       .map((d: any) => d.price);
-    const offPeakPrices = hourlyData
+    const offPeakPrices = filteredData
       .filter((d: any) => !peakHourIndices.includes(new Date(d.timestamp).getHours()))
       .map((d: any) => d.price);
 
@@ -194,13 +197,13 @@ serve(async (req) => {
       seasonalPattern,
       predictions,
       patterns,
-      hourlyData
+      hourlyData: filteredData
     };
 
-    // Peak shutdown analysis if requested
+    // Peak shutdown analysis if requested (use filtered data)
     let peakAnalysis = null;
     if (analysis === 'peak_shutdown') {
-      peakAnalysis = analyzePeakShutdown(hourlyData, shutdownHours, priceThreshold);
+      peakAnalysis = analyzePeakShutdown(filteredData, shutdownHours, priceThreshold);
     }
 
     return new Response(
