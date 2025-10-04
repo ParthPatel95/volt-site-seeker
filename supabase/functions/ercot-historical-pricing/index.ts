@@ -65,8 +65,13 @@ serve(async (req) => {
 
     if (!sppResponse.ok) {
       const errorText = await sppResponse.text();
-      console.error('ERCOT API error:', sppResponse.status, errorText);
-      throw new Error(`Failed to fetch ERCOT historical pricing data: ${sppResponse.status}`);
+      console.error('❌ ERCOT API error:', sppResponse.status, errorText);
+      console.error('❌ This usually means:');
+      console.error('   1. API key not subscribed to "ERCOT Public API" product at https://apiexplorer.ercot.com');
+      console.error('   2. API key is invalid or has been regenerated');
+      console.error('   3. Endpoint URL is incorrect');
+      console.error('💡 Please verify your API key is subscribed to the Public API product in ERCOT API Explorer');
+      throw new Error(`Failed to fetch ERCOT historical pricing data: ${sppResponse.status} - ${errorText}`);
     }
 
     const sppData = await sppResponse.json();
