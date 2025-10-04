@@ -38,9 +38,9 @@ serve(async (req) => {
     }
 
     // Fetch historical DAM Settlement Point Prices from ERCOT
-    // Using the Day-Ahead Market (DAM) Hourly LMP endpoint
+    // Using the correct API endpoint from ERCOT Public API
     const sppResponse = await fetch(
-      `https://api.ercot.com/api/public-reports/np4-190-cd/dam_hourly_lmp`,
+      `https://api.ercot.com/api/public-reports/np4-190-cd/dam_stlmnt_pnt_prices?size=5000`,
       {
         method: 'GET',
         headers: { 
@@ -59,39 +59,54 @@ serve(async (req) => {
     const sppData = await sppResponse.json();
     console.log('✅ ERCOT historical pricing data received:', {
       dataLength: sppData?.data?.length || 0,
+      hasReportMetadata: !!sppData?.report,
       sampleRecord: sppData?.data?.[0]
     });
 
     // Process the data - filter for time period and Hub Average
     const now = new Date();
-    const rawData = Array.isArray(sppData) ? sppData : (sppData?.data || []);
+    const rawData = sppData?.data || [];
+    
+    console.log('📊 Processing raw data, first few records:', rawData.slice(0, 3));
+    
     const hourlyData = rawData
       .filter((item: any) => {
-        // Filter by settlement point
-        const settlementPoint = item.SettlementPoint || item.settlementPoint || item.settlement_point;
+        // Filter by settlement point - check multiple possible field names
+        const settlementPoint = item.settlementPoint || item.SettlementPoint || item.settlement_point || item.SETTLEMENT_POINT;
         if (settlementPoint !== 'HB_HUBAVG') return false;
         
         // Filter by date range if applicable
-        const itemDate = new Date(item.DeliveryDate || item.deliveryDate || item.delivery_date);
+        const itemDate = new Date(item.deliveryDate || item.DeliveryDate || item.delivery_date || item.DELIVERY_DATE || item.operDay);
         const daysDiff = (now.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24);
         
-        if (period === '30days') return daysDiff <= 30;
-        if (period === '12months') return daysDiff <= 365;
-        if (period === '10years') return daysDiff <= 3650;
+        if (period === '30days') return daysDiff <= 30 && daysDiff >= 0;
+        if (period === '12months') return daysDiff <= 365 && daysDiff >= 0;
+        if (period === '10years') return daysDiff <= 3650 && daysDiff >= 0;
         
         return true;
       })
-      .map((item: any) => ({
-        timestamp: item.DeliveryDate || item.deliveryDate || item.delivery_date || item.OperDay,
-        price: parseFloat(
-          item.SettlementPointPrice || 
-          item.settlementPointPrice || 
-          item.settlement_point_price ||
-          item.LMP || 
-          item.Price
-        ) || 0,
-        demand: parseFloat(item.SystemLoad || item.Load) || undefined
-      }))
+      .map((item: any) => {
+        // Extract hour ending
+        const hourEnding = item.hourEnding || item.HourEnding || item.hour_ending || item.HOUR_ENDING || 0;
+        
+        // Create timestamp from delivery date and hour
+        const deliveryDate = item.deliveryDate || item.DeliveryDate || item.delivery_date || item.DELIVERY_DATE;
+        const timestamp = new Date(deliveryDate);
+        timestamp.setHours(hourEnding - 1); // Hour ending means the hour just completed
+        
+        return {
+          timestamp: timestamp.toISOString(),
+          price: parseFloat(
+            item.settlementPointPrice || 
+            item.SettlementPointPrice || 
+            item.settlement_point_price ||
+            item.SETTLEMENT_POINT_PRICE ||
+            item.price ||
+            item.Price
+          ) || 0,
+          hour: hourEnding
+        };
+      })
       .filter((item: any) => item.price > 0 && item.timestamp); // Remove invalid data
     
     console.log('📈 Processed data points:', hourlyData.length);
