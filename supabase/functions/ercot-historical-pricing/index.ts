@@ -44,39 +44,25 @@ serve(async (req) => {
     }
 
     // Fetch historical DAM Settlement Point Prices from ERCOT
-    // First, try a test endpoint to verify authentication works
+    // Using the same URL pattern as the working energy-data-integration function
     const apiHeaders = {
       'Ocp-Apim-Subscription-Key': ercotApiKey,
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     };
     
-    // Test with the generation endpoint first (we know this works in energy-data-integration)
-    const testEndpoint = 'https://api.ercot.com/api/public-reports/np4-732-cd/act_sys_load_by_fueltype';
-    console.log('🧪 Testing API authentication with:', testEndpoint);
-    
-    const testResponse = await fetch(testEndpoint, { headers: apiHeaders });
-    console.log('🧪 Test response status:', testResponse.status);
-    
-    if (testResponse.ok) {
-      console.log('✅ API authentication works! Now trying historical pricing endpoint...');
-    } else {
-      const testError = await testResponse.text();
-      console.error('❌ Even test endpoint failed:', testResponse.status, testError);
-    }
-    
-    // Now try the actual historical pricing endpoint
-    const endpoint = 'https://api.ercot.com/api/public-reports/np4-190-cd/dam_stlmnt_pnt_prices';
+    // Use the same endpoint structure that works in energy-data-integration
+    // Format: /api/public-reports/{report-id}/{artifact-name}
+    const endpoint = 'https://api.ercot.com/api/public-reports/np4-190-cd/dam_spp';
     console.log('📡 Calling ERCOT API endpoint:', endpoint);
-    console.log('📋 Headers:', Object.keys(apiHeaders));
+    console.log('📋 Using subscription key starting with:', ercotApiKey.substring(0, 8) + '...');
     
     const sppResponse = await fetch(
-      `${endpoint}?size=5000`,
+      `${endpoint}?size=10000`,
       { headers: apiHeaders }
     );
     
     console.log('📥 Response status:', sppResponse.status);
-    console.log('📥 Response headers:', Object.fromEntries(sppResponse.headers.entries()));
 
     if (!sppResponse.ok) {
       const errorText = await sppResponse.text();
