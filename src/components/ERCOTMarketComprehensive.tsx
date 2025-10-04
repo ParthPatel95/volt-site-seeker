@@ -545,7 +545,7 @@ export function ERCOTMarketComprehensive() {
             {/* Alerts Section */}
             <div>
               <ERCOTAlertsPanel 
-                alerts={alerts}
+                alerts={alerts || []}
                 onDismissAlert={dismissAlert}
                 onClearAll={clearAllAlerts}
               />

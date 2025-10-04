@@ -12,19 +12,21 @@ import {
   Activity
 } from 'lucide-react';
 
-interface ERCOTAlertsPanelProps {
-  alerts: Array<{
-    id: string;
-    type: string;
-    severity: string;
-    message: string;
-    timestamp: string;
-  }>;
-  onDismissAlert: (alertId: string) => void;
-  onClearAll: () => void;
+interface Alert {
+  id: string;
+  type: string;
+  severity: string;
+  message: string;
+  timestamp: string;
 }
 
-export function ERCOTAlertsPanel({ alerts, onDismissAlert, onClearAll }: ERCOTAlertsPanelProps) {
+interface ERCOTAlertsPanelProps {
+  alerts?: Alert[];
+  onDismissAlert?: (alertId: string) => void;
+  onClearAll?: () => void;
+}
+
+export function ERCOTAlertsPanel({ alerts = [], onDismissAlert, onClearAll }: ERCOTAlertsPanelProps) {
   const getAlertIcon = (type: string) => {
     switch (type) {
       case 'price_volatility':
@@ -131,14 +133,16 @@ export function ERCOTAlertsPanel({ alerts, onDismissAlert, onClearAll }: ERCOTAl
                     </div>
                     <p className="text-sm font-medium">{alert.message}</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDismissAlert(alert.id)}
-                    className="flex-shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  {onDismissAlert && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDismissAlert(alert.id)}
+                      className="flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             );
