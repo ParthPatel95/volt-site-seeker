@@ -72,11 +72,16 @@ export function ERCOTHistoricalPricing() {
   const calculateUptimeOptimization = (targetUptime: number = 95) => {
     const currentAnalysis = getCurrentAnalysis();
     
-    if (!currentAnalysis || !currentAnalysis.hourlyData) {
+    if (!currentAnalysis || !currentAnalysis.chartData || currentAnalysis.chartData.length === 0) {
       return null;
     }
 
-    const hourlyData = currentAnalysis.hourlyData;
+    // Use chartData which has price property
+    const hourlyData = currentAnalysis.chartData.map(d => ({
+      price: d.price || 0,
+      time: d.time || ''
+    }));
+    
     const sortedByPrice = [...hourlyData].sort((a, b) => b.price - a.price);
     
     const totalHours = hourlyData.length;
@@ -86,7 +91,9 @@ export function ERCOTHistoricalPricing() {
     const includedHours = sortedByPrice.slice(shutdownHours);
     
     const originalAvg = hourlyData.reduce((sum, h) => sum + h.price, 0) / totalHours;
-    const newAvg = includedHours.reduce((sum, h) => sum + h.price, 0) / includedHours.length;
+    const newAvg = includedHours.length > 0 
+      ? includedHours.reduce((sum, h) => sum + h.price, 0) / includedHours.length 
+      : 0;
     
     const savingsPerMWh = originalAvg - newAvg;
     const savingsPerKWh = savingsPerMWh / 1000;
