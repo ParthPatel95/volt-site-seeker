@@ -66,6 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/idle-industry-scanner', icon: Target, label: 'Idle Industry Scanner', permission: 'feature.idle-industry-scanner' },
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure', permission: 'feature.power-infrastructure' },
     { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab', permission: 'feature.btc-roi-lab' },
+    { path: '/app/secure-share', icon: Lock, label: 'Secure Share', permission: 'feature.secure-share' },
     { path: '/app/advanced-analytics', icon: BarChart3, label: 'Advanced Analytics', permission: 'feature.advanced-analytics' },
     { path: '/app/users', icon: Users, label: 'User Management', permission: 'feature.user-management' }
   ];

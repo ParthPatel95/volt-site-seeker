@@ -334,6 +334,48 @@ export type Database = {
         }
         Relationships: []
       }
+      bundle_documents: {
+        Row: {
+          bundle_id: string
+          created_at: string | null
+          display_order: number | null
+          document_id: string
+          folder_path: string | null
+          id: string
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string | null
+          display_order?: number | null
+          document_id: string
+          folder_path?: string | null
+          id?: string
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string | null
+          display_order?: number | null
+          document_id?: string
+          folder_path?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_documents_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "document_bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bundle_documents_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       city_power_analysis: {
         Row: {
           analysis_date: string
@@ -627,6 +669,39 @@ export type Database = {
           potential_value?: number
           power_capacity?: number
           signals?: string[]
+        }
+        Relationships: []
+      }
+      document_bundles: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          folder_structure: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          folder_structure?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          folder_structure?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2151,6 +2226,149 @@ export type Database = {
         }
         Relationships: []
       }
+      secure_documents: {
+        Row: {
+          category: Database["public"]["Enums"]["document_category"]
+          created_at: string | null
+          created_by: string
+          description: string | null
+          file_hash: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          is_active: boolean | null
+          page_count: number | null
+          site_id: string | null
+          storage_path: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["document_category"]
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          file_hash?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          is_active?: boolean | null
+          page_count?: number | null
+          site_id?: string | null
+          storage_path: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["document_category"]
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          file_hash?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_active?: boolean | null
+          page_count?: number | null
+          site_id?: string | null
+          storage_path?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      secure_links: {
+        Row: {
+          access_level: Database["public"]["Enums"]["access_level"] | null
+          allowed_domains: string[] | null
+          allowed_ips: string[] | null
+          created_at: string | null
+          created_by: string
+          current_views: number | null
+          custom_branding: Json | null
+          document_id: string
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          link_token: string
+          max_views: number | null
+          nda_required: boolean | null
+          nda_signed_at: string | null
+          password_hash: string | null
+          recipient_email: string | null
+          recipient_name: string | null
+          require_otp: boolean | null
+          status: Database["public"]["Enums"]["link_status"] | null
+          updated_at: string | null
+          watermark_enabled: boolean | null
+        }
+        Insert: {
+          access_level?: Database["public"]["Enums"]["access_level"] | null
+          allowed_domains?: string[] | null
+          allowed_ips?: string[] | null
+          created_at?: string | null
+          created_by: string
+          current_views?: number | null
+          custom_branding?: Json | null
+          document_id: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          link_token: string
+          max_views?: number | null
+          nda_required?: boolean | null
+          nda_signed_at?: string | null
+          password_hash?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          require_otp?: boolean | null
+          status?: Database["public"]["Enums"]["link_status"] | null
+          updated_at?: string | null
+          watermark_enabled?: boolean | null
+        }
+        Update: {
+          access_level?: Database["public"]["Enums"]["access_level"] | null
+          allowed_domains?: string[] | null
+          allowed_ips?: string[] | null
+          created_at?: string | null
+          created_by?: string
+          current_views?: number | null
+          custom_branding?: Json | null
+          document_id?: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          link_token?: string
+          max_views?: number | null
+          nda_required?: boolean | null
+          nda_signed_at?: string | null
+          password_hash?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          require_otp?: boolean | null
+          status?: Database["public"]["Enums"]["link_status"] | null
+          updated_at?: string | null
+          watermark_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secure_links_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_access_requests: {
         Row: {
           company_name: string
@@ -2870,6 +3088,75 @@ export type Database = {
           zoning?: string | null
         }
         Relationships: []
+      }
+      viewer_activity: {
+        Row: {
+          browser: string | null
+          device_type: string | null
+          document_id: string
+          engagement_score: number | null
+          id: string
+          last_activity_at: string | null
+          link_id: string
+          metadata: Json | null
+          opened_at: string | null
+          pages_viewed: Json | null
+          scroll_depth: Json | null
+          total_time_seconds: number | null
+          viewer_email: string | null
+          viewer_ip: string | null
+          viewer_location: string | null
+        }
+        Insert: {
+          browser?: string | null
+          device_type?: string | null
+          document_id: string
+          engagement_score?: number | null
+          id?: string
+          last_activity_at?: string | null
+          link_id: string
+          metadata?: Json | null
+          opened_at?: string | null
+          pages_viewed?: Json | null
+          scroll_depth?: Json | null
+          total_time_seconds?: number | null
+          viewer_email?: string | null
+          viewer_ip?: string | null
+          viewer_location?: string | null
+        }
+        Update: {
+          browser?: string | null
+          device_type?: string | null
+          document_id?: string
+          engagement_score?: number | null
+          id?: string
+          last_activity_at?: string | null
+          link_id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          pages_viewed?: Json | null
+          scroll_depth?: Json | null
+          total_time_seconds?: number | null
+          viewer_email?: string | null
+          viewer_ip?: string | null
+          viewer_location?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viewer_activity_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viewer_activity_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "secure_links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       voice_search_logs: {
         Row: {
@@ -4599,6 +4886,7 @@ export type Database = {
       }
     }
     Enums: {
+      access_level: "view_only" | "download" | "no_download"
       alert_type:
         | "new_property"
         | "price_change"
@@ -4613,6 +4901,7 @@ export type Database = {
         | "legal"
         | "marketing"
         | "other"
+      link_status: "active" | "expired" | "revoked" | "pending"
       permission_level: "read" | "write" | "admin"
       property_status:
         | "available"
@@ -4791,6 +5080,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      access_level: ["view_only", "download", "no_download"],
       alert_type: [
         "new_property",
         "price_change",
@@ -4807,6 +5097,7 @@ export const Constants = {
         "marketing",
         "other",
       ],
+      link_status: ["active", "expired", "revoked", "pending"],
       permission_level: ["read", "write", "admin"],
       property_status: [
         "available",

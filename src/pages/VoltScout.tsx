@@ -32,6 +32,7 @@ import { UserManagementSystem } from '@/components/users/UserManagementSystem';
 import { RealTimeMarketData } from '@/components/realtime/RealTimeMarketData';
 import { ExternalAPIIntegrations } from '@/components/integrations/ExternalAPIIntegrations';
 import { BottomNavigationWrapper } from '@/components/BottomNavigationWrapper';
+import SecureShare from './SecureShare';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -104,6 +105,7 @@ const VoltScout = () => {
               <Route path="documents" element={<DocumentManagementSystem />} />
               <Route path="reports" element={<AdvancedReportingEngine />} />
               <Route path="users" element={<UserManagementSystem />} />
+              <Route path="secure-share" element={<SecureShare />} />
               <Route path="realtime" element={<RealTimeMarketData />} />
               <Route path="integrations" element={<ExternalAPIIntegrations />} />
                <Route path="settings" element={<AdminSettings />} />
