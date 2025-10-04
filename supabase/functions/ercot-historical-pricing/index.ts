@@ -44,13 +44,28 @@ serve(async (req) => {
     }
 
     // Fetch historical DAM Settlement Point Prices from ERCOT
-    // Using the correct API endpoint from ERCOT Public API
+    // First, try a test endpoint to verify authentication works
     const apiHeaders = {
       'Ocp-Apim-Subscription-Key': ercotApiKey,
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     };
     
+    // Test with the generation endpoint first (we know this works in energy-data-integration)
+    const testEndpoint = 'https://api.ercot.com/api/public-reports/np4-732-cd/act_sys_load_by_fueltype';
+    console.log('🧪 Testing API authentication with:', testEndpoint);
+    
+    const testResponse = await fetch(testEndpoint, { headers: apiHeaders });
+    console.log('🧪 Test response status:', testResponse.status);
+    
+    if (testResponse.ok) {
+      console.log('✅ API authentication works! Now trying historical pricing endpoint...');
+    } else {
+      const testError = await testResponse.text();
+      console.error('❌ Even test endpoint failed:', testResponse.status, testError);
+    }
+    
+    // Now try the actual historical pricing endpoint
     const endpoint = 'https://api.ercot.com/api/public-reports/np4-190-cd/dam_stlmnt_pnt_prices';
     console.log('📡 Calling ERCOT API endpoint:', endpoint);
     console.log('📋 Headers:', Object.keys(apiHeaders));
