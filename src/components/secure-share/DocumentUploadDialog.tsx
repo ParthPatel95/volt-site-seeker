@@ -64,14 +64,22 @@ export function DocumentUploadDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      console.log('Starting upload for user:', user.id);
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
+      console.log('Uploading to storage:', fileName);
       const { error: uploadError } = await supabase.storage
         .from('secure-documents')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Storage upload successful');
 
       const { data: { publicUrl } } = supabase.storage
         .from('secure-documents')
@@ -89,11 +97,18 @@ export function DocumentUploadDialog({
         tags: tags ? tags.split(',').map(t => t.trim()) : [],
       };
 
-      const { error: dbError } = await supabase
+      console.log('Inserting document record:', insertData);
+      const { data: insertResult, error: dbError } = await supabase
         .from('secure_documents')
-        .insert([insertData]);
+        .insert([insertData])
+        .select();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw dbError;
+      }
+
+      console.log('Insert successful:', insertResult);
 
       toast({
         title: 'Document uploaded',
