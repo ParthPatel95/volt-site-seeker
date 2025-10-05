@@ -78,6 +78,7 @@ export function DocumentUploadDialog({
         .getPublicUrl(fileName);
 
       const insertData: any = {
+        user_id: user.id,
         file_name: file.name,
         file_size: file.size,
         file_type: file.type,
