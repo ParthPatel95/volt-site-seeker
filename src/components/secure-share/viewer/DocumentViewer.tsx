@@ -129,9 +129,9 @@ export function DocumentViewer({
 
   const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
   
-  // Build PDF URL with zoom parameter
-  const pdfUrl = isPdf 
-    ? `${documentUrl}#toolbar=0&view=FitH&zoom=${zoom}`
+  // Build PDF URL - hide toolbar for view-only
+  const pdfUrl = isPdf && !canDownload
+    ? `${documentUrl}#toolbar=0`
     : documentUrl;
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
@@ -187,9 +187,16 @@ export function DocumentViewer({
         {/* Document Display */}
         <div className="relative bg-muted/20 flex-1 overflow-auto">
           {isPdf ? (
-            <div className="relative w-full h-full">
+            <div 
+              className="relative w-full h-full overflow-auto"
+              style={{
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: 'top left',
+                width: `${100 / (zoom / 100)}%`,
+                height: `${100 / (zoom / 100)}%`
+              }}
+            >
               <iframe
-                key={zoom} // Force reload when zoom changes
                 src={pdfUrl}
                 className="w-full h-full"
                 style={{ border: 'none', minHeight: '500px' }}
