@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, Plus, FileText, Download, Link as LinkIcon, Trash2, ExternalLink } from 'lucide-react';
+import { Upload, Plus, FileText, Download, Link as LinkIcon, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { DocumentUploadDialog } from './DocumentUploadDialog';
 import { CreateLinkDialog } from './CreateLinkDialog';
+import { DocumentViewerDialog } from './DocumentViewerDialog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +13,8 @@ import { format } from 'date-fns';
 export function DocumentsTab() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [createLinkDialogOpen, setCreateLinkDialogOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string } | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string; storage_path: string; file_type: string } | null>(null);
   const { toast } = useToast();
 
   const { data: documents, isLoading, refetch } = useQuery({
@@ -116,12 +118,33 @@ export function DocumentsTab() {
                     variant="secondary"
                     size="sm"
                     onClick={() => {
-                      setSelectedDocument({ id: doc.id, name: doc.file_name });
+                      setSelectedDocument({ 
+                        id: doc.id, 
+                        name: doc.file_name,
+                        storage_path: doc.storage_path,
+                        file_type: doc.file_type
+                      });
+                      setViewDialogOpen(true);
+                    }}
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedDocument({ 
+                        id: doc.id, 
+                        name: doc.file_name,
+                        storage_path: doc.storage_path,
+                        file_type: doc.file_type
+                      });
                       setCreateLinkDialogOpen(true);
                     }}
                   >
                     <LinkIcon className="w-4 h-4 mr-1" />
-                    Create Link
+                    Share
                   </Button>
                   <Button
                     variant="destructive"
@@ -181,13 +204,21 @@ export function DocumentsTab() {
       />
 
       {selectedDocument && (
-        <CreateLinkDialog
-          open={createLinkDialogOpen}
-          onOpenChange={setCreateLinkDialogOpen}
-          documentId={selectedDocument.id}
-          documentName={selectedDocument.name}
-          onSuccess={() => refetch()}
-        />
+        <>
+          <CreateLinkDialog
+            open={createLinkDialogOpen}
+            onOpenChange={setCreateLinkDialogOpen}
+            documentId={selectedDocument.id}
+            documentName={selectedDocument.name}
+            onSuccess={() => refetch()}
+          />
+
+          <DocumentViewerDialog
+            open={viewDialogOpen}
+            onOpenChange={setViewDialogOpen}
+            document={selectedDocument}
+          />
+        </>
       )}
     </div>
   );
