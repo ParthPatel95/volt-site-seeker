@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface DocumentViewerProps {
   documentUrl: string;
@@ -60,6 +61,40 @@ export function DocumentViewer({
       });
     }
   };
+
+  // Disable right-click and keyboard shortcuts for view-only
+  useEffect(() => {
+    if (canDownload) return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      toast({
+        title: 'Action Restricted',
+        description: 'Right-click is disabled for view-only documents',
+        variant: 'destructive'
+      });
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Disable Ctrl/Cmd + P (print), Ctrl/Cmd + S (save)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 's')) {
+        e.preventDefault();
+        toast({
+          title: 'Action Restricted',
+          description: 'This action is disabled for view-only documents',
+          variant: 'destructive'
+        });
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [canDownload, toast]);
 
   // Watermark overlay
   useEffect(() => {
@@ -163,12 +198,25 @@ export function DocumentViewer({
         {/* Document Display */}
         <div className="relative bg-muted/20 flex-1 overflow-auto">
           {isPdf ? (
-            <iframe
-              src={pdfUrl}
-              className="w-full h-full"
-              style={{ border: 'none', minHeight: '500px' }}
-              title="Document Viewer"
-            />
+            <div className="relative w-full h-full">
+              <iframe
+                src={pdfUrl}
+                className={cn(
+                  "w-full h-full",
+                  !canDownload && "pointer-events-none select-none"
+                )}
+                style={{ border: 'none', minHeight: '500px' }}
+                title="Document Viewer"
+              />
+              {/* Overlay to prevent direct interaction for view-only */}
+              {!canDownload && (
+                <div 
+                  className="absolute inset-0 bg-transparent"
+                  onContextMenu={(e) => e.preventDefault()}
+                  style={{ userSelect: 'none' }}
+                />
+              )}
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full p-6 md:p-12">
               <div className="text-center">
