@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
+import { supabase } from '@/integrations/supabase/client';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
-export function usePdfThumbnail(pdfUrl: string | null) {
+export function usePdfThumbnail(storagePath: string | null, isPdf: boolean) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!pdfUrl) {
+    if (!storagePath || !isPdf) {
       setThumbnailUrl(null);
       return;
     }
@@ -17,29 +14,23 @@ export function usePdfThumbnail(pdfUrl: string | null) {
     const generateThumbnail = async () => {
       setLoading(true);
       try {
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
+        // Get signed URL for the PDF
+        const { data, error } = await supabase.functions.invoke('get-signed-url', {
+          body: {
+            bucket: 'secure-documents',
+            path: storagePath,
+            expiresIn: 3600,
+          },
+        });
 
-        const scale = 0.5;
-        const viewport = page.getViewport({ scale });
+        if (error) throw error;
 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        if (!context) return;
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        await page.render({
-          canvasContext: context,
-          viewport: viewport,
-          canvas: canvas,
-        } as any).promise;
-
-        setThumbnailUrl(canvas.toDataURL());
+        if (data?.signedUrl) {
+          // For PDFs, we'll use the URL directly and let the thumbnail component handle it
+          setThumbnailUrl(data.signedUrl);
+        }
       } catch (error) {
-        console.error('Error generating PDF thumbnail:', error);
+        console.error('Error getting PDF URL:', error);
         setThumbnailUrl(null);
       } finally {
         setLoading(false);
@@ -47,7 +38,7 @@ export function usePdfThumbnail(pdfUrl: string | null) {
     };
 
     generateThumbnail();
-  }, [pdfUrl]);
+  }, [storagePath, isPdf]);
 
   return { thumbnailUrl, loading };
 }

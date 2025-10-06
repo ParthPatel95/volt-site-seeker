@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react';
+import { FileText, File } from 'lucide-react';
 import { usePdfThumbnail } from '@/hooks/usePdfThumbnail';
 
 interface DocumentThumbnailProps {
@@ -11,7 +11,7 @@ export function DocumentThumbnail({ fileUrl, fileType, storagePath }: DocumentTh
   const isPdf = fileType === 'application/pdf';
   const isImage = fileType?.startsWith('image/');
   
-  const { thumbnailUrl, loading } = usePdfThumbnail(isPdf ? fileUrl : null);
+  const { thumbnailUrl, loading } = usePdfThumbnail(storagePath, isPdf);
 
   if (loading) {
     return (
@@ -25,11 +25,14 @@ export function DocumentThumbnail({ fileUrl, fileType, storagePath }: DocumentTh
 
   if (isPdf && thumbnailUrl) {
     return (
-      <img
-        src={thumbnailUrl}
-        alt="Document preview"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      <div className="absolute inset-0 bg-white">
+        <iframe
+          src={`${thumbnailUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+          className="w-full h-full pointer-events-none"
+          title="PDF preview"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+      </div>
     );
   }
 
@@ -43,9 +46,12 @@ export function DocumentThumbnail({ fileUrl, fileType, storagePath }: DocumentTh
     );
   }
 
+  // Default fallback for other file types
+  const Icon = isPdf ? FileText : File;
+  
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-background/95 to-muted/95">
-      <FileText className="w-20 h-20 text-muted-foreground/30" />
+      <Icon className="w-20 h-20 text-muted-foreground/30" />
     </div>
   );
 }
