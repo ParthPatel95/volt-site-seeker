@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Shield, Lock, Eye, Clock } from 'lucide-react';
+import { Shield, Lock, Eye, Clock, FileText, X } from 'lucide-react';
 import { PasswordProtection } from '@/components/secure-share/viewer/PasswordProtection';
 import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 export default function ViewDocument() {
   const { token } = useParams<{ token: string }>();
@@ -17,6 +19,7 @@ export default function ViewDocument() {
   const [ndaSigned, setNdaSigned] = useState(false);
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
 
   const { data: linkData, isLoading, error } = useQuery({
     queryKey: ['secure-link', token],
@@ -252,31 +255,34 @@ export default function ViewDocument() {
 
   // Render bundle viewer or single document viewer
   if (linkData.bundle_id) {
+    const documents = linkData.bundle.bundle_documents || [];
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         {/* Enhanced Header */}
         <div className="border-b bg-card/80 backdrop-blur-lg shadow-sm sticky top-0 z-10">
-          <div className="container mx-auto px-6 py-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
-                  <Shield className="w-6 h-6 text-primary" />
+          <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
+            <div className="flex items-start justify-between gap-3 md:gap-4">
+              <div className="flex items-start gap-3 md:gap-4 flex-1 min-w-0">
+                <div className="p-2 md:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm shrink-0">
+                  <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                 </div>
-                <div className="flex-1">
-                  <h1 className="text-2xl font-bold mb-1.5">{linkData.bundle.name}</h1>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <Eye className="w-4 h-4" />
-                      Bundle with {linkData.bundle.bundle_documents?.length || 0} documents
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-lg md:text-2xl font-bold mb-1 md:mb-1.5 truncate">{linkData.bundle.name}</h1>
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                      <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                      {documents.length} {documents.length === 1 ? 'document' : 'documents'}
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <Lock className="w-4 h-4" />
-                      {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+                    <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                      <Lock className="w-3 h-3 md:w-4 md:h-4" />
+                      {linkData.access_level === 'download' ? 'Download' : 'View Only'}
                     </span>
                     {linkData.expires_at && (
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" />
-                        Expires {new Date(linkData.expires_at).toLocaleDateString()}
+                      <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                        <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">Expires </span>
+                        {new Date(linkData.expires_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -286,52 +292,95 @@ export default function ViewDocument() {
           </div>
         </div>
 
-        {/* Enhanced Bundle Document List */}
-        <div className="container mx-auto px-6 py-10 max-w-7xl">
-          <div className="space-y-8">
-            {linkData.bundle.bundle_documents?.map((bundleDoc: any, index: number) => (
-              <div key={bundleDoc.document.id} className="group">
-                <Card className="overflow-hidden border-2 hover:border-primary/20 transition-all duration-300 shadow-lg hover:shadow-xl">
-                  {/* Document Header */}
-                  <div className="bg-gradient-to-r from-muted/50 to-muted/30 px-6 py-5 border-b">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-lg shrink-0">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-xl mb-1.5 truncate">
-                            {bundleDoc.document.file_name}
-                          </h3>
-                          {bundleDoc.document.description && (
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              {bundleDoc.document.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/80 px-3 py-1.5 rounded-full border shrink-0">
-                        <Eye className="w-3.5 h-3.5" />
-                        {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
-                      </div>
+        {/* Document Gallery Grid */}
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {documents.map((bundleDoc: any, index: number) => {
+              const doc = bundleDoc.document;
+              const isPdf = doc.file_type === 'application/pdf' || doc.file_name?.endsWith('.pdf');
+              
+              return (
+                <Card 
+                  key={doc.id}
+                  className="group cursor-pointer overflow-hidden border-2 hover:border-primary/40 transition-all duration-300 hover:shadow-xl"
+                  onClick={() => setSelectedDocument(doc)}
+                >
+                  {/* Document Preview */}
+                  <div className="relative aspect-[3/4] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden">
+                    {isPdf ? (
+                      <iframe
+                        src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
+                        className="absolute inset-0 w-full h-full pointer-events-none scale-110"
+                        title={doc.file_name}
+                      />
+                    ) : (
+                      <FileText className="w-16 h-16 md:w-20 md:h-20 text-muted-foreground/40" />
+                    )}
+                    
+                    {/* Overlay on hover */}
+                    <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button variant="secondary" size="sm" className="shadow-lg">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Document
+                      </Button>
+                    </div>
+
+                    {/* Document Number Badge */}
+                    <div className="absolute top-3 left-3 w-8 h-8 md:w-10 md:h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm md:text-base shadow-lg">
+                      {index + 1}
                     </div>
                   </div>
-                  
-                  {/* Document Viewer */}
-                  <div className="bg-background">
-                    <DocumentViewer
-                      documentUrl={bundleDoc.document.file_url}
-                      documentType={bundleDoc.document.file_type}
-                      accessLevel={linkData.access_level}
-                      watermarkEnabled={linkData.watermark_enabled}
-                      recipientEmail={linkData.recipient_email}
-                    />
+
+                  {/* Document Info */}
+                  <div className="p-3 md:p-4 bg-card border-t">
+                    <h3 className="font-semibold text-sm md:text-base mb-1 truncate" title={doc.file_name}>
+                      {doc.file_name}
+                    </h3>
+                    {doc.description && (
+                      <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">
+                        {doc.description}
+                      </p>
+                    )}
                   </div>
                 </Card>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+
+        {/* Full Document Viewer Dialog */}
+        <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
+          <DialogContent className="max-w-7xl h-[90vh] p-0 gap-0">
+            <div className="flex items-center justify-between p-4 border-b bg-muted/30">
+              <div className="flex-1 min-w-0 pr-4">
+                <h2 className="font-semibold text-lg truncate">{selectedDocument?.file_name}</h2>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <Eye className="w-3 h-3" />
+                  {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedDocument(null)}
+                className="shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {selectedDocument && (
+                <DocumentViewer
+                  documentUrl={selectedDocument.file_url}
+                  documentType={selectedDocument.file_type}
+                  accessLevel={linkData.access_level}
+                  watermarkEnabled={linkData.watermark_enabled}
+                  recipientEmail={linkData.recipient_email}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -341,27 +390,28 @@ export default function ViewDocument() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Enhanced Header */}
       <div className="border-b bg-card/80 backdrop-blur-lg shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
-                <Shield className="w-6 h-6 text-primary" />
+        <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
+          <div className="flex items-start justify-between gap-3 md:gap-4">
+            <div className="flex items-start gap-3 md:gap-4 flex-1 min-w-0">
+              <div className="p-2 md:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm shrink-0">
+                <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold mb-1.5">{linkData.document.file_name}</h1>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Eye className="w-4 h-4" />
-                    Secure Document Viewer
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg md:text-2xl font-bold mb-1 md:mb-1.5 truncate">{linkData.document.file_name}</h1>
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                    <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">Secure </span>Document
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <Lock className="w-4 h-4" />
-                    {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+                  <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                    <Lock className="w-3 h-3 md:w-4 md:h-4" />
+                    {linkData.access_level === 'download' ? 'Download' : 'View Only'}
                   </span>
                   {linkData.expires_at && (
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="w-4 h-4" />
-                      Expires {new Date(linkData.expires_at).toLocaleDateString()}
+                    <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                      <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                      <span className="hidden sm:inline">Expires </span>
+                      {new Date(linkData.expires_at).toLocaleDateString()}
                     </span>
                   )}
                 </div>
@@ -372,7 +422,7 @@ export default function ViewDocument() {
       </div>
 
       {/* Document Viewer Container */}
-      <div className="container mx-auto px-6 py-10 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
         <Card className="overflow-hidden border-2 shadow-xl">
           <DocumentViewer
             documentUrl={linkData.document.file_url}

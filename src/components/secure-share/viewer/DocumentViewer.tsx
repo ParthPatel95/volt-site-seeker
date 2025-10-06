@@ -90,42 +90,45 @@ export function DocumentViewer({
   }, [watermarkEnabled, recipientEmail]);
 
   const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
+  
+  // Append toolbar=0 to hide download button for view-only access
+  const pdfUrl = isPdf && !canDownload ? `${documentUrl}#toolbar=0` : documentUrl;
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className={`bg-card rounded-lg shadow-lg overflow-hidden ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
+    <div className="w-full">
+      <div className={`bg-card rounded-lg overflow-hidden ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
         {/* Controls */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Eye className="w-4 h-4" />
+        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border">
+          <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
             <span>
               {accessLevel === 'view_only' && 'View Only'}
               {accessLevel === 'download' && 'View & Download'}
-              {accessLevel === 'no_download' && 'View Only (No Download)'}
+              {accessLevel === 'no_download' && 'View Only'}
             </span>
           </div>
           
           {canDownload && (
-            <Button onClick={handleDownload} size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Download
+            <Button onClick={handleDownload} size="sm" className="text-xs md:text-sm">
+              <Download className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Download</span>
             </Button>
           )}
         </div>
 
         {/* Document Display */}
-        <div className="relative bg-muted/20" style={{ minHeight: '80vh' }}>
+        <div className="relative bg-muted/20" style={{ minHeight: '60vh' }}>
           {isPdf ? (
             <iframe
-              src={documentUrl}
+              src={pdfUrl}
               className="w-full h-full"
-              style={{ minHeight: '80vh', border: 'none' }}
+              style={{ minHeight: '60vh', border: 'none' }}
               title="Document Viewer"
             />
           ) : (
-            <div className="flex items-center justify-center h-full p-12">
+            <div className="flex items-center justify-center h-full p-6 md:p-12">
               <div className="text-center">
-                <p className="text-muted-foreground mb-4">
+                <p className="text-sm md:text-base text-muted-foreground mb-4">
                   Preview not available for this file type
                 </p>
                 {canDownload && (
