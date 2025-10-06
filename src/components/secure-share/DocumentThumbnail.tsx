@@ -1,4 +1,4 @@
-import { FileText, File, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { FileText, File, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -56,17 +56,21 @@ export function DocumentThumbnail({ fileUrl, fileType, storagePath }: DocumentTh
     );
   }
 
-  // For PDFs, show iframe preview of first page
+  // For PDFs, show object preview of first page
   if (isPdf && previewUrl) {
     return (
-      <div className="absolute inset-0 bg-white">
-        <iframe
-          src={`${previewUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0&zoom=page-width`}
-          className="w-full h-full pointer-events-none scale-[0.95] origin-top-left"
-          title="PDF preview"
-          style={{ border: 'none' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-white overflow-hidden">
+        <object
+          data={`${previewUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
+          type="application/pdf"
+          className="w-full h-full pointer-events-none scale-105"
+        >
+          {/* Fallback if object doesn't load */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+            <FileText className="w-24 h-24 text-primary/40" />
+            <span className="text-xs text-muted-foreground mt-2 font-medium">PDF</span>
+          </div>
+        </object>
       </div>
     );
   }

@@ -92,7 +92,7 @@ export function DocumentsTab() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="overflow-hidden animate-pulse">
               <div className="aspect-[3/4] bg-muted" />
@@ -104,7 +104,7 @@ export function DocumentsTab() {
           ))}
         </div>
       ) : documents && documents.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {documents.map((doc) => (
             <Card key={doc.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
               {/* Document Preview */}
