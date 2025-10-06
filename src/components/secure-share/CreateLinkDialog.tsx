@@ -98,7 +98,7 @@ export function CreateLinkDialog({
 
       if (error) throw error;
 
-      const baseUrl = window.location.origin;
+      const baseUrl = 'https://wattbyte.com';
       const shareUrl = `${baseUrl}/view/${linkToken}`;
       setGeneratedLink(shareUrl);
 

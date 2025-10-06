@@ -56,30 +56,30 @@ export default function ViewDocument() {
     if (!linkData) return;
 
     const trackView = async () => {
-      // Insert viewer activity
-      const { error: activityError } = await supabase
-        .from('viewer_activity')
-        .insert({
-          link_id: linkData.id,
-          document_id: linkData.document_id,
-          viewer_ip: 'unknown', // Would need server-side tracking for real IP
-          device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
-          browser: navigator.userAgent.split(' ').pop(),
-          opened_at: new Date().toISOString()
-        });
+      try {
+        // Insert viewer activity (RLS allows public insert)
+        await supabase
+          .from('viewer_activity')
+          .insert({
+            link_id: linkData.id,
+            document_id: linkData.document_id,
+            viewer_ip: 'unknown',
+            device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+            browser: navigator.userAgent.split(' ').pop(),
+            opened_at: new Date().toISOString()
+          });
 
-      if (activityError) {
-        console.error('Failed to track activity:', activityError);
+        // Increment view count (RLS allows public update on this specific action)
+        await supabase
+          .from('secure_links')
+          .update({ 
+            current_views: (linkData.current_views || 0) + 1,
+            last_accessed_at: new Date().toISOString()
+          })
+          .eq('id', linkData.id);
+      } catch (error) {
+        console.error('Failed to track activity:', error);
       }
-
-      // Increment view count
-      await supabase
-        .from('secure_links')
-        .update({ 
-          current_views: (linkData.current_views || 0) + 1,
-          last_accessed_at: new Date().toISOString()
-        })
-        .eq('id', linkData.id);
     };
 
     trackView();
