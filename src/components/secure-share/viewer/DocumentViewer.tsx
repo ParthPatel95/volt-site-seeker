@@ -185,43 +185,46 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <div className="relative bg-muted/20 flex-1 overflow-auto">
+        <div className="relative bg-muted/20 flex-1 overflow-hidden">
           {isPdf ? (
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full overflow-auto">
               <div 
-                className="relative w-full h-full overflow-auto"
+                className="inline-block min-w-full"
                 style={{
-                  transform: `scale(${zoom / 100})`,
-                  transformOrigin: 'top left',
-                  width: `${100 / (zoom / 100)}%`,
-                  height: `${100 / (zoom / 100)}%`
+                  width: `${zoom}%`,
+                  height: `${zoom}%`,
+                  minHeight: '100%'
                 }}
               >
                 <iframe
                   src={pdfUrl}
                   className="w-full h-full"
-                  style={{ border: 'none', minHeight: '500px' }}
+                  style={{ 
+                    border: 'none',
+                    minHeight: '100vh',
+                    display: 'block'
+                  }}
                   title="Document Viewer"
                 />
-                {/* Overlay to prevent right-click while allowing scroll */}
-                {!canDownload && (
-                  <div 
-                    className="absolute inset-0"
-                    style={{ 
-                      userSelect: 'none',
-                      pointerEvents: 'auto'
-                    }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      toast({
-                        title: 'Action Restricted',
-                        description: 'Right-click is disabled for view-only documents',
-                        variant: 'destructive'
-                      });
-                    }}
-                  />
-                )}
               </div>
+              {/* Invisible overlay to catch right-clicks but allow scrolling */}
+              {!canDownload && (
+                <div 
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ 
+                    userSelect: 'none'
+                  }}
+                  onContextMenuCapture={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toast({
+                      title: 'Action Restricted',
+                      description: 'Right-click is disabled for view-only documents',
+                      variant: 'destructive'
+                    });
+                  }}
+                />
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full p-6 md:p-12">
