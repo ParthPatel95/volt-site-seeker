@@ -134,9 +134,20 @@ export function DocumentViewer({
     ? `${documentUrl}#toolbar=0`
     : documentUrl;
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
-  const handleResetZoom = () => setZoom(100);
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoom + 25, 200);
+    console.log('Zoom In:', zoom, '->', newZoom);
+    setZoom(newZoom);
+  };
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoom - 25, 50);
+    console.log('Zoom Out:', zoom, '->', newZoom);
+    setZoom(newZoom);
+  };
+  const handleResetZoom = () => {
+    console.log('Reset Zoom to 100');
+    setZoom(100);
+  };
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -185,24 +196,24 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <div className="relative bg-muted/20 flex-1 overflow-hidden">
+        <div className="relative bg-muted/20 flex-1 overflow-auto">
           {isPdf ? (
-            <div className="relative w-full h-full overflow-auto">
+            <div className="w-full h-full overflow-auto bg-gray-100">
               <div 
-                className="inline-block min-w-full"
+                className="origin-top-left transition-transform duration-200"
                 style={{
-                  width: `${zoom}%`,
-                  height: `${zoom}%`,
-                  minHeight: '100%'
+                  transform: `scale(${zoom / 100})`,
+                  width: `${(100 / zoom) * 100}%`,
+                  minHeight: '100%',
+                  display: 'inline-block'
                 }}
               >
                 <iframe
                   src={pdfUrl}
-                  className="w-full h-full"
+                  className="w-full border-0 block"
                   style={{ 
-                    border: 'none',
                     minHeight: '100vh',
-                    display: 'block'
+                    height: '100%'
                   }}
                   title="Document Viewer"
                 />
@@ -210,18 +221,14 @@ export function DocumentViewer({
               {/* Invisible overlay to catch right-clicks but allow scrolling */}
               {!canDownload && (
                 <div 
-                  className="absolute inset-0 pointer-events-none"
+                  className="fixed inset-0 pointer-events-none"
                   style={{ 
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    zIndex: 10
                   }}
                   onContextMenuCapture={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    toast({
-                      title: 'Action Restricted',
-                      description: 'Right-click is disabled for view-only documents',
-                      variant: 'destructive'
-                    });
                   }}
                 />
               )}
