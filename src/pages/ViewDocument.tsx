@@ -350,34 +350,36 @@ export default function ViewDocument() {
 
         {/* Full Document Viewer Dialog */}
         <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
-          <DialogContent className="max-w-7xl h-[90vh] p-0 gap-0">
-            <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-              <div className="flex-1 min-w-0 pr-4">
-                <h2 className="font-semibold text-lg truncate">{selectedDocument?.file_name}</h2>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                  <Eye className="w-3 h-3" />
-                  {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+          <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0 overflow-hidden">
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-3 md:p-4 border-b bg-muted/30 shrink-0">
+                <div className="flex-1 min-w-0 pr-4">
+                  <h2 className="font-semibold text-sm md:text-lg truncate">{selectedDocument?.file_name}</h2>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                    <Eye className="w-3 h-3" />
+                    {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+                  </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedDocument(null)}
+                  className="shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedDocument(null)}
-                className="shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              {selectedDocument && (
-                <DocumentViewer
-                  documentUrl={selectedDocument.file_url}
-                  documentType={selectedDocument.file_type}
-                  accessLevel={linkData.access_level}
-                  watermarkEnabled={linkData.watermark_enabled}
-                  recipientEmail={linkData.recipient_email}
-                />
-              )}
+              <div className="flex-1 overflow-auto">
+                {selectedDocument && (
+                  <DocumentViewer
+                    documentUrl={selectedDocument.file_url}
+                    documentType={selectedDocument.file_type}
+                    accessLevel={linkData.access_level}
+                    watermarkEnabled={linkData.watermark_enabled}
+                    recipientEmail={linkData.recipient_email}
+                  />
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>

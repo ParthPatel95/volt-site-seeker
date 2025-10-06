@@ -20,6 +20,7 @@ export function DocumentViewer({
 }: DocumentViewerProps) {
   const { toast } = useToast();
   const [downloadAttempted, setDownloadAttempted] = useState(false);
+  const [zoom, setZoom] = useState(100);
 
   const canDownload = accessLevel === 'download';
 
@@ -91,21 +92,62 @@ export function DocumentViewer({
 
   const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
   
-  // Append toolbar=0 to hide download button for view-only access
-  const pdfUrl = isPdf && !canDownload ? `${documentUrl}#toolbar=0` : documentUrl;
+  // Append toolbar=0 to hide download button for view-only access and add zoom
+  const pdfUrl = isPdf && !canDownload 
+    ? `${documentUrl}#toolbar=0&zoom=${zoom}` 
+    : isPdf 
+    ? `${documentUrl}#zoom=${zoom}`
+    : documentUrl;
+
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
+  const handleResetZoom = () => setZoom(100);
 
   return (
-    <div className="w-full">
-      <div className={`bg-card rounded-lg overflow-hidden ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
+    <div className="w-full h-full flex flex-col">
+      <div className={`bg-card flex-1 flex flex-col ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
         {/* Controls */}
-        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border">
-          <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            <span>
-              {accessLevel === 'view_only' && 'View Only'}
-              {accessLevel === 'download' && 'View & Download'}
-              {accessLevel === 'no_download' && 'View Only'}
-            </span>
+        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+              <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span>
+                {accessLevel === 'view_only' && 'View Only'}
+                {accessLevel === 'download' && 'View & Download'}
+                {accessLevel === 'no_download' && 'View Only'}
+              </span>
+            </div>
+            
+            {isPdf && (
+              <div className="flex items-center gap-1 border-l pl-2 md:pl-4">
+                <Button 
+                  onClick={handleZoomOut} 
+                  size="sm" 
+                  variant="ghost"
+                  className="h-7 md:h-8 px-2"
+                  disabled={zoom <= 50}
+                >
+                  <span className="text-lg">−</span>
+                </Button>
+                <Button 
+                  onClick={handleResetZoom} 
+                  size="sm" 
+                  variant="ghost"
+                  className="h-7 md:h-8 px-2 text-xs"
+                >
+                  {zoom}%
+                </Button>
+                <Button 
+                  onClick={handleZoomIn} 
+                  size="sm" 
+                  variant="ghost"
+                  className="h-7 md:h-8 px-2"
+                  disabled={zoom >= 200}
+                >
+                  <span className="text-lg">+</span>
+                </Button>
+              </div>
+            )}
           </div>
           
           {canDownload && (
@@ -117,12 +159,12 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <div className="relative bg-muted/20" style={{ minHeight: '60vh' }}>
+        <div className="relative bg-muted/20 flex-1 overflow-auto">
           {isPdf ? (
             <iframe
               src={pdfUrl}
               className="w-full h-full"
-              style={{ minHeight: '60vh', border: 'none' }}
+              style={{ border: 'none', minHeight: '500px' }}
               title="Document Viewer"
             />
           ) : (

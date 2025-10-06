@@ -43,6 +43,7 @@ export function CreateLinkDialog({
   const { toast } = useToast();
 
   // Basic settings
+  const [linkName, setLinkName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [accessLevel, setAccessLevel] = useState<'view_only' | 'download' | 'no_download'>('view_only');
@@ -136,6 +137,7 @@ export function CreateLinkDialog({
 
   const handleClose = () => {
     setGeneratedLink(null);
+    setLinkName('');
     setRecipientEmail('');
     setRecipientName('');
     setPassword('');
@@ -211,6 +213,18 @@ export function CreateLinkDialog({
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4 mt-4">
+            <div>
+              <Label>Link Name</Label>
+              <Input
+                value={linkName}
+                onChange={(e) => setLinkName(e.target.value)}
+                placeholder="e.g., Texas Site - Investor Deck"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Give this link a descriptive name for your records
+              </p>
+            </div>
+
             <div>
               <Label>Recipient Email (Optional)</Label>
               <Input
