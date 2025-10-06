@@ -5,6 +5,16 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Link as LinkIcon,
   Copy,
   Trash2,
@@ -16,12 +26,18 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Edit,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, isPast } from 'date-fns';
+import { EditLinkDialog } from './EditLinkDialog';
 
 export function LinksManagement() {
   const { toast } = useToast();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [linkToEdit, setLinkToEdit] = useState<any>(null);
 
   const { data: links, isLoading, refetch } = useQuery({
     queryKey: ['secure-links'],
@@ -64,6 +80,31 @@ export function LinksManagement() {
         title: 'Link revoked',
         description: 'The share link has been revoked',
       });
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('secure_links')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Link deleted',
+        description: 'The share link has been permanently deleted',
+      });
+      setDeleteDialogOpen(false);
+      setLinkToDelete(null);
       refetch();
     } catch (error: any) {
       toast({
@@ -237,20 +278,78 @@ export function LinksManagement() {
                 </Button>
                 
                 {link.status === 'active' && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRevokeLink(link.id)}
-                  >
-                    <XCircle className="w-3 h-3 mr-1" />
-                    Revoke
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setLinkToEdit(link);
+                        setEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRevokeLink(link.id)}
+                    >
+                      <XCircle className="w-3 h-3 mr-1" />
+                      Revoke
+                    </Button>
+                  </>
                 )}
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setLinkToDelete(link.id);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Delete
+                </Button>
               </div>
             </div>
           </Card>
         ))}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Secure Link?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the secure link
+              and all associated analytics data. The link will immediately stop working.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => linkToDelete && handleDeleteLink(linkToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <EditLinkDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        link={linkToEdit}
+        onSuccess={() => {
+          refetch();
+          setEditDialogOpen(false);
+          setLinkToEdit(null);
+        }}
+      />
     </div>
   );
 }
