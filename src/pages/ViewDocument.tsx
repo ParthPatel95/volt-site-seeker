@@ -253,55 +253,82 @@ export default function ViewDocument() {
   // Render bundle viewer or single document viewer
   if (linkData.bundle_id) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="border-b border-border bg-card/50 backdrop-blur">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Shield className="w-5 h-5 text-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        {/* Enhanced Header */}
+        <div className="border-b bg-card/80 backdrop-blur-lg shadow-sm sticky top-0 z-10">
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
+                  <Shield className="w-6 h-6 text-primary" />
                 </div>
-                <div>
-                  <h1 className="font-semibold">{linkData.bundle.name}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Bundle with {linkData.bundle.bundle_documents?.length || 0} documents
-                  </p>
+                <div className="flex-1">
+                  <h1 className="text-2xl font-bold mb-1.5">{linkData.bundle.name}</h1>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Eye className="w-4 h-4" />
+                      Bundle with {linkData.bundle.bundle_documents?.length || 0} documents
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Lock className="w-4 h-4" />
+                      {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+                    </span>
+                    {linkData.expires_at && (
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
+                        Expires {new Date(linkData.expires_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bundle Document List */}
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="space-y-4">
+        {/* Enhanced Bundle Document List */}
+        <div className="container mx-auto px-6 py-10 max-w-7xl">
+          <div className="space-y-8">
             {linkData.bundle.bundle_documents?.map((bundleDoc: any, index: number) => (
-              <Card key={bundleDoc.document.id} className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-2">
-                      {index + 1}. {bundleDoc.document.file_name}
-                    </h3>
-                    {bundleDoc.document.description && (
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {bundleDoc.document.description}
-                      </p>
-                    )}
+              <div key={bundleDoc.document.id} className="group">
+                <Card className="overflow-hidden border-2 hover:border-primary/20 transition-all duration-300 shadow-lg hover:shadow-xl">
+                  {/* Document Header */}
+                  <div className="bg-gradient-to-r from-muted/50 to-muted/30 px-6 py-5 border-b">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-lg shrink-0">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-xl mb-1.5 truncate">
+                            {bundleDoc.document.file_name}
+                          </h3>
+                          {bundleDoc.document.description && (
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {bundleDoc.document.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/80 px-3 py-1.5 rounded-full border shrink-0">
+                        <Eye className="w-3.5 h-3.5" />
+                        {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                {/* Document Viewer */}
-                <div className="mt-4">
-                  <DocumentViewer
-                    documentUrl={bundleDoc.document.file_url}
-                    documentType={bundleDoc.document.file_type}
-                    accessLevel={linkData.access_level}
-                    watermarkEnabled={linkData.watermark_enabled}
-                    recipientEmail={linkData.recipient_email}
-                  />
-                </div>
-              </Card>
+                  
+                  {/* Document Viewer */}
+                  <div className="bg-background">
+                    <DocumentViewer
+                      documentUrl={bundleDoc.document.file_url}
+                      documentType={bundleDoc.document.file_type}
+                      accessLevel={linkData.access_level}
+                      watermarkEnabled={linkData.watermark_enabled}
+                      recipientEmail={linkData.recipient_email}
+                    />
+                  </div>
+                </Card>
+              </div>
             ))}
           </div>
         </div>
@@ -311,32 +338,51 @@ export default function ViewDocument() {
 
   // Single document viewer
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Shield className="w-5 h-5 text-primary" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Enhanced Header */}
+      <div className="border-b bg-card/80 backdrop-blur-lg shadow-sm sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
+                <Shield className="w-6 h-6 text-primary" />
               </div>
-              <div>
-                <h1 className="font-semibold">{linkData.document.file_name}</h1>
-                <p className="text-sm text-muted-foreground">Secure Document Viewer</p>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold mb-1.5">{linkData.document.file_name}</h1>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="w-4 h-4" />
+                    Secure Document Viewer
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Lock className="w-4 h-4" />
+                    {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
+                  </span>
+                  {linkData.expires_at && (
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" />
+                      Expires {new Date(linkData.expires_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Document Viewer */}
-      <DocumentViewer
-        documentUrl={linkData.document.file_url}
-        documentType={linkData.document.file_type}
-        accessLevel={linkData.access_level}
-        watermarkEnabled={linkData.watermark_enabled}
-        recipientEmail={linkData.recipient_email}
-      />
+      {/* Document Viewer Container */}
+      <div className="container mx-auto px-6 py-10 max-w-7xl">
+        <Card className="overflow-hidden border-2 shadow-xl">
+          <DocumentViewer
+            documentUrl={linkData.document.file_url}
+            documentType={linkData.document.file_type}
+            accessLevel={linkData.access_level}
+            watermarkEnabled={linkData.watermark_enabled}
+            recipientEmail={linkData.recipient_email}
+          />
+        </Card>
+      </div>
     </div>
   );
 }
