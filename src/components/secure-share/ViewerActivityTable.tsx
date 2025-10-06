@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 
 interface Activity {
   id: string;
+  viewer_name: string | null;
   viewer_email: string | null;
   viewer_ip: string | null;
   viewer_location: string | null;
@@ -52,7 +53,14 @@ export function ViewerActivityTable({ activities }: ViewerActivityTableProps) {
                   {activity.document?.file_name || 'Unknown'}
                 </TableCell>
                 <TableCell>
-                  {activity.viewer_email || activity.link?.recipient_email || 'Anonymous'}
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {activity.viewer_name || 'Anonymous'}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {activity.viewer_email || activity.link?.recipient_email || 'No email'}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col text-sm">

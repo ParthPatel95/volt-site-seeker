@@ -16,6 +16,7 @@ export default function ViewDocument() {
   const [passwordVerified, setPasswordVerified] = useState(false);
   const [ndaSigned, setNdaSigned] = useState(false);
   const [viewStartTime] = useState(Date.now());
+  const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
 
   const { data: linkData, isLoading, error } = useQuery({
     queryKey: ['secure-link', token],
@@ -70,53 +71,57 @@ export default function ViewDocument() {
     retry: false
   });
 
-  // Track activity on mount
+  // Track activity on mount and when viewer data is provided
   useEffect(() => {
     if (!linkData) return;
+    // Only track when password is not required OR when viewer data is collected
+    if (!linkData.password_hash || viewerData) {
+      const trackView = async () => {
+        try {
+          // Insert viewer activity (RLS allows public insert)
+          await supabase
+            .from('viewer_activity')
+            .insert({
+              link_id: linkData.id,
+              document_id: linkData.document_id,
+              viewer_name: viewerData?.name || null,
+              viewer_email: viewerData?.email || null,
+              viewer_ip: 'unknown',
+              device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+              browser: navigator.userAgent.split(' ').pop(),
+              opened_at: new Date().toISOString()
+            });
 
-    const trackView = async () => {
-      try {
-        // Insert viewer activity (RLS allows public insert)
-        await supabase
+          // Increment view count (RLS allows public update on this specific action)
+          await supabase
+            .from('secure_links')
+            .update({ 
+              current_views: (linkData.current_views || 0) + 1,
+              last_accessed_at: new Date().toISOString()
+            })
+            .eq('id', linkData.id);
+        } catch (error) {
+          console.error('Failed to track activity:', error);
+        }
+      };
+
+      trackView();
+
+      // Track time spent on page
+      return () => {
+        const timeSpent = Math.floor((Date.now() - viewStartTime) / 1000);
+        supabase
           .from('viewer_activity')
-          .insert({
-            link_id: linkData.id,
-            document_id: linkData.document_id,
-            viewer_ip: 'unknown',
-            device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
-            browser: navigator.userAgent.split(' ').pop(),
-            opened_at: new Date().toISOString()
-          });
-
-        // Increment view count (RLS allows public update on this specific action)
-        await supabase
-          .from('secure_links')
           .update({ 
-            current_views: (linkData.current_views || 0) + 1,
-            last_accessed_at: new Date().toISOString()
+            total_time_seconds: timeSpent,
+            last_activity_at: new Date().toISOString()
           })
-          .eq('id', linkData.id);
-      } catch (error) {
-        console.error('Failed to track activity:', error);
-      }
-    };
-
-    trackView();
-
-    // Track time spent on page
-    return () => {
-      const timeSpent = Math.floor((Date.now() - viewStartTime) / 1000);
-      supabase
-        .from('viewer_activity')
-        .update({ 
-          total_time_seconds: timeSpent,
-          last_activity_at: new Date().toISOString()
-        })
-        .eq('link_id', linkData.id)
-        .order('opened_at', { ascending: false })
-        .limit(1);
-    };
-  }, [linkData, viewStartTime]);
+          .eq('link_id', linkData.id)
+          .order('opened_at', { ascending: false })
+          .limit(1);
+      };
+    }
+  }, [linkData, viewStartTime, viewerData]);
 
   if (isLoading) {
     return (
@@ -149,8 +154,12 @@ export default function ViewDocument() {
     return (
       <PasswordProtection
         linkToken={token!}
+        linkId={linkData.id}
         expectedHash={linkData.password_hash}
-        onVerified={() => setPasswordVerified(true)}
+        onVerified={(data) => {
+          setViewerData(data);
+          setPasswordVerified(true);
+        }}
       />
     );
   }

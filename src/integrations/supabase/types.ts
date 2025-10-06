@@ -3106,6 +3106,7 @@ export type Database = {
           viewer_email: string | null
           viewer_ip: string | null
           viewer_location: string | null
+          viewer_name: string | null
         }
         Insert: {
           browser?: string | null
@@ -3123,6 +3124,7 @@ export type Database = {
           viewer_email?: string | null
           viewer_ip?: string | null
           viewer_location?: string | null
+          viewer_name?: string | null
         }
         Update: {
           browser?: string | null
@@ -3140,6 +3142,7 @@ export type Database = {
           viewer_email?: string | null
           viewer_ip?: string | null
           viewer_location?: string | null
+          viewer_name?: string | null
         }
         Relationships: [
           {
