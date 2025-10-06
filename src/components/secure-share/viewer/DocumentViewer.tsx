@@ -129,11 +129,9 @@ export function DocumentViewer({
 
   const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
   
-  // Append toolbar=0 to hide download button for view-only access and add zoom
-  const pdfUrl = isPdf && !canDownload 
-    ? `${documentUrl}#toolbar=0&zoom=${zoom}` 
-    : isPdf 
-    ? `${documentUrl}#zoom=${zoom}`
+  // Build PDF URL with zoom parameter
+  const pdfUrl = isPdf 
+    ? `${documentUrl}#toolbar=0&view=FitH&zoom=${zoom}`
     : documentUrl;
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
@@ -191,22 +189,12 @@ export function DocumentViewer({
           {isPdf ? (
             <div className="relative w-full h-full">
               <iframe
+                key={zoom} // Force reload when zoom changes
                 src={pdfUrl}
-                className={cn(
-                  "w-full h-full",
-                  !canDownload && "pointer-events-none select-none"
-                )}
+                className="w-full h-full"
                 style={{ border: 'none', minHeight: '500px' }}
                 title="Document Viewer"
               />
-              {/* Overlay to prevent direct interaction for view-only */}
-              {!canDownload && (
-                <div 
-                  className="absolute inset-0 bg-transparent"
-                  onContextMenu={(e) => e.preventDefault()}
-                  style={{ userSelect: 'none' }}
-                />
-              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full p-6 md:p-12">
