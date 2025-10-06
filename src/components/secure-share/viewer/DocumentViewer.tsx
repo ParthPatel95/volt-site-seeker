@@ -65,7 +65,9 @@ export function DocumentViewer({
   useEffect(() => {
     if (!watermarkEnabled) return;
 
-    const watermarkText = recipientEmail || 'CONFIDENTIAL';
+    const watermarkText = recipientEmail 
+      ? `Wattbyte Inc. - ${recipientEmail}` 
+      : 'Wattbyte Inc. - CONFIDENTIAL';
     const style = document.createElement('style');
     style.innerHTML = `
       .watermark-overlay::before {
