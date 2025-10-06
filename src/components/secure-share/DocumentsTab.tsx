@@ -89,76 +89,67 @@ export function DocumentsTab() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="p-4 animate-pulse">
-              <div className="h-32 bg-muted rounded" />
+            <Card key={i} className="overflow-hidden animate-pulse">
+              <div className="aspect-[3/4] bg-muted" />
+              <div className="p-4 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+              </div>
             </Card>
           ))}
         </div>
       ) : documents && documents.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {documents.map((doc) => (
-            <Card key={doc.id} className="p-4 hover:shadow-lg transition-shadow">
-              <div className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-primary" />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">{doc.file_name}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(doc.file_size)}
-                      </p>
-                    </div>
-                  </div>
+            <Card key={doc.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+              {/* Document Preview */}
+              <div className="aspect-[3/4] bg-muted relative overflow-hidden border-b">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-background/95 to-muted/95">
+                  <FileText className="w-20 h-20 text-muted-foreground/30" />
                 </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full border ${getCategoryBadge(
-                      doc.category
-                    )}`}
-                  >
-                    {doc.category.replace('_', ' ')}
-                  </span>
-                  {doc.tags && doc.tags.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{doc.tags.length} tags
-                    </span>
-                  )}
-                </div>
-
-                {doc.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {doc.description}
-                  </p>
-                )}
-
-                <div className="text-xs text-muted-foreground">
-                  Uploaded {format(new Date(doc.created_at), 'MMM d, yyyy')}
-                </div>
-
-                <div className="flex gap-2 pt-2 border-t">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
+                
+                {/* Hover overlay with actions */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       setSelectedDocument({ id: doc.id, name: doc.file_name });
                       setCreateLinkDialogOpen(true);
                     }}
                   >
-                    <LinkIcon className="w-3 h-3 mr-1" />
+                    <LinkIcon className="w-4 h-4 mr-1" />
                     Create Link
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(doc.id)}
                   >
-                    <Trash2 className="w-3 h-3 text-destructive" />
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
+
+                {/* Category badge */}
+                <div className="absolute top-2 right-2">
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full border backdrop-blur-sm ${getCategoryBadge(
+                      doc.category
+                    )}`}
+                  >
+                    {doc.category.replace('_', ' ')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Document Info */}
+              <div className="p-4 space-y-2">
+                <h3 className="font-semibold truncate text-sm">{doc.file_name}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(doc.created_at), 'MMM d, yyyy')}
+                </p>
               </div>
             </Card>
           ))}
