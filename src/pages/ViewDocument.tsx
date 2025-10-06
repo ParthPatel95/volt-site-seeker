@@ -50,6 +50,12 @@ export default function ViewDocument() {
       // Get signed URL for the document since bucket is private
       // Calculate expiry time based on link expiration or default to 24 hours
       const storagePath = link.document.storage_path;
+      
+      if (!storagePath) {
+        console.error('No storage path found for document:', link.document);
+        throw new Error('Document storage path not found');
+      }
+
       let expirySeconds = 86400; // Default 24 hours
       
       if (link.expires_at) {
@@ -58,12 +64,30 @@ export default function ViewDocument() {
         expirySeconds = Math.max(60, Math.floor((expiryTime - now) / 1000)); // At least 60 seconds
       }
 
-      const { data: signedUrlData } = await supabase.storage
-        .from('secure-documents')
-        .createSignedUrl(storagePath, expirySeconds);
+      console.log('Creating signed URL for:', storagePath, 'expiry:', expirySeconds);
+      
+      // Use edge function to generate signed URL since anonymous users can't access storage directly
+      const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
+        'get-signed-url',
+        {
+          body: { 
+            storagePath,
+            expiresIn: expirySeconds 
+          }
+        }
+      );
+
+      if (signedUrlError) {
+        console.error('Signed URL error:', signedUrlError);
+        throw new Error(`Failed to generate access URL: ${signedUrlError.message}`);
+      }
 
       if (signedUrlData?.signedUrl) {
+        console.log('Signed URL created successfully');
         link.document.file_url = signedUrlData.signedUrl;
+      } else {
+        console.error('No signed URL returned');
+        throw new Error('Failed to generate document access URL');
       }
 
       return link;
