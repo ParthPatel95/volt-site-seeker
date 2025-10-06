@@ -196,35 +196,36 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <div className="relative bg-muted/20 flex-1 overflow-auto">
+        <div className="relative bg-muted/20 flex-1 overflow-auto" id="pdf-scroll-container">
           {isPdf ? (
-            <div className="w-full h-full overflow-auto bg-gray-100">
+            <>
               <div 
-                className="origin-top-left transition-transform duration-200"
+                className="mx-auto"
                 style={{
-                  transform: `scale(${zoom / 100})`,
-                  width: `${(100 / zoom) * 100}%`,
-                  minHeight: '100%',
-                  display: 'inline-block'
+                  width: `${zoom}%`,
+                  minWidth: '100%',
+                  position: 'relative'
                 }}
               >
-                <iframe
-                  src={pdfUrl}
-                  className="w-full border-0 block"
-                  style={{ 
-                    minHeight: '100vh',
-                    height: '100%'
-                  }}
-                  title="Document Viewer"
-                />
+                <div style={{ paddingBottom: '141.4%', position: 'relative' }}>
+                  <iframe
+                    key={`pdf-${zoom}`}
+                    src={pdfUrl}
+                    className="absolute inset-0 w-full h-full border-0"
+                    title="Document Viewer"
+                    style={{
+                      backgroundColor: 'white'
+                    }}
+                  />
+                </div>
               </div>
-              {/* Invisible overlay to catch right-clicks but allow scrolling */}
+              {/* Overlay to prevent right-click */}
               {!canDownload && (
                 <div 
                   className="fixed inset-0 pointer-events-none"
                   style={{ 
                     userSelect: 'none',
-                    zIndex: 10
+                    zIndex: 999
                   }}
                   onContextMenuCapture={(e) => {
                     e.preventDefault();
@@ -232,7 +233,7 @@ export function DocumentViewer({
                   }}
                 />
               )}
-            </div>
+            </>
           ) : (
             <div className="flex items-center justify-center h-full p-6 md:p-12">
               <div className="text-center">
