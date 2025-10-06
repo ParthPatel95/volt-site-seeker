@@ -146,17 +146,8 @@ export function DocumentViewer({
         {/* Controls */}
         <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-              <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              <span>
-                {accessLevel === 'view_only' && 'View Only'}
-                {accessLevel === 'download' && 'View & Download'}
-                {accessLevel === 'no_download' && 'View Only'}
-              </span>
-            </div>
-            
             {isPdf && (
-              <div className="flex items-center gap-1 border-l pl-2 md:pl-4">
+              <div className="flex items-center gap-1">
                 <Button 
                   onClick={handleZoomOut} 
                   size="sm" 

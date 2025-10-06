@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Shield, Lock, Eye, Clock, FileText, X } from 'lucide-react';
+import { Shield, Lock, Eye, Clock, FileText, ArrowLeft } from 'lucide-react';
 import { PasswordProtection } from '@/components/secure-share/viewer/PasswordProtection';
 import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 export default function ViewDocument() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const documentId = searchParams.get('doc');
   const [passwordVerified, setPasswordVerified] = useState(false);
   const [ndaSigned, setNdaSigned] = useState(false);
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
 
   const { data: linkData, isLoading, error } = useQuery({
     queryKey: ['secure-link', token],
@@ -257,6 +257,77 @@ export default function ViewDocument() {
   if (linkData.bundle_id) {
     const documents = linkData.bundle.bundle_documents || [];
     
+    // If a specific document is selected, show only that document with a back button
+    if (documentId) {
+      const selectedDoc = documents.find((bd: any) => bd.document.id === documentId)?.document;
+      
+      if (!selectedDoc) {
+        return (
+          <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <Card className="max-w-md w-full p-8 text-center">
+              <p className="text-muted-foreground">Document not found</p>
+              <Button 
+                onClick={() => navigate(`/view/${token}`)} 
+                className="mt-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Bundle
+              </Button>
+            </Card>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+          {/* Header with Back Button */}
+          <div className="border-b bg-card/80 backdrop-blur-lg shadow-sm sticky top-0 z-10">
+            <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
+              <div className="flex items-start gap-3 md:gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/view/${token}`)}
+                  className="shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <div className="flex items-start gap-3 md:gap-4 flex-1 min-w-0">
+                  <div className="p-2 md:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm shrink-0">
+                    <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-lg md:text-2xl font-bold mb-1 md:mb-1.5 truncate">{selectedDoc.file_name}</h1>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                        <Lock className="w-3 h-3 md:w-4 md:h-4" />
+                        {linkData.access_level === 'download' ? 'Download' : 'View Only'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Document Viewer */}
+          <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
+            <Card className="overflow-hidden border-2 shadow-xl">
+              <DocumentViewer
+                documentUrl={selectedDoc.file_url}
+                documentType={selectedDoc.file_type}
+                accessLevel={linkData.access_level}
+                watermarkEnabled={linkData.watermark_enabled}
+                recipientEmail={linkData.recipient_email}
+              />
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    // Show bundle gallery
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         {/* Enhanced Header */}
@@ -303,7 +374,7 @@ export default function ViewDocument() {
                 <Card 
                   key={doc.id}
                   className="group cursor-pointer overflow-hidden border-2 hover:border-primary/40 transition-all duration-300 hover:shadow-xl"
-                  onClick={() => setSelectedDocument(doc)}
+                  onClick={() => navigate(`/view/${token}?doc=${doc.id}`)}
                 >
                   {/* Document Preview */}
                   <div className="relative aspect-[3/4] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden">
@@ -347,42 +418,6 @@ export default function ViewDocument() {
             })}
           </div>
         </div>
-
-        {/* Full Document Viewer Dialog */}
-        <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
-          <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0 overflow-hidden">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between p-3 md:p-4 border-b bg-muted/30 shrink-0">
-                <div className="flex-1 min-w-0 pr-4">
-                  <h2 className="font-semibold text-sm md:text-lg truncate">{selectedDocument?.file_name}</h2>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <Eye className="w-3 h-3" />
-                    {linkData.access_level === 'download' ? 'Download Enabled' : 'View Only'}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedDocument(null)}
-                  className="shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="flex-1 overflow-auto">
-                {selectedDocument && (
-                  <DocumentViewer
-                    documentUrl={selectedDocument.file_url}
-                    documentType={selectedDocument.file_type}
-                    accessLevel={linkData.access_level}
-                    watermarkEnabled={linkData.watermark_enabled}
-                    recipientEmail={linkData.recipient_email}
-                  />
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     );
   }
