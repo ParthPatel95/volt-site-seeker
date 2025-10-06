@@ -77,6 +77,7 @@ export function CreateLinkDialog({
       const linkData: any = {
         document_id: documentId,
         link_token: linkToken,
+        created_by: user.id,
         recipient_email: recipientEmail || null,
         recipient_name: recipientName || null,
         access_level: accessLevel,
