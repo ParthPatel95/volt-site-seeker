@@ -106,7 +106,7 @@ export function DocumentsTab() {
       ) : documents && documents.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {documents.map((doc) => (
-            <Card key={doc.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+            <Card key={doc.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
               {/* Document Preview */}
               <div className="aspect-[3/4] bg-muted relative overflow-hidden border-b">
                 <DocumentThumbnail
@@ -114,49 +114,6 @@ export function DocumentsTab() {
                   fileType={doc.file_type}
                   storagePath={doc.storage_path}
                 />
-                
-                {/* Hover overlay with actions */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedDocument({ 
-                        id: doc.id, 
-                        name: doc.file_name,
-                        storage_path: doc.storage_path,
-                        file_type: doc.file_type
-                      });
-                      setViewDialogOpen(true);
-                    }}
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedDocument({ 
-                        id: doc.id, 
-                        name: doc.file_name,
-                        storage_path: doc.storage_path,
-                        file_type: doc.file_type
-                      });
-                      setCreateLinkDialogOpen(true);
-                    }}
-                  >
-                    <LinkIcon className="w-4 h-4 mr-1" />
-                    Share
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(doc.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
 
                 {/* Category badge */}
                 <div className="absolute top-2 right-2">
@@ -171,11 +128,58 @@ export function DocumentsTab() {
               </div>
 
               {/* Document Info */}
-              <div className="p-4 space-y-2">
-                <h3 className="font-semibold truncate text-sm">{doc.file_name}</h3>
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(doc.created_at), 'MMM d, yyyy')}
-                </p>
+              <div className="p-4 space-y-3 flex-1 flex flex-col">
+                <div className="flex-1">
+                  <h3 className="font-semibold truncate text-sm">{doc.file_name}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(doc.created_at), 'MMM d, yyyy')}
+                  </p>
+                </div>
+
+                {/* Action buttons - always visible */}
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedDocument({
+                        id: doc.id,
+                        name: doc.file_name,
+                        storage_path: doc.storage_path,
+                        file_type: doc.file_type
+                      });
+                      setViewDialogOpen(true);
+                    }}
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedDocument({
+                        id: doc.id,
+                        name: doc.file_name,
+                        storage_path: doc.storage_path,
+                        file_type: doc.file_type
+                      });
+                      setCreateLinkDialogOpen(true);
+                    }}
+                  >
+                    <LinkIcon className="w-3 h-3 mr-1" />
+                    Share
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(doc.id)}
+                  >
+                    <Trash2 className="w-3 h-3 text-destructive" />
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
