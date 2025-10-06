@@ -49,6 +49,9 @@ export function LinksManagement() {
           secure_documents (
             file_name,
             category
+          ),
+          document_bundles (
+            name
           )
         `)
         .order('created_at', { ascending: false });
@@ -204,7 +207,7 @@ export function LinksManagement() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold">
-                      {link.secure_documents?.file_name || 'Unknown Document'}
+                      {link.link_name || link.document_bundles?.name || link.secure_documents?.file_name || 'Unknown Document'}
                     </h3>
                     {getStatusBadge(link)}
                   </div>
