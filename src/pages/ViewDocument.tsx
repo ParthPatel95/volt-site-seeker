@@ -47,10 +47,19 @@ export default function ViewDocument() {
       }
 
       // Get signed URL for the document since bucket is private
+      // Calculate expiry time based on link expiration or default to 24 hours
       const storagePath = link.document.storage_path;
+      let expirySeconds = 86400; // Default 24 hours
+      
+      if (link.expires_at) {
+        const expiryTime = new Date(link.expires_at).getTime();
+        const now = Date.now();
+        expirySeconds = Math.max(60, Math.floor((expiryTime - now) / 1000)); // At least 60 seconds
+      }
+
       const { data: signedUrlData } = await supabase.storage
         .from('secure-documents')
-        .createSignedUrl(storagePath, 3600); // 1 hour expiry
+        .createSignedUrl(storagePath, expirySeconds);
 
       if (signedUrlData?.signedUrl) {
         link.document.file_url = signedUrlData.signedUrl;
@@ -171,18 +180,6 @@ export default function ViewDocument() {
                 <h1 className="font-semibold">{linkData.document.file_name}</h1>
                 <p className="text-sm text-muted-foreground">Secure Document Viewer</p>
               </div>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4" />
-                <span>{linkData.current_views || 0} views</span>
-              </div>
-              {linkData.max_views && (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{linkData.max_views - (linkData.current_views || 0)} remaining</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
