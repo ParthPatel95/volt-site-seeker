@@ -46,6 +46,16 @@ export default function ViewDocument() {
         throw new Error('This link has reached its maximum views');
       }
 
+      // Get signed URL for the document since bucket is private
+      const storagePath = link.document.storage_path;
+      const { data: signedUrlData } = await supabase.storage
+        .from('secure-documents')
+        .createSignedUrl(storagePath, 3600); // 1 hour expiry
+
+      if (signedUrlData?.signedUrl) {
+        link.document.file_url = signedUrlData.signedUrl;
+      }
+
       return link;
     },
     retry: false
