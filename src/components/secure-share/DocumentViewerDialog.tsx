@@ -33,24 +33,34 @@ export function DocumentViewerDialog({ open, onOpenChange, document }: DocumentV
 
     setLoading(true);
     try {
+      console.log('Loading document:', document.storage_path);
+      
       const { data, error } = await supabase.functions.invoke('get-signed-url', {
         body: {
           bucket: 'secure-documents',
           path: document.storage_path,
-          expiresIn: 3600, // 1 hour
+          expiresIn: 3600,
         },
       });
 
-      if (error) throw error;
+      console.log('Edge function response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       if (data?.signedUrl) {
+        console.log('Got signed URL:', data.signedUrl);
         setDocumentUrl(data.signedUrl);
+      } else {
+        throw new Error('No signed URL returned');
       }
     } catch (error: any) {
       console.error('Error loading document:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load document preview',
+        description: error.message || 'Failed to load document preview',
         variant: 'destructive',
       });
     } finally {

@@ -1,5 +1,4 @@
-import { FileText, File } from 'lucide-react';
-import { usePdfThumbnail } from '@/hooks/usePdfThumbnail';
+import { FileText, File, Image as ImageIcon } from 'lucide-react';
 
 interface DocumentThumbnailProps {
   fileUrl: string;
@@ -11,47 +10,29 @@ export function DocumentThumbnail({ fileUrl, fileType, storagePath }: DocumentTh
   const isPdf = fileType === 'application/pdf';
   const isImage = fileType?.startsWith('image/');
   
-  const { thumbnailUrl, loading } = usePdfThumbnail(storagePath, isPdf);
-
-  if (loading) {
-    return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-background/95 to-muted/95">
-        <div className="animate-pulse">
-          <FileText className="w-20 h-20 text-muted-foreground/30" />
-        </div>
-      </div>
-    );
-  }
-
-  if (isPdf && thumbnailUrl) {
-    return (
-      <div className="absolute inset-0 bg-white">
-        <iframe
-          src={`${thumbnailUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
-          className="w-full h-full pointer-events-none"
-          title="PDF preview"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-      </div>
-    );
-  }
-
-  if (isImage) {
+  // For images, show the actual image
+  if (isImage && fileUrl) {
     return (
       <img
         src={fileUrl}
         alt="Document preview"
         className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
       />
     );
   }
 
-  // Default fallback for other file types
+  // For PDFs and other documents, show an icon
   const Icon = isPdf ? FileText : File;
   
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-background/95 to-muted/95">
-      <Icon className="w-20 h-20 text-muted-foreground/30" />
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+      <Icon className="w-24 h-24 text-primary/40" />
+      {isPdf && (
+        <span className="text-xs text-muted-foreground mt-2 font-medium">PDF</span>
+      )}
     </div>
   );
 }
