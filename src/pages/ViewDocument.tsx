@@ -197,6 +197,26 @@ export default function ViewDocument() {
     }
   }, [linkData, viewStartTime, viewerData]);
 
+  // Disable right-click for view-only access
+  useEffect(() => {
+    if (!linkData || linkData.access_level === 'download') return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      toast({
+        title: 'Action Restricted',
+        description: 'Right-click is disabled for view-only documents',
+        variant: 'destructive'
+      });
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, [linkData, toast]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
