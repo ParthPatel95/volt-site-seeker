@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Upload, Plus, FileText, Download, Link as LinkIcon, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { DocumentUploadDialog } from './DocumentUploadDialog';
 import { CreateLinkDialog } from './CreateLinkDialog';
 import { DocumentViewerDialog } from './DocumentViewerDialog';
+import { DocumentThumbnail } from './DocumentThumbnail';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -108,9 +109,11 @@ export function DocumentsTab() {
             <Card key={doc.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
               {/* Document Preview */}
               <div className="aspect-[3/4] bg-muted relative overflow-hidden border-b">
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-background/95 to-muted/95">
-                  <FileText className="w-20 h-20 text-muted-foreground/30" />
-                </div>
+                <DocumentThumbnail
+                  fileUrl={doc.file_url}
+                  fileType={doc.file_type}
+                  storagePath={doc.storage_path}
+                />
                 
                 {/* Hover overlay with actions */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">

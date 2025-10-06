@@ -14,9 +14,13 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { storagePath, expiresIn } = await req.json();
+    const { bucket, path, storagePath, expiresIn } = await req.json();
 
-    if (!storagePath) {
+    // Support both 'path' and 'storagePath' for backwards compatibility
+    const filePath = path || storagePath;
+    const bucketName = bucket || 'secure-documents';
+
+    if (!filePath) {
       return new Response(
         JSON.stringify({ error: "Storage path is required" }),
         {
@@ -34,8 +38,8 @@ serve(async (req: Request): Promise<Response> => {
 
     // Create signed URL with service role permissions
     const { data, error } = await supabaseAdmin.storage
-      .from("secure-documents")
-      .createSignedUrl(storagePath, expiresIn || 3600);
+      .from(bucketName)
+      .createSignedUrl(filePath, expiresIn || 3600);
 
     if (error) {
       console.error("Signed URL error:", error);
