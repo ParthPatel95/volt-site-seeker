@@ -23,7 +23,8 @@ import { cn } from '@/lib/utils';
 interface CreateLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  documentId: string;
+  documentId?: string;
+  bundleId?: string;
   documentName: string;
   onSuccess: () => void;
 }
@@ -32,6 +33,7 @@ export function CreateLinkDialog({
   open,
   onOpenChange,
   documentId,
+  bundleId,
   documentName,
   onSuccess,
 }: CreateLinkDialogProps) {
@@ -75,7 +77,8 @@ export function CreateLinkDialog({
       }
 
       const linkData: any = {
-        document_id: documentId,
+        document_id: documentId || null,
+        bundle_id: bundleId || null,
         link_token: linkToken,
         created_by: user.id,
         recipient_email: recipientEmail || null,

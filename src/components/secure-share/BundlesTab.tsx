@@ -4,12 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Package, Plus, Folder, FileText, Trash2, Edit } from 'lucide-react';
+import { Package, Plus, Folder, FileText, Trash2, Edit, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CreateBundleDialog } from './CreateBundleDialog';
+import { CreateLinkDialog } from './CreateLinkDialog';
 
 export function BundlesTab() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedBundle, setSelectedBundle] = useState<any>(null);
   const { toast } = useToast();
 
   const { data: bundles, isLoading, refetch } = useQuery({
@@ -34,6 +37,11 @@ export function BundlesTab() {
       return data;
     },
   });
+
+  const handleShareBundle = (bundle: any) => {
+    setSelectedBundle(bundle);
+    setShareDialogOpen(true);
+  };
 
   const handleDeleteBundle = async (id: string) => {
     try {
@@ -132,6 +140,13 @@ export function BundlesTab() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleShareBundle(bundle)}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
                   <Button variant="ghost" size="sm">
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -179,6 +194,16 @@ export function BundlesTab() {
         onOpenChange={setCreateDialogOpen}
         onSuccess={refetch}
       />
+
+      {selectedBundle && (
+        <CreateLinkDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          bundleId={selectedBundle.id}
+          documentName={selectedBundle.name}
+          onSuccess={refetch}
+        />
+      )}
     </div>
   );
 }

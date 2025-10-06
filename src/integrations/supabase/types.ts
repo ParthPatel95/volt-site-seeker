@@ -2291,11 +2291,12 @@ export type Database = {
           access_level: Database["public"]["Enums"]["access_level"] | null
           allowed_domains: string[] | null
           allowed_ips: string[] | null
+          bundle_id: string | null
           created_at: string | null
           created_by: string
           current_views: number | null
           custom_branding: Json | null
-          document_id: string
+          document_id: string | null
           expires_at: string | null
           id: string
           last_accessed_at: string | null
@@ -2315,11 +2316,12 @@ export type Database = {
           access_level?: Database["public"]["Enums"]["access_level"] | null
           allowed_domains?: string[] | null
           allowed_ips?: string[] | null
+          bundle_id?: string | null
           created_at?: string | null
           created_by: string
           current_views?: number | null
           custom_branding?: Json | null
-          document_id: string
+          document_id?: string | null
           expires_at?: string | null
           id?: string
           last_accessed_at?: string | null
@@ -2339,11 +2341,12 @@ export type Database = {
           access_level?: Database["public"]["Enums"]["access_level"] | null
           allowed_domains?: string[] | null
           allowed_ips?: string[] | null
+          bundle_id?: string | null
           created_at?: string | null
           created_by?: string
           current_views?: number | null
           custom_branding?: Json | null
-          document_id?: string
+          document_id?: string | null
           expires_at?: string | null
           id?: string
           last_accessed_at?: string | null
@@ -2360,6 +2363,13 @@ export type Database = {
           watermark_enabled?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "secure_links_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "document_bundles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "secure_links_document_id_fkey"
             columns: ["document_id"]
