@@ -54,9 +54,16 @@ export function CreateBundleDialog({
 
     setCreating(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const insertData: any = {
         name,
         description: description || null,
+        created_by: user.id,
       };
 
       const { data: bundle, error: bundleError } = await supabase
