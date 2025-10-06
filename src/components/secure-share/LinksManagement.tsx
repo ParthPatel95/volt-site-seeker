@@ -59,7 +59,8 @@ export function LinksManagement() {
   });
 
   const handleCopyLink = (token: string) => {
-    const shareUrl = `${window.location.origin}/view/${token}`;
+    const baseUrl = 'https://wattbyte.com';
+    const shareUrl = `${baseUrl}/view/${token}`;
     navigator.clipboard.writeText(shareUrl);
     toast({
       title: 'Link copied',
