@@ -73,12 +73,12 @@ export function DocumentViewerDialog({ open, onOpenChange, document }: DocumentV
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[80vh]">
-        <DialogHeader>
-          <DialogTitle>{document?.name}</DialogTitle>
+      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogTitle className="text-lg">{document?.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden rounded-lg border bg-muted/50">
+        <div className="flex-1 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
