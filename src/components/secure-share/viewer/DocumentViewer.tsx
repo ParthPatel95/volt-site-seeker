@@ -187,21 +187,41 @@ export function DocumentViewer({
         {/* Document Display */}
         <div className="relative bg-muted/20 flex-1 overflow-auto">
           {isPdf ? (
-            <div 
-              className="relative w-full h-full overflow-auto"
-              style={{
-                transform: `scale(${zoom / 100})`,
-                transformOrigin: 'top left',
-                width: `${100 / (zoom / 100)}%`,
-                height: `${100 / (zoom / 100)}%`
-              }}
-            >
-              <iframe
-                src={pdfUrl}
-                className="w-full h-full"
-                style={{ border: 'none', minHeight: '500px' }}
-                title="Document Viewer"
-              />
+            <div className="relative w-full h-full">
+              <div 
+                className="relative w-full h-full overflow-auto"
+                style={{
+                  transform: `scale(${zoom / 100})`,
+                  transformOrigin: 'top left',
+                  width: `${100 / (zoom / 100)}%`,
+                  height: `${100 / (zoom / 100)}%`
+                }}
+              >
+                <iframe
+                  src={pdfUrl}
+                  className="w-full h-full"
+                  style={{ border: 'none', minHeight: '500px' }}
+                  title="Document Viewer"
+                />
+                {/* Overlay to prevent right-click while allowing scroll */}
+                {!canDownload && (
+                  <div 
+                    className="absolute inset-0"
+                    style={{ 
+                      userSelect: 'none',
+                      pointerEvents: 'auto'
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      toast({
+                        title: 'Action Restricted',
+                        description: 'Right-click is disabled for view-only documents',
+                        variant: 'destructive'
+                      });
+                    }}
+                  />
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center h-full p-6 md:p-12">
