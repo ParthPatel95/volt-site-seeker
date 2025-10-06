@@ -13,9 +13,10 @@ interface DocumentViewerDialogProps {
     storage_path: string;
     file_type: string;
   } | null;
+  accessLevel?: 'view_only' | 'download';
 }
 
-export function DocumentViewerDialog({ open, onOpenChange, document }: DocumentViewerDialogProps) {
+export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel = 'view_only' }: DocumentViewerDialogProps) {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -70,12 +71,52 @@ export function DocumentViewerDialog({ open, onOpenChange, document }: DocumentV
 
   const isImage = document?.file_type?.startsWith('image/');
   const isPdf = document?.file_type === 'application/pdf';
+  const canDownload = accessLevel === 'download';
+
+  const handleDownload = async () => {
+    if (!canDownload || !documentUrl || !document) return;
+    
+    try {
+      const response = await fetch(documentUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = document.name || 'document';
+      window.document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      window.document.body.removeChild(link);
+
+      toast({
+        title: 'Download Started',
+        description: 'Your document is being downloaded',
+      });
+    } catch (error) {
+      toast({
+        title: 'Download Failed',
+        description: 'Failed to download document',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="text-lg">{document?.name}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg">{document?.name}</DialogTitle>
+            {canDownload && documentUrl && (
+              <button
+                onClick={handleDownload}
+                className="text-sm text-primary hover:underline inline-flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
@@ -86,45 +127,38 @@ export function DocumentViewerDialog({ open, onOpenChange, document }: DocumentV
           ) : documentUrl ? (
             <>
               {isPdf ? (
-                <object
-                  data={documentUrl}
-                  type="application/pdf"
+                <iframe
+                  src={`${documentUrl}#toolbar=${canDownload ? '1' : '0'}`}
                   className="w-full h-full"
-                >
-                  <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
-                    <p className="text-muted-foreground text-center">
-                      Your browser doesn't support PDF preview
-                    </p>
-                    <a
-                      href={documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline inline-flex items-center gap-2"
-                    >
-                      Open PDF in new tab
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
-                </object>
+                  style={{ border: 'none' }}
+                  title="Document Viewer"
+                  sandbox={canDownload ? "allow-same-origin allow-scripts allow-downloads" : "allow-same-origin allow-scripts"}
+                  onContextMenu={(e) => !canDownload && e.preventDefault()}
+                />
               ) : isImage ? (
-                <div className="flex items-center justify-center h-full p-4 bg-black/5">
+                <div 
+                  className="flex items-center justify-center h-full p-4 bg-black/5"
+                  onContextMenu={(e) => !canDownload && e.preventDefault()}
+                >
                   <img
                     src={documentUrl}
                     alt={document?.name}
                     className="max-w-full max-h-full object-contain"
+                    onContextMenu={(e) => !canDownload && e.preventDefault()}
                   />
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full gap-4">
                   <p className="text-muted-foreground">Preview not available for this file type</p>
-                  <a
-                    href={documentUrl}
-                    download={document?.name}
-                    className="text-primary hover:underline inline-flex items-center gap-2"
-                  >
-                    Download to view
-                    <Download className="w-4 h-4" />
-                  </a>
+                  {canDownload && (
+                    <button
+                      onClick={handleDownload}
+                      className="text-primary hover:underline inline-flex items-center gap-2"
+                    >
+                      Download to view
+                      <Download className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               )}
             </>
