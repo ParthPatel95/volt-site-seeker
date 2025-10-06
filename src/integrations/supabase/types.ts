@@ -4904,6 +4904,11 @@ export type Database = {
         | "legal"
         | "marketing"
         | "other"
+        | "investor_deck"
+        | "energy_bill"
+        | "loi"
+        | "ppa"
+        | "land_title"
       link_status: "active" | "expired" | "revoked" | "pending"
       permission_level: "read" | "write" | "admin"
       property_status:
@@ -5099,6 +5104,11 @@ export const Constants = {
         "legal",
         "marketing",
         "other",
+        "investor_deck",
+        "energy_bill",
+        "loi",
+        "ppa",
+        "land_title",
       ],
       link_status: ["active", "expired", "revoked", "pending"],
       permission_level: ["read", "write", "admin"],
