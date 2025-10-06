@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ExternalLink, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface DocumentViewerDialogProps {
@@ -86,13 +86,28 @@ export function DocumentViewerDialog({ open, onOpenChange, document }: DocumentV
           ) : documentUrl ? (
             <>
               {isPdf ? (
-                <iframe
-                  src={documentUrl}
+                <object
+                  data={documentUrl}
+                  type="application/pdf"
                   className="w-full h-full"
-                  title={document?.name}
-                />
+                >
+                  <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
+                    <p className="text-muted-foreground text-center">
+                      Your browser doesn't support PDF preview
+                    </p>
+                    <a
+                      href={documentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline inline-flex items-center gap-2"
+                    >
+                      Open PDF in new tab
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                </object>
               ) : isImage ? (
-                <div className="flex items-center justify-center h-full p-4">
+                <div className="flex items-center justify-center h-full p-4 bg-black/5">
                   <img
                     src={documentUrl}
                     alt={document?.name}
@@ -105,9 +120,10 @@ export function DocumentViewerDialog({ open, onOpenChange, document }: DocumentV
                   <a
                     href={documentUrl}
                     download={document?.name}
-                    className="text-primary hover:underline"
+                    className="text-primary hover:underline inline-flex items-center gap-2"
                   >
                     Download to view
+                    <Download className="w-4 h-4" />
                   </a>
                 </div>
               )}
