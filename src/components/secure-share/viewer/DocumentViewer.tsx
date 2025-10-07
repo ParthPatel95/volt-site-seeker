@@ -135,15 +135,21 @@ export function DocumentViewer({
     : documentUrl;
 
   const handleZoomIn = () => {
-    const newZoom = Math.min(zoom + 25, 200);
-    console.log('Zoom In:', zoom, '->', newZoom);
-    setZoom(newZoom);
+    setZoom(prev => {
+      const newZoom = Math.min(prev + 25, 200);
+      console.log('Zoom In:', prev, '->', newZoom);
+      return newZoom;
+    });
   };
+  
   const handleZoomOut = () => {
-    const newZoom = Math.max(zoom - 25, 50);
-    console.log('Zoom Out:', zoom, '->', newZoom);
-    setZoom(newZoom);
+    setZoom(prev => {
+      const newZoom = Math.max(prev - 25, 50);
+      console.log('Zoom Out:', prev, '->', newZoom);
+      return newZoom;
+    });
   };
+  
   const handleResetZoom = () => {
     console.log('Reset Zoom to 100');
     setZoom(100);
@@ -198,42 +204,26 @@ export function DocumentViewer({
         {/* Document Display */}
         <div className="relative bg-muted/20 flex-1 overflow-auto" id="pdf-scroll-container">
           {isPdf ? (
-            <>
+            <div className="flex items-center justify-center min-h-full p-4">
               <div 
-                className="mx-auto"
+                className="bg-white shadow-lg"
                 style={{
                   width: `${zoom}%`,
-                  minWidth: '100%',
-                  position: 'relative'
+                  maxWidth: '100%',
+                  minWidth: zoom >= 100 ? `${zoom}%` : '100%'
                 }}
               >
-                <div style={{ paddingBottom: '141.4%', position: 'relative' }}>
-                  <iframe
-                    key={`pdf-${zoom}`}
-                    src={pdfUrl}
-                    className="absolute inset-0 w-full h-full border-0"
-                    title="Document Viewer"
-                    style={{
-                      backgroundColor: 'white'
-                    }}
-                  />
-                </div>
-              </div>
-              {/* Overlay to prevent right-click */}
-              {!canDownload && (
-                <div 
-                  className="fixed inset-0 pointer-events-none"
+                <iframe
+                  src={pdfUrl}
+                  className="w-full border-0"
                   style={{ 
-                    userSelect: 'none',
-                    zIndex: 999
+                    height: '85vh',
+                    pointerEvents: canDownload ? 'auto' : 'none'
                   }}
-                  onContextMenuCapture={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
+                  title="Document Viewer"
                 />
-              )}
-            </>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full p-6 md:p-12">
               <div className="text-center">
