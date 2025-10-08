@@ -82,9 +82,10 @@ async function fetchTransmissionConstraints(apiKey: string) {
       {
         headers: {
           'API-KEY': apiKey,
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'Deno'
         }
-      }
+      } as RequestInit
     );
 
     if (!response.ok) {
@@ -165,9 +166,10 @@ async function fetchSevenDayForecast(apiKey: string) {
       {
         headers: {
           'API-KEY': apiKey,
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'Deno'
         }
-      }
+      } as RequestInit
     );
 
     if (!response.ok) {
@@ -239,9 +241,10 @@ async function fetchMarketParticipants(apiKey: string) {
       {
         headers: {
           'API-KEY': apiKey,
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'Deno'
         }
-      }
+      } as RequestInit
     );
 
     if (!response.ok) {
@@ -289,9 +292,10 @@ async function fetchOutageEvents(apiKey: string) {
       {
         headers: {
           'API-KEY': apiKey,
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'Deno'
         }
-      }
+      } as RequestInit
     );
 
     if (!response.ok) {
@@ -333,9 +337,10 @@ async function fetchStorageMetrics(apiKey: string) {
       {
         headers: {
           'API-KEY': apiKey,
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'Deno'
         }
-      }
+      } as RequestInit
     );
 
     if (!response.ok) {
@@ -377,9 +382,10 @@ async function fetchGridStability(apiKey: string) {
       {
         headers: {
           'API-KEY': apiKey,
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'Deno'
         }
-      }
+      } as RequestInit
     );
 
     if (!response.ok) {
