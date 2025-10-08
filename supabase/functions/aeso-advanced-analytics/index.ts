@@ -14,6 +14,8 @@ serve(async (req) => {
     console.log('Fetching AESO advanced analytics data...');
 
     const apiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') || Deno.env.get('AESO_API_KEY') || '';
+    console.log('API Key available:', apiKey ? `Yes (length: ${apiKey.length})` : 'No');
+    console.log('Using key from:', Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ? 'AESO_SUBSCRIPTION_KEY_PRIMARY' : 'AESO_API_KEY');
     
     // Fetch all data in parallel for efficiency
     const [
