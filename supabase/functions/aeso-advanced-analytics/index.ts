@@ -13,17 +13,19 @@ serve(async (req) => {
   try {
     console.log('Fetching AESO advanced analytics data...');
 
-    // Fetch all data in parallel for efficiency - using only endpoints that work
+    const apiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') || Deno.env.get('AESO_API_KEY') || '';
+    
+    // Fetch all data in parallel for efficiency
     const [
       transmissionData,
       forecastData,
       participantData,
       storageData
     ] = await Promise.all([
-      fetchTransmissionConstraints(),
-      fetchSevenDayForecast(),
-      fetchMarketParticipants(),
-      fetchStorageMetrics()
+      fetchTransmissionConstraints(apiKey),
+      fetchSevenDayForecast(apiKey),
+      fetchMarketParticipants(apiKey),
+      fetchStorageMetrics(apiKey)
     ]);
 
     const response = {
@@ -56,13 +58,18 @@ serve(async (req) => {
 });
 
 /**
- * Fetch transmission constraint data from AESO CSD v2 (public, no auth)
+ * Fetch transmission constraint data from AESO CSD v2
  */
-async function fetchTransmissionConstraints() {
+async function fetchTransmissionConstraints(apiKey: string) {
   try {
     const response = await fetch(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      { headers: { 'Accept': 'application/json' } }
+      { 
+        headers: { 
+          'Accept': 'application/json',
+          'Ocp-Apim-Subscription-Key': apiKey
+        } 
+      }
     );
 
     if (!response.ok) {
@@ -128,7 +135,7 @@ async function fetchTransmissionConstraints() {
 /**
  * Fetch 7-day forecast using Alberta Internal Load forecast endpoint
  */
-async function fetchSevenDayForecast() {
+async function fetchSevenDayForecast(apiKey: string) {
   try {
     const startDate = new Date();
     const endDate = new Date();
@@ -143,7 +150,12 @@ async function fetchSevenDayForecast() {
 
     const response = await fetch(
       `https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`,
-      { headers: { 'Accept': 'application/json' } }
+      { 
+        headers: { 
+          'Accept': 'application/json',
+          'Ocp-Apim-Subscription-Key': apiKey
+        } 
+      }
     );
 
     if (!response.ok) {
@@ -202,19 +214,23 @@ async function fetchSevenDayForecast() {
 }
 
 /**
- * Fetch market participant data from pool participant list (public endpoint)
+ * Fetch market participant data from pool participant list
  */
-async function fetchMarketParticipants() {
+async function fetchMarketParticipants(apiKey: string) {
   try {
     const response = await fetch(
       'https://apimgw.aeso.ca/public/poolparticipant-api/v1/poolparticipantlist',
-      { headers: { 'Accept': 'application/json' } }
+      { 
+        headers: { 
+          'Accept': 'application/json',
+          'Ocp-Apim-Subscription-Key': apiKey
+        } 
+      }
     );
 
     if (!response.ok) {
       console.error(`Pool participant API error: ${response.status}`);
-      // Return mock data if API fails
-      return generateMockParticipants();
+      return [];
     }
 
     const data = await response.json();
@@ -237,21 +253,26 @@ async function fetchMarketParticipants() {
       return participants;
     }
 
-    return generateMockParticipants();
+    return [];
   } catch (error) {
     console.error('Error fetching market participants:', error);
-    return generateMockParticipants();
+    return [];
   }
 }
 
 /**
  * Fetch energy storage metrics from CSD
  */
-async function fetchStorageMetrics() {
+async function fetchStorageMetrics(apiKey: string) {
   try {
     const response = await fetch(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      { headers: { 'Accept': 'application/json' } }
+      { 
+        headers: { 
+          'Accept': 'application/json',
+          'Ocp-Apim-Subscription-Key': apiKey
+        } 
+      }
     );
 
     if (!response.ok) {
@@ -297,26 +318,4 @@ function calculateGridStability(storageMetrics: any[]) {
     system_inertia: demandMW / 1000 * 3.5,
     stability_score: hasStorage ? 90 + Math.random() * 5 : 85 + Math.random() * 10
   };
-}
-
-/**
- * Generate mock participant data as fallback
- */
-function generateMockParticipants() {
-  console.log('Using mock participant data');
-  const participants = [
-    { participant_name: 'TransAlta', total_capacity_mw: 2500, generation_type: 'Gas/Hydro' },
-    { participant_name: 'Capital Power', total_capacity_mw: 2200, generation_type: 'Gas' },
-    { participant_name: 'ENMAX', total_capacity_mw: 1800, generation_type: 'Gas' },
-    { participant_name: 'ATCO Power', total_capacity_mw: 1500, generation_type: 'Gas' },
-    { participant_name: 'Heartland Generation', total_capacity_mw: 1400, generation_type: 'Gas' },
-  ];
-  
-  const totalCapacity = participants.reduce((sum, p) => sum + p.total_capacity_mw, 0);
-  
-  return participants.map(p => ({
-    ...p,
-    available_capacity_mw: p.total_capacity_mw * 0.9,
-    market_share_percent: (p.total_capacity_mw / totalCapacity) * 100
-  }));
 }
