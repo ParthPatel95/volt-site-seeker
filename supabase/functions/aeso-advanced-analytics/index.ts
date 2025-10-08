@@ -97,13 +97,14 @@ serve(async (req) => {
 });
 
 /**
- * Fetch transmission constraint data from AESO
+ * Fetch transmission constraint data from AESO (uses CSD v2 API)
  */
 async function fetchTransmissionConstraints(apiKey: string) {
   try {
-    const response = await fetchWithKey(
+    // Use v2 endpoint without auth - it's public
+    const response = await fetch(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      apiKey
+      { headers: { 'Accept': 'application/json' } }
     );
 
     if (!response.ok) {
@@ -180,7 +181,7 @@ async function fetchSevenDayForecast(apiKey: string) {
     const endDateStr = endDate.toISOString().split('T')[0];
 
     const response = await fetchWithKey(
-      `https://apimgw.aeso.ca/public/forecast-api/v1/actual-forecast?startDate=${startDateStr}&endDate=${endDateStr}`,
+      `https://apimgw.aeso.ca/public/actualforecast-api/v1/actualforecast?startDate=${startDateStr}&endDate=${endDateStr}`,
       apiKey
     );
 
@@ -291,8 +292,9 @@ async function fetchMarketParticipants(apiKey: string) {
  */
 async function fetchOutageEvents(apiKey: string) {
   try {
+    const today = new Date().toISOString().split('T')[0];
     const response = await fetchWithKey(
-      'https://apimgw.aeso.ca/public/ao-api/v1/asset-outage-report',
+      `https://apimgw.aeso.ca/public/assetoutage-api/v1/outages?startDate=${today}&endDate=${today}`,
       apiKey
     );
 
@@ -330,9 +332,10 @@ async function fetchOutageEvents(apiKey: string) {
  */
 async function fetchStorageMetrics(apiKey: string) {
   try {
-    const response = await fetchWithKey(
+    // Use v2 endpoint without auth - it's public
+    const response = await fetch(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      apiKey
+      { headers: { 'Accept': 'application/json' } }
     );
 
     if (!response.ok) {
@@ -369,9 +372,10 @@ async function fetchStorageMetrics(apiKey: string) {
  */
 async function fetchGridStability(apiKey: string) {
   try {
-    const response = await fetchWithKey(
+    // Use v2 endpoint without auth - it's public
+    const response = await fetch(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      apiKey
+      { headers: { 'Accept': 'application/json' } }
     );
 
     if (!response.ok) {
