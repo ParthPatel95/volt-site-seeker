@@ -75,7 +75,8 @@ async function fetchTransmissionConstraints(apiKey: string) {
     );
 
     if (!response.ok) {
-      console.error(`Transmission constraints API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Transmission constraints API error: ${response.status} - ${errorText}`);
       return [];
     }
 
