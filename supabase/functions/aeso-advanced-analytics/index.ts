@@ -78,12 +78,10 @@ async function fetchTransmissionConstraints(apiKey: string) {
     // AESO doesn't have a specific transmission constraints endpoint
     // We'll use intertie data and calculate utilization based on available data
     const response = await fetch(
-      'https://developer-apim.aeso.ca/api/v2/current-supply-demand',
+      'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
       {
         headers: {
-          'API-KEY': apiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'Deno'
+          'Accept': 'application/json'
         }
       } as RequestInit
     );
@@ -162,12 +160,10 @@ async function fetchSevenDayForecast(apiKey: string) {
     const endDateStr = endDate.toISOString().split('T')[0];
 
     const response = await fetch(
-      `https://developer-apim.aeso.ca/api/v1/actual-forecast?startDate=${startDateStr}&endDate=${endDateStr}`,
+      `https://apimgw.aeso.ca/public/forecast-api/v1/actual-forecast?startDate=${startDateStr}&endDate=${endDateStr}`,
       {
         headers: {
-          'API-KEY': apiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'Deno'
+          'Accept': 'application/json'
         }
       } as RequestInit
     );
@@ -237,12 +233,10 @@ async function fetchMarketParticipants(apiKey: string) {
   try {
     // AESO API: Pool Participant Report
     const response = await fetch(
-      'https://developer-apim.aeso.ca/api/v1/pool-participant-list',
+      'https://apimgw.aeso.ca/public/poolparticipant-api/v1/pool-participant-list',
       {
         headers: {
-          'API-KEY': apiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'Deno'
+          'Accept': 'application/json'
         }
       } as RequestInit
     );
@@ -288,12 +282,10 @@ async function fetchOutageEvents(apiKey: string) {
   try {
     // AESO API: Asset Outage Report
     const response = await fetch(
-      'https://developer-apim.aeso.ca/api/v1/asset-outage-report',
+      'https://apimgw.aeso.ca/public/ao-api/v1/asset-outage-report',
       {
         headers: {
-          'API-KEY': apiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'Deno'
+          'Accept': 'application/json'
         }
       } as RequestInit
     );
@@ -333,12 +325,10 @@ async function fetchOutageEvents(apiKey: string) {
 async function fetchStorageMetrics(apiKey: string) {
   try {
     const response = await fetch(
-      'https://developer-apim.aeso.ca/api/v2/current-supply-demand',
+      'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
       {
         headers: {
-          'API-KEY': apiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'Deno'
+          'Accept': 'application/json'
         }
       } as RequestInit
     );
@@ -378,12 +368,10 @@ async function fetchStorageMetrics(apiKey: string) {
 async function fetchGridStability(apiKey: string) {
   try {
     const response = await fetch(
-      'https://developer-apim.aeso.ca/api/v2/current-supply-demand',
+      'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
       {
         headers: {
-          'API-KEY': apiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'Deno'
+          'Accept': 'application/json'
         }
       } as RequestInit
     );
