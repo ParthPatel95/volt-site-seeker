@@ -72,6 +72,13 @@ export function AESOHistoricalPricing() {
     fetchExchangeRate();
   }, []);
 
+  // Re-fetch 8-year data when uptime percentage changes
+  useEffect(() => {
+    if (historicalTenYearData) {
+      fetchRealHistoricalData();
+    }
+  }, [uptimePercentage]);
+
   // Re-run analysis when time period changes
   useEffect(() => {
     if (customAnalysisResult && monthlyData && yearlyData) {
@@ -94,8 +101,8 @@ export function AESOHistoricalPricing() {
   };
 
   const fetchRealHistoricalData = async () => {
-    // Call the real API to fetch 8-year historical data
-    await fetchHistoricalTenYearData();
+    // Call the real API to fetch 8-year historical data with uptime filter
+    await fetchHistoricalTenYearData(parseFloat(uptimePercentage));
   };
 
 
@@ -1532,7 +1539,7 @@ export function AESOHistoricalPricing() {
                 <div>
                   <h3 className="text-lg font-semibold">8-Year Real AESO Historical Data Analysis</h3>
                   <p className="text-sm text-muted-foreground">
-                    Real historical price data from AESO API (95% uptime analysis)
+                    Real historical price data from AESO API ({uptimePercentage}% uptime analysis)
                   </p>
                 </div>
                 <Button 

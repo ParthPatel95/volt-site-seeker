@@ -24,7 +24,7 @@ serve(async (req) => {
   }
 
   try {
-    const { timeframe, startDate: customStartDate, endDate: customEndDate } = await req.json();
+    const { timeframe, startDate: customStartDate, endDate: customEndDate, uptimePercentage = 100 } = await req.json();
     
     // Use same API key priority as energy-data-integration function
     const apiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
@@ -77,7 +77,7 @@ serve(async (req) => {
       historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     } else if (timeframe === 'historical-10year') {
       // Fetch real 8-year historical data from AESO
-      console.log('Fetching 8-year real historical data from AESO API...');
+      console.log(`Fetching 8-year real historical data from AESO API with ${uptimePercentage}% uptime filter...`);
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       const historicalYearsData = [];
@@ -102,7 +102,19 @@ serve(async (req) => {
           
           if (yearData && yearData.length > 0) {
             console.log(`Received ${yearData.length} data points for year ${year}`);
-            const yearlyStats = await processHistoricalData(yearData, 'yearly');
+            
+            // Apply uptime filter if not 100%
+            let filteredYearData = yearData;
+            if (uptimePercentage < 100) {
+              const hoursToKeep = Math.floor(yearData.length * (uptimePercentage / 100));
+              // Sort by price and keep the lowest-priced hours
+              filteredYearData = [...yearData]
+                .sort((a, b) => a.price - b.price)
+                .slice(0, hoursToKeep);
+              console.log(`Applied ${uptimePercentage}% uptime filter: ${yearData.length} → ${filteredYearData.length} hours (removed ${yearData.length - filteredYearData.length} highest-price hours)`);
+            }
+            
+            const yearlyStats = await processHistoricalData(filteredYearData, 'yearly');
             
             if (yearlyStats && yearlyStats.statistics) {
               historicalYearsData.push({
@@ -112,9 +124,11 @@ serve(async (req) => {
                 low: Math.round(yearlyStats.statistics.low * 100) / 100,
                 volatility: Math.round(yearlyStats.statistics.volatility * 100) / 100,
                 dataPoints: yearData.length,
+                filteredDataPoints: filteredYearData.length,
+                uptimePercentage,
                 isReal: true
               });
-              console.log(`Year ${year}: Avg=$${yearlyStats.statistics.average.toFixed(2)} CAD/MWh (${yearData.length} data points)`);
+              console.log(`Year ${year}: Avg=$${yearlyStats.statistics.average.toFixed(2)} CAD/MWh (${filteredYearData.length} of ${yearData.length} data points at ${uptimePercentage}% uptime)`);
             } else {
               console.warn(`No statistics calculated for year ${year}`);
               historicalYearsData.push({
@@ -166,8 +180,9 @@ serve(async (req) => {
           historicalYears: historicalYearsData,
           totalYears: historicalYearsData.length,
           realDataYears: historicalYearsData.filter(y => y.isReal).length,
+          uptimePercentage,
           lastUpdated: new Date().toISOString()
-        }), 
+        }),
         { 
           headers: { 
             ...corsHeaders, 

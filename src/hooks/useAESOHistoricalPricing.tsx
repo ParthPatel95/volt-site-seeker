@@ -187,12 +187,15 @@ export function useAESOHistoricalPricing() {
     }
   };
 
-  const fetchHistoricalTenYearData = async () => {
+  const fetchHistoricalTenYearData = async (uptimePercentage: number = 100) => {
     setLoadingHistoricalTenYear(true);
     try {
-      console.log('Fetching real 8-year AESO historical data...');
+      console.log(`Fetching real 8-year AESO historical data with ${uptimePercentage}% uptime filter...`);
       const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
-        body: { timeframe: 'historical-10year' }
+        body: { 
+          timeframe: 'historical-10year',
+          uptimePercentage 
+        }
       });
 
       if (error) throw error;
