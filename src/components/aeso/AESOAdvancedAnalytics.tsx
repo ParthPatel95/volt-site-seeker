@@ -117,7 +117,12 @@ export function AESOAdvancedAnalytics() {
         body: { action: 'fetch_all' }
       });
 
-      if (error) throw error;
+      console.log('📦 Raw response:', { data, error });
+
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw error;
+      }
 
       if (data) {
         console.log('✅ Advanced analytics data received:', {
