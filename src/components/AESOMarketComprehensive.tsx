@@ -36,7 +36,6 @@ import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
 import { AESOAlertsPanel } from './intelligence/AESOAlertsPanel';
 import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
 import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
-import { AESOAdvancedAnalytics } from './aeso/AESOAdvancedAnalytics';
 
 export function AESOMarketComprehensive() {
   // Use working dashboard data source
@@ -176,7 +175,7 @@ export function AESOMarketComprehensive() {
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(6, minmax(80px, 1fr))'}}>
+            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(5, minmax(80px, 1fr))'}}>
               <TabsTrigger value="market" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline truncate">Market Data</span>
@@ -201,11 +200,6 @@ export function AESOMarketComprehensive() {
                 <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden lg:inline truncate">Outages & Alerts</span>
                 <span className="lg:hidden truncate">Alerts</span>
-              </TabsTrigger>
-              <TabsTrigger value="advanced-analytics" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Advanced Analytics</span>
-                <span className="lg:hidden truncate">Advanced</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -570,10 +564,6 @@ export function AESOMarketComprehensive() {
             </div>
           </TabsContent>
 
-          {/* Advanced Analytics Tab */}
-          <TabsContent value="advanced-analytics" className="space-y-4 sm:space-y-6">
-            <AESOAdvancedAnalytics />
-          </TabsContent>
         </Tabs>
 
         {/* Real-time Market Overview (moved below tabs) */}
