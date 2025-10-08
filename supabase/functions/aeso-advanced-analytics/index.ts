@@ -5,18 +5,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function buildHeaders(key: string): HeadersInit {
+  return {
+    'Ocp-Apim-Subscription-Key': key,
+    'x-api-key': key,
+    'Accept': 'application/json',
+    'User-Agent': 'LovableEnergy/1.0'
+  } as HeadersInit;
+}
+
+async function fetchWithKey(url: string, key: string): Promise<Response> {
+  let res = await fetch(url, { headers: buildHeaders(key) });
+  if (res.ok) return res;
+
+  if (res.status === 401 || res.status === 403) {
+    try {
+      const u = new URL(url);
+      if (!u.searchParams.has('subscription-key')) {
+        u.searchParams.set('subscription-key', key);
+      }
+      res = await fetch(u.toString(), { headers: buildHeaders(key) });
+      return res;
+    } catch (_) {
+      // Fallthrough
+    }
+  }
+  return res;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { action } = await req.json();
-    
     const apiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
-                   Deno.env.get('AESO_API_KEY') ||
+                   Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY') ||
                    Deno.env.get('AESO_SUB_KEY') ||
-                   Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY');
+                   Deno.env.get('AESO_API_KEY');
     
     if (!apiKey) {
       throw new Error('AESO API key is not configured');
@@ -75,15 +101,9 @@ serve(async (req) => {
  */
 async function fetchTransmissionConstraints(apiKey: string) {
   try {
-    // AESO doesn't have a specific transmission constraints endpoint
-    // We'll use intertie data and calculate utilization based on available data
-    const response = await fetch(
+    const response = await fetchWithKey(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      } as RequestInit
+      apiKey
     );
 
     if (!response.ok) {
@@ -159,13 +179,9 @@ async function fetchSevenDayForecast(apiKey: string) {
     const startDateStr = startDate.toISOString().split('T')[0];
     const endDateStr = endDate.toISOString().split('T')[0];
 
-    const response = await fetch(
+    const response = await fetchWithKey(
       `https://apimgw.aeso.ca/public/forecast-api/v1/actual-forecast?startDate=${startDateStr}&endDate=${endDateStr}`,
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      } as RequestInit
+      apiKey
     );
 
     if (!response.ok) {
@@ -231,14 +247,9 @@ async function fetchSevenDayForecast(apiKey: string) {
  */
 async function fetchMarketParticipants(apiKey: string) {
   try {
-    // AESO API: Pool Participant Report
-    const response = await fetch(
-      'https://apimgw.aeso.ca/public/poolparticipant-api/v1/pool-participant-list',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      } as RequestInit
+    const response = await fetchWithKey(
+      'https://apimgw.aeso.ca/public/poolparticipant-api/v1/poolparticipantlist',
+      apiKey
     );
 
     if (!response.ok) {
@@ -280,14 +291,9 @@ async function fetchMarketParticipants(apiKey: string) {
  */
 async function fetchOutageEvents(apiKey: string) {
   try {
-    // AESO API: Asset Outage Report
-    const response = await fetch(
+    const response = await fetchWithKey(
       'https://apimgw.aeso.ca/public/ao-api/v1/asset-outage-report',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      } as RequestInit
+      apiKey
     );
 
     if (!response.ok) {
@@ -324,13 +330,9 @@ async function fetchOutageEvents(apiKey: string) {
  */
 async function fetchStorageMetrics(apiKey: string) {
   try {
-    const response = await fetch(
+    const response = await fetchWithKey(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      } as RequestInit
+      apiKey
     );
 
     if (!response.ok) {
@@ -367,13 +369,9 @@ async function fetchStorageMetrics(apiKey: string) {
  */
 async function fetchGridStability(apiKey: string) {
   try {
-    const response = await fetch(
+    const response = await fetchWithKey(
       'https://apimgw.aeso.ca/public/currentsupplydemand-api/v2/csd/summary/current',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      } as RequestInit
+      apiKey
     );
 
     if (!response.ok) {
