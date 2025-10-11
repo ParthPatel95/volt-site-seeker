@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -169,9 +169,37 @@ export function DocumentViewer({
         {/* Controls */}
         <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2 md:gap-4">
-            {isPdf && (
+            {isPdf && numPages > 0 && (
               <>
+                {/* Page Navigation */}
                 <div className="flex items-center gap-1">
+                  <Button 
+                    onClick={() => setPageNumber(prev => Math.max(prev - 1, 1))} 
+                    size="sm" 
+                    variant="ghost"
+                    className="h-7 md:h-8 px-2"
+                    disabled={pageNumber <= 1}
+                    title="Previous Page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground min-w-[80px] text-center">
+                    {pageNumber} / {numPages}
+                  </span>
+                  <Button 
+                    onClick={() => setPageNumber(prev => Math.min(prev + 1, numPages))} 
+                    size="sm" 
+                    variant="ghost"
+                    className="h-7 md:h-8 px-2"
+                    disabled={pageNumber >= numPages}
+                    title="Next Page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-1 border-l border-border pl-2 md:pl-4">
                   <Button 
                     onClick={handleZoomOut} 
                     size="sm" 
@@ -201,6 +229,8 @@ export function DocumentViewer({
                     <ZoomIn className="w-4 h-4" />
                   </Button>
                 </div>
+                
+                {/* Rotate */}
                 <Button 
                   onClick={handleRotate} 
                   size="sm" 
@@ -210,11 +240,6 @@ export function DocumentViewer({
                 >
                   <RotateCw className="w-4 h-4" />
                 </Button>
-                {numPages > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    Page {pageNumber} of {numPages}
-                  </span>
-                )}
               </>
             )}
           </div>
@@ -229,49 +254,44 @@ export function DocumentViewer({
 
         {/* Document Display */}
         <ScrollArea className="flex-1">
-          <div className="relative bg-muted/20 min-h-full">
+          <div className="relative bg-muted/20 min-h-full flex items-center justify-center p-4">
             {isPdf ? (
-              <div className="flex flex-col items-center justify-start p-4 gap-4">
-                <Document
-                  file={documentUrl}
-                  onLoadSuccess={onDocumentLoadSuccess}
+              <Document
+                file={documentUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                loading={
+                  <div className="flex items-center justify-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+                error={
+                  <div className="text-center p-8">
+                    <p className="text-sm text-destructive mb-4">
+                      Failed to load PDF document
+                    </p>
+                    {canDownload && (
+                      <Button onClick={handleDownload} size="sm">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Instead
+                      </Button>
+                    )}
+                  </div>
+                }
+              >
+                <Page
+                  pageNumber={pageNumber}
+                  scale={zoom}
+                  rotate={rotation}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="shadow-lg"
                   loading={
-                    <div className="flex items-center justify-center p-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="flex items-center justify-center p-8 bg-card">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                     </div>
                   }
-                  error={
-                    <div className="text-center p-8">
-                      <p className="text-sm text-destructive mb-4">
-                        Failed to load PDF document
-                      </p>
-                      {canDownload && (
-                        <Button onClick={handleDownload} size="sm">
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Instead
-                        </Button>
-                      )}
-                    </div>
-                  }
-                >
-                  {Array.from(new Array(numPages), (el, index) => (
-                    <Page
-                      key={`page_${index + 1}`}
-                      pageNumber={index + 1}
-                      scale={zoom}
-                      rotate={rotation}
-                      renderTextLayer={true}
-                      renderAnnotationLayer={true}
-                      className="mb-4 shadow-lg"
-                      loading={
-                        <div className="flex items-center justify-center p-8 bg-white">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                        </div>
-                      }
-                    />
-                  ))}
-                </Document>
-              </div>
+                />
+              </Document>
             ) : (
               <div className="flex items-center justify-center h-full p-6 md:p-12">
                 <div className="text-center">
