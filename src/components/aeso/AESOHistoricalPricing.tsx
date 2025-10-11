@@ -1026,7 +1026,7 @@ export function AESOHistoricalPricing() {
                 <div className="flex items-center justify-center h-64">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
-              ) : (
+              ) : dailyData?.rawHourlyData && dailyData.rawHourlyData.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-muted/50">
@@ -1038,15 +1038,25 @@ export function AESOHistoricalPricing() {
                       </tr>
                     </thead>
                     <tbody>
-                      {dailyData?.chartData?.map((hourData: any, index: number) => {
+                      {dailyData.rawHourlyData.map((hourData: any, index: number) => {
                         const priceCAD = hourData.price;
                         const priceUSD = convertCADtoUSD(priceCAD);
                         const isHigh = priceCAD > (dailyData?.statistics?.average || 0) * 1.2;
                         const isLow = priceCAD < (dailyData?.statistics?.average || 0) * 0.8;
                         
+                        // Format the datetime to be more readable
+                        const dateObj = new Date(hourData.datetime);
+                        const formattedTime = dateObj.toLocaleString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: true 
+                        });
+                        
                         return (
                           <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                            <td className="py-3 px-4 font-medium">{hourData.date}</td>
+                            <td className="py-3 px-4 font-medium">{formattedTime}</td>
                             <td className="text-right py-3 px-4 font-mono font-semibold">
                               {formatCurrency(priceCAD)}
                             </td>
@@ -1067,6 +1077,13 @@ export function AESOHistoricalPricing() {
                       })}
                     </tbody>
                   </table>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-muted-foreground">
+                  <div className="text-center">
+                    <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p>No hourly data available</p>
+                  </div>
                 </div>
               )}
             </CardContent>
