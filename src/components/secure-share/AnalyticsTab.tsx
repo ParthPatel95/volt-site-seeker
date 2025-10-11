@@ -28,12 +28,23 @@ export function AnalyticsTab() {
         : 0;
       const uniqueViewers = new Set(activity?.map(v => v.viewer_email).filter(Boolean)).size;
 
+      // Transform the data to match the Activity interface
+      const transformedActivity = activity?.slice(0, 10).map(a => ({
+        ...a,
+        pages_viewed: Array.isArray(a.pages_viewed) 
+          ? a.pages_viewed as Array<{ page: number; time_spent: number; viewed_at: string }>
+          : [],
+        scroll_depth: typeof a.scroll_depth === 'object' && a.scroll_depth !== null
+          ? a.scroll_depth as Record<string, number>
+          : {}
+      })) || [];
+
       return {
         totalViews,
         totalEngagementTime,
         avgEngagementScore,
         uniqueViewers,
-        recentActivity: activity?.slice(0, 10) || []
+        recentActivity: transformedActivity
       };
     }
   });

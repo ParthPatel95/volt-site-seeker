@@ -16,6 +16,8 @@ interface Activity {
   opened_at: string;
   document?: { file_name: string };
   link?: { recipient_email: string };
+  pages_viewed?: Array<{ page: number; time_spent: number; viewed_at: string }>;
+  scroll_depth?: Record<string, number>;
 }
 
 interface ViewerActivityTableProps {
@@ -41,6 +43,8 @@ export function ViewerActivityTable({ activities }: ViewerActivityTableProps) {
               <TableHead>Document</TableHead>
               <TableHead>Viewer</TableHead>
               <TableHead>Device</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Pages Viewed</TableHead>
               <TableHead>Time Spent</TableHead>
               <TableHead>Engagement</TableHead>
               <TableHead>Opened At</TableHead>
@@ -68,8 +72,21 @@ export function ViewerActivityTable({ activities }: ViewerActivityTableProps) {
                     <span className="text-muted-foreground text-xs">{activity.browser}</span>
                   </div>
                 </TableCell>
+                <TableCell className="text-sm">
+                  {activity.viewer_location || 'Unknown'}
+                </TableCell>
                 <TableCell>
-                  {Math.round(activity.total_time_seconds / 60)}m {activity.total_time_seconds % 60}s
+                  <div className="flex flex-col text-sm">
+                    <span className="font-medium">{activity.pages_viewed?.length || 0} pages</span>
+                    {activity.pages_viewed && activity.pages_viewed.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {activity.pages_viewed.map(p => `P${p.page}: ${Math.round(p.time_spent)}s`).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {Math.floor(activity.total_time_seconds / 60)}m {activity.total_time_seconds % 60}s
                 </TableCell>
                 <TableCell>
                   {getEngagementBadge(activity.engagement_score)}
