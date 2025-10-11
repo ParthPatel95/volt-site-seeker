@@ -278,13 +278,13 @@ export function DocumentViewer({
                   </div>
                 }
               >
-                <Page
-                  pageNumber={pageNumber}
-                  scale={zoom}
-                  rotate={rotation}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                  className="shadow-lg"
+              <Page
+                pageNumber={pageNumber}
+                scale={zoom}
+                rotate={rotation}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="shadow-lg"
                   loading={
                     <div className="flex items-center justify-center p-8 bg-card">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
