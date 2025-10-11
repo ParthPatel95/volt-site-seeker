@@ -47,11 +47,21 @@ export function DocumentViewer({
     
     try {
       const response = await fetch(documentUrl);
-      const blob = await response.blob();
+      const arrayBuffer = await response.arrayBuffer();
+      
+      // Create blob with correct MIME type
+      const blob = new Blob([arrayBuffer], { type: documentType });
       const url = window.URL.createObjectURL(blob);
+      
+      // Extract filename from URL, preserving the full name with extension
+      let filename = documentUrl.split('/').pop()?.split('?')[0] || 'document';
+      
+      // Decode URL-encoded filename
+      filename = decodeURIComponent(filename);
+      
       const a = document.createElement('a');
       a.href = url;
-      a.download = documentUrl.split('/').pop() || 'document';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
