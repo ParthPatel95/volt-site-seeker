@@ -151,38 +151,63 @@ export function useDocumentActivityTracking({
       try {
         const location = await getUserLocation();
 
-        // Find the most recent activity record for this link
-        const { data: existingActivity } = await supabase
+        // Try to find the most recent activity record for this link
+        const { data: existingActivities } = await supabase
           .from('viewer_activity')
           .select('id')
           .eq('link_id', linkId)
           .eq('document_id', documentId)
           .order('opened_at', { ascending: false })
-          .limit(1)
-          .single();
+          .limit(1);
 
-        if (existingActivity) {
-          setActivityId(existingActivity.id);
+        let activityRecordId: string;
 
-          // Update with location if we got it
-          if (location) {
-            await supabase
-              .from('viewer_activity')
-              .update({ viewer_location: location })
-              .eq('id', existingActivity.id);
+        if (existingActivities && existingActivities.length > 0) {
+          // Use existing record
+          activityRecordId = existingActivities[0].id;
+        } else {
+          // Create a new activity record
+          const { data: newActivity, error: insertError } = await supabase
+            .from('viewer_activity')
+            .insert({
+              link_id: linkId,
+              document_id: documentId,
+              viewer_location: location,
+              device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+              browser: navigator.userAgent.split(' ').pop() || 'unknown',
+              opened_at: new Date().toISOString()
+            })
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating activity record:', insertError);
+            return;
           }
 
-          // Initialize first page
-          pageActivities.current.set(1, {
-            page: 1,
-            timeSpent: 0,
-            scrollDepth: 0,
-            viewedAt: new Date().toISOString()
-          });
-
-          // Set up periodic updates every 5 seconds
-          updateInterval.current = setInterval(updateActivityInDatabase, 5000);
+          activityRecordId = newActivity.id;
         }
+
+        setActivityId(activityRecordId);
+
+        // Update with location if we got it and using existing record
+        if (location && existingActivities && existingActivities.length > 0) {
+          await supabase
+            .from('viewer_activity')
+            .update({ viewer_location: location })
+            .eq('id', activityRecordId);
+        }
+
+        // Initialize first page
+        pageActivities.current.set(1, {
+          page: 1,
+          timeSpent: 0,
+          scrollDepth: 0,
+          viewedAt: new Date().toISOString()
+        });
+
+        // Set up periodic updates every 5 seconds
+        updateInterval.current = setInterval(updateActivityInDatabase, 5000);
       } catch (error) {
         console.error('Error initializing tracking:', error);
       }

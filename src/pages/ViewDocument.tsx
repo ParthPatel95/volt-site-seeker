@@ -145,27 +145,13 @@ export default function ViewDocument() {
     retry: false
   });
 
-  // Track activity on mount and when viewer data is provided
+  // Increment view count when link is accessed
   useEffect(() => {
     if (!linkData) return;
     // Only track when password is not required OR when viewer data is collected
     if (!linkData.password_hash || viewerData) {
-      const trackView = async () => {
+      const incrementViewCount = async () => {
         try {
-          // Insert viewer activity (RLS allows public insert)
-          await supabase
-            .from('viewer_activity')
-            .insert({
-              link_id: linkData.id,
-              document_id: linkData.document_id,
-              viewer_name: viewerData?.name || null,
-              viewer_email: viewerData?.email || null,
-              viewer_ip: 'unknown',
-              device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
-              browser: navigator.userAgent.split(' ').pop(),
-              opened_at: new Date().toISOString()
-            });
-
           // Increment view count (RLS allows public update on this specific action)
           await supabase
             .from('secure_links')
@@ -175,27 +161,13 @@ export default function ViewDocument() {
             })
             .eq('id', linkData.id);
         } catch (error) {
-          console.error('Failed to track activity:', error);
+          console.error('Failed to increment view count:', error);
         }
       };
 
-      trackView();
-
-      // Track time spent on page
-      return () => {
-        const timeSpent = Math.floor((Date.now() - viewStartTime) / 1000);
-        supabase
-          .from('viewer_activity')
-          .update({ 
-            total_time_seconds: timeSpent,
-            last_activity_at: new Date().toISOString()
-          })
-          .eq('link_id', linkData.id)
-          .order('opened_at', { ascending: false })
-          .limit(1);
-      };
+      incrementViewCount();
     }
-  }, [linkData, viewStartTime, viewerData]);
+  }, [linkData, viewerData]);
 
   // Disable right-click for view-only access
   useEffect(() => {
@@ -340,6 +312,9 @@ export default function ViewDocument() {
                 accessLevel={linkData.access_level}
                 watermarkEnabled={linkData.watermark_enabled}
                 recipientEmail={linkData.recipient_email}
+                linkId={linkData.id}
+                documentId={selectedDoc.id}
+                enableTracking={true}
               />
             </Card>
           </div>
