@@ -65,8 +65,11 @@ export function AESOHistoricalPricing() {
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
+  const [dailyData, setDailyData] = useState<any>(null);
+  const [loadingDaily, setLoadingDaily] = useState(false);
 
   useEffect(() => {
+    fetchDailyData();
     fetchMonthlyData();
     fetchYearlyData();
     fetchExchangeRate();
@@ -97,6 +100,45 @@ export function AESOHistoricalPricing() {
     } catch (error) {
       console.error('Failed to fetch exchange rate:', error);
       setExchangeRate(0.73); // Fallback rate
+    }
+  };
+
+  const fetchDailyData = async () => {
+    setLoadingDaily(true);
+    try {
+      // Fetch last 24 hours of AESO data
+      const response = await fetch('https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=' + 
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 
+        '&endDate=' + new Date().toISOString().split('T')[0]);
+      const data = await response.json();
+      
+      // Process hourly data for last 24 hours
+      const hourlyPrices = data?.return?.Pool_Price_Report || [];
+      const last24Hours = hourlyPrices.slice(-24);
+      
+      // Calculate statistics
+      const prices = last24Hours.map((h: any) => parseFloat(h.pool_price));
+      const average = prices.reduce((sum: number, p: number) => sum + p, 0) / prices.length;
+      const peak = Math.max(...prices);
+      const low = Math.min(...prices);
+      const volatility = (Math.sqrt(prices.reduce((sum: number, p: number) => sum + Math.pow(p - average, 2), 0) / prices.length) / average) * 100;
+      
+      // Format for charts
+      const chartData = last24Hours.map((h: any) => ({
+        date: new Date(h.begin_datetime_mpt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        price: parseFloat(h.pool_price),
+        hour: new Date(h.begin_datetime_mpt).getHours()
+      }));
+      
+      setDailyData({
+        statistics: { average, peak, low, volatility },
+        chartData,
+        rawHourlyData: last24Hours.map((h: any) => ({ price: parseFloat(h.pool_price) }))
+      });
+    } catch (error) {
+      console.error('Error fetching daily data:', error);
+    } finally {
+      setLoadingDaily(false);
     }
   };
 
@@ -867,8 +909,12 @@ export function AESOHistoricalPricing() {
         </div>
       </div>
 
-      <Tabs defaultValue="monthly" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 h-auto p-1">
+      <Tabs defaultValue="daily" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
+          <TabsTrigger value="daily" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Clock className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">Last 24 Hours</span>
+          </TabsTrigger>
           <TabsTrigger value="monthly" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Calendar className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm whitespace-nowrap">Last 30 Days</span>
@@ -890,6 +936,156 @@ export function AESOHistoricalPricing() {
             <span className="text-xs sm:text-sm whitespace-nowrap">Weather Analysis</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Daily Data Tab - Last 24 Hours */}
+        <TabsContent value="daily" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-green-600" />
+                  24-Hour Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Average Price</span>
+                    <span className="font-semibold">
+                      {dailyData?.statistics?.average !== undefined ? formatCurrency(dailyData.statistics.average) : '—'}/MWh
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Peak Price</span>
+                    <span className="font-semibold text-red-600">
+                      {dailyData?.statistics?.peak !== undefined ? formatCurrency(dailyData.statistics.peak) : '—'}/MWh
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Low Price</span>
+                    <span className="font-semibold text-green-600">
+                      {dailyData?.statistics?.low !== undefined ? formatCurrency(dailyData.statistics.low) : '—'}/MWh
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Volatility</span>
+                    <span className="font-semibold">
+                      {dailyData?.statistics?.volatility ? `${dailyData.statistics.volatility.toFixed(1)}%` : '—'}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-blue-600" />
+                  Optimized Pricing by Uptime (24h)
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Strategic shutdown during peak prices - showing actual avg cost in CAD & USD
+                </p>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  if (!dailyData?.rawHourlyData) return <div className="text-sm text-muted-foreground">Loading data...</div>;
+                  
+                  const uptimeLevels = [85, 90, 95, 97];
+                  const transmissionCost = parseFloat(transmissionAdder) || 11.63;
+                  const hourlyPrices = dailyData.rawHourlyData.map((h: any) => h.price);
+                  
+                  const quickAnalysis = uptimeLevels.map(uptime => {
+                    const totalHours = hourlyPrices.length;
+                    const operatingHours = Math.floor(totalHours * (uptime / 100));
+                    const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
+                    const operatingPrices = sortedPrices.slice(0, operatingHours);
+                    const avgEnergyPrice = operatingPrices.reduce((sum: number, p: number) => sum + p, 0) / operatingHours;
+                    const allInPrice = avgEnergyPrice + transmissionCost;
+                    
+                    return {
+                      uptime,
+                      priceInCentsCAD: (allInPrice / 10).toFixed(2),
+                      priceInCentsUSD: (convertCADtoUSD(allInPrice) / 10).toFixed(2),
+                      avgEnergyCAD: avgEnergyPrice.toFixed(2),
+                      avgEnergyUSD: convertCADtoUSD(avgEnergyPrice).toFixed(2)
+                    };
+                  });
+                  
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {quickAnalysis.map((item) => (
+                        <div key={item.uptime} className="bg-muted/30 rounded-lg p-3 border border-border">
+                          <div className="text-xs text-muted-foreground mb-1">{item.uptime}% Uptime</div>
+                          <div className="space-y-1">
+                            <div>
+                              <div className="text-lg font-bold text-blue-600">
+                                {item.priceInCentsCAD}¢
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                CAD per kWh
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold text-green-600">
+                                {item.priceInCentsUSD}¢
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                USD per kWh
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-border/50">
+                            <div className="text-xs text-muted-foreground mb-1">Energy only:</div>
+                            <div className="text-xs font-medium flex flex-wrap gap-x-1 items-center">
+                              <span className="text-orange-600 whitespace-nowrap">CA${item.avgEnergyCAD}</span>
+                              <span className="text-muted-foreground">/</span>
+                              <span className="text-green-600 whitespace-nowrap">US${item.avgEnergyUSD}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-blue-600" />
+                24-Hour Price Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                {loadingDaily ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <ResponsiveContainer>
+                    <AreaChart data={dailyData?.chartData || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="price" 
+                        stroke="#2563eb" 
+                        fill="#2563eb20" 
+                        name="Price"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Monthly Data Tab */}
         <TabsContent value="monthly" className="space-y-4">
