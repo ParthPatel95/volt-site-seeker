@@ -487,6 +487,9 @@ export default function ViewDocument() {
             accessLevel={linkData.access_level}
             watermarkEnabled={linkData.watermark_enabled}
             recipientEmail={linkData.recipient_email}
+            linkId={linkData.id}
+            documentId={linkData.document.id}
+            enableTracking={true}
           />
         </Card>
       </div>

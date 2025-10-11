@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -15,6 +16,9 @@ interface DocumentViewerProps {
   accessLevel: string;
   watermarkEnabled: boolean;
   recipientEmail?: string | null;
+  linkId?: string;
+  documentId?: string;
+  enableTracking?: boolean;
 }
 
 export function DocumentViewer({
@@ -22,7 +26,10 @@ export function DocumentViewer({
   documentType,
   accessLevel,
   watermarkEnabled,
-  recipientEmail
+  recipientEmail,
+  linkId,
+  documentId,
+  enableTracking = false
 }: DocumentViewerProps) {
   const { toast } = useToast();
   const [downloadAttempted, setDownloadAttempted] = useState(false);
@@ -30,6 +37,14 @@ export function DocumentViewer({
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Activity tracking
+  const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
+    linkId: linkId || '',
+    documentId: documentId || '',
+    enabled: enableTracking && !!linkId && !!documentId
+  });
 
   const canDownload = accessLevel === 'download';
 
@@ -173,6 +188,36 @@ export function DocumentViewer({
     setPageNumber(1);
   }
 
+  // Track page changes
+  useEffect(() => {
+    if (enableTracking && linkId && documentId) {
+      trackPageChange(pageNumber);
+    }
+  }, [pageNumber, enableTracking, linkId, documentId]);
+
+  // Track scroll depth
+  useEffect(() => {
+    if (!enableTracking || !linkId || !documentId) return;
+
+    const handleScroll = () => {
+      const scrollArea = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (!scrollArea) return;
+
+      const scrollTop = scrollArea.scrollTop;
+      const scrollHeight = scrollArea.scrollHeight - scrollArea.clientHeight;
+      const scrollPercentage = scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+
+      trackScrollDepth(scrollPercentage);
+    };
+
+    const scrollArea = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    scrollArea?.addEventListener('scroll', handleScroll);
+
+    return () => {
+      scrollArea?.removeEventListener('scroll', handleScroll);
+    };
+  }, [enableTracking, linkId, documentId, trackScrollDepth]);
+
   return (
     <div className="w-full h-full flex flex-col">
       <div className={`bg-card flex-1 flex flex-col ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
@@ -263,7 +308,7 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1" ref={scrollAreaRef}>
           <div className="relative bg-muted/20 min-h-full flex items-center justify-center p-4">
             {isPdf ? (
               <Document
