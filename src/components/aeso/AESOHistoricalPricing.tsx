@@ -1018,33 +1018,57 @@ export function AESOHistoricalPricing() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-blue-600" />
-                24-Hour Price Trend
+                Hourly Pricing Data (Last 24 Hours)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                {loadingDaily ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : (
-                  <ResponsiveContainer>
-                    <AreaChart data={dailyData?.chartData || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Area 
-                        type="monotone" 
-                        dataKey="price" 
-                        stroke="#2563eb" 
-                        fill="#2563eb20" 
-                        name="Price"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
+              {loadingDaily ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left py-3 px-4 font-semibold text-sm">Hour Ending</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (CAD/MWh)</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (USD/MWh)</th>
+                        <th className="text-center py-3 px-4 font-semibold text-sm">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dailyData?.chartData?.map((hourData: any, index: number) => {
+                        const priceCAD = hourData.price;
+                        const priceUSD = convertCADtoUSD(priceCAD);
+                        const isHigh = priceCAD > (dailyData?.statistics?.average || 0) * 1.2;
+                        const isLow = priceCAD < (dailyData?.statistics?.average || 0) * 0.8;
+                        
+                        return (
+                          <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+                            <td className="py-3 px-4 font-medium">{hourData.date}</td>
+                            <td className="text-right py-3 px-4 font-mono font-semibold">
+                              {formatCurrency(priceCAD)}
+                            </td>
+                            <td className="text-right py-3 px-4 font-mono text-green-600">
+                              US${priceUSD.toFixed(2)}
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              {isHigh ? (
+                                <Badge variant="destructive" className="text-xs">High</Badge>
+                              ) : isLow ? (
+                                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">Low</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">Normal</Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
