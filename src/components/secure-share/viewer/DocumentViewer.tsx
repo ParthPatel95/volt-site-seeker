@@ -218,6 +218,32 @@ export function DocumentViewer({
     };
   }, [enableTracking, linkId, documentId, trackScrollDepth]);
 
+  // Keyboard navigation for pages
+  useEffect(() => {
+    if (!isPdf || numPages === 0) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if not typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft' && pageNumber > 1) {
+        e.preventDefault();
+        setPageNumber(prev => Math.max(prev - 1, 1));
+      } else if (e.key === 'ArrowRight' && pageNumber < numPages) {
+        e.preventDefault();
+        setPageNumber(prev => Math.min(prev + 1, numPages));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPdf, numPages, pageNumber]);
+
   return (
     <div className="w-full h-full flex flex-col">
       <div className={`bg-card flex-1 flex flex-col ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
@@ -310,6 +336,35 @@ export function DocumentViewer({
         {/* Document Display */}
         <ScrollArea className="flex-1" ref={scrollAreaRef}>
           <div className="relative bg-muted/20 min-h-full flex items-center justify-center p-4">
+            {/* Floating Navigation Arrows */}
+            {isPdf && numPages > 1 && (
+              <>
+                {/* Left Arrow */}
+                <Button
+                  onClick={() => setPageNumber(prev => Math.max(prev - 1, 1))}
+                  disabled={pageNumber <= 1}
+                  variant="secondary"
+                  size="icon"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30"
+                  title="Previous Page (Left Arrow)"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </Button>
+
+                {/* Right Arrow */}
+                <Button
+                  onClick={() => setPageNumber(prev => Math.min(prev + 1, numPages))}
+                  disabled={pageNumber >= numPages}
+                  variant="secondary"
+                  size="icon"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30"
+                  title="Next Page (Right Arrow)"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </Button>
+              </>
+            )}
+
             {isPdf ? (
               <Document
                 file={documentUrl}
