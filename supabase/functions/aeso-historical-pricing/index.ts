@@ -59,6 +59,14 @@ serve(async (req) => {
       } else {
         historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
       }
+    } else if (timeframe === 'daily') {
+      // Fetch last 24 hours of hourly data
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - 1);
+      
+      console.log(`Daily date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
     } else if (timeframe === 'monthly') {
       // Fetch last 30 days of hourly data
       const endDate = new Date();

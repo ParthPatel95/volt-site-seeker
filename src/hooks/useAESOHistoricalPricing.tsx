@@ -69,15 +69,49 @@ export interface PeakAnalysisData {
 }
 
 export function useAESOHistoricalPricing() {
+  const [dailyData, setDailyData] = useState<HistoricalPricingData | null>(null);
   const [monthlyData, setMonthlyData] = useState<HistoricalPricingData | null>(null);
   const [yearlyData, setYearlyData] = useState<HistoricalPricingData | null>(null);
   const [peakAnalysis, setPeakAnalysis] = useState<PeakAnalysisData | null>(null);
   const [historicalTenYearData, setHistoricalTenYearData] = useState<any | null>(null);
+  const [loadingDaily, setLoadingDaily] = useState(false);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [loadingYearly, setLoadingYearly] = useState(false);
   const [loadingPeakAnalysis, setLoadingPeakAnalysis] = useState(false);
   const [loadingHistoricalTenYear, setLoadingHistoricalTenYear] = useState(false);
   const { toast } = useToast();
+
+  const fetchDailyData = async () => {
+    setLoadingDaily(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+        body: { timeframe: 'daily' }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      } else {
+        setDailyData(data);
+        
+        toast({
+          title: "Daily data loaded",
+          description: "Real-time 24-hour pricing data updated",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching daily data:', error);
+      
+      toast({
+        title: "Error loading data",
+        description: "Failed to fetch real-time pricing data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingDaily(false);
+    }
+  };
 
   const fetchMonthlyData = async () => {
     setLoadingMonthly(true);
@@ -225,14 +259,17 @@ export function useAESOHistoricalPricing() {
   };
 
   return {
+    dailyData,
     monthlyData,
     yearlyData,
     peakAnalysis,
     historicalTenYearData,
+    loadingDaily,
     loadingMonthly,
     loadingYearly,
     loadingPeakAnalysis,
     loadingHistoricalTenYear,
+    fetchDailyData,
     fetchMonthlyData,
     fetchYearlyData,
     analyzePeakShutdown,

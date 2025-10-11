@@ -46,14 +46,17 @@ import { AdvancedAnalytics } from '@/components/historical/AdvancedAnalytics';
 export function AESOHistoricalPricing() {
   const { convertCADtoUSD, formatCurrency: formatCurrencyUSD, exchangeRate: liveExchangeRate } = useCurrencyConversion();
   const { 
+    dailyData,
     monthlyData, 
     yearlyData, 
     peakAnalysis,
     historicalTenYearData,
+    loadingDaily,
     loadingMonthly, 
     loadingYearly, 
     loadingPeakAnalysis,
     loadingHistoricalTenYear,
+    fetchDailyData,
     fetchMonthlyData,
     fetchYearlyData,
     analyzePeakShutdown,
@@ -65,8 +68,6 @@ export function AESOHistoricalPricing() {
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
-  const [dailyData, setDailyData] = useState<any>(null);
-  const [loadingDaily, setLoadingDaily] = useState(false);
 
   useEffect(() => {
     fetchDailyData();
@@ -100,45 +101,6 @@ export function AESOHistoricalPricing() {
     } catch (error) {
       console.error('Failed to fetch exchange rate:', error);
       setExchangeRate(0.73); // Fallback rate
-    }
-  };
-
-  const fetchDailyData = async () => {
-    setLoadingDaily(true);
-    try {
-      // Fetch last 24 hours of AESO data
-      const response = await fetch('https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=' + 
-        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 
-        '&endDate=' + new Date().toISOString().split('T')[0]);
-      const data = await response.json();
-      
-      // Process hourly data for last 24 hours
-      const hourlyPrices = data?.return?.Pool_Price_Report || [];
-      const last24Hours = hourlyPrices.slice(-24);
-      
-      // Calculate statistics
-      const prices = last24Hours.map((h: any) => parseFloat(h.pool_price));
-      const average = prices.reduce((sum: number, p: number) => sum + p, 0) / prices.length;
-      const peak = Math.max(...prices);
-      const low = Math.min(...prices);
-      const volatility = (Math.sqrt(prices.reduce((sum: number, p: number) => sum + Math.pow(p - average, 2), 0) / prices.length) / average) * 100;
-      
-      // Format for charts
-      const chartData = last24Hours.map((h: any) => ({
-        date: new Date(h.begin_datetime_mpt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        price: parseFloat(h.pool_price),
-        hour: new Date(h.begin_datetime_mpt).getHours()
-      }));
-      
-      setDailyData({
-        statistics: { average, peak, low, volatility },
-        chartData,
-        rawHourlyData: last24Hours.map((h: any) => ({ price: parseFloat(h.pool_price) }))
-      });
-    } catch (error) {
-      console.error('Error fetching daily data:', error);
-    } finally {
-      setLoadingDaily(false);
     }
   };
 
