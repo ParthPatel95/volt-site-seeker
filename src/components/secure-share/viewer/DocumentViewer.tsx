@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Eye } from 'lucide-react';
+import { Download, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Document, Page, pdfjs } from 'react-pdf';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocumentViewerProps {
   documentUrl: string;
@@ -21,7 +28,10 @@ export function DocumentViewer({
 }: DocumentViewerProps) {
   const { toast } = useToast();
   const [downloadAttempted, setDownloadAttempted] = useState(false);
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(1.0);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   const canDownload = accessLevel === 'download';
 
@@ -135,25 +145,25 @@ export function DocumentViewer({
     : documentUrl;
 
   const handleZoomIn = () => {
-    setZoom(prev => {
-      const newZoom = Math.min(prev + 25, 200);
-      console.log('Zoom In:', prev, '->', newZoom);
-      return newZoom;
-    });
+    setZoom(prev => Math.min(prev + 0.25, 3.0));
   };
   
   const handleZoomOut = () => {
-    setZoom(prev => {
-      const newZoom = Math.max(prev - 25, 50);
-      console.log('Zoom Out:', prev, '->', newZoom);
-      return newZoom;
-    });
+    setZoom(prev => Math.max(prev - 0.25, 0.5));
   };
   
   const handleResetZoom = () => {
-    console.log('Reset Zoom to 100');
-    setZoom(100);
+    setZoom(1.0);
   };
+
+  const handleRotate = () => {
+    setRotation(prev => (prev + 90) % 360);
+  };
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages);
+    setPageNumber(1);
+  }
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -162,34 +172,52 @@ export function DocumentViewer({
         <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2 md:gap-4">
             {isPdf && (
-              <div className="flex items-center gap-1">
+              <>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    onClick={handleZoomOut} 
+                    size="sm" 
+                    variant="ghost"
+                    className="h-7 md:h-8 px-2"
+                    disabled={zoom <= 0.5}
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    onClick={handleResetZoom} 
+                    size="sm" 
+                    variant="ghost"
+                    className="h-7 md:h-8 px-2 text-xs min-w-[60px]"
+                  >
+                    {Math.round(zoom * 100)}%
+                  </Button>
+                  <Button 
+                    onClick={handleZoomIn} 
+                    size="sm" 
+                    variant="ghost"
+                    className="h-7 md:h-8 px-2"
+                    disabled={zoom >= 3.0}
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </Button>
+                </div>
                 <Button 
-                  onClick={handleZoomOut} 
+                  onClick={handleRotate} 
                   size="sm" 
                   variant="ghost"
                   className="h-7 md:h-8 px-2"
-                  disabled={zoom <= 50}
+                  title="Rotate"
                 >
-                  <span className="text-lg">−</span>
+                  <RotateCw className="w-4 h-4" />
                 </Button>
-                <Button 
-                  onClick={handleResetZoom} 
-                  size="sm" 
-                  variant="ghost"
-                  className="h-7 md:h-8 px-2 text-xs"
-                >
-                  {zoom}%
-                </Button>
-                <Button 
-                  onClick={handleZoomIn} 
-                  size="sm" 
-                  variant="ghost"
-                  className="h-7 md:h-8 px-2"
-                  disabled={zoom >= 200}
-                >
-                  <span className="text-lg">+</span>
-                </Button>
-              </div>
+                {numPages > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    Page {pageNumber} of {numPages}
+                  </span>
+                )}
+              </>
             )}
           </div>
           
@@ -202,44 +230,67 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <div className="relative bg-muted/20 flex-1 overflow-auto" id="pdf-scroll-container">
-          {isPdf ? (
-            <div className="flex items-center justify-center min-h-full p-4">
-              <div 
-                className="bg-white shadow-lg"
-                style={{
-                  width: `${zoom}%`,
-                  maxWidth: '100%',
-                  minWidth: zoom >= 100 ? `${zoom}%` : '100%'
-                }}
-              >
-                <iframe
-                  src={pdfUrl}
-                  className="w-full border-0"
-                  style={{ 
-                    height: '85vh',
-                    pointerEvents: canDownload ? 'auto' : 'none'
-                  }}
-                  title="Document Viewer"
-                />
+        <ScrollArea className="flex-1">
+          <div className="relative bg-muted/20 min-h-full">
+            {isPdf ? (
+              <div className="flex flex-col items-center justify-start p-4 gap-4">
+                <Document
+                  file={documentUrl}
+                  onLoadSuccess={onDocumentLoadSuccess}
+                  loading={
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  }
+                  error={
+                    <div className="text-center p-8">
+                      <p className="text-sm text-destructive mb-4">
+                        Failed to load PDF document
+                      </p>
+                      {canDownload && (
+                        <Button onClick={handleDownload} size="sm">
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Instead
+                        </Button>
+                      )}
+                    </div>
+                  }
+                >
+                  {Array.from(new Array(numPages), (el, index) => (
+                    <Page
+                      key={`page_${index + 1}`}
+                      pageNumber={index + 1}
+                      scale={zoom}
+                      rotate={rotation}
+                      renderTextLayer={true}
+                      renderAnnotationLayer={true}
+                      className="mb-4 shadow-lg"
+                      loading={
+                        <div className="flex items-center justify-center p-8 bg-white">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                      }
+                    />
+                  ))}
+                </Document>
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full p-6 md:p-12">
-              <div className="text-center">
-                <p className="text-sm md:text-base text-muted-foreground mb-4">
-                  Preview not available for this file type
-                </p>
-                {canDownload && (
-                  <Button onClick={handleDownload}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download to View
-                  </Button>
-                )}
+            ) : (
+              <div className="flex items-center justify-center h-full p-6 md:p-12">
+                <div className="text-center">
+                  <p className="text-sm md:text-base text-muted-foreground mb-4">
+                    Preview not available for this file type
+                  </p>
+                  {canDownload && (
+                    <Button onClick={handleDownload}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download to View
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
