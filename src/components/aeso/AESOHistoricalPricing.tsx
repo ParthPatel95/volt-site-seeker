@@ -1063,10 +1063,10 @@ export function AESOHistoricalPricing() {
                           <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
                             <td className="py-3 px-4 font-medium">{formattedTime}</td>
                             <td className="text-right py-3 px-4 font-mono font-semibold">
-                              {priceCentsCAD.toFixed(2)}¢
+                              {priceCentsCAD.toFixed(2)}c/kWh
                             </td>
                             <td className="text-right py-3 px-4 font-mono text-green-600">
-                              {priceCentsUSD.toFixed(2)}¢
+                              {priceCentsUSD.toFixed(2)}c/kWh
                             </td>
                             <td className="text-center py-3 px-4">
                               {isHigh ? (
