@@ -110,6 +110,14 @@ export function useDocumentActivityTracking({
       return;
     }
 
+    // Update current page's time spent before sending to database
+    const timeOnCurrentPage = Math.floor((Date.now() - pageStartTime.current) / 1000);
+    const currentActivity = pageActivities.current.get(currentPage.current);
+    if (currentActivity) {
+      currentActivity.timeSpent += timeOnCurrentPage;
+      pageStartTime.current = Date.now(); // Reset the timer
+    }
+
     const totalTimeSpent = Math.floor((Date.now() - sessionStartTime.current) / 1000);
     const pagesViewed = Array.from(pageActivities.current.values());
     
