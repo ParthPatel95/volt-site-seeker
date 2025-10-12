@@ -19,6 +19,8 @@ interface DocumentViewerProps {
   linkId?: string;
   documentId?: string;
   enableTracking?: boolean;
+  viewerName?: string;
+  viewerEmail?: string;
 }
 
 export function DocumentViewer({
@@ -29,7 +31,9 @@ export function DocumentViewer({
   recipientEmail,
   linkId,
   documentId,
-  enableTracking = false
+  enableTracking = false,
+  viewerName,
+  viewerEmail
 }: DocumentViewerProps) {
   const { toast } = useToast();
   const [downloadAttempted, setDownloadAttempted] = useState(false);
@@ -43,7 +47,9 @@ export function DocumentViewer({
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
     linkId: linkId || '',
     documentId: documentId || '',
-    enabled: enableTracking && !!linkId && !!documentId
+    enabled: enableTracking && !!linkId && !!documentId,
+    viewerName,
+    viewerEmail
   });
 
   const canDownload = accessLevel === 'download';

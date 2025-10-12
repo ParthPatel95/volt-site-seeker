@@ -315,6 +315,8 @@ export default function ViewDocument() {
                 linkId={linkData.id}
                 documentId={selectedDoc.id}
                 enableTracking={true}
+                viewerName={viewerData?.name}
+                viewerEmail={viewerData?.email}
               />
             </Card>
           </div>
@@ -465,6 +467,8 @@ export default function ViewDocument() {
             linkId={linkData.id}
             documentId={linkData.document.id}
             enableTracking={true}
+            viewerName={viewerData?.name}
+            viewerEmail={viewerData?.email}
           />
         </Card>
       </div>

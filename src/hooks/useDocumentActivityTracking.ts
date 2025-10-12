@@ -5,6 +5,8 @@ interface UseDocumentActivityTrackingProps {
   linkId: string;
   documentId: string;
   enabled: boolean;
+  viewerName?: string;
+  viewerEmail?: string;
 }
 
 interface PageActivity {
@@ -17,7 +19,9 @@ interface PageActivity {
 export function useDocumentActivityTracking({
   linkId,
   documentId,
-  enabled
+  enabled,
+  viewerName,
+  viewerEmail
 }: UseDocumentActivityTrackingProps) {
   const [activityId, setActivityId] = useState<string | null>(null);
   const sessionStartTime = useRef<number>(Date.now());
@@ -179,6 +183,8 @@ export function useDocumentActivityTracking({
           .insert({
             link_id: linkId,
             document_id: documentId,
+            viewer_name: viewerName || null,
+            viewer_email: viewerEmail || null,
             viewer_location: location,
             device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
             browser: navigator.userAgent.split(' ').pop() || 'unknown',
