@@ -31,27 +31,27 @@ export function useDocumentActivityTracking({
   const updateInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Get user location (IP-based from browser or geolocation API)
-  const getUserLocation = async (): Promise<string | null> => {
+  const getUserLocation = async (activityId: string): Promise<void> => {
     try {
       // Try to get browser geolocation
       if (navigator.geolocation) {
-        return new Promise((resolve) => {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              resolve(`${position.coords.latitude.toFixed(2)},${position.coords.longitude.toFixed(2)}`);
-            },
-            () => {
-              // Fallback to IP-based location (could be enhanced with a geolocation API)
-              resolve(null);
-            },
-            { timeout: 5000 }
-          );
-        });
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const location = `${position.coords.latitude.toFixed(2)},${position.coords.longitude.toFixed(2)}`;
+            // Update the activity record with location
+            await supabase
+              .from('viewer_activity')
+              .update({ viewer_location: location })
+              .eq('id', activityId);
+          },
+          () => {
+            // Silently fail - location is optional
+          },
+          { timeout: 5000 }
+        );
       }
-      return null;
     } catch (error) {
       console.error('Error getting location:', error);
-      return null;
     }
   };
 
@@ -183,9 +183,7 @@ export function useDocumentActivityTracking({
 
     const initTracking = async () => {
       try {
-        const location = await getUserLocation();
-
-        // Create a new activity record for each session
+        // Create activity record immediately without waiting for location
         const { data: newActivity, error: insertError } = await supabase
           .from('viewer_activity')
           .insert({
@@ -193,7 +191,7 @@ export function useDocumentActivityTracking({
             document_id: documentId,
             viewer_name: viewerName || null,
             viewer_email: viewerEmail || null,
-            viewer_location: location,
+            viewer_location: null, // Will be updated asynchronously
             device_type: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
             browser: navigator.userAgent.split(' ').pop() || 'unknown',
             opened_at: new Date().toISOString(),
@@ -219,6 +217,9 @@ export function useDocumentActivityTracking({
           scrollDepth: 0,
           viewedAt: new Date().toISOString()
         });
+
+        // Get location asynchronously (don't wait for it)
+        getUserLocation(newActivity.id);
 
         // Set up periodic updates every 5 seconds
         updateInterval.current = setInterval(updateActivityInDatabase, 5000);
