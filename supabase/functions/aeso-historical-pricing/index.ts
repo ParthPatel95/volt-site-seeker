@@ -68,14 +68,22 @@ serve(async (req) => {
       console.log(`Daily date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       const rawData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
       
-      // Filter out future hours (where price is 0 and datetime is in the future)
+      // Filter out future hours - AESO returns datetime strings without 'Z', treat as UTC
       const now = new Date();
       historicalData = rawData.filter(point => {
-        const pointDate = new Date(point.datetime);
-        return pointDate <= now && point.price > 0;
+        // Parse as UTC by adding 'Z' or using UTC string format
+        const pointDate = new Date(point.datetime + ' UTC');
+        const isPast = pointDate <= now;
+        const hasPrice = point.price > 0;
+        
+        if (!isPast) {
+          console.log(`Filtering out future point: ${point.datetime} (now: ${now.toISOString()})`);
+        }
+        
+        return isPast && hasPrice;
       });
       
-      console.log(`Filtered ${rawData.length} records to ${historicalData.length} actual historical records`);
+      console.log(`Filtered ${rawData.length} records to ${historicalData.length} actual historical records (current time: ${now.toISOString()})`);
     } else if (timeframe === 'monthly') {
       // Fetch last 30 days of hourly data
       const endDate = new Date();
