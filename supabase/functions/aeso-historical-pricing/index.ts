@@ -69,29 +69,20 @@ serve(async (req) => {
       const rawData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
       
       // Filter out future hours
-      // AESO API returns times in Mountain Time (America/Edmonton) despite field name "begin_datetime_utc"
-      // Mountain Time is UTC-7 (MDT) or UTC-6 (MST) depending on daylight saving
+      // AESO API returns "begin_datetime_utc" which IS actually in UTC format
+      // Just needs to be parsed correctly
       const now = new Date();
       
       historicalData = rawData.filter(point => {
-        // Parse the datetime string as Mountain Time
-        // Format: "2025-10-12 20:00" -> interpret in Mountain timezone
-        const dateStr = point.datetime.replace(' ', 'T'); // Convert to ISO format
-        
-        // Create date assuming it's in Mountain Time
-        // Mountain Time offset: UTC-6 (October is Mountain Daylight Time = UTC-6)
-        const [datePart, timePart] = point.datetime.split(' ');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = timePart.split(':').map(Number);
-        
-        // Create UTC date by adding Mountain Time offset (6 hours during MDT)
-        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute || 0, 0));
+        // Parse the datetime string as UTC (the field name is correct - it IS UTC)
+        // Format: "2025-10-12 20:00" -> add 'Z' to parse as UTC
+        const pointDateUTC = new Date(point.datetime.replace(' ', 'T') + 'Z');
         
         const isPast = pointDateUTC <= now;
         const hasPrice = point.price > 0;
         
         if (!isPast) {
-          console.log(`Filtering out future point: ${point.datetime} MT (${pointDateUTC.toISOString()} UTC) - now: ${now.toISOString()}`);
+          console.log(`Filtering out future point: ${point.datetime} UTC (${pointDateUTC.toISOString()}) - now: ${now.toISOString()}`);
         }
         
         return isPast && hasPrice;
