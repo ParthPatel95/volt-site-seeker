@@ -393,6 +393,12 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
       return [];
     }
     
+    // Log sample record to verify field mapping
+    if (priceData.length > 0) {
+      console.log('Sample API record (first):', JSON.stringify(priceData[0], null, 2));
+      console.log('Sample API record (last):', JSON.stringify(priceData[priceData.length - 1], null, 2));
+    }
+    
     // Transform to internal format
     const mappedData: HistoricalDataPoint[] = priceData.map((item: any) => ({
       datetime: item.begin_datetime_utc,
