@@ -1032,8 +1032,8 @@ export function AESOHistoricalPricing() {
                     <thead className="bg-muted/50">
                       <tr>
                         <th className="text-left py-3 px-4 font-semibold text-sm">Hour Ending</th>
-                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (CAD/MWh)</th>
-                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (USD/MWh)</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (¢/kWh CAD)</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (¢/kWh USD)</th>
                         <th className="text-center py-3 px-4 font-semibold text-sm">Status</th>
                       </tr>
                     </thead>
@@ -1041,6 +1041,11 @@ export function AESOHistoricalPricing() {
                       {dailyData.rawHourlyData.map((hourData: any, index: number) => {
                         const priceCAD = hourData.price;
                         const priceUSD = convertCADtoUSD(priceCAD);
+                        
+                        // Convert from $/MWh to ¢/kWh (divide by 10)
+                        const priceCentsCAD = priceCAD / 10;
+                        const priceCentsUSD = priceUSD / 10;
+                        
                         const isHigh = priceCAD > (dailyData?.statistics?.average || 0) * 1.2;
                         const isLow = priceCAD < (dailyData?.statistics?.average || 0) * 0.8;
                         
@@ -1058,10 +1063,10 @@ export function AESOHistoricalPricing() {
                           <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
                             <td className="py-3 px-4 font-medium">{formattedTime}</td>
                             <td className="text-right py-3 px-4 font-mono font-semibold">
-                              {formatCurrency(priceCAD)}
+                              {priceCentsCAD.toFixed(2)}¢
                             </td>
                             <td className="text-right py-3 px-4 font-mono text-green-600">
-                              US${priceUSD.toFixed(2)}
+                              {priceCentsUSD.toFixed(2)}¢
                             </td>
                             <td className="text-center py-3 px-4">
                               {isHigh ? (
