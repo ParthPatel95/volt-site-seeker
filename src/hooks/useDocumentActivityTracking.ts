@@ -106,6 +106,13 @@ export function useDocumentActivityTracking({
     const totalTimeSpent = Math.floor((Date.now() - sessionStartTime.current) / 1000);
     const pagesViewed = Array.from(pageActivities.current.values());
     
+    console.log('Updating activity:', {
+      activityId,
+      totalTimeSpent,
+      pagesViewed,
+      pageActivitiesSize: pageActivities.current.size
+    });
+    
     // Calculate engagement score based on:
     // - Number of unique pages viewed
     // - Total time spent
@@ -124,7 +131,7 @@ export function useDocumentActivityTracking({
     });
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('viewer_activity')
         .update({
           total_time_seconds: totalTimeSpent,
@@ -138,6 +145,12 @@ export function useDocumentActivityTracking({
           last_activity_at: new Date().toISOString()
         })
         .eq('id', activityId);
+      
+      if (error) {
+        console.error('Error updating activity:', error);
+      } else {
+        console.log('Activity updated successfully');
+      }
     } catch (error) {
       console.error('Error updating activity:', error);
     }
