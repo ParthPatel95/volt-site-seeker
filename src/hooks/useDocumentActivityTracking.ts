@@ -101,16 +101,20 @@ export function useDocumentActivityTracking({
 
   // Update activity in database
   const updateActivityInDatabase = async () => {
-    if (!activityId) return;
+    if (!activityId) {
+      console.log('No activityId, skipping update');
+      return;
+    }
 
     const totalTimeSpent = Math.floor((Date.now() - sessionStartTime.current) / 1000);
     const pagesViewed = Array.from(pageActivities.current.values());
     
-    console.log('Updating activity:', {
+    console.log('📊 Updating activity:', {
       activityId,
       totalTimeSpent,
-      pagesViewed,
-      pageActivitiesSize: pageActivities.current.size
+      pagesCount: pagesViewed.length,
+      pageActivitiesSize: pageActivities.current.size,
+      pages: pagesViewed
     });
     
     // Calculate engagement score based on:
@@ -130,29 +134,34 @@ export function useDocumentActivityTracking({
       scrollDepth[`page_${p.page}`] = p.scrollDepth;
     });
 
+    const updateData = {
+      total_time_seconds: totalTimeSpent,
+      pages_viewed: pagesViewed.map(p => ({
+        page: p.page,
+        time_spent: p.timeSpent,
+        viewed_at: p.viewedAt
+      })),
+      scroll_depth: scrollDepth,
+      engagement_score: engagementScore,
+      last_activity_at: new Date().toISOString()
+    };
+
+    console.log('📝 Update data:', updateData);
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('viewer_activity')
-        .update({
-          total_time_seconds: totalTimeSpent,
-          pages_viewed: pagesViewed.map(p => ({
-            page: p.page,
-            time_spent: p.timeSpent,
-            viewed_at: p.viewedAt
-          })),
-          scroll_depth: scrollDepth,
-          engagement_score: engagementScore,
-          last_activity_at: new Date().toISOString()
-        })
-        .eq('id', activityId);
+        .update(updateData)
+        .eq('id', activityId)
+        .select();
       
       if (error) {
-        console.error('Error updating activity:', error);
+        console.error('❌ Error updating activity:', error);
       } else {
-        console.log('Activity updated successfully');
+        console.log('✅ Activity updated successfully:', data);
       }
     } catch (error) {
-      console.error('Error updating activity:', error);
+      console.error('❌ Exception updating activity:', error);
     }
   };
 
