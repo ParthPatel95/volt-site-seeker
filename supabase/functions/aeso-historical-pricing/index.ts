@@ -60,13 +60,22 @@ serve(async (req) => {
         historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
       }
     } else if (timeframe === 'daily') {
-      // Fetch last 24 hours of hourly data
+      // Fetch last 24 hours of hourly data (actual historical data only)
       const endDate = new Date();
       const startDate = new Date();
-      startDate.setDate(endDate.getDate() - 1);
+      startDate.setHours(endDate.getHours() - 24);
       
       console.log(`Daily date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-      historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      const rawData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      
+      // Filter out future hours (where price is 0 and datetime is in the future)
+      const now = new Date();
+      historicalData = rawData.filter(point => {
+        const pointDate = new Date(point.datetime);
+        return pointDate <= now && point.price > 0;
+      });
+      
+      console.log(`Filtered ${rawData.length} records to ${historicalData.length} actual historical records`);
     } else if (timeframe === 'monthly') {
       // Fetch last 30 days of hourly data
       const endDate = new Date();
