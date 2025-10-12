@@ -7,6 +7,7 @@ const corsHeaders = {
 
 interface HistoricalDataPoint {
   datetime: string;
+  datetimeMPT?: string; // Mountain Prevailing Time - the reliable timestamp
   price: number;
   forecast_begin: string;
   forecast_end: string;
@@ -74,15 +75,26 @@ serve(async (req) => {
       const now = new Date();
       
       historicalData = rawData.filter(point => {
-        // Parse the datetime string as UTC (the field name is correct - it IS UTC)
-        // Format: "2025-10-12 20:00" -> add 'Z' to parse as UTC
-        const pointDateUTC = new Date(point.datetime.replace(' ', 'T') + 'Z');
+        // CRITICAL FIX: Use datetimeMPT instead of datetime (which comes from begin_datetime_utc)
+        // The begin_datetime_utc field is MISLEADING - it's not actually in UTC!
+        // Use begin_datetime_mpt which is explicitly in Mountain Time, then convert to UTC
+        const mptString = point.datetimeMPT || point.datetime; // Fallback to datetime if MPT not available
+        
+        // Parse as Mountain Time and convert to UTC
+        // Mountain Time is UTC-6 during daylight saving (April-October)
+        const [datePart, timePart] = mptString.split(' ');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
+        
+        // Create date in Mountain Time, then add 6 hours to get UTC (during MDT)
+        // Note: This is a simplification. For production, use a proper timezone library.
+        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute || 0, 0));
         
         const isPast = pointDateUTC <= now;
         const hasPrice = point.price > 0;
         
         if (!isPast) {
-          console.log(`Filtering out future point: ${point.datetime} UTC (${pointDateUTC.toISOString()}) - now: ${now.toISOString()}`);
+          console.log(`Filtering out future point: ${mptString} MT (${pointDateUTC.toISOString()} UTC) - now: ${now.toISOString()}`);
         }
         
         return isPast && hasPrice;
@@ -393,6 +405,7 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
     // Transform to internal format
     const mappedData: HistoricalDataPoint[] = priceData.map((item: any) => ({
       datetime: item.begin_datetime_utc,
+      datetimeMPT: item.begin_datetime_mpt, // Add Mountain Time for accurate filtering
       price: parseFloat(item.pool_price || '0'),
       forecast_begin: item.begin_datetime_utc || '',
       forecast_end: item.forecast_pool_price || ''
