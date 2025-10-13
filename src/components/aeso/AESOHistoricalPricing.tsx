@@ -1049,14 +1049,16 @@ export function AESOHistoricalPricing() {
                         const isHigh = priceCAD > (dailyData?.statistics?.average || 0) * 1.2;
                         const isLow = priceCAD < (dailyData?.statistics?.average || 0) * 0.8;
                         
-                        // Format the datetime to be more readable
-                        const dateObj = new Date(hourData.datetime);
+                        // Format the datetime in Mountain Time (AESO's timezone)
+                        // AESO data is in Mountain Time (America/Edmonton)
+                        const dateObj = new Date(hourData.ts || hourData.datetime);
                         const formattedTime = dateObj.toLocaleString('en-US', { 
                           month: 'short', 
                           day: 'numeric', 
                           hour: '2-digit', 
                           minute: '2-digit',
-                          hour12: true 
+                          hour12: true,
+                          timeZone: 'America/Edmonton'  // Force Mountain Time display
                         });
                         
                         return (
