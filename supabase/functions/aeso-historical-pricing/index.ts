@@ -69,32 +69,26 @@ serve(async (req) => {
       console.log(`Daily date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       const rawData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
       
-      // Filter out future hours
-      // AESO API returns "begin_datetime_utc" which IS actually in UTC format
-      // Just needs to be parsed correctly
+      // Filter out future hours - only show actual historical data with pool prices
       const now = new Date();
-      const nowMT = new Date(now.getTime() - (6 * 60 * 60 * 1000)); // Convert current UTC to MT (UTC-6 for MDT)
-      
-      console.log(`Current time: ${now.toISOString()} UTC / ${nowMT.toISOString().replace('Z', '')} MT`);
       
       historicalData = rawData.filter(point => {
         // Only include data where we have an ACTUAL pool price (not forecast)
-        // and the time is in the past
         const hasActualPrice = point.price > 0;
+        if (!hasActualPrice) return false;
         
-        // Parse the Mountain Time string
+        // Parse the Mountain Time string properly
+        // Format is "2025-10-12 19:00" in Mountain Time
         const mptString = point.datetimeMPT || point.datetime;
-        const pointDateMT = new Date(mptString.replace(' ', 'T'));
+        const [datePart, timePart] = mptString.split(' ');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
         
-        // Compare in Mountain Time to avoid timezone conversion issues
-        const isPast = pointDateMT <= nowMT;
+        // Create date in UTC by adding 6 hours to Mountain Time (MDT is UTC-6)
+        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute, 0));
         
-        if (!isPast && hasActualPrice) {
-          console.log(`⚠️ Future data point with price: ${mptString} MT - now: ${nowMT.toISOString().replace('Z', '')} MT`);
-        }
-        
-        // Only include if it's in the past AND has an actual price
-        return isPast && hasActualPrice;
+        // Only include if the time is in the past
+        return pointDateUTC <= now;
       });
       
       console.log(`Filtered ${rawData.length} records to ${historicalData.length} actual historical records (current UTC time: ${now.toISOString()})`);
