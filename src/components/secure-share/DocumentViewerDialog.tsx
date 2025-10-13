@@ -218,8 +218,8 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                       <Page
                         pageNumber={pageNumber}
                         scale={scale}
-                        renderTextLayer={true}
-                        renderAnnotationLayer={true}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
                         onContextMenu={(e) => !canDownload && e.preventDefault()}
                       />
                     </Document>
