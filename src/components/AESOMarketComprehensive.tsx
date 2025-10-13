@@ -91,38 +91,29 @@ export function AESOMarketComprehensive() {
   const hasValidPrice = pricing !== null && pricing !== undefined;
   const priceTimestamp = pricing?.timestamp;
 
-  // Calculate 95% uptime average price (excluding top 5% of highest prices)
+  // Calculate 95% uptime average price using REAL historical data
   const calculate95UptimeAverage = (averagePrice: number, currentPrice: number) => {
-    // Simulate historical price data for the past 30 days
-    // In a real implementation, this would come from a database of historical prices
-    const mockHistoricalPrices = [];
-    const basePrice = averagePrice || currentPrice || 30;
-    
-    // Generate 30 days of mock hourly data (720 data points)
-    for (let i = 0; i < 720; i++) {
-      // Create realistic price variations around the base price
-      const variation = (Math.random() - 0.5) * 2; // ±1 multiplier
-      const dailyCycle = Math.sin((i % 24) * Math.PI / 12) * 0.3; // Daily cycle
-      const weeklyPattern = Math.sin((i / 24) * Math.PI / 3.5) * 0.2; // Weekly pattern
-      const randomSpike = Math.random() < 0.05 ? Math.random() * 3 : 0; // 5% chance of price spike
+    // Use real historical data from historicalPrices if available
+    if (historicalPrices?.prices && historicalPrices.prices.length > 0) {
+      const prices = historicalPrices.prices.map(p => p.pool_price).sort((a, b) => a - b);
+      // Calculate 95th percentile - exclude top 5%
+      const index95 = Math.floor(prices.length * 0.95);
+      const prices95 = prices.slice(0, index95);
+      const uptimeAverage = prices95.reduce((sum, p) => sum + p, 0) / prices95.length;
       
-      const price = Math.max(0, basePrice * (1 + variation * 0.4 + dailyCycle + weeklyPattern + randomSpike));
-      mockHistoricalPrices.push(price);
+      return {
+        uptimeAverage: uptimeAverage,
+        uptimePercentage: 95,
+        excludedPrices: prices.length - prices95.length,
+        totalDataPoints: prices.length
+      };
     }
-    
-    // Sort prices and remove top 5% for 95% uptime calculation
-    const sortedPrices = [...mockHistoricalPrices].sort((a, b) => a - b);
-    const cutoffIndex = Math.floor(sortedPrices.length * 0.95);
-    const uptime95Prices = sortedPrices.slice(0, cutoffIndex);
-    
-    // Calculate average of remaining 95% of prices
-    const uptimeAverage = uptime95Prices.reduce((sum, price) => sum + price, 0) / uptime95Prices.length;
-    
+    // If no historical data, return the average as best estimate
     return {
-      uptimeAverage: uptimeAverage,
+      uptimeAverage: averagePrice,
       uptimePercentage: 95,
-      excludedPrices: sortedPrices.length - uptime95Prices.length,
-      totalDataPoints: sortedPrices.length
+      excludedPrices: 0,
+      totalDataPoints: 0
     };
   };
 

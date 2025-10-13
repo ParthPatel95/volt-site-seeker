@@ -278,69 +278,107 @@ export function useAESOEnhancedData() {
   };
 
   const getWindSolarForecast = async () => {
-    const data = await fetchAESOEnhancedData('fetch_wind_solar_forecast');
-    if (data?.generationMix) {
-      // Generate forecast based on current generation
-      const currentWind = data.generationMix.wind_mw || 0;
-      const currentSolar = data.generationMix.solar_mw || 0;
-      const forecastData = generateFallbackWindSolarForecast();
-      setWindSolarForecast(forecastData);
-      checkForAlerts('wind_solar_forecast', forecastData);
-      return forecastData;
-    } else {
-      const fallbackData = generateFallbackWindSolarForecast();
-      setWindSolarForecast(fallbackData);
-      checkForAlerts('wind_solar_forecast', fallbackData);
-      return fallbackData;
-    }
+    // NOTE: AESO does not provide public wind/solar forecast API
+    // This feature requires a paid AESO subscription or alternate data source
+    // For now, return null to indicate no real data available
+    setWindSolarForecast(null);
+    return null;
   };
 
   const getAssetOutages = async () => {
-    const data = await fetchAESOEnhancedData('fetch_asset_outages');
-    if (data?.loadData) {
-      // Generate outages based on current system conditions
-      const outageData = generateFallbackAssetOutages();
-      setAssetOutages(outageData);
-      checkForAlerts('asset_outages', outageData);
-      return outageData;
-    } else {
-      const fallbackData = generateFallbackAssetOutages();
-      setAssetOutages(fallbackData);
-      checkForAlerts('asset_outages', fallbackData);
-      return fallbackData;
-    }
+    // NOTE: AESO asset outage data requires authentication and is not in public API
+    // This feature requires proper AESO market participant credentials
+    // For now, return null to indicate no real data available
+    setAssetOutages(null);
+    return null;
   };
 
   const getHistoricalPrices = async () => {
-    const data = await fetchAESOEnhancedData('fetch_historical_prices');
-    if (data?.pricing) {
-      // Generate historical data based on current pricing
-      const historyData = generateFallbackHistoricalPrices();
-      setHistoricalPrices(historyData);
-      checkForAlerts('historical_prices', historyData);
-      return historyData;
-    } else {
-      const fallbackData = generateFallbackHistoricalPrices();
-      setHistoricalPrices(fallbackData);
-      checkForAlerts('historical_prices', fallbackData);
-      return fallbackData;
+    // Fetch REAL historical prices from AESO API via our edge function
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+        body: { timeframe: 'daily' }
+      });
+
+      if (error) throw error;
+
+      if (data && data.statistics) {
+        const historicalData: AESOHistoricalPrices = {
+          prices: data.rawHourlyData?.map((item: any) => ({
+            datetime: item.ts,
+            pool_price: item.price,
+            forecast_pool_price: item.price // AESO doesn't provide forecast in historical
+          })) || [],
+          statistics: {
+            average_price: data.statistics.average,
+            max_price: data.statistics.peak,
+            min_price: data.statistics.low,
+            price_volatility: data.statistics.volatility || 0,
+            total_records: data.rawHourlyData?.length || 0
+          },
+          timestamp: new Date().toISOString()
+        };
+        setHistoricalPrices(historicalData);
+        checkForAlerts('historical_prices', historicalData);
+        return historicalData;
+      }
+    } catch (e) {
+      console.error('Error fetching real AESO historical prices:', e);
     }
+    setHistoricalPrices(null);
+    return null;
   };
 
   const getMarketAnalytics = async () => {
     const data = await fetchAESOEnhancedData('fetch_market_analytics');
     if (data?.pricing && data?.loadData) {
-      // Generate analytics based on real market data
-      const analyticsData = generateFallbackMarketAnalytics();
+      // Calculate REAL analytics based on actual AESO market data
+      const currentPrice = data.pricing.current_price || 0;
+      const currentDemand = data.loadData.current_demand_mw || 0;
+      const peakForecast = data.loadData.peak_forecast_mw || 0;
+      const reserveMargin = data.loadData.reserve_margin || 0;
+      
+      // Calculate market stress based on real metrics
+      const demandRatio = peakForecast > 0 ? (currentDemand / peakForecast) * 100 : 50;
+      const priceStress = Math.min(100, (currentPrice / 100) * 100); // Normalize to 100
+      const reserveStress = Math.max(0, (15 - reserveMargin) * 10); // Low reserve = higher stress
+      const stressScore = Math.round((demandRatio * 0.4 + priceStress * 0.4 + reserveStress * 0.2));
+
+      const analyticsData: AESOMarketAnalytics = {
+        market_stress_score: Math.min(100, Math.max(0, stressScore)),
+        price_prediction: {
+          next_hour_prediction: currentPrice, // Simple persistence model
+          confidence: 65, // Lower confidence for simple model
+          trend_direction: currentPrice > (data.pricing.average_price || currentPrice) ? 'increasing' : 'decreasing',
+          predicted_range: {
+            low: Math.round(currentPrice * 0.85 * 100) / 100,
+            high: Math.round(currentPrice * 1.15 * 100) / 100
+          }
+        },
+        capacity_gap_analysis: {
+          current_gap_mw: Math.round(peakForecast - currentDemand),
+          utilization_rate: Math.round(demandRatio),
+          status: demandRatio > 90 ? 'critical' : demandRatio > 80 ? 'tight' : 'adequate',
+          recommendation: demandRatio > 90 ? 'conservation_measures' : 'normal_operations'
+        },
+        investment_opportunities: [], // Remove synthetic investment recommendations
+        risk_assessment: {
+          risks: [
+            ...(currentPrice > 100 ? [{ type: 'price_spike', level: 'high', impact: 'significant' }] : []),
+            ...(reserveMargin < 10 ? [{ type: 'low_reserve', level: 'high', impact: 'reliability_concern' }] : []),
+            ...(demandRatio > 85 ? [{ type: 'high_demand', level: 'medium', impact: 'moderate' }] : [])
+          ],
+          overall_risk_level: stressScore > 70 ? 'high' : stressScore > 50 ? 'medium' : 'low'
+        },
+        market_timing_signals: [], // Remove synthetic trading signals
+        timestamp: new Date().toISOString()
+      };
       setMarketAnalytics(analyticsData);
       checkForAlerts('market_analytics', analyticsData);
       return analyticsData;
-    } else {
-      const fallbackData = generateFallbackMarketAnalytics();
-      setMarketAnalytics(fallbackData);
-      checkForAlerts('market_analytics', fallbackData);
-      return fallbackData;
     }
+    setMarketAnalytics(null);
+    return null;
   };
 
   const checkForAlerts = (dataType: string, data: any) => {
@@ -406,14 +444,8 @@ export function useAESOEnhancedData() {
     setAlerts([]);
   };
 
-  // Auto-fetch enhanced data on component mount and set initial fallback data
+  // Auto-fetch enhanced data on component mount - REAL DATA ONLY
   useEffect(() => {
-    // Set initial fallback data immediately
-    setWindSolarForecast(generateFallbackWindSolarForecast());
-    setAssetOutages(generateFallbackAssetOutages());
-    setHistoricalPrices(generateFallbackHistoricalPrices());
-    setMarketAnalytics(generateFallbackMarketAnalytics());
-    
     const fetchAllEnhancedData = async () => {
       await Promise.all([
         getWindSolarForecast(),
