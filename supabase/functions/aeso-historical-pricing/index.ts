@@ -73,19 +73,13 @@ serve(async (req) => {
       const now = new Date();
       
       historicalData = rawData.filter(point => {
-        // Only include data where we have an ACTUAL pool price (not forecast)
-        const hasActualPrice = point.price > 0;
+        // Check if there's an actual pool price (not empty string, not null, not zero)
+        const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
         if (!hasActualPrice) return false;
         
-        // Parse the Mountain Time string properly
-        // Format is "2025-10-12 19:00" in Mountain Time
-        const mptString = point.datetimeMPT || point.datetime;
-        const [datePart, timePart] = mptString.split(' ');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
-        
-        // Create date in UTC by adding 6 hours to Mountain Time (MDT is UTC-6)
-        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute, 0));
+        // Use UTC timestamp directly from API instead of parsing Mountain Time
+        const utcString = point.datetimeUTC || point.datetime;
+        const pointDateUTC = new Date(utcString.replace(' ', 'T') + 'Z');
         
         // Only include if the time is in the past
         return pointDateUTC <= now;
@@ -104,14 +98,13 @@ serve(async (req) => {
       // Filter out future hours - only show actual historical data with pool prices
       const now = new Date();
       historicalData = rawData.filter(point => {
-        const hasActualPrice = point.price > 0;
+        // Check if there's an actual pool price (not empty string, not null, not zero)
+        const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
         if (!hasActualPrice) return false;
         
-        const mptString = point.datetimeMPT || point.datetime;
-        const [datePart, timePart] = mptString.split(' ');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
-        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute, 0));
+        // Use UTC timestamp directly from API
+        const utcString = point.datetimeUTC || point.datetime;
+        const pointDateUTC = new Date(utcString.replace(' ', 'T') + 'Z');
         
         return pointDateUTC <= now;
       });
@@ -127,14 +120,13 @@ serve(async (req) => {
       // Filter out future hours - only show actual historical data with pool prices
       const now = new Date();
       historicalData = rawData.filter(point => {
-        const hasActualPrice = point.price > 0;
+        // Check if there's an actual pool price (not empty string, not null, not zero)
+        const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
         if (!hasActualPrice) return false;
         
-        const mptString = point.datetimeMPT || point.datetime;
-        const [datePart, timePart] = mptString.split(' ');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
-        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute, 0));
+        // Use UTC timestamp directly from API
+        const utcString = point.datetimeUTC || point.datetime;
+        const pointDateUTC = new Date(utcString.replace(' ', 'T') + 'Z');
         
         return pointDateUTC <= now;
       });
