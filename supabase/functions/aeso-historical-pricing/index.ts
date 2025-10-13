@@ -99,15 +99,45 @@ serve(async (req) => {
       startDate.setDate(endDate.getDate() - 30);
       
       console.log(`Monthly date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-      historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      const rawData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      
+      // Filter out future hours - only show actual historical data with pool prices
+      const now = new Date();
+      historicalData = rawData.filter(point => {
+        const hasActualPrice = point.price > 0;
+        if (!hasActualPrice) return false;
+        
+        const mptString = point.datetimeMPT || point.datetime;
+        const [datePart, timePart] = mptString.split(' ');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
+        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute, 0));
+        
+        return pointDateUTC <= now;
+      });
     } else if (timeframe === 'yearly') {
-      // Fetch last 12 months of daily averages - use a smaller range to avoid extremely old data
+      // Fetch last 12 months of daily averages
       const endDate = new Date();
       const startDate = new Date();
       startDate.setMonth(endDate.getMonth() - 12);
       
       console.log(`Yearly date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-      historicalData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      const rawData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      
+      // Filter out future hours - only show actual historical data with pool prices
+      const now = new Date();
+      historicalData = rawData.filter(point => {
+        const hasActualPrice = point.price > 0;
+        if (!hasActualPrice) return false;
+        
+        const mptString = point.datetimeMPT || point.datetime;
+        const [datePart, timePart] = mptString.split(' ');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
+        const pointDateUTC = new Date(Date.UTC(year, month - 1, day, hour + 6, minute, 0));
+        
+        return pointDateUTC <= now;
+      });
     } else if (timeframe === 'historical-10year') {
       // Fetch real 8-year historical data from AESO
       console.log(`Fetching 8-year real historical data from AESO API with ${uptimePercentage}% uptime filter...`);
