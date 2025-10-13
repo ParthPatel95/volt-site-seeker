@@ -1,8 +1,15 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ExternalLink, Download } from 'lucide-react';
+import { Loader2, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { Button } from '@/components/ui/button';
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -19,6 +26,9 @@ interface DocumentViewerDialogProps {
 export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel = 'view_only' }: DocumentViewerDialogProps) {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -26,6 +36,8 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
       loadDocument();
     } else {
       setDocumentUrl(null);
+      setNumPages(0);
+      setPageNumber(1);
     }
   }, [open, document]);
 
@@ -101,6 +113,23 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     }
   };
 
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setPageNumber(1);
+  };
+
+  const changePage = (offset: number) => {
+    setPageNumber(prevPageNumber => {
+      const newPage = prevPageNumber + offset;
+      return Math.min(Math.max(1, newPage), numPages);
+    });
+  };
+
+  const previousPage = () => changePage(-1);
+  const nextPage = () => changePage(1);
+  const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3));
+  const zoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
@@ -127,14 +156,77 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
           ) : documentUrl ? (
             <>
               {isPdf ? (
-                <iframe
-                  src={`${documentUrl}#toolbar=${canDownload ? '1' : '0'}`}
-                  className="w-full h-full"
-                  style={{ border: 'none' }}
-                  title="Document Viewer"
-                  sandbox={canDownload ? "allow-same-origin allow-scripts allow-downloads" : "allow-same-origin allow-scripts"}
-                  onContextMenu={(e) => !canDownload && e.preventDefault()}
-                />
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b gap-2">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={previousPage}
+                        disabled={pageNumber <= 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm">
+                        Page {pageNumber} of {numPages || '...'}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={nextPage}
+                        disabled={pageNumber >= numPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={zoomOut}
+                        disabled={scale <= 0.5}
+                      >
+                        <ZoomOut className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm min-w-[60px] text-center">{Math.round(scale * 100)}%</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={zoomIn}
+                        disabled={scale >= 3}
+                      >
+                        <ZoomIn className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/10">
+                    <Document
+                      file={documentUrl}
+                      onLoadSuccess={onDocumentLoadSuccess}
+                      onLoadError={(error) => {
+                        console.error('Error loading PDF:', error);
+                        toast({
+                          title: 'Error',
+                          description: 'Failed to load PDF document',
+                          variant: 'destructive',
+                        });
+                      }}
+                      loading={
+                        <div className="flex items-center justify-center p-8">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        </div>
+                      }
+                    >
+                      <Page
+                        pageNumber={pageNumber}
+                        scale={scale}
+                        renderTextLayer={true}
+                        renderAnnotationLayer={true}
+                        onContextMenu={(e) => !canDownload && e.preventDefault()}
+                      />
+                    </Document>
+                  </div>
+                </div>
               ) : isImage ? (
                 <div 
                   className="flex items-center justify-center h-full p-4 bg-black/5"
