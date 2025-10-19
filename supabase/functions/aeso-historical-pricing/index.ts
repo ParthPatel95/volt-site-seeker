@@ -562,11 +562,12 @@ async function processHistoricalData(data: HistoricalDataPoint[], timeframe: str
   
   // Return ALL raw hourly data for frontend use (USE ORIGINAL DATA, NOT FILTERED)
   // This includes ALL prices including high spikes like $999.99
+  // Use Mountain Time (MPT) timestamp for accurate display
   const rawHourlyData = data.map(d => ({
-    datetime: d.datetime,
+    datetime: d.datetimeMPT || d.datetime, // Use Mountain Time when available
     price: parseFloat(d.price.toString()),
-    date: d.datetime.split('T')[0] || d.datetime.substring(0, 10),
-    hour: new Date(d.datetime).getUTCHours()
+    date: (d.datetimeMPT || d.datetime).split(' ')[0] || (d.datetimeMPT || d.datetime).split('T')[0],
+    hour: parseInt((d.datetimeMPT || d.datetime).split(' ')[1]?.split(':')[0] || '0')
   }));
   
   console.log(`Returning ${rawHourlyData.length} raw hourly data points`);

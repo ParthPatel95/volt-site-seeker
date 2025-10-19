@@ -1049,17 +1049,17 @@ export function AESOHistoricalPricing() {
                         const isHigh = priceCAD > (dailyData?.statistics?.average || 0) * 1.2;
                         const isLow = priceCAD < (dailyData?.statistics?.average || 0) * 0.8;
                         
-                        // Format the datetime in Mountain Time (AESO's timezone)
-                        // AESO data is in Mountain Time (America/Edmonton)
-                        const dateObj = new Date(hourData.ts || hourData.datetime);
-                        const formattedTime = dateObj.toLocaleString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: true,
-                          timeZone: 'America/Edmonton'  // Force Mountain Time display
-                        });
+                        // Data is already in Mountain Time from the edge function
+                        // Format: "2025-10-19 14:00" (YYYY-MM-DD HH:MM)
+                        const datetime = hourData.datetime || '';
+                        const [datePart, timePart] = datetime.split(' ');
+                        const [year, month, day] = datePart.split('-');
+                        const [hour24, minute] = timePart.split(':');
+                        
+                        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const hour12 = parseInt(hour24) % 12 || 12;
+                        const ampm = parseInt(hour24) >= 12 ? 'PM' : 'AM';
+                        const formattedTime = `${monthNames[parseInt(month) - 1]} ${parseInt(day)}, ${hour12}:${minute} ${ampm}`;
                         
                         return (
                           <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
