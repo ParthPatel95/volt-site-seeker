@@ -66,8 +66,10 @@ serve(async (req) => {
       const startDate = new Date();
       startDate.setHours(endDate.getHours() - 24);
       
-      console.log(`Daily date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      console.log(`[DAILY] Requesting date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      console.log(`[DAILY] Will format as: startDate=${startDate.toISOString().slice(0, 10)}, endDate=${endDate.toISOString().slice(0, 10)}`);
       const rawData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+      console.log(`[DAILY] Received ${rawData.length} raw records from API`);
       
       // Filter out future hours - only show actual historical data with pool prices
       const now = new Date();
@@ -77,15 +79,43 @@ serve(async (req) => {
         const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
         if (!hasActualPrice) return false;
         
-        // Use UTC timestamp directly from API instead of parsing Mountain Time
-        const utcString = point.datetimeUTC || point.datetime;
-        const pointDateUTC = new Date(utcString.replace(' ', 'T') + 'Z');
+        // Use UTC timestamp directly from API (point.datetime contains begin_datetime_utc)
+        const utcString = point.datetime;
+        // Handle format "2025-10-19 06:00" - add T and Z to make it a valid ISO string
+        const isoString = utcString.includes('T') ? utcString : utcString.replace(' ', 'T') + 'Z';
+        const pointDateUTC = new Date(isoString);
         
         // Only include if the time is in the past
         return pointDateUTC <= now;
       });
       
-      console.log(`Filtered ${rawData.length} records to ${historicalData.length} actual historical records (current UTC time: ${now.toISOString()})`);
+      console.log(`[DAILY] Filtered ${rawData.length} records to ${historicalData.length} actual historical records (current UTC time: ${now.toISOString()})`);
+      if (historicalData.length > 0) {
+        console.log(`[DAILY] First record: ${JSON.stringify(historicalData[0])}`);
+        console.log(`[DAILY] Last record: ${JSON.stringify(historicalData[historicalData.length - 1])}`);
+      }
+      
+      // Fallback: If we got very little or no data, fetch the most recent 30 days and take the last 24 hours
+      if (historicalData.length < 10) {
+        console.log(`[DAILY] Only got ${historicalData.length} records, fetching wider range as fallback...`);
+        const fallbackEndDate = new Date();
+        const fallbackStartDate = new Date();
+        fallbackStartDate.setDate(fallbackEndDate.getDate() - 30);
+        
+        const fallbackData = await fetchAESOHistoricalData(fallbackStartDate, fallbackEndDate, apiKey);
+        const fallbackFiltered = fallbackData.filter(point => {
+          const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
+          return hasActualPrice;
+        });
+        
+        // Get the most recent 24 data points
+        historicalData = fallbackFiltered.slice(-24);
+        console.log(`[DAILY] Fallback got ${fallbackFiltered.length} records, using most recent ${historicalData.length}`);
+        if (historicalData.length > 0) {
+          console.log(`[DAILY] Fallback first record: ${JSON.stringify(historicalData[0])}`);
+          console.log(`[DAILY] Fallback last record: ${JSON.stringify(historicalData[historicalData.length - 1])}`);
+        }
+      }
     } else if (timeframe === 'monthly') {
       // Fetch last 30 days of hourly data
       const endDate = new Date();
