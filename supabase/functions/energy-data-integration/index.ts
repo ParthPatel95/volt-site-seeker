@@ -533,7 +533,71 @@ async function fetchERCOTData() {
   }
 
 
-  // Try Fuel Mix dashboard (public) for real-time generation mix if still missing
+  // Try ERCOT API for generation mix (fuel type)
+  console.log('🔍 Generation mix check - generationMix:', generationMix, 'ercotApiKey exists:', !!ercotApiKey);
+  if (!generationMix && ercotApiKey) {
+    try {
+      console.log('🚀 Fetching ERCOT fuel mix from API...');
+      const fuelMixUrl = 'https://api.ercot.com/api/public-reports/np4-732-cd/act_sys_load_by_fueltype';
+      const fuelMixResponse = await fetch(fuelMixUrl, {
+        headers: {
+          'Authorization': `Bearer ${ercotApiKey}`,
+          'Ocp-Apim-Subscription-Key': ercotApiKey
+        }
+      });
+
+      if (fuelMixResponse.ok) {
+        const fuelMixData = await fuelMixResponse.json();
+        console.log('ERCOT fuel mix API response status:', fuelMixResponse.status);
+        console.log('ERCOT fuel mix data sample:', JSON.stringify(fuelMixData).substring(0, 500));
+
+        // The API returns data in fields array format
+        if (fuelMixData && fuelMixData.data && Array.isArray(fuelMixData.data)) {
+          // Get the most recent record
+          const latestRecord = fuelMixData.data[0];
+          
+          if (latestRecord) {
+            // Extract fuel type values from the latest record
+            const gas = parseFloat(latestRecord.naturalGas) || 0;
+            const wind = parseFloat(latestRecord.wind) || 0;
+            const solar = parseFloat(latestRecord.solar) || 0;
+            const nuclear = parseFloat(latestRecord.nuclear) || 0;
+            const coal = parseFloat(latestRecord.coal) || 0;
+            const hydro = parseFloat(latestRecord.hydro) || 0;
+            const other = parseFloat(latestRecord.other) || 0;
+            
+            const total = gas + wind + solar + nuclear + coal + hydro + other;
+            
+            console.log('ERCOT fuel mix from API - gas:', gas, 'wind:', wind, 'solar:', solar, 'nuclear:', nuclear, 'coal:', coal, 'total:', total);
+            
+            if (total > 10000) {
+              generationMix = {
+                total_generation_mw: Math.round(total),
+                natural_gas_mw: Math.round(gas),
+                wind_mw: Math.round(wind),
+                solar_mw: Math.round(solar),
+                nuclear_mw: Math.round(nuclear),
+                coal_mw: Math.round(coal),
+                hydro_mw: Math.round(hydro),
+                other_mw: Math.round(other),
+                renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
+                timestamp: new Date().toISOString(),
+                source: 'ercot_api_fuelmix'
+              };
+              console.log('✅ ERCOT generation mix from API extracted successfully');
+              realDataFound = true;
+            }
+          }
+        }
+      } else {
+        console.error('ERCOT fuel mix API failed:', fuelMixResponse.status, await fuelMixResponse.text());
+      }
+    } catch (fuelErr) {
+      console.error('ERCOT fuel mix API fetch failed:', fuelErr);
+    }
+  }
+
+  // Fallback to web scraping for generation mix if API didn't work
   if (!generationMix) {
     try {
       const fuelUrls = [
@@ -546,15 +610,10 @@ async function fetchERCOTData() {
         if (res.ok) { text = await res.text(); break; }
       }
       if (text) {
-        // Updated pattern to extract generation data from format like "Natural Gas\n\n39,466 MW(60.2%)"
         const grab = (label: string) => {
-          // More flexible regex that looks for label followed by MW value with optional newlines/spaces
           const patterns = [
-            // Pattern 1: Label followed by MW and percentage: "Wind\n\n7,560 MW(11.5%)"
             new RegExp(label + '[\\s\\S]{0,50}?([0-9,]+)\\s*MW\\s*\\(', 'i'),
-            // Pattern 2: Label followed by just MW: "Wind 7,560 MW"
             new RegExp(label + '[\\s\\S]{0,50}?([0-9,]+)\\s*MW', 'i'),
-            // Pattern 3: In a table row format
             new RegExp(label + '[\\s\\S]{0,100}?<[^>]*>\\s*([0-9,]+)\\s*MW', 'i')
           ];
           
@@ -562,7 +621,6 @@ async function fetchERCOTData() {
             const m = text.match(re);
             if (m && m[1]) {
               const val = parseFloat(m[1].replace(/,/g, ''));
-              // Validate it's a reasonable MW value
               if (!isNaN(val) && val >= 0 && val < 100000) {
                 console.log(`Extracted ${label}: ${val} MW`);
                 return val;
@@ -586,7 +644,6 @@ async function fetchERCOTData() {
         
         console.log('ERCOT fuel mix totals:', { gas, wind, solar, nuclear, coal, hydro, other, total });
         
-        // Only accept if total is reasonable for ERCOT (> 10,000 MW minimum)
         if (total > 10000) {
           generationMix = {
             total_generation_mw: Math.round(total),
@@ -599,9 +656,9 @@ async function fetchERCOTData() {
             other_mw: Math.round(other),
             renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
             timestamp: new Date().toISOString(),
-            source: 'ercot_fuelmix'
+            source: 'ercot_fuelmix_scrape'
           };
-          console.log('✅ ERCOT generation from Fuel Mix dashboard extracted successfully');
+          console.log('✅ ERCOT generation from scraping extracted successfully');
           realDataFound = true;
         } else {
           console.warn('⚠️ ERCOT fuel mix total too low:', total, 'MW - will try other sources');
