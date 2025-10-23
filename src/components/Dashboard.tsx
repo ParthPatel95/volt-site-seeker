@@ -184,12 +184,12 @@ export const Dashboard = () => {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">AESO Price</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                    {aesoPricing ? `CA$${aesoPricing.current_price.toFixed(2)}` : (
+                    {aesoPricing ? `$${convertToUSD(aesoPricing.current_price).toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
                     )}
                   </p>
                   {aesoPricing && (
-                    <p className="text-sm text-muted-foreground">${convertToUSD(aesoPricing.current_price).toFixed(2)} USD</p>
+                    <p className="text-sm text-muted-foreground">CA${aesoPricing.current_price.toFixed(2)}</p>
                   )}
                   <p className="text-xs text-muted-foreground">per MWh</p>
                    {marketMetrics.aesoTrend && (
