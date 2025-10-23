@@ -936,7 +936,12 @@ async function fetchMISOData() {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
+    }).catch(fetchErr => {
+      console.error('❌ MISO LMP fetch network error:', fetchErr.message);
+      throw fetchErr;
     });
+    
+    console.log('✅ MISO LMP fetch completed, status:', lmpResponse.status);
     
     if (lmpResponse.ok) {
       const lmpData = await lmpResponse.json();
@@ -986,7 +991,7 @@ async function fetchMISOData() {
       }
     }
   } catch (lmpError) {
-    console.error('Error fetching MISO LMP data:', lmpError);
+    console.error('❌ Error fetching MISO LMP data:', lmpError.message || lmpError);
   }
 
   // MISO Total Load - parse from operations page
@@ -997,7 +1002,12 @@ async function fetchMISOData() {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
+    }).catch(fetchErr => {
+      console.error('❌ MISO load fetch network error:', fetchErr.message);
+      throw fetchErr;
     });
+    
+    console.log('✅ MISO load fetch completed, status:', loadResponse.status);
     
     if (loadResponse.ok) {
       const loadHtml = await loadResponse.text();
@@ -1023,7 +1033,7 @@ async function fetchMISOData() {
       }
     }
   } catch (loadError) {
-    console.error('Error fetching MISO load data:', loadError);
+    console.error('❌ Error fetching MISO load data:', loadError.message || loadError);
   }
 
   // MISO Fuel Mix
@@ -1034,7 +1044,12 @@ async function fetchMISOData() {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
+    }).catch(fetchErr => {
+      console.error('❌ MISO fuel mix fetch network error:', fetchErr.message);
+      throw fetchErr;
     });
+    
+    console.log('✅ MISO fuel mix fetch completed, status:', fuelMixResponse.status);
     
     if (fuelMixResponse.ok) {
       const fuelMixData = await fuelMixResponse.json();
@@ -1083,7 +1098,7 @@ async function fetchMISOData() {
       }
     }
   } catch (fuelMixError) {
-    console.error('Error fetching MISO fuel mix:', fuelMixError);
+    console.error('❌ Error fetching MISO fuel mix:', fuelMixError.message || fuelMixError);
   }
 
   console.log('MISO data summary:', {
