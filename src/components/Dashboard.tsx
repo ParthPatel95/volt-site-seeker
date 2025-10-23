@@ -22,6 +22,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { ResponsivePageContainer, ResponsiveSection } from '@/components/ResponsiveContainer';
 import { DataSourceBadge } from '@/components/energy/DataSourceBadge';
 
@@ -39,6 +40,8 @@ export const Dashboard = () => {
     marketMetrics,
     refreshData: refreshDataHook
   } = useOptimizedDashboard();
+
+  const { convertToUSD } = useExchangeRate();
 
   const refreshData = async () => {
     setLastUpdated(new Date());
@@ -185,6 +188,9 @@ export const Dashboard = () => {
                       <span className="text-muted-foreground">Loading...</span>
                     )}
                   </p>
+                  {aesoPricing && (
+                    <p className="text-sm text-muted-foreground">${convertToUSD(aesoPricing.current_price).toFixed(2)} USD</p>
+                  )}
                   <p className="text-xs text-muted-foreground">per MWh</p>
                    {marketMetrics.aesoTrend && (
                      <div className="flex items-center gap-1 mt-2">
@@ -377,10 +383,12 @@ export const Dashboard = () => {
                   <div className="bg-muted/50 p-3 rounded-lg">
                     <p className="text-sm font-medium text-muted-foreground">Current</p>
                     <p className="text-lg font-bold">CA${aesoPricing.current_price.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">${convertToUSD(aesoPricing.current_price).toFixed(2)} USD</p>
                   </div>
                   <div className="bg-muted/50 p-3 rounded-lg">
                     <p className="text-sm font-medium text-muted-foreground">30-Day Avg (95% Uptime)</p>
                     <p className="text-lg font-bold">CA${calculate95UptimeAverage(aesoPricing.average_price, aesoPricing.current_price).uptimeAverage.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">${convertToUSD(calculate95UptimeAverage(aesoPricing.average_price, aesoPricing.current_price).uptimeAverage).toFixed(2)} USD</p>
                   </div>
                 </div>
               ) : (
