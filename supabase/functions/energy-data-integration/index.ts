@@ -940,7 +940,9 @@ async function fetchMISOData() {
     
     if (lmpResponse.ok) {
       const lmpData = await lmpResponse.json();
-      console.log('MISO LMP data fetched');
+      console.log('MISO LMP response status:', lmpResponse.status);
+      console.log('MISO LMP data type:', typeof lmpData, 'isArray:', Array.isArray(lmpData));
+      console.log('MISO LMP data sample:', JSON.stringify(lmpData).substring(0, 500));
       
       // Extract hub prices (Indiana Hub, Illinois Hub, Michigan Hub, Minnesota Hub, Arkansas Hub)
       const hubPrices: number[] = [];
@@ -965,6 +967,8 @@ async function fetchMISOData() {
         }
       }
       
+      console.log('MISO hub prices found:', hubPrices.length, 'prices:', hubPrices.slice(0, 5));
+      
       if (hubPrices.length >= 3) {
         const currentPrice = hubPrices.reduce((a, b) => a + b, 0) / hubPrices.length;
         pricing = {
@@ -977,6 +981,8 @@ async function fetchMISOData() {
           source: 'miso_lmp_hub_avg'
         };
         console.log('MISO pricing extracted from', hubPrices.length, 'hub prices:', pricing);
+      } else {
+        console.log('⚠️ Not enough MISO hub prices found, need at least 3, got:', hubPrices.length);
       }
     }
   } catch (lmpError) {
@@ -1032,7 +1038,9 @@ async function fetchMISOData() {
     
     if (fuelMixResponse.ok) {
       const fuelMixData = await fuelMixResponse.json();
-      console.log('MISO fuel mix data fetched');
+      console.log('MISO fuel mix response status:', fuelMixResponse.status);
+      console.log('MISO fuel mix data type:', typeof fuelMixData, 'isArray:', Array.isArray(fuelMixData));
+      console.log('MISO fuel mix data sample:', JSON.stringify(fuelMixData).substring(0, 500));
       
       let coal = 0, gas = 0, nuclear = 0, wind = 0, solar = 0, hydro = 0, other = 0;
       
@@ -1054,6 +1062,7 @@ async function fetchMISOData() {
       }
       
       const total = coal + gas + nuclear + wind + solar + hydro + other;
+      console.log('MISO fuel mix totals - coal:', coal, 'gas:', gas, 'nuclear:', nuclear, 'wind:', wind, 'solar:', solar, 'total:', total);
       
       // Validate MISO typical generation range (50,000 - 180,000 MW)
       if (total >= 50000 && total <= 180000) {
