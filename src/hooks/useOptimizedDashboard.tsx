@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { useAESOData } from '@/hooks/useAESOData';
+import { useMISOData } from '@/hooks/useMISOData';
 
 export const useOptimizedDashboard = () => {
   const { 
@@ -19,20 +20,16 @@ export const useOptimizedDashboard = () => {
     refetch: refetchAESO
   } = useAESOData();
 
+  const { 
+    pricing: misoPricing, 
+    loadData: misoLoad, 
+    generationMix: misoGeneration,
+    loading: misoLoading,
+    refetch: refetchMISO
+  } = useMISOData();
+
   // Memoize expensive calculations
   const marketMetrics = useMemo(() => {
-    const getTotalGeneration = () => {
-      const ercotTotal = ercotGeneration?.total_generation_mw || 0;
-      const aesoTotal = aesoGeneration?.total_generation_mw || 0;
-      return (ercotTotal + aesoTotal) / 1000; // Convert to GW
-    };
-
-    const getAverageRenewable = () => {
-      const ercotRenewable = ercotGeneration?.renewable_percentage || 0;
-      const aesoRenewable = aesoGeneration?.renewable_percentage || 0;
-      return ((ercotRenewable + aesoRenewable) / 2).toFixed(1);
-    };
-
     const getMarketTrend = (current: number, average: number) => {
       const diff = ((current - average) / average) * 100;
       return {
@@ -43,15 +40,14 @@ export const useOptimizedDashboard = () => {
     };
 
     return {
-      totalGeneration: getTotalGeneration(),
-      averageRenewable: getAverageRenewable(),
       ercotTrend: ercotPricing ? getMarketTrend(ercotPricing.current_price, ercotPricing.average_price) : null,
-      aesoTrend: aesoPricing ? getMarketTrend(aesoPricing.current_price, aesoPricing.average_price) : null
+      aesoTrend: aesoPricing ? getMarketTrend(aesoPricing.current_price, aesoPricing.average_price) : null,
+      misoTrend: misoPricing ? getMarketTrend(misoPricing.current_price, misoPricing.average_price) : null
     };
-  }, [ercotPricing, aesoPricing, ercotGeneration, aesoGeneration]);
+  }, [ercotPricing, aesoPricing, misoPricing]);
 
   const refreshData = async () => {
-    await Promise.all([refetchERCOT(), refetchAESO()]);
+    await Promise.all([refetchERCOT(), refetchAESO(), refetchMISO()]);
   };
 
   return {
@@ -61,7 +57,10 @@ export const useOptimizedDashboard = () => {
     aesoPricing,
     aesoLoad,
     aesoGeneration,
-    isLoading: ercotLoading || aesoLoading,
+    misoPricing,
+    misoLoad,
+    misoGeneration,
+    isLoading: ercotLoading || aesoLoading || misoLoading,
     marketMetrics,
     refreshData
   };
