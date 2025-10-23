@@ -90,666 +90,249 @@ serve(async (req) => {
 })
 
 async function fetchERCOTData() {
-  console.log('Fetching ERCOT data...');
+  console.log('Fetching ERCOT data (API only)...');
+
+  // Get API key with fallback (similar to AESO pattern)
+  const apiKey = Deno.env.get('ERCOT_API_KEY') || Deno.env.get('ERCOT_API_KEY_SECONDARY') || '';
   
-  let pricing, loadData, generationMix;
-  let zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad;
-  let operatingReserve, interchange, energyStorage;
-  let realDataFound = false;
-  
-  // Try ERCOT API first if available (PRIMARY METHOD)
-  const ercotApiKey = Deno.env.get('ERCOT_API_KEY') || Deno.env.get('ERCOT_API_KEY_SECONDARY');
-  if (ercotApiKey) {
-    console.log('✅ ERCOT API key found, using official API as primary source');
+  if (!apiKey) {
+    console.warn('ERCOT API key is missing. Configure ERCOT_API_KEY (preferred).');
+    return {
+      pricing: undefined,
+      loadData: undefined,
+      generationMix: undefined,
+      zoneLMPs: undefined,
+      ordcAdder: undefined,
+      ancillaryPrices: undefined,
+      systemFrequency: undefined,
+      constraints: undefined,
+      intertieFlows: undefined,
+      weatherZoneLoad: undefined,
+      operatingReserve: undefined,
+      interchange: undefined,
+      energyStorage: undefined
+    };
+  }
+
+  const baseUrl = 'https://api.ercot.com/api/public-reports';
+  const headers: Record<string, string> = {
+    'Ocp-Apim-Subscription-Key': apiKey,
+    'Accept': 'application/json',
+    'Cache-Control': 'no-cache',
+    'User-Agent': 'LovableEnergy/1.0'
+  };
+
+  async function getJson(url: string) {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
     try {
-      const apiHeaders = {
-        'Ocp-Apim-Subscription-Key': ercotApiKey,
-        'Content-Type': 'application/json'
-      };
-
-      // Fetch real-time LMP data (NP6-788-CD)
-      console.log('Fetching ERCOT LMP from official API...');
-      const lmpApiResponse = await fetch(
-        'https://api.ercot.com/api/public-reports/np6-788-cd/lmp_by_settlement_point',
-        { headers: apiHeaders }
-      );
-
-      if (lmpApiResponse.ok) {
-        const lmpApiData = await lmpApiResponse.json();
-        const lmpRecords = Array.isArray(lmpApiData) ? lmpApiData : (lmpApiData?.data || []);
-        
-        console.log('ERCOT API LMP records received:', lmpRecords.length);
-        
-        // Find hub average or calculate from hubs
-        let hubAvgPrice = null;
-        const hubPrices: number[] = [];
-        
-        for (const record of lmpRecords) {
-          const settlementPoint = String(record.SettlementPoint || record.settlement_point || '').toUpperCase();
-          const lmp = parseFloat(record.LMP || record.lmp || 0);
-          
-          // Check for hub average
-          if (settlementPoint.includes('HB_HUBAVG') || settlementPoint.includes('HUBAVG')) {
-            hubAvgPrice = lmp;
-            break;
-          }
-          
-          // Collect hub prices
-          if ((settlementPoint.startsWith('HB_') || settlementPoint.startsWith('LZ_')) && 
-              Number.isFinite(lmp) && lmp > -500 && lmp < 3000) {
-            hubPrices.push(lmp);
-          }
-        }
-        
-        // Use hub average or calculate from collected hub prices
-        const currentPrice = hubAvgPrice || (hubPrices.length >= 3 ? 
-          hubPrices.reduce((a, b) => a + b, 0) / hubPrices.length : null);
-        
-        if (currentPrice !== null && currentPrice >= 0) {
-          pricing = {
-            current_price: Math.round(currentPrice * 100) / 100,
-            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
-            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
-            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
-            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'ercot_api_lmp'
-          };
-          console.log('✅ Real ERCOT pricing from official API:', pricing);
-          realDataFound = true;
-        }
-      } else {
-        console.error('ERCOT LMP API failed:', lmpApiResponse.status, await lmpApiResponse.text());
+      const res = await fetch(url, { headers, signal: ctrl.signal });
+      const text = await res.text();
+      if (!res.ok) {
+        console.error('ERCOT API not OK', res.status, res.statusText, 'for', url, 'body:', text.slice(0, 300));
+        return null as any;
       }
-    } catch (apiError) {
-      console.error('Error calling ERCOT API for pricing:', apiError);
+      try { return JSON.parse(text); } catch (e) {
+        console.error('ERCOT API JSON parse error:', String(e));
+        return null as any;
+      }
+    } catch (e) {
+      console.error('ERCOT API fetch error:', String(e));
+      return null as any;
+    } finally {
+      clearTimeout(timeout);
     }
   }
-  
-  // Fallback to web scraping if API didn't work
-  if (!pricing) {
-    // Try ERCOT's real-time LMP data via web scraping
-    try {
-    console.log('Fetching ERCOT real-time LMP data via web scraping...');
-    const lmpUrl = 'https://www.ercot.com/content/cdr/html/current_np6788.html';
-    const lmpResponse = await fetch(lmpUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    
-    if (lmpResponse.ok) {
-      const htmlData = await lmpResponse.text();
-      console.log('ERCOT LMP data length:', htmlData.length);
 
-      // Prefer HUBAVG row if present
-      const hubAvgRegex = /HB[_\s-]*HUBAVG[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>/i;
-      const hubAvgMatch = htmlData.match(hubAvgRegex);
-      if (hubAvgMatch) {
-        const currentPrice = parseFloat(hubAvgMatch[1]);
-        if (!Number.isNaN(currentPrice) && currentPrice >= 0 && currentPrice < 10000) {
-          pricing = {
-            current_price: Math.round(currentPrice * 100) / 100,
-            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
-            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
-            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
-            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'ercot_lmp_hubavg'
-          };
-          console.log('Real ERCOT hub average pricing extracted:', pricing);
-          realDataFound = true;
-        }
-      }
+  // Fetch all ERCOT data in parallel
+  const [pricingResp, loadResp, fuelMixResp, zoneLMPResp] = await Promise.allSettled([
+    getJson(`${baseUrl}/np6-788-cd/lmp_by_settlement_point`),      // Pricing (LMP)
+    getJson(`${baseUrl}/np3-565-cd/act_sys_load_by_wzn`),          // Load by weather zone
+    getJson(`${baseUrl}/np4-732-cd/act_sys_load_by_fueltype`),     // Generation mix
+    getJson(`${baseUrl}/np6-788-cd/lmp_electrical_bus`)            // Zone LMPs
+  ]);
 
-      // If HUBAVG not found, compute average across LZ/HB rows
-      if (!realDataFound) {
-        const rowRegex = /<tr[^>]*>[\s\S]*?<td[^>]*>\s*([^<]+)\s*<\/td>[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>[\s\S]*?<\/tr>/gi;
-        const prices: number[] = [];
-        let m: RegExpExecArray | null;
-        while ((m = rowRegex.exec(htmlData)) !== null) {
-          const name = (m[1] || '').toUpperCase();
-          const val = parseFloat(m[2]);
-          const isNodeOrHub = name.includes('HB') || name.includes('HUB') || name.includes('LZ');
-          if (isNodeOrHub && !Number.isNaN(val) && val > -1000 && val < 10000) {
-            prices.push(val);
-          }
-        }
-        if (prices.length >= 5) {
-          const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-          const currentPrice = Math.round(avg * 100) / 100;
-          pricing = {
-            current_price: currentPrice,
-            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
-            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
-            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
-            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'ercot_lmp'
-          };
-          console.log('Real ERCOT pricing extracted from', prices.length, 'rows');
-          realDataFound = true;
-        }
-      }
-    }
-  } catch (lmpError) {
-    console.error('Error fetching ERCOT LMP data:', lmpError);
-  }
-  
-  // If not parsed yet, try via proxy fetcher (handles TLS/CORS issues)
-  if (!pricing) {
-    try {
-      console.log('Fetching ERCOT LMP via proxy...');
-      const proxyUrl = 'https://r.jina.ai/http://www.ercot.com/content/cdr/html/current_np6788.html';
-      const proxied = await fetch(proxyUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (proxied.ok) {
-        const htmlData = await proxied.text();
-        // Prefer HUBAVG
-        const hubAvgRegex = /HB[_\s-]*HUBAVG[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>/i;
-        const hubAvgMatch = htmlData.match(hubAvgRegex);
-        let currentPrice: number | null = null;
-        if (hubAvgMatch) {
-          currentPrice = parseFloat(hubAvgMatch[1]);
-        } else {
-          const rowRegex = /<tr[^>]*>[\s\S]*?<td[^>]*>\s*([^<]+)\s*<\/td>[\s\S]*?<td[^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*<\/td>[\s\S]*?<\/tr>/gi;
-          const prices: number[] = [];
-          let m: RegExpExecArray | null;
-          while ((m = rowRegex.exec(htmlData)) !== null) {
-            const name = (m[1] || '').toUpperCase();
-            const val = parseFloat(m[2]);
-            const isNodeOrHub = name.includes('HB') || name.includes('HUB') || name.includes('LZ');
-            if (isNodeOrHub && !Number.isNaN(val) && val > -1000 && val < 10000) prices.push(val);
-          }
-          if (prices.length >= 5) currentPrice = Math.round((prices.reduce((a,b)=>a+b,0)/prices.length)*100)/100;
-        }
-        if (currentPrice !== null && currentPrice >= 0) {
-          pricing = {
-            current_price: currentPrice,
-            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
-            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
-            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
-            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'ercot_lmp_proxy'
-          };
-          console.log('ERCOT pricing via proxy extracted:', pricing);
-        }
-      }
-  } catch (proxyErr) {
-      console.error('ERCOT LMP proxy fetch failed:', proxyErr);
-    }
-  }
-  } // End of pricing fallback
-
-  // Try ERCOT's real-time system conditions for load data
+  let pricing: any | undefined;
+  let loadData: any | undefined;
+  let generationMix: any | undefined;
+  let zoneLMPs: any | undefined;
+  let ordcAdder: any | undefined;
+  let ancillaryPrices: any | undefined;
+  let systemFrequency: any | undefined;
+  let constraints: any | undefined;
+  let intertieFlows: any | undefined;
+  let weatherZoneLoad: any | undefined;
+  let operatingReserve: any | undefined;
+  let interchange: any | undefined;
+  let energyStorage: any | undefined;
+  // Parse Pricing from LMP API response
   try {
-    console.log('Fetching ERCOT system load data...');
-    const loadUrl = 'https://www.ercot.com/content/cdr/html/real_time_system_conditions.html';
-    const loadResponse = await fetch(loadUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
+    const json: any = pricingResp.status === 'fulfilled' ? pricingResp.value : null;
     
-    if (loadResponse.ok) {
-      const loadHtml = await loadResponse.text();
-      console.log('ERCOT load data length:', loadHtml.length);
+    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
+      console.log('ERCOT pricing API returned', json.data.length, 'records');
       
-      // Extract Actual System Demand from the table
-      let currentLoadVal: number | null = null;
+      // Find HB_HUBAVG or calculate average from all LMP records
+      let hubAvgPrice: number | null = null;
+      const allPrices: number[] = [];
       
-      // Try to match "Actual System Demand | 63215" format from the table
-      const demandMatch = loadHtml.match(/Actual\s+System\s+Demand[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>/i);
-      if (demandMatch) {
-        currentLoadVal = parseFloat(demandMatch[1].replace(/,/g, ''));
-        console.log('Extracted Actual System Demand:', currentLoadVal);
-      }
-      
-      // Fallback patterns
-      if (!currentLoadVal) {
-        const loadMatch = loadHtml.match(/(?:Current|Actual)\s+(?:System\s+)?(?:Load|Demand)[^0-9]*([0-9,]+)/i) ||
-                         loadHtml.match(/<td[^>]*>\s*([0-9,]+)\s*<\/td>[\s\S]*?(?:MW|MWh)/i);
-        if (loadMatch) {
-          const val = parseFloat(loadMatch[1].replace(/,/g, ''));
-          // Only accept values in reasonable ERCOT range (20,000 - 90,000 MW)
-          if (val >= 20000 && val <= 90000) {
-            currentLoadVal = val;
-          }
+      for (const record of json.data) {
+        const settlementPoint = String(record.SettlementPoint || record.settlementPoint || '').toUpperCase();
+        const lmpValue = parseFloat(record.LMP || record.lmp || record.price || 0);
+        
+        if (settlementPoint.includes('HUBAVG') || settlementPoint === 'HB_HUBAVG') {
+          hubAvgPrice = lmpValue;
+          break;
+        }
+        
+        // Collect valid hub/load zone prices
+        if ((settlementPoint.startsWith('HB_') || settlementPoint.startsWith('LZ_')) && 
+            Number.isFinite(lmpValue) && lmpValue >= -500 && lmpValue < 3000) {
+          allPrices.push(lmpValue);
         }
       }
       
-      if (currentLoadVal && currentLoadVal >= 20000) {
+      const currentPrice = hubAvgPrice !== null ? hubAvgPrice : 
+        (allPrices.length >= 3 ? allPrices.reduce((a, b) => a + b, 0) / allPrices.length : null);
+      
+      if (currentPrice !== null && Number.isFinite(currentPrice)) {
+        pricing = {
+          current_price: Math.round(currentPrice * 100) / 100,
+          average_price: Math.round(currentPrice * 0.9 * 100) / 100,
+          peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
+          off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
+          market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+          timestamp: new Date().toISOString(),
+          source: 'ercot_api_lmp'
+        };
+        console.log('✅ ERCOT pricing from API:', pricing.current_price, '$/MWh');
+      }
+    }
+  } catch (e) {
+    console.error('ERCOT pricing parse error:', e);
+  }
+
+  // Parse Load from weather zone API response
+  try {
+    const json: any = loadResp.status === 'fulfilled' ? loadResp.value : null;
+    
+    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
+      console.log('ERCOT load API returned', json.data.length, 'records');
+      
+      // Sum all weather zone loads to get total system load
+      let totalLoad = 0;
+      let maxForecast = 0;
+      
+      for (const record of json.data) {
+        const actual = parseFloat(record.ActualLoad || record.actualLoad || record.load || 0);
+        const forecast = parseFloat(record.ForecastLoad || record.forecastLoad || record.forecast || 0);
+        
+        if (Number.isFinite(actual)) {
+          totalLoad += actual;
+        }
+        if (Number.isFinite(forecast) && forecast > maxForecast) {
+          maxForecast = forecast;
+        }
+      }
+      
+      if (totalLoad > 10000) { // Sanity check for MW
         loadData = {
-          current_demand_mw: currentLoadVal,
-          peak_forecast_mw: currentLoadVal * 1.15,
+          current_demand_mw: Math.round(totalLoad),
+          peak_forecast_mw: maxForecast > totalLoad ? Math.round(maxForecast) : Math.round(totalLoad * 1.15),
           reserve_margin: 15.0,
           timestamp: new Date().toISOString(),
-          source: 'ercot_rtsc'
+          source: 'ercot_api_load'
         };
-        console.log('Real ERCOT load extracted:', loadData);
-        realDataFound = true;
-      }
-    }
-  } catch (loadError) {
-    console.error('Error fetching ERCOT load data:', loadError);
-  }
-  
-  // If load not parsed yet, try proxy as well
-  if (!loadData) {
-    try {
-      console.log('Fetching ERCOT load via proxy...');
-      const proxyLoadUrl = 'https://r.jina.ai/https://www.ercot.com/content/cdr/html/real_time_system_conditions.html';
-      const proxiedLoad = await fetch(proxyLoadUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (proxiedLoad.ok) {
-        const loadHtml = await proxiedLoad.text();
-        let currentLoadVal: number | null = null;
-        
-        // Match Actual System Demand
-        const demandMatch = loadHtml.match(/Actual\s+System\s+Demand[\s\S]*?<td[^>]*>\s*([0-9,]+)\s*<\/td>/i);
-        if (demandMatch) {
-          currentLoadVal = parseFloat(demandMatch[1].replace(/,/g, ''));
-        }
-        
-        // Fallback with range validation
-        if (!currentLoadVal) {
-          const loadMatch = loadHtml.match(/(?:Current|Actual)\s+(?:System\s+)?(?:Load|Demand)[^0-9]*([0-9,]+)/i);
-          if (loadMatch) {
-            const val = parseFloat(loadMatch[1].replace(/,/g, ''));
-            if (val >= 20000 && val <= 90000) currentLoadVal = val;
-          }
-        }
-        
-        if (currentLoadVal && currentLoadVal >= 20000) {
-          loadData = {
-            current_demand_mw: currentLoadVal,
-            peak_forecast_mw: currentLoadVal * 1.15,
-            reserve_margin: 15.0,
-            timestamp: new Date().toISOString(),
-            source: 'ercot_load_proxy'
-          };
-          console.log('ERCOT load via proxy extracted:', loadData);
-        }
-      }
-    } catch (proxyErr) {
-      console.error('ERCOT load proxy fetch failed:', proxyErr);
-    }
-  }
-
-  // Real-Time System Conditions: frequency, ORDC adder, intertie flows
-  try {
-    console.log('Fetching ERCOT Real-Time System Conditions...');
-    const rtscUrls = [
-      'https://www.ercot.com/content/cdr/html/real_time_system_conditions.html',
-      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/real_time_system_conditions.html'
-    ];
-    let html: string | null = null;
-    for (const url of rtscUrls) {
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (res.ok) { html = await res.text(); break; }
-    }
-    if (html) {
-      // Frequency
-      const freqMatch = html.match(/([5][9]\.[0-9]{2,})\s*Hz/i) || html.match(/Frequency[^0-9]*([5][9]\.[0-9]{2,})/i);
-      if (freqMatch) {
-        const hz = parseFloat(freqMatch[1]);
-        if (!Number.isNaN(hz) && hz > 58 && hz < 61) {
-          systemFrequency = { hz, timestamp: new Date().toISOString(), source: 'ercot_rtsc' };
-          console.log('ERCOT system frequency:', systemFrequency);
-        }
-      }
-      // ORDC adder (aka Price Adder)
-      const adderMatch = html.match(/(?:ORDC|Price\s*Adder|Adder)[^-$+]*([+-]?\$?\s*[0-9]+(?:\.[0-9]+)?)/i);
-      if (adderMatch) {
-        const num = parseFloat(adderMatch[1].replace(/[^0-9.-]/g, ''));
-        if (!Number.isNaN(num)) {
-          ordcAdder = { adder_per_mwh: num, timestamp: new Date().toISOString(), source: 'ercot_rtsc' };
-          console.log('ERCOT ORDC/Price Adder:', ordcAdder);
-        }
-      }
-      // Imports / Exports / Net Interchange
-      const impMatch = html.match(/Imports[^0-9-]*(-?[0-9,]+)\s*MW/i);
-      const expMatch = html.match(/Exports[^0-9-]*(-?[0-9,]+)\s*MW/i);
-      const netMatch = html.match(/Interchange[^0-9-]*(-?[0-9,]+)\s*MW/i) || html.match(/Net\s*(?:Interchange|Export)[^0-9-]*(-?[0-9,]+)\s*MW/i);
-      const imports = impMatch ? parseFloat(impMatch[1].replace(/,/g, '')) : undefined;
-      const exports = expMatch ? parseFloat(expMatch[1].replace(/,/g, '')) : undefined;
-      const net = netMatch ? parseFloat(netMatch[1].replace(/,/g, '')) : (imports !== undefined && exports !== undefined ? imports - exports : undefined);
-      if (imports !== undefined || exports !== undefined || net !== undefined) {
-        intertieFlows = { imports_mw: imports, exports_mw: exports, net_mw: net, timestamp: new Date().toISOString(), source: 'ercot_rtsc' };
-        console.log('ERCOT intertie flows:', intertieFlows);
+        console.log('✅ ERCOT load from API:', loadData.current_demand_mw, 'MW');
       }
     }
   } catch (e) {
-    console.error('ERCOT real-time system conditions fetch failed:', e);
+    console.error('ERCOT load parse error:', e);
   }
 
-  // Ancillary services clearing prices
+  // Parse Generation Mix from fuel type API response
   try {
-    console.log('Fetching ERCOT ancillary services prices...');
-    const urls = [
-      'https://www.ercot.com/content/cdr/html/current_as_prices.html',
-      'https://www.ercot.com/content/cdr/html/ancillary_services.html',
-      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/current_as_prices.html',
-      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/ancillary_services.html'
-    ];
-    let html: string | null = null;
-    for (const url of urls) {
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (res.ok) { html = await res.text(); break; }
-    }
-    if (html) {
-      const pick = (names: string[]) => {
-        for (const n of names) {
-          const m = html.match(new RegExp(n + '[\\s\\S]*?([0-9]+(?:\\.[0-9]+)?)', 'i'));
-          if (m) return parseFloat(m[1]);
-        }
-        return undefined;
-      };
-      const regUp = pick(['Reg\\s*Up','REGUP','Regulation\\s*Up']);
-      const regDown = pick(['Reg\\s*Down','REGDN','Regulation\\s*Down']);
-      const rrs = pick(['RRS','Responsive\\s*Reserve']);
-      const nspin = pick(['NSPIN','Non[-\\s]*Spin']);
-      const frrsUp = pick(['FRRS\\s*Up','Fast\\s*RRS\\s*Up']);
-      const frrsDown = pick(['FRRS\\s*Down','Fast\\s*RRS\\s*Down']);
-      const values: Record<string, number> = {};
-      if (regUp !== undefined) values.reg_up = regUp;
-      if (regDown !== undefined) values.reg_down = regDown;
-      if (rrs !== undefined) values.rrs = rrs;
-      if (nspin !== undefined) values.non_spin = nspin;
-      if (frrsUp !== undefined) values.frrs_up = frrsUp;
-      if (frrsDown !== undefined) values.frrs_down = frrsDown;
-      if (Object.keys(values).length > 0) {
-        ancillaryPrices = { ...values, timestamp: new Date().toISOString(), source: 'ercot_as' };
-        console.log('ERCOT ancillary prices:', ancillaryPrices);
-      }
-    }
-  } catch (e) {
-    console.error('ERCOT ancillary price fetch failed:', e);
-  }
-
-  // Transmission constraints (shadow prices)
-  try {
-    console.log('Fetching ERCOT transmission constraints...');
-    const urls = [
-      'https://www.ercot.com/content/cdr/html/real_time_congestion.html',
-      'https://www.ercot.com/content/cdr/html/rt_congestion.html',
-      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/real_time_congestion.html',
-      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/rt_congestion.html'
-    ];
-    let html: string | null = null;
-    for (const url of urls) {
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (res.ok) { html = await res.text(); break; }
-    }
-    if (html) {
-      const items: Array<{ name: string; shadow_price: number }> = [];
-      const rowRe = /<tr[^>]*>[\s\S]*?<td[^>]*>\s*([^<]+?)\s*<\/td>[\s\S]*?<td[^>]*>\s*([-$0-9.,]+)\s*<\/td>[\s\S]*?<\/tr>/gi;
-      let m: RegExpExecArray | null;
-      while ((m = rowRe.exec(html)) !== null) {
-        const name = m[1].trim();
-        const priceNum = parseFloat((m[2] || '').replace(/[^0-9.-]/g, ''));
-        if (name && Number.isFinite(priceNum)) items.push({ name, shadow_price: priceNum });
-      }
-      if (items.length > 0) {
-        constraints = { items: items.slice(0, 10), timestamp: new Date().toISOString(), source: 'ercot_congestion' };
-        console.log('ERCOT constraints:', constraints.items.length);
-      }
-    }
-  } catch (e) {
-    console.error('ERCOT constraints fetch failed:', e);
-  }
-
-  // Weather-zone load
-  try {
-    console.log('Fetching ERCOT weather zone load...');
-    const urls = [
-      'https://www.ercot.com/content/cdr/html/load_forecast_by_weather_zone.html',
-      'https://www.ercot.com/content/cdr/html/loadforecastbywzn.html',
-      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/load_forecast_by_weather_zone.html',
-      'https://r.jina.ai/http://www.ercot.com/content/cdr/html/loadforecastbywzn.html'
-    ];
-    let html: string | null = null;
-    for (const url of urls) {
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (res.ok) { html = await res.text(); break; }
-    }
-    if (html) {
-      const zones = ['Coast','East','Far\\s*West','North','North\\s*Central','South\\s*Central','South','West'];
-      const values: Record<string, number> = {};
-      for (const z of zones) {
-        const re = new RegExp(z + '[\\s\\S]*?([0-9,]+)\\s*MW','i');
-        const m = html.match(re);
-        if (m) {
-          const key = z.replace(/\\s+/g,' ').replace(/\\s/g, '_').toUpperCase();
-          values[key] = parseFloat(m[1].replace(/,/g, ''));
-        }
-      }
-      if (Object.keys(values).length > 0) {
-        weatherZoneLoad = { ...values, timestamp: new Date().toISOString(), source: 'ercot_wz' };
-        console.log('ERCOT weather zone load extracted:', Object.keys(values).length, 'zones');
-      }
-    }
-  } catch (e) {
-    console.error('ERCOT weather-zone load fetch failed:', e);
-  }
-
-
-  // Try ERCOT API for generation mix (fuel type)
-  console.log('🔍 Generation mix check - generationMix:', generationMix, 'ercotApiKey exists:', !!ercotApiKey);
-  if (!generationMix && ercotApiKey) {
-    try {
-      console.log('🚀 Fetching ERCOT fuel mix from API...');
-      const fuelMixUrl = 'https://api.ercot.com/api/public-reports/np4-732-cd/act_sys_load_by_fueltype';
-      const fuelMixResponse = await fetch(fuelMixUrl, {
-        headers: {
-          'Authorization': `Bearer ${ercotApiKey}`,
-          'Ocp-Apim-Subscription-Key': ercotApiKey
-        }
-      });
-
-      if (fuelMixResponse.ok) {
-        const fuelMixData = await fuelMixResponse.json();
-        console.log('ERCOT fuel mix API response status:', fuelMixResponse.status);
-        console.log('ERCOT fuel mix data sample:', JSON.stringify(fuelMixData).substring(0, 500));
-
-        // The API returns data in fields array format
-        if (fuelMixData && fuelMixData.data && Array.isArray(fuelMixData.data)) {
-          // Get the most recent record
-          const latestRecord = fuelMixData.data[0];
-          
-          if (latestRecord) {
-            // Extract fuel type values from the latest record
-            const gas = parseFloat(latestRecord.naturalGas) || 0;
-            const wind = parseFloat(latestRecord.wind) || 0;
-            const solar = parseFloat(latestRecord.solar) || 0;
-            const nuclear = parseFloat(latestRecord.nuclear) || 0;
-            const coal = parseFloat(latestRecord.coal) || 0;
-            const hydro = parseFloat(latestRecord.hydro) || 0;
-            const other = parseFloat(latestRecord.other) || 0;
-            
-            const total = gas + wind + solar + nuclear + coal + hydro + other;
-            
-            console.log('ERCOT fuel mix from API - gas:', gas, 'wind:', wind, 'solar:', solar, 'nuclear:', nuclear, 'coal:', coal, 'total:', total);
-            
-            if (total > 10000) {
-              generationMix = {
-                total_generation_mw: Math.round(total),
-                natural_gas_mw: Math.round(gas),
-                wind_mw: Math.round(wind),
-                solar_mw: Math.round(solar),
-                nuclear_mw: Math.round(nuclear),
-                coal_mw: Math.round(coal),
-                hydro_mw: Math.round(hydro),
-                other_mw: Math.round(other),
-                renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
-                timestamp: new Date().toISOString(),
-                source: 'ercot_api_fuelmix'
-              };
-              console.log('✅ ERCOT generation mix from API extracted successfully');
-              realDataFound = true;
-            }
-          }
-        }
-      } else {
-        console.error('ERCOT fuel mix API failed:', fuelMixResponse.status, await fuelMixResponse.text());
-      }
-    } catch (fuelErr) {
-      console.error('ERCOT fuel mix API fetch failed:', fuelErr);
-    }
-  }
-
-  // Fallback to web scraping for generation mix if API didn't work
-  if (!generationMix) {
-    try {
-      const fuelUrls = [
-        'https://www.ercot.com/gridmktinfo/dashboards/fuelmix',
-        'https://r.jina.ai/https://www.ercot.com/gridmktinfo/dashboards/fuelmix'
-      ];
-      let text: string | null = null;
-      for (const url of fuelUrls) {
-        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (res.ok) { text = await res.text(); break; }
-      }
-      if (text) {
-        const grab = (label: string) => {
-          const patterns = [
-            new RegExp(label + '[\\s\\S]{0,50}?([0-9,]+)\\s*MW\\s*\\(', 'i'),
-            new RegExp(label + '[\\s\\S]{0,50}?([0-9,]+)\\s*MW', 'i'),
-            new RegExp(label + '[\\s\\S]{0,100}?<[^>]*>\\s*([0-9,]+)\\s*MW', 'i')
-          ];
-          
-          for (const re of patterns) {
-            const m = text.match(re);
-            if (m && m[1]) {
-              const val = parseFloat(m[1].replace(/,/g, ''));
-              if (!isNaN(val) && val >= 0 && val < 100000) {
-                console.log(`Extracted ${label}: ${val} MW`);
-                return val;
-              }
-            }
-          }
-          console.log(`Could not extract ${label}`);
-          return 0;
+    const json: any = fuelMixResp.status === 'fulfilled' ? fuelMixResp.value : null;
+    
+    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
+      console.log('ERCOT fuel mix API returned', json.data.length, 'records');
+      
+      // Get the most recent record (first one, as API returns latest first)
+      const latest = json.data[0];
+      
+      const gas = parseFloat(latest.NaturalGas || latest.naturalGas || latest.gas || 0);
+      const wind = parseFloat(latest.Wind || latest.wind || 0);
+      const solar = parseFloat(latest.Solar || latest.solar || 0);
+      const nuclear = parseFloat(latest.Nuclear || latest.nuclear || 0);
+      const coal = parseFloat(latest.Coal || latest.coal || 0);
+      const hydro = parseFloat(latest.Hydro || latest.hydro || 0);
+      const other = parseFloat(latest.Other || latest.other || 0);
+      
+      const total = gas + wind + solar + nuclear + coal + hydro + other;
+      
+      if (total > 10000) { // Sanity check for total MW
+        generationMix = {
+          total_generation_mw: Math.round(total),
+          natural_gas_mw: Math.round(gas),
+          wind_mw: Math.round(wind),
+          solar_mw: Math.round(solar),
+          nuclear_mw: Math.round(nuclear),
+          coal_mw: Math.round(coal),
+          hydro_mw: Math.round(hydro),
+          other_mw: Math.round(other),
+          renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
+          timestamp: new Date().toISOString(),
+          source: 'ercot_api_fuelmix'
         };
+        console.log('✅ ERCOT generation mix from API:', Math.round(generationMix.renewable_percentage), '% renewable');
+      }
+    }
+  } catch (e) {
+    console.error('ERCOT generation mix parse error:', e);
+  }
+
+  // Parse Zone LMPs from electrical bus API response
+  try {
+    const json: any = zoneLMPResp.status === 'fulfilled' ? zoneLMPResp.value : null;
+    
+    if (json && json.data && Array.isArray(json.data)) {
+      const zones: Record<string, number> = {};
+      
+      for (const record of json.data) {
+        const settlementPoint = String(record.SettlementPoint || record.settlementPoint || '');
+        const lmpValue = parseFloat(record.LMP || record.lmp || 0);
         
-        const gas = grab('Natural\\s+Gas');
-        const wind = grab('Wind');
-        const solar = grab('Solar');
-        const nuclear = grab('Nuclear');
-        const coal = grab('Coal(?:\\s+and\\s+Lignite)?');
-        const hydro = grab('Hydro');
-        const storage = grab('Power\\s+Storage');
-        const other = grab('Other');
-        
-        const total = gas + wind + solar + nuclear + coal + hydro + other;
-        
-        console.log('ERCOT fuel mix totals:', { gas, wind, solar, nuclear, coal, hydro, other, total });
-        
-        if (total > 10000) {
-          generationMix = {
-            total_generation_mw: Math.round(total),
-            natural_gas_mw: Math.round(gas),
-            wind_mw: Math.round(wind),
-            solar_mw: Math.round(solar),
-            nuclear_mw: Math.round(nuclear),
-            coal_mw: Math.round(coal),
-            hydro_mw: Math.round(hydro),
-            other_mw: Math.round(other),
-            renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
-            timestamp: new Date().toISOString(),
-            source: 'ercot_fuelmix_scrape'
-          };
-          console.log('✅ ERCOT generation from scraping extracted successfully');
-          realDataFound = true;
-        } else {
-          console.warn('⚠️ ERCOT fuel mix total too low:', total, 'MW - will try other sources');
+        // Extract zone names (HB_*, LZ_*)
+        if ((settlementPoint.startsWith('HB_') || settlementPoint.startsWith('LZ_')) && 
+            Number.isFinite(lmpValue)) {
+          zones[settlementPoint] = Math.round(lmpValue * 100) / 100;
         }
       }
-    } catch (fuelErr) {
-      console.error('ERCOT fuel mix scrape failed:', fuelErr);
+      
+      if (Object.keys(zones).length > 0) {
+        zoneLMPs = {
+          ...zones,
+          timestamp: new Date().toISOString(),
+          source: 'ercot_api_zones'
+        };
+        console.log('✅ ERCOT zone LMPs from API:', Object.keys(zones).length, 'zones');
+      }
     }
+  } catch (e) {
+    console.error('ERCOT zone LMPs parse error:', e);
   }
 
-  // Provide fallback data if needed
-  if (!loadData) {
-    const currentHour = new Date().getHours();
-    const currentMonth = new Date().getMonth();
-    
-    let baseLoad = 35000;
-    if (currentHour >= 14 && currentHour <= 18) baseLoad = 50000;
-    else if (currentHour >= 6 && currentHour <= 22) baseLoad = 42000;
-    else baseLoad = 28000;
-    
-    if (currentMonth >= 5 && currentMonth <= 8) baseLoad *= 1.3;
-    
-    const variation = (Math.random() - 0.5) * 3000;
-    const currentLoad = Math.max(25000, baseLoad + variation);
-    
-    loadData = {
-      current_demand_mw: Math.round(currentLoad),
-      peak_forecast_mw: Math.round(currentLoad * 1.15),
-      reserve_margin: 15.0,
-      timestamp: new Date().toISOString(),
-      source: 'fallback'
-    };
-  }
-  
-  // Do not synthesize ERCOT generation mix; if unavailable, leave undefined to avoid showing fallback
-  // if (!generationMix) {
-  //   // intentionally no fallback
-  // }
-
-
-  if (!pricing) {
-    const currentHour = new Date().getHours();
-    const currentMonth = new Date().getMonth();
-    
-    let basePrice = 35;
-    if (currentHour >= 14 && currentHour <= 18) basePrice = 65;
-    else if (currentHour >= 6 && currentHour <= 22) basePrice = 45;
-    
-    if (currentMonth >= 5 && currentMonth <= 8) basePrice *= 1.8;
-    
-    const variation = (Math.random() - 0.5) * 20;
-    const currentPrice = Math.max(10, basePrice + variation);
-    
-    pricing = {
-      current_price: Math.round(currentPrice * 100) / 100,
-      average_price: Math.round(currentPrice * 0.9 * 100) / 100,
-      peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
-      off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
-      market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-      timestamp: new Date().toISOString(),
-      source: 'fallback'
-    };
-  }
-
-  // Set operatingReserve as alias to ensure backward compatibility
-  operatingReserve = {
-    total_reserve_mw: 0,
-    spinning_reserve_mw: 0,
-    supplemental_reserve_mw: 0,
-    timestamp: new Date().toISOString(),
-    source: 'ercot_calculated'
-  };
-
-  // Set interchange as alias to intertieFlows for backward compatibility
-  interchange = intertieFlows || {
-    imports_mw: 0,
-    exports_mw: 0,
-    net_mw: 0,
-    timestamp: new Date().toISOString(),
-    source: 'ercot_calculated'
-  };
-
-  // Energy storage - will be real when we add battery storage data source
-  energyStorage = {
-    charging_mw: 0,
-    discharging_mw: 0,
-    net_storage_mw: 0,
-    state_of_charge_percent: null,
-    timestamp: new Date().toISOString(),
-    source: 'ercot_placeholder'
-  };
+  // Placeholder values for data not available from primary APIs
+  // These would need additional API endpoints to be fully implemented
+  ordcAdder = undefined;
+  ancillaryPrices = undefined;
+  systemFrequency = undefined;
+  constraints = undefined;
+  intertieFlows = undefined;
+  weatherZoneLoad = undefined;
+  operatingReserve = undefined;
+  interchange = undefined;
+  energyStorage = undefined;
 
   return { pricing, loadData, generationMix, zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad, operatingReserve, interchange, energyStorage };
 }
