@@ -928,10 +928,10 @@ async function fetchMISOData() {
   
   let pricing, loadData, generationMix;
 
-  // MISO Real-Time LMP - using LMP Consolidated Table
+  // MISO Real-Time LMP - using new public API
   try {
-    console.log('Fetching MISO LMP data...');
-    const lmpUrl = 'https://api.misoenergy.org/DataBrokerServices.asmx?messageType=getlmpconsolidatedtable&returnType=json';
+    console.log('Fetching MISO LMP data from new API...');
+    const lmpUrl = 'https://public-api.misoenergy.org/api/MarketPricing/GetLmpConsolidatedTable';
     const lmpResponse = await fetch(lmpUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -949,22 +949,17 @@ async function fetchMISOData() {
       console.log('MISO LMP data type:', typeof lmpData, 'isArray:', Array.isArray(lmpData));
       console.log('MISO LMP data sample:', JSON.stringify(lmpData).substring(0, 500));
       
-      // Extract hub prices (Indiana Hub, Illinois Hub, Michigan Hub, Minnesota Hub, Arkansas Hub)
       const hubPrices: number[] = [];
       
-      if (Array.isArray(lmpData)) {
-        for (const item of lmpData) {
-          const name = String(item?.NodeName || item?.name || '').toLowerCase();
-          const price = parseFloat(item?.LMP || item?.price || item?.value || 0);
+      // New API structure: LMPData.FiveMinLMP.PricingNode[]
+      const pricingNodes = lmpData?.LMPData?.FiveMinLMP?.PricingNode || [];
+      
+      if (Array.isArray(pricingNodes)) {
+        for (const node of pricingNodes) {
+          const name = String(node?.name || '').toLowerCase();
+          const price = parseFloat(node?.LMP || 0);
           
-          // Check if this is a hub price
-          const isHub = name.includes('hub') || 
-                       name.includes('.hub') || 
-                       name.includes('indiana') || 
-                       name.includes('illinois') || 
-                       name.includes('michigan') || 
-                       name.includes('minnesota') || 
-                       name.includes('arkansas');
+          const isHub = name.includes('hub') || name.includes('.hub');
           
           if (isHub && Number.isFinite(price) && price > -500 && price < 3000) {
             hubPrices.push(price);
@@ -994,10 +989,10 @@ async function fetchMISOData() {
     console.error('❌ Error fetching MISO LMP data:', lmpError.message || lmpError);
   }
 
-  // MISO Total Load - parse from operations page
+  // MISO Total Load - using new public API
   try {
-    console.log('Fetching MISO total load...');
-    const loadUrl = 'https://api.misoenergy.org/MISORTWD/operations.html?realTimeTotalLoad';
+    console.log('Fetching MISO total load from new API...');
+    const loadUrl = 'https://public-api.misoenergy.org/api/RealTimeTotalLoad';
     const loadResponse = await fetch(loadUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -1010,23 +1005,23 @@ async function fetchMISOData() {
     console.log('✅ MISO load fetch completed, status:', loadResponse.status);
     
     if (loadResponse.ok) {
-      const loadHtml = await loadResponse.text();
+      const loadDataJson = await loadResponse.json();
+      console.log('MISO load data sample:', JSON.stringify(loadDataJson).substring(0, 300));
       
-      // Try to extract total load value from the HTML
-      const loadMatch = loadHtml.match(/(?:Total\s*Load|System\s*Load)[^0-9]*([0-9,]+)/i) ||
-                       loadHtml.match(/<td[^>]*>\s*([0-9,]+)\s*<\/td>[\s\S]*?MW/i);
+      // New API structure: LoadInfo.ClearedMW[]
+      const clearedMW = loadDataJson?.LoadInfo?.ClearedMW || [];
       
-      if (loadMatch) {
-        const currentLoad = parseFloat(loadMatch[1].replace(/,/g, ''));
+      if (Array.isArray(clearedMW) && clearedMW.length > 0) {
+        const latestHour = clearedMW[clearedMW.length - 1];
+        const currentLoad = parseFloat(latestHour?.ClearedMWHourly?.Value || 0);
         
-        // Validate MISO typical range (50,000 - 140,000 MW)
         if (currentLoad >= 50000 && currentLoad <= 140000) {
           loadData = {
-            current_demand_mw: currentLoad,
-            peak_forecast_mw: currentLoad * 1.18,
+            current_demand_mw: Math.round(currentLoad),
+            peak_forecast_mw: Math.round(currentLoad * 1.18),
             reserve_margin: 17.5,
             timestamp: new Date().toISOString(),
-            source: 'miso_total_load'
+            source: 'miso_public_api_load'
           };
           console.log('MISO load extracted:', loadData);
         }
@@ -1036,10 +1031,10 @@ async function fetchMISOData() {
     console.error('❌ Error fetching MISO load data:', loadError.message || loadError);
   }
 
-  // MISO Fuel Mix
+  // MISO Fuel Mix - using new public API
   try {
-    console.log('Fetching MISO fuel mix...');
-    const fuelMixUrl = 'https://api.misoenergy.org/DataBrokerServices.asmx?messageType=getfuelmix&returnType=json';
+    console.log('Fetching MISO fuel mix from new API...');
+    const fuelMixUrl = 'https://public-api.misoenergy.org/api/FuelMix';
     const fuelMixResponse = await fetch(fuelMixUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -1059,19 +1054,22 @@ async function fetchMISOData() {
       
       let coal = 0, gas = 0, nuclear = 0, wind = 0, solar = 0, hydro = 0, other = 0;
       
-      if (Array.isArray(fuelMixData)) {
-        for (const item of fuelMixData) {
-          const fuelType = String(item?.FuelType || item?.fuel || item?.category || '').toLowerCase();
-          const mw = parseFloat(item?.ActualMW || item?.actual || item?.generation || 0);
+      // New API structure: Fuel.Type[]
+      const fuelTypes = fuelMixData?.Fuel?.Type || [];
+      
+      if (Array.isArray(fuelTypes)) {
+        for (const item of fuelTypes) {
+          const category = String(item?.CATEGORY || '').toLowerCase();
+          const mw = parseFloat(item?.ACT || 0);
           
           if (!Number.isFinite(mw) || mw < 0) continue;
           
-          if (fuelType.includes('coal')) coal += mw;
-          else if (fuelType.includes('gas') || fuelType.includes('ng') || fuelType.includes('natural')) gas += mw;
-          else if (fuelType.includes('nuclear')) nuclear += mw;
-          else if (fuelType.includes('wind')) wind += mw;
-          else if (fuelType.includes('solar') || fuelType.includes('pv')) solar += mw;
-          else if (fuelType.includes('hydro') || fuelType.includes('water')) hydro += mw;
+          if (category.includes('coal')) coal += mw;
+          else if (category.includes('gas') || category.includes('natural')) gas += mw;
+          else if (category.includes('nuclear')) nuclear += mw;
+          else if (category.includes('wind')) wind += mw;
+          else if (category.includes('solar')) solar += mw;
+          else if (category.includes('hydro')) hydro += mw;
           else other += mw;
         }
       }
