@@ -36,6 +36,9 @@ export const Dashboard = () => {
     aesoPricing, 
     aesoLoad, 
     aesoGeneration,
+    misoPricing,
+    misoLoad,
+    misoGeneration,
     isLoading,
     marketMetrics,
     refreshData: refreshDataHook
@@ -139,7 +142,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* ERCOT Price Card */}
           <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-primary/5">
             <CardContent className="p-6">
@@ -216,11 +219,48 @@ export const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* MISO Price Card */}
+          <Card className="border-l-4 border-watt-accent hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-accent/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">MISO Price</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                    {misoPricing ? `$${misoPricing.current_price.toFixed(2)}` : (
+                      <span className="text-muted-foreground">Loading...</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">per MWh</p>
+                   {marketMetrics.misoTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.misoTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
+                </div>
+                <div className="p-3 bg-watt-accent/10 rounded-xl group-hover:bg-watt-accent/20 transition-colors">
+                  <Activity className="w-6 h-6 text-watt-accent" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Live Market Data Grid */}
         <ResponsiveSection className="mt-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* ERCOT Detailed Card */}
             <Card className="hover:shadow-lg transition-all duration-300 border-watt-primary/20 bg-gradient-to-br from-card to-watt-primary/5">
               <CardHeader className="pb-4 bg-gradient-to-r from-watt-primary/10 to-transparent">
@@ -404,6 +444,99 @@ export const Dashboard = () => {
               )}
             </CardContent>
             </Card>
+
+            {/* MISO Detailed Card */}
+            <Card className="hover:shadow-lg transition-all duration-300 border-watt-accent/20 bg-gradient-to-br from-card to-watt-accent/5">
+              <CardHeader className="pb-4 bg-gradient-to-r from-watt-accent/10 to-transparent">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <MapPin className="w-6 h-6 text-watt-accent" />
+                  <span className="text-watt-accent font-bold">MISO (Midwest)</span>
+                   {isLoading && (
+                     <div className="w-5 h-5 border-2 border-watt-accent border-t-transparent rounded-full animate-spin" />
+                   )}
+                  <Badge 
+                    variant={misoPricing?.market_conditions === 'normal' ? 'default' : 'secondary'} 
+                    className="ml-auto bg-watt-accent/10 text-watt-accent border-watt-accent/20"
+                  >
+                    {misoPricing?.market_conditions || 'Loading...'}
+                  </Badge>
+                </CardTitle>
+                <div className="mt-2 flex justify-end">
+                  <DataSourceBadge 
+                    pricingSource={misoPricing?.source}
+                    loadSource={misoLoad?.source}
+                    mixSource={misoGeneration?.source}
+                  />
+                </div>
+              </CardHeader>
+            <CardContent className="space-y-6 p-6">
+              {/* Pricing */}
+              {misoPricing ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-muted-foreground">Current</p>
+                    <p className="text-lg font-bold">${misoPricing.current_price.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-muted-foreground">Average</p>
+                    <p className="text-lg font-bold">${misoPricing.average_price.toFixed(2)}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  <p className="text-sm text-amber-700">Pricing data temporarily unavailable</p>
+                </div>
+              )}
+
+              {/* Load Information */}
+              {misoLoad && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">System Load</span>
+                    <span className="font-bold">{(misoLoad.current_demand_mw / 1000).toFixed(1)} GW</span>
+                  </div>
+                  <Progress 
+                    value={(misoLoad.current_demand_mw / misoLoad.peak_forecast_mw) * 100} 
+                    className="h-3"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Current</span>
+                    <span>Peak: {(misoLoad.peak_forecast_mw / 1000).toFixed(1)} GW</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Generation Mix */}
+              {misoGeneration && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium">Generation Mix</p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Fuel className="w-4 h-4 text-blue-500" />
+                      <span>Gas: {((misoGeneration.natural_gas_mw / misoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Gauge className="w-4 h-4 text-gray-500" />
+                      <span>Coal: {((misoGeneration.coal_mw / misoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Wind className="w-4 h-4 text-green-500" />
+                      <span>Wind: {((misoGeneration.wind_mw / misoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Battery className="w-4 h-4 text-purple-500" />
+                      <span>Nuclear: {((misoGeneration.nuclear_mw / misoGeneration.total_generation_mw) * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-2 rounded border border-green-200">
+                    <p className="text-sm font-medium text-green-700">
+                      Renewable: {misoGeneration.renewable_percentage.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            </Card>
           </div>
         </ResponsiveSection>
 
@@ -419,8 +552,8 @@ export const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center p-6 bg-gradient-to-br from-watt-primary/10 to-watt-primary/5 rounded-xl border border-watt-primary/20">
                 <p className="text-2xl font-bold text-watt-primary">
-                  {(ercotLoad && aesoLoad) ? 
-                    `${(((ercotLoad.current_demand_mw || 0) + (aesoLoad.current_demand_mw || 0)) / 1000).toFixed(1)} GW` : 
+                  {(ercotLoad && aesoLoad && misoLoad) ? 
+                    `${(((ercotLoad.current_demand_mw || 0) + (aesoLoad.current_demand_mw || 0) + (misoLoad.current_demand_mw || 0)) / 1000).toFixed(1)} GW` : 
                     'Loading...'
                   }
                 </p>
@@ -428,8 +561,8 @@ export const Dashboard = () => {
               </div>
               <div className="text-center p-6 bg-gradient-to-br from-watt-secondary/10 to-watt-secondary/5 rounded-xl border border-watt-secondary/20">
                 <p className="text-2xl font-bold text-watt-secondary">
-                  {ercotPricing && aesoPricing ? 
-                    `$${((ercotPricing.current_price + convertToUSD(aesoPricing.current_price)) / 2).toFixed(2)}` : 
+                  {(ercotPricing && aesoPricing && misoPricing) ? 
+                    `$${((ercotPricing.current_price + convertToUSD(aesoPricing.current_price) + misoPricing.current_price) / 3).toFixed(2)}` : 
                     'Loading...'
                   }
                 </p>
@@ -437,8 +570,8 @@ export const Dashboard = () => {
               </div>
               <div className="text-center p-6 bg-gradient-to-br from-watt-success/10 to-watt-success/5 rounded-xl border border-watt-success/20">
                  <p className="text-2xl font-bold text-watt-success">
-                   {(ercotGeneration && aesoGeneration) ? 
-                     `${(((ercotGeneration.renewable_percentage || 0) + (aesoGeneration.renewable_percentage || 0)) / 2).toFixed(1)}%` : 
+                   {(ercotGeneration && aesoGeneration && misoGeneration) ? 
+                     `${(((ercotGeneration.renewable_percentage || 0) + (aesoGeneration.renewable_percentage || 0) + (misoGeneration.renewable_percentage || 0)) / 3).toFixed(1)}%` : 
                      'Loading...'
                    }
                 </p>
