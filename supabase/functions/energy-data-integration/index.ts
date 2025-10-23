@@ -96,9 +96,81 @@ async function fetchERCOTData() {
   let zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad;
   let operatingReserve, interchange, energyStorage;
   let realDataFound = false;
-  // Try ERCOT's real-time LMP data first
-  try {
-    console.log('Fetching ERCOT real-time LMP data...');
+  
+  // Try ERCOT API first if available (PRIMARY METHOD)
+  const ercotApiKey = Deno.env.get('ERCOT_API_KEY') || Deno.env.get('ERCOT_API_KEY_SECONDARY');
+  if (ercotApiKey) {
+    console.log('✅ ERCOT API key found, using official API as primary source');
+    try {
+      const apiHeaders = {
+        'Ocp-Apim-Subscription-Key': ercotApiKey,
+        'Content-Type': 'application/json'
+      };
+
+      // Fetch real-time LMP data (NP6-788-CD)
+      console.log('Fetching ERCOT LMP from official API...');
+      const lmpApiResponse = await fetch(
+        'https://api.ercot.com/api/public-reports/np6-788-cd/lmp_by_settlement_point',
+        { headers: apiHeaders }
+      );
+
+      if (lmpApiResponse.ok) {
+        const lmpApiData = await lmpApiResponse.json();
+        const lmpRecords = Array.isArray(lmpApiData) ? lmpApiData : (lmpApiData?.data || []);
+        
+        console.log('ERCOT API LMP records received:', lmpRecords.length);
+        
+        // Find hub average or calculate from hubs
+        let hubAvgPrice = null;
+        const hubPrices: number[] = [];
+        
+        for (const record of lmpRecords) {
+          const settlementPoint = String(record.SettlementPoint || record.settlement_point || '').toUpperCase();
+          const lmp = parseFloat(record.LMP || record.lmp || 0);
+          
+          // Check for hub average
+          if (settlementPoint.includes('HB_HUBAVG') || settlementPoint.includes('HUBAVG')) {
+            hubAvgPrice = lmp;
+            break;
+          }
+          
+          // Collect hub prices
+          if ((settlementPoint.startsWith('HB_') || settlementPoint.startsWith('LZ_')) && 
+              Number.isFinite(lmp) && lmp > -500 && lmp < 3000) {
+            hubPrices.push(lmp);
+          }
+        }
+        
+        // Use hub average or calculate from collected hub prices
+        const currentPrice = hubAvgPrice || (hubPrices.length >= 3 ? 
+          hubPrices.reduce((a, b) => a + b, 0) / hubPrices.length : null);
+        
+        if (currentPrice !== null && currentPrice >= 0) {
+          pricing = {
+            current_price: Math.round(currentPrice * 100) / 100,
+            average_price: Math.round(currentPrice * 0.9 * 100) / 100,
+            peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
+            off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
+            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+            timestamp: new Date().toISOString(),
+            source: 'ercot_api_lmp'
+          };
+          console.log('✅ Real ERCOT pricing from official API:', pricing);
+          realDataFound = true;
+        }
+      } else {
+        console.error('ERCOT LMP API failed:', lmpApiResponse.status, await lmpApiResponse.text());
+      }
+    } catch (apiError) {
+      console.error('Error calling ERCOT API for pricing:', apiError);
+    }
+  }
+  
+  // Fallback to web scraping if API didn't work
+  if (!pricing) {
+    // Try ERCOT's real-time LMP data via web scraping
+    try {
+    console.log('Fetching ERCOT real-time LMP data via web scraping...');
     const lmpUrl = 'https://www.ercot.com/content/cdr/html/current_np6788.html';
     const lmpResponse = await fetch(lmpUrl, {
       headers: {
@@ -203,10 +275,11 @@ async function fetchERCOTData() {
           console.log('ERCOT pricing via proxy extracted:', pricing);
         }
       }
-    } catch (proxyErr) {
+  } catch (proxyErr) {
       console.error('ERCOT LMP proxy fetch failed:', proxyErr);
     }
   }
+  } // End of pricing fallback
 
   // Try ERCOT's real-time system conditions for load data
   try {
@@ -459,66 +532,6 @@ async function fetchERCOTData() {
     console.error('ERCOT weather-zone load fetch failed:', e);
   }
 
-  // Try ERCOT API if available
-  const ercotApiKey = Deno.env.get('ERCOT_API_KEY');
-  if (ercotApiKey && !realDataFound) {
-    try {
-      const apiHeaders = {
-        'Ocp-Apim-Subscription-Key': ercotApiKey,
-        'Content-Type': 'application/json'
-      };
-
-      // Try generation data - ERCOT Actual System Load by Fuel Type
-      const generationResponse = await fetch(
-        'https://api.ercot.com/api/public-reports/np4-732-cd/act_sys_load_by_fueltype',
-        { headers: apiHeaders }
-      );
-
-      if (generationResponse.ok) {
-        const genData = await generationResponse.json();
-        const rawData = Array.isArray(genData) ? genData : (genData?.data || []);
-        
-        if (rawData.length > 0) {
-          // Get the most recent record
-          const latest = rawData[rawData.length - 1];
-          
-          // Parse generation values with multiple possible field names
-          const gasGeneration = parseFloat(latest.NaturalGas || latest.Natural_Gas || latest.Gas || 0);
-          const windGeneration = parseFloat(latest.Wind || latest.WindPower || 0);
-          const solarGeneration = parseFloat(latest.Solar || latest.SolarPower || 0);
-          const nuclearGeneration = parseFloat(latest.Nuclear || 0);
-          const coalGeneration = parseFloat(latest.Coal || latest.CoalAndLignite || 0);
-          const hydroGeneration = parseFloat(latest.Hydro || 0);
-          const otherGeneration = parseFloat(latest.Other || 0);
-          
-          const totalGeneration = gasGeneration + windGeneration + solarGeneration + 
-                                 nuclearGeneration + coalGeneration + hydroGeneration + otherGeneration;
-          
-          if (totalGeneration > 1000) { // Sanity check - should be > 1000 MW
-            generationMix = {
-              total_generation_mw: totalGeneration,
-              natural_gas_mw: gasGeneration,
-              wind_mw: windGeneration,
-              solar_mw: solarGeneration,
-              nuclear_mw: nuclearGeneration,
-              coal_mw: coalGeneration,
-              hydro_mw: hydroGeneration,
-              other_mw: otherGeneration,
-              renewable_percentage: ((windGeneration + solarGeneration + hydroGeneration) / totalGeneration * 100),
-              timestamp: new Date().toISOString(),
-              source: 'ercot_api_fuel_type'
-            };
-            console.log('✅ ERCOT generation from API:', generationMix);
-            realDataFound = true;
-          }
-        }
-      } else {
-        console.error('ERCOT generation API failed:', generationResponse.status, await generationResponse.text());
-      }
-    } catch (apiError) {
-      console.error('Error calling ERCOT API:', apiError);
-    }
-  }
 
   // Try Fuel Mix dashboard (public) for real-time generation mix if still missing
   if (!generationMix) {
