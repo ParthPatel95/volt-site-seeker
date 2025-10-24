@@ -363,15 +363,15 @@ async function fetchERCOTData() {
     return `deliveryDateFrom=${encodeURIComponent(deliveryDateFrom)}&deliveryDateTo=${encodeURIComponent(deliveryDateTo)}&page=1&size=10000${additionalParams}`;
   };
 
-  // Fetch ERCOT data products in parallel with query parameters
-  // Correct document names from ERCOT API documentation:
-  // - NP6-905-CD: Settlement Point Prices at Resource Nodes, Hubs and Load Zones
-  // - NP6-345-CD: Actual System Load by Weather Zone  
-  // - NP3-910-ER: 2 Day Aggregated Generation Summary
+  // Fetch ERCOT data products - using confirmed available endpoints
+  // Based on Public API access:
+  // - Real-time Settlement Point Prices
+  // - System Load data
+  // - Generation data
   const [pricingResp, loadResp, genResp] = await Promise.allSettled([
-    getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub?${buildQuery()}`),           // Settlement Point Prices
-    getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn?${buildQuery()}`),         // Load by weather zone
-    getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary?${buildQuery()}`)           // Aggregated generation
+    getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`),           // Settlement Point Prices (no date filter)
+    getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`),         // System Load by Weather Zone
+    getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary`)           // Aggregated generation
   ]);
 
   let pricing: any | undefined;
