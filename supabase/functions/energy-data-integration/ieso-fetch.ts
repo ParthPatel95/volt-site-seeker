@@ -156,58 +156,7 @@ export async function fetchIESOData() {
     console.error('❌ IESO pricing error:', e.message || e);
   }
 
-  // Fallbacks if APIs failed
-  if (!pricing) {
-    console.log('⚠️ IESO pricing API failed, using estimate');
-    const estimatedPrice = 25 + (Math.random() - 0.5) * 8;
-    pricing = {
-      current_price: Math.round(estimatedPrice * 100) / 100,
-      average_price: Math.round(estimatedPrice * 0.92 * 100) / 100,
-      peak_price: Math.round(estimatedPrice * 1.6 * 100) / 100,
-      off_peak_price: Math.round(estimatedPrice * 0.55 * 100) / 100,
-      market_conditions: estimatedPrice > 30 ? 'high' : estimatedPrice > 22 ? 'normal' : 'low',
-      timestamp: new Date().toISOString(),
-      source: 'ieso_estimated'
-    };
-  }
-
-  if (!loadData) {
-    console.log('⚠️ IESO demand API failed, using estimate');
-    const estimatedDemand = 16500 + Math.random() * 2000;
-    loadData = {
-      current_demand_mw: Math.round(estimatedDemand),
-      peak_forecast_mw: Math.round(estimatedDemand * 1.15),
-      reserve_margin: 15,
-      timestamp: new Date().toISOString(),
-      source: 'ieso_estimated'
-    };
-  }
-
-  if (!generationMix) {
-    console.log('⚠️ IESO generation API failed, using estimate');
-    const totalGen = loadData.current_demand_mw;
-    const nuclear = totalGen * 0.60;
-    const hydro = totalGen * 0.20;
-    const gas = totalGen * 0.14;
-    const wind = totalGen * 0.04;
-    const solar = totalGen * 0.01;
-    const biofuel = totalGen * 0.01;
-    const renewable = hydro + wind + solar + biofuel;
-    
-    generationMix = {
-      total_generation_mw: Math.round(totalGen),
-      nuclear_mw: Math.round(nuclear),
-      hydro_mw: Math.round(hydro),
-      natural_gas_mw: Math.round(gas),
-      wind_mw: Math.round(wind),
-      solar_mw: Math.round(solar),
-      biofuel_mw: Math.round(biofuel),
-      other_mw: 0,
-      renewable_percentage: Math.round((renewable / totalGen) * 100 * 100) / 100,
-      timestamp: new Date().toISOString(),
-      source: 'ieso_estimated'
-    };
-  }
+  // No fallbacks - only return real data if APIs succeed
 
   console.log('IESO function complete:', { 
     pricingSource: pricing?.source, 
