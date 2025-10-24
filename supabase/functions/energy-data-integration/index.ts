@@ -1099,21 +1099,31 @@ async function fetchCAISOData() {
 
   // Fetch Fuel Mix (Generation Mix)
   try {
-    const fuelMixUrl = `https://www.caiso.com/outlook/current/fuelsource.csv?_=${Date.now()}`;
-    const response = await fetch(fuelMixUrl);
+    console.log('Fetching CAISO fuel mix...');
+    const fuelMixUrl = `https://www.caiso.com/outlook/SP/fuelsource.csv`;
+    const response = await fetch(fuelMixUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    console.log('CAISO fuel mix response status:', response.status);
     
     if (response.ok) {
       const text = await response.text();
+      console.log('CAISO fuel mix text length:', text.length, 'first 200 chars:', text.substring(0, 200));
       const data = parseCSV(text);
+      console.log('CAISO fuel mix parsed rows:', data.length);
       
       if (data.length > 0) {
         const latest = data[data.length - 1];
+        console.log('CAISO latest fuel mix row:', JSON.stringify(latest).substring(0, 300));
         
         const solar = parseFloat(latest['Solar'] || 0);
         const wind = parseFloat(latest['Wind'] || 0);
         const gas = parseFloat(latest['Natural Gas'] || 0);
         const nuclear = parseFloat(latest['Nuclear'] || 0);
-        const hydro = parseFloat(latest['Large Hydro'] || 0) + parseFloat(latest['Small Hydro'] || 0);
+        const hydro = parseFloat(latest['Large Hydro'] || 0) + parseFloat(latest['Small hydro'] || 0);
         const coal = parseFloat(latest['Coal'] || 0);
         const geothermal = parseFloat(latest['Geothermal'] || 0);
         const biomass = parseFloat(latest['Biomass'] || 0);
@@ -1141,23 +1151,35 @@ async function fetchCAISOData() {
         
         console.log('✅ CAISO generation mix:', generationMix);
       }
+    } else {
+      console.error('❌ CAISO fuel mix HTTP error:', response.status, response.statusText);
     }
-  } catch (e) {
-    console.error('❌ CAISO fuel mix error:', e);
+  } catch (e: any) {
+    console.error('❌ CAISO fuel mix error:', e.message || e);
   }
 
   // Fetch Load (Demand)
   try {
-    const loadUrl = `https://www.caiso.com/outlook/current/demand.csv?_=${Date.now()}`;
-    const response = await fetch(loadUrl);
+    console.log('Fetching CAISO load...');
+    const loadUrl = `https://www.caiso.com/outlook/SP/demand.csv`;
+    const response = await fetch(loadUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    console.log('CAISO load response status:', response.status);
     
     if (response.ok) {
       const text = await response.text();
+      console.log('CAISO load text length:', text.length, 'first 200 chars:', text.substring(0, 200));
       const data = parseCSV(text);
+      console.log('CAISO load parsed rows:', data.length);
       
       if (data.length > 0) {
         const latest = data[data.length - 1];
-        const currentLoad = parseFloat(latest['Load'] || 0);
+        console.log('CAISO latest load row:', JSON.stringify(latest));
+        const currentLoad = parseFloat(latest['Current demand'] || latest['Load'] || 0);
         
         if (currentLoad > 10000) {
           loadData = {
@@ -1169,11 +1191,15 @@ async function fetchCAISOData() {
           };
           
           console.log('✅ CAISO load data:', loadData);
+        } else {
+          console.log('❌ CAISO load too low:', currentLoad);
         }
       }
+    } else {
+      console.error('❌ CAISO load HTTP error:', response.status, response.statusText);
     }
-  } catch (e) {
-    console.error('❌ CAISO load error:', e);
+  } catch (e: any) {
+    console.error('❌ CAISO load error:', e.message || e);
   }
 
   // Estimate pricing from generation mix and load
@@ -1195,8 +1221,11 @@ async function fetchCAISOData() {
     };
     
     console.log('✅ CAISO pricing (estimated):', pricing);
+  } else {
+    console.log('⚠️ CAISO: Cannot estimate pricing - missing data (generationMix:', !!generationMix, 'loadData:', !!loadData, ')');
   }
 
+  console.log('CAISO function complete - returning:', { hasPricing: !!pricing, hasLoad: !!loadData, hasGenMix: !!generationMix });
   return { pricing, loadData, generationMix };
 }
 
@@ -1230,18 +1259,33 @@ async function fetchNYISOData() {
 
   // Fetch Real-Time Fuel Mix
   try {
+    console.log('Fetching NYISO fuel mix...');
     const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
     const fuelMixUrl = `http://mis.nyiso.com/public/csv/rtfuelmix/${dateStr}rtfuelmix.csv`;
     
-    const response = await fetch(fuelMixUrl);
+    console.log('NYISO fuel mix URL:', fuelMixUrl);
+    
+    const response = await fetch(fuelMixUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    console.log('NYISO fuel mix response status:', response.status);
     
     if (response.ok) {
       const text = await response.text();
+      console.log('NYISO fuel mix text length:', text.length, 'first 200 chars:', text.substring(0, 200));
       const data = parseCSV(text);
+      console.log('NYISO fuel mix parsed rows:', data.length);
       
       if (data.length > 0) {
         const latest = data[data.length - 1];
+        console.log('NYISO latest fuel mix row:', JSON.stringify(latest).substring(0, 300));
         
         const dualFuel = parseFloat(latest['Dual Fuel'] || 0);
         const naturalGas = parseFloat(latest['Natural Gas'] || 0);
@@ -1272,22 +1316,34 @@ async function fetchNYISOData() {
         
         console.log('✅ NYISO generation mix:', generationMix);
       }
+    } else {
+      console.error('❌ NYISO fuel mix HTTP error:', response.status, response.statusText);
     }
-  } catch (e) {
-    console.error('❌ NYISO fuel mix error:', e);
+  } catch (e: any) {
+    console.error('❌ NYISO fuel mix error:', e.message || e);
   }
 
   // Fetch Real-Time Load
   try {
+    console.log('Fetching NYISO load...');
     const loadUrl = 'http://mis.nyiso.com/public/csv/pal/pal.csv';
-    const response = await fetch(loadUrl);
+    const response = await fetch(loadUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    console.log('NYISO load response status:', response.status);
     
     if (response.ok) {
       const text = await response.text();
+      console.log('NYISO load text length:', text.length, 'first 200 chars:', text.substring(0, 200));
       const data = parseCSV(text);
+      console.log('NYISO load parsed rows:', data.length);
       
       if (data.length > 0) {
         const latest = data[data.length - 1];
+        console.log('NYISO latest load row:', JSON.stringify(latest));
         const currentLoad = parseFloat(latest['NYISO'] || 0);
         
         if (currentLoad > 5000) {
@@ -1300,11 +1356,15 @@ async function fetchNYISOData() {
           };
           
           console.log('✅ NYISO load data:', loadData);
+        } else {
+          console.log('❌ NYISO load too low:', currentLoad);
         }
       }
+    } else {
+      console.error('❌ NYISO load HTTP error:', response.status, response.statusText);
     }
-  } catch (e) {
-    console.error('❌ NYISO load error:', e);
+  } catch (e: any) {
+    console.error('❌ NYISO load error:', e.message || e);
   }
 
   // Estimate pricing
@@ -1325,8 +1385,11 @@ async function fetchNYISOData() {
     };
     
     console.log('✅ NYISO pricing (estimated):', pricing);
+  } else {
+    console.log('⚠️ NYISO: Cannot estimate pricing - missing data (generationMix:', !!generationMix, 'loadData:', !!loadData, ')');
   }
 
+  console.log('NYISO function complete - returning:', { hasPricing: !!pricing, hasLoad: !!loadData, hasGenMix: !!generationMix });
   return { pricing, loadData, generationMix };
 }
 
