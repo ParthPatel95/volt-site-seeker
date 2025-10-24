@@ -2,6 +2,10 @@ import { useMemo } from 'react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useMISOData } from '@/hooks/useMISOData';
+import { useCAISOData } from '@/hooks/useCAISOData';
+import { useNYISOData } from '@/hooks/useNYISOData';
+import { usePJMData } from '@/hooks/usePJMData';
+import { useSPPData } from '@/hooks/useSPPData';
 
 export const useOptimizedDashboard = () => {
   const { 
@@ -28,6 +32,38 @@ export const useOptimizedDashboard = () => {
     refetch: refetchMISO
   } = useMISOData();
 
+  const { 
+    pricing: caisoPricing, 
+    loadData: caisoLoad, 
+    generationMix: caisoGeneration,
+    loading: caisoLoading,
+    refetch: refetchCAISO
+  } = useCAISOData();
+
+  const { 
+    pricing: nyisoPricing, 
+    loadData: nyisoLoad, 
+    generationMix: nyisoGeneration,
+    loading: nyisoLoading,
+    refetch: refetchNYISO
+  } = useNYISOData();
+
+  const { 
+    pricing: pjmPricing, 
+    loadData: pjmLoad, 
+    generationMix: pjmGeneration,
+    loading: pjmLoading,
+    refetch: refetchPJM
+  } = usePJMData();
+
+  const { 
+    pricing: sppPricing, 
+    loadData: sppLoad, 
+    generationMix: sppGeneration,
+    loading: sppLoading,
+    refetch: refetchSPP
+  } = useSPPData();
+
   // Memoize expensive calculations
   const marketMetrics = useMemo(() => {
     const getMarketTrend = (current: number, average: number) => {
@@ -42,12 +78,24 @@ export const useOptimizedDashboard = () => {
     return {
       ercotTrend: ercotPricing ? getMarketTrend(ercotPricing.current_price, ercotPricing.average_price) : null,
       aesoTrend: aesoPricing ? getMarketTrend(aesoPricing.current_price, aesoPricing.average_price) : null,
-      misoTrend: misoPricing ? getMarketTrend(misoPricing.current_price, misoPricing.average_price) : null
+      misoTrend: misoPricing ? getMarketTrend(misoPricing.current_price, misoPricing.average_price) : null,
+      caisoTrend: caisoPricing ? getMarketTrend(caisoPricing.current_price, caisoPricing.average_price) : null,
+      nyisoTrend: nyisoPricing ? getMarketTrend(nyisoPricing.current_price, nyisoPricing.average_price) : null,
+      pjmTrend: pjmPricing ? getMarketTrend(pjmPricing.current_price, pjmPricing.average_price) : null,
+      sppTrend: sppPricing ? getMarketTrend(sppPricing.current_price, sppPricing.average_price) : null
     };
-  }, [ercotPricing, aesoPricing, misoPricing]);
+  }, [ercotPricing, aesoPricing, misoPricing, caisoPricing, nyisoPricing, pjmPricing, sppPricing]);
 
   const refreshData = async () => {
-    await Promise.all([refetchERCOT(), refetchAESO(), refetchMISO()]);
+    await Promise.all([
+      refetchERCOT(), 
+      refetchAESO(), 
+      refetchMISO(), 
+      refetchCAISO(), 
+      refetchNYISO(), 
+      refetchPJM(), 
+      refetchSPP()
+    ]);
   };
 
   return {
@@ -60,7 +108,19 @@ export const useOptimizedDashboard = () => {
     misoPricing,
     misoLoad,
     misoGeneration,
-    isLoading: ercotLoading || aesoLoading || misoLoading,
+    caisoPricing,
+    caisoLoad,
+    caisoGeneration,
+    nyisoPricing,
+    nyisoLoad,
+    nyisoGeneration,
+    pjmPricing,
+    pjmLoad,
+    pjmGeneration,
+    sppPricing,
+    sppLoad,
+    sppGeneration,
+    isLoading: ercotLoading || aesoLoading || misoLoading || caisoLoading || nyisoLoading || pjmLoading || sppLoading,
     marketMetrics,
     refreshData
   };

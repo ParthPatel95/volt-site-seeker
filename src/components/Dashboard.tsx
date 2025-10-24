@@ -39,6 +39,18 @@ export const Dashboard = () => {
     misoPricing,
     misoLoad,
     misoGeneration,
+    caisoPricing,
+    caisoLoad,
+    caisoGeneration,
+    nyisoPricing,
+    nyisoLoad,
+    nyisoGeneration,
+    pjmPricing,
+    pjmLoad,
+    pjmGeneration,
+    sppPricing,
+    sppLoad,
+    sppGeneration,
     isLoading,
     marketMetrics,
     refreshData: refreshDataHook
@@ -142,7 +154,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {/* ERCOT Price Card */}
           <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-primary/5">
             <CardContent className="p-6">
@@ -252,6 +264,154 @@ export const Dashboard = () => {
                 </div>
                 <div className="p-3 bg-watt-accent/10 rounded-xl group-hover:bg-watt-accent/20 transition-colors">
                   <Activity className="w-6 h-6 text-watt-accent" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* CAISO Price Card */}
+          <Card className="border-l-4 border-blue-500 hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-blue-500/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">CAISO Price</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                    {caisoPricing ? `$${caisoPricing.current_price.toFixed(2)}` : (
+                      <span className="text-muted-foreground">Loading...</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">per MWh</p>
+                   {marketMetrics.caisoTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.caisoTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
+                </div>
+                <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
+                  <Sun className="w-6 h-6 text-blue-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* NYISO Price Card */}
+          <Card className="border-l-4 border-purple-500 hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-purple-500/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">NYISO Price</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                    {nyisoPricing ? `$${nyisoPricing.current_price.toFixed(2)}` : (
+                      <span className="text-muted-foreground">Loading...</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">per MWh</p>
+                   {marketMetrics.nyisoTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.nyisoTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
+                </div>
+                <div className="p-3 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-colors">
+                  <MapPin className="w-6 h-6 text-purple-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* PJM Price Card */}
+          <Card className="border-l-4 border-green-500 hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-green-500/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">PJM Price</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                    {pjmPricing ? `$${pjmPricing.current_price.toFixed(2)}` : (
+                      <span className="text-muted-foreground">Loading...</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">per MWh</p>
+                   {marketMetrics.pjmTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.pjmTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
+                </div>
+                <div className="p-3 bg-green-500/10 rounded-xl group-hover:bg-green-500/20 transition-colors">
+                  <Battery className="w-6 h-6 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SPP Price Card */}
+          <Card className="border-l-4 border-orange-500 hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-orange-500/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">SPP Price</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                    {sppPricing ? `$${sppPricing.current_price.toFixed(2)}` : (
+                      <span className="text-muted-foreground">Loading...</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">per MWh</p>
+                   {marketMetrics.sppTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.sppTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
+                </div>
+                <div className="p-3 bg-orange-500/10 rounded-xl group-hover:bg-orange-500/20 transition-colors">
+                  <Wind className="w-6 h-6 text-orange-500" />
                 </div>
               </div>
             </CardContent>
