@@ -390,13 +390,16 @@ async function fetchERCOTData() {
       console.log('ERCOT pricing data returned', json.data.length, 'records');
       console.log('First pricing record sample:', JSON.stringify(json.data[0]).substring(0, 300));
       
-      // Find HB_HUBAVG or calculate average from all LMP records
+      // Data comes as arrays: [date, hour, interval, settlement_point, settlement_point_type, lmp, repeated]
+      // Index 3 = settlement_point, Index 5 = lmp value
       let hubAvgPrice: number | null = null;
       const allPrices: number[] = [];
       
       for (const record of json.data) {
-        const settlementPoint = String(record.SettlementPoint || record.settlementPoint || record.settlement_point || '').toUpperCase();
-        const lmpValue = parseFloat(record.LMP || record.lmp || record.settlementPointPrice || 0);
+        if (!Array.isArray(record) || record.length < 6) continue;
+        
+        const settlementPoint = String(record[3] || '').toUpperCase();
+        const lmpValue = parseFloat(record[5] || '0');
         
         if (settlementPoint.includes('HUBAVG') || settlementPoint === 'HB_HUBAVG') {
           hubAvgPrice = lmpValue;
@@ -444,19 +447,24 @@ async function fetchERCOTData() {
       console.log('ERCOT load data returned', json.data.length, 'records');
       console.log('First load record sample:', JSON.stringify(json.data[0]).substring(0, 300));
       
-      // Sum all weather zone loads to get total system load
+      // Data comes as arrays: [date, time, coast, east, far_west, north, north_central, south_central, southern, west, ercot_total, repeated]
+      // Index 10 = ERCOT total load in MW
       let totalLoad = 0;
       let maxForecast = 0;
       
       for (const record of json.data) {
-        const actual = parseFloat(record.ActualLoad || record.actualLoad || record.actual || 0);
-        const forecast = parseFloat(record.ForecastLoad || record.forecastLoad || record.forecast || 0);
+        if (!Array.isArray(record) || record.length < 11) continue;
         
-        if (Number.isFinite(actual)) {
-          totalLoad += actual;
+        // Use the ERCOT total directly from index 10
+        const ercotTotal = parseFloat(record[10] || '0');
+        
+        if (Number.isFinite(ercotTotal) && ercotTotal > totalLoad) {
+          totalLoad = ercotTotal;
         }
-        if (Number.isFinite(forecast) && forecast > maxForecast) {
-          maxForecast = forecast;
+        
+        // Use highest value as forecast (could be improved with actual forecast data)
+        if (ercotTotal > maxForecast) {
+          maxForecast = ercotTotal;
         }
       }
       
