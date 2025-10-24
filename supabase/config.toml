@@ -19,6 +19,9 @@ verify_jwt = false
 [functions.get-mapbox-config]
 verify_jwt = false
 
+[functions.test-ercot-auth]
+verify_jwt = false
+
 # Authentication required endpoints
 [functions.api-key-management]
 verify_jwt = true

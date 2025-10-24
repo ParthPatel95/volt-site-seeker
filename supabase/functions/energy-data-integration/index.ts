@@ -44,6 +44,12 @@ serve(async (req) => {
   }
 
   try {
+    // Check if this is a test request to verify ERCOT subscription
+    const url = new URL(req.url);
+    if (url.searchParams.get('test') === 'ercot-auth') {
+      return await testERCOTSubscription();
+    }
+
     console.log('Fetching unified energy data...');
 
     // Fetch ERCOT, AESO, and MISO data in parallel
@@ -88,6 +94,116 @@ serve(async (req) => {
     );
   }
 })
+
+async function testERCOTSubscription() {
+  console.log('\n=== ERCOT API SUBSCRIPTION TEST ===\n');
+  
+  const apiKey = Deno.env.get('ERCOT_API_KEY') || '';
+  const apiKeySecondary = Deno.env.get('ERCOT_API_KEY_SECONDARY') || '';
+  
+  const results: any = {
+    subscriptionStatus: {
+      primaryKeyConfigured: !!apiKey,
+      secondaryKeyConfigured: !!apiKeySecondary,
+      timestamp: new Date().toISOString()
+    },
+    tests: []
+  };
+
+  console.log('Primary key configured:', !!apiKey);
+  console.log('Secondary key configured:', !!apiKeySecondary);
+
+  // Test endpoints
+  const testEndpoints = [
+    {
+      name: 'List All Products',
+      url: 'https://api.ercot.com/api/public-reports',
+      description: 'Should list all available EMIL products'
+    },
+    {
+      name: 'Get Product NP6-788-CD Metadata',
+      url: 'https://api.ercot.com/api/public-reports/np6-788-cd',
+      description: 'Settlement Point Prices product metadata'
+    },
+    {
+      name: 'Get Latest Data (if accessible)',
+      url: 'https://api.ercot.com/api/public-reports/np6-788-cd/spp_hrly_avrg_agg',
+      description: 'Actual pricing data - may require OAuth'
+    }
+  ];
+
+  for (const endpoint of testEndpoints) {
+    console.log(`\nTesting: ${endpoint.name}`);
+    console.log(`URL: ${endpoint.url}`);
+    
+    const testResult: any = {
+      name: endpoint.name,
+      url: endpoint.url,
+      description: endpoint.description
+    };
+
+    try {
+      // Test with subscription key
+      const res = await fetch(endpoint.url, {
+        headers: {
+          'Ocp-Apim-Subscription-Key': apiKey,
+          'Accept': 'application/json',
+          'User-Agent': 'LovableEnergy/1.0'
+        }
+      });
+
+      const text = await res.text();
+      testResult.status = res.status;
+      testResult.statusText = res.statusText;
+      testResult.responsePreview = text.slice(0, 500);
+
+      console.log(`Status: ${res.status} ${res.statusText}`);
+      console.log(`Response preview:`, text.slice(0, 200));
+
+      if (res.status === 200) {
+        testResult.success = true;
+        testResult.message = 'Subscription key is valid for this endpoint';
+        
+        // Try to parse and show structure
+        try {
+          const json = JSON.parse(text);
+          testResult.responseStructure = Object.keys(json);
+          if (json._embedded?.products) {
+            testResult.productsCount = json._embedded.products.length;
+          }
+        } catch (e) {
+          // Not JSON or couldn't parse
+        }
+      } else if (res.status === 401) {
+        testResult.success = false;
+        testResult.message = 'Requires OAuth Bearer token (ID token) in addition to subscription key';
+        testResult.authType = 'OAuth + Subscription Key';
+      } else if (res.status === 404) {
+        testResult.success = false;
+        testResult.message = 'Endpoint not found - may be incorrect path or product ID';
+      } else {
+        testResult.success = false;
+        testResult.message = `Unexpected status: ${res.status}`;
+      }
+    } catch (error: any) {
+      console.error(`Error testing ${endpoint.name}:`, error);
+      testResult.error = error.message;
+      testResult.success = false;
+    }
+
+    results.tests.push(testResult);
+  }
+
+  console.log('\n=== TEST COMPLETE ===\n');
+  
+  return new Response(
+    JSON.stringify(results, null, 2),
+    { 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200 
+    }
+  );
+}
 
 async function fetchERCOTData() {
   console.log('Fetching ERCOT data (API only - matching AESO pattern)...');
