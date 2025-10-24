@@ -90,9 +90,9 @@ serve(async (req) => {
 })
 
 async function fetchERCOTData() {
-  console.log('Fetching ERCOT data (API only)...');
+  console.log('Fetching ERCOT data (API only - matching AESO pattern)...');
 
-  // Get API key with fallback (similar to AESO pattern)
+  // Get API key with fallback (same pattern as AESO)
   const apiKey = Deno.env.get('ERCOT_API_KEY') || Deno.env.get('ERCOT_API_KEY_SECONDARY') || '';
   
   if (!apiKey) {
@@ -114,7 +114,9 @@ async function fetchERCOTData() {
     };
   }
 
-  const baseUrl = 'https://api.ercot.com/api/public-reports';
+  // Use the official public-data API base per documentation
+  // https://apiexplorer.ercot.com/
+  const baseUrl = 'https://api.ercot.com/api/public-data';
   const headers: Record<string, string> = {
     'Ocp-Apim-Subscription-Key': apiKey,
     'Accept': 'application/json',
@@ -122,6 +124,7 @@ async function fetchERCOTData() {
     'User-Agent': 'LovableEnergy/1.0'
   };
 
+  // Helper function matching AESO pattern exactly
   async function getJson(url: string) {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
@@ -144,68 +147,81 @@ async function fetchERCOTData() {
     }
   }
 
-  // Fetch all ERCOT data in parallel
-  const [pricingResp, loadResp, fuelMixResp, zoneLMPResp] = await Promise.allSettled([
-    getJson(`${baseUrl}/np6-788-cd/lmp_by_settlement_point`),      // Pricing (LMP)
-    getJson(`${baseUrl}/np3-565-cd/act_sys_load_by_wzn`),          // Load by weather zone
-    getJson(`${baseUrl}/np4-732-cd/act_sys_load_by_fueltype`),     // Generation mix
-    getJson(`${baseUrl}/np6-788-cd/lmp_electrical_bus`)            // Zone LMPs
+  // Fetch ERCOT data products in parallel
+  // Product IDs based on ERCOT public data registry:
+  // - NP6-788-CD: LMP by Settlement Point
+  // - NP3-565-CD: Actual System Load by Weather Zone  
+  // - NP4-732-CD: Actual System Load by Fuel Type
+  const [pricingResp, loadResp, fuelMixResp] = await Promise.allSettled([
+    getJson(`${baseUrl}/np6-788-cd`),      // Pricing (LMP)
+    getJson(`${baseUrl}/np3-565-cd`),      // Load by weather zone
+    getJson(`${baseUrl}/np4-732-cd`)       // Generation mix
   ]);
 
   let pricing: any | undefined;
   let loadData: any | undefined;
   let generationMix: any | undefined;
   let zoneLMPs: any | undefined;
-  let ordcAdder: any | undefined;
-  let ancillaryPrices: any | undefined;
-  let systemFrequency: any | undefined;
-  let constraints: any | undefined;
-  let intertieFlows: any | undefined;
-  let weatherZoneLoad: any | undefined;
-  let operatingReserve: any | undefined;
-  let interchange: any | undefined;
-  let energyStorage: any | undefined;
-  // Parse Pricing from LMP API response
+
+  // Parse Pricing from Product API response (following AESO pattern)
   try {
     const json: any = pricingResp.status === 'fulfilled' ? pricingResp.value : null;
+    console.log('ERCOT pricing response:', json ? 'received' : 'null');
     
-    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
-      console.log('ERCOT pricing API returned', json.data.length, 'records');
+    // The public-data API returns product info with artifacts
+    // We need to fetch the actual data from artifacts
+    if (json && json.productId) {
+      console.log('ERCOT pricing product:', json.productId, json.name);
       
-      // Find HB_HUBAVG or calculate average from all LMP records
-      let hubAvgPrice: number | null = null;
-      const allPrices: number[] = [];
-      
-      for (const record of json.data) {
-        const settlementPoint = String(record.SettlementPoint || record.settlementPoint || '').toUpperCase();
-        const lmpValue = parseFloat(record.LMP || record.lmp || record.price || 0);
+      // Get the first artifact link if available
+      if (json.artifacts && json.artifacts.length > 0) {
+        const artifact = json.artifacts[0];
+        const dataLink = artifact.links?.find((l: any) => l.rel === 'data');
         
-        if (settlementPoint.includes('HUBAVG') || settlementPoint === 'HB_HUBAVG') {
-          hubAvgPrice = lmpValue;
-          break;
+        if (dataLink && dataLink.href) {
+          console.log('Fetching pricing data from artifact:', dataLink.href);
+          const dataResp = await getJson(dataLink.href);
+          
+          if (dataResp && dataResp.data && Array.isArray(dataResp.data) && dataResp.data.length > 0) {
+            console.log('ERCOT pricing data returned', dataResp.data.length, 'records');
+            
+            // Find HB_HUBAVG or calculate average from all LMP records
+            let hubAvgPrice: number | null = null;
+            const allPrices: number[] = [];
+            
+            for (const record of dataResp.data) {
+              const settlementPoint = String(record.SettlementPoint || record.settlementPoint || '').toUpperCase();
+              const lmpValue = parseFloat(record.LMP || record.lmp || record.price || 0);
+              
+              if (settlementPoint.includes('HUBAVG') || settlementPoint === 'HB_HUBAVG') {
+                hubAvgPrice = lmpValue;
+                break;
+              }
+              
+              // Collect valid hub/load zone prices
+              if ((settlementPoint.startsWith('HB_') || settlementPoint.startsWith('LZ_')) && 
+                  Number.isFinite(lmpValue) && lmpValue >= -500 && lmpValue < 3000) {
+                allPrices.push(lmpValue);
+              }
+            }
+            
+            const currentPrice = hubAvgPrice !== null ? hubAvgPrice : 
+              (allPrices.length >= 3 ? allPrices.reduce((a, b) => a + b, 0) / allPrices.length : null);
+            
+            if (currentPrice !== null && Number.isFinite(currentPrice)) {
+              pricing = {
+                current_price: Math.round(currentPrice * 100) / 100,
+                average_price: Math.round(currentPrice * 0.9 * 100) / 100,
+                peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
+                off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
+                market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+                timestamp: new Date().toISOString(),
+                source: 'ercot_api_lmp'
+              };
+              console.log('✅ ERCOT pricing from API:', pricing.current_price, '$/MWh');
+            }
+          }
         }
-        
-        // Collect valid hub/load zone prices
-        if ((settlementPoint.startsWith('HB_') || settlementPoint.startsWith('LZ_')) && 
-            Number.isFinite(lmpValue) && lmpValue >= -500 && lmpValue < 3000) {
-          allPrices.push(lmpValue);
-        }
-      }
-      
-      const currentPrice = hubAvgPrice !== null ? hubAvgPrice : 
-        (allPrices.length >= 3 ? allPrices.reduce((a, b) => a + b, 0) / allPrices.length : null);
-      
-      if (currentPrice !== null && Number.isFinite(currentPrice)) {
-        pricing = {
-          current_price: Math.round(currentPrice * 100) / 100,
-          average_price: Math.round(currentPrice * 0.9 * 100) / 100,
-          peak_price: Math.round(currentPrice * 1.8 * 100) / 100,
-          off_peak_price: Math.round(currentPrice * 0.5 * 100) / 100,
-          market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-          timestamp: new Date().toISOString(),
-          source: 'ercot_api_lmp'
-        };
-        console.log('✅ ERCOT pricing from API:', pricing.current_price, '$/MWh');
       }
     }
   } catch (e) {
@@ -215,35 +231,50 @@ async function fetchERCOTData() {
   // Parse Load from weather zone API response
   try {
     const json: any = loadResp.status === 'fulfilled' ? loadResp.value : null;
+    console.log('ERCOT load response:', json ? 'received' : 'null');
     
-    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
-      console.log('ERCOT load API returned', json.data.length, 'records');
+    if (json && json.productId) {
+      console.log('ERCOT load product:', json.productId, json.name);
       
-      // Sum all weather zone loads to get total system load
-      let totalLoad = 0;
-      let maxForecast = 0;
-      
-      for (const record of json.data) {
-        const actual = parseFloat(record.ActualLoad || record.actualLoad || record.load || 0);
-        const forecast = parseFloat(record.ForecastLoad || record.forecastLoad || record.forecast || 0);
+      if (json.artifacts && json.artifacts.length > 0) {
+        const artifact = json.artifacts[0];
+        const dataLink = artifact.links?.find((l: any) => l.rel === 'data');
         
-        if (Number.isFinite(actual)) {
-          totalLoad += actual;
+        if (dataLink && dataLink.href) {
+          console.log('Fetching load data from artifact:', dataLink.href);
+          const dataResp = await getJson(dataLink.href);
+          
+          if (dataResp && dataResp.data && Array.isArray(dataResp.data) && dataResp.data.length > 0) {
+            console.log('ERCOT load data returned', dataResp.data.length, 'records');
+            
+            // Sum all weather zone loads to get total system load
+            let totalLoad = 0;
+            let maxForecast = 0;
+            
+            for (const record of dataResp.data) {
+              const actual = parseFloat(record.ActualLoad || record.actualLoad || record.load || 0);
+              const forecast = parseFloat(record.ForecastLoad || record.forecastLoad || record.forecast || 0);
+              
+              if (Number.isFinite(actual)) {
+                totalLoad += actual;
+              }
+              if (Number.isFinite(forecast) && forecast > maxForecast) {
+                maxForecast = forecast;
+              }
+            }
+            
+            if (totalLoad > 10000) { // Sanity check for MW
+              loadData = {
+                current_demand_mw: Math.round(totalLoad),
+                peak_forecast_mw: maxForecast > totalLoad ? Math.round(maxForecast) : Math.round(totalLoad * 1.15),
+                reserve_margin: 15.0,
+                timestamp: new Date().toISOString(),
+                source: 'ercot_api_load'
+              };
+              console.log('✅ ERCOT load from API:', loadData.current_demand_mw, 'MW');
+            }
+          }
         }
-        if (Number.isFinite(forecast) && forecast > maxForecast) {
-          maxForecast = forecast;
-        }
-      }
-      
-      if (totalLoad > 10000) { // Sanity check for MW
-        loadData = {
-          current_demand_mw: Math.round(totalLoad),
-          peak_forecast_mw: maxForecast > totalLoad ? Math.round(maxForecast) : Math.round(totalLoad * 1.15),
-          reserve_margin: 15.0,
-          timestamp: new Date().toISOString(),
-          source: 'ercot_api_load'
-        };
-        console.log('✅ ERCOT load from API:', loadData.current_demand_mw, 'MW');
       }
     }
   } catch (e) {
@@ -253,88 +284,77 @@ async function fetchERCOTData() {
   // Parse Generation Mix from fuel type API response
   try {
     const json: any = fuelMixResp.status === 'fulfilled' ? fuelMixResp.value : null;
+    console.log('ERCOT fuel mix response:', json ? 'received' : 'null');
     
-    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
-      console.log('ERCOT fuel mix API returned', json.data.length, 'records');
+    if (json && json.productId) {
+      console.log('ERCOT fuel mix product:', json.productId, json.name);
       
-      // Get the most recent record (first one, as API returns latest first)
-      const latest = json.data[0];
-      
-      const gas = parseFloat(latest.NaturalGas || latest.naturalGas || latest.gas || 0);
-      const wind = parseFloat(latest.Wind || latest.wind || 0);
-      const solar = parseFloat(latest.Solar || latest.solar || 0);
-      const nuclear = parseFloat(latest.Nuclear || latest.nuclear || 0);
-      const coal = parseFloat(latest.Coal || latest.coal || 0);
-      const hydro = parseFloat(latest.Hydro || latest.hydro || 0);
-      const other = parseFloat(latest.Other || latest.other || 0);
-      
-      const total = gas + wind + solar + nuclear + coal + hydro + other;
-      
-      if (total > 10000) { // Sanity check for total MW
-        generationMix = {
-          total_generation_mw: Math.round(total),
-          natural_gas_mw: Math.round(gas),
-          wind_mw: Math.round(wind),
-          solar_mw: Math.round(solar),
-          nuclear_mw: Math.round(nuclear),
-          coal_mw: Math.round(coal),
-          hydro_mw: Math.round(hydro),
-          other_mw: Math.round(other),
-          renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
-          timestamp: new Date().toISOString(),
-          source: 'ercot_api_fuelmix'
-        };
-        console.log('✅ ERCOT generation mix from API:', Math.round(generationMix.renewable_percentage), '% renewable');
+      if (json.artifacts && json.artifacts.length > 0) {
+        const artifact = json.artifacts[0];
+        const dataLink = artifact.links?.find((l: any) => l.rel === 'data');
+        
+        if (dataLink && dataLink.href) {
+          console.log('Fetching fuel mix data from artifact:', dataLink.href);
+          const dataResp = await getJson(dataLink.href);
+          
+          if (dataResp && dataResp.data && Array.isArray(dataResp.data) && dataResp.data.length > 0) {
+            console.log('ERCOT fuel mix data returned', dataResp.data.length, 'records');
+            
+            // Get the most recent record (first one, as API returns latest first)
+            const latest = dataResp.data[0];
+            
+            const gas = parseFloat(latest.NaturalGas || latest.naturalGas || latest.gas || 0);
+            const wind = parseFloat(latest.Wind || latest.wind || 0);
+            const solar = parseFloat(latest.Solar || latest.solar || 0);
+            const nuclear = parseFloat(latest.Nuclear || latest.nuclear || 0);
+            const coal = parseFloat(latest.Coal || latest.coal || 0);
+            const hydro = parseFloat(latest.Hydro || latest.hydro || 0);
+            const other = parseFloat(latest.Other || latest.other || 0);
+            
+            const total = gas + wind + solar + nuclear + coal + hydro + other;
+            
+            if (total > 10000) { // Sanity check for total MW
+              generationMix = {
+                total_generation_mw: Math.round(total),
+                natural_gas_mw: Math.round(gas),
+                wind_mw: Math.round(wind),
+                solar_mw: Math.round(solar),
+                nuclear_mw: Math.round(nuclear),
+                coal_mw: Math.round(coal),
+                hydro_mw: Math.round(hydro),
+                other_mw: Math.round(other),
+                renewable_percentage: total > 0 ? ((wind + solar + hydro) / total * 100) : 0,
+                timestamp: new Date().toISOString(),
+                source: 'ercot_api_fuelmix'
+              };
+              console.log('✅ ERCOT generation mix from API:', Math.round(generationMix.renewable_percentage), '% renewable');
+            }
+          }
+        }
       }
     }
   } catch (e) {
     console.error('ERCOT generation mix parse error:', e);
   }
 
-  // Parse Zone LMPs from electrical bus API response
-  try {
-    const json: any = zoneLMPResp.status === 'fulfilled' ? zoneLMPResp.value : null;
-    
-    if (json && json.data && Array.isArray(json.data)) {
-      const zones: Record<string, number> = {};
-      
-      for (const record of json.data) {
-        const settlementPoint = String(record.SettlementPoint || record.settlementPoint || '');
-        const lmpValue = parseFloat(record.LMP || record.lmp || 0);
-        
-        // Extract zone names (HB_*, LZ_*)
-        if ((settlementPoint.startsWith('HB_') || settlementPoint.startsWith('LZ_')) && 
-            Number.isFinite(lmpValue)) {
-          zones[settlementPoint] = Math.round(lmpValue * 100) / 100;
-        }
-      }
-      
-      if (Object.keys(zones).length > 0) {
-        zoneLMPs = {
-          ...zones,
-          timestamp: new Date().toISOString(),
-          source: 'ercot_api_zones'
-        };
-        console.log('✅ ERCOT zone LMPs from API:', Object.keys(zones).length, 'zones');
-      }
-    }
-  } catch (e) {
-    console.error('ERCOT zone LMPs parse error:', e);
-  }
+  // ZoneLMPs not implemented in this version
+  zoneLMPs = undefined;
 
-  // Placeholder values for data not available from primary APIs
-  // These would need additional API endpoints to be fully implemented
-  ordcAdder = undefined;
-  ancillaryPrices = undefined;
-  systemFrequency = undefined;
-  constraints = undefined;
-  intertieFlows = undefined;
-  weatherZoneLoad = undefined;
-  operatingReserve = undefined;
-  interchange = undefined;
-  energyStorage = undefined;
-
-  return { pricing, loadData, generationMix, zoneLMPs, ordcAdder, ancillaryPrices, systemFrequency, constraints, intertieFlows, weatherZoneLoad, operatingReserve, interchange, energyStorage };
+  return { 
+    pricing, 
+    loadData, 
+    generationMix, 
+    zoneLMPs, 
+    ordcAdder: undefined, 
+    ancillaryPrices: undefined, 
+    systemFrequency: undefined, 
+    constraints: undefined, 
+    intertieFlows: undefined, 
+    weatherZoneLoad: undefined, 
+    operatingReserve: undefined, 
+    interchange: undefined, 
+    energyStorage: undefined 
+  };
 }
 
 async function fetchAESOData() {
