@@ -1,99 +1,219 @@
 // IESO (Independent Electricity System Operator - Ontario) Data Fetching
 export async function fetchIESOData() {
-  console.log('Fetching IESO (Ontario) data...');
+  console.log('Fetching IESO (Ontario) data from public reports...');
   
   let pricing: any;
   let loadData: any;
   let generationMix: any;
 
+  // Helper to parse XML
+  function parseXMLValue(xml: string, tagName: string): string | null {
+    const regex = new RegExp(`<${tagName}>([^<]+)<\/${tagName}>`);
+    const match = xml.match(regex);
+    return match ? match[1].trim() : null;
+  }
+
+  // Fetch Real-Time Generation Data (Generator Output and Capability Report)
   try {
-    const basePrice = 25; // CAD/MWh typical Ontario HOEP
-    const currentPrice = basePrice + (Math.random() - 0.5) * 10;
-    const avgPrice = basePrice * 0.92;
-    const peakPrice = basePrice * 1.6;
-    const offPeakPrice = basePrice * 0.55;
+    console.log('Fetching IESO generation output...');
+    const genUrl = 'http://reports.ieso.ca/public/GenOutputCapability/PUB_GenOutputCapability.xml';
+    
+    const response = await fetch(genUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+    
+    console.log('IESO generation response status:', response.status);
+    
+    if (response.ok) {
+      const xml = await response.text();
+      console.log('IESO generation XML length:', xml.length);
+      
+      // Extract fuel types and their generation
+      let nuclear = 0, hydro = 0, gas = 0, wind = 0, solar = 0, biofuel = 0;
+      
+      // Parse XML for generator outputs grouped by fuel type
+      const fuelTypeMatches = xml.matchAll(/<Fuel>([^<]+)<\/Fuel>[\s\S]*?<Output>([^<]+)<\/Output>/g);
+      
+      for (const match of fuelTypeMatches) {
+        const fuelType = match[1].toLowerCase();
+        const output = parseFloat(match[2]) || 0;
+        
+        if (fuelType.includes('nuclear')) nuclear += output;
+        else if (fuelType.includes('hydro')) hydro += output;
+        else if (fuelType.includes('gas') || fuelType.includes('natural')) gas += output;
+        else if (fuelType.includes('wind')) wind += output;
+        else if (fuelType.includes('solar')) solar += output;
+        else if (fuelType.includes('bio')) biofuel += output;
+      }
+      
+      const totalGen = nuclear + hydro + gas + wind + solar + biofuel;
+      const renewableGen = hydro + wind + solar + biofuel;
+      const renewablePercentage = totalGen > 0 ? (renewableGen / totalGen) * 100 : 0;
+      
+      console.log('IESO generation breakdown:', { nuclear, hydro, gas, wind, solar, biofuel, totalGen });
+      
+      if (totalGen > 10000 && totalGen < 28000) {
+        generationMix = {
+          total_generation_mw: Math.round(totalGen),
+          nuclear_mw: Math.round(nuclear),
+          hydro_mw: Math.round(hydro),
+          natural_gas_mw: Math.round(gas),
+          wind_mw: Math.round(wind),
+          solar_mw: Math.round(solar),
+          biofuel_mw: Math.round(biofuel),
+          other_mw: 0,
+          renewable_percentage: Math.round(renewablePercentage * 100) / 100,
+          timestamp: new Date().toISOString(),
+          source: 'ieso_gen_output_api'
+        };
+        
+        console.log('✅ IESO generation mix:', generationMix);
+      }
+    }
+  } catch (e: any) {
+    console.error('❌ IESO generation error:', e.message || e);
+  }
 
+  // Fetch Real-Time Demand
+  try {
+    console.log('Fetching IESO demand...');
+    const demandUrl = 'http://reports.ieso.ca/public/Demand/PUB_Demand.xml';
+    
+    const response = await fetch(demandUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+    
+    console.log('IESO demand response status:', response.status);
+    
+    if (response.ok) {
+      const xml = await response.text();
+      console.log('IESO demand XML length:', xml.length);
+      
+      const demandValue = parseXMLValue(xml, 'OntarioDemand');
+      
+      if (demandValue) {
+        const currentDemand = parseFloat(demandValue) || 0;
+        
+        if (currentDemand > 10000 && currentDemand < 28000) {
+          loadData = {
+            current_demand_mw: Math.round(currentDemand),
+            peak_forecast_mw: Math.round(currentDemand * 1.15),
+            reserve_margin: 15,
+            timestamp: new Date().toISOString(),
+            source: 'ieso_demand_api'
+          };
+          
+          console.log('✅ IESO demand data:', loadData);
+        }
+      }
+    }
+  } catch (e: any) {
+    console.error('❌ IESO demand error:', e.message || e);
+  }
+
+  // Fetch HOEP (Hourly Ontario Energy Price)
+  try {
+    console.log('Fetching IESO HOEP pricing...');
+    const pricingUrl = 'http://reports.ieso.ca/public/Price/PUB_Price.xml';
+    
+    const response = await fetch(pricingUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+    
+    console.log('IESO pricing response status:', response.status);
+    
+    if (response.ok) {
+      const xml = await response.text();
+      console.log('IESO pricing XML length:', xml.length);
+      
+      const hoepValue = parseXMLValue(xml, 'HOEP');
+      
+      if (hoepValue) {
+        const currentPrice = parseFloat(hoepValue) || 0;
+        
+        if (currentPrice > -50 && currentPrice < 500) {
+          pricing = {
+            current_price: Math.round(currentPrice * 100) / 100,
+            average_price: Math.round(currentPrice * 0.92 * 100) / 100,
+            peak_price: Math.round(currentPrice * 1.6 * 100) / 100,
+            off_peak_price: Math.round(currentPrice * 0.55 * 100) / 100,
+            market_conditions: currentPrice > 50 ? 'high' : currentPrice > 25 ? 'normal' : 'low',
+            timestamp: new Date().toISOString(),
+            source: 'ieso_hoep_api'
+          };
+          
+          console.log('✅ IESO pricing (HOEP):', pricing);
+        }
+      }
+    }
+  } catch (e: any) {
+    console.error('❌ IESO pricing error:', e.message || e);
+  }
+
+  // Fallbacks if APIs failed
+  if (!pricing) {
+    console.log('⚠️ IESO pricing API failed, using estimate');
+    const estimatedPrice = 25 + (Math.random() - 0.5) * 8;
     pricing = {
-      current_price: Math.round(currentPrice * 100) / 100,
-      average_price: Math.round(avgPrice * 100) / 100,
-      peak_price: Math.round(peakPrice * 100) / 100,
-      off_peak_price: Math.round(offPeakPrice * 100) / 100,
-      market_conditions: currentPrice > basePrice * 1.2 ? 'high' : currentPrice < basePrice * 0.8 ? 'low' : 'normal',
+      current_price: Math.round(estimatedPrice * 100) / 100,
+      average_price: Math.round(estimatedPrice * 0.92 * 100) / 100,
+      peak_price: Math.round(estimatedPrice * 1.6 * 100) / 100,
+      off_peak_price: Math.round(estimatedPrice * 0.55 * 100) / 100,
+      market_conditions: estimatedPrice > 30 ? 'high' : estimatedPrice > 22 ? 'normal' : 'low',
       timestamp: new Date().toISOString(),
       source: 'ieso_estimated'
-    };
-
-    const currentDemand = 16500 + Math.random() * 2000;
-    const peakForecast = currentDemand * 1.15;
-
-    loadData = {
-      current_demand_mw: Math.round(currentDemand),
-      peak_forecast_mw: Math.round(peakForecast),
-      reserve_margin: 15,
-      timestamp: new Date().toISOString(),
-      source: 'ieso_estimated'
-    };
-
-    const totalGen = currentDemand;
-    const nuclearMW = totalGen * 0.60;
-    const hydroMW = totalGen * 0.20;
-    const gasMW = totalGen * 0.14;
-    const windMW = totalGen * 0.04;
-    const solarMW = totalGen * 0.01;
-    const biofuelMW = totalGen * 0.01;
-
-    const renewableMW = hydroMW + windMW + solarMW + biofuelMW;
-    const renewablePercentage = (renewableMW / totalGen) * 100;
-
-    generationMix = {
-      total_generation_mw: Math.round(totalGen),
-      nuclear_mw: Math.round(nuclearMW),
-      hydro_mw: Math.round(hydroMW),
-      natural_gas_mw: Math.round(gasMW),
-      wind_mw: Math.round(windMW),
-      solar_mw: Math.round(solarMW),
-      biofuel_mw: Math.round(biofuelMW),
-      other_mw: 0,
-      renewable_percentage: Math.round(renewablePercentage * 100) / 100,
-      timestamp: new Date().toISOString(),
-      source: 'ieso_estimated'
-    };
-
-    console.log('✅ IESO data (estimated)');
-  } catch (error) {
-    console.error('Error fetching IESO data:', error);
-    pricing = {
-      current_price: 25.0,
-      average_price: 23.0,
-      peak_price: 40.0,
-      off_peak_price: 13.75,
-      market_conditions: 'normal',
-      timestamp: new Date().toISOString(),
-      source: 'ieso_fallback'
-    };
-
-    loadData = {
-      current_demand_mw: 17000,
-      peak_forecast_mw: 19550,
-      reserve_margin: 15,
-      timestamp: new Date().toISOString(),
-      source: 'ieso_fallback'
-    };
-
-    generationMix = {
-      total_generation_mw: 17000,
-      nuclear_mw: 10200,
-      hydro_mw: 3400,
-      natural_gas_mw: 2380,
-      wind_mw: 680,
-      solar_mw: 170,
-      biofuel_mw: 170,
-      other_mw: 0,
-      renewable_percentage: 26.0,
-      timestamp: new Date().toISOString(),
-      source: 'ieso_fallback'
     };
   }
+
+  if (!loadData) {
+    console.log('⚠️ IESO demand API failed, using estimate');
+    const estimatedDemand = 16500 + Math.random() * 2000;
+    loadData = {
+      current_demand_mw: Math.round(estimatedDemand),
+      peak_forecast_mw: Math.round(estimatedDemand * 1.15),
+      reserve_margin: 15,
+      timestamp: new Date().toISOString(),
+      source: 'ieso_estimated'
+    };
+  }
+
+  if (!generationMix) {
+    console.log('⚠️ IESO generation API failed, using estimate');
+    const totalGen = loadData.current_demand_mw;
+    const nuclear = totalGen * 0.60;
+    const hydro = totalGen * 0.20;
+    const gas = totalGen * 0.14;
+    const wind = totalGen * 0.04;
+    const solar = totalGen * 0.01;
+    const biofuel = totalGen * 0.01;
+    const renewable = hydro + wind + solar + biofuel;
+    
+    generationMix = {
+      total_generation_mw: Math.round(totalGen),
+      nuclear_mw: Math.round(nuclear),
+      hydro_mw: Math.round(hydro),
+      natural_gas_mw: Math.round(gas),
+      wind_mw: Math.round(wind),
+      solar_mw: Math.round(solar),
+      biofuel_mw: Math.round(biofuel),
+      other_mw: 0,
+      renewable_percentage: Math.round((renewable / totalGen) * 100 * 100) / 100,
+      timestamp: new Date().toISOString(),
+      source: 'ieso_estimated'
+    };
+  }
+
+  console.log('IESO function complete:', { 
+    pricingSource: pricing?.source, 
+    loadSource: loadData?.source, 
+    genSource: generationMix?.source 
+  });
 
   return { pricing, loadData, generationMix };
 }
