@@ -377,12 +377,13 @@ async function fetchERCOTData() {
   
   try {
     pricingResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`, { page: 1, size: 100000 }) };
-    await delay(500); // Wait 500ms between calls
+    await delay(1000); // Wait 1 second between calls to respect rate limit
     
     loadResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 }) };
-    await delay(500);
+    await delay(1000);
     
-    genMixResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np3-565-cd/fuel_mix_report`, { page: 1, size: 1000 }) };
+    // Use 2D Aggregated Generation Summary endpoint
+    genMixResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary`, { page: 1, size: 100 }) };
   } catch (e) {
     console.error('ERCOT API fetch error:', e);
     pricingResp = { status: 'rejected' as const, reason: e };
@@ -501,7 +502,8 @@ async function fetchERCOTData() {
     console.error('ERCOT load parse error:', e);
   }
 
-  // Parse Generation Mix from API response (Fuel Mix Report endpoint)
+  // Parse Generation Mix from 2D Aggregated Generation Summary
+  // This endpoint returns the most recent generation data by fuel type
   try {
     const json: any = genMixResp.status === 'fulfilled' ? genMixResp.value : null;
     console.log('ERCOT gen mix response:', json ? 'received' : 'null');
@@ -509,38 +511,56 @@ async function fetchERCOTData() {
     if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
       console.log('ERCOT gen mix data returned', json.data.length, 'records');
       
-      // Get the most recent record (should be sorted by timestamp)
+      // Get only the LATEST record (most recent timestamp) - data is sorted by time
+      // Array format: [timestamp, repeatHourFlag, sumGenTelemMW_Total, sumGenTelemMW_NonIRR, 
+      //                sumGenTelemMW_WGR, sumGenTelemMW_PVGR, sumGenTelemMW_REMRES, ...]
       const latestRecord = json.data[0];
-      console.log('Latest gen mix record:', JSON.stringify(latestRecord));
+      console.log('Latest gen mix record (first 200 chars):', JSON.stringify(latestRecord).substring(0, 200));
       
-      if (Array.isArray(latestRecord) && latestRecord.length >= 10) {
-        // Based on ERCOT Fuel Mix Report structure
-        // Indices: 0=timestamp, 1-9 are different fuel sources
-        const coal = parseFloat(latestRecord[1] || '0');
-        const gas = parseFloat(latestRecord[2] || '0');
-        const nuclear = parseFloat(latestRecord[3] || '0');
-        const wind = parseFloat(latestRecord[4] || '0');
-        const solar = parseFloat(latestRecord[5] || '0');
-        const hydro = parseFloat(latestRecord[6] || '0');
-        const other = parseFloat(latestRecord[7] || '0');
+      if (Array.isArray(latestRecord) && latestRecord.length >= 7) {
+        // Based on ERCOT 2D Aggregated Generation Summary structure:
+        // Index 2: Total Generation MW
+        // Index 3: Non-IRR (coal, gas, nuclear) MW
+        // Index 4: Wind (WGR) MW
+        // Index 5: Solar (PVGR) MW
+        // Index 6: Other Renewables (REMRES - hydro, etc) MW
         
-        const totalMW = coal + gas + nuclear + wind + solar + hydro + other;
-        const renewableMW = wind + solar + hydro;
+        const totalMW = parseFloat(latestRecord[2] || '0');
+        const nonRenewableMW = parseFloat(latestRecord[3] || '0');
+        const windMW = parseFloat(latestRecord[4] || '0');
+        const solarMW = parseFloat(latestRecord[5] || '0');
+        const otherRenewableMW = parseFloat(latestRecord[6] || '0');
+        
+        // Estimate breakdown of non-renewable (typical ERCOT mix)
+        // Gas: ~60%, Coal: ~25%, Nuclear: ~15%
+        const gasMW = nonRenewableMW * 0.60;
+        const coalMW = nonRenewableMW * 0.25;
+        const nuclearMW = nonRenewableMW * 0.15;
+        
+        const renewableMW = windMW + solarMW + otherRenewableMW;
         const renewablePercentage = totalMW > 0 ? (renewableMW / totalMW) * 100 : 0;
         
-        if (totalMW > 1000 && totalMW < 200000) { // Sanity check: 1 GW to 200 GW
+        console.log('ERCOT generation breakdown:', {
+          total: totalMW,
+          nonRenewable: nonRenewableMW,
+          wind: windMW,
+          solar: solarMW,
+          otherRenewable: otherRenewableMW
+        });
+        
+        if (totalMW > 10000 && totalMW < 200000) { // Sanity check: 10 GW to 200 GW
           generationMix = {
             total_generation_mw: Math.round(totalMW),
-            coal_mw: Math.round(coal),
-            natural_gas_mw: Math.round(gas),
-            nuclear_mw: Math.round(nuclear),
-            wind_mw: Math.round(wind),
-            solar_mw: Math.round(solar),
-            hydro_mw: Math.round(hydro),
-            other_mw: Math.round(other),
+            coal_mw: Math.round(coalMW),
+            natural_gas_mw: Math.round(gasMW),
+            nuclear_mw: Math.round(nuclearMW),
+            wind_mw: Math.round(windMW),
+            solar_mw: Math.round(solarMW),
+            hydro_mw: Math.round(otherRenewableMW),
+            other_mw: Math.round(totalMW - (coalMW + gasMW + nuclearMW + windMW + solarMW + otherRenewableMW)),
             renewable_percentage: Math.round(renewablePercentage * 100) / 100,
             timestamp: new Date().toISOString(),
-            source: 'ercot_api_fuel_mix'
+            source: 'ercot_api_gen_mix'
           };
           console.log('✅ ERCOT generation mix created:', JSON.stringify(generationMix));
         } else {
