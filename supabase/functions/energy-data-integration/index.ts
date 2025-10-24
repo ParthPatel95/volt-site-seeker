@@ -335,15 +335,26 @@ async function fetchERCOTData() {
     'User-Agent': 'LovableEnergy/1.0'
   };
 
-  // Helper function matching AESO pattern exactly
-  async function getJson(url: string) {
+  // Helper function to make ERCOT API calls with query params
+  async function getJson(url: string, params: Record<string, any> = {}) {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
+    
+    // Build URL with query params (like requests.get in Python)
+    const queryParts: string[] = [];
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== null) {
+        queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(val))}`);
+      }
+    }
+    const queryString = queryParts.length > 0 ? '?' + queryParts.join('&') : '';
+    const fullUrl = url + queryString;
+    
     try {
-      const res = await fetch(url, { headers, signal: ctrl.signal });
+      const res = await fetch(fullUrl, { headers, signal: ctrl.signal });
       const text = await res.text();
       if (!res.ok) {
-        console.error('ERCOT API not OK', res.status, res.statusText, 'for', url, 'body:', text.slice(0, 300));
+        console.error('ERCOT API not OK', res.status, res.statusText, 'for', fullUrl, 'body:', text.slice(0, 300));
         return null as any;
       }
       try { return JSON.parse(text); } catch (e) {
@@ -358,20 +369,11 @@ async function fetchERCOTData() {
     }
   }
 
-  // Build query params like AESO
-  const buildQuery = (additionalParams = '') => {
-    return `deliveryDateFrom=${encodeURIComponent(deliveryDateFrom)}&deliveryDateTo=${encodeURIComponent(deliveryDateTo)}&page=1&size=10000${additionalParams}`;
-  };
-
-  // Fetch ERCOT data products - using confirmed available endpoints
-  // Based on Public API access:
-  // - Real-time Settlement Point Prices
-  // - System Load data
-  // - Generation data
-  const [pricingResp, loadResp, genResp] = await Promise.allSettled([
-    getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`),           // Settlement Point Prices (no date filter)
-    getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`),         // System Load by Weather Zone
-    getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary`)           // Aggregated generation
+  // Fetch ERCOT data using documented endpoints with pagination
+  // Based on gridstatus implementation - uses page and size params for real-time data
+  const [pricingResp, loadResp] = await Promise.allSettled([
+    getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`, { page: 1, size: 100000 }),     // Real-time Settlement Point Prices
+    getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 })    // Actual System Load by Weather Zone
   ]);
 
   let pricing: any | undefined;
@@ -466,46 +468,8 @@ async function fetchERCOTData() {
     console.error('ERCOT load parse error:', e);
   }
 
-  // Parse Generation Mix from aggregated generation API response
-  try {
-    const json: any = genResp.status === 'fulfilled' ? genResp.value : null;
-    console.log('ERCOT generation response:', json ? 'received' : 'null');
-    
-    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
-      console.log('ERCOT generation data returned', json.data.length, 'records');
-      
-      // Get the most recent record
-      const latest = json.data[0];
-      
-      // Parse generation values from different possible field names
-      const nonIRR = parseFloat(latest.sumBasePointNonIRR || latest.sumGenTelemMW || 0);
-      const wind = parseFloat(latest.sumBasePointWGR || latest.sumGenTelemWGR || 0);
-      const solar = parseFloat(latest.sumBasePointPVGR || latest.sumGenTelemPVGR || 0);
-      const renewable = parseFloat(latest.sumBasePointREMRES || 0);
-      
-      // Calculate total from available data
-      const total = nonIRR + wind + solar + renewable;
-      
-      if (total > 10000) { // Sanity check for total MW
-        generationMix = {
-          total_generation_mw: Math.round(total),
-          natural_gas_mw: Math.round(nonIRR * 0.5), // Estimate (non-intermittent is ~50% gas)
-          wind_mw: Math.round(wind),
-          solar_mw: Math.round(solar),
-          nuclear_mw: Math.round(nonIRR * 0.15), // Estimate (~15% nuclear)
-          coal_mw: Math.round(nonIRR * 0.2), // Estimate (~20% coal)
-          hydro_mw: Math.round(renewable * 0.1), // Estimate from renewable
-          other_mw: Math.round(nonIRR * 0.15 + renewable * 0.9),
-          renewable_percentage: total > 0 ? ((wind + solar + renewable) / total * 100) : 0,
-          timestamp: new Date().toISOString(),
-          source: 'ercot_api_gen'
-        };
-        console.log('✅ ERCOT generation mix from API:', Math.round(generationMix.renewable_percentage), '% renewable');
-      }
-    }
-  } catch (e) {
-    console.error('ERCOT generation mix parse error:', e);
-  }
+  // Generation mix not implemented yet - will add later
+  generationMix = undefined;
 
   // ZoneLMPs not implemented in this version
   zoneLMPs = undefined;
