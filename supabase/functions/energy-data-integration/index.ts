@@ -205,10 +205,74 @@ async function testERCOTSubscription() {
   );
 }
 
-async function fetchERCOTData() {
-  console.log('Fetching ERCOT data (APIM pattern with query params)...');
+// Global token cache for ERCOT (valid for 1 hour)
+let ercotTokenCache: { token: string; expiresAt: number } | null = null;
 
-  // Get API key with fallback (same pattern as AESO)
+async function getERCOTAuthToken(): Promise<string | null> {
+  // Check if we have a valid cached token
+  if (ercotTokenCache && ercotTokenCache.expiresAt > Date.now()) {
+    console.log('✅ Using cached ERCOT token');
+    return ercotTokenCache.token;
+  }
+
+  const username = Deno.env.get('ERCOT_USERNAME');
+  const password = Deno.env.get('ERCOT_PASSWORD');
+
+  if (!username || !password) {
+    console.warn('ERCOT credentials missing. Configure ERCOT_USERNAME and ERCOT_PASSWORD.');
+    return null;
+  }
+
+  console.log('🔐 Fetching new ERCOT OAuth token...');
+
+  const authUrl = 'https://ercotb2c.b2clogin.com/ercotb2c.onmicrosoft.com/B2C_1_PUBAPI-ROPC-FLOW/oauth2/v2.0/token'
+    + `?username=${encodeURIComponent(username)}`
+    + `&password=${encodeURIComponent(password)}`
+    + '&grant_type=password'
+    + '&scope=openid+fec253ea-0d06-4272-a5e6-b478baeecd70+offline_access'
+    + '&client_id=fec253ea-0d06-4272-a5e6-b478baeecd70'
+    + '&response_type=id_token';
+
+  try {
+    const response = await fetch(authUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('ERCOT OAuth failed:', response.status, text.slice(0, 200));
+      return null;
+    }
+
+    const data = await response.json();
+    const idToken = data.id_token;
+
+    if (!idToken) {
+      console.error('ERCOT OAuth response missing id_token');
+      return null;
+    }
+
+    // Cache token for 55 minutes (expires in 60)
+    ercotTokenCache = {
+      token: idToken,
+      expiresAt: Date.now() + 55 * 60 * 1000
+    };
+
+    console.log('✅ ERCOT OAuth token acquired successfully');
+    return idToken;
+  } catch (error) {
+    console.error('ERCOT OAuth error:', error);
+    return null;
+  }
+}
+
+async function fetchERCOTData() {
+  console.log('Fetching ERCOT data (with OAuth authentication)...');
+
+  // Get API key with fallback
   const apiKey = Deno.env.get('ERCOT_API_KEY') || Deno.env.get('ERCOT_API_KEY_SECONDARY') || '';
   
   if (!apiKey) {
@@ -230,7 +294,28 @@ async function fetchERCOTData() {
     };
   }
 
-  // Use the official public-reports API base with query params (matching AESO pattern)
+  // Get OAuth token
+  const authToken = await getERCOTAuthToken();
+  if (!authToken) {
+    console.error('❌ Failed to get ERCOT OAuth token');
+    return {
+      pricing: undefined,
+      loadData: undefined,
+      generationMix: undefined,
+      zoneLMPs: undefined,
+      ordcAdder: undefined,
+      ancillaryPrices: undefined,
+      systemFrequency: undefined,
+      constraints: undefined,
+      intertieFlows: undefined,
+      weatherZoneLoad: undefined,
+      operatingReserve: undefined,
+      interchange: undefined,
+      energyStorage: undefined
+    };
+  }
+
+  // Use the official public-reports API base with query params
   const baseUrl = 'https://api.ercot.com/api/public-reports';
   
   // Date range for recent data (last 2 days like AESO)
@@ -244,6 +329,7 @@ async function fetchERCOTData() {
   
   const headers: Record<string, string> = {
     'Ocp-Apim-Subscription-Key': apiKey,
+    'Authorization': `Bearer ${authToken}`,
     'Accept': 'application/json',
     'Cache-Control': 'no-cache',
     'User-Agent': 'LovableEnergy/1.0'
