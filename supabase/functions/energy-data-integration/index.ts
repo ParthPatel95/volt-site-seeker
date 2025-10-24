@@ -70,7 +70,7 @@ serve(async (req) => {
       return await testERCOTSubscription();
     }
 
-    console.log('Fetching unified energy data...');
+    console.log('Fetching unified energy data from 7 markets (ERCOT, AESO, MISO, CAISO, NYISO, PJM, SPP)...');
 
     // Fetch all market data in parallel
     const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult] = await Promise.allSettled([
@@ -82,6 +82,16 @@ serve(async (req) => {
       fetchPJMData(),
       fetchSPPData()
     ]);
+    
+    console.log('Market fetch results:', {
+      ercot: ercotResult.status,
+      aeso: aesoResult.status,
+      miso: misoResult.status,
+      caiso: caisoResult.status,
+      nyiso: nyisoResult.status,
+      pjm: pjmResult.status,
+      spp: sppResult.status
+    });
 
     const response: EnergyDataResponse = {
       success: true,
