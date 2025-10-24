@@ -371,9 +371,10 @@ async function fetchERCOTData() {
 
   // Fetch ERCOT data using documented endpoints with pagination
   // Based on gridstatus implementation - uses page and size params for real-time data
-  const [pricingResp, loadResp] = await Promise.allSettled([
+  const [pricingResp, loadResp, genMixResp] = await Promise.allSettled([
     getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`, { page: 1, size: 100000 }),     // Real-time Settlement Point Prices
-    getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 })    // Actual System Load by Weather Zone
+    getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 }),   // Actual System Load by Weather Zone
+    getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary`, { page: 1, size: 10000 })      // Generation Mix Summary
   ]);
 
   let pricing: any | undefined;
@@ -487,8 +488,68 @@ async function fetchERCOTData() {
     console.error('ERCOT load parse error:', e);
   }
 
-  // Generation mix not implemented yet - will add later
-  generationMix = undefined;
+  // Parse Generation Mix from API response
+  try {
+    const json: any = genMixResp.status === 'fulfilled' ? genMixResp.value : null;
+    console.log('ERCOT gen mix response:', json ? 'received' : 'null');
+    
+    if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
+      console.log('ERCOT gen mix data returned', json.data.length, 'records');
+      console.log('First gen mix record sample:', JSON.stringify(json.data[0]).substring(0, 300));
+      
+      // Data comes as arrays: [date, hour, fuel_type, generation_mw, ...]
+      // We need to aggregate by fuel type
+      const fuelTotals: Record<string, number> = {};
+      
+      for (const record of json.data) {
+        if (!Array.isArray(record) || record.length < 4) continue;
+        
+        const fuelType = String(record[2] || '').toLowerCase();
+        const generationMW = parseFloat(record[3] || '0');
+        
+        if (Number.isFinite(generationMW) && generationMW > 0) {
+          fuelTotals[fuelType] = (fuelTotals[fuelType] || 0) + generationMW;
+        }
+      }
+      
+      console.log('ERCOT fuel totals:', fuelTotals);
+      
+      // Map to standard fuel types
+      const totalMW = Object.values(fuelTotals).reduce((a, b) => a + b, 0);
+      
+      if (totalMW > 1000) {
+        const coal = fuelTotals['coal'] || 0;
+        const gas = (fuelTotals['gas'] || 0) + (fuelTotals['natural gas'] || 0);
+        const nuclear = fuelTotals['nuclear'] || 0;
+        const wind = fuelTotals['wind'] || 0;
+        const solar = fuelTotals['solar'] || 0;
+        const hydro = fuelTotals['hydro'] || fuelTotals['water'] || 0;
+        const other = totalMW - (coal + gas + nuclear + wind + solar + hydro);
+        
+        const renewableMW = wind + solar + hydro;
+        const renewablePercentage = (renewableMW / totalMW) * 100;
+        
+        generationMix = {
+          total_generation_mw: Math.round(totalMW),
+          coal_mw: Math.round(coal),
+          natural_gas_mw: Math.round(gas),
+          nuclear_mw: Math.round(nuclear),
+          wind_mw: Math.round(wind),
+          solar_mw: Math.round(solar),
+          hydro_mw: Math.round(hydro),
+          other_mw: Math.round(other),
+          renewable_percentage: Math.round(renewablePercentage * 100) / 100,
+          timestamp: new Date().toISOString(),
+          source: 'ercot_api_gen_mix'
+        };
+        console.log('✅ ERCOT generation mix created:', JSON.stringify(generationMix));
+      } else {
+        console.log('❌ Total generation too low:', totalMW, 'MW');
+      }
+    }
+  } catch (e) {
+    console.error('ERCOT generation mix parse error:', e);
+  }
 
   // ZoneLMPs not implemented in this version
   zoneLMPs = undefined;
@@ -496,8 +557,10 @@ async function fetchERCOTData() {
   console.log('ERCOT data being returned:', {
     hasPricing: !!pricing,
     hasLoad: !!loadData,
+    hasGenMix: !!generationMix,
     pricingValue: pricing?.current_price,
-    loadValue: loadData?.current_demand_mw
+    loadValue: loadData?.current_demand_mw,
+    genMixTotal: generationMix?.total_generation_mw
   });
 
   return { 
