@@ -388,6 +388,7 @@ async function fetchERCOTData() {
     
     if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
       console.log('ERCOT pricing data returned', json.data.length, 'records');
+      console.log('First pricing record sample:', JSON.stringify(json.data[0]).substring(0, 300));
       
       // Find HB_HUBAVG or calculate average from all LMP records
       let hubAvgPrice: number | null = null;
@@ -399,6 +400,7 @@ async function fetchERCOTData() {
         
         if (settlementPoint.includes('HUBAVG') || settlementPoint === 'HB_HUBAVG') {
           hubAvgPrice = lmpValue;
+          console.log('Found HB_HUBAVG price:', hubAvgPrice);
           break;
         }
         
@@ -408,6 +410,8 @@ async function fetchERCOTData() {
           allPrices.push(lmpValue);
         }
       }
+      
+      console.log('Hub prices collected:', allPrices.length, 'prices, hubAvg:', hubAvgPrice);
       
       const currentPrice = hubAvgPrice !== null ? hubAvgPrice : 
         (allPrices.length >= 3 ? allPrices.reduce((a, b) => a + b, 0) / allPrices.length : null);
@@ -422,7 +426,9 @@ async function fetchERCOTData() {
           timestamp: new Date().toISOString(),
           source: 'ercot_api_lmp'
         };
-        console.log('✅ ERCOT pricing from API:', pricing.current_price, '$/MWh');
+        console.log('✅ ERCOT pricing created:', JSON.stringify(pricing));
+      } else {
+        console.log('❌ Could not determine current price from data');
       }
     }
   } catch (e) {
@@ -436,6 +442,7 @@ async function fetchERCOTData() {
     
     if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
       console.log('ERCOT load data returned', json.data.length, 'records');
+      console.log('First load record sample:', JSON.stringify(json.data[0]).substring(0, 300));
       
       // Sum all weather zone loads to get total system load
       let totalLoad = 0;
@@ -453,6 +460,8 @@ async function fetchERCOTData() {
         }
       }
       
+      console.log('Load totals - actual:', totalLoad, 'forecast:', maxForecast);
+      
       if (totalLoad > 10000) { // Sanity check for MW
         loadData = {
           current_demand_mw: Math.round(totalLoad),
@@ -461,7 +470,9 @@ async function fetchERCOTData() {
           timestamp: new Date().toISOString(),
           source: 'ercot_api_load'
         };
-        console.log('✅ ERCOT load from API:', loadData.current_demand_mw, 'MW');
+        console.log('✅ ERCOT load created:', JSON.stringify(loadData));
+      } else {
+        console.log('❌ Total load too low:', totalLoad, 'MW');
       }
     }
   } catch (e) {
@@ -473,6 +484,13 @@ async function fetchERCOTData() {
 
   // ZoneLMPs not implemented in this version
   zoneLMPs = undefined;
+
+  console.log('ERCOT data being returned:', {
+    hasPricing: !!pricing,
+    hasLoad: !!loadData,
+    pricingValue: pricing?.current_price,
+    loadValue: loadData?.current_demand_mw
+  });
 
   return { 
     pricing, 
