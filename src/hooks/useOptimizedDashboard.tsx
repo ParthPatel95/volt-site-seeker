@@ -6,6 +6,7 @@ import { useCAISOData } from '@/hooks/useCAISOData';
 import { useNYISOData } from '@/hooks/useNYISOData';
 import { usePJMData } from '@/hooks/usePJMData';
 import { useSPPData } from '@/hooks/useSPPData';
+import { useIESOData } from '@/hooks/useIESOData';
 
 export const useOptimizedDashboard = () => {
   const { 
@@ -64,6 +65,14 @@ export const useOptimizedDashboard = () => {
     refetch: refetchSPP
   } = useSPPData();
 
+  const { 
+    pricing: iesoPricing, 
+    loadData: iesoLoad, 
+    generationMix: iesoGeneration,
+    loading: iesoLoading,
+    refetch: refetchIESO
+  } = useIESOData();
+
   // Memoize expensive calculations
   const marketMetrics = useMemo(() => {
     const getMarketTrend = (current: number, average: number) => {
@@ -82,9 +91,10 @@ export const useOptimizedDashboard = () => {
       caisoTrend: caisoPricing ? getMarketTrend(caisoPricing.current_price, caisoPricing.average_price) : null,
       nyisoTrend: nyisoPricing ? getMarketTrend(nyisoPricing.current_price, nyisoPricing.average_price) : null,
       pjmTrend: pjmPricing ? getMarketTrend(pjmPricing.current_price, pjmPricing.average_price) : null,
-      sppTrend: sppPricing ? getMarketTrend(sppPricing.current_price, sppPricing.average_price) : null
+      sppTrend: sppPricing ? getMarketTrend(sppPricing.current_price, sppPricing.average_price) : null,
+      iesoTrend: iesoPricing ? getMarketTrend(iesoPricing.current_price, iesoPricing.average_price) : null
     };
-  }, [ercotPricing, aesoPricing, misoPricing, caisoPricing, nyisoPricing, pjmPricing, sppPricing]);
+  }, [ercotPricing, aesoPricing, misoPricing, caisoPricing, nyisoPricing, pjmPricing, sppPricing, iesoPricing]);
 
   const refreshData = async () => {
     await Promise.all([
@@ -94,7 +104,8 @@ export const useOptimizedDashboard = () => {
       refetchCAISO(), 
       refetchNYISO(), 
       refetchPJM(), 
-      refetchSPP()
+      refetchSPP(),
+      refetchIESO()
     ]);
   };
 
@@ -120,7 +131,10 @@ export const useOptimizedDashboard = () => {
     sppPricing,
     sppLoad,
     sppGeneration,
-    isLoading: ercotLoading || aesoLoading || misoLoading || caisoLoading || nyisoLoading || pjmLoading || sppLoading,
+    iesoPricing,
+    iesoLoad,
+    iesoGeneration,
+    isLoading: ercotLoading || aesoLoading || misoLoading || caisoLoading || nyisoLoading || pjmLoading || sppLoading || iesoLoading,
     marketMetrics,
     refreshData
   };

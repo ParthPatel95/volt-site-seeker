@@ -51,6 +51,9 @@ export const Dashboard = () => {
     sppPricing,
     sppLoad,
     sppGeneration,
+    iesoPricing,
+    iesoLoad,
+    iesoGeneration,
     isLoading,
     marketMetrics,
     refreshData: refreshDataHook
@@ -378,6 +381,40 @@ export const Dashboard = () => {
                      <div className="flex items-center gap-1 mt-2">
                        {(() => {
                          const trend = getMarketTrendWithIcon(marketMetrics.sppTrend);
+                         if (!trend) return null;
+                         const Icon = trend.icon;
+                         return (
+                           <>
+                             <Icon className={`w-3 h-3 ${trend.color}`} />
+                             <span className={`text-xs font-medium ${trend.color}`}>
+                               {trend.percentage}% vs avg
+                             </span>
+                           </>
+                         );
+                       })()}
+                     </div>
+                   )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* IESO Price Card */}
+          <Card className="border-l-4 border-indigo-500 hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-indigo-500/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">IESO Price (Ontario)</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                    {iesoPricing ? `$${convertToUSD(iesoPricing.current_price).toFixed(2)}` : (
+                      <span className="text-muted-foreground">Loading...</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">per MWh (USD)</p>
+                   {marketMetrics.iesoTrend && (
+                     <div className="flex items-center gap-1 mt-2">
+                       {(() => {
+                         const trend = getMarketTrendWithIcon(marketMetrics.iesoTrend);
                          if (!trend) return null;
                          const Icon = trend.icon;
                          return (

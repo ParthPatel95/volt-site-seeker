@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { fetchIESOData } from "./ieso-fetch.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,6 +55,11 @@ interface EnergyDataResponse {
     loadData?: any;
     generationMix?: any;
   };
+  ieso?: {
+    pricing?: any;
+    loadData?: any;
+    generationMix?: any;
+  };
   error?: string;
 }
 
@@ -70,17 +76,18 @@ serve(async (req) => {
       return await testERCOTSubscription();
     }
 
-    console.log('Fetching unified energy data from 7 markets (ERCOT, AESO, MISO, CAISO, NYISO, PJM, SPP)...');
+    console.log('Fetching unified energy data from 8 markets (ERCOT, AESO, MISO, CAISO, NYISO, PJM, SPP, IESO)...');
 
     // Fetch all market data in parallel
-    const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult] = await Promise.allSettled([
+    const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult, iesoResult] = await Promise.allSettled([
       fetchERCOTData(),
       fetchAESOData(),
       fetchMISOData(),
       fetchCAISOData(),
       fetchNYISOData(),
       fetchPJMData(),
-      fetchSPPData()
+      fetchSPPData(),
+      fetchIESOData()
     ]);
     
     console.log('Market fetch results:', {
@@ -90,7 +97,8 @@ serve(async (req) => {
       caiso: caisoResult.status,
       nyiso: nyisoResult.status,
       pjm: pjmResult.status,
-      spp: sppResult.status
+      spp: sppResult.status,
+      ieso: iesoResult.status
     });
 
     const response: EnergyDataResponse = {
@@ -101,7 +109,8 @@ serve(async (req) => {
       caiso: caisoResult.status === 'fulfilled' ? caisoResult.value : undefined,
       nyiso: nyisoResult.status === 'fulfilled' ? nyisoResult.value : undefined,
       pjm: pjmResult.status === 'fulfilled' ? pjmResult.value : undefined,
-      spp: sppResult.status === 'fulfilled' ? sppResult.value : undefined
+      spp: sppResult.status === 'fulfilled' ? sppResult.value : undefined,
+      ieso: iesoResult.status === 'fulfilled' ? iesoResult.value : undefined
     };
 
     console.log('Energy data processing complete:', {
