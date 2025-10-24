@@ -199,7 +199,7 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
       {/* Helper text for coordinate formats */}
       {acceptCoordinates && inputValue && !isCoordinateInput && !isOpen && (
         <p className="text-xs text-muted-foreground mt-1">
-          💡 You can also enter coordinates directly: 40.7128, -74.0060 or lat: 40.7128, lng: -74.0060
+          You can also enter coordinates directly: 40.7128, -74.0060 or lat: 40.7128, lng: -74.0060
         </p>
       )}
 

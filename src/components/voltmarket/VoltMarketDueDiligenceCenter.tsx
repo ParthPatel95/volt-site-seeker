@@ -561,37 +561,31 @@ export const VoltMarketDueDiligenceCenter: React.FC = () => {
                     {
                       name: 'Wind Farm Assessment',
                       description: 'Specialized template for wind energy projects',
-                      sections: ['Technical', 'Environmental', 'Grid Connection', 'Financial'],
-                      icon: '💨'
+                      sections: ['Technical', 'Environmental', 'Grid Connection', 'Financial']
                     },
                     {
                       name: 'Battery Storage Evaluation',
                       description: 'Template for energy storage facilities',
-                      sections: ['Technical', 'Market Analysis', 'Safety', 'Financial'],
-                      icon: '🔋'
+                      sections: ['Technical', 'Market Analysis', 'Safety', 'Financial']
                     },
                     {
                       name: 'Transmission Infrastructure',
                       description: 'Template for transmission line and substation assets',
-                      sections: ['Technical', 'Regulatory', 'Maintenance', 'Capacity'],
-                      icon: '⚡'
+                      sections: ['Technical', 'Regulatory', 'Maintenance', 'Capacity']
                     },
                     {
                       name: 'Data Center Power',
                       description: 'Template for data center power infrastructure',
-                      sections: ['Power Capacity', 'Redundancy', 'Cooling', 'Financial'],
-                      icon: '🏢'
+                      sections: ['Power Capacity', 'Redundancy', 'Cooling', 'Financial']
                     },
                     {
                       name: 'Industrial Power Assets',
                       description: 'Template for industrial power generation',
-                      sections: ['Equipment', 'Environmental', 'Operations', 'Market'],
-                      icon: '🏭'
+                      sections: ['Equipment', 'Environmental', 'Operations', 'Market']
                     }
                   ].map((template, index) => (
                     <div key={index} className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
                       <div className="text-center mb-3 sm:mb-4">
-                        <div className="text-3xl sm:text-4xl mb-2">{template.icon}</div>
                         <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{template.name}</h3>
                         <p className="text-xs sm:text-sm text-gray-600 mt-1">{template.description}</p>
                       </div>

@@ -403,28 +403,24 @@ export const VoltMarketHomepage: React.FC = () => {
                 title: "AI-Powered Analysis",
                 description: "Advanced machine learning algorithms for asset valuation and risk assessment",
                 features: ["Real-time market analysis", "Predictive modeling", "Risk scoring"],
-                icon: "🧠",
                 gradient: "from-blue-500 to-purple-600"
               },
               {
                 title: "Real-Time Energy Data",
                 description: "Live integration with AESO, ERCOT, and other energy market operators",
                 features: ["Live pricing feeds", "Market conditions", "Grid analytics"],
-                icon: "⚡",
                 gradient: "from-yellow-500 to-orange-600"
               },
               {
                 title: "Due Diligence Automation",
                 description: "Comprehensive automated analysis and documentation workflows",
                 features: ["Document verification", "Compliance checks", "Risk reports"],
-                icon: "📋",
                 gradient: "from-green-500 to-emerald-600"
               },
               {
                 title: "Enterprise Security",
                 description: "Bank-grade security with advanced encryption and compliance frameworks",
                 features: ["Multi-factor auth", "Encrypted transactions", "Audit trails"],
-                icon: "🛡️",
                 gradient: "from-red-500 to-pink-600"
               }
             ].map((tech, index) => (
@@ -432,7 +428,6 @@ export const VoltMarketHomepage: React.FC = () => {
                 <div className="absolute inset-0 bg-watt-gradient opacity-0 group-hover:opacity-5 transition-opacity rounded-lg"></div>
                 <CardContent className="p-8 text-center relative">
                   <div className={`w-20 h-20 bg-gradient-to-br ${tech.gradient} rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                    <span className="text-3xl">{tech.icon}</span>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-watt-primary transition-colors">
                     {tech.title}

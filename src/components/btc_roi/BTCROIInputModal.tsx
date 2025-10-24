@@ -33,7 +33,7 @@ export const BTCROIInputModal: React.FC<BTCROIInputModalProps> = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
-            {mode === 'hosting' ? '⚡ Configure Hosting Business' : '🏠 Configure Self-Mining'}
+            {mode === 'hosting' ? 'Configure Hosting Business' : 'Configure Self-Mining'}
           </DialogTitle>
         </DialogHeader>
         

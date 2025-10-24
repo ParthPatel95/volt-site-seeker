@@ -37,12 +37,10 @@ export function SubstationCard({ substation, onClick }: SubstationCardProps) {
           
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center space-x-2">
-              <span>📍</span>
               <span className="truncate">{substation.address}</span>
             </div>
             
             <div className="flex items-center space-x-2">
-              <span>⚡</span>
               <span>
                 {substation.capacity_estimate?.max 
                   ? `${substation.capacity_estimate.max} MVA` 
@@ -52,25 +50,21 @@ export function SubstationCard({ substation, onClick }: SubstationCardProps) {
             </div>
             
             <div className="flex items-center space-x-2">
-              <span>🏢</span>
               <span>{substation.details?.utility_owner || 'Unknown Utility'}</span>
             </div>
             
             <div className="flex items-center space-x-2">
-              <span>🔌</span>
               <span>{substation.details?.voltage_level || 'Voltage TBD'}</span>
             </div>
             
             {substation.details?.load_factor && (
               <div className="flex items-center space-x-2">
-                <span>📊</span>
                 <span>{(substation.details.load_factor * 100).toFixed(1)}% Load Factor</span>
               </div>
             )}
 
             {substation.confidence_score && (
               <div className="flex items-center space-x-2">
-                <span>🎯</span>
                 <span>{substation.confidence_score}% Confidence</span>
               </div>
             )}

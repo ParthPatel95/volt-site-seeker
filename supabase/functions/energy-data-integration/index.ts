@@ -1310,6 +1310,19 @@ async function fetchNYISOData() {
     console.error('❌ NYISO load error:', e.message || e);
   }
 
+  // If load API fails, estimate load based on generation mix
+  if (generationMix && !loadData) {
+    const estimatedLoad = generationMix.total_generation_mw * 1.02; // Slight overhead
+    loadData = {
+      current_demand_mw: Math.round(estimatedLoad),
+      peak_forecast_mw: Math.round(estimatedLoad * 1.15),
+      reserve_margin: 18.0,
+      timestamp: new Date().toISOString(),
+      source: 'nyiso_estimated_from_gen'
+    };
+    console.log('✅ NYISO load estimated from generation mix:', loadData);
+  }
+
   // Estimate pricing
   if (generationMix && loadData) {
     const loadRatio = loadData.current_demand_mw / (generationMix.total_generation_mw || 1);
