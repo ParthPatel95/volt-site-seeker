@@ -369,13 +369,26 @@ async function fetchERCOTData() {
     }
   }
 
-  // Fetch ERCOT data using documented endpoints with pagination
-  // Based on gridstatus implementation - uses page and size params for real-time data
-  const [pricingResp, loadResp, genMixResp] = await Promise.allSettled([
-    getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`, { page: 1, size: 100000 }),     // Real-time Settlement Point Prices
-    getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 }),   // Actual System Load by Weather Zone
-    getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary`, { page: 1, size: 10000 })      // Generation Mix Summary
-  ]);
+  // Add delay between API calls to avoid rate limiting
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  // Fetch ERCOT data sequentially with delays to avoid 429 errors
+  let pricingResp, loadResp, genMixResp;
+  
+  try {
+    pricingResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`, { page: 1, size: 100000 }) };
+    await delay(500); // Wait 500ms between calls
+    
+    loadResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 }) };
+    await delay(500);
+    
+    genMixResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np3-565-cd/fuel_mix_report`, { page: 1, size: 1000 }) };
+  } catch (e) {
+    console.error('ERCOT API fetch error:', e);
+    pricingResp = { status: 'rejected' as const, reason: e };
+    loadResp = { status: 'rejected' as const, reason: e };
+    genMixResp = { status: 'rejected' as const, reason: e };
+  }
 
   let pricing: any | undefined;
   let loadData: any | undefined;
@@ -488,63 +501,51 @@ async function fetchERCOTData() {
     console.error('ERCOT load parse error:', e);
   }
 
-  // Parse Generation Mix from API response
+  // Parse Generation Mix from API response (Fuel Mix Report endpoint)
   try {
     const json: any = genMixResp.status === 'fulfilled' ? genMixResp.value : null;
     console.log('ERCOT gen mix response:', json ? 'received' : 'null');
     
     if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
       console.log('ERCOT gen mix data returned', json.data.length, 'records');
-      console.log('First gen mix record sample:', JSON.stringify(json.data[0]).substring(0, 300));
       
-      // Data comes as arrays: [date, hour, fuel_type, generation_mw, ...]
-      // We need to aggregate by fuel type
-      const fuelTotals: Record<string, number> = {};
+      // Get the most recent record (should be sorted by timestamp)
+      const latestRecord = json.data[0];
+      console.log('Latest gen mix record:', JSON.stringify(latestRecord));
       
-      for (const record of json.data) {
-        if (!Array.isArray(record) || record.length < 4) continue;
+      if (Array.isArray(latestRecord) && latestRecord.length >= 10) {
+        // Based on ERCOT Fuel Mix Report structure
+        // Indices: 0=timestamp, 1-9 are different fuel sources
+        const coal = parseFloat(latestRecord[1] || '0');
+        const gas = parseFloat(latestRecord[2] || '0');
+        const nuclear = parseFloat(latestRecord[3] || '0');
+        const wind = parseFloat(latestRecord[4] || '0');
+        const solar = parseFloat(latestRecord[5] || '0');
+        const hydro = parseFloat(latestRecord[6] || '0');
+        const other = parseFloat(latestRecord[7] || '0');
         
-        const fuelType = String(record[2] || '').toLowerCase();
-        const generationMW = parseFloat(record[3] || '0');
-        
-        if (Number.isFinite(generationMW) && generationMW > 0) {
-          fuelTotals[fuelType] = (fuelTotals[fuelType] || 0) + generationMW;
-        }
-      }
-      
-      console.log('ERCOT fuel totals:', fuelTotals);
-      
-      // Map to standard fuel types
-      const totalMW = Object.values(fuelTotals).reduce((a, b) => a + b, 0);
-      
-      if (totalMW > 1000) {
-        const coal = fuelTotals['coal'] || 0;
-        const gas = (fuelTotals['gas'] || 0) + (fuelTotals['natural gas'] || 0);
-        const nuclear = fuelTotals['nuclear'] || 0;
-        const wind = fuelTotals['wind'] || 0;
-        const solar = fuelTotals['solar'] || 0;
-        const hydro = fuelTotals['hydro'] || fuelTotals['water'] || 0;
-        const other = totalMW - (coal + gas + nuclear + wind + solar + hydro);
-        
+        const totalMW = coal + gas + nuclear + wind + solar + hydro + other;
         const renewableMW = wind + solar + hydro;
-        const renewablePercentage = (renewableMW / totalMW) * 100;
+        const renewablePercentage = totalMW > 0 ? (renewableMW / totalMW) * 100 : 0;
         
-        generationMix = {
-          total_generation_mw: Math.round(totalMW),
-          coal_mw: Math.round(coal),
-          natural_gas_mw: Math.round(gas),
-          nuclear_mw: Math.round(nuclear),
-          wind_mw: Math.round(wind),
-          solar_mw: Math.round(solar),
-          hydro_mw: Math.round(hydro),
-          other_mw: Math.round(other),
-          renewable_percentage: Math.round(renewablePercentage * 100) / 100,
-          timestamp: new Date().toISOString(),
-          source: 'ercot_api_gen_mix'
-        };
-        console.log('✅ ERCOT generation mix created:', JSON.stringify(generationMix));
-      } else {
-        console.log('❌ Total generation too low:', totalMW, 'MW');
+        if (totalMW > 1000 && totalMW < 200000) { // Sanity check: 1 GW to 200 GW
+          generationMix = {
+            total_generation_mw: Math.round(totalMW),
+            coal_mw: Math.round(coal),
+            natural_gas_mw: Math.round(gas),
+            nuclear_mw: Math.round(nuclear),
+            wind_mw: Math.round(wind),
+            solar_mw: Math.round(solar),
+            hydro_mw: Math.round(hydro),
+            other_mw: Math.round(other),
+            renewable_percentage: Math.round(renewablePercentage * 100) / 100,
+            timestamp: new Date().toISOString(),
+            source: 'ercot_api_fuel_mix'
+          };
+          console.log('✅ ERCOT generation mix created:', JSON.stringify(generationMix));
+        } else {
+          console.log('❌ Total generation out of range:', totalMW, 'MW');
+        }
       }
     }
   } catch (e) {
