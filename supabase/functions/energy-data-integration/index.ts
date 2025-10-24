@@ -206,7 +206,7 @@ async function testERCOTSubscription() {
 }
 
 async function fetchERCOTData() {
-  console.log('Fetching ERCOT data (API only - matching AESO pattern)...');
+  console.log('Fetching ERCOT data (APIM pattern with query params)...');
 
   // Get API key with fallback (same pattern as AESO)
   const apiKey = Deno.env.get('ERCOT_API_KEY') || Deno.env.get('ERCOT_API_KEY_SECONDARY') || '';
@@ -230,9 +230,18 @@ async function fetchERCOTData() {
     };
   }
 
-  // Use the official public-reports API base per documentation
-  // https://developer.ercot.com/applications/pubapi/user-guide/using-the-api/
+  // Use the official public-reports API base with query params (matching AESO pattern)
   const baseUrl = 'https://api.ercot.com/api/public-reports';
+  
+  // Date range for recent data (last 2 days like AESO)
+  const endDate = new Date();
+  const startDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  
+  // Format: YYYY-MM-DDTHH:mm:ss
+  const formatDateTime = (d: Date) => d.toISOString().slice(0, 19);
+  const deliveryDateFrom = formatDateTime(startDate);
+  const deliveryDateTo = formatDateTime(endDate);
+  
   const headers: Record<string, string> = {
     'Ocp-Apim-Subscription-Key': apiKey,
     'Accept': 'application/json',
@@ -263,15 +272,20 @@ async function fetchERCOTData() {
     }
   }
 
-  // Fetch ERCOT data products in parallel
+  // Build query params like AESO
+  const buildQuery = (additionalParams = '') => {
+    return `deliveryDateFrom=${encodeURIComponent(deliveryDateFrom)}&deliveryDateTo=${encodeURIComponent(deliveryDateTo)}&page=1&size=10000${additionalParams}`;
+  };
+
+  // Fetch ERCOT data products in parallel with query parameters
   // Product IDs based on ERCOT EMIL (public-reports API):
   // - NP6-788-CD: Settlement Point Prices - LMP by Settlement Point
   // - NP3-565-CD: Actual System Load by Weather Zone  
   // - NP4-732-CD: Actual System Load by Fuel Type
   const [pricingResp, loadResp, fuelMixResp] = await Promise.allSettled([
-    getJson(`${baseUrl}/np6-788-cd/spp_hrly_avrg_agg`),           // Pricing (LMP hourly average)
-    getJson(`${baseUrl}/np3-565-cd/act_sys_load_by_wzn`),         // Load by weather zone
-    getJson(`${baseUrl}/np4-732-cd/act_sys_load_by_fueltype`)     // Generation mix
+    getJson(`${baseUrl}/np6-788-cd/spp_hrly_avrg_agg?${buildQuery()}`),           // Pricing (LMP hourly average)
+    getJson(`${baseUrl}/np3-565-cd/act_sys_load_by_wzn?${buildQuery()}`),         // Load by weather zone
+    getJson(`${baseUrl}/np4-732-cd/act_sys_load_by_fueltype?${buildQuery()}`)     // Generation mix
   ]);
 
   let pricing: any | undefined;
