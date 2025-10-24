@@ -185,9 +185,6 @@ export const Dashboard = () => {
                      </div>
                    )}
                 </div>
-                <div className="p-3 bg-watt-primary/10 rounded-xl group-hover:bg-watt-primary/20 transition-colors">
-                  <Zap className="w-6 h-6 text-watt-primary" />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -225,9 +222,6 @@ export const Dashboard = () => {
                      </div>
                    )}
                 </div>
-                <div className="p-3 bg-watt-secondary/10 rounded-xl group-hover:bg-watt-secondary/20 transition-colors">
-                  <Globe className="w-6 h-6 text-watt-secondary" />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -261,9 +255,6 @@ export const Dashboard = () => {
                        })()}
                      </div>
                    )}
-                </div>
-                <div className="p-3 bg-watt-accent/10 rounded-xl group-hover:bg-watt-accent/20 transition-colors">
-                  <Activity className="w-6 h-6 text-watt-accent" />
                 </div>
               </div>
             </CardContent>
@@ -299,9 +290,6 @@ export const Dashboard = () => {
                      </div>
                    )}
                 </div>
-                <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
-                  <Sun className="w-6 h-6 text-blue-500" />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -335,9 +323,6 @@ export const Dashboard = () => {
                        })()}
                      </div>
                    )}
-                </div>
-                <div className="p-3 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-colors">
-                  <MapPin className="w-6 h-6 text-purple-500" />
                 </div>
               </div>
             </CardContent>
@@ -373,9 +358,6 @@ export const Dashboard = () => {
                      </div>
                    )}
                 </div>
-                <div className="p-3 bg-green-500/10 rounded-xl group-hover:bg-green-500/20 transition-colors">
-                  <Battery className="w-6 h-6 text-green-500" />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -409,9 +391,6 @@ export const Dashboard = () => {
                        })()}
                      </div>
                    )}
-                </div>
-                <div className="p-3 bg-orange-500/10 rounded-xl group-hover:bg-orange-500/20 transition-colors">
-                  <Wind className="w-6 h-6 text-orange-500" />
                 </div>
               </div>
             </CardContent>
