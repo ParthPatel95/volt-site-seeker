@@ -1305,7 +1305,7 @@ async function fetchNYISOData() {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
-    const loadUrl = `https://mis.nyiso.com/public/csv/pal/${dateStr}pal.csv`;
+    const loadUrl = `https://mis.nyiso.com/public/csv/pal/${dateStr} pal.csv`;
     
     console.log('NYISO load URL:', loadUrl);
     
@@ -1360,7 +1360,7 @@ async function fetchNYISOData() {
     
     // Try today's file first, if 404 try yesterday
     const urls = [
-      `https://mis.nyiso.com/public/csv/realtime/${dateStr}realtime_zone.csv`,
+      `https://mis.nyiso.com/public/csv/realtime/${dateStr} realtime_zone.csv`,
     ];
     
     for (const lmpUrl of urls) {
