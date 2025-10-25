@@ -1222,7 +1222,7 @@ async function fetchNYISOData() {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
-    const fuelMixUrl = `http://mis.nyiso.com/public/csv/rtfuelmix/${dateStr}rtfuelmix.csv`;
+    const fuelMixUrl = `https://mis.nyiso.com/public/csv/rtfuelmix/${dateStr} rtfuelmix.csv`;
     
     console.log('NYISO fuel mix URL:', fuelMixUrl);
     
