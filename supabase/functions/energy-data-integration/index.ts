@@ -1217,81 +1217,104 @@ async function fetchNYISOData() {
   // Fetch Real-Time Fuel Mix
   try {
     console.log('Fetching NYISO fuel mix...');
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    // Use EST timezone for NYISO dates
+    const now = new Date();
+    const estOffset = -5 * 60; // EST is UTC-5
+    const estTime = new Date(now.getTime() + (estOffset * 60 * 1000));
+    
+    const year = estTime.getUTCFullYear();
+    const month = String(estTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(estTime.getUTCDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
-    const fuelMixUrl = `https://mis.nyiso.com/public/csv/rtfuelmix/${dateStr}rtfuelmix.csv`;
     
-    console.log('NYISO fuel mix URL:', fuelMixUrl);
+    // Also prepare yesterday's date as fallback
+    const yesterday = new Date(estTime.getTime() - 24 * 60 * 60 * 1000);
+    const yYear = yesterday.getUTCFullYear();
+    const yMonth = String(yesterday.getUTCMonth() + 1).padStart(2, '0');
+    const yDay = String(yesterday.getUTCDate()).padStart(2, '0');
+    const yDateStr = `${yYear}${yMonth}${yDay}`;
     
-    const response = await fetch(fuelMixUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
+    const fuelMixUrls = [
+      `https://mis.nyiso.com/public/csv/rtfuelmix/${dateStr}rtfuelmix.csv`,
+      `https://mis.nyiso.com/public/csv/rtfuelmix/${yDateStr}rtfuelmix.csv`
+    ];
     
-    console.log('NYISO fuel mix response status:', response.status);
-    
-    if (response.ok) {
-      const text = await response.text();
-      console.log('NYISO fuel mix text length:', text.length, 'first 200 chars:', text.substring(0, 200));
-      const rows = parseCSV(text);
-      console.log('NYISO fuel mix parsed rows:', rows.length);
-      
-      if (rows.length > 0) {
-        // NYISO CSV has rows per fuel type, need to aggregate by latest timestamp
-        // Find the latest timestamp
-        const latestTime = rows[rows.length - 1]['Time Stamp'];
-        console.log('NYISO latest timestamp:', latestTime);
+    for (const fuelMixUrl of fuelMixUrls) {
+      try {
+        console.log('NYISO fuel mix URL:', fuelMixUrl);
         
-        // Filter to only latest timestamp rows and aggregate by fuel category
-        const latestRows = rows.filter(row => row['Time Stamp'] === latestTime);
-        console.log('NYISO latest time rows:', latestRows.length);
+        const response = await fetch(fuelMixUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
         
-        let dualFuel = 0, naturalGas = 0, nuclear = 0, otherFossil = 0, otherRenewables = 0, hydro = 0, wind = 0;
+        console.log('NYISO fuel mix response status:', response.status);
         
-        for (const row of latestRows) {
-          const category = String(row['Fuel Category'] || '').trim();
-          const genMW = parseFloat(row['Gen MW'] || 0);
+        if (response.ok) {
+          const text = await response.text();
+          console.log('NYISO fuel mix text length:', text.length, 'first 200 chars:', text.substring(0, 200));
+          const rows = parseCSV(text);
+          console.log('NYISO fuel mix parsed rows:', rows.length);
           
-          console.log(`NYISO fuel: ${category} = ${genMW} MW`);
-          
-          if (category === 'Dual Fuel') dualFuel += genMW;
-          else if (category === 'Natural Gas') naturalGas += genMW;
-          else if (category === 'Nuclear') nuclear += genMW;
-          else if (category === 'Other Fossil Fuels') otherFossil += genMW;
-          else if (category === 'Other Renewables') otherRenewables += genMW;
-          else if (category === 'Hydro') hydro += genMW;
-          else if (category === 'Wind') wind += genMW;
+          if (rows.length > 0) {
+            // NYISO CSV has rows per fuel type, need to aggregate by latest timestamp
+            // Find the latest timestamp
+            const latestTime = rows[rows.length - 1]['Time Stamp'];
+            console.log('NYISO latest timestamp:', latestTime);
+            
+            // Filter to only latest timestamp rows and aggregate by fuel category
+            const latestRows = rows.filter(row => row['Time Stamp'] === latestTime);
+            console.log('NYISO latest time rows:', latestRows.length);
+            
+            let dualFuel = 0, naturalGas = 0, nuclear = 0, otherFossil = 0, otherRenewables = 0, hydro = 0, wind = 0;
+            
+            for (const row of latestRows) {
+              const category = String(row['Fuel Category'] || '').trim();
+              const genMW = parseFloat(row['Gen MW'] || 0);
+              
+              console.log(`NYISO fuel: ${category} = ${genMW} MW`);
+              
+              if (category === 'Dual Fuel') dualFuel += genMW;
+              else if (category === 'Natural Gas') naturalGas += genMW;
+              else if (category === 'Nuclear') nuclear += genMW;
+              else if (category === 'Other Fossil Fuels') otherFossil += genMW;
+              else if (category === 'Other Renewables') otherRenewables += genMW;
+              else if (category === 'Hydro') hydro += genMW;
+              else if (category === 'Wind') wind += genMW;
+            }
+            
+            const gas = dualFuel + naturalGas;
+            const totalGen = gas + nuclear + otherFossil + otherRenewables + hydro + wind;
+            const renewableGen = hydro + wind + otherRenewables;
+            const renewablePercentage = totalGen > 0 ? (renewableGen / totalGen) * 100 : 0;
+            
+            console.log('NYISO aggregated fuel mix:', { gas, nuclear, hydro, wind, otherRenewables, otherFossil, totalGen });
+            
+            generationMix = {
+              total_generation_mw: Math.round(totalGen),
+              natural_gas_mw: Math.round(gas),
+              nuclear_mw: Math.round(nuclear),
+              hydro_mw: Math.round(hydro),
+              wind_mw: Math.round(wind),
+              solar_mw: 0, // NYISO doesn't separate solar
+              coal_mw: 0,
+              other_mw: Math.round(otherFossil + otherRenewables),
+              renewable_percentage: Math.round(renewablePercentage * 100) / 100,
+              timestamp: new Date().toISOString(),
+              source: 'nyiso_rtfuelmix'
+            };
+            
+            console.log('✅ NYISO generation mix:', generationMix);
+            break; // Success, exit loop
+          }
+        } else {
+          console.error('❌ NYISO fuel mix HTTP error:', response.status, response.statusText);
         }
-        
-        const gas = dualFuel + naturalGas;
-        const totalGen = gas + nuclear + otherFossil + otherRenewables + hydro + wind;
-        const renewableGen = hydro + wind + otherRenewables;
-        const renewablePercentage = totalGen > 0 ? (renewableGen / totalGen) * 100 : 0;
-        
-        console.log('NYISO aggregated fuel mix:', { gas, nuclear, hydro, wind, otherRenewables, otherFossil, totalGen });
-        
-        generationMix = {
-          total_generation_mw: Math.round(totalGen),
-          natural_gas_mw: Math.round(gas),
-          nuclear_mw: Math.round(nuclear),
-          hydro_mw: Math.round(hydro),
-          wind_mw: Math.round(wind),
-          solar_mw: 0, // NYISO doesn't separate solar
-          coal_mw: 0,
-          other_mw: Math.round(otherFossil + otherRenewables),
-          renewable_percentage: Math.round(renewablePercentage * 100) / 100,
-          timestamp: new Date().toISOString(),
-          source: 'nyiso_rtfuelmix'
-        };
-        
-        console.log('✅ NYISO generation mix:', generationMix);
+      } catch (urlError: any) {
+        console.log('NYISO fuel mix URL failed:', fuelMixUrl, urlError.message);
+        continue; // Try next URL
       }
-    } else {
-      console.error('❌ NYISO fuel mix HTTP error:', response.status, response.statusText);
     }
   } catch (e: any) {
     console.error('❌ NYISO fuel mix error:', e.message || e);
@@ -1300,41 +1323,74 @@ async function fetchNYISOData() {
   // Fetch Real-Time Load (using dated file format)
   try {
     console.log('Fetching NYISO load...');
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    // Use EST timezone for NYISO dates
+    const now = new Date();
+    const estOffset = -5 * 60; // EST is UTC-5
+    const estTime = new Date(now.getTime() + (estOffset * 60 * 1000));
+    
+    const year = estTime.getUTCFullYear();
+    const month = String(estTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(estTime.getUTCDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
-    const loadUrl = `https://mis.nyiso.com/public/csv/pal/${dateStr}pal.csv`;
     
-    console.log('NYISO load URL:', loadUrl);
+    // Also prepare yesterday's date as fallback
+    const yesterday = new Date(estTime.getTime() - 24 * 60 * 60 * 1000);
+    const yYear = yesterday.getUTCFullYear();
+    const yMonth = String(yesterday.getUTCMonth() + 1).padStart(2, '0');
+    const yDay = String(yesterday.getUTCDate()).padStart(2, '0');
+    const yDateStr = `${yYear}${yMonth}${yDay}`;
     
-    const response = await fetch(loadUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
+    const loadUrls = [
+      `https://mis.nyiso.com/public/csv/pal/${dateStr}pal.csv`,
+      `https://mis.nyiso.com/public/csv/pal/${yDateStr}pal.csv`
+    ];
     
-    console.log('NYISO load response status:', response.status);
-    
-    if (response.ok) {
-      const text = await response.text();
-      console.log('NYISO load text length:', text.length, 'first 200 chars:', text.substring(0, 200));
-      const data = parseCSV(text);
-      console.log('NYISO load parsed rows:', data.length);
-      
-      if (data.length > 0) {
-        const latest = data[data.length - 1];
-        console.log('NYISO latest load row:', JSON.stringify(latest));
-        const currentLoad = parseFloat(latest['NYISO'] || 0);
+    for (const loadUrl of loadUrls) {
+      try {
+        console.log('NYISO load URL:', loadUrl);
         
-        if (currentLoad > 5000) {
-          loadData = {
-            current_demand_mw: Math.round(currentLoad),
-            peak_forecast_mw: Math.round(currentLoad * 1.15),
-            reserve_margin: 18.0,
-            timestamp: new Date().toISOString(),
-            source: 'nyiso_pal'
+        const response = await fetch(loadUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        
+        console.log('NYISO load response status:', response.status);
+        
+        if (response.ok) {
+          const text = await response.text();
+          console.log('NYISO load text length:', text.length, 'first 200 chars:', text.substring(0, 200));
+          const data = parseCSV(text);
+          console.log('NYISO load parsed rows:', data.length);
+          
+          if (data.length > 0) {
+            const latest = data[data.length - 1];
+            console.log('NYISO latest load row:', JSON.stringify(latest));
+            const currentLoad = parseFloat(latest['NYISO'] || 0);
+            
+            if (currentLoad > 5000) {
+              loadData = {
+                current_demand_mw: Math.round(currentLoad),
+                peak_forecast_mw: Math.round(currentLoad * 1.15),
+                reserve_margin: 18.0,
+                timestamp: new Date().toISOString(),
+                source: 'nyiso_pal'
+              };
+              console.log('✅ NYISO load:', loadData);
+              break; // Success, exit loop
+            }
+          }
+        } else {
+          console.error('❌ NYISO load HTTP error:', response.status, response.statusText);
+        }
+      } catch (urlError: any) {
+        console.log('NYISO load URL failed:', loadUrl, urlError.message);
+        continue; // Try next URL
+      }
+    }
+  } catch (e: any) {
+    console.error('❌ NYISO load error:', e.message || e);
+  }
           };
           
           console.log('✅ NYISO load data:', loadData);
@@ -1352,15 +1408,27 @@ async function fetchNYISOData() {
   // Fetch Real-Time LMP Pricing (zonal average)
   try {
     console.log('Fetching NYISO real-time LMP pricing...');
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    // Use EST timezone for NYISO dates
+    const now = new Date();
+    const estOffset = -5 * 60; // EST is UTC-5
+    const estTime = new Date(now.getTime() + (estOffset * 60 * 1000));
+    
+    const year = estTime.getUTCFullYear();
+    const month = String(estTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(estTime.getUTCDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
+    
+    // Also prepare yesterday's date as fallback
+    const yesterday = new Date(estTime.getTime() - 24 * 60 * 60 * 1000);
+    const yYear = yesterday.getUTCFullYear();
+    const yMonth = String(yesterday.getUTCMonth() + 1).padStart(2, '0');
+    const yDay = String(yesterday.getUTCDate()).padStart(2, '0');
+    const yDateStr = `${yYear}${yMonth}${yDay}`;
     
     // Try today's file first, if 404 try yesterday
     const urls = [
       `https://mis.nyiso.com/public/csv/realtime/${dateStr}realtime_zone.csv`,
+      `https://mis.nyiso.com/public/csv/realtime/${yDateStr}realtime_zone.csv`
     ];
     
     for (const lmpUrl of urls) {
