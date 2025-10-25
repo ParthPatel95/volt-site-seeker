@@ -123,12 +123,34 @@ serve(async (req) => {
       sppSuccess: sppResult.status === 'fulfilled'
     });
 
-    return new Response(
-      JSON.stringify(response),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    // Ensure response serialization doesn't fail
+    try {
+      const responseBody = JSON.stringify(response);
+      return new Response(responseBody, { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    } catch (serializationError) {
+      console.error('Response serialization error:', serializationError);
+      // Return a simplified response if full response fails
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          ercot: ercotResult.status === 'fulfilled' ? { pricing: ercotResult.value?.pricing } : undefined,
+          aeso: aesoResult.status === 'fulfilled' ? { pricing: aesoResult.value?.pricing } : undefined,
+          miso: misoResult.status === 'fulfilled' ? { pricing: misoResult.value?.pricing } : undefined,
+          caiso: caisoResult.status === 'fulfilled' ? { pricing: caisoResult.value?.pricing } : undefined,
+          nyiso: nyisoResult.status === 'fulfilled' ? { pricing: nyisoResult.value?.pricing } : undefined,
+          pjm: pjmResult.status === 'fulfilled' ? { pricing: pjmResult.value?.pricing } : undefined,
+          spp: sppResult.status === 'fulfilled' ? { pricing: sppResult.value?.pricing } : undefined,
+          ieso: iesoResult.status === 'fulfilled' ? { pricing: iesoResult.value?.pricing } : undefined
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
 
   } catch (error) {
     console.error('Error in energy data integration:', error);
