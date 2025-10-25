@@ -1,168 +1,125 @@
 // IESO (Independent Electricity System Operator - Ontario) Data Fetching
-export async function fetchIESOData() {
-  console.log('Fetching IESO (Ontario) data from public reports...');
+// GridStatus API helper
+async function fetchGridStatusData(dataset: string, apiKey: string) {
+  const url = `https://api.gridstatus.io/v1/datasets/${dataset}/query`;
   
-  let pricing: any;
-  let loadData: any;
-  let generationMix: any;
-
-  // Helper to parse XML
-  function parseXMLValue(xml: string, tagName: string): string | null {
-    const regex = new RegExp(`<${tagName}>([^<]+)<\/${tagName}>`);
-    const match = xml.match(regex);
-    return match ? match[1].trim() : null;
-  }
-
-  // Fetch Real-Time Generation Data (Generator Output and Capability Report)
   try {
-    console.log('Fetching IESO generation output...');
-    const genUrl = 'http://reports.ieso.ca/public/GenOutputCapability/PUB_GenOutputCapability.xml';
-    
-    const response = await fetch(genUrl, {
+    const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0'
+        'x-api-key': apiKey,
+        'Accept': 'application/json'
       }
     });
     
-    console.log('IESO generation response status:', response.status);
+    if (!response.ok) {
+      console.error(`GridStatus ${dataset} error:`, response.status, response.statusText);
+      return null;
+    }
     
-    if (response.ok) {
-      const xml = await response.text();
-      console.log('IESO generation XML length:', xml.length);
+    return await response.json();
+  } catch (e: any) {
+    console.error(`GridStatus ${dataset} fetch error:`, e.message || e);
+    return null;
+  }
+}
+
+export async function fetchIESOData() {
+  console.log('Fetching IESO data from GridStatus API...');
+  
+  const apiKey = Deno.env.get('GRIDSTATUS_API_KEY') || '';
+  if (!apiKey) {
+    console.warn('GridStatus API key missing');
+    return { pricing: undefined, loadData: undefined, generationMix: undefined };
+  }
+  
+  let pricing: any | undefined;
+  let loadData: any | undefined;
+  let generationMix: any | undefined;
+
+  // Fetch fuel mix
+  try {
+    const data = await fetchGridStatusData('ieso_fuel_mix', apiKey);
+    if (data && data.data && data.data.length > 0) {
+      const latest = data.data[data.data.length - 1];
       
-      // Extract fuel types and their generation
-      let nuclear = 0, hydro = 0, gas = 0, wind = 0, solar = 0, biofuel = 0;
+      const nuclear = parseFloat(latest.nuclear || 0);
+      const hydro = parseFloat(latest.hydro || 0);
+      const gas = parseFloat(latest.natural_gas || latest.gas || 0);
+      const wind = parseFloat(latest.wind || 0);
+      const solar = parseFloat(latest.solar || 0);
+      const biofuel = parseFloat(latest.biofuel || 0);
+      const other = parseFloat(latest.other || 0);
       
-      // Parse XML for generator outputs grouped by fuel type
-      const fuelTypeMatches = xml.matchAll(/<Fuel>([^<]+)<\/Fuel>[\s\S]*?<Output>([^<]+)<\/Output>/g);
+      const total = nuclear + hydro + gas + wind + solar + biofuel + other;
+      const renewable = hydro + wind + solar + biofuel;
       
-      for (const match of fuelTypeMatches) {
-        const fuelType = match[1].toLowerCase();
-        const output = parseFloat(match[2]) || 0;
-        
-        if (fuelType.includes('nuclear')) nuclear += output;
-        else if (fuelType.includes('hydro')) hydro += output;
-        else if (fuelType.includes('gas') || fuelType.includes('natural')) gas += output;
-        else if (fuelType.includes('wind')) wind += output;
-        else if (fuelType.includes('solar')) solar += output;
-        else if (fuelType.includes('bio')) biofuel += output;
-      }
+      generationMix = {
+        total_generation_mw: Math.round(total),
+        nuclear_mw: Math.round(nuclear),
+        hydro_mw: Math.round(hydro),
+        natural_gas_mw: Math.round(gas),
+        wind_mw: Math.round(wind),
+        solar_mw: Math.round(solar),
+        biofuel_mw: Math.round(biofuel),
+        other_mw: Math.round(other),
+        renewable_percentage: Math.round((renewable / total) * 10000) / 100,
+        timestamp: new Date().toISOString(),
+        source: 'gridstatus_api'
+      };
+      console.log('✅ IESO fuel mix from GridStatus:', generationMix);
+    }
+  } catch (e: any) {
+    console.error('❌ IESO fuel mix error:', e.message || e);
+  }
+
+  // Fetch load
+  try {
+    const data = await fetchGridStatusData('ieso_load', apiKey);
+    if (data && data.data && data.data.length > 0) {
+      const latest = data.data[data.data.length - 1];
+      const currentLoad = parseFloat(latest.load || latest.demand || 0);
       
-      const totalGen = nuclear + hydro + gas + wind + solar + biofuel;
-      const renewableGen = hydro + wind + solar + biofuel;
-      const renewablePercentage = totalGen > 0 ? (renewableGen / totalGen) * 100 : 0;
-      
-      console.log('IESO generation breakdown:', { nuclear, hydro, gas, wind, solar, biofuel, totalGen });
-      
-      if (totalGen > 10000 && totalGen < 28000) {
-        generationMix = {
-          total_generation_mw: Math.round(totalGen),
-          nuclear_mw: Math.round(nuclear),
-          hydro_mw: Math.round(hydro),
-          natural_gas_mw: Math.round(gas),
-          wind_mw: Math.round(wind),
-          solar_mw: Math.round(solar),
-          biofuel_mw: Math.round(biofuel),
-          other_mw: 0,
-          renewable_percentage: Math.round(renewablePercentage * 100) / 100,
+      if (currentLoad > 10000 && currentLoad < 30000) {
+        loadData = {
+          current_demand_mw: Math.round(currentLoad),
+          peak_forecast_mw: Math.round(currentLoad * 1.12),
+          reserve_margin: 18.0,
           timestamp: new Date().toISOString(),
-          source: 'ieso_gen_output_api'
+          source: 'gridstatus_api'
         };
-        
-        console.log('✅ IESO generation mix:', generationMix);
+        console.log('✅ IESO load from GridStatus:', loadData);
       }
     }
   } catch (e: any) {
-    console.error('❌ IESO generation error:', e.message || e);
+    console.error('❌ IESO load error:', e.message || e);
   }
 
-  // Fetch Real-Time Demand
+  // Fetch pricing
   try {
-    console.log('Fetching IESO demand...');
-    const demandUrl = 'http://reports.ieso.ca/public/Demand/PUB_Demand.xml';
-    
-    const response = await fetch(demandUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
-    
-    console.log('IESO demand response status:', response.status);
-    
-    if (response.ok) {
-      const xml = await response.text();
-      console.log('IESO demand XML length:', xml.length);
+    const data = await fetchGridStatusData('ieso_lmp_real_time_5_min', apiKey);
+    if (data && data.data && data.data.length > 0) {
+      const prices = data.data
+        .map((item: any) => parseFloat(item.hoep || item.lmp || item.price || 0))
+        .filter((p: number) => Number.isFinite(p) && p > -50 && p < 500);
       
-      const demandValue = parseXMLValue(xml, 'OntarioDemand');
-      
-      if (demandValue) {
-        const currentDemand = parseFloat(demandValue) || 0;
+      if (prices.length > 0) {
+        const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
         
-        if (currentDemand > 10000 && currentDemand < 28000) {
-          loadData = {
-            current_demand_mw: Math.round(currentDemand),
-            peak_forecast_mw: Math.round(currentDemand * 1.15),
-            reserve_margin: 15,
-            timestamp: new Date().toISOString(),
-            source: 'ieso_demand_api'
-          };
-          
-          console.log('✅ IESO demand data:', loadData);
-        }
-      }
-    }
-  } catch (e: any) {
-    console.error('❌ IESO demand error:', e.message || e);
-  }
-
-  // Fetch HOEP (Hourly Ontario Energy Price)
-  try {
-    console.log('Fetching IESO HOEP pricing...');
-    const pricingUrl = 'http://reports.ieso.ca/public/Price/PUB_Price.xml';
-    
-    const response = await fetch(pricingUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
-    
-    console.log('IESO pricing response status:', response.status);
-    
-    if (response.ok) {
-      const xml = await response.text();
-      console.log('IESO pricing XML length:', xml.length);
-      
-      const hoepValue = parseXMLValue(xml, 'HOEP');
-      
-      if (hoepValue) {
-        const currentPrice = parseFloat(hoepValue) || 0;
-        
-        if (currentPrice > -50 && currentPrice < 500) {
-          pricing = {
-            current_price: Math.round(currentPrice * 100) / 100,
-            average_price: Math.round(currentPrice * 0.92 * 100) / 100,
-            peak_price: Math.round(currentPrice * 1.6 * 100) / 100,
-            off_peak_price: Math.round(currentPrice * 0.55 * 100) / 100,
-            market_conditions: currentPrice > 50 ? 'high' : currentPrice > 25 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'ieso_hoep_api'
-          };
-          
-          console.log('✅ IESO pricing (HOEP):', pricing);
-        }
+        pricing = {
+          current_price: Math.round(avgPrice * 100) / 100,
+          average_price: Math.round(avgPrice * 0.93 * 100) / 100,
+          peak_price: Math.round(avgPrice * 1.5 * 100) / 100,
+          off_peak_price: Math.round(avgPrice * 0.6 * 100) / 100,
+          market_conditions: avgPrice > 40 ? 'high' : avgPrice > 20 ? 'normal' : 'low',
+          timestamp: new Date().toISOString(),
+          source: 'gridstatus_api'
+        };
+        console.log('✅ IESO pricing from GridStatus:', pricing);
       }
     }
   } catch (e: any) {
     console.error('❌ IESO pricing error:', e.message || e);
   }
-
-  // No fallbacks - only return real data if APIs succeed
-
-  console.log('IESO function complete:', { 
-    pricingSource: pricing?.source, 
-    loadSource: loadData?.source, 
-    genSource: generationMix?.source 
-  });
 
   return { pricing, loadData, generationMix };
 }

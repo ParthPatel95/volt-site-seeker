@@ -29,6 +29,7 @@ const abbreviate = (s?: string) => {
     ercot_load_proxy: 'load(proxy)',
     ercot_api: 'api',
     ercot_fuelmix: 'mix',
+    gridstatus_api: 'gs',
   };
   return map[s] ?? s;
 };
