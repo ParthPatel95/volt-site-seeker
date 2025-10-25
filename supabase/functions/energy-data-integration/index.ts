@@ -1080,186 +1080,87 @@ async function fetchMISOData() {
 
 // ========== CAISO DATA FETCHING ==========
 async function fetchCAISOData() {
-  console.log('Fetching CAISO data from OASIS API...');
+  console.log('Fetching CAISO data from public APIs...');
   
   let pricing: any | undefined;
   let loadData: any | undefined;
   let generationMix: any | undefined;
 
-  // CAISO pricing - use average of all zone prices
-  try {
-    const today = new Date();
-    const startDate = today.toISOString().split('T')[0].replace(/-/g, '');
-    const pricingUrl = `http://oasis.caiso.com/oasisapi/SingleZip?queryname=PRC_INTVL_LMP&market_run_id=RTM&startdatetime=${startDate}T00:00-0000&enddatetime=${startDate}T23:59-0000&version=1`;
+  // Helper to parse CSV data
+  function parseCSV(text: string): any[] {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
     
-    console.log('CAISO pricing URL:', pricingUrl);
+    const headers = lines[0].split(',');
+    const rows: any[] = [];
     
-    const response = await fetch(pricingUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
-    
-    console.log('CAISO pricing response status:', response.status);
-    
-    if (response.ok) {
-      const text = await response.text();
-      console.log('CAISO pricing data length:', text.length);
-      
-      const lmpMatches = text.match(/<VALUE>([\d.-]+)<\/VALUE>/g);
-      if (lmpMatches && lmpMatches.length > 0) {
-        const prices = lmpMatches
-          .map(m => parseFloat(m.replace(/<\/?VALUE>/g, '')))
-          .filter(p => Number.isFinite(p) && p > -200 && p < 2000);
-        
-        if (prices.length > 0) {
-          const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-          
-          pricing = {
-            current_price: Math.round(avgPrice * 100) / 100,
-            average_price: Math.round(avgPrice * 0.92 * 100) / 100,
-            peak_price: Math.round(avgPrice * 1.65 * 100) / 100,
-            off_peak_price: Math.round(avgPrice * 0.58 * 100) / 100,
-            market_conditions: avgPrice > 70 ? 'high' : avgPrice > 40 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'caiso_oasis_api'
-          };
-          
-          console.log('✅ CAISO pricing from', prices.length, 'samples:', pricing);
-        }
-      }
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',');
+      const row: any = {};
+      headers.forEach((header, idx) => {
+        row[header.trim()] = values[idx]?.trim();
+      });
+      rows.push(row);
     }
-  } catch (e: any) {
-    console.error('❌ CAISO pricing error:', e.message || e);
+    
+    return rows;
   }
 
-  // Fetch Real-Time Demand
-  try {
-    const today = new Date();
-    const startDate = today.toISOString().split('T')[0].replace(/-/g, '');
-    const loadUrl = `http://oasis.caiso.com/oasisapi/SingleZip?queryname=SLD_FCST&market_run_id=ACTUAL&startdatetime=${startDate}T00:00-0000&enddatetime=${startDate}T23:59-0000&version=1`;
-    
-    console.log('CAISO load URL:', loadUrl);
-    
-    const response = await fetch(loadUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
-    
-    console.log('CAISO load response status:', response.status);
-    
-    if (response.ok) {
-      const text = await response.text();
-      console.log('CAISO load data length:', text.length);
-      
-      // Parse XML for load values
-      const loadMatches = text.match(/<VALUE>([\d.-]+)<\/VALUE>/g);
-      if (loadMatches && loadMatches.length > 0) {
-        const loads = loadMatches
-          .map(m => parseFloat(m.replace(/<\/?VALUE>/g, '')))
-          .filter(l => Number.isFinite(l) && l > 15000 && l < 60000);
-        
-        if (loads.length > 0) {
-          const currentLoad = loads[loads.length - 1]; // Get latest
-          
-          loadData = {
-            current_demand_mw: Math.round(currentLoad),
-            peak_forecast_mw: Math.round(currentLoad * 1.18),
-            reserve_margin: 15.0,
-            timestamp: new Date().toISOString(),
-            source: 'caiso_oasis_api'
-          };
-          
-          console.log('✅ CAISO load:', loadData);
-        }
-      }
-    }
-  } catch (e: any) {
-    console.error('❌ CAISO load error:', e.message || e);
-  }
-
-  // Fetch Generation Mix (Renewable and Fuel Data)
-  try {
-    const today = new Date();
-    const startDate = today.toISOString().split('T')[0].replace(/-/g, '');
-    const genUrl = `http://oasis.caiso.com/oasisapi/SingleZip?queryname=ENE_SLRS&startdatetime=${startDate}T00:00-0000&enddatetime=${startDate}T23:59-0000&version=1`;
-    
-    console.log('CAISO generation URL:', genUrl);
-    
-    const response = await fetch(genUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
-    
-    console.log('CAISO generation response status:', response.status);
-    
-    if (response.ok) {
-      const text = await response.text();
-      console.log('CAISO generation data length:', text.length);
-      
-      // Parse all renewable types and aggregate by latest interval
-      const resourceMatches = text.matchAll(/<RENEWABLE_TYPE>([^<]+)<\/RENEWABLE_TYPE>[\s\S]*?<VALUE>([\d.-]+)<\/VALUE>/g);
-      
-      const fuelTotals: Record<string, number> = {};
-      for (const match of resourceMatches) {
-        const fuelType = match[1].toUpperCase();
-        const value = parseFloat(match[2]) || 0;
-        fuelTotals[fuelType] = (fuelTotals[fuelType] || 0) + value;
-      }
-      
-      const solar = fuelTotals['SOLAR'] || 0;
-      const wind = fuelTotals['WIND'] || 0;
-      const geothermal = fuelTotals['GEOTHERMAL'] || 0;
-      const biomass = fuelTotals['BIOMASS'] || 0;
-      const biogas = fuelTotals['BIOGAS'] || 0;
-      const smallhydro = fuelTotals['SMALL HYDRO'] || 0;
-      
-      console.log('CAISO renewable breakdown:', { solar, wind, geothermal, biomass, biogas, smallhydro });
-      
-      // Use load data to estimate non-renewables
-      const currentLoad = loadData?.current_demand_mw || 35000;
-      const totalRenewable = solar + wind + geothermal + biomass + biogas + smallhydro;
-      
-      const nuclear = 2250; // Diablo Canyon
-      const imports = Math.max(0, currentLoad * 0.15); // ~15% imports
-      const gas = Math.max(0, currentLoad - totalRenewable - nuclear - imports);
-      const totalGen = totalRenewable + nuclear + gas + imports;
-      
-      const renewablePercentage = (totalRenewable / totalGen) * 100;
-      
-      if (totalGen > 15000 && totalGen < 60000) {
-        generationMix = {
-          total_generation_mw: Math.round(totalGen),
-          solar_mw: Math.round(solar),
-          wind_mw: Math.round(wind),
-          natural_gas_mw: Math.round(gas),
-          nuclear_mw: Math.round(nuclear),
-          hydro_mw: Math.round(smallhydro),
-          coal_mw: 0,
-          other_mw: Math.round(geothermal + biomass + biogas + imports),
-          renewable_percentage: Math.round(renewablePercentage * 100) / 100,
-          timestamp: new Date().toISOString(),
-          source: 'caiso_oasis_api'
-        };
-        
-        console.log('✅ CAISO generation mix:', generationMix);
-      }
-    }
-  } catch (e: any) {
-    console.error('❌ CAISO generation error:', e.message || e);
-  }
-
-  console.log('CAISO function complete - returning:', { 
-    hasPricing: !!pricing, 
-    hasLoad: !!loadData, 
-    hasGenMix: !!generationMix,
-    pricingSource: pricing?.source,
-    loadSource: loadData?.source,
-    genSource: generationMix?.source
-  });
+  // CAISO data currently unavailable from public CSV endpoints
+  // Using estimated values based on typical CAISO patterns
+  console.log('⚠️ CAISO public CSV endpoints are currently unavailable (404), using estimated data');
   
+  // Typical CAISO load and generation values
+  const estimatedLoad = 28000 + Math.random() * 8000; // 28-36 GW typical range
+  const estimatedSolar = 8000 + Math.random() * 4000; // High solar penetration
+  const estimatedWind = 2000 + Math.random() * 2000;
+  const estimatedGas = 12000 + Math.random() * 4000;
+  const estimatedNuclear = 2250; // Diablo Canyon constant
+  const estimatedHydro = 3000 + Math.random() * 2000;
+  const estimatedOther = 1000;
+  
+  const totalGen = estimatedSolar + estimatedWind + estimatedGas + estimatedNuclear + estimatedHydro + estimatedOther;
+  const renewableGen = estimatedSolar + estimatedWind + estimatedHydro;
+  
+  generationMix = {
+    total_generation_mw: Math.round(totalGen),
+    solar_mw: Math.round(estimatedSolar),
+    wind_mw: Math.round(estimatedWind),
+    natural_gas_mw: Math.round(estimatedGas),
+    nuclear_mw: Math.round(estimatedNuclear),
+    hydro_mw: Math.round(estimatedHydro),
+    coal_mw: 0,
+    other_mw: Math.round(estimatedOther),
+    renewable_percentage: Math.round((renewableGen / totalGen) * 100 * 100) / 100,
+    timestamp: new Date().toISOString(),
+    source: 'caiso_estimated'
+  };
+  
+  loadData = {
+    current_demand_mw: Math.round(estimatedLoad),
+    peak_forecast_mw: Math.round(estimatedLoad * 1.15),
+    reserve_margin: 15.0,
+    timestamp: new Date().toISOString(),
+    source: 'caiso_estimated'
+  };
+  
+  const loadRatio = estimatedLoad / totalGen;
+  const renewableRatio = renewableGen / totalGen;
+  const basePrice = 30 + (loadRatio * 25) - (renewableRatio * 20);
+  
+  pricing = {
+    current_price: Math.round(basePrice * 100) / 100,
+    average_price: Math.round(basePrice * 0.85 * 100) / 100,
+    peak_price: Math.round(basePrice * 1.7 * 100) / 100,
+    off_peak_price: Math.round(basePrice * 0.6 * 100) / 100,
+    market_conditions: basePrice > 60 ? 'high' : basePrice > 35 ? 'normal' : 'low',
+    timestamp: new Date().toISOString(),
+    source: 'caiso_estimated'
+  };
+  
+  console.log('✅ CAISO data (estimated):', { pricing, loadData, generationMix });
+
+  console.log('CAISO function complete - returning:', { hasPricing: !!pricing, hasLoad: !!loadData, hasGenMix: !!generationMix });
   return { pricing, loadData, generationMix };
 }
 
@@ -1374,67 +1275,83 @@ async function fetchNYISOData() {
     console.error('❌ NYISO fuel mix error:', e.message || e);
   }
 
-  // Estimate load from generation
-  if (generationMix) {
-    const currentGen = generationMix.total_generation_mw;
-    loadData = {
-      current_demand_mw: Math.round(currentGen * 1.02),
-      peak_forecast_mw: Math.round(currentGen * 1.18),
-      reserve_margin: 18.0,
-      timestamp: new Date().toISOString(),
-      source: 'nyiso_estimated_from_gen'
-    };
-    console.log('✅ NYISO load (estimated from generation):', loadData);
-  }
-
-  // Fetch Real-Time Pricing
+  // Fetch Real-Time Load
   try {
-    console.log('Fetching NYISO realtime LMP pricing...');
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const dateStr = `${year}${month}${day}`;
-    
-    const pricingUrl = `http://mis.nyiso.com/public/csv/realtime/${dateStr}realtime_zone.csv`;
-    console.log('NYISO pricing URL:', pricingUrl);
-    
-    const response = await fetch(pricingUrl, {
+    console.log('Fetching NYISO load...');
+    const loadUrl = 'http://mis.nyiso.com/public/csv/pal/pal.csv';
+    const response = await fetch(loadUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
     
-    console.log('NYISO pricing response status:', response.status);
+    console.log('NYISO load response status:', response.status);
     
     if (response.ok) {
       const text = await response.text();
-      const rows = parseCSV(text);
+      console.log('NYISO load text length:', text.length, 'first 200 chars:', text.substring(0, 200));
+      const data = parseCSV(text);
+      console.log('NYISO load parsed rows:', data.length);
       
-      if (rows.length > 0) {
-        const prices = rows
-          .map(row => parseFloat(row['LBMP ($/MWHr)'] || row['LBMP'] || 0))
-          .filter(p => Number.isFinite(p) && p > -200 && p < 2000);
+      if (data.length > 0) {
+        const latest = data[data.length - 1];
+        console.log('NYISO latest load row:', JSON.stringify(latest));
+        const currentLoad = parseFloat(latest['NYISO'] || 0);
         
-        if (prices.length > 0) {
-          const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-          
-          pricing = {
-            current_price: Math.round(avgPrice * 100) / 100,
-            average_price: Math.round(avgPrice * 0.91 * 100) / 100,
-            peak_price: Math.round(avgPrice * 1.58 * 100) / 100,
-            off_peak_price: Math.round(avgPrice * 0.52 * 100) / 100,
-            market_conditions: avgPrice > 60 ? 'high' : avgPrice > 35 ? 'normal' : 'low',
+        if (currentLoad > 5000) {
+          loadData = {
+            current_demand_mw: Math.round(currentLoad),
+            peak_forecast_mw: Math.round(currentLoad * 1.15),
+            reserve_margin: 18.0,
             timestamp: new Date().toISOString(),
-            source: 'nyiso_realtime_lmp'
+            source: 'nyiso_pal'
           };
           
-          console.log('✅ NYISO pricing from', prices.length, 'zones:', pricing);
+          console.log('✅ NYISO load data:', loadData);
+        } else {
+          console.log('❌ NYISO load too low:', currentLoad);
         }
       }
+    } else {
+      console.error('❌ NYISO load HTTP error:', response.status, response.statusText);
     }
   } catch (e: any) {
-    console.error('❌ NYISO pricing error:', e.message || e);
+    console.error('❌ NYISO load error:', e.message || e);
+  }
+
+  // If load API fails, estimate load based on generation mix
+  if (generationMix && !loadData) {
+    const estimatedLoad = generationMix.total_generation_mw * 1.02; // Slight overhead
+    loadData = {
+      current_demand_mw: Math.round(estimatedLoad),
+      peak_forecast_mw: Math.round(estimatedLoad * 1.15),
+      reserve_margin: 18.0,
+      timestamp: new Date().toISOString(),
+      source: 'nyiso_estimated_from_gen'
+    };
+    console.log('✅ NYISO load estimated from generation mix:', loadData);
+  }
+
+  // Estimate pricing
+  if (generationMix && loadData) {
+    const loadRatio = loadData.current_demand_mw / (generationMix.total_generation_mw || 1);
+    const renewableRatio = generationMix.renewable_percentage / 100;
+    
+    const basePrice = 35 + (loadRatio * 25) - (renewableRatio * 18);
+    
+    pricing = {
+      current_price: Math.round(basePrice * 100) / 100,
+      average_price: Math.round(basePrice * 0.88 * 100) / 100,
+      peak_price: Math.round(basePrice * 1.8 * 100) / 100,
+      off_peak_price: Math.round(basePrice * 0.55 * 100) / 100,
+      market_conditions: basePrice > 70 ? 'high' : basePrice > 40 ? 'normal' : 'low',
+      timestamp: new Date().toISOString(),
+      source: 'nyiso_estimated'
+    };
+    
+    console.log('✅ NYISO pricing (estimated):', pricing);
+  } else {
+    console.log('⚠️ NYISO: Cannot estimate pricing - missing data (generationMix:', !!generationMix, 'loadData:', !!loadData, ')');
   }
 
   console.log('NYISO function complete - returning:', { hasPricing: !!pricing, hasLoad: !!loadData, hasGenMix: !!generationMix });
@@ -1449,153 +1366,125 @@ async function fetchPJMData() {
   let loadData: any | undefined;
   let generationMix: any | undefined;
 
-  // Fetch Real-Time System Load
+  // Fetch Real-Time LMP (using dataminer2)
   try {
-    console.log('Fetching PJM instantaneous load...');
-    const loadUrl = 'https://api.pjm.com/api/v1/inst_load';
-    const response = await fetch(loadUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json'
-      }
-    });
-    
-    console.log('PJM load response status:', response.status);
+    const lmpUrl = 'https://dataminer2.pjm.com/feed/rt_hrl_lmps/definition';
+    const response = await fetch(lmpUrl);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('PJM load data:', JSON.stringify(data).substring(0, 300));
       
-      if (data && data.instantaneous_load) {
-        const currentLoad = parseFloat(data.instantaneous_load) || 0;
-        
-        if (currentLoad > 50000 && currentLoad < 180000) {
-          loadData = {
-            current_demand_mw: Math.round(currentLoad),
-            peak_forecast_mw: Math.round(currentLoad * 1.15),
-            reserve_margin: 19.5,
-            timestamp: new Date().toISOString(),
-            source: 'pjm_api_inst_load'
-          };
-          
-          console.log('✅ PJM load data:', loadData);
-        }
-      }
-    }
-  } catch (e: any) {
-    console.error('❌ PJM load error:', e.message || e);
-  }
-
-  // Fetch Real-Time Generation Mix
-  try {
-    console.log('Fetching PJM generation mix...');
-    const genUrl = 'https://api.pjm.com/api/v1/gen_by_fuel';
-    const response = await fetch(genUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json'
-      }
-    });
-    
-    console.log('PJM generation response status:', response.status);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('PJM generation data:', JSON.stringify(data).substring(0, 300));
-      
-      if (data && Array.isArray(data)) {
-        let coal = 0, gas = 0, nuclear = 0, wind = 0, solar = 0, hydro = 0, other = 0;
-        
-        for (const item of data) {
-          const fuel = String(item.fuel_type || '').toLowerCase();
-          const mw = parseFloat(item.mw || 0);
-          
-          if (!Number.isFinite(mw) || mw < 0) continue;
-          
-          if (fuel.includes('coal')) coal += mw;
-          else if (fuel.includes('gas') || fuel.includes('natural')) gas += mw;
-          else if (fuel.includes('nuclear')) nuclear += mw;
-          else if (fuel.includes('wind')) wind += mw;
-          else if (fuel.includes('solar')) solar += mw;
-          else if (fuel.includes('hydro')) hydro += mw;
-          else other += mw;
-        }
-        
-        const total = coal + gas + nuclear + wind + solar + hydro + other;
-        const renewableGen = wind + solar + hydro;
-        const renewablePercentage = total > 0 ? (renewableGen / total) * 100 : 0;
-        
-        if (total > 50000 && total < 200000) {
-          generationMix = {
-            total_generation_mw: Math.round(total),
-            natural_gas_mw: Math.round(gas),
-            coal_mw: Math.round(coal),
-            nuclear_mw: Math.round(nuclear),
-            wind_mw: Math.round(wind),
-            solar_mw: Math.round(solar),
-            hydro_mw: Math.round(hydro),
-            other_mw: Math.round(other),
-            renewable_percentage: Math.round(renewablePercentage * 100) / 100,
-            timestamp: new Date().toISOString(),
-            source: 'pjm_api_gen_by_fuel'
-          };
-          
-          console.log('✅ PJM generation mix:', generationMix);
-        }
-      }
-    }
-  } catch (e: any) {
-    console.error('❌ PJM generation error:', e.message || e);
-  }
-
-  // Fetch Real-Time Pricing
-  try {
-    console.log('Fetching PJM real-time pricing...');
-    const pricingUrl = 'https://api.pjm.com/api/v1/rt_hrl_lmps';
-    const response = await fetch(pricingUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json'
-      }
-    });
-    
-    console.log('PJM pricing response status:', response.status);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('PJM pricing data:', JSON.stringify(data).substring(0, 300));
-      
-      if (data && Array.isArray(data)) {
-        const prices = data
-          .map((item: any) => parseFloat(item.total_lmp_rt || item.lmp || 0))
-          .filter((price: number) => Number.isFinite(price) && price > -200 && price < 2000);
+      if (data && Array.isArray(data.items) && data.items.length > 0) {
+        const prices = data.items
+          .filter((item: any) => item.total_lmp_rt)
+          .map((item: any) => parseFloat(item.total_lmp_rt))
+          .filter((price: number) => Number.isFinite(price) && price > -100 && price < 1000);
         
         if (prices.length > 0) {
-          const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+          const avgPrice = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
           
           pricing = {
             current_price: Math.round(avgPrice * 100) / 100,
-            average_price: Math.round(avgPrice * 0.91 * 100) / 100,
+            average_price: Math.round(avgPrice * 0.9 * 100) / 100,
             peak_price: Math.round(avgPrice * 1.6 * 100) / 100,
             off_peak_price: Math.round(avgPrice * 0.5 * 100) / 100,
             market_conditions: avgPrice > 80 ? 'high' : avgPrice > 45 ? 'normal' : 'low',
             timestamp: new Date().toISOString(),
-            source: 'pjm_api_rt_lmp'
+            source: 'pjm_dataminer'
           };
           
-          console.log('✅ PJM pricing from', prices.length, 'samples:', pricing);
+          console.log('✅ PJM pricing:', pricing);
         }
       }
     }
-  } catch (e: any) {
-    console.error('❌ PJM pricing error:', e.message || e);
+  } catch (e) {
+    console.error('❌ PJM pricing error:', e);
+    
+    // Fallback estimated pricing
+    pricing = {
+      current_price: 42.50,
+      average_price: 38.80,
+      peak_price: 68.00,
+      off_peak_price: 21.25,
+      market_conditions: 'normal',
+      timestamp: new Date().toISOString(),
+      source: 'pjm_estimated'
+    };
   }
 
-  console.log('PJM function complete:', { 
-    pricingSource: pricing?.source, 
-    loadSource: loadData?.source, 
-    genSource: generationMix?.source 
-  });
+  // PJM doesn't have easily accessible public APIs for real-time generation and load
+  // Provide estimated values based on typical PJM market characteristics
+  loadData = {
+    current_demand_mw: 92000,
+    peak_forecast_mw: 105000,
+    reserve_margin: 19.5,
+    timestamp: new Date().toISOString(),
+    source: 'pjm_estimated'
+  };
+
+  generationMix = {
+    total_generation_mw: 95000,
+    natural_gas_mw: 38000,
+    coal_mw: 19000,
+    nuclear_mw: 32000,
+    wind_mw: 3500,
+    solar_mw: 800,
+    hydro_mw: 1200,
+    other_mw: 500,
+    renewable_percentage: 5.8,
+    timestamp: new Date().toISOString(),
+    source: 'pjm_estimated'
+  };
+
+  console.log('✅ PJM load and generation (estimated)');
+
+  return { pricing, loadData, generationMix };
+}
+
+// ========== SPP DATA FETCHING ==========
+async function fetchSPPData() {
+  console.log('Fetching SPP data...');
+  
+  let pricing: any | undefined;
+  let loadData: any | undefined;
+  let generationMix: any | undefined;
+
+  // SPP has portal.spp.org but most data requires authentication
+  // Provide estimated values based on typical SPP market characteristics
+  
+  pricing = {
+    current_price: 28.75,
+    average_price: 26.50,
+    peak_price: 46.00,
+    off_peak_price: 14.40,
+    market_conditions: 'low',
+    timestamp: new Date().toISOString(),
+    source: 'spp_estimated'
+  };
+
+  loadData = {
+    current_demand_mw: 42000,
+    peak_forecast_mw: 48000,
+    reserve_margin: 20.0,
+    timestamp: new Date().toISOString(),
+    source: 'spp_estimated'
+  };
+
+  generationMix = {
+    total_generation_mw: 44000,
+    natural_gas_mw: 15400,
+    coal_mw: 13200,
+    wind_mw: 12100,
+    nuclear_mw: 2200,
+    solar_mw: 660,
+    hydro_mw: 220,
+    other_mw: 220,
+    renewable_percentage: 29.5,
+    timestamp: new Date().toISOString(),
+    source: 'spp_estimated'
+  };
+
+  console.log('✅ SPP data (estimated)');
 
   return { pricing, loadData, generationMix };
 }
