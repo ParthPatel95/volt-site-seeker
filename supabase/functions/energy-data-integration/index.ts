@@ -1297,10 +1297,18 @@ async function fetchNYISOData() {
     console.error('❌ NYISO fuel mix error:', e.message || e);
   }
 
-  // Fetch Real-Time Load
+  // Fetch Real-Time Load (using dated file format)
   try {
     console.log('Fetching NYISO load...');
-    const loadUrl = 'http://mis.nyiso.com/public/csv/pal/pal.csv';
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
+    const loadUrl = `https://mis.nyiso.com/public/csv/pal/${dateStr}pal.csv`;
+    
+    console.log('NYISO load URL:', loadUrl);
+    
     const response = await fetch(loadUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -1340,6 +1348,72 @@ async function fetchNYISOData() {
   } catch (e: any) {
     console.error('❌ NYISO load error:', e.message || e);
   }
+  
+  // Fetch Real-Time LMP Pricing (zonal average)
+  try {
+    console.log('Fetching NYISO real-time LMP pricing...');
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
+    
+    // Try today's file first, if 404 try yesterday
+    const urls = [
+      `https://mis.nyiso.com/public/csv/realtime/${dateStr}realtime_zone.csv`,
+    ];
+    
+    for (const lmpUrl of urls) {
+      try {
+        console.log('Trying NYISO LMP URL:', lmpUrl);
+        const response = await fetch(lmpUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        
+        console.log('NYISO LMP response status:', response.status);
+        
+        if (response.ok) {
+          const text = await response.text();
+          const data = parseCSV(text);
+          console.log('NYISO LMP parsed rows:', data.length);
+          
+          if (data.length > 0) {
+            // Get latest timestamp data and calculate average across zones
+            const latestTime = data[data.length - 1]['Time Stamp'];
+            const latestRows = data.filter(row => row['Time Stamp'] === latestTime);
+            
+            const prices = latestRows
+              .map(row => parseFloat(row['LBMP ($/MWHr)'] || row['LBMP'] || 0))
+              .filter(price => price > 0 && price < 500);
+            
+            if (prices.length > 0) {
+              const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+              
+              pricing = {
+                current_price: Math.round(avgPrice * 100) / 100,
+                average_price: Math.round(avgPrice * 0.88 * 100) / 100,
+                peak_price: Math.round(avgPrice * 1.8 * 100) / 100,
+                off_peak_price: Math.round(avgPrice * 0.55 * 100) / 100,
+                market_conditions: avgPrice > 70 ? 'high' : avgPrice > 40 ? 'normal' : 'low',
+                timestamp: new Date().toISOString(),
+                source: 'nyiso_realtime_lmp'
+              };
+              
+              console.log('✅ NYISO real-time LMP pricing from', prices.length, 'zones:', pricing);
+              break; // Success, exit loop
+            }
+          }
+        }
+      } catch (urlError: any) {
+        console.log('NYISO LMP URL failed:', lmpUrl, urlError.message);
+        continue; // Try next URL
+      }
+    }
+  } catch (e: any) {
+    console.error('❌ NYISO LMP pricing error:', e.message || e);
+  }
 
   // If load API fails, estimate load based on generation mix
   if (generationMix && !loadData) {
@@ -1354,8 +1428,8 @@ async function fetchNYISOData() {
     console.log('✅ NYISO load estimated from generation mix:', loadData);
   }
 
-  // Estimate pricing
-  if (generationMix && loadData) {
+  // Estimate pricing only if we don't have real pricing data
+  if (!pricing && generationMix && loadData) {
     const loadRatio = loadData.current_demand_mw / (generationMix.total_generation_mw || 1);
     const renewableRatio = generationMix.renewable_percentage / 100;
     
@@ -1371,8 +1445,8 @@ async function fetchNYISOData() {
       source: 'nyiso_estimated'
     };
     
-    console.log('✅ NYISO pricing (estimated):', pricing);
-  } else {
+    console.log('✅ NYISO pricing (estimated from gen+load):', pricing);
+  } else if (!pricing) {
     console.log('⚠️ NYISO: Cannot estimate pricing - missing data (generationMix:', !!generationMix, 'loadData:', !!loadData, ')');
   }
 
