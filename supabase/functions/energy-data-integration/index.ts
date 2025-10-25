@@ -1391,19 +1391,6 @@ async function fetchNYISOData() {
   } catch (e: any) {
     console.error('❌ NYISO load error:', e.message || e);
   }
-          };
-          
-          console.log('✅ NYISO load data:', loadData);
-        } else {
-          console.log('❌ NYISO load too low:', currentLoad);
-        }
-      }
-    } else {
-      console.error('❌ NYISO load HTTP error:', response.status, response.statusText);
-    }
-  } catch (e: any) {
-    console.error('❌ NYISO load error:', e.message || e);
-  }
   
   // Fetch Real-Time LMP Pricing (zonal average)
   try {
