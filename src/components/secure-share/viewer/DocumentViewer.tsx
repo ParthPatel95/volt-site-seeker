@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -164,29 +165,6 @@ export function DocumentViewer({
       `;
     }
     
-    // Annotation layer styles for clickable links
-    styles += `
-      .react-pdf__Page__annotations {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-      
-      .react-pdf__Page__annotations .linkAnnotation > a {
-        position: absolute;
-        cursor: pointer;
-        opacity: 0.2;
-        background-color: transparent;
-        border: none;
-      }
-      
-      .react-pdf__Page__annotations .linkAnnotation > a:hover {
-        opacity: 0.4;
-        background-color: rgba(255, 255, 0, 0.1);
-      }
-    `;
     
     style.innerHTML = styles;
     document.head.appendChild(style);
