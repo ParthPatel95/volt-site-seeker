@@ -399,7 +399,7 @@ export function DocumentViewer({
                 scale={zoom}
                 rotate={rotation}
                 renderTextLayer={false}
-                renderAnnotationLayer={false}
+                renderAnnotationLayer={true}
                 className="shadow-lg"
                   loading={
                     <div className="flex items-center justify-center p-8 bg-card">
