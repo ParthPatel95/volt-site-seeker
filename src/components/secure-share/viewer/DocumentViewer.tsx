@@ -7,9 +7,6 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 
-// Import react-pdf styles for annotations
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -138,30 +135,60 @@ export function DocumentViewer({
     };
   }, [canDownload, toast]);
 
-  // Watermark overlay
+  // Watermark overlay and annotation layer styles
   useEffect(() => {
-    if (!watermarkEnabled) return;
-
-    const watermarkText = recipientEmail 
-      ? `Wattbyte Inc. - ${recipientEmail}` 
-      : 'Wattbyte Inc. - CONFIDENTIAL';
     const style = document.createElement('style');
-    style.innerHTML = `
-      .watermark-overlay::before {
-        content: "${watermarkText}";
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: 4rem;
-        font-weight: bold;
-        color: rgba(0, 0, 0, 0.05);
-        pointer-events: none;
-        z-index: 9999;
-        white-space: nowrap;
-        user-select: none;
+    
+    let styles = '';
+    
+    // Watermark styles
+    if (watermarkEnabled) {
+      const watermarkText = recipientEmail 
+        ? `Wattbyte Inc. - ${recipientEmail}` 
+        : 'Wattbyte Inc. - CONFIDENTIAL';
+      styles += `
+        .watermark-overlay::before {
+          content: "${watermarkText}";
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          font-size: 4rem;
+          font-weight: bold;
+          color: rgba(0, 0, 0, 0.05);
+          pointer-events: none;
+          z-index: 9999;
+          white-space: nowrap;
+          user-select: none;
+        }
+      `;
+    }
+    
+    // Annotation layer styles for clickable links
+    styles += `
+      .react-pdf__Page__annotations {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      
+      .react-pdf__Page__annotations .linkAnnotation > a {
+        position: absolute;
+        cursor: pointer;
+        opacity: 0.2;
+        background-color: transparent;
+        border: none;
+      }
+      
+      .react-pdf__Page__annotations .linkAnnotation > a:hover {
+        opacity: 0.4;
+        background-color: rgba(255, 255, 0, 0.1);
       }
     `;
+    
+    style.innerHTML = styles;
     document.head.appendChild(style);
 
     return () => {
