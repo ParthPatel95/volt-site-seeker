@@ -164,50 +164,45 @@ export function DocumentViewer({
       `;
     }
     
-    // Annotation layer styles for clickable links
+    // Annotation layer styles for clickable links (based on official PDF.js styles)
     styles += `
       .react-pdf__Page {
         position: relative;
       }
       
-      .react-pdf__Page__annotations {
+      .react-pdf__Page__annotations.annotationLayer {
         position: absolute;
         top: 0;
         left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 2;
         pointer-events: none;
+        transform-origin: 0 0;
       }
       
-      .react-pdf__Page__annotations .annotationLayer {
+      .react-pdf__Page__annotations.annotationLayer section {
         position: absolute;
+        text-align: initial;
+        pointer-events: auto;
+        box-sizing: border-box;
+        transform-origin: 0 0;
+      }
+      
+      .react-pdf__Page__annotations.annotationLayer :is(.linkAnnotation, .buttonWidgetAnnotation.pushButton) > a {
+        position: absolute;
+        font-size: 1em;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        pointer-events: none;
+        cursor: pointer;
       }
       
-      .react-pdf__Page__annotations .annotationLayer section,
-      .react-pdf__Page__annotations .annotationLayer .linkAnnotation,
-      .react-pdf__Page__annotations .annotationLayer .linkAnnotation > a,
-      .react-pdf__Page__annotations .annotationLayer .buttonWidgetAnnotation.pushButton > a {
-        position: absolute;
-        pointer-events: auto !important;
-        cursor: pointer !important;
-      }
-      
-      .react-pdf__Page__annotations .annotationLayer .linkAnnotation > a {
-        opacity: 0;
-        background: transparent;
-        border: none;
-        display: block;
-      }
-      
-      .react-pdf__Page__annotations .annotationLayer .linkAnnotation > a:hover {
+      .react-pdf__Page__annotations.annotationLayer :is(.linkAnnotation, .buttonWidgetAnnotation.pushButton):not(.hasBorder) > a:hover {
         opacity: 0.2;
-        background: rgba(59, 130, 246, 0.2);
+        background-color: rgb(255 255 0);
+      }
+      
+      .react-pdf__Page__annotations.annotationLayer .linkAnnotation.hasBorder:hover {
+        background-color: rgb(255 255 0 / 0.2);
       }
     `;
     
