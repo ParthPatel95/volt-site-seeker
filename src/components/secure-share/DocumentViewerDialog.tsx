@@ -29,6 +29,39 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const [scale, setScale] = useState(1.0);
   const { toast } = useToast();
 
+  // Add annotation layer styles for clickable links
+  useEffect(() => {
+    const style = window.document.createElement('style');
+    style.innerHTML = `
+      .react-pdf__Page__annotations {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      
+      .react-pdf__Page__annotations .annotationLayer section,
+      .react-pdf__Page__annotations .linkAnnotation > a,
+      .react-pdf__Page__annotations .buttonWidgetAnnotation > a {
+        position: absolute;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+      
+      .react-pdf__Page__annotations .linkAnnotation > a:hover {
+        opacity: 0.2;
+        background: rgba(255, 255, 0, 0.2);
+      }
+    `;
+    window.document.head.appendChild(style);
+    
+    return () => {
+      window.document.head.removeChild(style);
+    };
+  }, []);
+
   useEffect(() => {
     if (open && document) {
       loadDocument();
@@ -219,7 +252,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                         pageNumber={pageNumber}
                         scale={scale}
                         renderTextLayer={false}
-                        renderAnnotationLayer={false}
+                        renderAnnotationLayer={true}
                         onContextMenu={(e) => !canDownload && e.preventDefault()}
                       />
                     </Document>
