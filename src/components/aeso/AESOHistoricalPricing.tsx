@@ -89,12 +89,16 @@ export function AESOHistoricalPricing() {
 
   // Fetch custom period data when time period changes
   useEffect(() => {
+    console.log(`[QA] Time period changed to: ${timePeriod} days`);
     fetchCustomPeriodData(parseInt(timePeriod));
   }, [timePeriod]);
 
   // Re-run analysis when time period data or uptime changes
   useEffect(() => {
     if (customAnalysisResult && (customPeriodData || monthlyData)) {
+      console.log('[QA] Auto-recalculating analysis due to data/uptime change');
+      console.log('[QA] customPeriodData available:', !!customPeriodData);
+      console.log('[QA] monthlyData available:', !!monthlyData);
       const result = calculateUptimeOptimization();
       setCustomAnalysisResult(result);
     }
@@ -121,11 +125,20 @@ export function AESOHistoricalPricing() {
 
   const handleUptimeAnalysis = () => {
     try {
+      console.log('[QA] ========================================');
+      console.log('[QA] Manual "Calculate Uptime Optimized" button clicked');
+      console.log('[QA] Current time period:', timePeriod, 'days');
+      console.log('[QA] Current uptime target:', uptimePercentage, '%');
+      console.log('[QA] customPeriodData available:', !!customPeriodData);
+      console.log('[QA] monthlyData available:', !!monthlyData);
+      console.log('[QA] yearlyData available:', !!yearlyData);
+      console.log('[QA] ========================================');
+      
       const result = calculateUptimeOptimization();
-      console.log('Uptime optimization result:', result);
+      console.log('[QA] Uptime optimization result:', result);
       setCustomAnalysisResult(result);
     } catch (error) {
-      console.error('Error in uptime analysis:', error);
+      console.error('[QA] Error in uptime analysis:', error);
       setCustomAnalysisResult(null);
     }
   };
@@ -500,8 +513,25 @@ export function AESOHistoricalPricing() {
   // Simplified Uptime Optimization Analysis using REAL AESO data
   const calculateUptimeOptimization = () => {
     const daysInPeriod = parseInt(timePeriod);
+    
     // Use appropriate data source based on selected time period
-    const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
+    // Priority: customPeriodData > yearlyData > monthlyData
+    let sourceData;
+    let dataSourceName;
+    
+    if (daysInPeriod === 30) {
+      sourceData = monthlyData;
+      dataSourceName = 'monthlyData (30 days)';
+    } else if (customPeriodData) {
+      sourceData = customPeriodData;
+      dataSourceName = `customPeriodData (${daysInPeriod} days)`;
+    } else if (daysInPeriod > 180) {
+      sourceData = yearlyData;
+      dataSourceName = 'yearlyData (365 days)';
+    } else {
+      sourceData = monthlyData;
+      dataSourceName = 'monthlyData (30 days - fallback)';
+    }
     
     if (!sourceData || !sourceData.rawHourlyData) {
       console.warn('No raw hourly data available for optimization');
@@ -509,8 +539,9 @@ export function AESOHistoricalPricing() {
     }
     
     console.log('=== UPTIME OPTIMIZATION ANALYSIS (REAL AESO DATA) ===');
-    console.log('Days in period:', daysInPeriod);
-    console.log('Using data source:', daysInPeriod > 180 ? 'yearlyData (12 months)' : 'monthlyData (30 days)');
+    console.log('Days in period requested:', daysInPeriod);
+    console.log('Using data source:', dataSourceName);
+    console.log('Raw hourly data points available:', sourceData.rawHourlyData.length);
     
     // Use REAL hourly data from AESO (no synthetic generation!)
     // Filter to the exact time period requested
@@ -2158,8 +2189,19 @@ export function AESOHistoricalPricing() {
                 {/* Time Period and Adder Configuration */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Analysis Period</label>
-                    <Select value={timePeriod} onValueChange={(value: '30' | '90' | '180' | '365') => setTimePeriod(value)}>
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      Analysis Period
+                      {loadingCustomPeriod && (
+                        <span className="text-xs text-muted-foreground animate-pulse">
+                          (Loading data...)
+                        </span>
+                      )}
+                    </label>
+                    <Select 
+                      value={timePeriod} 
+                      onValueChange={(value: '30' | '90' | '180' | '365') => setTimePeriod(value)}
+                      disabled={loadingCustomPeriod}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
