@@ -74,11 +74,13 @@ export function useAESOHistoricalPricing() {
   const [yearlyData, setYearlyData] = useState<HistoricalPricingData | null>(null);
   const [peakAnalysis, setPeakAnalysis] = useState<PeakAnalysisData | null>(null);
   const [historicalTenYearData, setHistoricalTenYearData] = useState<any | null>(null);
+  const [customPeriodData, setCustomPeriodData] = useState<HistoricalPricingData | null>(null);
   const [loadingDaily, setLoadingDaily] = useState(false);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [loadingYearly, setLoadingYearly] = useState(false);
   const [loadingPeakAnalysis, setLoadingPeakAnalysis] = useState(false);
   const [loadingHistoricalTenYear, setLoadingHistoricalTenYear] = useState(false);
+  const [loadingCustomPeriod, setLoadingCustomPeriod] = useState(false);
   const { toast } = useToast();
 
   const fetchDailyData = async () => {
@@ -258,21 +260,72 @@ export function useAESOHistoricalPricing() {
     }
   };
 
+  const fetchCustomPeriodData = async (daysInPeriod: number) => {
+    // For 30 days, use existing monthlyData
+    if (daysInPeriod === 30) {
+      setCustomPeriodData(null); // Will fallback to monthlyData
+      return;
+    }
+    
+    setLoadingCustomPeriod(true);
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - daysInPeriod);
+      
+      console.log(`Fetching custom period data for ${daysInPeriod} days...`);
+      const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+        body: {
+          timeframe: 'custom',
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0]
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      } else {
+        setCustomPeriodData(data);
+        console.log(`Custom period data loaded: ${data.chartData?.length || 0} data points`);
+        
+        toast({
+          title: "Custom period data loaded",
+          description: `${daysInPeriod} days of pricing data updated`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching custom period data:', error);
+      setCustomPeriodData(null);
+      toast({
+        title: "Error loading custom period data",
+        description: error.message || "Failed to fetch data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCustomPeriod(false);
+    }
+  };
+
   return {
     dailyData,
     monthlyData,
     yearlyData,
     peakAnalysis,
     historicalTenYearData,
+    customPeriodData,
     loadingDaily,
     loadingMonthly,
     loadingYearly,
     loadingPeakAnalysis,
     loadingHistoricalTenYear,
+    loadingCustomPeriod,
     fetchDailyData,
     fetchMonthlyData,
     fetchYearlyData,
     analyzePeakShutdown,
     fetchHistoricalTenYearData,
+    fetchCustomPeriodData,
   };
 }

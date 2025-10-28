@@ -51,16 +51,19 @@ export function AESOHistoricalPricing() {
     yearlyData, 
     peakAnalysis,
     historicalTenYearData,
+    customPeriodData,
     loadingDaily,
     loadingMonthly, 
     loadingYearly, 
     loadingPeakAnalysis,
     loadingHistoricalTenYear,
+    loadingCustomPeriod,
     fetchDailyData,
     fetchMonthlyData,
     fetchYearlyData,
     analyzePeakShutdown,
-    fetchHistoricalTenYearData
+    fetchHistoricalTenYearData,
+    fetchCustomPeriodData
   } = useAESOHistoricalPricing();
 
   const [uptimePercentage, setUptimePercentage] = useState('95');
@@ -74,6 +77,7 @@ export function AESOHistoricalPricing() {
     fetchMonthlyData();
     fetchYearlyData();
     fetchExchangeRate();
+    fetchCustomPeriodData(parseInt(timePeriod)); // Initial load for current time period
   }, []);
 
   // Re-fetch 8-year data when uptime percentage changes
@@ -83,13 +87,18 @@ export function AESOHistoricalPricing() {
     }
   }, [uptimePercentage]);
 
-  // Re-run analysis when time period changes
+  // Fetch custom period data when time period changes
   useEffect(() => {
-    if (customAnalysisResult && monthlyData && yearlyData) {
+    fetchCustomPeriodData(parseInt(timePeriod));
+  }, [timePeriod]);
+
+  // Re-run analysis when time period data or uptime changes
+  useEffect(() => {
+    if (customAnalysisResult && (customPeriodData || monthlyData)) {
       const result = calculateUptimeOptimization();
       setCustomAnalysisResult(result);
     }
-  }, [timePeriod, monthlyData, yearlyData]);
+  }, [customPeriodData, uptimePercentage]);
 
   const fetchExchangeRate = async () => {
     try {
@@ -125,7 +134,14 @@ export function AESOHistoricalPricing() {
   const analyzeUptimeOptimized = (targetUptime: number) => {
     try {
       const daysInPeriod = parseInt(timePeriod);
-      const sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
+      
+      // Use custom period data if available, otherwise fall back to monthly/yearly
+      let sourceData;
+      if (customPeriodData && daysInPeriod !== 30) {
+        sourceData = customPeriodData;
+      } else {
+        sourceData = daysInPeriod > 180 ? yearlyData : monthlyData;
+      }
       
       if (!sourceData || !sourceData.chartData || sourceData.chartData.length === 0) {
         console.warn('No data available for uptime analysis');
@@ -2206,10 +2222,10 @@ export function AESOHistoricalPricing() {
                     
                     <Button 
                       onClick={handleUptimeAnalysis}
-                      disabled={loadingPeakAnalysis || !monthlyData}
+                      disabled={loadingPeakAnalysis || loadingCustomPeriod || (!monthlyData && !customPeriodData)}
                       className="w-full"
                     >
-                      {loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Uptime Optimized'}
+                      {loadingCustomPeriod ? 'Loading data...' : loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Uptime Optimized'}
                     </Button>
                   </div>
                 </div>
