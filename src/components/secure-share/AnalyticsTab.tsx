@@ -8,6 +8,11 @@ import { ViewerActivityTable } from './ViewerActivityTable';
 import { AnalyticsDateRangePicker } from './AnalyticsDateRangePicker';
 import { ExportControls } from './ExportControls';
 import { EnhancedKPICard } from './EnhancedKPICard';
+import { AdvancedEngagementMetrics } from './AdvancedEngagementMetrics';
+import { DocumentLeaderboard } from './DocumentLeaderboard';
+import { GeographicDeviceAnalytics } from './GeographicDeviceAnalytics';
+import { PredictiveInsights } from './PredictiveInsights';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays } from 'date-fns';
@@ -178,12 +183,39 @@ export function AnalyticsTab() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <EngagementChart />
-            <TopDocumentsChart />
-          </div>
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="engagement">Engagement</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="audience">Audience</TabsTrigger>
+              <TabsTrigger value="insights">Insights</TabsTrigger>
+            </TabsList>
 
-          <ViewerActivityTable activities={analytics.recentActivity} />
+            <TabsContent value="overview" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <EngagementChart />
+                <TopDocumentsChart />
+              </div>
+              <ViewerActivityTable activities={analytics.recentActivity} />
+            </TabsContent>
+
+            <TabsContent value="engagement" className="space-y-4">
+              <AdvancedEngagementMetrics dateRange={dateRange} />
+            </TabsContent>
+
+            <TabsContent value="documents" className="space-y-4">
+              <DocumentLeaderboard dateRange={dateRange} />
+            </TabsContent>
+
+            <TabsContent value="audience" className="space-y-4">
+              <GeographicDeviceAnalytics dateRange={dateRange} />
+            </TabsContent>
+
+            <TabsContent value="insights" className="space-y-4">
+              <PredictiveInsights dateRange={dateRange} />
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>
