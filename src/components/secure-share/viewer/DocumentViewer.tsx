@@ -420,42 +420,53 @@ export function DocumentViewer({
             )}
 
             {isPdf ? (
-              <Document
-                file={documentUrl}
-                onLoadSuccess={onDocumentLoadSuccess}
-                loading={
-                  <div className="flex items-center justify-center p-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                }
-                error={
-                  <div className="text-center p-8">
-                    <p className="text-sm text-destructive mb-4">
-                      Failed to load PDF document
-                    </p>
-                    {canDownload && (
-                      <Button onClick={handleDownload} size="sm">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download Instead
-                      </Button>
-                    )}
-                  </div>
-                }
+              <div 
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  const link = target.closest('a[href]') as HTMLAnchorElement;
+                  if (link && link.href) {
+                    e.preventDefault();
+                    window.open(link.href, '_blank', 'noopener,noreferrer');
+                  }
+                }}
               >
-              <Page
-                pageNumber={pageNumber}
-                scale={zoom}
-                rotate={rotation}
-                renderTextLayer={false}
-                renderAnnotationLayer={true}
-                className="shadow-lg"
+                <Document
+                  file={documentUrl}
+                  onLoadSuccess={onDocumentLoadSuccess}
                   loading={
-                    <div className="flex items-center justify-center p-8 bg-card">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                   }
-                />
-              </Document>
+                  error={
+                    <div className="text-center p-8">
+                      <p className="text-sm text-destructive mb-4">
+                        Failed to load PDF document
+                      </p>
+                      {canDownload && (
+                        <Button onClick={handleDownload} size="sm">
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Instead
+                        </Button>
+                      )}
+                    </div>
+                  }
+                >
+                <Page
+                  pageNumber={pageNumber}
+                  scale={zoom}
+                  rotate={rotation}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={true}
+                  className="shadow-lg"
+                    loading={
+                      <div className="flex items-center justify-center p-8 bg-card">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      </div>
+                    }
+                  />
+                </Document>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full p-6 md:p-12">
                 <div className="text-center">

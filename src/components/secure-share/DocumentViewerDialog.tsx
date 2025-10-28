@@ -247,7 +247,17 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                       </Button>
                     </div>
                   </div>
-                  <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/10">
+                  <div 
+                    className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/10"
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      const link = target.closest('a[href]') as HTMLAnchorElement;
+                      if (link && link.href) {
+                        e.preventDefault();
+                        window.open(link.href, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                  >
                     <Document
                       file={documentUrl}
                       onLoadSuccess={onDocumentLoadSuccess}
