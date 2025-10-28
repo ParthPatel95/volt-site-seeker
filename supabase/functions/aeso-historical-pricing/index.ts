@@ -282,22 +282,46 @@ serve(async (req) => {
       throw new Error('No historical data available from AESO API');
     }
 
-    // For custom timeframe, return raw data directly without processing
-    // Transform to match expected format with ts, price, generation, ail
+    // For custom timeframe, process the data to include all necessary fields
     if (timeframe === 'custom') {
-      console.log(`Returning ${historicalData.length} raw data points for custom date range`);
-      const transformedData = historicalData.map(d => ({
-        ts: d.datetime,
-        price: d.price,
-        generation: (d as any).generation || 0, // Generation data if available
-        ail: (d as any).ail || 0 // AIL data if available
-      }));
+      console.log(`Processing ${historicalData.length} raw data points for custom date range`);
+      
+      // Transform to expected frontend format
+      const rawHourlyData = historicalData.map(d => {
+        const dateObj = new Date(d.datetime);
+        return {
+          datetime: d.datetime,
+          price: d.price,
+          date: dateObj.toISOString().split('T')[0],
+          hour: dateObj.getUTCHours(),
+          generation: (d as any).generation || 0,
+          ail: (d as any).ail || 0
+        };
+      });
       
       // Count how many records have AIL data
-      const ailCount = transformedData.filter(d => d.ail > 0).length;
-      console.log(`AIL data available for ${ailCount} out of ${transformedData.length} records`);
+      const ailCount = rawHourlyData.filter(d => d.ail > 0).length;
+      console.log(`AIL data available for ${ailCount} out of ${rawHourlyData.length} records`);
       
-      return new Response(JSON.stringify(transformedData), {
+      // Calculate basic statistics for the custom period
+      const prices = rawHourlyData.map(d => d.price);
+      const average = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+      const peak = Math.max(...prices);
+      const low = Math.min(...prices);
+      
+      // Process data for chart display
+      const processedData = await processHistoricalData(historicalData, 'monthly');
+      
+      return new Response(JSON.stringify({
+        ...processedData,
+        rawHourlyData,
+        statistics: {
+          ...processedData.statistics,
+          average,
+          peak,
+          low
+        }
+      }), {
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
