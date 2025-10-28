@@ -288,11 +288,18 @@ export function useAESOHistoricalPricing() {
         throw new Error(data.error);
       } else {
         setCustomPeriodData(data);
-        console.log(`Custom period data loaded: ${data.chartData?.length || 0} data points`);
+        const dataPoints = data.rawHourlyData?.length || data.chartData?.length || 0;
+        console.log(`Custom period data loaded: ${dataPoints} data points`);
+        console.log('Data structure:', {
+          hasRawHourlyData: !!data.rawHourlyData,
+          hasChartData: !!data.chartData,
+          rawHourlyDataLength: data.rawHourlyData?.length,
+          chartDataLength: data.chartData?.length
+        });
         
         toast({
           title: "Custom period data loaded",
-          description: `${daysInPeriod} days of pricing data updated`,
+          description: `${daysInPeriod} days of pricing data updated (${dataPoints} hours)`,
         });
       }
     } catch (error: any) {

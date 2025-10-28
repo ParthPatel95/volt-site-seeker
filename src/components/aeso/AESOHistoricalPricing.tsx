@@ -125,14 +125,17 @@ export function AESOHistoricalPricing() {
 
   const handleUptimeAnalysis = () => {
     try {
-      console.log('[QA] ========================================');
-      console.log('[QA] Manual "Calculate Uptime Optimized" button clicked');
-      console.log('[QA] Current time period:', timePeriod, 'days');
-      console.log('[QA] Current uptime target:', uptimePercentage, '%');
-      console.log('[QA] customPeriodData available:', !!customPeriodData);
-      console.log('[QA] monthlyData available:', !!monthlyData);
-      console.log('[QA] yearlyData available:', !!yearlyData);
-      console.log('[QA] ========================================');
+    console.log('[QA] ========================================');
+    console.log('[QA] Manual "Calculate Uptime Optimized" button clicked');
+    console.log('[QA] Current time period:', timePeriod, 'days');
+    console.log('[QA] Current uptime target:', uptimePercentage, '%');
+    console.log('[QA] customPeriodData available:', !!customPeriodData);
+    console.log('[QA] customPeriodData.rawHourlyData:', customPeriodData?.rawHourlyData?.length || 0);
+    console.log('[QA] monthlyData available:', !!monthlyData);
+    console.log('[QA] monthlyData.rawHourlyData:', monthlyData?.rawHourlyData?.length || 0);
+    console.log('[QA] yearlyData available:', !!yearlyData);
+    console.log('[QA] yearlyData.rawHourlyData:', yearlyData?.rawHourlyData?.length || 0);
+    console.log('[QA] ========================================');
       
       const result = calculateUptimeOptimization();
       console.log('[QA] Uptime optimization result:', result);
