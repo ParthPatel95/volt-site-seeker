@@ -166,7 +166,21 @@ export function DocumentViewer({
     
     // Annotation layer styles for clickable links
     styles += `
+      .react-pdf__Page {
+        position: relative;
+      }
+      
       .react-pdf__Page__annotations {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+      
+      .react-pdf__Page__annotations .annotationLayer {
         position: absolute;
         top: 0;
         left: 0;
@@ -176,16 +190,24 @@ export function DocumentViewer({
       }
       
       .react-pdf__Page__annotations .annotationLayer section,
-      .react-pdf__Page__annotations .linkAnnotation > a,
-      .react-pdf__Page__annotations .buttonWidgetAnnotation > a {
+      .react-pdf__Page__annotations .annotationLayer .linkAnnotation,
+      .react-pdf__Page__annotations .annotationLayer .linkAnnotation > a,
+      .react-pdf__Page__annotations .annotationLayer .buttonWidgetAnnotation.pushButton > a {
         position: absolute;
-        pointer-events: auto;
-        cursor: pointer;
+        pointer-events: auto !important;
+        cursor: pointer !important;
       }
       
-      .react-pdf__Page__annotations .linkAnnotation > a:hover {
+      .react-pdf__Page__annotations .annotationLayer .linkAnnotation > a {
+        opacity: 0;
+        background: transparent;
+        border: none;
+        display: block;
+      }
+      
+      .react-pdf__Page__annotations .annotationLayer .linkAnnotation > a:hover {
         opacity: 0.2;
-        background: rgba(255, 255, 0, 0.2);
+        background: rgba(59, 130, 246, 0.2);
       }
     `;
     
