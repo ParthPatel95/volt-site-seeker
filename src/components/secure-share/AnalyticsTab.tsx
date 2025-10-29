@@ -103,8 +103,8 @@ export function AnalyticsTab() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center py-12 sm:py-16">
+        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-3 border-watt-primary border-t-transparent shadow-watt-glow"></div>
       </div>
     );
   }
@@ -112,11 +112,14 @@ export function AnalyticsTab() {
   const hasData = analytics && analytics.totalViews > 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 lg:px-0">
+      {/* Header with controls - mobile optimized */}
+      <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
-          <h2 className="text-2xl font-bold">Analytics & Engagement</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent">
+            Analytics & Engagement
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Track document views, engagement, and viewer activity
           </p>
         </div>
@@ -133,22 +136,25 @@ export function AnalyticsTab() {
       )}
 
       {!hasData ? (
-        <Card className="p-12 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="p-4 rounded-full bg-muted">
-              <BarChart3 className="w-12 h-12 text-muted-foreground" />
+        <Card className="border-watt-primary/20 bg-gradient-to-br from-card to-watt-primary/5 shadow-lg">
+          <CardContent className="p-8 sm:p-12 text-center">
+            <div className="flex flex-col items-center gap-4 animate-fade-in">
+              <div className="p-4 sm:p-6 rounded-full bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 shadow-watt-glow">
+                <BarChart3 className="w-10 h-10 sm:w-12 sm:h-12 text-watt-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">No analytics data yet</h3>
+                <p className="text-sm sm:text-base text-muted-foreground max-w-md">
+                  Analytics will appear here once you share documents and viewers start engaging with them
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">No analytics data yet</h3>
-              <p className="text-muted-foreground max-w-md">
-                Analytics will appear here once you share documents and viewers start engaging with them
-              </p>
-            </div>
-          </div>
+          </CardContent>
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Key Metrics - Mobile optimized grid */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <EnhancedKPICard
               title="Total Views"
               value={analytics.totalViews}
@@ -183,38 +189,64 @@ export function AnalyticsTab() {
             />
           </div>
 
+          {/* Tabs for different analytics views - Mobile optimized */}
           <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="engagement">Engagement</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="audience">Audience</TabsTrigger>
-              <TabsTrigger value="insights">Insights</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 h-auto p-1 bg-gradient-to-r from-watt-primary/10 to-watt-secondary/10 backdrop-blur-sm">
+              <TabsTrigger 
+                value="overview" 
+                className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white transition-all"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="engagement" 
+                className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white transition-all"
+              >
+                Engagement
+              </TabsTrigger>
+              <TabsTrigger 
+                value="documents" 
+                className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white transition-all"
+              >
+                Documents
+              </TabsTrigger>
+              <TabsTrigger 
+                value="audience" 
+                className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white transition-all"
+              >
+                Audience
+              </TabsTrigger>
+              <TabsTrigger 
+                value="insights" 
+                className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white transition-all col-span-2 xs:col-span-1"
+              >
+                Insights
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <TabsContent value="overview" className="space-y-4 animate-fade-in">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 <EngagementChart />
                 <TopDocumentsChart />
               </div>
               <ViewerActivityTable activities={analytics.recentActivity} />
             </TabsContent>
 
-            <TabsContent value="engagement" className="space-y-4">
-              <AdvancedEngagementMetrics dateRange={dateRange} />
-            </TabsContent>
+        <TabsContent value="engagement" className="space-y-4 animate-fade-in">
+          <AdvancedEngagementMetrics dateRange={dateRange} />
+        </TabsContent>
 
-            <TabsContent value="documents" className="space-y-4">
-              <DocumentLeaderboard dateRange={dateRange} />
-            </TabsContent>
+        <TabsContent value="documents" className="space-y-4 animate-fade-in">
+          <DocumentLeaderboard dateRange={dateRange} />
+        </TabsContent>
 
-            <TabsContent value="audience" className="space-y-4">
-              <GeographicDeviceAnalytics dateRange={dateRange} />
-            </TabsContent>
+        <TabsContent value="audience" className="space-y-4 animate-fade-in">
+          <GeographicDeviceAnalytics dateRange={dateRange} />
+        </TabsContent>
 
-            <TabsContent value="insights" className="space-y-4">
-              <PredictiveInsights dateRange={dateRange} />
-            </TabsContent>
+        <TabsContent value="insights" className="space-y-4 animate-fade-in">
+          <PredictiveInsights dateRange={dateRange} />
+        </TabsContent>
           </Tabs>
         </>
       )}

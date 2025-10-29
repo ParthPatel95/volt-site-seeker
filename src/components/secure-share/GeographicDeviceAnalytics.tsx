@@ -160,17 +160,17 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card>
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+      <Card className="border-watt-primary/20 hover:border-watt-primary/40 transition-all shadow-lg hover:shadow-watt-glow">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Monitor className="h-5 w-5 text-primary" />
-            <CardTitle>Device Distribution</CardTitle>
+            <Monitor className="h-5 w-5 text-watt-primary" />
+            <CardTitle className="text-base sm:text-lg">Device Distribution</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {data?.deviceData && data.deviceData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={data.deviceData}
@@ -178,7 +178,7 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
                   cy="50%"
                   labelLine={false}
                   label={(entry: any) => `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  outerRadius={window.innerWidth < 640 ? 60 : 80}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -190,78 +190,78 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[250px] sm:h-[300px] flex items-center justify-center text-muted-foreground text-sm">
               No device data available
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-watt-secondary/20 hover:border-watt-secondary/40 transition-all shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5 text-primary" />
-            <CardTitle>Device Engagement Comparison</CardTitle>
+            <Smartphone className="h-5 w-5 text-watt-secondary" />
+            <CardTitle className="text-base sm:text-lg">Device Engagement</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {data?.deviceEngagementData && data.deviceEngagementData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <BarChart data={data.deviceEngagementData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="device" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="device" tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="engagement" fill="hsl(var(--primary))" name="Engagement Score" />
-                <Bar yAxisId="right" dataKey="timeMinutes" fill="hsl(var(--secondary))" name="Avg. Time (min)" />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar yAxisId="left" dataKey="engagement" fill="hsl(var(--watt-primary))" name="Engagement" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="right" dataKey="timeMinutes" fill="hsl(var(--watt-secondary))" name="Time (min)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[250px] sm:h-[300px] flex items-center justify-center text-muted-foreground text-sm">
               No engagement data available
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-watt-accent/20 hover:border-watt-accent/40 transition-all shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-primary" />
-            <CardTitle>Top Locations</CardTitle>
+            <Globe className="h-5 w-5 text-watt-accent" />
+            <CardTitle className="text-base sm:text-lg">Top Locations</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {data?.locationData && data.locationData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <BarChart data={data.locationData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" fill="hsl(var(--watt-accent))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[250px] sm:h-[300px] flex items-center justify-center text-muted-foreground text-sm">
               No location data available
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-watt-success/20 hover:border-watt-success/40 transition-all shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Chrome className="h-5 w-5 text-primary" />
-            <CardTitle>Browser Distribution</CardTitle>
+            <Chrome className="h-5 w-5 text-watt-success" />
+            <CardTitle className="text-base sm:text-lg">Browser Distribution</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {data?.browserData && data.browserData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={data.browserData}
@@ -269,7 +269,7 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
                   cy="50%"
                   labelLine={false}
                   label={(entry: any) => `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  outerRadius={window.innerWidth < 640 ? 60 : 80}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -281,7 +281,7 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[250px] sm:h-[300px] flex items-center justify-center text-muted-foreground text-sm">
               No browser data available
             </div>
           )}
