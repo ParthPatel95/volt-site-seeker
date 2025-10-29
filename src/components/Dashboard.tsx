@@ -156,14 +156,20 @@ export const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {/* ERCOT Price Card */}
-          <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-primary/5">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">ERCOT Price</p>
+        {/* USA Markets */}
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Globe className="w-5 h-5 text-watt-primary" />
+              <h2 className="text-xl font-bold text-foreground">United States Markets</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {/* ERCOT Price Card */}
+              <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-primary/5">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">ERCOT (Texas)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {ercotPricing ? `$${ercotPricing.current_price.toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
@@ -192,49 +198,12 @@ export const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* AESO Price Card */}
-          <Card className="border-l-4 border-watt-secondary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-secondary/5">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">AESO Price</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                    {aesoPricing ? `$${convertToUSD(aesoPricing.current_price).toFixed(2)}` : (
-                      <span className="text-muted-foreground">Loading...</span>
-                    )}
-                  </p>
-                  {aesoPricing && (
-                    <p className="text-sm text-muted-foreground">CA${aesoPricing.current_price.toFixed(2)}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">per MWh</p>
-                   {marketMetrics.aesoTrend && (
-                     <div className="flex items-center gap-1 mt-2">
-                       {(() => {
-                         const trend = getMarketTrendWithIcon(marketMetrics.aesoTrend);
-                         if (!trend) return null;
-                         const Icon = trend.icon;
-                         return (
-                           <>
-                             <Icon className={`w-3 h-3 ${trend.color}`} />
-                             <span className={`text-xs font-medium ${trend.color}`}>
-                               {trend.percentage}% vs avg
-                             </span>
-                           </>
-                         );
-                       })()}
-                     </div>
-                   )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* MISO Price Card */}
           <Card className="border-l-4 border-watt-accent hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-accent/5">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">MISO Price</p>
+                  <p className="text-sm font-medium text-muted-foreground">MISO (Midwest)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {misoPricing ? `$${misoPricing.current_price.toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
@@ -268,7 +237,7 @@ export const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">CAISO Price</p>
+                  <p className="text-sm font-medium text-muted-foreground">CAISO (California)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {caisoPricing ? `$${caisoPricing.current_price.toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
@@ -302,7 +271,7 @@ export const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">NYISO Price</p>
+                  <p className="text-sm font-medium text-muted-foreground">NYISO (New York)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {nyisoPricing ? `$${nyisoPricing.current_price.toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
@@ -336,7 +305,7 @@ export const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">PJM Price</p>
+                  <p className="text-sm font-medium text-muted-foreground">PJM (Mid-Atlantic)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {pjmPricing ? `$${pjmPricing.current_price.toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
@@ -370,7 +339,7 @@ export const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">SPP Price</p>
+                  <p className="text-sm font-medium text-muted-foreground">SPP (Southwest)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {sppPricing ? `$${sppPricing.current_price.toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
@@ -398,6 +367,53 @@ export const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+            </div>
+          </div>
+
+          {/* Canada Markets */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Globe className="w-5 h-5 text-watt-secondary" />
+              <h2 className="text-xl font-bold text-foreground">Canadian Markets</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {/* AESO Price Card */}
+              <Card className="border-l-4 border-watt-secondary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-secondary/5">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">AESO (Alberta)</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                        {aesoPricing ? `$${convertToUSD(aesoPricing.current_price).toFixed(2)}` : (
+                          <span className="text-muted-foreground">Loading...</span>
+                        )}
+                      </p>
+                      {aesoPricing && (
+                        <p className="text-sm text-muted-foreground">CA${aesoPricing.current_price.toFixed(2)}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">per MWh</p>
+                       {marketMetrics.aesoTrend && (
+                         <div className="flex items-center gap-1 mt-2">
+                           {(() => {
+                             const trend = getMarketTrendWithIcon(marketMetrics.aesoTrend);
+                             if (!trend) return null;
+                             const Icon = trend.icon;
+                             return (
+                               <>
+                                 <Icon className={`w-3 h-3 ${trend.color}`} />
+                                 <span className={`text-xs font-medium ${trend.color}`}>
+                                   {trend.percentage}% vs avg
+                                 </span>
+                               </>
+                             );
+                           })()}
+                         </div>
+                       )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
           {/* IESO Price Card */}
           <Card className="border-l-4 border-indigo-500 hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-indigo-500/5">
@@ -432,6 +448,8 @@ export const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+            </div>
+          </div>
         </div>
 
         {/* Live Market Data Grid */}
