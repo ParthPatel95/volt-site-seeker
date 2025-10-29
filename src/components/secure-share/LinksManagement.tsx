@@ -169,10 +169,14 @@ export function LinksManagement() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4">
+      <div className="grid gap-4 sm:gap-6">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="p-4 animate-pulse">
-            <div className="h-24 bg-muted rounded" />
+          <Card key={i} className="p-6 animate-pulse border-border/50">
+            <div className="space-y-3">
+              <div className="h-6 bg-muted rounded w-1/3" />
+              <div className="h-4 bg-muted rounded w-2/3" />
+              <div className="h-20 bg-muted rounded" />
+            </div>
           </Card>
         ))}
       </div>
@@ -181,15 +185,18 @@ export function LinksManagement() {
 
   if (!links || links.length === 0) {
     return (
-      <Card className="p-12 text-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="p-4 rounded-full bg-muted">
-            <LinkIcon className="w-12 h-12 text-muted-foreground" />
+      <Card className="p-12 text-center border-dashed border-2 bg-gradient-to-br from-card to-muted/20">
+        <div className="flex flex-col items-center gap-4 max-w-md mx-auto">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-watt-primary to-watt-secondary rounded-full blur-xl opacity-20" />
+            <div className="relative p-5 rounded-full bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 border border-watt-primary/20">
+              <LinkIcon className="w-10 h-10 text-watt-primary" />
+            </div>
           </div>
           <div>
-            <h3 className="text-lg font-semibold mb-2">No secure links yet</h3>
+            <h3 className="text-xl font-semibold mb-2">No secure links yet</h3>
             <p className="text-muted-foreground">
-              Create secure links from your documents to start sharing
+              Create your first secure link to start sharing documents safely with tracking and analytics
             </p>
           </div>
         </div>
@@ -198,125 +205,152 @@ export function LinksManagement() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid gap-4 sm:gap-6">
         {links.map((link: any) => (
-          <Card key={link.id} className="p-4 hover:shadow-lg transition-shadow">
-            <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold">
-                      {link.link_name || link.document_bundles?.name || link.secure_documents?.file_name || 'Unknown Document'}
-                    </h3>
-                    {getStatusBadge(link)}
+          <Card key={link.id} className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:border-watt-primary/20 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-watt-primary/0 to-watt-secondary/0 group-hover:from-watt-primary/5 group-hover:to-watt-secondary/5 transition-all duration-300" />
+            
+            <div className="relative p-5 sm:p-6">
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="font-semibold text-base sm:text-lg truncate">
+                        {link.link_name || link.document_bundles?.name || link.secure_documents?.file_name || 'Unknown Document'}
+                      </h3>
+                      {getStatusBadge(link)}
+                    </div>
+                    {link.recipient_email && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{link.recipient_name || link.recipient_email}</span>
+                      </p>
+                    )}
                   </div>
-                  {link.recipient_email && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Mail className="w-3 h-3" />
-                      {link.recipient_name || link.recipient_email}
-                    </p>
+                </div>
+
+                {/* Security Features */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
+                    {getAccessIcon(link.access_level)}
+                    <span className="capitalize">{link.access_level.replace('_', ' ')}</span>
+                  </Badge>
+                  
+                  {link.password_hash && (
+                    <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
+                      <Shield className="w-3 h-3" />
+                      Password
+                    </Badge>
+                  )}
+
+                  {link.require_otp && (
+                    <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
+                      <AlertCircle className="w-3 h-3" />
+                      OTP
+                    </Badge>
+                  )}
+
+                  {link.watermark_enabled && (
+                    <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
+                      <Shield className="w-3 h-3" />
+                      Watermark
+                    </Badge>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  {getAccessIcon(link.access_level)}
-                  <span className="capitalize">{link.access_level.replace('_', ' ')}</span>
+                {/* Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-border/50">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-md bg-watt-primary/10">
+                      <Eye className="w-3.5 h-3.5 text-watt-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Views</p>
+                      <p className="font-semibold text-sm">
+                        {link.current_views || 0}
+                        {link.max_views ? `/${link.max_views}` : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-md bg-muted">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Created</p>
+                      <p className="font-semibold text-xs">{format(new Date(link.created_at), 'MMM d')}</p>
+                    </div>
+                  </div>
+
+                  {link.expires_at && (
+                    <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
+                      <div className="p-1.5 rounded-md bg-muted">
+                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Expires</p>
+                        <p className="font-semibold text-xs">{format(new Date(link.expires_at), 'MMM d')}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                
-                {link.password_hash && (
-                  <div className="flex items-center gap-1">
-                    <Shield className="w-3 h-3" />
-                    <span>Password</span>
-                  </div>
-                )}
 
-                {link.require_otp && (
-                  <div className="flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    <span>OTP</span>
-                  </div>
-                )}
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyLink(link.link_token)}
+                    disabled={link.status === 'revoked'}
+                    className="gap-1.5 hover:bg-watt-primary/5 hover:border-watt-primary/30 hover:text-watt-primary transition-colors disabled:opacity-50"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Copy
+                  </Button>
+                  
+                  {link.status === 'active' && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setLinkToEdit(link);
+                          setEditDialogOpen(true);
+                        }}
+                        className="gap-1.5 hover:bg-watt-secondary/5 hover:border-watt-secondary/30 hover:text-watt-secondary transition-colors"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        Edit
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRevokeLink(link.id)}
+                        className="gap-1.5 hover:bg-orange-500/5 hover:border-orange-500/30 hover:text-orange-600 transition-colors"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        Revoke
+                      </Button>
+                    </>
+                  )}
 
-                {link.watermark_enabled && (
-                  <div className="flex items-center gap-1">
-                    <Shield className="w-3 h-3" />
-                    <span>Watermark</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Eye className="w-3 h-3" />
-                  <span>
-                    {link.current_views || 0}
-                    {link.max_views ? ` / ${link.max_views}` : ''} views
-                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setLinkToDelete(link.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </Button>
                 </div>
-
-                {link.expires_at && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>Expires {format(new Date(link.expires_at), 'MMM d, yyyy')}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  <span>Created {format(new Date(link.created_at), 'MMM d, yyyy')}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCopyLink(link.link_token)}
-                  disabled={link.status === 'revoked'}
-                >
-                  <Copy className="w-3 h-3 mr-1" />
-                  Copy Link
-                </Button>
-                
-                {link.status === 'active' && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setLinkToEdit(link);
-                        setEditDialogOpen(true);
-                      }}
-                    >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Edit
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRevokeLink(link.id)}
-                    >
-                      <XCircle className="w-3 h-3 mr-1" />
-                      Revoke
-                    </Button>
-                  </>
-                )}
-
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    setLinkToDelete(link.id);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  Delete
-                </Button>
               </div>
             </div>
           </Card>

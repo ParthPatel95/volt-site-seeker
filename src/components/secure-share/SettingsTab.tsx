@@ -35,19 +35,21 @@ export function SettingsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Settings</h2>
-        <p className="text-muted-foreground">
-          Configure your secure share preferences and defaults
+        <h2 className="text-xl sm:text-2xl font-bold">Settings</h2>
+        <p className="text-sm text-muted-foreground">
+          Configure preferences and security defaults
         </p>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6 max-w-4xl">
         {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-primary" />
-              <CardTitle>Notifications</CardTitle>
+        <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 border border-watt-primary/20">
+                <Bell className="w-4 h-4 text-watt-primary" />
+              </div>
+              <CardTitle className="text-lg">Notifications</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -97,11 +99,13 @@ export function SettingsTab() {
         </Card>
 
         {/* Security Defaults */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary" />
-              <CardTitle>Security Defaults</CardTitle>
+        <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 border border-watt-primary/20">
+                <Shield className="w-4 h-4 text-watt-primary" />
+              </div>
+              <CardTitle className="text-lg">Security Defaults</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -152,11 +156,13 @@ export function SettingsTab() {
         </Card>
 
         {/* Branding */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Palette className="w-5 h-5 text-primary" />
-              <CardTitle>Branding</CardTitle>
+        <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 border border-watt-primary/20">
+                <Palette className="w-4 h-4 text-watt-primary" />
+              </div>
+              <CardTitle className="text-lg">Branding</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -187,27 +193,45 @@ export function SettingsTab() {
         </Card>
 
         {/* Email Settings */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-primary" />
-              <CardTitle>Email Settings</CardTitle>
+        <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-watt-primary/10 to-watt-secondary/10 border border-watt-primary/20">
+                <Mail className="w-4 h-4 text-watt-primary" />
+              </div>
+              <CardTitle className="text-lg">Email Settings</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold mb-2">Coming Soon</h4>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• Custom email templates</li>
-                <li>• Automated follow-ups</li>
-                <li>• Weekly activity digests</li>
+            <div className="p-4 bg-gradient-to-br from-muted/50 to-muted rounded-lg border border-border/50">
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <span className="text-watt-primary">✨</span>
+                Coming Soon
+              </h4>
+              <ul className="text-sm space-y-1.5 text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-watt-primary" />
+                  Custom email templates
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-watt-primary" />
+                  Automated follow-ups
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-watt-primary" />
+                  Weekly activity digests
+                </li>
               </ul>
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
-          <Button onClick={handleSave} size="lg">
+        <div className="flex justify-end pt-2">
+          <Button 
+            onClick={handleSave} 
+            size="lg"
+            className="bg-gradient-to-r from-watt-primary to-watt-secondary hover:opacity-90 transition-opacity"
+          >
             Save Settings
           </Button>
         </div>

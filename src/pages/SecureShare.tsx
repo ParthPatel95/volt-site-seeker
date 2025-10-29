@@ -11,58 +11,59 @@ export default function SecureShare() {
   const [activeTab, setActiveTab] = useState('documents');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-watt-light/5 to-background">
-      {/* Enhanced Header */}
-      <div className="border-b border-border bg-gradient-to-r from-card/80 via-watt-primary/5 to-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 shadow-sm">
-        <div className="container-responsive py-6 sm:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-watt-primary to-watt-secondary shadow-watt-glow animate-glow">
-                <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-watt-primary/5">
+      {/* Professional Header */}
+      <div className="sticky top-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-xl shadow-sm">
+        <div className="container-responsive py-4 sm:py-6">
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-watt-primary to-watt-secondary rounded-xl blur opacity-25 group-hover:opacity-40 transition"></div>
+              <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-watt-primary to-watt-secondary">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent">
-                  Secure Share
-                </h1>
-                <p className="text-sm sm:text-base text-muted-foreground">
-                  Share documents securely with investors and partners
-                </p>
-              </div>
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+                Secure Share
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Professional document sharing platform
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container-responsive py-4 sm:py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 h-auto p-1 bg-gradient-to-r from-watt-primary/10 via-watt-secondary/10 to-watt-primary/10 backdrop-blur-sm shadow-lg">
+      <div className="container-responsive py-6 sm:py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="inline-flex h-11 items-center justify-start rounded-lg bg-muted/50 p-1 backdrop-blur-sm border border-border/50 overflow-x-auto w-full sm:w-auto">
             <TabsTrigger 
               value="documents" 
-              className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+              className="text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all rounded-md"
             >
               Documents
             </TabsTrigger>
             <TabsTrigger 
               value="links" 
-              className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+              className="text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all rounded-md"
             >
               Links
             </TabsTrigger>
             <TabsTrigger 
               value="bundles" 
-              className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+              className="text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all rounded-md"
             >
               Bundles
             </TabsTrigger>
             <TabsTrigger 
               value="analytics" 
-              className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all col-span-2 xs:col-span-1"
+              className="text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all rounded-md"
             >
               Analytics
             </TabsTrigger>
             <TabsTrigger 
               value="settings" 
-              className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-watt-primary data-[state=active]:to-watt-primary/90 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all col-span-2 xs:col-span-1 sm:col-span-1"
+              className="text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all rounded-md"
             >
               Settings
             </TabsTrigger>

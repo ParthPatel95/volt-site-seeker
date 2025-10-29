@@ -50,32 +50,32 @@ export function ViewerActivityTable({ activities }: ViewerActivityTableProps) {
 
   return (
     <>
-    <Card>
+    <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
       <CardHeader>
-        <CardTitle>Recent Viewer Activity</CardTitle>
+        <CardTitle className="text-lg">Recent Viewer Activity</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Document</TableHead>
-              <TableHead>Viewer</TableHead>
-              <TableHead>Device</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Pages Viewed</TableHead>
-              <TableHead>Time Spent</TableHead>
-              <TableHead>Engagement</TableHead>
-              <TableHead>Opened At</TableHead>
+            <TableRow className="hover:bg-transparent border-border/50">
+              <TableHead className="font-semibold">Document</TableHead>
+              <TableHead className="font-semibold">Viewer</TableHead>
+              <TableHead className="font-semibold">Device</TableHead>
+              <TableHead className="font-semibold">Location</TableHead>
+              <TableHead className="font-semibold">Pages</TableHead>
+              <TableHead className="font-semibold">Time</TableHead>
+              <TableHead className="font-semibold">Engagement</TableHead>
+              <TableHead className="font-semibold">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {activities.map((activity) => (
               <TableRow 
                 key={activity.id}
-                className="cursor-pointer hover:bg-muted/50"
+                className="cursor-pointer hover:bg-watt-primary/5 transition-colors border-border/50"
                 onClick={() => setSelectedActivity(activity)}
               >
-                <TableCell className="font-medium">
+                <TableCell className="font-medium max-w-xs truncate">
                   {activity.document?.file_name || 'Unknown'}
                 </TableCell>
                 <TableCell>
