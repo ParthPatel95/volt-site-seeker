@@ -11,6 +11,51 @@ interface GeographicDeviceAnalyticsProps {
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#8884d8', '#82ca9d', '#ffc658'];
 
+// Cache for geocoding results to avoid repeated API calls
+const geocodeCache = new Map<string, string>();
+
+async function getCityFromCoordinates(coordinates: string): Promise<string> {
+  if (!coordinates || coordinates === 'Unknown') return 'Unknown';
+  
+  // Check cache first
+  if (geocodeCache.has(coordinates)) {
+    return geocodeCache.get(coordinates)!;
+  }
+  
+  // Parse coordinates (format: "lat,lon")
+  const [lat, lon] = coordinates.split(',').map(s => s.trim());
+  if (!lat || !lon) return coordinates;
+  
+  try {
+    // Use Nominatim API for reverse geocoding (free, no API key needed)
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`,
+      {
+        headers: {
+          'User-Agent': 'SecureShareAnalytics/1.0'
+        }
+      }
+    );
+    
+    if (!response.ok) throw new Error('Geocoding failed');
+    
+    const data = await response.json();
+    const city = data.address?.city || 
+                 data.address?.town || 
+                 data.address?.village || 
+                 data.address?.county ||
+                 data.address?.state ||
+                 'Unknown Location';
+    
+    // Cache the result
+    geocodeCache.set(coordinates, city);
+    return city;
+  } catch (error) {
+    console.error('Error geocoding coordinates:', error);
+    return coordinates; // Fallback to coordinates
+  }
+}
+
 export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyticsProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['geographic-device-analytics', dateRange],
@@ -48,14 +93,30 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
         avgTime: stats.count > 0 ? Math.round(stats.time / stats.count) : 0
       }));
 
-      // Location breakdown
+      // Location breakdown - convert coordinates to city names
       const locationCounts: Record<string, number> = {};
+      
+      // Get unique locations and their counts
       activity?.forEach(a => {
         const loc = a.viewer_location || 'Unknown';
         locationCounts[loc] = (locationCounts[loc] || 0) + 1;
       });
 
-      const locationData = Object.entries(locationCounts)
+      // Convert coordinates to city names
+      const locationEntries = await Promise.all(
+        Object.entries(locationCounts).map(async ([coordinates, count]) => {
+          const cityName = await getCityFromCoordinates(coordinates);
+          return { name: cityName, value: count };
+        })
+      );
+
+      // Merge duplicate city names
+      const mergedLocations: Record<string, number> = {};
+      locationEntries.forEach(({ name, value }) => {
+        mergedLocations[name] = (mergedLocations[name] || 0) + value;
+      });
+
+      const locationData = Object.entries(mergedLocations)
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value)
         .slice(0, 10);
