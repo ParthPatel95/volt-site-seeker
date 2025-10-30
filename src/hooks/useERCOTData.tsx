@@ -98,11 +98,13 @@ export const useERCOTData = () => {
   const intervalRef = useRef<number | null>(null);
   const isFetchingRef = useRef(false);
   const lastFetchAtRef = useRef(0);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
 
   useEffect(() => {
     const fetchData = async () => {
       const now = Date.now();
-      if (isFetchingRef.current || now - lastFetchAtRef.current < 1500) return;
+      if (isFetchingRef.current || now - lastFetchAtRef.current < 2000) return;
       isFetchingRef.current = true;
       lastFetchAtRef.current = now;
       try {
@@ -110,10 +112,26 @@ export const useERCOTData = () => {
         const { data, error } = await supabase.functions.invoke('energy-data-integration');
         if (error) {
           console.error('Energy data fetch error:', error);
-          setError('Failed to fetch ERCOT data');
+          
+          // Check if it's a rate limit error and retry with exponential backoff
+          if (error.message?.includes('429') || error.message?.includes('rate limit')) {
+            if (retryCountRef.current < maxRetries) {
+              retryCountRef.current++;
+              const backoffDelay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
+              console.log(`Rate limited. Retrying in ${backoffDelay}ms (attempt ${retryCountRef.current}/${maxRetries})`);
+              setTimeout(fetchData, backoffDelay);
+              return;
+            }
+            setError('ERCOT API rate limited. Data will refresh automatically.');
+          } else {
+            setError('Failed to fetch ERCOT data');
+          }
           return;
         }
       if (data?.success && data?.ercot) {
+        // Reset retry count on success
+        retryCountRef.current = 0;
+        
         setPricing(data.ercot.pricing);
         setLoadData(data.ercot.loadData);
         setGenerationMix(data.ercot.generationMix);
@@ -127,8 +145,6 @@ export const useERCOTData = () => {
         setOperatingReserve(data.ercot.operatingReserve || null);
         setInterchange(data.ercot.interchange || null);
         setEnergyStorage(data.ercot.energyStorage || null);
-        // Note: Enhanced data (windSolarForecast, assetOutages, historicalPrices, marketAnalytics, alerts)
-        // will be set to null until we implement real data sources for them
         setWindSolarForecast(null);
         setAssetOutages(null);
         setHistoricalPrices(null);
@@ -150,7 +166,7 @@ export const useERCOTData = () => {
     // initial fetch and stabilized interval (handles React 18 StrictMode)
     fetchData();
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = window.setInterval(fetchData, 600000); // 10 minutes
+    intervalRef.current = window.setInterval(fetchData, 300000); // 5 minutes (reduced from 10 to handle rate limits better)
 
     return () => {
       if (intervalRef.current) {
@@ -164,13 +180,18 @@ export const useERCOTData = () => {
     if (isFetchingRef.current) return;
     setLoading(true);
     setError(null);
+    retryCountRef.current = 0; // Reset retry count on manual refetch
     try {
       isFetchingRef.current = true;
       lastFetchAtRef.current = Date.now();
       const { data, error } = await supabase.functions.invoke('energy-data-integration');
       if (error) {
         console.error('Energy data fetch error:', error);
-        setError('Failed to fetch ERCOT data');
+        if (error.message?.includes('429') || error.message?.includes('rate limit')) {
+          setError('ERCOT API rate limited. Please wait a moment and try again.');
+        } else {
+          setError('Failed to fetch ERCOT data');
+        }
         return;
       }
       if (data?.success && data?.ercot) {
