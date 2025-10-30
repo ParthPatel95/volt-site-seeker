@@ -132,9 +132,27 @@ export const useERCOTData = () => {
         // Reset retry count on success
         retryCountRef.current = 0;
         
-        setPricing(data.ercot.pricing);
-        setLoadData(data.ercot.loadData);
-        setGenerationMix(data.ercot.generationMix);
+        // Only update if we have complete data (all three fields)
+        const hasCompleteData = data.ercot.pricing && data.ercot.loadData && data.ercot.generationMix;
+        
+        if (hasCompleteData) {
+          setPricing(data.ercot.pricing);
+          setLoadData(data.ercot.loadData);
+          setGenerationMix(data.ercot.generationMix);
+        } else {
+          console.warn('Incomplete ERCOT data received:', { 
+            hasPricing: !!data.ercot.pricing, 
+            hasLoad: !!data.ercot.loadData, 
+            hasGenMix: !!data.ercot.generationMix 
+          });
+          // Keep existing data if we have it, otherwise show error
+          if (!pricing && !loadData && !generationMix) {
+            setError('Incomplete ERCOT data received. Retrying...');
+            // Retry after a short delay
+            setTimeout(fetchData, 3000);
+            return;
+          }
+        }
         setZoneLMPs(data.ercot.zoneLMPs || null);
         setOrdcAdder(data.ercot.ordcAdder || null);
         setAncillaryPrices(data.ercot.ancillaryPrices || null);
@@ -195,9 +213,16 @@ export const useERCOTData = () => {
         return;
       }
       if (data?.success && data?.ercot) {
-        setPricing(data.ercot.pricing);
-        setLoadData(data.ercot.loadData);
-        setGenerationMix(data.ercot.generationMix);
+        const hasCompleteData = data.ercot.pricing && data.ercot.loadData && data.ercot.generationMix;
+        
+        if (hasCompleteData) {
+          setPricing(data.ercot.pricing);
+          setLoadData(data.ercot.loadData);
+          setGenerationMix(data.ercot.generationMix);
+        } else {
+          setError('Incomplete ERCOT data received. Please try again.');
+          return;
+        }
         setZoneLMPs(data.ercot.zoneLMPs || null);
         setOrdcAdder(data.ercot.ordcAdder || null);
         setAncillaryPrices(data.ercot.ancillaryPrices || null);
