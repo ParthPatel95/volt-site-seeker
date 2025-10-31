@@ -450,10 +450,10 @@ async function fetchERCOTData() {
   
   try {
     pricingResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`, { page: 1, size: 100000 }) };
-    await delay(3000); // Wait 3 seconds between calls to respect rate limit
+    await delay(1000); // Reduced delay - 1 second between calls
     
     loadResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 }) };
-    await delay(3000);
+    await delay(1000); // Reduced delay
     
     // Use 2D Aggregated Generation Summary endpoint
     genMixResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary`, { page: 1, size: 100 }) };
