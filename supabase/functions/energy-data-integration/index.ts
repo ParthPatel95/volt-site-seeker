@@ -78,16 +78,26 @@ serve(async (req) => {
 
     console.log('Fetching unified energy data from 8 markets (ERCOT, AESO, MISO, CAISO, NYISO, PJM, SPP, IESO)...');
 
-    // Fetch all market data in parallel
+    // Helper to add timeout to each market fetch (15 seconds max per market)
+    const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, marketName: string): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+          setTimeout(() => reject(new Error(`${marketName} fetch timeout after ${timeoutMs}ms`)), timeoutMs)
+        )
+      ]);
+    };
+
+    // Fetch all market data in parallel with individual timeouts
     const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult, iesoResult] = await Promise.allSettled([
-      fetchERCOTData(),
-      fetchAESOData(),
-      fetchMISOData(),
-      fetchCAISOData(),
-      fetchNYISOData(),
-      fetchPJMData(),
-      fetchSPPData(),
-      fetchIESOData()
+      withTimeout(fetchERCOTData(), 15000, 'ERCOT'),
+      withTimeout(fetchAESOData(), 10000, 'AESO'),
+      withTimeout(fetchMISOData(), 10000, 'MISO'),
+      withTimeout(fetchCAISOData(), 10000, 'CAISO'),
+      withTimeout(fetchNYISOData(), 12000, 'NYISO'),
+      withTimeout(fetchPJMData(), 10000, 'PJM'),
+      withTimeout(fetchSPPData(), 8000, 'SPP'),
+      withTimeout(fetchIESOData(), 10000, 'IESO')
     ]);
     
     console.log('Market fetch results:', {
