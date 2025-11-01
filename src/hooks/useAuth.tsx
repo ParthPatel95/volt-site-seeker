@@ -19,8 +19,18 @@ export function useAuth() {
     }
 
     try {
-      const { data, error } = await supabase
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Approval check timeout')), 5000)
+      );
+      
+      const approvalPromise = supabase
         .rpc('is_voltscout_approved', { user_id: userId });
+      
+      const { data, error } = await Promise.race([
+        approvalPromise,
+        timeoutPromise
+      ]) as any;
       
       if (error) {
         console.error('Error checking VoltScout approval:', error);
