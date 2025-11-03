@@ -36,6 +36,7 @@ import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
 import { AESOAlertsPanel } from './intelligence/AESOAlertsPanel';
 import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
 import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
+import { AESOPricePredictionDashboard } from './aeso/AESOPricePredictionDashboard';
 
 export function AESOMarketComprehensive() {
   // Use working dashboard data source
@@ -166,11 +167,16 @@ export function AESOMarketComprehensive() {
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(5, minmax(80px, 1fr))'}}>
+            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(6, minmax(80px, 1fr))'}}>
               <TabsTrigger value="market" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline truncate">Market Data</span>
                 <span className="sm:hidden truncate">Market</span>
+              </TabsTrigger>
+              <TabsTrigger value="predictions" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
+                <Brain className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden sm:inline truncate">AI Predictions</span>
+                <span className="sm:hidden truncate">AI</span>
               </TabsTrigger>
               <TabsTrigger value="historical" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -420,6 +426,11 @@ export function AESOMarketComprehensive() {
           {/* Historical Pricing Tab */}
           <TabsContent value="historical" className="space-y-4 sm:space-y-6">
             <AESOHistoricalPricing />
+          </TabsContent>
+
+          {/* AI Price Predictions Tab */}
+          <TabsContent value="predictions" className="space-y-4 sm:space-y-6">
+            <AESOPricePredictionDashboard />
           </TabsContent>
 
           {/* Generation Tab */}
