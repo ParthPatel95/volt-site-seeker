@@ -10,6 +10,15 @@ verify_jwt = false
 [functions.aeso-market-data]
 verify_jwt = false
 
+[functions.aeso-weather-integration]
+verify_jwt = false
+
+[functions.aeso-data-collector]
+verify_jwt = false
+
+[functions.aeso-price-predictor]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

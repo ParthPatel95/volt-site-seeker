@@ -1,0 +1,223 @@
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RefreshCw, Download, TrendingUp, Brain, AlertCircle } from 'lucide-react';
+import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
+import { PricePredictionChart } from './PricePredictionChart';
+import { FeatureImpactVisualization } from './FeatureImpactVisualization';
+import { useAESOData } from '@/hooks/useAESOData';
+import { useToast } from '@/hooks/use-toast';
+
+export const AESOPricePredictionDashboard = () => {
+  const [horizon, setHorizon] = useState('24h');
+  const { predictions, modelPerformance, loading, fetchPredictions, fetchModelPerformance, collectTrainingData } = useAESOPricePrediction();
+  const { pricing } = useAESOData();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchPredictions(horizon);
+    fetchModelPerformance();
+  }, []);
+
+  const handleGeneratePredictions = async () => {
+    await fetchPredictions(horizon);
+  };
+
+  const handleCollectData = async () => {
+    await collectTrainingData();
+    toast({
+      title: "Training Data Updated",
+      description: "The prediction model now has access to the latest market data",
+    });
+  };
+
+  const handleExport = () => {
+    const csv = [
+      ['Timestamp', 'Predicted Price', 'Confidence Lower', 'Confidence Upper', 'Confidence Score'].join(','),
+      ...predictions.map(p => [
+        p.timestamp,
+        p.price.toFixed(2),
+        p.confidenceLower.toFixed(2),
+        p.confidenceUpper.toFixed(2),
+        (p.confidenceScore * 100).toFixed(1)
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aeso-price-predictions-${new Date().toISOString()}.csv`;
+    a.click();
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold flex items-center gap-2">
+            <Brain className="h-8 w-8 text-primary" />
+            AESO Price Predictions
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            AI-powered energy price forecasting with confidence intervals
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Select value={horizon} onValueChange={setHorizon}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="6h">6 Hours</SelectItem>
+              <SelectItem value="24h">24 Hours</SelectItem>
+              <SelectItem value="7d">7 Days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={handleCollectData} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Update Data
+          </Button>
+          <Button onClick={handleGeneratePredictions} disabled={loading}>
+            <TrendingUp className="h-4 w-4 mr-2" />
+            {loading ? 'Generating...' : 'Generate Forecast'}
+          </Button>
+          {predictions.length > 0 && (
+            <Button onClick={handleExport} variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Model Performance */}
+      {modelPerformance && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Model Performance</CardTitle>
+            <CardDescription>Accuracy metrics for prediction model</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">Mean Absolute Error</div>
+                <div className="text-2xl font-bold">${modelPerformance.mae.toFixed(2)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">RMSE</div>
+                <div className="text-2xl font-bold">${modelPerformance.rmse.toFixed(2)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">MAPE</div>
+                <div className="text-2xl font-bold">{modelPerformance.mape.toFixed(1)}%</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">R² Score</div>
+                <div className="text-2xl font-bold">{modelPerformance.rSquared.toFixed(3)}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Info Banner */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-primary mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-semibold mb-1">How It Works</h4>
+              <p className="text-sm text-muted-foreground">
+                Our AI model analyzes historical price patterns, weather conditions (temperature, wind, cloud cover), 
+                time-of-day patterns, holidays, and generation mix to predict future electricity prices. 
+                The model uses an ensemble approach combining linear regression, time series decomposition, 
+                gradient boosting, and seasonal patterns for maximum accuracy.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Price Prediction Chart */}
+      <PricePredictionChart 
+        predictions={predictions}
+        currentPrice={pricing?.current_price}
+      />
+
+      {/* Feature Impact */}
+      {predictions.length > 0 && (
+        <FeatureImpactVisualization prediction={predictions[0]} />
+      )}
+
+      {/* Optimization Recommendations */}
+      {predictions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Optimization Recommendations</CardTitle>
+            <CardDescription>Smart timing for energy-intensive operations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {(() => {
+                const sortedPredictions = [...predictions].sort((a, b) => a.price - b.price);
+                const cheapestHours = sortedPredictions.slice(0, 5);
+                const expensiveHours = sortedPredictions.slice(-5).reverse();
+                
+                return (
+                  <>
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 text-success">Best Times to Operate (Lowest Prices):</h4>
+                      <div className="space-y-2">
+                        {cheapestHours.map((pred, idx) => (
+                          <div key={idx} className="flex justify-between items-center p-2 rounded bg-success/10">
+                            <span className="text-sm">
+                              {new Date(pred.timestamp).toLocaleString('en-US', { 
+                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                              })}
+                            </span>
+                            <span className="text-sm font-bold">${pred.price.toFixed(2)}/MWh</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 text-destructive">Times to Avoid (Highest Prices):</h4>
+                      <div className="space-y-2">
+                        {expensiveHours.map((pred, idx) => (
+                          <div key={idx} className="flex justify-between items-center p-2 rounded bg-destructive/10">
+                            <span className="text-sm">
+                              {new Date(pred.timestamp).toLocaleString('en-US', { 
+                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                              })}
+                            </span>
+                            <span className="text-sm font-bold">${pred.price.toFixed(2)}/MWh</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <h4 className="text-sm font-semibold mb-2">Potential Savings:</h4>
+                      <p className="text-sm text-muted-foreground">
+                        By operating during the 5 cheapest hours instead of the 5 most expensive, 
+                        you could save approximately{' '}
+                        <span className="font-bold text-primary">
+                          ${((expensiveHours.reduce((s, p) => s + p.price, 0) / 5) - (cheapestHours.reduce((s, p) => s + p.price, 0) / 5)).toFixed(2)}/MWh
+                        </span>
+                        {' '}per operating hour.
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};

@@ -95,6 +95,207 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_model_performance: {
+        Row: {
+          created_at: string | null
+          evaluation_date: string | null
+          feature_importance: Json | null
+          id: string
+          mae: number | null
+          mape: number | null
+          model_version: string
+          r_squared: number | null
+          rmse: number | null
+          training_period_end: string | null
+          training_period_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          evaluation_date?: string | null
+          feature_importance?: Json | null
+          id?: string
+          mae?: number | null
+          mape?: number | null
+          model_version: string
+          r_squared?: number | null
+          rmse?: number | null
+          training_period_end?: string | null
+          training_period_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          evaluation_date?: string | null
+          feature_importance?: Json | null
+          id?: string
+          mae?: number | null
+          mape?: number | null
+          model_version?: string
+          r_squared?: number | null
+          rmse?: number | null
+          training_period_end?: string | null
+          training_period_start?: string | null
+        }
+        Relationships: []
+      }
+      aeso_price_predictions: {
+        Row: {
+          confidence_lower: number | null
+          confidence_score: number | null
+          confidence_upper: number | null
+          created_at: string | null
+          features_used: Json | null
+          horizon_hours: number
+          id: string
+          model_version: string | null
+          predicted_price: number
+          prediction_timestamp: string
+          target_timestamp: string
+        }
+        Insert: {
+          confidence_lower?: number | null
+          confidence_score?: number | null
+          confidence_upper?: number | null
+          created_at?: string | null
+          features_used?: Json | null
+          horizon_hours: number
+          id?: string
+          model_version?: string | null
+          predicted_price: number
+          prediction_timestamp: string
+          target_timestamp: string
+        }
+        Update: {
+          confidence_lower?: number | null
+          confidence_score?: number | null
+          confidence_upper?: number | null
+          created_at?: string | null
+          features_used?: Json | null
+          horizon_hours?: number
+          id?: string
+          model_version?: string | null
+          predicted_price?: number
+          prediction_timestamp?: string
+          target_timestamp?: string
+        }
+        Relationships: []
+      }
+      aeso_training_data: {
+        Row: {
+          ail_mw: number | null
+          cloud_cover: number | null
+          created_at: string | null
+          day_of_week: number | null
+          generation_coal: number | null
+          generation_gas: number | null
+          generation_hydro: number | null
+          generation_solar: number | null
+          generation_wind: number | null
+          hour_of_day: number | null
+          id: string
+          interchange_net: number | null
+          is_holiday: boolean | null
+          is_weekend: boolean | null
+          month: number | null
+          operating_reserve: number | null
+          outage_capacity_mw: number | null
+          pool_price: number
+          season: string | null
+          solar_irradiance: number | null
+          temperature_calgary: number | null
+          temperature_edmonton: number | null
+          timestamp: string
+          wind_speed: number | null
+        }
+        Insert: {
+          ail_mw?: number | null
+          cloud_cover?: number | null
+          created_at?: string | null
+          day_of_week?: number | null
+          generation_coal?: number | null
+          generation_gas?: number | null
+          generation_hydro?: number | null
+          generation_solar?: number | null
+          generation_wind?: number | null
+          hour_of_day?: number | null
+          id?: string
+          interchange_net?: number | null
+          is_holiday?: boolean | null
+          is_weekend?: boolean | null
+          month?: number | null
+          operating_reserve?: number | null
+          outage_capacity_mw?: number | null
+          pool_price: number
+          season?: string | null
+          solar_irradiance?: number | null
+          temperature_calgary?: number | null
+          temperature_edmonton?: number | null
+          timestamp: string
+          wind_speed?: number | null
+        }
+        Update: {
+          ail_mw?: number | null
+          cloud_cover?: number | null
+          created_at?: string | null
+          day_of_week?: number | null
+          generation_coal?: number | null
+          generation_gas?: number | null
+          generation_hydro?: number | null
+          generation_solar?: number | null
+          generation_wind?: number | null
+          hour_of_day?: number | null
+          id?: string
+          interchange_net?: number | null
+          is_holiday?: boolean | null
+          is_weekend?: boolean | null
+          month?: number | null
+          operating_reserve?: number | null
+          outage_capacity_mw?: number | null
+          pool_price?: number
+          season?: string | null
+          solar_irradiance?: number | null
+          temperature_calgary?: number | null
+          temperature_edmonton?: number | null
+          timestamp?: string
+          wind_speed?: number | null
+        }
+        Relationships: []
+      }
+      aeso_weather_forecasts: {
+        Row: {
+          cloud_cover: number | null
+          created_at: string | null
+          forecast_timestamp: string
+          id: string
+          location: string | null
+          precipitation_probability: number | null
+          target_timestamp: string
+          temperature: number | null
+          wind_speed: number | null
+        }
+        Insert: {
+          cloud_cover?: number | null
+          created_at?: string | null
+          forecast_timestamp: string
+          id?: string
+          location?: string | null
+          precipitation_probability?: number | null
+          target_timestamp: string
+          temperature?: number | null
+          wind_speed?: number | null
+        }
+        Update: {
+          cloud_cover?: number | null
+          created_at?: string | null
+          forecast_timestamp?: string
+          id?: string
+          location?: string | null
+          precipitation_probability?: number | null
+          target_timestamp?: string
+          temperature?: number | null
+          wind_speed?: number | null
+        }
+        Relationships: []
+      }
       ai_company_analysis: {
         Row: {
           acquisition_readiness: number | null
@@ -503,7 +704,7 @@ export type Database = {
         Row: {
           company_name: string
           company_ticker: string | null
-          coordinates: unknown | null
+          coordinates: unknown
           created_at: string
           id: string
           location_description: string
@@ -515,7 +716,7 @@ export type Database = {
         Insert: {
           company_name: string
           company_ticker?: string | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           created_at?: string
           id: string
           location_description: string
@@ -527,7 +728,7 @@ export type Database = {
         Update: {
           company_name?: string
           company_ticker?: string | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           created_at?: string
           id?: string
           location_description?: string
@@ -1223,7 +1424,7 @@ export type Database = {
           address: string | null
           ai_insights: string | null
           city: string | null
-          coordinates: unknown | null
+          coordinates: unknown
           created_at: string
           created_by: string | null
           data_sources: Json | null
@@ -1243,7 +1444,7 @@ export type Database = {
           address?: string | null
           ai_insights?: string | null
           city?: string | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           created_at?: string
           created_by?: string | null
           data_sources?: Json | null
@@ -1263,7 +1464,7 @@ export type Database = {
           address?: string | null
           ai_insights?: string | null
           city?: string | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           created_at?: string
           created_by?: string | null
           data_sources?: Json | null
@@ -2957,7 +3158,7 @@ export type Database = {
           city: string
           confidence_level: string | null
           confidence_score: number | null
-          coordinates: unknown | null
+          coordinates: unknown
           created_at: string
           created_by: string | null
           data_sources: Json | null
@@ -3006,7 +3207,7 @@ export type Database = {
           city: string
           confidence_level?: string | null
           confidence_score?: number | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           created_at?: string
           created_by?: string | null
           data_sources?: Json | null
@@ -3055,7 +3256,7 @@ export type Database = {
           city?: string
           confidence_level?: string | null
           confidence_score?: number | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           created_at?: string
           created_by?: string | null
           data_sources?: Json | null
@@ -4603,7 +4804,7 @@ export type Database = {
           activity_type: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string
         }
@@ -4612,7 +4813,7 @@ export type Database = {
           activity_type: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id: string
         }
@@ -4621,7 +4822,7 @@ export type Database = {
           activity_type?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string
         }
@@ -4641,7 +4842,7 @@ export type Database = {
           event_data: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           listing_id: string | null
           session_id: string | null
           user_agent: string | null
@@ -4652,7 +4853,7 @@ export type Database = {
           event_data?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           listing_id?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -4663,7 +4864,7 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           listing_id?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -4840,12 +5041,9 @@ export type Database = {
         Args: { site_ids: string[] }
         Returns: number
       }
-      clean_expired_verification_tokens: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      clean_expired_verification_tokens: { Args: never; Returns: undefined }
       get_all_users_with_details: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           department: string
@@ -4885,18 +5083,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_voltscout_approved: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      restore_verified_site: {
-        Args: { site_id: string }
-        Returns: boolean
-      }
-      soft_delete_verified_site: {
-        Args: { site_id: string }
-        Returns: boolean
-      }
+      is_voltscout_approved: { Args: { user_id: string }; Returns: boolean }
+      restore_verified_site: { Args: { site_id: string }; Returns: boolean }
+      soft_delete_verified_site: { Args: { site_id: string }; Returns: boolean }
     }
     Enums: {
       access_level: "view_only" | "download" | "no_download"
