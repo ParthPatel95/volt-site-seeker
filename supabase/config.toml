@@ -1,14 +1,11 @@
 project_id = "ktgosplhknmnyagxrgbe"
 
-# Public data endpoints - no authentication required
-[functions.aeso-historical-pricing]
-verify_jwt = false
-
-[functions.aeso-advanced-analytics]
-verify_jwt = false
-
-[functions.aeso-market-data]
-verify_jwt = false
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
 
 [functions.aeso-weather-integration]
 verify_jwt = false
@@ -17,6 +14,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.aeso-price-predictor]
+verify_jwt = false
+
+[functions.aeso-model-trainer]
 verify_jwt = false
 
 [functions.crypto-details]

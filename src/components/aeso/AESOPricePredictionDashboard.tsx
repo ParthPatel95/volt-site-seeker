@@ -2,10 +2,15 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Download, TrendingUp, Brain, AlertCircle } from 'lucide-react';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { PricePredictionChart } from './PricePredictionChart';
 import { FeatureImpactVisualization } from './FeatureImpactVisualization';
+import { PricePredictionAlerts } from './PricePredictionAlerts';
+import { ScenarioAnalysis } from './ScenarioAnalysis';
+import { ModelPerformanceMetrics } from './ModelPerformanceMetrics';
+import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 
@@ -123,6 +128,11 @@ export const AESOPricePredictionDashboard = () => {
         </Card>
       )}
 
+      {/* Smart Alerts */}
+      {predictions.length > 0 && (
+        <PricePredictionAlerts predictions={predictions} />
+      )}
+
       {/* Info Banner */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-6">
@@ -141,15 +151,36 @@ export const AESOPricePredictionDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Price Prediction Chart */}
-      <PricePredictionChart 
-        predictions={predictions}
-        currentPrice={pricing?.current_price}
-      />
-
-      {/* Feature Impact */}
+      {/* Tabbed Content */}
       {predictions.length > 0 && (
-        <FeatureImpactVisualization prediction={predictions[0]} />
+        <Tabs defaultValue="forecast" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="forecast">Forecast</TabsTrigger>
+            <TabsTrigger value="scenario">Scenario Analysis</TabsTrigger>
+            <TabsTrigger value="analytics">Advanced Analytics</TabsTrigger>
+            <TabsTrigger value="performance">Model Performance</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="forecast" className="space-y-6">
+            <PricePredictionChart 
+              predictions={predictions}
+              currentPrice={pricing?.current_price}
+            />
+            <FeatureImpactVisualization prediction={predictions[0]} />
+          </TabsContent>
+
+          <TabsContent value="scenario">
+            <ScenarioAnalysis basePrediction={predictions[0] || null} />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AESOPredictionAnalytics predictions={predictions} />
+          </TabsContent>
+
+          <TabsContent value="performance">
+            <ModelPerformanceMetrics performance={modelPerformance} />
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Optimization Recommendations */}
