@@ -52,11 +52,19 @@ export const useAESOPricePrediction = () => {
           description: `${data.predictions.length} price predictions for the next ${horizon}`,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching predictions:', error);
+      
+      // Check if it's a training data issue
+      const errorMessage = error?.message || error?.toString() || '';
+      const isDataIssue = errorMessage.includes('Insufficient training data') || 
+                         errorMessage.includes('training data');
+      
       toast({
-        title: "Prediction Error",
-        description: "Failed to generate price predictions",
+        title: isDataIssue ? "No Training Data" : "Prediction Error",
+        description: isDataIssue 
+          ? "Please click 'Update Data' first to collect historical price data for the AI model"
+          : "Failed to generate price predictions",
         variant: "destructive"
       });
     } finally {
