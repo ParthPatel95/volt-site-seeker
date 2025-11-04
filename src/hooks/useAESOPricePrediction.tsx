@@ -43,7 +43,11 @@ export const useAESOPricePrediction = () => {
         body: { horizon }
       });
 
+      // Check for errors in both the error object and data.error
       if (error) throw error;
+      if (data && !data.success && data.error) {
+        throw new Error(data.error);
+      }
 
       if (data?.success) {
         setPredictions(data.predictions);
@@ -55,8 +59,8 @@ export const useAESOPricePrediction = () => {
     } catch (error: any) {
       console.error('Error fetching predictions:', error);
       
-      // Check if it's a training data issue
-      const errorMessage = error?.message || error?.toString() || '';
+      // Check if it's a training data issue - check multiple sources
+      const errorMessage = error?.message || error?.error || error?.toString() || '';
       const isDataIssue = errorMessage.includes('Insufficient training data') || 
                          errorMessage.includes('training data');
       
