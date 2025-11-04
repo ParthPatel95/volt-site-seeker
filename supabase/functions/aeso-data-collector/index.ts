@@ -18,16 +18,21 @@ serve(async (req) => {
 
     console.log('Collecting AESO training data...');
 
-    // Fetch current AESO market data
-    const aesoData = await supabase.functions.invoke('aeso-market-data');
+    // Fetch current market data and weather data
+    const energyData = await supabase.functions.invoke('energy-data-integration');
     const weatherData = await supabase.functions.invoke('aeso-weather-integration');
 
-    if (!aesoData.data?.success) {
+    console.log('Energy data response:', energyData.data);
+
+    if (!energyData.data?.aeso) {
       throw new Error('Failed to fetch AESO market data');
     }
 
+    const aesoData = energyData.data.aeso;
     const currentTime = new Date();
-    const poolPrice = aesoData.data.systemMarginalPrice?.price || 0;
+    const poolPrice = aesoData.pricing?.current_price || 0;
+    
+    console.log('Pool price:', poolPrice);
 
     // Calculate derived features
     const isWeekend = currentTime.getDay() === 0 || currentTime.getDay() === 6;
@@ -55,26 +60,28 @@ serve(async (req) => {
       .single();
 
     // Extract generation mix data
-    const generationData = aesoData.data.generationMix || {};
+    const generationData = aesoData.generationMix || {};
+    
+    console.log('Generation mix data:', generationData);
     
     // Create training data record
     const trainingData = {
       timestamp: currentTime.toISOString(),
       pool_price: poolPrice,
-      ail_mw: aesoData.data.load?.current || null,
+      ail_mw: aesoData.load?.current_demand_mw || null,
       temperature_calgary: calgaryWeather?.temperature || null,
       temperature_edmonton: edmontonWeather?.temperature || null,
       wind_speed: calgaryWeather?.wind_speed || null,
       cloud_cover: calgaryWeather?.cloud_cover || null,
       solar_irradiance: calculateSolarIrradiance(calgaryWeather?.cloud_cover || 0, hourOfDay),
-      generation_coal: generationData.coal || 0,
-      generation_gas: generationData.gas || 0,
-      generation_wind: generationData.wind || 0,
-      generation_solar: generationData.solar || 0,
-      generation_hydro: generationData.hydro || 0,
-      interchange_net: aesoData.data.interchange?.netInterchange || 0,
-      operating_reserve: aesoData.data.operatingReserve?.totalReserve || 0,
-      outage_capacity_mw: calculateOutageCapacity(aesoData.data.outages),
+      generation_coal: generationData.coal_mw || 0,
+      generation_gas: generationData.natural_gas_mw || 0,
+      generation_wind: generationData.wind_mw || 0,
+      generation_solar: generationData.solar_mw || 0,
+      generation_hydro: generationData.hydro_mw || 0,
+      interchange_net: 0,
+      operating_reserve: 0,
+      outage_capacity_mw: 0,
       is_holiday: isHoliday,
       is_weekend: isWeekend,
       day_of_week: dayOfWeek,
