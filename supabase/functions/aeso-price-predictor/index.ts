@@ -138,8 +138,14 @@ async function predictPrice(
   calgaryWeather: any,
   edmontonWeather: any
 ) {
-  // Extract features
-  const recentPrices = historicalData.slice(0, 24).map(d => d.pool_price);
+  // Extract features - filter out zero prices
+  const recentPrices = historicalData.slice(0, 24).map(d => d.pool_price).filter(p => p > 0);
+  
+  // If we don't have enough valid prices, throw an error
+  if (recentPrices.length === 0) {
+    throw new Error('No valid price data available. Please collect more training data.');
+  }
+  
   const avgPrice = recentPrices.reduce((a, b) => a + b, 0) / recentPrices.length;
   const priceStdDev = Math.sqrt(
     recentPrices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / recentPrices.length

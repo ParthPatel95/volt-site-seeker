@@ -154,6 +154,10 @@ export const useAESOPricePrediction = () => {
           title: "Data Collected",
           description: "Training data successfully collected and stored",
         });
+        
+        // Automatically generate predictions after collecting data
+        console.log('Auto-generating predictions after data collection...');
+        await fetchPredictions('24h');
       }
     } catch (error) {
       console.error('Error collecting training data:', error);
