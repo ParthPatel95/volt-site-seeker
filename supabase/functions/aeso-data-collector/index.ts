@@ -40,7 +40,7 @@ serve(async (req) => {
     
     console.log('Pool price:', poolPrice);
     console.log('AESO pricing data:', JSON.stringify(aesoData.pricing, null, 2));
-    console.log('AESO load data:', JSON.stringify(aesoData.loadData, null, 2));
+    console.log('AESO load data:', JSON.stringify(aesoData.load, null, 2));
     
     if (poolPrice === 0) {
       console.warn('WARNING: Pool price is 0. This may indicate a data fetch issue.');
