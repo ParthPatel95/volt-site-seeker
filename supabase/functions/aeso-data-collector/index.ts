@@ -22,10 +22,16 @@ serve(async (req) => {
     const energyData = await supabase.functions.invoke('energy-data-integration');
     const weatherData = await supabase.functions.invoke('aeso-weather-integration');
 
-    console.log('Energy data response:', energyData.data);
+    console.log('Energy data full response:', JSON.stringify(energyData, null, 2));
+
+    if (energyData.error) {
+      console.error('Error fetching energy data:', energyData.error);
+      throw new Error('Failed to fetch energy data: ' + energyData.error.message);
+    }
 
     if (!energyData.data?.aeso) {
-      throw new Error('Failed to fetch AESO market data');
+      console.error('No AESO data in response:', energyData.data);
+      throw new Error('Failed to fetch AESO market data - no aeso data in response');
     }
 
     const aesoData = energyData.data.aeso;
@@ -33,6 +39,12 @@ serve(async (req) => {
     const poolPrice = aesoData.pricing?.current_price || 0;
     
     console.log('Pool price:', poolPrice);
+    console.log('AESO pricing data:', JSON.stringify(aesoData.pricing, null, 2));
+    console.log('AESO load data:', JSON.stringify(aesoData.loadData, null, 2));
+    
+    if (poolPrice === 0) {
+      console.warn('WARNING: Pool price is 0. This may indicate a data fetch issue.');
+    }
 
     // Calculate derived features
     const isWeekend = currentTime.getDay() === 0 || currentTime.getDay() === 6;
