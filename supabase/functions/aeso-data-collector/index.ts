@@ -36,15 +36,20 @@ serve(async (req) => {
 
     const aesoData = energyData.data.aeso;
     const currentTime = new Date();
-    const poolPrice = aesoData.pricing?.current_price || 0;
+    const poolPrice = aesoData.pricing?.current_price;
     
     console.log('Pool price:', poolPrice);
     console.log('AESO pricing data:', JSON.stringify(aesoData.pricing, null, 2));
     console.log('AESO load data:', JSON.stringify(aesoData.load, null, 2));
     
-    if (poolPrice === 0) {
-      console.warn('WARNING: Pool price is 0. This may indicate a data fetch issue.');
+    // Validate pool price - reject if missing or zero
+    if (!poolPrice || poolPrice === 0) {
+      console.error('ERROR: Invalid pool price received:', poolPrice);
+      console.error('Full AESO data:', JSON.stringify(aesoData, null, 2));
+      throw new Error(`Invalid pool price: ${poolPrice}. Cannot collect training data with zero or missing prices.`);
     }
+    
+    console.log('✅ Valid pool price received:', poolPrice);
 
     // Calculate derived features
     const isWeekend = currentTime.getDay() === 0 || currentTime.getDay() === 6;
