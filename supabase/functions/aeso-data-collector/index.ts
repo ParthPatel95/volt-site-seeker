@@ -36,20 +36,40 @@ serve(async (req) => {
 
     const aesoData = energyData.data.aeso;
     const currentTime = new Date();
-    const poolPrice = aesoData.pricing?.current_price;
+    
+    // Check if pricing data exists (API succeeded)
+    if (!aesoData.pricing) {
+      console.error('ERROR: AESO API failed - no pricing object returned');
+      console.error('API success indicator:', aesoData.apiSuccess);
+      console.error('Full AESO data:', JSON.stringify(aesoData, null, 2));
+      throw new Error('AESO API failure: No pricing data available. Cannot collect training data when API is down.');
+    }
+    
+    const poolPrice = aesoData.pricing.current_price;
     
     console.log('Pool price:', poolPrice);
     console.log('AESO pricing data:', JSON.stringify(aesoData.pricing, null, 2));
     console.log('AESO load data:', JSON.stringify(aesoData.load, null, 2));
     
-    // Validate pool price - reject if missing or zero
-    if (!poolPrice || poolPrice === 0) {
-      console.error('ERROR: Invalid pool price received:', poolPrice);
+    // Validate pool price exists (can be zero if that's the real market price)
+    if (poolPrice === undefined || poolPrice === null) {
+      console.error('ERROR: Pool price is undefined/null despite pricing object existing');
       console.error('Full AESO data:', JSON.stringify(aesoData, null, 2));
-      throw new Error(`Invalid pool price: ${poolPrice}. Cannot collect training data with zero or missing prices.`);
+      throw new Error('AESO data integrity error: pricing object exists but current_price is undefined.');
     }
     
-    console.log('✅ Valid pool price received:', poolPrice);
+    // Price range validation (-$100 to $1000 per MWh)
+    if (poolPrice < -100 || poolPrice > 1000) {
+      console.warn('⚠️ UNUSUAL PRICE DETECTED:', poolPrice, '$/MWh - outside normal range [-100, 1000]');
+      console.log('This price will be stored but flagged for review');
+    }
+    
+    // Log zero prices specifically (legitimate market condition)
+    if (poolPrice === 0) {
+      console.log('✅ Zero pool price detected - legitimate market condition (oversupply)');
+    } else {
+      console.log('✅ Valid pool price received:', poolPrice, '$/MWh');
+    }
 
     // Calculate derived features
     const isWeekend = currentTime.getDay() === 0 || currentTime.getDay() === 6;

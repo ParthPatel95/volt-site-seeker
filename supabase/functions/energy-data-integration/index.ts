@@ -89,9 +89,10 @@ serve(async (req) => {
     };
 
     // Fetch all market data in parallel with individual timeouts
+    // AESO timeout increased to 30s to handle API latency
     const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult, iesoResult] = await Promise.allSettled([
       withTimeout(fetchERCOTData(), 15000, 'ERCOT'),
-      withTimeout(fetchAESOData(), 10000, 'AESO'),
+      withTimeout(fetchAESODataWithRetry(), 30000, 'AESO'),
       withTimeout(fetchMISOData(), 10000, 'MISO'),
       withTimeout(fetchCAISOData(), 10000, 'CAISO'),
       withTimeout(fetchNYISOData(), 12000, 'NYISO'),
@@ -681,6 +682,58 @@ async function fetchERCOTData() {
     operatingReserve: undefined, 
     interchange: undefined, 
     energyStorage: undefined 
+  };
+}
+
+// Retry wrapper for AESO API calls with exponential backoff
+async function fetchAESODataWithRetry(maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`AESO fetch attempt ${attempt}/${maxRetries}...`);
+      const result = await fetchAESOData();
+      
+      // Check if we got valid data
+      if (result && result.pricing && result.pricing.current_price !== undefined) {
+        console.log(`✅ AESO data fetched successfully on attempt ${attempt}`);
+        return result;
+      }
+      
+      // If no pricing data but no error, this is an API issue
+      if (attempt < maxRetries) {
+        const backoffMs = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+        console.log(`⚠️ AESO returned incomplete data, retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      
+      console.error('❌ AESO API failed - no valid pricing data after all retries');
+      return { 
+        pricing: undefined, 
+        loadData: result?.loadData, 
+        generationMix: result?.generationMix,
+        apiSuccess: false 
+      };
+      
+    } catch (error) {
+      console.error(`AESO fetch attempt ${attempt} error:`, error);
+      if (attempt === maxRetries) {
+        return { 
+          pricing: undefined, 
+          loadData: undefined, 
+          generationMix: undefined,
+          apiSuccess: false 
+        };
+      }
+      const backoffMs = Math.pow(2, attempt) * 1000;
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
+    }
+  }
+  
+  return { 
+    pricing: undefined, 
+    loadData: undefined, 
+    generationMix: undefined,
+    apiSuccess: false 
   };
 }
 

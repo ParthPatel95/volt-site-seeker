@@ -138,17 +138,26 @@ async function predictPrice(
   calgaryWeather: any,
   edmontonWeather: any
 ) {
-  // Extract features - filter out zero prices
-  const recentPrices = historicalData.slice(0, 24).map(d => d.pool_price).filter(p => p > 0);
+  // Extract features - get all recent prices (including zeros)
+  const recentPrices = historicalData.slice(0, 24).map(d => d.pool_price);
+  
+  // Price range validation - filter out outliers beyond reasonable range
+  const validPrices = recentPrices.filter(p => p !== null && p !== undefined && p >= -100 && p <= 1000);
+  
+  // Log unusual prices for monitoring
+  const unusualPrices = recentPrices.filter(p => p !== null && p !== undefined && (p < -10 || p > 500));
+  if (unusualPrices.length > 0) {
+    console.log('⚠️ Unusual prices detected in training data:', unusualPrices);
+  }
   
   // If we don't have enough valid prices, throw an error
-  if (recentPrices.length === 0) {
+  if (validPrices.length === 0) {
     throw new Error('No valid price data available. Please collect more training data.');
   }
   
-  const avgPrice = recentPrices.reduce((a, b) => a + b, 0) / recentPrices.length;
+  const avgPrice = validPrices.reduce((a, b) => a + b, 0) / validPrices.length;
   const priceStdDev = Math.sqrt(
-    recentPrices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / recentPrices.length
+    validPrices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / validPrices.length
   );
 
   // Time-based features
@@ -166,7 +175,7 @@ async function predictPrice(
   // Ensemble prediction using multiple models
   const predictions = [
     linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed),
-    timeSeriesDecompositionPredict(recentPrices, hour, dayOfWeek, month),
+    timeSeriesDecompositionPredict(validPrices, hour, dayOfWeek, month),
     gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover),
     seasonalPatternPredict(historicalData, hour, month, isWeekend)
   ];
