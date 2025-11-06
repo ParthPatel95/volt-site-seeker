@@ -135,6 +135,22 @@ export const AESOPricePredictionDashboard = () => {
         <PricePredictionAlerts predictions={predictions} />
       )}
 
+      {/* Development Notice */}
+      <Card className="bg-warning/10 border-warning/30">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-semibold mb-1 text-warning">Development Notice</h4>
+              <p className="text-sm text-muted-foreground">
+                This AI prediction tool is still in development and isn't fully completed yet. 
+                Predictions may not be fully accurate and features are subject to change as we continue to improve the model.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Info Banner */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-6">
