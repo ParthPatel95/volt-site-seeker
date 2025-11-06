@@ -155,10 +155,27 @@ async function predictPrice(
     throw new Error('No valid price data available. Please collect more training data.');
   }
   
-  const avgPrice = validPrices.reduce((a, b) => a + b, 0) / validPrices.length;
+  // Use exponentially weighted moving average (EWMA) to emphasize recent prices
+  // This prevents old spikes from inflating current predictions
+  let weightedSum = 0;
+  let weightSum = 0;
+  const alpha = 0.3; // Decay factor - higher = more weight on recent prices
+  
+  validPrices.forEach((price, i) => {
+    const weight = Math.exp(-alpha * i); // Exponential decay
+    weightedSum += price * weight;
+    weightSum += weight;
+  });
+  
+  const avgPrice = weightedSum / weightSum; // EWMA instead of simple average
+  const currentPrice = validPrices[0]; // Most recent price
+  
+  // Calculate std dev for confidence intervals
   const priceStdDev = Math.sqrt(
     validPrices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / validPrices.length
   );
+  
+  console.log(`Price analysis - Current: ${currentPrice.toFixed(2)}, EWMA: ${avgPrice.toFixed(2)}, StdDev: ${priceStdDev.toFixed(2)}`);
 
   // Time-based features
   const hour = targetTime.getHours();
@@ -184,9 +201,21 @@ async function predictPrice(
 
   // Weighted ensemble (different weights based on horizon)
   const weights = getEnsembleWeights(horizonHours);
-  const predictedPrice = predictions.reduce((sum, pred, i) => sum + pred * weights[i], 0);
+  let predictedPrice = predictions.reduce((sum, pred, i) => sum + pred * weights[i], 0);
   
-  console.log(`Ensemble prediction: ${predictedPrice.toFixed(2)} from avgPrice: ${avgPrice.toFixed(2)}`);
+  // Apply mean reversion - prices tend to revert to recent average
+  // This dampens predictions that are too far from current reality
+  const meanReversionFactor = 0.3; // 30% pull toward current price
+  predictedPrice = predictedPrice * (1 - meanReversionFactor) + currentPrice * meanReversionFactor;
+  
+  // Cap maximum deviation from current price (prevents wild predictions)
+  const maxDeviation = Math.max(currentPrice * 0.5, 20); // Max 50% change or $20
+  if (Math.abs(predictedPrice - currentPrice) > maxDeviation) {
+    predictedPrice = currentPrice + Math.sign(predictedPrice - currentPrice) * maxDeviation;
+    console.log(`⚠️ Prediction capped due to excessive deviation from current price`);
+  }
+  
+  console.log(`Ensemble: ${predictedPrice.toFixed(2)} (post mean-reversion & cap) from EWMA: ${avgPrice.toFixed(2)}, current: ${currentPrice.toFixed(2)}`);
 
   // Calculate confidence intervals
   const volatility = priceStdDev * Math.sqrt(horizonHours / 24);
@@ -323,13 +352,13 @@ function seasonalPatternPredict(
 }
 
 function getEnsembleWeights(horizonHours: number): number[] {
-  // Adjusted weights - give more weight to simpler models to reduce over-prediction
+  // Give much more weight to seasonal pattern as it's most accurate
   if (horizonHours <= 6) {
-    return [0.35, 0.30, 0.20, 0.15]; // More weight on linear regression for near-term
+    return [0.20, 0.25, 0.15, 0.40]; // Heavy weight on seasonal for near-term
   } else if (horizonHours <= 24) {
-    return [0.30, 0.30, 0.25, 0.15]; // Balanced but conservative
+    return [0.20, 0.25, 0.20, 0.35]; // Still favor seasonal
   } else {
-    return [0.25, 0.25, 0.25, 0.25]; // Equal weights for long-term
+    return [0.20, 0.25, 0.20, 0.35]; // Consistent weights for long-term
   }
 }
 
