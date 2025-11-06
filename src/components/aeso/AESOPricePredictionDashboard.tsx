@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
-  const { predictions, modelPerformance, loading, fetchPredictions, fetchModelPerformance, collectTrainingData, loadHistoricalData, trainModel } = useAESOPricePrediction();
+  const { predictions, modelPerformance, loading, fetchPredictions, fetchModelPerformance, collectTrainingData } = useAESOPricePrediction();
   const { pricing } = useAESOData();
   const { toast } = useToast();
 
@@ -33,16 +33,8 @@ export const AESOPricePredictionDashboard = () => {
     await collectTrainingData();
     toast({
       title: "Training Data Updated",
-      description: "The prediction model now has access to the latest market data",
+      description: "AI model will auto-train when sufficient data is available",
     });
-  };
-
-  const handleLoadHistoricalData = async () => {
-    await loadHistoricalData();
-  };
-
-  const handleTrainModel = async () => {
-    await trainModel();
   };
 
   const handleExport = () => {
@@ -105,16 +97,6 @@ export const AESOPricePredictionDashboard = () => {
               </Button>
             )}
           </div>
-          <div className="flex gap-2 justify-end">
-            <Button onClick={handleLoadHistoricalData} variant="secondary" size="sm" disabled={loading}>
-              <Download className="h-4 w-4 mr-2" />
-              Load 3 Years Data
-            </Button>
-            <Button onClick={handleTrainModel} variant="secondary" size="sm" disabled={loading}>
-              <Brain className="h-4 w-4 mr-2" />
-              Train AI Model
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -161,10 +143,10 @@ export const AESOPricePredictionDashboard = () => {
             <div className="flex-1">
               <h4 className="font-semibold mb-1">How It Works</h4>
               <p className="text-sm text-muted-foreground">
-                Our AI model analyzes historical price patterns, weather conditions (temperature, wind, cloud cover), 
-                time-of-day patterns, holidays, and generation mix to predict future electricity prices. 
-                The model uses an ensemble approach combining linear regression, time series decomposition, 
-                gradient boosting, and seasonal patterns for maximum accuracy.
+                Our AI model continuously learns from live market data, analyzing price patterns, weather conditions, 
+                time-of-day patterns, holidays, and generation mix. The system auto-trains every 24 hours when 
+                sufficient data is available, using an ensemble approach for maximum accuracy. Simply click "Update Data" 
+                to feed the latest market information into the AI.
               </p>
             </div>
           </div>

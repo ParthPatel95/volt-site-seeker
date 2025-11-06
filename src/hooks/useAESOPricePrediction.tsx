@@ -155,7 +155,11 @@ export const useAESOPricePrediction = () => {
           description: "Training data successfully collected and stored",
         });
         
-        // Automatically generate predictions after collecting data
+        // Auto-train if we have enough data
+        console.log('Checking if model training is needed...');
+        await autoTrainIfNeeded();
+        
+        // Then generate predictions
         console.log('Auto-generating predictions after data collection...');
         await fetchPredictions('24h');
       }
@@ -169,79 +173,57 @@ export const useAESOPricePrediction = () => {
     }
   };
 
-  const loadHistoricalData = async () => {
-    setLoading(true);
+  const autoTrainIfNeeded = async () => {
     try {
-      toast({
-        title: "Loading Historical Data",
-        description: "Fetching 3 years of data... This may take several minutes",
-      });
+      // Check how much training data we have
+      const { count } = await supabase
+        .from('aeso_training_data')
+        .select('*', { count: 'exact', head: true });
 
-      const { data, error } = await supabase.functions.invoke('aeso-historical-data-loader');
-      if (error) throw error;
-      
-      if (data?.success) {
-        toast({
-          title: "Historical Data Loaded",
-          description: `Successfully loaded ${data.recordsInserted} records from the past 3 years`,
-        });
+      if (!count || count < 100) {
+        console.log(`Not enough data to train (${count}/100 minimum)`);
+        return;
+      }
 
-        // Automatically train model after loading historical data
-        console.log('Auto-training model with historical data...');
-        await trainModel();
+      // Check when we last trained
+      const { data: lastTraining } = await supabase
+        .from('aeso_model_performance')
+        .select('evaluation_date')
+        .order('evaluation_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      const hoursSinceLastTraining = lastTraining 
+        ? (Date.now() - new Date(lastTraining.evaluation_date).getTime()) / (1000 * 60 * 60)
+        : Infinity;
+
+      // Train every 24 hours or if never trained
+      if (hoursSinceLastTraining > 24) {
+        console.log('Auto-training model with latest data...');
+        const { data, error } = await supabase.functions.invoke('aeso-model-trainer');
+        
+        if (error) throw error;
+        
+        if (data?.success) {
+          setModelPerformance({
+            modelVersion: data.model_version,
+            mae: data.performance.mae,
+            rmse: data.performance.rmse,
+            mape: data.performance.mape,
+            rSquared: data.performance.r_squared,
+            featureImportance: data.feature_importance
+          });
+          console.log('✅ Model auto-trained successfully');
+        }
+      } else {
+        console.log(`Skipping training - last trained ${hoursSinceLastTraining.toFixed(1)}h ago`);
       }
     } catch (error) {
-      console.error('Error loading historical data:', error);
-      toast({
-        title: "Loading Error",
-        description: "Failed to load historical data",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      console.error('Auto-training error:', error);
+      // Don't show error to user for background training
     }
   };
 
-  const trainModel = async () => {
-    setLoading(true);
-    try {
-      toast({
-        title: "Training Model",
-        description: "Analyzing correlations and training AI model...",
-      });
-
-      const { data, error } = await supabase.functions.invoke('aeso-model-trainer');
-      if (error) throw error;
-      
-      if (data?.success) {
-        setModelPerformance({
-          modelVersion: data.model_version,
-          mae: data.performance.mae,
-          rmse: data.performance.rmse,
-          mape: data.performance.mape,
-          rSquared: data.performance.r_squared,
-          featureImportance: data.feature_importance
-        });
-
-        toast({
-          title: "Model Trained Successfully",
-          description: `MAE: ${data.performance.mae.toFixed(2)}, MAPE: ${data.performance.mape.toFixed(2)}%, R²: ${data.performance.r_squared.toFixed(4)}`,
-        });
-
-        // Auto-generate predictions after training
-        await fetchPredictions('24h');
-      }
-    } catch (error) {
-      console.error('Error training model:', error);
-      toast({
-        title: "Training Error",
-        description: "Failed to train model",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return {
     predictions,
@@ -250,8 +232,6 @@ export const useAESOPricePrediction = () => {
     fetchPredictions,
     fetchStoredPredictions,
     fetchModelPerformance,
-    collectTrainingData,
-    loadHistoricalData,
-    trainModel
+    collectTrainingData
   };
 };
