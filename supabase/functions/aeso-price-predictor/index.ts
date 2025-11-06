@@ -173,16 +173,20 @@ async function predictPrice(
   const cloudCover = calgaryWeather?.cloud_cover || 0;
 
   // Ensemble prediction using multiple models
-  const predictions = [
-    linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed),
-    timeSeriesDecompositionPredict(validPrices, hour, dayOfWeek, month),
-    gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover),
-    seasonalPatternPredict(historicalData, hour, month, isWeekend)
-  ];
+  const pred1 = linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed);
+  const pred2 = timeSeriesDecompositionPredict(validPrices, hour, dayOfWeek, month);
+  const pred3 = gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover);
+  const pred4 = seasonalPatternPredict(historicalData, hour, month, isWeekend);
+  
+  const predictions = [pred1, pred2, pred3, pred4];
+  
+  console.log(`Individual predictions - LR: ${pred1.toFixed(2)}, TS: ${pred2.toFixed(2)}, GB: ${pred3.toFixed(2)}, SP: ${pred4.toFixed(2)}`);
 
   // Weighted ensemble (different weights based on horizon)
   const weights = getEnsembleWeights(horizonHours);
   const predictedPrice = predictions.reduce((sum, pred, i) => sum + pred * weights[i], 0);
+  
+  console.log(`Ensemble prediction: ${predictedPrice.toFixed(2)} from avgPrice: ${avgPrice.toFixed(2)}`);
 
   // Calculate confidence intervals
   const volatility = priceStdDev * Math.sqrt(horizonHours / 24);
@@ -217,11 +221,11 @@ function linearRegressionPredict(
   temp: number,
   windSpeed: number
 ): number {
-  // Simplified linear regression model
-  const hourFactor = (hour >= 7 && hour <= 21) ? 1.15 : 0.85; // Peak vs off-peak
-  const weekdayFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.1 : 0.9;
-  const tempFactor = 1 + (Math.abs(temp - 15) / 100); // Extreme temps increase demand
-  const windFactor = 1 - (windSpeed / 100); // More wind = lower prices
+  // More conservative linear regression model
+  const hourFactor = (hour >= 7 && hour <= 21) ? 1.08 : 0.92; // Peak vs off-peak (reduced from 1.15/0.85)
+  const weekdayFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.03 : 0.97; // Reduced from 1.1/0.9
+  const tempFactor = 1 + (Math.abs(temp - 15) / 200); // Reduced impact (was /100)
+  const windFactor = 1 - (windSpeed / 200); // Reduced impact (was /100)
   
   return avgPrice * hourFactor * weekdayFactor * tempFactor * windFactor;
 }
@@ -235,21 +239,21 @@ function timeSeriesDecompositionPredict(
   // Trend component
   const trend = recentPrices[0];
   
-  // Seasonal component (hourly pattern)
+  // More conservative seasonal component (hourly pattern)
   const hourlyMultipliers = [
-    0.7, 0.65, 0.6, 0.6, 0.65, 0.75, 0.9, 1.1, // 0-7
-    1.2, 1.25, 1.2, 1.15, 1.1, 1.05, 1.1, 1.15, // 8-15
-    1.25, 1.3, 1.35, 1.3, 1.2, 1.0, 0.9, 0.8   // 16-23
+    0.85, 0.82, 0.80, 0.80, 0.82, 0.88, 0.95, 1.05, // 0-7 (reduced extremes)
+    1.10, 1.12, 1.10, 1.08, 1.05, 1.03, 1.05, 1.08, // 8-15
+    1.12, 1.15, 1.18, 1.15, 1.10, 1.00, 0.95, 0.90   // 16-23 (reduced from 1.35 max)
   ];
   const hourlyFactor = hourlyMultipliers[hour];
   
-  // Weekly seasonality
-  const weeklyFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.05 : 0.95;
+  // Weekly seasonality - more conservative
+  const weeklyFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.02 : 0.98; // Reduced from 1.05/0.95
   
-  // Monthly seasonality (higher in extreme weather months)
+  // Monthly seasonality - more conservative (reduced extremes)
   const monthlyMultipliers = [
-    1.2, 1.15, 1.05, 0.95, 0.9, 0.95, // Jan-Jun
-    1.1, 1.15, 1.0, 0.95, 1.05, 1.15  // Jul-Dec
+    1.10, 1.08, 1.03, 0.97, 0.95, 0.97, // Jan-Jun (reduced from 1.2 max)
+    1.05, 1.08, 1.00, 0.97, 1.03, 1.08  // Jul-Dec
   ];
   const monthlyFactor = monthlyMultipliers[month - 1];
   
@@ -268,27 +272,27 @@ function gradientBoostingPredict(
   // Simulate gradient boosting with decision tree-like rules
   let prediction = avgPrice;
   
-  // Tree 1: Hour of day rules
-  if (hour >= 17 && hour <= 20) prediction *= 1.3;
-  else if (hour >= 0 && hour <= 5) prediction *= 0.7;
+  // Tree 1: Hour of day rules - more conservative
+  if (hour >= 17 && hour <= 20) prediction *= 1.15; // Reduced from 1.3
+  else if (hour >= 0 && hour <= 5) prediction *= 0.85; // Reduced from 0.7
   else prediction *= 1.0;
   
-  // Tree 2: Weekend effect
-  if (isWeekend) prediction *= 0.92;
+  // Tree 2: Weekend effect - more conservative
+  if (isWeekend) prediction *= 0.96; // Reduced from 0.92
   
-  // Tree 3: Temperature effects
-  if (temp < -10 || temp > 25) prediction *= 1.2;
-  else if (temp >= 10 && temp <= 20) prediction *= 0.95;
+  // Tree 3: Temperature effects - more conservative
+  if (temp < -10 || temp > 25) prediction *= 1.10; // Reduced from 1.2
+  else if (temp >= 10 && temp <= 20) prediction *= 0.97; // Less aggressive
   
-  // Tree 4: Wind generation impact
-  if (windSpeed > 20) prediction *= 0.85; // High wind = lower prices
-  else if (windSpeed < 5) prediction *= 1.1;
+  // Tree 4: Wind generation impact - more conservative
+  if (windSpeed > 20) prediction *= 0.92; // Reduced from 0.85
+  else if (windSpeed < 5) prediction *= 1.05; // Reduced from 1.1
   
-  // Tree 5: Cloud cover (affects solar)
-  if (cloudCover > 80 && (hour >= 10 && hour <= 16)) prediction *= 1.05;
+  // Tree 5: Cloud cover (affects solar) - more conservative
+  if (cloudCover > 80 && (hour >= 10 && hour <= 16)) prediction *= 1.02; // Reduced from 1.05
   
-  // Add volatility adjustment
-  prediction += stdDev * 0.1;
+  // Reduce volatility adjustment
+  prediction += stdDev * 0.05; // Reduced from 0.1
   
   return prediction;
 }
@@ -319,13 +323,13 @@ function seasonalPatternPredict(
 }
 
 function getEnsembleWeights(horizonHours: number): number[] {
-  // Adjust weights based on prediction horizon
+  // Adjusted weights - give more weight to simpler models to reduce over-prediction
   if (horizonHours <= 6) {
-    return [0.3, 0.35, 0.25, 0.1]; // More weight on recent patterns
+    return [0.35, 0.30, 0.20, 0.15]; // More weight on linear regression for near-term
   } else if (horizonHours <= 24) {
-    return [0.25, 0.3, 0.3, 0.15]; // Balanced
+    return [0.30, 0.30, 0.25, 0.15]; // Balanced but conservative
   } else {
-    return [0.2, 0.25, 0.25, 0.3]; // More weight on seasonal patterns
+    return [0.25, 0.25, 0.25, 0.25]; // Equal weights for long-term
   }
 }
 
