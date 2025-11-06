@@ -147,7 +147,32 @@ export const useAESOPricePrediction = () => {
   const collectTrainingData = async () => {
     setLoading(true);
     try {
-      // Step 1: Fetch historical data (10 years)
+      const { data: currentData, error: currentError } = await supabase.functions.invoke('aeso-data-collector');
+      
+      if (currentError) throw currentError;
+      
+      toast({
+        title: "Data Updated",
+        description: "Latest energy data collected successfully",
+      });
+      
+      await fetchPredictions('24h');
+      
+    } catch (error: any) {
+      console.error('Error collecting data:', error);
+      toast({
+        title: "Data Collection Error",
+        description: error.message || "Failed to collect latest data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const trainModel = async () => {
+    setLoading(true);
+    try {
       toast({
         title: "Fetching Historical Data",
         description: "Collecting up to 10 years of energy price data...",
@@ -167,12 +192,6 @@ export const useAESOPricePrediction = () => {
         });
       }
       
-      // Step 2: Collect current data
-      const { data: currentData, error: currentError } = await supabase.functions.invoke('aeso-data-collector');
-      
-      if (currentError) throw currentError;
-      
-      // Step 3: Train the AI model with all data
       toast({
         title: "Training AI Model",
         description: "Training prediction model with historical data...",
@@ -198,14 +217,11 @@ export const useAESOPricePrediction = () => {
         });
       }
       
-      // Step 4: Generate predictions
-      await fetchPredictions('24h');
-      
     } catch (error: any) {
-      console.error('Error in training pipeline:', error);
+      console.error('Error training model:', error);
       toast({
         title: "Training Error",
-        description: error.message || "Failed to complete training pipeline",
+        description: error.message || "Failed to train model",
         variant: "destructive"
       });
     } finally {
@@ -221,6 +237,7 @@ export const useAESOPricePrediction = () => {
     fetchPredictions,
     fetchStoredPredictions,
     fetchModelPerformance,
-    collectTrainingData
+    collectTrainingData,
+    trainModel
   };
 };
