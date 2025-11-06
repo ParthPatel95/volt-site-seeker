@@ -710,8 +710,7 @@ async function fetchAESODataWithRetry(maxRetries = 3) {
       return { 
         pricing: undefined, 
         loadData: result?.loadData, 
-        generationMix: result?.generationMix,
-        apiSuccess: false 
+        generationMix: result?.generationMix
       };
       
     } catch (error) {
@@ -720,8 +719,7 @@ async function fetchAESODataWithRetry(maxRetries = 3) {
         return { 
           pricing: undefined, 
           loadData: undefined, 
-          generationMix: undefined,
-          apiSuccess: false 
+          generationMix: undefined
         };
       }
       const backoffMs = Math.pow(2, attempt) * 1000;
@@ -732,8 +730,7 @@ async function fetchAESODataWithRetry(maxRetries = 3) {
   return { 
     pricing: undefined, 
     loadData: undefined, 
-    generationMix: undefined,
-    apiSuccess: false 
+    generationMix: undefined
   };
 }
 
