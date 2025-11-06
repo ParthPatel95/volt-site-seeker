@@ -140,12 +140,15 @@ async function predictPrice(
   calgaryWeather: any,
   edmontonWeather: any
 ) {
-  // Extract features - use more data for better patterns (48 hours)
+  // Extract features - use available data (up to 48 hours for better patterns)
   const recentPrices = historicalData.slice(0, 48).map(d => d.pool_price).filter(p => p !== null && p !== undefined);
   
-  if (recentPrices.length < 24) {
-    throw new Error('Insufficient recent price data for prediction');
+  // Need at least 3 data points for meaningful prediction
+  if (recentPrices.length < 3) {
+    throw new Error('Insufficient recent price data for prediction (need at least 3 data points)');
   }
+  
+  console.log(`Using ${recentPrices.length} recent prices for prediction`);
   
   // Calculate weighted moving average with moderate decay
   let weightedSum = 0;
