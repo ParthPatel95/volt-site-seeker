@@ -145,82 +145,71 @@ export const useAESOPricePrediction = () => {
   };
 
   const collectTrainingData = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('aeso-data-collector');
-      if (error) throw error;
+      // Step 1: Fetch historical data (10 years)
+      toast({
+        title: "Fetching Historical Data",
+        description: "Collecting up to 10 years of energy price data...",
+      });
       
-      if (data?.success) {
+      const { data: histData, error: histError } = await supabase.functions.invoke('aeso-historical-data-fetcher');
+      
+      if (histError) {
+        console.error('Historical fetch error:', histError);
+        throw new Error('Failed to fetch historical data');
+      }
+      
+      if (histData?.success) {
         toast({
-          title: "Data Collected",
-          description: "Training data successfully collected and stored",
+          title: "Historical Data Collected",
+          description: `${histData.recordsInserted} historical records collected`,
+        });
+      }
+      
+      // Step 2: Collect current data
+      const { data: currentData, error: currentError } = await supabase.functions.invoke('aeso-data-collector');
+      
+      if (currentError) throw currentError;
+      
+      // Step 3: Train the AI model with all data
+      toast({
+        title: "Training AI Model",
+        description: "Training prediction model with historical data...",
+      });
+      
+      const { data: trainData, error: trainError } = await supabase.functions.invoke('aeso-model-trainer');
+      
+      if (trainError) throw trainError;
+      
+      if (trainData?.success) {
+        setModelPerformance({
+          modelVersion: trainData.model_version,
+          mae: trainData.performance.mae,
+          rmse: trainData.performance.rmse,
+          mape: trainData.performance.mape,
+          rSquared: trainData.performance.r_squared,
+          featureImportance: trainData.feature_importance
         });
         
-        // Auto-train if we have enough data
-        console.log('Checking if model training is needed...');
-        await autoTrainIfNeeded();
-        
-        // Then generate predictions
-        console.log('Auto-generating predictions after data collection...');
-        await fetchPredictions('24h');
+        toast({
+          title: "AI Model Trained",
+          description: `Model accuracy: ${trainData.performance.r_squared.toFixed(2)} R² score, ${trainData.training_samples} samples`,
+        });
       }
-    } catch (error) {
-      console.error('Error collecting training data:', error);
+      
+      // Step 4: Generate predictions
+      await fetchPredictions('24h');
+      
+    } catch (error: any) {
+      console.error('Error in training pipeline:', error);
       toast({
-        title: "Collection Error",
-        description: "Failed to collect training data",
+        title: "Training Error",
+        description: error.message || "Failed to complete training pipeline",
         variant: "destructive"
       });
-    }
-  };
-
-  const autoTrainIfNeeded = async () => {
-    try {
-      // Check how much training data we have
-      const { count } = await supabase
-        .from('aeso_training_data')
-        .select('*', { count: 'exact', head: true });
-
-      if (!count || count < 100) {
-        console.log(`Not enough data to train (${count}/100 minimum)`);
-        return;
-      }
-
-      // Check when we last trained
-      const { data: lastTraining } = await supabase
-        .from('aeso_model_performance')
-        .select('evaluation_date')
-        .order('evaluation_date', { ascending: false })
-        .limit(1)
-        .single();
-
-      const hoursSinceLastTraining = lastTraining 
-        ? (Date.now() - new Date(lastTraining.evaluation_date).getTime()) / (1000 * 60 * 60)
-        : Infinity;
-
-      // Train every 24 hours or if never trained
-      if (hoursSinceLastTraining > 24) {
-        console.log('Auto-training model with latest data...');
-        const { data, error } = await supabase.functions.invoke('aeso-model-trainer');
-        
-        if (error) throw error;
-        
-        if (data?.success) {
-          setModelPerformance({
-            modelVersion: data.model_version,
-            mae: data.performance.mae,
-            rmse: data.performance.rmse,
-            mape: data.performance.mape,
-            rSquared: data.performance.r_squared,
-            featureImportance: data.feature_importance
-          });
-          console.log('✅ Model auto-trained successfully');
-        }
-      } else {
-        console.log(`Skipping training - last trained ${hoursSinceLastTraining.toFixed(1)}h ago`);
-      }
-    } catch (error) {
-      console.error('Auto-training error:', error);
-      // Don't show error to user for background training
+    } finally {
+      setLoading(false);
     }
   };
 

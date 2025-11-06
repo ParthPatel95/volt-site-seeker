@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MODEL_VERSION = 'v1.0-ensemble';
+const MODEL_VERSION = 'v2.0-ml-trained';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -18,106 +18,85 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('🚀 Starting model training and evaluation...');
+    console.log('Starting AI model training with real historical data...');
 
-    // Fetch ALL training data for comprehensive analysis
-    const { data: allData, error: dataError } = await supabase
+    // Fetch all training data
+    const { data: trainingData, error: trainError } = await supabase
       .from('aeso_training_data')
       .select('*')
-      .order('timestamp', { ascending: true }); // Ascending for time series
+      .order('timestamp', { ascending: true });
 
-    if (dataError || !allData || allData.length < 100) {
-      throw new Error('Insufficient training data');
+    if (trainError || !trainingData || trainingData.length < 100) {
+      throw new Error(`Insufficient training data: ${trainingData?.length || 0} records (need at least 100)`);
     }
 
-    console.log(`📊 Total dataset: ${allData.length} samples`);
-    console.log(`📅 Date range: ${allData[0].timestamp} to ${allData[allData.length - 1].timestamp}`);
+    console.log(`Training AI model with ${trainingData.length} historical data points`);
 
-    // Analyze correlations between features and price
-    console.log('\n🔍 Analyzing feature correlations with price...');
-    const correlations = calculateFeatureCorrelations(allData);
-    console.log('Correlations:', JSON.stringify(correlations, null, 2));
+    // Calculate feature correlations with price
+    const featureCorrelations = calculateFeatureCorrelations(trainingData);
+    const featureStats = calculateFeatureStats(trainingData);
 
-    // Calculate feature statistics
-    const featureStats = calculateFeatureStats(allData);
-    console.log('\n📈 Feature statistics:', {
-      avgPrice: featureStats.avgPrice.toFixed(2),
-      stdDev: featureStats.stdDev.toFixed(2),
-      minPrice: featureStats.minPrice.toFixed(2),
-      maxPrice: featureStats.maxPrice.toFixed(2)
-    });
+    console.log('Feature correlations with price:', featureCorrelations);
+    console.log('Feature statistics:', featureStats);
 
-    // Split: 80% training, 20% testing
-    const testSize = Math.floor(allData.length * 0.2);
-    const trainingData = allData.slice(0, allData.length - testSize);
-    const testData = allData.slice(allData.length - testSize);
+    // Split data: 80% training, 20% testing
+    const splitIndex = Math.floor(trainingData.length * 0.8);
+    const trainSet = trainingData.slice(0, splitIndex);
+    const testSet = trainingData.slice(splitIndex);
 
-    console.log(`\n🎯 Training set: ${trainingData.length} samples, Test set: ${testData.length} samples`);
+    console.log(`Training: ${trainSet.length} samples, Testing: ${testSet.length} samples`);
 
-    // Evaluate model performance on test set
-    let totalAbsoluteError = 0;
+    // Evaluate model on test set
+    let totalAbsError = 0;
     let totalSquaredError = 0;
-    let totalPercentageError = 0;
-    let actualMean = 0;
-    let predictedMean = 0;
+    let totalPercentError = 0;
+    const predictions: number[] = [];
+    const actuals: number[] = [];
 
-    // Calculate feature importance based on correlations
-    const featureImportance: Record<string, number> = {
-      avgPrice: Math.abs(correlations.recentAvgPrice || 0.30),
-      hour: Math.abs(correlations.hour_of_day || 0.20),
-      dayOfWeek: Math.abs(correlations.day_of_week || 0.10),
-      avgTemp: Math.abs(correlations.temperature || 0.15),
-      windSpeed: Math.abs(correlations.wind_speed || 0.12),
-      cloudCover: Math.abs(correlations.cloud_cover || 0.08),
-      isWeekend: Math.abs(correlations.is_weekend || 0.10),
-      isHoliday: Math.abs(correlations.is_holiday || 0.05),
-      load: Math.abs(correlations.ail_mw || 0.18),
-      renewables: Math.abs(correlations.generation_renewable || 0.15)
-    };
-
-    for (const testPoint of testData) {
-      // Generate prediction using historical data
+    for (const testPoint of testSet) {
+      const prediction = predictPriceForTraining(trainSet, testPoint, featureCorrelations, featureStats);
       const actual = testPoint.pool_price;
-      const predicted = await predictPriceForTraining(trainingData, testPoint);
       
-      const error = Math.abs(predicted - actual);
-      totalAbsoluteError += error;
+      predictions.push(prediction);
+      actuals.push(actual);
+      
+      const error = prediction - actual;
+      totalAbsError += Math.abs(error);
       totalSquaredError += error * error;
-      totalPercentageError += actual > 0 ? (error / actual) * 100 : 0;
       
-      actualMean += actual;
-      predictedMean += predicted;
+      if (actual !== 0) {
+        totalPercentError += Math.abs(error / actual) * 100;
+      }
     }
 
-    const n = testData.length;
-    const mae = totalAbsoluteError / n;
-    const rmse = Math.sqrt(totalSquaredError / n);
-    const mape = totalPercentageError / n;
+    // Calculate performance metrics
+    const mae = totalAbsError / testSet.length;
+    const rmse = Math.sqrt(totalSquaredError / testSet.length);
+    const mape = totalPercentError / testSet.length;
+    
+    // R-squared
+    const meanActual = actuals.reduce((sum, val) => sum + val, 0) / actuals.length;
+    const totalSS = actuals.reduce((sum, val) => sum + Math.pow(val - meanActual, 2), 0);
+    const residualSS = actuals.reduce((sum, val, i) => sum + Math.pow(val - predictions[i], 2), 0);
+    const rSquared = 1 - (residualSS / totalSS);
 
-    actualMean /= n;
-    predictedMean /= n;
+    console.log(`✅ Model Performance:`);
+    console.log(`  MAE: $${mae.toFixed(2)}/MWh`);
+    console.log(`  RMSE: $${rmse.toFixed(2)}/MWh`);
+    console.log(`  MAPE: ${mape.toFixed(2)}%`);
+    console.log(`  R²: ${rSquared.toFixed(4)}`);
 
-    // Calculate R-squared
-    let ssTotal = 0;
-    let ssResidual = 0;
-    for (const testPoint of testData) {
-      const actual = testPoint.pool_price;
-      const predicted = await predictPriceForTraining(trainingData, testPoint);
-      ssTotal += Math.pow(actual - actualMean, 2);
-      ssResidual += Math.pow(actual - predicted, 2);
+    // Calculate feature importance
+    const featureImportance: Record<string, number> = {};
+    const totalCorr = Object.values(featureCorrelations).reduce((sum, val) => sum + Math.abs(val), 0);
+    
+    for (const [feature, corr] of Object.entries(featureCorrelations)) {
+      featureImportance[feature] = Math.abs(corr) / totalCorr;
     }
-    const rSquared = 1 - (ssResidual / ssTotal);
 
-    // Normalize feature importance
-    const importanceSum = Object.values(featureImportance).reduce((a, b) => a + b, 0);
-    Object.keys(featureImportance).forEach(key => {
-      featureImportance[key] = featureImportance[key] / importanceSum;
-    });
+    console.log('Feature importance:', featureImportance);
 
-    console.log(`\n✅ Model Performance - MAE: ${mae.toFixed(2)}, RMSE: ${rmse.toFixed(2)}, MAPE: ${mape.toFixed(2)}%, R²: ${rSquared.toFixed(4)}`);
-    console.log('📊 Feature Importance:', JSON.stringify(featureImportance, null, 2));
-
-    // Store performance metrics
+    // Store model performance
     const { error: insertError } = await supabase
       .from('aeso_model_performance')
       .insert({
@@ -126,40 +105,32 @@ serve(async (req) => {
         rmse: rmse,
         mape: mape,
         r_squared: rSquared,
-        training_period_start: trainingData[0].timestamp,
-        training_period_end: trainingData[trainingData.length - 1].timestamp,
-        evaluation_date: new Date().toISOString(),
-        feature_importance: featureImportance
+        feature_importance: featureImportance,
+        training_samples: trainingData.length
       });
 
     if (insertError) {
-      console.error('Error storing performance metrics:', insertError);
+      console.error('Error storing model performance:', insertError);
     }
 
     return new Response(JSON.stringify({
       success: true,
       model_version: MODEL_VERSION,
-      performance: {
-        mae,
-        rmse,
-        mape,
-        r_squared: rSquared
-      },
-      correlations,
-      feature_importance: featureImportance,
-      feature_stats: {
-        avgPrice: featureStats.avgPrice,
-        stdDev: featureStats.stdDev,
-        dataPoints: featureStats.dataPoints
-      },
       training_samples: trainingData.length,
-      test_samples: testData.length
+      performance: {
+        mae: parseFloat(mae.toFixed(2)),
+        rmse: parseFloat(rmse.toFixed(2)),
+        mape: parseFloat(mape.toFixed(2)),
+        r_squared: parseFloat(rSquared.toFixed(4))
+      },
+      feature_importance: featureImportance,
+      feature_correlations: featureCorrelations
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Training error:', error);
+    console.error('Model training error:', error);
     return new Response(JSON.stringify({ 
       success: false, 
       error: error.message 
@@ -170,135 +141,195 @@ serve(async (req) => {
   }
 });
 
-async function predictPriceForTraining(historicalData: any[], testPoint: any): Promise<number> {
-  // Simplified prediction using similar logic to main predictor
-  const recentPrices = historicalData.slice(0, 24).map(d => d.pool_price);
-  const avgPrice = recentPrices.reduce((a, b) => a + b, 0) / recentPrices.length;
+// AI prediction function for training evaluation
+function predictPriceForTraining(
+  historicalData: any[], 
+  testPoint: any, 
+  correlations: Record<string, number>,
+  stats: any
+): number {
+  // Use recent 14 days (336 hours) for context
+  const recentData = historicalData.slice(-336);
   
-  const hour = testPoint.hour_of_day || 0;
-  const dayOfWeek = testPoint.day_of_week || 0;
-  const avgTemp = testPoint.temperature_calgary || 0;
-  const windSpeed = testPoint.wind_speed || 0;
-  const isWeekend = testPoint.is_weekend || false;
-
-  // Linear regression component
-  const hourFactor = (hour >= 7 && hour <= 21) ? 1.15 : 0.85;
-  const weekdayFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.1 : 0.9;
-  const tempFactor = 1 + (Math.abs(avgTemp - 15) / 100);
-  const windFactor = 1 - (windSpeed / 100);
+  if (recentData.length === 0) return stats.avgPrice || 30;
   
-  const linearPred = avgPrice * hourFactor * weekdayFactor * tempFactor * windFactor;
-
-  // Time series component
-  const hourlyMultipliers = [
-    0.7, 0.65, 0.6, 0.6, 0.65, 0.75, 0.9, 1.1,
-    1.2, 1.25, 1.2, 1.15, 1.1, 1.05, 1.1, 1.15,
-    1.25, 1.3, 1.35, 1.3, 1.2, 1.0, 0.9, 0.8
-  ];
-  const timeSeriesPred = avgPrice * hourlyMultipliers[hour] * (isWeekend ? 0.95 : 1.05);
-
-  // Gradient boosting component
-  let gbPred = avgPrice;
-  if (hour >= 17 && hour <= 20) gbPred *= 1.3;
-  else if (hour >= 0 && hour <= 5) gbPred *= 0.7;
-  if (isWeekend) gbPred *= 0.92;
-  if (avgTemp < -10 || avgTemp > 25) gbPred *= 1.2;
-  if (windSpeed > 20) gbPred *= 0.85;
-
-  // Ensemble with equal weights
-  return (linearPred + timeSeriesPred + gbPred) / 3;
-}
-
-// Calculate Pearson correlation coefficient
-function calculateCorrelation(x: number[], y: number[]): number {
-  const n = x.length;
-  if (n === 0) return 0;
+  const recentPrices = recentData.map(d => d.pool_price).filter(p => p !== null && p !== undefined);
+  if (recentPrices.length === 0) return stats.avgPrice || 30;
   
-  const sum_x = x.reduce((a, b) => a + b, 0);
-  const sum_y = y.reduce((a, b) => a + b, 0);
-  const sum_xy = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-  const sum_x2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-  const sum_y2 = y.reduce((sum, yi) => sum + yi * yi, 0);
-
-  const numerator = n * sum_xy - sum_x * sum_y;
-  const denominator = Math.sqrt((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y));
-
-  return denominator === 0 ? 0 : numerator / denominator;
+  // Exponentially weighted moving average
+  let weightedSum = 0;
+  let weightSum = 0;
+  const alpha = 0.3;
+  
+  recentPrices.forEach((price, i) => {
+    const weight = Math.exp(-alpha * i);
+    weightedSum += price * weight;
+    weightSum += weight;
+  });
+  
+  const basePrice = weightedSum / weightSum;
+  
+  // Extract features from test point
+  const timestamp = new Date(testPoint.timestamp);
+  const hour = timestamp.getHours();
+  const dayOfWeek = timestamp.getDay();
+  const month = timestamp.getMonth() + 1;
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  
+  // Multi-factor model using learned correlations
+  let prediction = basePrice;
+  
+  // Hour of day factor (peak hours = higher prices)
+  const hourlyMultiplier = stats.hourlyAvgPrices?.[hour] || basePrice;
+  const hourFactor = hourlyMultiplier / stats.avgPrice;
+  prediction *= hourFactor;
+  
+  // Day of week factor
+  if (isWeekend) {
+    prediction *= 0.92; // Weekends typically 8% lower
+  }
+  
+  // Seasonal factor (winter & summer = higher demand)
+  const seasonalFactors: Record<number, number> = {
+    1: 1.15, 2: 1.12, 3: 1.05, 4: 0.95, 5: 0.92, 6: 0.95,
+    7: 1.08, 8: 1.12, 9: 1.02, 10: 0.98, 11: 1.05, 12: 1.12
+  };
+  prediction *= seasonalFactors[month] || 1.0;
+  
+  // Temperature impact (if available)
+  if (testPoint.temperature_calgary !== null && correlations.temperature) {
+    const tempDeviation = testPoint.temperature_calgary - 15; // 15°C is mild
+    prediction *= 1 + (Math.abs(tempDeviation) / 150) * Math.sign(correlations.temperature);
+  }
+  
+  // Wind generation impact (if available)
+  if (testPoint.generation_wind !== null && correlations.windGen) {
+    // More wind = lower prices
+    const windFactor = 1 - (testPoint.generation_wind / 3000) * 0.15; // Max 15% reduction
+    prediction *= Math.max(0.85, windFactor);
+  }
+  
+  // Demand impact (if available)
+  if (testPoint.ail_mw !== null && correlations.demand) {
+    const demandFactor = testPoint.ail_mw / (stats.avgDemand || 10000);
+    prediction *= demandFactor;
+  }
+  
+  return Math.max(0, prediction); // Prices can't be negative (well, rarely)
 }
 
 // Calculate correlations between features and price
-function calculateFeatureCorrelations(data: any[]) {
-  const prices = data.map(d => d.pool_price);
+function calculateFeatureCorrelations(data: any[]): Record<string, number> {
+  const correlations: Record<string, number> = {};
   
-  // Calculate recent average price for each point
-  const recentAvgPrices = data.map((d, i) => {
-    const lookback = Math.min(24, i);
-    if (lookback === 0) return d.pool_price;
-    const recentPrices = data.slice(Math.max(0, i - lookback), i).map(p => p.pool_price);
-    return recentPrices.reduce((sum, p) => sum + p, 0) / recentPrices.length;
-  });
+  // Hour of day
+  correlations.hourOfDay = calculateCorrelation(
+    data.map(d => d.hour_of_day),
+    data.map(d => d.pool_price)
+  );
   
-  return {
-    recentAvgPrice: calculateCorrelation(recentAvgPrices, prices),
-    hour_of_day: calculateCorrelation(data.map(d => d.hour_of_day), prices),
-    day_of_week: calculateCorrelation(data.map(d => d.day_of_week), prices),
-    temperature: calculateCorrelation(
-      data.map(d => (d.temperature_calgary + d.temperature_edmonton) / 2), 
-      prices
-    ),
-    wind_speed: calculateCorrelation(data.map(d => d.wind_speed), prices),
-    cloud_cover: calculateCorrelation(data.map(d => d.cloud_cover), prices),
-    is_weekend: calculateCorrelation(data.map(d => d.is_weekend ? 1 : 0), prices),
-    is_holiday: calculateCorrelation(data.map(d => d.is_holiday ? 1 : 0), prices),
-    ail_mw: calculateCorrelation(data.map(d => d.ail_mw || 0), prices),
-    generation_renewable: calculateCorrelation(
-      data.map(d => (d.generation_wind || 0) + (d.generation_solar || 0) + (d.generation_hydro || 0)),
-      prices
-    )
-  };
+  // Day of week
+  correlations.dayOfWeek = calculateCorrelation(
+    data.map(d => d.day_of_week),
+    data.map(d => d.pool_price)
+  );
+  
+  // Month (seasonality)
+  correlations.month = calculateCorrelation(
+    data.map(d => d.month),
+    data.map(d => d.pool_price)
+  );
+  
+  // Temperature (if available)
+  const tempData = data.filter(d => d.temperature_calgary !== null);
+  if (tempData.length > 100) {
+    correlations.temperature = calculateCorrelation(
+      tempData.map(d => d.temperature_calgary),
+      tempData.map(d => d.pool_price)
+    );
+  }
+  
+  // Wind generation
+  const windData = data.filter(d => d.generation_wind !== null);
+  if (windData.length > 100) {
+    correlations.windGen = calculateCorrelation(
+      windData.map(d => d.generation_wind),
+      windData.map(d => d.pool_price)
+    );
+  }
+  
+  // Demand
+  const demandData = data.filter(d => d.ail_mw !== null);
+  if (demandData.length > 100) {
+    correlations.demand = calculateCorrelation(
+      demandData.map(d => d.ail_mw),
+      demandData.map(d => d.pool_price)
+    );
+  }
+  
+  return correlations;
 }
 
-// Calculate feature statistics
-function calculateFeatureStats(data: any[]) {
+function calculateCorrelation(x: number[], y: number[]): number {
+  const n = x.length;
+  if (n === 0 || n !== y.length) return 0;
+  
+  const meanX = x.reduce((sum, val) => sum + val, 0) / n;
+  const meanY = y.reduce((sum, val) => sum + val, 0) / n;
+  
+  let numerator = 0;
+  let denomX = 0;
+  let denomY = 0;
+  
+  for (let i = 0; i < n; i++) {
+    const dx = x[i] - meanX;
+    const dy = y[i] - meanY;
+    numerator += dx * dy;
+    denomX += dx * dx;
+    denomY += dy * dy;
+  }
+  
+  const denominator = Math.sqrt(denomX * denomY);
+  return denominator === 0 ? 0 : numerator / denominator;
+}
+
+function calculateFeatureStats(data: any[]): Record<string, any> {
   const prices = data.map(d => d.pool_price);
   const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
   const stdDev = Math.sqrt(
     prices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / prices.length
   );
-
-  // Price by hour of day
-  const priceByHour: Record<number, number[]> = {};
-  data.forEach(d => {
-    if (!priceByHour[d.hour_of_day]) priceByHour[d.hour_of_day] = [];
-    priceByHour[d.hour_of_day].push(d.pool_price);
-  });
-
-  const avgPriceByHour: Record<number, number> = {};
-  Object.keys(priceByHour).forEach(hour => {
-    const hourPrices = priceByHour[parseInt(hour)];
-    avgPriceByHour[parseInt(hour)] = hourPrices.reduce((sum, p) => sum + p, 0) / hourPrices.length;
-  });
-
-  // Price by day of week
-  const priceByDay: Record<number, number[]> = {};
-  data.forEach(d => {
-    if (!priceByDay[d.day_of_week]) priceByDay[d.day_of_week] = [];
-    priceByDay[d.day_of_week].push(d.pool_price);
-  });
-
-  const avgPriceByDay: Record<number, number> = {};
-  Object.keys(priceByDay).forEach(day => {
-    const dayPrices = priceByDay[parseInt(day)];
-    avgPriceByDay[parseInt(day)] = dayPrices.reduce((sum, p) => sum + p, 0) / dayPrices.length;
-  });
-
+  
+  // Hourly average prices
+  const hourlyAvgs: Record<number, number> = {};
+  const hourlyCounts: Record<number, number> = {};
+  
+  for (const d of data) {
+    const hour = d.hour_of_day;
+    if (!hourlyAvgs[hour]) {
+      hourlyAvgs[hour] = 0;
+      hourlyCounts[hour] = 0;
+    }
+    hourlyAvgs[hour] += d.pool_price;
+    hourlyCounts[hour]++;
+  }
+  
+  for (const hour in hourlyAvgs) {
+    hourlyAvgs[hour] /= hourlyCounts[hour];
+  }
+  
+  // Average demand (if available)
+  const demandData = data.filter(d => d.ail_mw !== null);
+  const avgDemand = demandData.length > 0
+    ? demandData.reduce((sum, d) => sum + d.ail_mw, 0) / demandData.length
+    : null;
+  
   return {
     avgPrice,
     stdDev,
     minPrice: Math.min(...prices),
     maxPrice: Math.max(...prices),
-    avgPriceByHour,
-    avgPriceByDay,
-    dataPoints: data.length
+    hourlyAvgPrices: hourlyAvgs,
+    avgDemand
   };
 }
