@@ -19,6 +19,9 @@ verify_jwt = false
 [functions.aeso-model-trainer]
 verify_jwt = false
 
+[functions.aeso-historical-data-loader]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

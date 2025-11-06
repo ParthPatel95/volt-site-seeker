@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
-  const { predictions, modelPerformance, loading, fetchPredictions, fetchModelPerformance, collectTrainingData } = useAESOPricePrediction();
+  const { predictions, modelPerformance, loading, fetchPredictions, fetchModelPerformance, collectTrainingData, loadHistoricalData, trainModel } = useAESOPricePrediction();
   const { pricing } = useAESOData();
   const { toast } = useToast();
 
@@ -35,6 +35,14 @@ export const AESOPricePredictionDashboard = () => {
       title: "Training Data Updated",
       description: "The prediction model now has access to the latest market data",
     });
+  };
+
+  const handleLoadHistoricalData = async () => {
+    await loadHistoricalData();
+  };
+
+  const handleTrainModel = async () => {
+    await trainModel();
   };
 
   const handleExport = () => {
@@ -70,31 +78,43 @@ export const AESOPricePredictionDashboard = () => {
             AI-powered energy price forecasting with confidence intervals
           </p>
         </div>
-        <div className="flex gap-2">
-          <Select value={horizon} onValueChange={setHorizon}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="6h">6 Hours</SelectItem>
-              <SelectItem value="24h">24 Hours</SelectItem>
-              <SelectItem value="7d">7 Days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={handleCollectData} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Update Data
-          </Button>
-          <Button onClick={handleGeneratePredictions} disabled={loading}>
-            <TrendingUp className="h-4 w-4 mr-2" />
-            {loading ? 'Generating...' : 'Generate Forecast'}
-          </Button>
-          {predictions.length > 0 && (
-            <Button onClick={handleExport} variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Select value={horizon} onValueChange={setHorizon}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6h">6 Hours</SelectItem>
+                <SelectItem value="24h">24 Hours</SelectItem>
+                <SelectItem value="7d">7 Days</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Update Data
             </Button>
-          )}
+            <Button onClick={handleGeneratePredictions} disabled={loading}>
+              <TrendingUp className="h-4 w-4 mr-2" />
+              {loading ? 'Generating...' : 'Generate Forecast'}
+            </Button>
+            {predictions.length > 0 && (
+              <Button onClick={handleExport} variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button onClick={handleLoadHistoricalData} variant="secondary" size="sm" disabled={loading}>
+              <Download className="h-4 w-4 mr-2" />
+              Load 3 Years Data
+            </Button>
+            <Button onClick={handleTrainModel} variant="secondary" size="sm" disabled={loading}>
+              <Brain className="h-4 w-4 mr-2" />
+              Train AI Model
+            </Button>
+          </div>
         </div>
       </div>
 
