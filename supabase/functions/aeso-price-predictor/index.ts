@@ -22,26 +22,18 @@ serve(async (req) => {
 
     console.log(`Generating price predictions for horizon: ${horizon}`);
 
-    // Fetch recent training data (last 168 hours = 7 days)
-    // FILTER OUT zeros - they're invalid data points
-    const { data: allData, error: histError } = await supabase
+    // Fetch recent training data (last 336 hours = 14 days for better pattern recognition)
+    const { data: historicalData, error: histError } = await supabase
       .from('aeso_training_data')
       .select('*')
-      .neq('pool_price', 0)
       .order('timestamp', { ascending: false })
-      .limit(168);
+      .limit(336);
 
-    if (histError || !allData || allData.length === 0) {
+    if (histError || !historicalData || historicalData.length === 0) {
       throw new Error('Insufficient training data');
     }
     
-    const historicalData = allData.filter(d => d.pool_price > 0);
-    
-    if (historicalData.length === 0) {
-      throw new Error('No valid price data available (all prices are zero or invalid)');
-    }
-    
-    console.log(`Using ${historicalData.length} valid data points for prediction`);
+    console.log(`Using ${historicalData.length} data points for prediction`);
 
     // Parse horizon
     const horizonHours = parseHorizon(horizon);
@@ -148,44 +140,33 @@ async function predictPrice(
   calgaryWeather: any,
   edmontonWeather: any
 ) {
-  // Extract features - get all recent prices (including zeros)
-  const recentPrices = historicalData.slice(0, 24).map(d => d.pool_price);
+  // Extract features - use more data for better patterns (48 hours)
+  const recentPrices = historicalData.slice(0, 48).map(d => d.pool_price).filter(p => p !== null && p !== undefined);
   
-  // Price range validation - filter out outliers beyond reasonable range
-  const validPrices = recentPrices.filter(p => p !== null && p !== undefined && p >= -100 && p <= 1000);
-  
-  // Log unusual prices for monitoring
-  const unusualPrices = recentPrices.filter(p => p !== null && p !== undefined && (p < -10 || p > 500));
-  if (unusualPrices.length > 0) {
-    console.log('⚠️ Unusual prices detected in training data:', unusualPrices);
+  if (recentPrices.length < 24) {
+    throw new Error('Insufficient recent price data for prediction');
   }
   
-  // If we don't have enough valid prices, throw an error
-  if (validPrices.length === 0) {
-    throw new Error('No valid price data available. Please collect more training data.');
-  }
-  
-  // Use exponentially weighted moving average (EWMA) to emphasize recent prices
-  // This prevents old spikes from inflating current predictions
+  // Calculate weighted moving average with moderate decay
   let weightedSum = 0;
   let weightSum = 0;
-  const alpha = 0.8; // Aggressive decay - heavily favor the most recent prices
+  const alpha = 0.3; // Moderate decay - balance recent and historical
   
-  validPrices.forEach((price, i) => {
-    const weight = Math.exp(-alpha * i); // Exponential decay
+  recentPrices.forEach((price, i) => {
+    const weight = Math.exp(-alpha * i);
     weightedSum += price * weight;
     weightSum += weight;
   });
   
-  const avgPrice = weightedSum / weightSum; // EWMA instead of simple average
-  const currentPrice = validPrices[0]; // Most recent price
+  const avgPrice = weightedSum / weightSum;
+  const currentPrice = recentPrices[0];
   
-  // Calculate std dev for confidence intervals
+  // Calculate volatility (standard deviation)
   const priceStdDev = Math.sqrt(
-    validPrices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / validPrices.length
+    recentPrices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / recentPrices.length
   );
   
-  console.log(`Price analysis - Current: ${currentPrice.toFixed(2)}, EWMA: ${avgPrice.toFixed(2)}, StdDev: ${priceStdDev.toFixed(2)}`);
+  console.log(`Price stats - Current: $${currentPrice.toFixed(2)}, Avg: $${avgPrice.toFixed(2)}, StdDev: $${priceStdDev.toFixed(2)}`);
 
   // Time-based features
   const hour = targetTime.getHours();
@@ -201,31 +182,21 @@ async function predictPrice(
 
   // Ensemble prediction using multiple models
   const pred1 = linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed);
-  const pred2 = timeSeriesDecompositionPredict(validPrices, hour, dayOfWeek, month);
+  const pred2 = timeSeriesDecompositionPredict(recentPrices, hour, dayOfWeek, month);
   const pred3 = gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover);
   const pred4 = seasonalPatternPredict(historicalData, hour, month, isWeekend);
   
-  const predictions = [pred1, pred2, pred3, pred4];
-  
-  console.log(`Individual predictions - LR: ${pred1.toFixed(2)}, TS: ${pred2.toFixed(2)}, GB: ${pred3.toFixed(2)}, SP: ${pred4.toFixed(2)}`);
+  console.log(`Model predictions - LR: $${pred1.toFixed(2)}, TS: $${pred2.toFixed(2)}, GB: $${pred3.toFixed(2)}, SP: $${pred4.toFixed(2)}`);
 
-  // Weighted ensemble (different weights based on horizon)
-  const weights = getEnsembleWeights(horizonHours);
-  let predictedPrice = predictions.reduce((sum, pred, i) => sum + pred * weights[i], 0);
+  // Adaptive ensemble weights based on horizon and volatility
+  const weights = getEnsembleWeights(horizonHours, priceStdDev);
+  let predictedPrice = pred1 * weights[0] + pred2 * weights[1] + pred3 * weights[2] + pred4 * weights[3];
   
-  // Apply mean reversion - prices tend to revert to recent average
-  // This dampens predictions that are too far from current reality
-  const meanReversionFactor = 0.5; // 50% pull toward current price (increased for stability)
-  predictedPrice = predictedPrice * (1 - meanReversionFactor) + currentPrice * meanReversionFactor;
+  // Smart mean reversion - less aggressive for short horizons
+  const reversionFactor = Math.min(0.3 + (horizonHours / 100), 0.6);
+  predictedPrice = predictedPrice * (1 - reversionFactor) + currentPrice * reversionFactor;
   
-  // Cap maximum deviation from current price (prevents wild predictions)
-  const maxDeviation = Math.max(currentPrice * 0.5, 20); // Max 50% change or $20
-  if (Math.abs(predictedPrice - currentPrice) > maxDeviation) {
-    predictedPrice = currentPrice + Math.sign(predictedPrice - currentPrice) * maxDeviation;
-    console.log(`⚠️ Prediction capped due to excessive deviation from current price`);
-  }
-  
-  console.log(`Ensemble: ${predictedPrice.toFixed(2)} (post mean-reversion & cap) from EWMA: ${avgPrice.toFixed(2)}, current: ${currentPrice.toFixed(2)}`);
+  console.log(`Final prediction: $${predictedPrice.toFixed(2)} (reversion factor: ${reversionFactor.toFixed(2)})`);
 
   // Calculate confidence intervals
   const volatility = priceStdDev * Math.sqrt(horizonHours / 24);
@@ -260,11 +231,11 @@ function linearRegressionPredict(
   temp: number,
   windSpeed: number
 ): number {
-  // More conservative linear regression model
-  const hourFactor = (hour >= 7 && hour <= 21) ? 1.08 : 0.92; // Peak vs off-peak (reduced from 1.15/0.85)
-  const weekdayFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.03 : 0.97; // Reduced from 1.1/0.9
-  const tempFactor = 1 + (Math.abs(temp - 15) / 200); // Reduced impact (was /100)
-  const windFactor = 1 - (windSpeed / 200); // Reduced impact (was /100)
+  // Linear model with realistic coefficients
+  const hourFactor = (hour >= 7 && hour <= 21) ? 1.12 : 0.88;
+  const weekdayFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.05 : 0.95;
+  const tempFactor = 1 + (Math.abs(temp - 15) / 150);
+  const windFactor = Math.max(0.85, 1 - (windSpeed / 150));
   
   return avgPrice * hourFactor * weekdayFactor * tempFactor * windFactor;
 }
@@ -275,24 +246,24 @@ function timeSeriesDecompositionPredict(
   dayOfWeek: number,
   month: number
 ): number {
-  // Trend component
-  const trend = recentPrices[0];
+  // Use median for robustness against outliers
+  const sortedPrices = [...recentPrices].sort((a, b) => a - b);
+  const trend = sortedPrices[Math.floor(sortedPrices.length / 2)];
   
-  // More conservative seasonal component (hourly pattern)
+  // Realistic hourly patterns for Alberta
   const hourlyMultipliers = [
-    0.85, 0.82, 0.80, 0.80, 0.82, 0.88, 0.95, 1.05, // 0-7 (reduced extremes)
-    1.10, 1.12, 1.10, 1.08, 1.05, 1.03, 1.05, 1.08, // 8-15
-    1.12, 1.15, 1.18, 1.15, 1.10, 1.00, 0.95, 0.90   // 16-23 (reduced from 1.35 max)
+    0.82, 0.78, 0.76, 0.75, 0.77, 0.85, 0.95, 1.08,
+    1.15, 1.18, 1.16, 1.12, 1.08, 1.05, 1.08, 1.12,
+    1.18, 1.22, 1.25, 1.20, 1.12, 1.02, 0.92, 0.87
   ];
   const hourlyFactor = hourlyMultipliers[hour];
   
-  // Weekly seasonality - more conservative
-  const weeklyFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.02 : 0.98; // Reduced from 1.05/0.95
+  const weeklyFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.04 : 0.96;
   
-  // Monthly seasonality - more conservative (reduced extremes)
+  // Alberta seasonal patterns (heating/cooling demand)
   const monthlyMultipliers = [
-    1.10, 1.08, 1.03, 0.97, 0.95, 0.97, // Jan-Jun (reduced from 1.2 max)
-    1.05, 1.08, 1.00, 0.97, 1.03, 1.08  // Jul-Dec
+    1.15, 1.12, 1.05, 0.95, 0.92, 0.95,
+    1.08, 1.12, 1.02, 0.98, 1.05, 1.12
   ];
   const monthlyFactor = monthlyMultipliers[month - 1];
   
@@ -308,30 +279,27 @@ function gradientBoostingPredict(
   windSpeed: number,
   cloudCover: number
 ): number {
-  // Simulate gradient boosting with decision tree-like rules
   let prediction = avgPrice;
   
-  // Tree 1: Hour of day rules - more conservative
-  if (hour >= 17 && hour <= 20) prediction *= 1.15; // Reduced from 1.3
-  else if (hour >= 0 && hour <= 5) prediction *= 0.85; // Reduced from 0.7
-  else prediction *= 1.0;
+  // Peak hour premium (evening demand surge)
+  if (hour >= 17 && hour <= 20) prediction *= 1.20;
+  else if (hour >= 7 && hour <= 9) prediction *= 1.12;
+  else if (hour >= 0 && hour <= 5) prediction *= 0.82;
   
-  // Tree 2: Weekend effect - more conservative
-  if (isWeekend) prediction *= 0.96; // Reduced from 0.92
+  // Weekend discount (lower industrial demand)
+  if (isWeekend) prediction *= 0.93;
   
-  // Tree 3: Temperature effects - more conservative
-  if (temp < -10 || temp > 25) prediction *= 1.10; // Reduced from 1.2
-  else if (temp >= 10 && temp <= 20) prediction *= 0.97; // Less aggressive
+  // Temperature impacts (heating/cooling demand)
+  if (temp < -15) prediction *= 1.18; // Heating demand
+  else if (temp > 28) prediction *= 1.15; // Cooling demand
+  else if (temp >= 10 && temp <= 20) prediction *= 0.95; // Mild weather
   
-  // Tree 4: Wind generation impact - more conservative
-  if (windSpeed > 20) prediction *= 0.92; // Reduced from 0.85
-  else if (windSpeed < 5) prediction *= 1.05; // Reduced from 1.1
+  // Wind generation (Alberta has significant wind capacity)
+  if (windSpeed > 25) prediction *= 0.88; // High wind = more generation
+  else if (windSpeed < 8) prediction *= 1.08; // Low wind = less generation
   
-  // Tree 5: Cloud cover (affects solar) - more conservative
-  if (cloudCover > 80 && (hour >= 10 && hour <= 16)) prediction *= 1.02; // Reduced from 1.05
-  
-  // Reduce volatility adjustment
-  prediction += stdDev * 0.05; // Reduced from 0.1
+  // Solar impact (less significant than wind in Alberta)
+  if (cloudCover > 80 && hour >= 10 && hour <= 16) prediction *= 1.03;
   
   return prediction;
 }
@@ -342,50 +310,48 @@ function seasonalPatternPredict(
   month: number,
   isWeekend: boolean
 ): number {
-  // Get current price as baseline
-  const currentPrice = historicalData[0]?.pool_price || 30;
+  // Look at last 7 days for patterns
+  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  const recentData = historicalData.filter(d => new Date(d.timestamp).getTime() > sevenDaysAgo);
   
-  // Find similar historical periods (only from last 24 hours to avoid old spikes)
-  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-  const recentData = historicalData.filter(d => new Date(d.timestamp).getTime() > oneDayAgo);
+  if (recentData.length === 0) {
+    return historicalData[0]?.pool_price || 30;
+  }
   
+  // Find similar time periods (same hour ±1, same day type)
   const similarPeriods = recentData.filter(d => {
     const dHour = new Date(d.timestamp).getHours();
-    const dMonth = new Date(d.timestamp).getMonth() + 1;
     const dIsWeekend = [0, 6].includes(new Date(d.timestamp).getDay());
     
-    return Math.abs(dHour - hour) <= 1 && 
-           dMonth === month && 
-           dIsWeekend === isWeekend;
+    return Math.abs(dHour - hour) <= 1 && dIsWeekend === isWeekend;
   });
   
-  // If no similar periods found, return current price (not historical outliers)
   if (similarPeriods.length === 0) {
-    return currentPrice;
+    return recentData[0].pool_price;
   }
   
-  // Filter out outliers before averaging (remove prices > 2x current or < 0.5x current)
-  const validSimilar = similarPeriods.filter(d => {
-    const price = d.pool_price;
-    return price > currentPrice * 0.5 && price < currentPrice * 2;
-  });
-  
-  if (validSimilar.length === 0) {
-    return currentPrice;
-  }
-  
-  const avgSimilarPrice = validSimilar.reduce((sum, d) => sum + d.pool_price, 0) / validSimilar.length;
-  return avgSimilarPrice;
+  // Use median to avoid outlier influence
+  const prices = similarPeriods.map(d => d.pool_price).sort((a, b) => a - b);
+  return prices[Math.floor(prices.length / 2)];
 }
 
-function getEnsembleWeights(horizonHours: number): number[] {
-  // Give much more weight to seasonal pattern as it's most accurate
+function getEnsembleWeights(horizonHours: number, volatility: number): number[] {
+  // Adaptive weights based on horizon and market volatility
+  const isHighVolatility = volatility > 15;
+  
   if (horizonHours <= 6) {
-    return [0.20, 0.25, 0.15, 0.40]; // Heavy weight on seasonal for near-term
+    // Near-term: favor seasonal patterns and time series
+    return isHighVolatility 
+      ? [0.15, 0.35, 0.25, 0.25]  // More weight on gradient boosting in volatile markets
+      : [0.15, 0.30, 0.15, 0.40]; // Heavy seasonal in stable markets
   } else if (horizonHours <= 24) {
-    return [0.20, 0.25, 0.20, 0.35]; // Still favor seasonal
+    // Medium-term: balanced approach
+    return isHighVolatility
+      ? [0.20, 0.30, 0.25, 0.25]
+      : [0.20, 0.30, 0.20, 0.30];
   } else {
-    return [0.20, 0.25, 0.20, 0.35]; // Consistent weights for long-term
+    // Long-term: rely more on statistical models
+    return [0.25, 0.30, 0.25, 0.20];
   }
 }
 
