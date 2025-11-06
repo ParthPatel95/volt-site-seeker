@@ -1583,35 +1583,47 @@ async function fetchPJMData() {
     const response = await fetch(lmpUrl);
     
     if (response.ok) {
-      const data = await response.json();
-      
-      if (data && Array.isArray(data.items) && data.items.length > 0) {
-        const prices = data.items
-          .filter((item: any) => item.total_lmp_rt)
-          .map((item: any) => parseFloat(item.total_lmp_rt))
-          .filter((price: number) => Number.isFinite(price) && price > -100 && price < 1000);
-        
-        if (prices.length > 0) {
-          const avgPrice = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+      // Check content type before parsing
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const data = await response.json();
           
-          pricing = {
-            current_price: Math.round(avgPrice * 100) / 100,
-            average_price: Math.round(avgPrice * 0.9 * 100) / 100,
-            peak_price: Math.round(avgPrice * 1.6 * 100) / 100,
-            off_peak_price: Math.round(avgPrice * 0.5 * 100) / 100,
-            market_conditions: avgPrice > 80 ? 'high' : avgPrice > 45 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'pjm_dataminer'
-          };
-          
-          console.log('✅ PJM pricing:', pricing);
+          if (data && Array.isArray(data.items) && data.items.length > 0) {
+            const prices = data.items
+              .filter((item: any) => item.total_lmp_rt)
+              .map((item: any) => parseFloat(item.total_lmp_rt))
+              .filter((price: number) => Number.isFinite(price) && price > -100 && price < 1000);
+            
+            if (prices.length > 0) {
+              const avgPrice = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+              
+              pricing = {
+                current_price: Math.round(avgPrice * 100) / 100,
+                average_price: Math.round(avgPrice * 0.9 * 100) / 100,
+                peak_price: Math.round(avgPrice * 1.6 * 100) / 100,
+                off_peak_price: Math.round(avgPrice * 0.5 * 100) / 100,
+                market_conditions: avgPrice > 80 ? 'high' : avgPrice > 45 ? 'normal' : 'low',
+                timestamp: new Date().toISOString(),
+                source: 'pjm_dataminer'
+              };
+              
+              console.log('✅ PJM pricing:', pricing);
+            }
+          }
+        } catch (jsonError) {
+          console.error('❌ PJM JSON parsing error:', jsonError);
         }
+      } else {
+        console.log('⚠️ PJM API returned non-JSON content:', contentType);
       }
     }
   } catch (e) {
     console.error('❌ PJM pricing error:', e);
-    
-    // Fallback estimated pricing
+  }
+  
+  // Always provide fallback if pricing wasn't fetched
+  if (!pricing) {
     pricing = {
       current_price: 42.50,
       average_price: 38.80,
