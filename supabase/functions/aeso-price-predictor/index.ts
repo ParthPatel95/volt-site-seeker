@@ -159,7 +159,7 @@ async function predictPrice(
   // This prevents old spikes from inflating current predictions
   let weightedSum = 0;
   let weightSum = 0;
-  const alpha = 0.3; // Decay factor - higher = more weight on recent prices
+  const alpha = 0.8; // Aggressive decay - heavily favor the most recent prices
   
   validPrices.forEach((price, i) => {
     const weight = Math.exp(-alpha * i); // Exponential decay
@@ -205,7 +205,7 @@ async function predictPrice(
   
   // Apply mean reversion - prices tend to revert to recent average
   // This dampens predictions that are too far from current reality
-  const meanReversionFactor = 0.3; // 30% pull toward current price
+  const meanReversionFactor = 0.5; // 50% pull toward current price (increased for stability)
   predictedPrice = predictedPrice * (1 - meanReversionFactor) + currentPrice * meanReversionFactor;
   
   // Cap maximum deviation from current price (prevents wild predictions)
@@ -332,8 +332,14 @@ function seasonalPatternPredict(
   month: number,
   isWeekend: boolean
 ): number {
-  // Find similar historical periods
-  const similarPeriods = historicalData.filter(d => {
+  // Get current price as baseline
+  const currentPrice = historicalData[0]?.pool_price || 30;
+  
+  // Find similar historical periods (only from last 24 hours to avoid old spikes)
+  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+  const recentData = historicalData.filter(d => new Date(d.timestamp).getTime() > oneDayAgo);
+  
+  const similarPeriods = recentData.filter(d => {
     const dHour = new Date(d.timestamp).getHours();
     const dMonth = new Date(d.timestamp).getMonth() + 1;
     const dIsWeekend = [0, 6].includes(new Date(d.timestamp).getDay());
@@ -343,11 +349,22 @@ function seasonalPatternPredict(
            dIsWeekend === isWeekend;
   });
   
+  // If no similar periods found, return current price (not historical outliers)
   if (similarPeriods.length === 0) {
-    return historicalData[0].pool_price;
+    return currentPrice;
   }
   
-  const avgSimilarPrice = similarPeriods.reduce((sum, d) => sum + d.pool_price, 0) / similarPeriods.length;
+  // Filter out outliers before averaging (remove prices > 2x current or < 0.5x current)
+  const validSimilar = similarPeriods.filter(d => {
+    const price = d.pool_price;
+    return price > currentPrice * 0.5 && price < currentPrice * 2;
+  });
+  
+  if (validSimilar.length === 0) {
+    return currentPrice;
+  }
+  
+  const avgSimilarPrice = validSimilar.reduce((sum, d) => sum + d.pool_price, 0) / validSimilar.length;
   return avgSimilarPrice;
 }
 
