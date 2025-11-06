@@ -23,15 +23,25 @@ serve(async (req) => {
     console.log(`Generating price predictions for horizon: ${horizon}`);
 
     // Fetch recent training data (last 168 hours = 7 days)
-    const { data: historicalData, error: histError } = await supabase
+    // FILTER OUT zeros - they're invalid data points
+    const { data: allData, error: histError } = await supabase
       .from('aeso_training_data')
       .select('*')
+      .neq('pool_price', 0)
       .order('timestamp', { ascending: false })
       .limit(168);
 
-    if (histError || !historicalData || historicalData.length === 0) {
+    if (histError || !allData || allData.length === 0) {
       throw new Error('Insufficient training data');
     }
+    
+    const historicalData = allData.filter(d => d.pool_price > 0);
+    
+    if (historicalData.length === 0) {
+      throw new Error('No valid price data available (all prices are zero or invalid)');
+    }
+    
+    console.log(`Using ${historicalData.length} valid data points for prediction`);
 
     // Parse horizon
     const horizonHours = parseHorizon(horizon);

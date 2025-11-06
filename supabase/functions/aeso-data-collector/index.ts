@@ -45,30 +45,46 @@ serve(async (req) => {
       throw new Error('AESO API failure: No pricing data available. Cannot collect training data when API is down.');
     }
     
-    const poolPrice = aesoData.pricing.current_price;
+    let poolPrice = aesoData.pricing.current_price;
     
-    console.log('Pool price:', poolPrice);
+    console.log('Raw pool price from API:', poolPrice);
     console.log('AESO pricing data:', JSON.stringify(aesoData.pricing, null, 2));
     console.log('AESO load data:', JSON.stringify(aesoData.load, null, 2));
     
-    // Validate pool price exists (can be zero if that's the real market price)
+    // Validate pool price exists
     if (poolPrice === undefined || poolPrice === null) {
       console.error('ERROR: Pool price is undefined/null despite pricing object existing');
       console.error('Full AESO data:', JSON.stringify(aesoData, null, 2));
       throw new Error('AESO data integrity error: pricing object exists but current_price is undefined.');
     }
     
-    // Price range validation (-$100 to $1000 per MWh)
-    if (poolPrice < -100 || poolPrice > 1000) {
-      console.warn('⚠️ UNUSUAL PRICE DETECTED:', poolPrice, '$/MWh - outside normal range [-100, 1000]');
-      console.log('This price will be stored but flagged for review');
+    // REJECT zero prices - they indicate API errors or missing data
+    if (poolPrice === 0) {
+      console.warn('⚠️ Zero price detected - API likely returned invalid data');
+      
+      // Fetch the last valid (non-zero) price from database
+      const { data: lastValid } = await supabase
+        .from('aeso_training_data')
+        .select('pool_price, timestamp')
+        .neq('pool_price', 0)
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (lastValid?.pool_price) {
+        poolPrice = lastValid.pool_price;
+        console.log('✅ Using last valid price:', poolPrice, '$/MWh from', lastValid.timestamp);
+      } else {
+        throw new Error('No valid historical price data available and API returned zero');
+      }
     }
     
-    // Log zero prices specifically (legitimate market condition)
-    if (poolPrice === 0) {
-      console.log('✅ Zero pool price detected - legitimate market condition (oversupply)');
+    // Price range validation ($1 to $1000 per MWh)
+    if (poolPrice < 1 || poolPrice > 1000) {
+      console.warn('⚠️ UNUSUAL PRICE DETECTED:', poolPrice, '$/MWh - outside normal range [1, 1000]');
+      console.log('This price will be stored but flagged for review');
     } else {
-      console.log('✅ Valid pool price received:', poolPrice, '$/MWh');
+      console.log('✅ Valid pool price:', poolPrice, '$/MWh');
     }
 
     // Calculate derived features
