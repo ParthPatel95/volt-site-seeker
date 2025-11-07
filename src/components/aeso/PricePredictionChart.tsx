@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, ComposedChart } from 'recharts';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from 'date-fns';
 import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import { PricePrediction } from '@/hooks/useAESOPricePrediction';
@@ -21,33 +21,13 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
     );
   }
 
-  const chartData = predictions.map(pred => ({
-    time: format(new Date(pred.timestamp), 'MMM dd HH:mm'),
+  const tableData = predictions.map(pred => ({
+    timestamp: new Date(pred.timestamp),
     price: pred.price,
     lower: pred.confidenceLower,
     upper: pred.confidenceUpper,
     confidence: pred.confidenceScore * 100
   }));
-
-  // Add current price as first point if available
-  if (currentPrice) {
-    chartData.unshift({
-      time: 'Now',
-      price: currentPrice,
-      lower: currentPrice,
-      upper: currentPrice,
-      confidence: 100
-    });
-  }
-
-  // Calculate max value for proper Y-axis scaling
-  const maxValue = Math.max(
-    ...chartData.map(d => Math.max(d.price, d.upper))
-  );
-  const yAxisMax = Math.ceil(maxValue * 1.1);
-  
-  console.log('Chart data sample:', chartData.slice(0, 3));
-  console.log('Max value:', maxValue, 'Y-axis max:', yAxisMax);
 
   // Calculate insights
   const avgPrediction = predictions.reduce((sum, p) => sum + p.price, 0) / predictions.length;
@@ -111,69 +91,48 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
           </div>
         )}
 
-        {/* Chart */}
-        <ResponsiveContainer width="100%" height={400}>
-          <ComposedChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="time" 
-              tick={{ fontSize: 12 }}
-              angle={-45}
-              textAnchor="end"
-              height={80}
-            />
-            <YAxis 
-              label={{ value: 'Price ($/MWh)', angle: -90, position: 'insideLeft' }}
-              domain={[0, yAxisMax]}
-            />
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-background border rounded-lg p-3 shadow-lg">
-                      <p className="font-semibold">{payload[0].payload.time}</p>
-                      <p className="text-sm">
-                        Price: <span className="font-bold">${payload[0].value?.toFixed(2)}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Range: ${payload[0].payload.lower.toFixed(2)} - ${payload[0].payload.upper.toFixed(2)}
-                      </p>
-                      <p className="text-sm text-success">
-                        Confidence: {payload[0].payload.confidence.toFixed(0)}%
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Legend />
-            <Area
-              type="monotone"
-              dataKey="upper"
-              stroke="none"
-              fill="hsl(var(--primary))"
-              fillOpacity={0.1}
-              name="Upper Bound"
-            />
-            <Area
-              type="monotone"
-              dataKey="lower"
-              stroke="none"
-              fill="hsl(var(--primary))"
-              fillOpacity={0.1}
-              name="Lower Bound"
-            />
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              name="Predicted Price"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        {/* Table */}
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Predicted Price</TableHead>
+                <TableHead className="text-right">Range</TableHead>
+                <TableHead className="text-right">Confidence</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentPrice && (
+                <TableRow className="bg-accent/30 font-semibold">
+                  <TableCell>Now</TableCell>
+                  <TableCell>{format(new Date(), 'MMM dd, yyyy')}</TableCell>
+                  <TableCell className="text-right">${currentPrice.toFixed(2)}/MWh</TableCell>
+                  <TableCell className="text-right text-muted-foreground">-</TableCell>
+                  <TableCell className="text-right">100%</TableCell>
+                </TableRow>
+              )}
+              {tableData.map((row, idx) => (
+                <TableRow key={idx}>
+                  <TableCell className="font-medium">{format(row.timestamp, 'HH:mm')}</TableCell>
+                  <TableCell className="text-muted-foreground">{format(row.timestamp, 'MMM dd, yyyy')}</TableCell>
+                  <TableCell className="text-right font-semibold">
+                    ${row.price.toFixed(2)}/MWh
+                  </TableCell>
+                  <TableCell className="text-right text-sm text-muted-foreground">
+                    ${row.lower.toFixed(2)} - ${row.upper.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className={row.confidence >= 80 ? "text-success" : row.confidence >= 60 ? "text-warning" : "text-destructive"}>
+                      {row.confidence.toFixed(0)}%
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
