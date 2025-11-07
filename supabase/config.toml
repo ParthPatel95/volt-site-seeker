@@ -22,6 +22,12 @@ verify_jwt = false
 [functions.aeso-historical-data-fetcher]
 verify_jwt = false
 
+[functions.aeso-weather-collector]
+verify_jwt = false
+
+[functions.aeso-prediction-validator]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

@@ -229,6 +229,56 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const collectWeatherData = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-weather-collector');
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Weather Data Updated",
+          description: `Collected ${data.totalForecasts} weather forecasts`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error collecting weather:', error);
+      toast({
+        title: "Weather Collection Error",
+        description: error.message || "Failed to collect weather data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validatePredictions = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-prediction-validator');
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Predictions Validated",
+          description: `${data.validated} predictions validated. MAE: $${data.summary.mae}, MAPE: ${data.summary.mape}%`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error validating predictions:', error);
+      toast({
+        title: "Validation Error",
+        description: error.message || "Failed to validate predictions",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return {
     predictions,
@@ -238,6 +288,8 @@ export const useAESOPricePrediction = () => {
     fetchStoredPredictions,
     fetchModelPerformance,
     collectTrainingData,
-    trainModel
+    trainModel,
+    collectWeatherData,
+    validatePredictions
   };
 };
