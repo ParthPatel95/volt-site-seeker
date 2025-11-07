@@ -115,6 +115,7 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
             />
             <YAxis 
               label={{ value: 'Price ($/MWh)', angle: -90, position: 'insideLeft' }}
+              domain={[0, 'auto']}
             />
             <Tooltip
               content={({ active, payload }) => {
