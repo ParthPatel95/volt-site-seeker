@@ -108,12 +108,22 @@ async function generatePredictions(
   const { data: modelParams } = await supabase
     .from('aeso_model_parameters')
     .select('*')
-    .eq('model_version', MODEL_VERSION)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .eq('model_version', 'v2.0-ml-trained')
+    .eq('parameter_type', 'learned_coefficients')
     .single();
 
   console.log('Loaded model parameters:', modelParams ? 'YES' : 'NO (using defaults)');
+  
+  const featureCorrelations = modelParams?.feature_correlations || {};
+  const laggedFeatures = featureCorrelations.lagged || {};
+  const regimeThresholds = featureCorrelations.regimes || {
+    highWindThreshold: 2000,
+    peakDemandThreshold: 11000,
+    lowDemandThreshold: 8000
+  };
+  const ensembleWeights = featureCorrelations.ensemble_weights || { 
+    base: 0.25, high_wind: 0.25, peak_demand: 0.25, low_demand: 0.25 
+  };
 
   // Fetch weather forecasts
   const { data: weatherForecasts } = await supabase
@@ -136,7 +146,10 @@ async function generatePredictions(
       h,
       calgaryForecasts[h - 1],
       edmontonForecasts[h - 1],
-      modelParams
+      modelParams,
+      laggedFeatures,
+      regimeThresholds,
+      ensembleWeights
     );
     
     predictions.push(prediction);
@@ -151,11 +164,20 @@ async function predictPrice(
   horizonHours: number,
   calgaryWeather: any,
   edmontonWeather: any,
-  modelParams: any
+  modelParams: any,
+  laggedFeatures: any,
+  regimeThresholds: any,
+  ensembleWeights: any
 ) {
   // Extract learned coefficients if available
   const featureCorrelations = modelParams?.feature_correlations || {};
   const featureStats = modelParams?.feature_statistics || {};
+  
+  // Detect current market regime
+  const currentConditions = historicalData[0];
+  const regime = detectMarketRegime(currentConditions, regimeThresholds);
+  
+  console.log(`Market regime detected: ${regime}`);
   // Extract features - use available data (up to 48 hours for better patterns)
   const recentPrices = historicalData.slice(0, 48).map(d => d.pool_price).filter(p => p !== null && p !== undefined);
   
@@ -199,21 +221,38 @@ async function predictPrice(
   const windSpeed = calgaryWeather?.wind_speed || 0;
   const cloudCover = calgaryWeather?.cloud_cover || 0;
 
-  // Ensemble prediction using multiple models with learned parameters
-  const pred1 = linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed, featureCorrelations, featureStats);
-  const pred2 = timeSeriesDecompositionPredict(recentPrices, hour, dayOfWeek, month, featureStats);
-  const pred3 = gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover, featureCorrelations);
-  const pred4 = seasonalPatternPredict(historicalData, hour, month, isWeekend);
+  // Ensemble prediction with regime-aware models and dynamic weighting
+  const pred1 = linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed, featureCorrelations, featureStats, laggedFeatures, regime);
+  const pred2 = timeSeriesDecompositionPredict(recentPrices, hour, dayOfWeek, month, featureStats, laggedFeatures, regime);
+  const pred3 = gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover, featureCorrelations, laggedFeatures, regime);
+  const pred4 = seasonalPatternPredict(historicalData, hour, month, isWeekend, regime);
   
-  console.log(`Model predictions - LR: $${pred1.toFixed(2)}, TS: $${pred2.toFixed(2)}, GB: $${pred3.toFixed(2)}, SP: $${pred4.toFixed(2)}`);
+  console.log(`Model predictions [${regime}] - LR: $${pred1.toFixed(2)}, TS: $${pred2.toFixed(2)}, GB: $${pred3.toFixed(2)}, SP: $${pred4.toFixed(2)}`);
 
-  // Adaptive ensemble weights based on horizon and volatility
-  const weights = getEnsembleWeights(horizonHours, priceStdDev);
-  let predictedPrice = pred1 * weights[0] + pred2 * weights[1] + pred3 * weights[2] + pred4 * weights[3];
+  // Dynamic ensemble weights based on regime performance
+  const regimeWeight = ensembleWeights[regime] || 0.25;
+  const baseWeight = (1 - regimeWeight) / 3;
+  let predictedPrice = (pred1 * baseWeight) + (pred2 * regimeWeight) + (pred3 * baseWeight) + (pred4 * baseWeight);
   
-  // Smart mean reversion - reduced to 20% max (was 60%)
-  const reversionFactor = Math.min(0.05 + (horizonHours / 200), 0.2);
-  predictedPrice = predictedPrice * (1 - reversionFactor) + currentPrice * reversionFactor;
+  // Intelligent mean reversion - only apply if deviation isn't explained by fundamentals
+  const windGen = currentConditions?.generation_wind || 0;
+  const demand = currentConditions?.ail_mw || 0;
+  
+  const isHighWind = windGen > regimeThresholds.highWindThreshold;
+  const isPeakDemand = demand > regimeThresholds.peakDemandThreshold;
+  
+  const deviation = Math.abs(predictedPrice - avgPrice);
+  const maxDeviation = priceStdDev * 2;
+  
+  // Only apply reversion if deviation is extreme AND not explained by market fundamentals
+  let reversionFactor = 0;
+  if (deviation > maxDeviation && !isHighWind && !isPeakDemand) {
+    reversionFactor = Math.min(0.05 + (horizonHours / 200), 0.2);
+  } else if (deviation > priceStdDev && !isHighWind && !isPeakDemand) {
+    reversionFactor = Math.min(0.02 + (horizonHours / 400), 0.1);
+  }
+  
+  predictedPrice = predictedPrice * (1 - reversionFactor) + avgPrice * reversionFactor;
   
   console.log(`Final prediction: $${predictedPrice.toFixed(2)} (reversion factor: ${reversionFactor.toFixed(2)})`);
 
@@ -250,7 +289,9 @@ function linearRegressionPredict(
   temp: number,
   windSpeed: number,
   correlations: any = {},
-  stats: any = {}
+  stats: any = {},
+  laggedFeatures: any = {},
+  regime: string = 'base'
 ): number {
   // Use learned hourly patterns if available
   const hourlyAvg = stats?.hourlyAvgPrices?.[hour];
@@ -270,7 +311,18 @@ function linearRegressionPredict(
   const windCorr = correlations.windGen || -0.3; // Negative correlation by default
   const windFactor = Math.max(0.85, 1 + (windSpeed / 150) * windCorr);
   
-  return basePrice * hourFactor * weekdayFactor * tempFactor * windFactor;
+  let prediction = basePrice * hourFactor * weekdayFactor * tempFactor * windFactor;
+  
+  // Apply regime adjustment
+  if (regime === 'high_wind') {
+    prediction *= 0.85;
+  } else if (regime === 'peak_demand') {
+    prediction *= 1.15;
+  } else if (regime === 'low_demand') {
+    prediction *= 0.90;
+  }
+  
+  return prediction;
 }
 
 function timeSeriesDecompositionPredict(
@@ -278,7 +330,9 @@ function timeSeriesDecompositionPredict(
   hour: number,
   dayOfWeek: number,
   month: number,
-  stats: any = {}
+  stats: any = {},
+  laggedFeatures: any = {},
+  regime: string = 'base'
 ): number {
   // Use learned patterns if available, otherwise use defaults
   const hourlyMultipliers = stats?.hourlyAvgPrices ? 
@@ -305,7 +359,18 @@ function timeSeriesDecompositionPredict(
   ];
   const monthlyFactor = monthlyMultipliers[month - 1];
   
-  return trend * hourlyFactor * weeklyFactor * monthlyFactor;
+  let prediction = trend * hourlyFactor * weeklyFactor * monthlyFactor;
+  
+  // Apply regime adjustment
+  if (regime === 'high_wind') {
+    prediction *= 0.88;
+  } else if (regime === 'peak_demand') {
+    prediction *= 1.12;
+  } else if (regime === 'low_demand') {
+    prediction *= 0.92;
+  }
+  
+  return prediction;
 }
 
 function gradientBoostingPredict(
@@ -316,7 +381,9 @@ function gradientBoostingPredict(
   temp: number,
   windSpeed: number,
   cloudCover: number,
-  correlations: any = {}
+  correlations: any = {},
+  laggedFeatures: any = {},
+  regime: string = 'base'
 ): number {
   let prediction = avgPrice;
   
@@ -344,6 +411,15 @@ function gradientBoostingPredict(
   // Solar impact
   if (cloudCover > 80 && hour >= 10 && hour <= 16) prediction *= 1.03;
   
+  // Apply regime-specific adjustments
+  if (regime === 'high_wind') {
+    prediction *= 0.82;
+  } else if (regime === 'peak_demand') {
+    prediction *= 1.18;
+  } else if (regime === 'low_demand') {
+    prediction *= 0.88;
+  }
+  
   return prediction;
 }
 
@@ -351,7 +427,8 @@ function seasonalPatternPredict(
   historicalData: any[],
   hour: number,
   month: number,
-  isWeekend: boolean
+  isWeekend: boolean,
+  regime: string = 'base'
 ): number {
   // Look at last 7 days for patterns
   const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
@@ -375,27 +452,45 @@ function seasonalPatternPredict(
   
   // Use median to avoid outlier influence
   const prices = similarPeriods.map(d => d.pool_price).sort((a, b) => a - b);
-  return prices[Math.floor(prices.length / 2)];
+  let prediction = prices[Math.floor(prices.length / 2)];
+  
+  // Apply regime adjustment
+  if (regime === 'high_wind') {
+    prediction *= 0.90;
+  } else if (regime === 'peak_demand') {
+    prediction *= 1.10;
+  } else if (regime === 'low_demand') {
+    prediction *= 0.93;
+  }
+  
+  return prediction;
 }
 
-function getEnsembleWeights(horizonHours: number, volatility: number): number[] {
-  // Adaptive weights based on horizon and market volatility
-  const isHighVolatility = volatility > 15;
+// Detect market regime based on current conditions
+function detectMarketRegime(dataPoint: any, thresholds: any): string {
+  if (!dataPoint) return 'base';
   
-  if (horizonHours <= 6) {
-    // Near-term: favor seasonal patterns and time series
-    return isHighVolatility 
-      ? [0.15, 0.35, 0.25, 0.25]  // More weight on gradient boosting in volatile markets
-      : [0.15, 0.30, 0.15, 0.40]; // Heavy seasonal in stable markets
-  } else if (horizonHours <= 24) {
-    // Medium-term: balanced approach
-    return isHighVolatility
-      ? [0.20, 0.30, 0.25, 0.25]
-      : [0.20, 0.30, 0.20, 0.30];
-  } else {
-    // Long-term: rely more on statistical models
-    return [0.25, 0.30, 0.25, 0.20];
+  const windGen = dataPoint.generation_wind || 0;
+  const demand = dataPoint.ail_mw || 0;
+  
+  const highWindThreshold = thresholds.highWindThreshold || 2000;
+  const peakDemandThreshold = thresholds.peakDemandThreshold || 11000;
+  const lowDemandThreshold = thresholds.lowDemandThreshold || 8000;
+  
+  // Priority order: high wind > peak demand > low demand > base
+  if (windGen > highWindThreshold) {
+    return 'high_wind';
   }
+  
+  if (demand > peakDemandThreshold) {
+    return 'peak_demand';
+  }
+  
+  if (demand < lowDemandThreshold && demand > 0) {
+    return 'low_demand';
+  }
+  
+  return 'base';
 }
 
 function checkIfHoliday(date: Date): boolean {

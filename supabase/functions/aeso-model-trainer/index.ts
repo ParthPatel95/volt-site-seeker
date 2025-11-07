@@ -35,9 +35,13 @@ serve(async (req) => {
     // Calculate feature correlations with price
     const featureCorrelations = calculateFeatureCorrelations(trainingData);
     const featureStats = calculateFeatureStats(trainingData);
+    const laggedFeatures = calculateLaggedFeatures(trainingData);
+    const regimeThresholds = calculateRegimeThresholds(trainingData);
 
     console.log('Feature correlations with price:', featureCorrelations);
     console.log('Feature statistics:', featureStats);
+    console.log('Lagged feature importance:', laggedFeatures);
+    console.log('Market regime thresholds:', regimeThresholds);
 
     // Split data: 80% training, 20% testing
     const splitIndex = Math.floor(trainingData.length * 0.8);
@@ -46,26 +50,34 @@ serve(async (req) => {
 
     console.log(`Training: ${trainSet.length} samples, Testing: ${testSet.length} samples`);
 
-    // Evaluate model on test set
+    // Evaluate model on test set with regime-aware predictions
     let totalAbsError = 0;
     let totalSquaredError = 0;
     let totalPercentError = 0;
     const predictions: number[] = [];
     const actuals: number[] = [];
+    const modelErrors: Record<string, number[]> = {
+      'base': [],
+      'high_wind': [],
+      'peak_demand': [],
+      'low_demand': []
+    };
 
     for (const testPoint of testSet) {
-      const prediction = predictPriceForTraining(trainSet, testPoint, featureCorrelations, featureStats);
+      const regime = detectRegime(testPoint, regimeThresholds);
+      const prediction = predictPriceForTraining(trainSet, testPoint, featureCorrelations, featureStats, laggedFeatures, regime);
       const actual = testPoint.pool_price;
       
       predictions.push(prediction);
       actuals.push(actual);
       
-      const error = prediction - actual;
-      totalAbsError += Math.abs(error);
-      totalSquaredError += error * error;
+      const error = Math.abs(prediction - actual);
+      totalAbsError += error;
+      totalSquaredError += (prediction - actual) * (prediction - actual);
+      modelErrors[regime].push(error);
       
       if (actual !== 0) {
-        totalPercentError += Math.abs(error / actual) * 100;
+        totalPercentError += Math.abs((prediction - actual) / actual) * 100;
       }
     }
 
@@ -113,6 +125,26 @@ serve(async (req) => {
       console.error('Error storing model performance:', insertError);
     }
 
+    // Calculate ensemble weights based on regime performance
+    const ensembleWeights: Record<string, number> = {};
+    for (const [regime, errors] of Object.entries(modelErrors)) {
+      if (errors.length > 0) {
+        const avgError = errors.reduce((sum, e) => sum + e, 0) / errors.length;
+        // Lower error = higher weight (inverse relationship)
+        ensembleWeights[regime] = 1 / (avgError + 1);
+      } else {
+        ensembleWeights[regime] = 0.5;
+      }
+    }
+
+    // Normalize weights
+    const totalWeight = Object.values(ensembleWeights).reduce((sum, w) => sum + w, 0);
+    for (const regime in ensembleWeights) {
+      ensembleWeights[regime] /= totalWeight;
+    }
+
+    console.log('Ensemble weights by regime:', ensembleWeights);
+
     // Store learned parameters for use by predictor
     console.log('Storing learned model parameters...');
     
@@ -122,8 +154,13 @@ serve(async (req) => {
         model_version: MODEL_VERSION,
         parameter_type: 'learned_coefficients',
         parameter_name: 'main',
-        parameter_value: 1.0, // Placeholder
-        feature_correlations: featureCorrelations,
+        parameter_value: 1.0,
+        feature_correlations: {
+          ...featureCorrelations,
+          lagged: laggedFeatures,
+          regimes: regimeThresholds,
+          ensemble_weights: ensembleWeights
+        },
         feature_statistics: featureStats,
         training_samples: trainingData.length
       }, {
@@ -164,12 +201,14 @@ serve(async (req) => {
   }
 });
 
-// AI prediction function for training evaluation
+// AI prediction function for training evaluation with regime awareness
 function predictPriceForTraining(
   historicalData: any[], 
   testPoint: any, 
   correlations: Record<string, number>,
-  stats: any
+  stats: any,
+  laggedFeatures: any,
+  regime: string
 ): number {
   // Use recent 14 days (336 hours) for context
   const recentData = historicalData.slice(-336);
@@ -199,13 +238,27 @@ function predictPriceForTraining(
   const month = timestamp.getMonth() + 1;
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   
-  // Multi-factor model using learned correlations
+  // Multi-factor model using learned correlations with regime adjustments
   let prediction = basePrice;
+  
+  // Apply regime-specific adjustments
+  if (regime === 'high_wind' && testPoint.generation_wind !== null) {
+    // High wind generation = lower prices
+    const windFactor = 1 - (testPoint.generation_wind / 3500) * 0.25; // Up to 25% reduction
+    prediction *= Math.max(0.7, windFactor);
+  } else if (regime === 'peak_demand' && testPoint.ail_mw !== null) {
+    // Peak demand = higher prices
+    const demandFactor = testPoint.ail_mw / (stats.avgDemand || 10000);
+    prediction *= Math.max(1.1, demandFactor * 1.15);
+  } else if (regime === 'low_demand') {
+    // Low demand = lower prices
+    prediction *= 0.88;
+  }
   
   // Hour of day factor (peak hours = higher prices)
   const hourlyMultiplier = stats.hourlyAvgPrices?.[hour] || basePrice;
   const hourFactor = hourlyMultiplier / stats.avgPrice;
-  prediction *= hourFactor;
+  prediction *= Math.pow(hourFactor, 0.9); // Reduce hour factor impact slightly
   
   // Day of week factor
   if (isWeekend) {
@@ -354,5 +407,90 @@ function calculateFeatureStats(data: any[]): Record<string, any> {
     maxPrice: Math.max(...prices),
     hourlyAvgPrices: hourlyAvgs,
     avgDemand
+  };
+}
+
+// Calculate lagged feature correlations (how past prices predict future)
+function calculateLaggedFeatures(data: any[]): Record<string, number> {
+  const lagged: Record<string, number> = {};
+  
+  // 1-hour lag
+  const lag1h = [];
+  const currentPrices = [];
+  for (let i = 1; i < data.length; i++) {
+    lag1h.push(data[i - 1].pool_price);
+    currentPrices.push(data[i].pool_price);
+  }
+  lagged['lag_1h'] = calculateCorrelation(lag1h, currentPrices);
+  
+  // 24-hour lag (same hour yesterday)
+  if (data.length > 24) {
+    const lag24h = [];
+    const prices24h = [];
+    for (let i = 24; i < data.length; i++) {
+      lag24h.push(data[i - 24].pool_price);
+      prices24h.push(data[i].pool_price);
+    }
+    lagged['lag_24h'] = calculateCorrelation(lag24h, prices24h);
+  }
+  
+  // 168-hour lag (same hour last week)
+  if (data.length > 168) {
+    const lag168h = [];
+    const prices168h = [];
+    for (let i = 168; i < data.length; i++) {
+      lag168h.push(data[i - 168].pool_price);
+      prices168h.push(data[i].pool_price);
+    }
+    lagged['lag_168h'] = calculateCorrelation(lag168h, prices168h);
+  }
+  
+  return lagged;
+}
+
+// Detect market regimes based on current conditions
+function detectRegime(dataPoint: any, thresholds: any): string {
+  // High wind generation regime
+  if (dataPoint.generation_wind !== null && dataPoint.generation_wind > thresholds.highWindThreshold) {
+    return 'high_wind';
+  }
+  
+  // Peak demand regime
+  if (dataPoint.ail_mw !== null && dataPoint.ail_mw > thresholds.peakDemandThreshold) {
+    return 'peak_demand';
+  }
+  
+  // Low demand regime (nights, weekends)
+  if (dataPoint.ail_mw !== null && dataPoint.ail_mw < thresholds.lowDemandThreshold) {
+    return 'low_demand';
+  }
+  
+  return 'base';
+}
+
+// Calculate thresholds for regime detection
+function calculateRegimeThresholds(data: any[]): Record<string, number> {
+  const windData = data.filter(d => d.generation_wind !== null).map(d => d.generation_wind);
+  const demandData = data.filter(d => d.ail_mw !== null).map(d => d.ail_mw);
+  
+  // High wind = top 25% of wind generation
+  const highWindThreshold = windData.length > 0
+    ? windData.sort((a, b) => b - a)[Math.floor(windData.length * 0.25)]
+    : 2000;
+  
+  // Peak demand = top 20% of demand
+  const peakDemandThreshold = demandData.length > 0
+    ? demandData.sort((a, b) => b - a)[Math.floor(demandData.length * 0.20)]
+    : 11000;
+  
+  // Low demand = bottom 20% of demand
+  const lowDemandThreshold = demandData.length > 0
+    ? demandData.sort((a, b) => a - b)[Math.floor(demandData.length * 0.20)]
+    : 8000;
+  
+  return {
+    highWindThreshold,
+    peakDemandThreshold,
+    lowDemandThreshold
   };
 }
