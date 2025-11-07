@@ -40,6 +40,15 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
     });
   }
 
+  // Calculate max value for proper Y-axis scaling
+  const maxValue = Math.max(
+    ...chartData.map(d => Math.max(d.price, d.upper))
+  );
+  const yAxisMax = Math.ceil(maxValue * 1.1);
+  
+  console.log('Chart data sample:', chartData.slice(0, 3));
+  console.log('Max value:', maxValue, 'Y-axis max:', yAxisMax);
+
   // Calculate insights
   const avgPrediction = predictions.reduce((sum, p) => sum + p.price, 0) / predictions.length;
   const maxPrice = Math.max(...predictions.map(p => p.price));
@@ -115,7 +124,7 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
             />
             <YAxis 
               label={{ value: 'Price ($/MWh)', angle: -90, position: 'insideLeft' }}
-              domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]}
+              domain={[0, yAxisMax]}
             />
             <Tooltip
               content={({ active, payload }) => {
