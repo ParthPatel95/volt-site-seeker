@@ -113,6 +113,29 @@ serve(async (req) => {
       console.error('Error storing model performance:', insertError);
     }
 
+    // Store learned parameters for use by predictor
+    console.log('Storing learned model parameters...');
+    
+    const { error: paramsError } = await supabase
+      .from('aeso_model_parameters')
+      .upsert({
+        model_version: MODEL_VERSION,
+        parameter_type: 'learned_coefficients',
+        parameter_name: 'main',
+        parameter_value: 1.0, // Placeholder
+        feature_correlations: featureCorrelations,
+        feature_statistics: featureStats,
+        training_samples: trainingData.length
+      }, {
+        onConflict: 'model_version,parameter_type,parameter_name'
+      });
+
+    if (paramsError) {
+      console.error('Error storing model parameters:', paramsError);
+    } else {
+      console.log('✅ Model parameters stored successfully');
+    }
+
     return new Response(JSON.stringify({
       success: true,
       model_version: MODEL_VERSION,

@@ -95,6 +95,45 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_model_parameters: {
+        Row: {
+          created_at: string
+          feature_correlations: Json | null
+          feature_statistics: Json | null
+          id: string
+          model_version: string
+          parameter_name: string
+          parameter_type: string
+          parameter_value: number
+          training_samples: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feature_correlations?: Json | null
+          feature_statistics?: Json | null
+          id?: string
+          model_version: string
+          parameter_name: string
+          parameter_type: string
+          parameter_value: number
+          training_samples: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feature_correlations?: Json | null
+          feature_statistics?: Json | null
+          id?: string
+          model_version?: string
+          parameter_name?: string
+          parameter_type?: string
+          parameter_value?: number
+          training_samples?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aeso_model_performance: {
         Row: {
           created_at: string | null

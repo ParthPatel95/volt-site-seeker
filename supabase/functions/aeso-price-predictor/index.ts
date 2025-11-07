@@ -104,6 +104,17 @@ async function generatePredictions(
   const lastDataPoint = historicalData[0];
   const currentTime = new Date(lastDataPoint.timestamp);
 
+  // Load learned model parameters
+  const { data: modelParams } = await supabase
+    .from('aeso_model_parameters')
+    .select('*')
+    .eq('model_version', MODEL_VERSION)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  console.log('Loaded model parameters:', modelParams ? 'YES' : 'NO (using defaults)');
+
   // Fetch weather forecasts
   const { data: weatherForecasts } = await supabase
     .from('aeso_weather_forecasts')
@@ -124,7 +135,8 @@ async function generatePredictions(
       targetTime,
       h,
       calgaryForecasts[h - 1],
-      edmontonForecasts[h - 1]
+      edmontonForecasts[h - 1],
+      modelParams
     );
     
     predictions.push(prediction);
@@ -138,8 +150,12 @@ async function predictPrice(
   targetTime: Date,
   horizonHours: number,
   calgaryWeather: any,
-  edmontonWeather: any
+  edmontonWeather: any,
+  modelParams: any
 ) {
+  // Extract learned coefficients if available
+  const featureCorrelations = modelParams?.feature_correlations || {};
+  const featureStats = modelParams?.feature_statistics || {};
   // Extract features - use available data (up to 48 hours for better patterns)
   const recentPrices = historicalData.slice(0, 48).map(d => d.pool_price).filter(p => p !== null && p !== undefined);
   
@@ -183,10 +199,10 @@ async function predictPrice(
   const windSpeed = calgaryWeather?.wind_speed || 0;
   const cloudCover = calgaryWeather?.cloud_cover || 0;
 
-  // Ensemble prediction using multiple models
-  const pred1 = linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed);
-  const pred2 = timeSeriesDecompositionPredict(recentPrices, hour, dayOfWeek, month);
-  const pred3 = gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover);
+  // Ensemble prediction using multiple models with learned parameters
+  const pred1 = linearRegressionPredict(avgPrice, hour, dayOfWeek, avgTemp, windSpeed, featureCorrelations, featureStats);
+  const pred2 = timeSeriesDecompositionPredict(recentPrices, hour, dayOfWeek, month, featureStats);
+  const pred3 = gradientBoostingPredict(avgPrice, priceStdDev, hour, isWeekend, avgTemp, windSpeed, cloudCover, featureCorrelations);
   const pred4 = seasonalPatternPredict(historicalData, hour, month, isWeekend);
   
   console.log(`Model predictions - LR: $${pred1.toFixed(2)}, TS: $${pred2.toFixed(2)}, GB: $${pred3.toFixed(2)}, SP: $${pred4.toFixed(2)}`);
@@ -195,8 +211,8 @@ async function predictPrice(
   const weights = getEnsembleWeights(horizonHours, priceStdDev);
   let predictedPrice = pred1 * weights[0] + pred2 * weights[1] + pred3 * weights[2] + pred4 * weights[3];
   
-  // Smart mean reversion - less aggressive for short horizons
-  const reversionFactor = Math.min(0.3 + (horizonHours / 100), 0.6);
+  // Smart mean reversion - reduced to 20% max (was 60%)
+  const reversionFactor = Math.min(0.05 + (horizonHours / 200), 0.2);
   predictedPrice = predictedPrice * (1 - reversionFactor) + currentPrice * reversionFactor;
   
   console.log(`Final prediction: $${predictedPrice.toFixed(2)} (reversion factor: ${reversionFactor.toFixed(2)})`);
@@ -232,38 +248,57 @@ function linearRegressionPredict(
   hour: number,
   dayOfWeek: number,
   temp: number,
-  windSpeed: number
+  windSpeed: number,
+  correlations: any = {},
+  stats: any = {}
 ): number {
-  // Linear model with realistic coefficients
-  const hourFactor = (hour >= 7 && hour <= 21) ? 1.12 : 0.88;
-  const weekdayFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.05 : 0.95;
-  const tempFactor = 1 + (Math.abs(temp - 15) / 150);
-  const windFactor = Math.max(0.85, 1 - (windSpeed / 150));
+  // Use learned hourly patterns if available
+  const hourlyAvg = stats?.hourlyAvgPrices?.[hour];
+  const basePrice = hourlyAvg || avgPrice;
   
-  return avgPrice * hourFactor * weekdayFactor * tempFactor * windFactor;
+  // Hour factor from learned patterns or defaults
+  const hourFactor = hourlyAvg ? hourlyAvg / (stats.avgPrice || avgPrice) : 
+                     (hour >= 7 && hour <= 21) ? 1.12 : 0.88;
+  
+  const weekdayFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.05 : 0.95;
+  
+  // Temperature factor using learned correlation if available
+  const tempCorr = correlations.temperature || 0;
+  const tempFactor = 1 + (Math.abs(temp - 15) / 150) * Math.abs(tempCorr);
+  
+  // Wind factor - more wind = lower prices
+  const windCorr = correlations.windGen || -0.3; // Negative correlation by default
+  const windFactor = Math.max(0.85, 1 + (windSpeed / 150) * windCorr);
+  
+  return basePrice * hourFactor * weekdayFactor * tempFactor * windFactor;
 }
 
 function timeSeriesDecompositionPredict(
   recentPrices: number[],
   hour: number,
   dayOfWeek: number,
-  month: number
+  month: number,
+  stats: any = {}
 ): number {
-  // Use median for robustness against outliers
+  // Use learned patterns if available, otherwise use defaults
+  const hourlyMultipliers = stats?.hourlyAvgPrices ? 
+    Array.from({length: 24}, (_, h) => {
+      const hourAvg = stats.hourlyAvgPrices[h];
+      return hourAvg ? hourAvg / stats.avgPrice : 1.0;
+    }) :
+    [
+      0.82, 0.78, 0.76, 0.75, 0.77, 0.85, 0.95, 1.08,
+      1.15, 1.18, 1.16, 1.12, 1.08, 1.05, 1.08, 1.12,
+      1.18, 1.22, 1.25, 1.20, 1.12, 1.02, 0.92, 0.87
+    ];
+  
   const sortedPrices = [...recentPrices].sort((a, b) => a - b);
   const trend = sortedPrices[Math.floor(sortedPrices.length / 2)];
   
-  // Realistic hourly patterns for Alberta
-  const hourlyMultipliers = [
-    0.82, 0.78, 0.76, 0.75, 0.77, 0.85, 0.95, 1.08,
-    1.15, 1.18, 1.16, 1.12, 1.08, 1.05, 1.08, 1.12,
-    1.18, 1.22, 1.25, 1.20, 1.12, 1.02, 0.92, 0.87
-  ];
   const hourlyFactor = hourlyMultipliers[hour];
-  
   const weeklyFactor = (dayOfWeek >= 1 && dayOfWeek <= 5) ? 1.04 : 0.96;
   
-  // Alberta seasonal patterns (heating/cooling demand)
+  // Alberta seasonal patterns
   const monthlyMultipliers = [
     1.15, 1.12, 1.05, 0.95, 0.92, 0.95,
     1.08, 1.12, 1.02, 0.98, 1.05, 1.12
@@ -280,28 +315,33 @@ function gradientBoostingPredict(
   isWeekend: boolean,
   temp: number,
   windSpeed: number,
-  cloudCover: number
+  cloudCover: number,
+  correlations: any = {}
 ): number {
   let prediction = avgPrice;
   
-  // Peak hour premium (evening demand surge)
+  // Use learned temperature correlation if available
+  const tempCorr = Math.abs(correlations.temperature || 0.5);
+  
+  // Peak hour premium
   if (hour >= 17 && hour <= 20) prediction *= 1.20;
   else if (hour >= 7 && hour <= 9) prediction *= 1.12;
   else if (hour >= 0 && hour <= 5) prediction *= 0.82;
   
-  // Weekend discount (lower industrial demand)
+  // Weekend discount
   if (isWeekend) prediction *= 0.93;
   
-  // Temperature impacts (heating/cooling demand)
-  if (temp < -15) prediction *= 1.18; // Heating demand
-  else if (temp > 28) prediction *= 1.15; // Cooling demand
-  else if (temp >= 10 && temp <= 20) prediction *= 0.95; // Mild weather
+  // Temperature impacts with learned sensitivity
+  if (temp < -15) prediction *= (1 + 0.18 * tempCorr);
+  else if (temp > 28) prediction *= (1 + 0.15 * tempCorr);
+  else if (temp >= 10 && temp <= 20) prediction *= 0.95;
   
-  // Wind generation (Alberta has significant wind capacity)
-  if (windSpeed > 25) prediction *= 0.88; // High wind = more generation
-  else if (windSpeed < 8) prediction *= 1.08; // Low wind = less generation
+  // Wind generation impact
+  const windCorr = Math.abs(correlations.windGen || 0.3);
+  if (windSpeed > 25) prediction *= (1 - 0.12 * windCorr);
+  else if (windSpeed < 8) prediction *= (1 + 0.08 * windCorr);
   
-  // Solar impact (less significant than wind in Alberta)
+  // Solar impact
   if (cloudCover > 80 && hour >= 10 && hour <= 16) prediction *= 1.03;
   
   return prediction;
