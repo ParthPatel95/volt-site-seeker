@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Download, TrendingUp, Brain, AlertCircle } from 'lucide-react';
+import { RefreshCw, Download, TrendingUp, Brain, AlertCircle, CloudSun, CheckCircle, BarChart3 } from 'lucide-react';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { PricePredictionChart } from './PricePredictionChart';
 import { FeatureImpactVisualization } from './FeatureImpactVisualization';
@@ -11,12 +11,24 @@ import { PricePredictionAlerts } from './PricePredictionAlerts';
 import { ScenarioAnalysis } from './ScenarioAnalysis';
 import { ModelPerformanceMetrics } from './ModelPerformanceMetrics';
 import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
+import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
+import { BacktestingDashboard } from './BacktestingDashboard';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
-  const { predictions, modelPerformance, loading, fetchPredictions, fetchModelPerformance, collectTrainingData } = useAESOPricePrediction();
+  const { 
+    predictions, 
+    modelPerformance, 
+    loading, 
+    fetchPredictions, 
+    fetchModelPerformance, 
+    collectTrainingData,
+    trainModel,
+    collectWeatherData,
+    validatePredictions
+  } = useAESOPricePrediction();
   const { pricing } = useAESOData();
   const { toast } = useToast();
 
@@ -31,10 +43,18 @@ export const AESOPricePredictionDashboard = () => {
 
   const handleCollectData = async () => {
     await collectTrainingData();
-    toast({
-      title: "Training Data Updated",
-      description: "AI model will auto-train when sufficient data is available",
-    });
+  };
+
+  const handleTrainModel = async () => {
+    await trainModel();
+  };
+
+  const handleCollectWeather = async () => {
+    await collectWeatherData();
+  };
+
+  const handleValidatePredictions = async () => {
+    await validatePredictions();
   };
 
   const handleExport = () => {
@@ -71,7 +91,7 @@ export const AESOPricePredictionDashboard = () => {
           </p>
         </div>
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Select value={horizon} onValueChange={setHorizon}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
@@ -85,6 +105,18 @@ export const AESOPricePredictionDashboard = () => {
             <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Update Data
+            </Button>
+            <Button onClick={handleCollectWeather} variant="outline" size="sm" disabled={loading}>
+              <CloudSun className="h-4 w-4 mr-2" />
+              Update Weather
+            </Button>
+            <Button onClick={handleTrainModel} variant="outline" size="sm" disabled={loading}>
+              <Brain className="h-4 w-4 mr-2" />
+              Train Model
+            </Button>
+            <Button onClick={handleValidatePredictions} variant="outline" size="sm" disabled={loading}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Validate
             </Button>
             <Button onClick={handleGeneratePredictions} disabled={loading}>
               <TrendingUp className="h-4 w-4 mr-2" />
@@ -172,11 +204,13 @@ export const AESOPricePredictionDashboard = () => {
       {/* Tabbed Content */}
       {predictions.length > 0 && (
         <Tabs defaultValue="forecast" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="forecast">Forecast</TabsTrigger>
             <TabsTrigger value="scenario">Scenario Analysis</TabsTrigger>
             <TabsTrigger value="analytics">Advanced Analytics</TabsTrigger>
             <TabsTrigger value="performance">Model Performance</TabsTrigger>
+            <TabsTrigger value="accuracy">Accuracy Tracker</TabsTrigger>
+            <TabsTrigger value="backtest">Backtesting</TabsTrigger>
           </TabsList>
 
           <TabsContent value="forecast" className="space-y-6">
@@ -197,6 +231,14 @@ export const AESOPricePredictionDashboard = () => {
 
           <TabsContent value="performance">
             <ModelPerformanceMetrics performance={modelPerformance} />
+          </TabsContent>
+
+          <TabsContent value="accuracy">
+            <PredictionAccuracyTracker />
+          </TabsContent>
+
+          <TabsContent value="backtest">
+            <BacktestingDashboard />
           </TabsContent>
         </Tabs>
       )}
