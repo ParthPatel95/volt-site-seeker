@@ -56,7 +56,7 @@ export const BacktestingDashboard = () => {
       // Fetch predictions that were made during this period
       const { data: predictionData, error: predError } = await supabase
         .from('aeso_price_predictions')
-        .select('target_timestamp, predicted_price, forecast_timestamp')
+        .select('target_timestamp, predicted_price, prediction_timestamp')
         .gte('target_timestamp', startDate.toISOString())
         .order('target_timestamp', { ascending: true });
 

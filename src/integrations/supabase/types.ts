@@ -176,6 +176,59 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_prediction_accuracy: {
+        Row: {
+          absolute_error: number
+          actual_price: number
+          created_at: string
+          horizon_hours: number
+          id: string
+          model_version: string | null
+          percent_error: number
+          predicted_price: number
+          prediction_id: string | null
+          target_timestamp: string
+          validated_at: string | null
+          within_confidence: boolean | null
+        }
+        Insert: {
+          absolute_error: number
+          actual_price: number
+          created_at?: string
+          horizon_hours: number
+          id?: string
+          model_version?: string | null
+          percent_error: number
+          predicted_price: number
+          prediction_id?: string | null
+          target_timestamp: string
+          validated_at?: string | null
+          within_confidence?: boolean | null
+        }
+        Update: {
+          absolute_error?: number
+          actual_price?: number
+          created_at?: string
+          horizon_hours?: number
+          id?: string
+          model_version?: string | null
+          percent_error?: number
+          predicted_price?: number
+          prediction_id?: string | null
+          target_timestamp?: string
+          validated_at?: string | null
+          within_confidence?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aeso_prediction_accuracy_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_price_predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aeso_price_predictions: {
         Row: {
           confidence_lower: number | null
