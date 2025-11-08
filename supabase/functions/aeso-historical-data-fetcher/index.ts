@@ -34,9 +34,9 @@ serve(async (req) => {
       startDate.setTime(new Date(existingData[0].timestamp).getTime() - 24 * 60 * 60 * 1000);
       console.log(`Continuing from last data point: ${existingData[0].timestamp}`);
     } else {
-      // Start from 10 years ago
-      startDate.setFullYear(startDate.getFullYear() - 10);
-      console.log('Starting fresh fetch from 10 years ago');
+      // Start from 20 years ago
+      startDate.setFullYear(startDate.getFullYear() - 20);
+      console.log('Starting fresh fetch from 20 years ago');
     }
 
     // AESO API might have limits, so we'll fetch in chunks (1 year at a time)

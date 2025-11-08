@@ -28,6 +28,9 @@ verify_jwt = false
 [functions.aeso-prediction-validator]
 verify_jwt = false
 
+[functions.aeso-auto-trainer]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

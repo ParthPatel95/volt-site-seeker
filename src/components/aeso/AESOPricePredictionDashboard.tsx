@@ -25,7 +25,6 @@ export const AESOPricePredictionDashboard = () => {
     fetchPredictions, 
     fetchModelPerformance, 
     collectTrainingData,
-    trainModel,
     collectWeatherData,
     validatePredictions
   } = useAESOPricePrediction();
@@ -43,10 +42,6 @@ export const AESOPricePredictionDashboard = () => {
 
   const handleCollectData = async () => {
     await collectTrainingData();
-  };
-
-  const handleTrainModel = async () => {
-    await trainModel();
   };
 
   const handleCollectWeather = async () => {
@@ -109,10 +104,6 @@ export const AESOPricePredictionDashboard = () => {
             <Button onClick={handleCollectWeather} variant="outline" size="sm" disabled={loading}>
               <CloudSun className="h-4 w-4 mr-2" />
               Update Weather
-            </Button>
-            <Button onClick={handleTrainModel} variant="outline" size="sm" disabled={loading}>
-              <Brain className="h-4 w-4 mr-2" />
-              Train Model
             </Button>
             <Button onClick={handleValidatePredictions} variant="outline" size="sm" disabled={loading}>
               <CheckCircle className="h-4 w-4 mr-2" />
