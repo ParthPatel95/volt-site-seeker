@@ -26,8 +26,8 @@ serve(async (req) => {
       .select('*')
       .order('timestamp', { ascending: true });
 
-    if (trainError || !trainingData || trainingData.length < 100) {
-      throw new Error(`Insufficient training data: ${trainingData?.length || 0} records (need at least 100)`);
+    if (trainError || !trainingData || trainingData.length < 24) {
+      throw new Error(`Insufficient training data: ${trainingData?.length || 0} records (need at least 24 hours)`);
     }
 
     console.log(`Training AI model with ${trainingData.length} historical data points`);
