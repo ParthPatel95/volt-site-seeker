@@ -172,14 +172,14 @@ serve(async (req) => {
           };
         });
         
-        // Insert in batches of 500 (use regular insert, not upsert)
+        // Insert in batches of 500 using upsert with unique timestamp constraint
         const batchSize = 500;
         for (let i = 0; i < trainingRecords.length; i += batchSize) {
           const batch = trainingRecords.slice(i, i + batchSize);
           
           const { error } = await supabase
             .from('aeso_training_data')
-            .insert(batch, { ignoreDuplicates: false }); // Regular insert
+            .upsert(batch, { onConflict: 'timestamp', ignoreDuplicates: true });
 
           if (error) {
             console.error(`Error inserting batch:`, error);
