@@ -46,6 +46,15 @@ verify_jwt = false
 [functions.aeso-performance-tracker]
 verify_jwt = false
 
+[functions.aeso-data-quality-checker]
+verify_jwt = false
+
+[functions.aeso-lstm-predictor]
+verify_jwt = false
+
+[functions.aeso-monitoring-endpoint]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 
