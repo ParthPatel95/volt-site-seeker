@@ -160,9 +160,10 @@ serve(async (req) => {
       totalSquaredError += (prediction - actual) * (prediction - actual);
       modelErrors[regime].push(error);
       
-      if (actual !== 0) {
-        totalPercentError += Math.abs((prediction - actual) / actual) * 100;
-      }
+      // For MAPE: use $5 minimum threshold to avoid division by very small numbers
+      // Zero prices are valid but create infinite percentage errors
+      const actualForMape = Math.max(5, actual);
+      totalPercentError += Math.abs((prediction - actualForMape) / actualForMape) * 100;
     }
 
     // Calculate performance metrics
