@@ -1,5 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { serve, createClient } from "../_shared/imports.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,8 +13,16 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const aesoSubKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') || Deno.env.get('AESO_SUB_KEY')!;
+    // Use correct API key that works with working endpoints
+    const aesoApiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
+                       Deno.env.get('AESO_API_KEY') ||
+                       Deno.env.get('AESO_SUB_KEY') ||
+                       Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY');
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    if (!aesoApiKey) {
+      throw new Error('AESO API key not configured. Please set AESO_SUBSCRIPTION_KEY_PRIMARY.');
+    }
 
     console.log('Fetching AESO historical data for 30,000 hours (~3.4 years)...');
 
@@ -47,23 +54,17 @@ serve(async (req) => {
       });
     }
     
-    if (existingData?.[0]?.timestamp) {
-      // Continue from last data point
-      startDate.setTime(new Date(existingData[0].timestamp).getTime() - 24 * 60 * 60 * 1000);
-      console.log(`Continuing from last data point: ${existingData[0].timestamp}`);
-    } else {
-      // Fetch exactly 30,000 hours back from now
-      startDate.setTime(currentTime.getTime() - HOURS_NEEDED * 60 * 60 * 1000);
-      console.log(`Starting fresh fetch from ${startDate.toISOString()} (30,000 hours ago)`);
-    }
+    // Fetch exactly 30,000 hours back from now
+    startDate.setTime(currentTime.getTime() - HOURS_NEEDED * 60 * 60 * 1000);
+    console.log(`Starting fresh fetch from ${startDate.toISOString()} (30,000 hours ago)`);
 
-    // Fetch in 3-month chunks for better API handling
+    // Fetch in 11-month chunks (max 366 days per AESO API request)
     const chunks: Array<{start: Date, end: Date}> = [];
     let chunkStart = new Date(startDate);
     
     while (chunkStart < currentTime) {
       const chunkEnd = new Date(chunkStart);
-      chunkEnd.setMonth(chunkEnd.getMonth() + 3); // 3-month chunks
+      chunkEnd.setMonth(chunkEnd.getMonth() + 11); // 11 months = ~330 days (safe under 366)
       
       if (chunkEnd > currentTime) {
         chunks.push({ start: chunkStart, end: currentTime });
@@ -72,46 +73,67 @@ serve(async (req) => {
       }
       
       chunkStart = new Date(chunkEnd);
+      chunkStart.setDate(chunkStart.getDate() + 1); // Move to next day after chunk end
     }
 
-    console.log(`Fetching ${chunks.length} chunks (~3 months each) of historical data`);
+    console.log(`Fetching ${chunks.length} chunks (~11 months each) of historical data`);
     
     let totalRecords = 0;
     let totalInserted = 0;
 
     for (const chunk of chunks) {
-      const formattedStart = chunk.start.toISOString().split('T')[0].replace(/-/g, '');
-      const formattedEnd = chunk.end.toISOString().split('T')[0].replace(/-/g, '');
+      const formattedStart = chunk.start.toISOString().split('T')[0]; // YYYY-MM-DD format (not YYYYMMDD)
+      const formattedEnd = chunk.end.toISOString().split('T')[0];
       
       console.log(`Fetching chunk: ${formattedStart} to ${formattedEnd}`);
       
       try {
-        // Use AESO APIM gateway for pool price historical data
-        const poolPriceUrl = `https://apimgw.aeso.ca/public/price-api/v1/poolprice?startDate=${formattedStart}&endDate=${formattedEnd}`;
+        // Use WORKING Pool Price API from aeso-historical-pricing (v1.1 with hyphens)
+        const poolPriceUrl = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${formattedStart}&endDate=${formattedEnd}`;
         
+        console.log(`Calling: ${poolPriceUrl}`);
         const response = await fetch(poolPriceUrl, {
           headers: {
-            'accept': 'application/json',
-            'Ocp-Apim-Subscription-Key': aesoSubKey
+            'API-KEY': aesoApiKey,  // Use API-KEY header (not Ocp-Apim-Subscription-Key)
+            'Accept': 'application/json'
           }
         });
 
         if (!response.ok) {
-          console.error(`API error for chunk ${formattedStart}-${formattedEnd}: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`API error for chunk ${formattedStart}-${formattedEnd}: ${response.status} - ${errorText.substring(0, 200)}`);
           continue;
         }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+          console.log('✅ API response received, keys:', Object.keys(data));
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          const text = await response.text();
+          console.error('Response text (first 500 chars):', text.substring(0, 500));
+          continue;
+        }
         
-        if (!data.return?.Pool_Price_Report || data.return.Pool_Price_Report.length === 0) {
-          console.log(`No data for chunk ${formattedStart}-${formattedEnd}`);
+        if (data.return) {
+          console.log('  data.return keys:', Object.keys(data.return));
+        }
+        
+        // AESO API returns { "return": { "Pool Price Report": [...] } } with SPACE in key name
+        const priceReports = data.return?.['Pool Price Report'] || data.return?.Pool_Price_Report || [];
+        
+        console.log(`Found ${priceReports.length} price records in response`);
+        
+        if (priceReports.length === 0) {
+          console.log(`❌ No data for chunk ${formattedStart}-${formattedEnd}`);
+          console.log('Response structure:', JSON.stringify(data).substring(0, 300));
           continue;
         }
 
-        const priceReports = data.return.Pool_Price_Report;
         totalRecords += priceReports.length;
         
-        console.log(`Processing ${priceReports.length} records from chunk`);
+        console.log(`✅ Processing ${priceReports.length} records from chunk`);
         
         // Convert to training data format
         const trainingRecords = priceReports.map((report: any) => {
@@ -150,22 +172,20 @@ serve(async (req) => {
           };
         });
         
-        // Insert in batches of 500
+        // Insert in batches of 500 (use regular insert, not upsert)
         const batchSize = 500;
         for (let i = 0; i < trainingRecords.length; i += batchSize) {
           const batch = trainingRecords.slice(i, i + batchSize);
           
           const { error } = await supabase
             .from('aeso_training_data')
-            .upsert(batch, { 
-              onConflict: 'timestamp',
-              ignoreDuplicates: true 
-            });
+            .insert(batch, { ignoreDuplicates: false }); // Regular insert
 
           if (error) {
             console.error(`Error inserting batch:`, error);
           } else {
             totalInserted += batch.length;
+            console.log(`✅ Inserted batch ${Math.floor(i/batchSize) + 1}: ${batch.length} records`);
           }
         }
         
