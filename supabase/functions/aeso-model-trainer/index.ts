@@ -203,7 +203,7 @@ serve(async (req) => {
         mape: mape,
         r_squared: rSquared,
         feature_importance: featureImportance,
-        training_samples: trainingData.length
+        predictions_evaluated: testSet.length
       });
 
     if (insertError) {
