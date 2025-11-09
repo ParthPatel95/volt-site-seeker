@@ -274,7 +274,9 @@ function predictPriceWithXGBoost(
   // Apply regime-specific multipliers
   prediction *= getRegimeMultiplier(regime, currentConditions);
   
-  return Math.max(0, prediction);
+  // Handle extreme Alberta price volatility with bounds
+  // AESO market can spike to $999.99 but predictions should be conservative
+  return Math.max(5, Math.min(800, prediction));
 }
 
 // Simplified decision tree builder for gradient boosting
@@ -442,13 +444,15 @@ function predictPriceForTraining(
     prediction *= Math.max(0.85, windFactor);
   }
   
-  // Demand impact (if available)
-  if (testPoint.ail_mw !== null && correlations.demand) {
+  // Demand impact (if available and reasonable)
+  if (testPoint.ail_mw !== null && testPoint.ail_mw > 5000 && correlations.demand) {
     const demandFactor = testPoint.ail_mw / (stats.avgDemand || 10000);
-    prediction *= demandFactor;
+    // Limit demand impact to reasonable range
+    prediction *= Math.max(0.7, Math.min(1.4, demandFactor));
   }
   
-  return Math.max(0, prediction); // Prices can't be negative (well, rarely)
+  // Price floor and ceiling for Alberta market (historically -$100 to $999.99)
+  return Math.max(0, Math.min(999, prediction));
 }
 
 // Calculate correlations between features and price

@@ -105,7 +105,7 @@ serve(async (req) => {
     const trainingData = {
       timestamp: currentTime.toISOString(),
       pool_price: poolPrice,
-      ail_mw: aesoData.load?.current_demand_mw || null,
+      ail_mw: aesoData.loadData?.current_demand_mw || null,
       temperature_calgary: calgaryWeather?.temperature || null,
       temperature_edmonton: edmontonWeather?.temperature || null,
       wind_speed: calgaryWeather?.wind_speed || null,
