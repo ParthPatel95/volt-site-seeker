@@ -55,6 +55,9 @@ verify_jwt = false
 [functions.aeso-monitoring-endpoint]
 verify_jwt = false
 
+[functions.aeso-orchestrator]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

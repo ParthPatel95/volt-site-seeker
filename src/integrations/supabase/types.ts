@@ -95,6 +95,48 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_data_quality_reports: {
+        Row: {
+          clean_records: number
+          created_at: string | null
+          duplicate_count: number
+          id: string
+          issue_details: Json | null
+          missing_value_count: number
+          outlier_count: number
+          quality_score: number
+          records_checked: number
+          report_date: string
+          total_issues: number
+        }
+        Insert: {
+          clean_records: number
+          created_at?: string | null
+          duplicate_count: number
+          id?: string
+          issue_details?: Json | null
+          missing_value_count: number
+          outlier_count: number
+          quality_score: number
+          records_checked: number
+          report_date: string
+          total_issues: number
+        }
+        Update: {
+          clean_records?: number
+          created_at?: string | null
+          duplicate_count?: number
+          id?: string
+          issue_details?: Json | null
+          missing_value_count?: number
+          outlier_count?: number
+          quality_score?: number
+          records_checked?: number
+          report_date?: string
+          total_issues?: number
+        }
+        Relationships: []
+      }
       aeso_enhanced_features: {
         Row: {
           created_at: string
@@ -263,6 +305,45 @@ export type Database = {
           rmse?: number | null
           training_period_end?: string | null
           training_period_start?: string | null
+        }
+        Relationships: []
+      }
+      aeso_model_versions: {
+        Row: {
+          created_at: string | null
+          deployed_at: string | null
+          description: string | null
+          hyperparameters: Json | null
+          id: string
+          is_active: boolean | null
+          model_type: string
+          performance_metrics: Json | null
+          training_config: Json | null
+          version_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          deployed_at?: string | null
+          description?: string | null
+          hyperparameters?: Json | null
+          id?: string
+          is_active?: boolean | null
+          model_type: string
+          performance_metrics?: Json | null
+          training_config?: Json | null
+          version_name: string
+        }
+        Update: {
+          created_at?: string | null
+          deployed_at?: string | null
+          description?: string | null
+          hyperparameters?: Json | null
+          id?: string
+          is_active?: boolean | null
+          model_type?: string
+          performance_metrics?: Json | null
+          training_config?: Json | null
+          version_name?: string
         }
         Relationships: []
       }
@@ -436,6 +517,45 @@ export type Database = {
           predicted_price?: number
           prediction_timestamp?: string
           target_timestamp?: string
+        }
+        Relationships: []
+      }
+      aeso_scheduled_tasks: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          last_run: string | null
+          next_run: string | null
+          result: Json | null
+          status: string | null
+          task_name: string
+          task_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          last_run?: string | null
+          next_run?: string | null
+          result?: Json | null
+          status?: string | null
+          task_name: string
+          task_type: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          last_run?: string | null
+          next_run?: string | null
+          result?: Json | null
+          status?: string | null
+          task_name?: string
+          task_type?: string
         }
         Relationships: []
       }
