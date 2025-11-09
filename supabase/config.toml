@@ -37,6 +37,15 @@ verify_jwt = false
 [functions.aeso-feature-calculator]
 verify_jwt = false
 
+[functions.aeso-regime-detector]
+verify_jwt = false
+
+[functions.aeso-ensemble-predictor]
+verify_jwt = false
+
+[functions.aeso-performance-tracker]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 
