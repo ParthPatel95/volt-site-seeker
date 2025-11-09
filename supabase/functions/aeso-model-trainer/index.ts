@@ -20,21 +20,76 @@ serve(async (req) => {
 
     console.log('Starting XGBoost-style gradient boosting training with enhanced features...');
 
-    // Fetch all training data with enhanced features
-    const { data: trainingData, error: trainError } = await supabase
-      .from('aeso_training_data')
-      .select('*')
-      .order('timestamp', { ascending: true });
+    // Fetch all training data with enhanced features (paginate to get all records)
+    console.log('Fetching all training data...');
+    let trainingData: any[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const { data: chunk, error: chunkError } = await supabase
+        .from('aeso_training_data')
+        .select('*')
+        .order('timestamp', { ascending: true })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+      if (chunkError) {
+        console.error('Error fetching training data chunk:', chunkError);
+        break;
+      }
+      
+      if (!chunk || chunk.length === 0) {
+        hasMore = false;
+      } else {
+        trainingData = trainingData.concat(chunk);
+        console.log(`Fetched page ${page + 1}: ${chunk.length} records (total: ${trainingData.length})`);
+        page++;
+        
+        if (chunk.length < pageSize) {
+          hasMore = false;
+        }
+      }
+    }
+    
+    const trainError = trainingData.length === 0 ? new Error('No training data found') : null;
 
     if (trainError || !trainingData || trainingData.length < 24) {
       throw new Error(`Insufficient training data: ${trainingData?.length || 0} records (need at least 24 hours)`);
     }
 
-    // Fetch enhanced features
-    const { data: enhancedFeatures, error: featureError } = await supabase
-      .from('aeso_enhanced_features')
-      .select('*')
-      .order('timestamp', { ascending: true });
+    // Fetch enhanced features (paginate to get all records)
+    console.log('Fetching enhanced features...');
+    let enhancedFeatures: any[] = [];
+    page = 0;
+    hasMore = true;
+    
+    while (hasMore) {
+      const { data: chunk, error: chunkError } = await supabase
+        .from('aeso_enhanced_features')
+        .select('*')
+        .order('timestamp', { ascending: true })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+      if (chunkError) {
+        console.warn('Error fetching enhanced features chunk:', chunkError);
+        break;
+      }
+      
+      if (!chunk || chunk.length === 0) {
+        hasMore = false;
+      } else {
+        enhancedFeatures = enhancedFeatures.concat(chunk);
+        console.log(`Fetched enhanced features page ${page + 1}: ${chunk.length} records`);
+        page++;
+        
+        if (chunk.length < pageSize) {
+          hasMore = false;
+        }
+      }
+    }
+    
+    const featureError = enhancedFeatures.length === 0 ? new Error('No enhanced features found') : null;
 
     if (featureError) {
       console.warn('Enhanced features not available, using base features only');
