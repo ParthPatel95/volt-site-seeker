@@ -95,16 +95,57 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_enhanced_features: {
+        Row: {
+          created_at: string
+          id: string
+          natural_gas_price: number | null
+          net_imports: number | null
+          price_momentum_3h: number | null
+          price_volatility_1h: number | null
+          price_volatility_24h: number | null
+          renewable_curtailment: number | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          natural_gas_price?: number | null
+          net_imports?: number | null
+          price_momentum_3h?: number | null
+          price_volatility_1h?: number | null
+          price_volatility_24h?: number | null
+          renewable_curtailment?: number | null
+          timestamp: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          natural_gas_price?: number | null
+          net_imports?: number | null
+          price_momentum_3h?: number | null
+          price_volatility_1h?: number | null
+          price_volatility_24h?: number | null
+          renewable_curtailment?: number | null
+          timestamp?: string
+        }
+        Relationships: []
+      }
       aeso_model_parameters: {
         Row: {
           created_at: string
           feature_correlations: Json | null
           feature_statistics: Json | null
           id: string
+          learning_rate: number | null
+          max_depth: number | null
+          min_samples_split: number | null
           model_version: string
+          n_estimators: number | null
           parameter_name: string
           parameter_type: string
           parameter_value: number
+          subsample: number | null
           training_samples: number
           updated_at: string
         }
@@ -113,10 +154,15 @@ export type Database = {
           feature_correlations?: Json | null
           feature_statistics?: Json | null
           id?: string
+          learning_rate?: number | null
+          max_depth?: number | null
+          min_samples_split?: number | null
           model_version: string
+          n_estimators?: number | null
           parameter_name: string
           parameter_type: string
           parameter_value: number
+          subsample?: number | null
           training_samples: number
           updated_at?: string
         }
@@ -125,10 +171,15 @@ export type Database = {
           feature_correlations?: Json | null
           feature_statistics?: Json | null
           id?: string
+          learning_rate?: number | null
+          max_depth?: number | null
+          min_samples_split?: number | null
           model_version?: string
+          n_estimators?: number | null
           parameter_name?: string
           parameter_type?: string
           parameter_value?: number
+          subsample?: number | null
           training_samples?: number
           updated_at?: string
         }
@@ -173,6 +224,33 @@ export type Database = {
           rmse?: number | null
           training_period_end?: string | null
           training_period_start?: string | null
+        }
+        Relationships: []
+      }
+      aeso_natural_gas_prices: {
+        Row: {
+          created_at: string
+          id: string
+          market: string
+          price: number
+          source: string
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market?: string
+          price: number
+          source?: string
+          timestamp: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market?: string
+          price?: number
+          source?: string
+          timestamp?: string
         }
         Relationships: []
       }

@@ -31,6 +31,12 @@ verify_jwt = false
 [functions.aeso-auto-trainer]
 verify_jwt = false
 
+[functions.aeso-natural-gas-collector]
+verify_jwt = false
+
+[functions.aeso-feature-calculator]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

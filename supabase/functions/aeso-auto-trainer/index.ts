@@ -18,8 +18,8 @@ serve(async (req) => {
 
     console.log('Starting automated training workflow...');
 
-    // Step 1: Fetch historical data
-    console.log('Step 1: Fetching historical AESO data...');
+    // Step 1: Fetch historical data (20 years)
+    console.log('Step 1: Fetching historical AESO data (20 years)...');
     const { data: historicalData, error: historicalError } = await supabase.functions.invoke('aeso-historical-data-fetcher');
     
     if (historicalError) {
@@ -40,8 +40,30 @@ serve(async (req) => {
     
     console.log('Weather data collected:', weatherData);
 
-    // Step 3: Train the model
-    console.log('Step 3: Training AI model...');
+    // Step 3: Collect natural gas prices
+    console.log('Step 3: Collecting natural gas prices...');
+    const { data: gasData, error: gasError } = await supabase.functions.invoke('aeso-natural-gas-collector');
+    
+    if (gasError) {
+      console.error('Natural gas data collection failed:', gasError);
+      // Don't throw - gas data is supplementary
+    }
+    
+    console.log('Natural gas prices collected:', gasData);
+
+    // Step 4: Calculate enhanced features
+    console.log('Step 4: Calculating enhanced features...');
+    const { data: featuresData, error: featuresError } = await supabase.functions.invoke('aeso-feature-calculator');
+    
+    if (featuresError) {
+      console.error('Enhanced features calculation failed:', featuresError);
+      // Don't throw - enhanced features are supplementary
+    }
+    
+    console.log('Enhanced features calculated:', featuresData);
+
+    // Step 5: Train the XGBoost model with enhanced features
+    console.log('Step 5: Training XGBoost model with enhanced features...');
     const { data: trainingResult, error: trainingError } = await supabase.functions.invoke('aeso-model-trainer');
     
     if (trainingError) {
@@ -51,8 +73,8 @@ serve(async (req) => {
     
     console.log('Model training complete:', trainingResult);
 
-    // Step 4: Validate predictions (if any exist)
-    console.log('Step 4: Validating existing predictions...');
+    // Step 6: Validate predictions (if any exist)
+    console.log('Step 6: Validating existing predictions...');
     const { data: validationData, error: validationError } = await supabase.functions.invoke('aeso-prediction-validator');
     
     if (validationError) {
@@ -68,6 +90,8 @@ serve(async (req) => {
       steps: {
         historical_data: historicalData,
         weather_data: weatherData,
+        gas_data: gasData,
+        enhanced_features: featuresData,
         training: trainingResult,
         validation: validationData
       },

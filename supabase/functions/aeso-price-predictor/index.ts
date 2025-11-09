@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MODEL_VERSION = 'v1.0-ensemble';
+const MODEL_VERSION = 'v3.0-xgboost-enhanced';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -22,7 +22,7 @@ serve(async (req) => {
 
     console.log(`Generating price predictions for horizon: ${horizon}`);
 
-    // Fetch recent training data (last 336 hours = 14 days for better pattern recognition)
+    // Fetch recent training data with enhanced features (last 336 hours = 14 days)
     const { data: historicalData, error: histError } = await supabase
       .from('aeso_training_data')
       .select('*')
@@ -32,15 +32,33 @@ serve(async (req) => {
     if (histError || !historicalData || historicalData.length === 0) {
       throw new Error('Insufficient training data');
     }
+
+    // Fetch enhanced features for the same period
+    const oldestTimestamp = historicalData[historicalData.length - 1]?.timestamp;
+    const { data: enhancedFeatures } = await supabase
+      .from('aeso_enhanced_features')
+      .select('*')
+      .gte('timestamp', oldestTimestamp)
+      .order('timestamp', { ascending: false });
+
+    // Merge enhanced features with historical data
+    const enhancedDataMap = new Map(
+      (enhancedFeatures || []).map(f => [f.timestamp, f])
+    );
     
-    console.log(`Using ${historicalData.length} data points for prediction`);
+    const mergedData = historicalData.map(record => ({
+      ...record,
+      ...enhancedDataMap.get(record.timestamp)
+    }));
+    
+    console.log(`Using ${mergedData.length} data points with enhanced features for prediction`);
 
     // Parse horizon
     const horizonHours = parseHorizon(horizon);
     
-    // Generate predictions
+    // Generate predictions with enhanced features
     const predictions = await generatePredictions(
-      historicalData,
+      mergedData,
       horizonHours,
       supabase
     );
