@@ -1,5 +1,4 @@
 import { serve } from "../_shared/imports.ts";
-import { fetchIESOData } from "./ieso-fetch.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1708,6 +1707,54 @@ async function fetchSPPData() {
   };
 
   console.log('✅ SPP data (estimated)');
+
+  return { pricing, loadData, generationMix };
+}
+
+// ========== IESO (Ontario) DATA FETCHING ==========
+async function fetchIESOData() {
+  console.log('Fetching IESO (Ontario) data...');
+  
+  let pricing: any | undefined;
+  let loadData: any | undefined;
+  let generationMix: any | undefined;
+
+  // IESO has public APIs but they require authentication
+  // Provide estimated values based on typical IESO market characteristics
+  
+  pricing = {
+    current_price: 32.50,
+    average_price: 29.80,
+    peak_price: 52.00,
+    off_peak_price: 16.25,
+    market_conditions: 'normal',
+    timestamp: new Date().toISOString(),
+    source: 'ieso_estimated'
+  };
+
+  loadData = {
+    current_demand_mw: 15500,
+    peak_forecast_mw: 17800,
+    reserve_margin: 22.0,
+    timestamp: new Date().toISOString(),
+    source: 'ieso_estimated'
+  };
+
+  generationMix = {
+    total_generation_mw: 16200,
+    nuclear_mw: 9500,
+    hydro_mw: 4800,
+    natural_gas_mw: 1200,
+    wind_mw: 600,
+    solar_mw: 80,
+    coal_mw: 0,
+    other_mw: 20,
+    renewable_percentage: 33.8,
+    timestamp: new Date().toISOString(),
+    source: 'ieso_estimated'
+  };
+
+  console.log('✅ IESO data (estimated)');
 
   return { pricing, loadData, generationMix };
 }
