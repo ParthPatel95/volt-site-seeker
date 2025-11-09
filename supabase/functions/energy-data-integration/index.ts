@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { fetchIESOData } from "./ieso-fetch.ts"
+import { serve } from "../_shared/imports.ts";
+import { fetchIESOData } from "./ieso-fetch.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
