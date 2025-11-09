@@ -19,6 +19,9 @@ verify_jwt = false
 [functions.aeso-model-trainer]
 verify_jwt = false
 
+[functions.aeso-rapid-backfill]
+verify_jwt = false
+
 [functions.aeso-historical-data-fetcher]
 verify_jwt = false
 

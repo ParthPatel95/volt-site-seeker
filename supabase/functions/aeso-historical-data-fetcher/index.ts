@@ -14,38 +14,56 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const aesoApiKey = Deno.env.get('AESO_API_KEY')!;
+    const aesoSubKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') || Deno.env.get('AESO_SUB_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Fetching AESO historical data (up to 10 years)...');
+    console.log('Fetching AESO historical data for 30,000 hours (~3.4 years)...');
+
+    // Target: 30,000 hours = 1,250 days ≈ 3.4 years
+    const HOURS_NEEDED = 30000;
 
     // Check what data we already have
-    const { data: existingData } = await supabase
+    const { data: existingData, count } = await supabase
       .from('aeso_training_data')
-      .select('timestamp')
+      .select('timestamp', { count: 'exact' })
       .order('timestamp', { ascending: false })
       .limit(1);
+
+    console.log(`Current data in database: ${count || 0} records`);
 
     const currentTime = new Date();
     const startDate = new Date();
     
+    if (existingData?.[0]?.timestamp && (count || 0) >= HOURS_NEEDED) {
+      console.log(`✅ Already have ${count} records (target: ${HOURS_NEEDED}). No additional fetch needed.`);
+      return new Response(JSON.stringify({
+        success: true,
+        recordsProcessed: 0,
+        recordsInserted: 0,
+        totalRecords: count,
+        message: 'Sufficient historical data already present'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
     if (existingData?.[0]?.timestamp) {
-      // Start from last data point minus 1 day overlap
+      // Continue from last data point
       startDate.setTime(new Date(existingData[0].timestamp).getTime() - 24 * 60 * 60 * 1000);
       console.log(`Continuing from last data point: ${existingData[0].timestamp}`);
     } else {
-      // Start from 20 years ago
-      startDate.setFullYear(startDate.getFullYear() - 20);
-      console.log('Starting fresh fetch from 20 years ago');
+      // Fetch exactly 30,000 hours back from now
+      startDate.setTime(currentTime.getTime() - HOURS_NEEDED * 60 * 60 * 1000);
+      console.log(`Starting fresh fetch from ${startDate.toISOString()} (30,000 hours ago)`);
     }
 
-    // AESO API might have limits, so we'll fetch in chunks (1 year at a time)
+    // Fetch in 3-month chunks for better API handling
     const chunks: Array<{start: Date, end: Date}> = [];
     let chunkStart = new Date(startDate);
     
     while (chunkStart < currentTime) {
       const chunkEnd = new Date(chunkStart);
-      chunkEnd.setFullYear(chunkEnd.getFullYear() + 1);
+      chunkEnd.setMonth(chunkEnd.getMonth() + 3); // 3-month chunks
       
       if (chunkEnd > currentTime) {
         chunks.push({ start: chunkStart, end: currentTime });
@@ -56,7 +74,7 @@ serve(async (req) => {
       chunkStart = new Date(chunkEnd);
     }
 
-    console.log(`Fetching ${chunks.length} year chunks of data`);
+    console.log(`Fetching ${chunks.length} chunks (~3 months each) of historical data`);
     
     let totalRecords = 0;
     let totalInserted = 0;
@@ -68,12 +86,13 @@ serve(async (req) => {
       console.log(`Fetching chunk: ${formattedStart} to ${formattedEnd}`);
       
       try {
-        const poolPriceUrl = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${formattedStart}&endDate=${formattedEnd}`;
+        // Use AESO APIM gateway for pool price historical data
+        const poolPriceUrl = `https://apimgw.aeso.ca/public/price-api/v1/poolprice?startDate=${formattedStart}&endDate=${formattedEnd}`;
         
         const response = await fetch(poolPriceUrl, {
           headers: {
             'accept': 'application/json',
-            'X-API-Key': aesoApiKey
+            'Ocp-Apim-Subscription-Key': aesoSubKey
           }
         });
 
@@ -159,13 +178,28 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Historical data fetch complete: ${totalInserted}/${totalRecords} records inserted`);
+    console.log(`✅ Historical data fetch complete: ${totalInserted}/${totalRecords} records inserted`);
+    console.log(`📊 Total records in database now: ${(count || 0) + totalInserted}`);
+    
+    // After successful backfill, trigger model training
+    console.log('🤖 Triggering model training with historical data...');
+    const { data: trainResult, error: trainError } = await supabase.functions.invoke('aeso-model-trainer');
+    
+    if (trainError) {
+      console.error('Model training failed:', trainError);
+    } else {
+      console.log('✅ Model training completed:', trainResult);
+    }
 
     return new Response(JSON.stringify({
       success: true,
       recordsProcessed: totalRecords,
       recordsInserted: totalInserted,
-      chunksProcessed: chunks.length
+      totalRecordsNow: (count || 0) + totalInserted,
+      chunksProcessed: chunks.length,
+      targetHours: HOURS_NEEDED,
+      modelTrained: !trainError,
+      trainingResult: trainResult
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
