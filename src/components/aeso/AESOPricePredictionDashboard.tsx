@@ -15,6 +15,8 @@ import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
 import { BacktestingDashboard } from './BacktestingDashboard';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
+import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
+import { ResponsiveMetricsGrid } from '@/components/ResponsiveGrid';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
@@ -73,22 +75,23 @@ export const AESOPricePredictionDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold flex items-center gap-2">
-            <Brain className="h-8 w-8 text-primary" />
-            AESO Price Predictions
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            AI-powered energy price forecasting with confidence intervals
-          </p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2 flex-wrap">
+    <ResponsivePageContainer>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+                <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                AI Price Predictions
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                AI-powered energy price forecasting with confidence intervals
+              </p>
+            </div>
+            
             <Select value={horizon} onValueChange={setHorizon}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -97,209 +100,221 @@ export const AESOPricePredictionDashboard = () => {
                 <SelectItem value="7d">7 Days</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Update Data
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Update Data</span>
             </Button>
-            <Button onClick={handleCollectWeather} variant="outline" size="sm" disabled={loading}>
-              <CloudSun className="h-4 w-4 mr-2" />
-              Update Weather
+            <Button onClick={handleCollectWeather} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
+              <CloudSun className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Weather</span>
             </Button>
-            <Button onClick={handleValidatePredictions} variant="outline" size="sm" disabled={loading}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Validate
+            <Button onClick={handleValidatePredictions} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
+              <CheckCircle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Validate</span>
             </Button>
-            <Button onClick={handleGeneratePredictions} disabled={loading}>
-              <TrendingUp className="h-4 w-4 mr-2" />
-              {loading ? 'Generating...' : 'Generate Forecast'}
+            <Button onClick={handleGeneratePredictions} disabled={loading} className="flex-1 sm:flex-none">
+              <TrendingUp className="h-4 w-4 sm:mr-2" />
+              <span>{loading ? 'Generating...' : 'Forecast'}</span>
             </Button>
             {predictions.length > 0 && (
-              <Button onClick={handleExport} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
+              <Button onClick={handleExport} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Export</span>
               </Button>
             )}
           </div>
         </div>
+
+        {/* Model Performance */}
+        {modelPerformance && (
+          <Card className="border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Model Performance
+              </CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Accuracy metrics for prediction model</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveMetricsGrid>
+                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
+                  <div className="text-xs sm:text-sm text-muted-foreground">MAE</div>
+                  <div className="text-xl sm:text-2xl font-bold text-foreground">${modelPerformance.mae.toFixed(2)}</div>
+                </div>
+                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
+                  <div className="text-xs sm:text-sm text-muted-foreground">RMSE</div>
+                  <div className="text-xl sm:text-2xl font-bold text-foreground">${modelPerformance.rmse.toFixed(2)}</div>
+                </div>
+                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
+                  <div className="text-xs sm:text-sm text-muted-foreground">MAPE</div>
+                  <div className="text-xl sm:text-2xl font-bold text-foreground">{modelPerformance.mape.toFixed(1)}%</div>
+                </div>
+                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
+                  <div className="text-xs sm:text-sm text-muted-foreground">R² Score</div>
+                  <div className="text-xl sm:text-2xl font-bold text-foreground">{modelPerformance.rSquared.toFixed(3)}</div>
+                </div>
+              </ResponsiveMetricsGrid>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Smart Alerts */}
+        {predictions.length > 0 && (
+          <PricePredictionAlerts predictions={predictions} />
+        )}
+
+        {/* Info Banners */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          {/* Development Notice */}
+          <Card className="bg-warning/5 border-warning/20">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold mb-1 text-warning text-sm sm:text-base">Development Notice</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    This AI tool is in development. Predictions may vary as we improve the model.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Info Banner */}
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="flex items-start gap-3">
+                <Brain className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold mb-1 text-sm sm:text-base">How It Works</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    AI learns from live market data, weather, and patterns. Auto-trains every 24 hours for maximum accuracy.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabbed Content */}
+        {predictions.length > 0 && (
+          <Tabs defaultValue="forecast" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
+              <TabsTrigger value="forecast" className="text-xs sm:text-sm">Forecast</TabsTrigger>
+              <TabsTrigger value="scenario" className="text-xs sm:text-sm">Scenario</TabsTrigger>
+              <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+              <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
+              <TabsTrigger value="accuracy" className="text-xs sm:text-sm">Accuracy</TabsTrigger>
+              <TabsTrigger value="backtest" className="text-xs sm:text-sm">Backtest</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="forecast" className="space-y-4 sm:space-y-6 mt-4">
+              <PricePredictionChart 
+                predictions={predictions}
+                currentPrice={pricing?.current_price}
+              />
+              <FeatureImpactVisualization prediction={predictions[0]} />
+            </TabsContent>
+
+            <TabsContent value="scenario" className="mt-4">
+              <ScenarioAnalysis basePrediction={predictions[0] || null} />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="mt-4">
+              <AESOPredictionAnalytics predictions={predictions} />
+            </TabsContent>
+
+            <TabsContent value="performance" className="mt-4">
+              <ModelPerformanceMetrics performance={modelPerformance} />
+            </TabsContent>
+
+            <TabsContent value="accuracy" className="mt-4">
+              <PredictionAccuracyTracker />
+            </TabsContent>
+
+            <TabsContent value="backtest" className="mt-4">
+              <BacktestingDashboard />
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {/* Optimization Recommendations */}
+        {predictions.length > 0 && (
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Optimization Recommendations</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Smart timing for energy-intensive operations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 sm:space-y-6">
+                {(() => {
+                  const sortedPredictions = [...predictions].sort((a, b) => a.price - b.price);
+                  const cheapestHours = sortedPredictions.slice(0, 5);
+                  const expensiveHours = sortedPredictions.slice(-5).reverse();
+                  
+                  return (
+                    <>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-semibold mb-3 text-success flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4" />
+                          Best Times to Operate (Lowest Prices)
+                        </h4>
+                        <div className="space-y-2">
+                          {cheapestHours.map((pred, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-success/10 border border-success/20">
+                              <span className="text-xs sm:text-sm text-foreground">
+                                {new Date(pred.timestamp).toLocaleString('en-US', { 
+                                  month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                                })}
+                              </span>
+                              <span className="text-xs sm:text-sm font-bold text-success">${pred.price.toFixed(2)}/MWh</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-semibold mb-3 text-destructive flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          Times to Avoid (Highest Prices)
+                        </h4>
+                        <div className="space-y-2">
+                          {expensiveHours.map((pred, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                              <span className="text-xs sm:text-sm text-foreground">
+                                {new Date(pred.timestamp).toLocaleString('en-US', { 
+                                  month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                                })}
+                              </span>
+                              <span className="text-xs sm:text-sm font-bold text-destructive">${pred.price.toFixed(2)}/MWh</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <h4 className="text-xs sm:text-sm font-semibold mb-2">Potential Savings</h4>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          By operating during the 5 cheapest hours instead of the 5 most expensive, 
+                          you could save approximately{' '}
+                          <span className="font-bold text-primary text-sm sm:text-base">
+                            ${((expensiveHours.reduce((s, p) => s + p.price, 0) / 5) - (cheapestHours.reduce((s, p) => s + p.price, 0) / 5)).toFixed(2)}/MWh
+                          </span>
+                          {' '}per operating hour.
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {/* Model Performance */}
-      {modelPerformance && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Model Performance</CardTitle>
-            <CardDescription>Accuracy metrics for prediction model</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-sm text-muted-foreground">Mean Absolute Error</div>
-                <div className="text-2xl font-bold">${modelPerformance.mae.toFixed(2)}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-muted-foreground">RMSE</div>
-                <div className="text-2xl font-bold">${modelPerformance.rmse.toFixed(2)}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-muted-foreground">MAPE</div>
-                <div className="text-2xl font-bold">{modelPerformance.mape.toFixed(1)}%</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-muted-foreground">R² Score</div>
-                <div className="text-2xl font-bold">{modelPerformance.rSquared.toFixed(3)}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Smart Alerts */}
-      {predictions.length > 0 && (
-        <PricePredictionAlerts predictions={predictions} />
-      )}
-
-      {/* Development Notice */}
-      <Card className="bg-warning/10 border-warning/30">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
-            <div className="flex-1">
-              <h4 className="font-semibold mb-1 text-warning">Development Notice</h4>
-              <p className="text-sm text-muted-foreground">
-                This AI prediction tool is still in development and isn't fully completed yet. 
-                Predictions may not be fully accurate and features are subject to change as we continue to improve the model.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Info Banner */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-primary mt-0.5" />
-            <div className="flex-1">
-              <h4 className="font-semibold mb-1">How It Works</h4>
-              <p className="text-sm text-muted-foreground">
-                Our AI model continuously learns from live market data, analyzing price patterns, weather conditions, 
-                time-of-day patterns, holidays, and generation mix. The system auto-trains every 24 hours when 
-                sufficient data is available, using an ensemble approach for maximum accuracy. Simply click "Update Data" 
-                to feed the latest market information into the AI.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabbed Content */}
-      {predictions.length > 0 && (
-        <Tabs defaultValue="forecast" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="forecast">Forecast</TabsTrigger>
-            <TabsTrigger value="scenario">Scenario Analysis</TabsTrigger>
-            <TabsTrigger value="analytics">Advanced Analytics</TabsTrigger>
-            <TabsTrigger value="performance">Model Performance</TabsTrigger>
-            <TabsTrigger value="accuracy">Accuracy Tracker</TabsTrigger>
-            <TabsTrigger value="backtest">Backtesting</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="forecast" className="space-y-6">
-            <PricePredictionChart 
-              predictions={predictions}
-              currentPrice={pricing?.current_price}
-            />
-            <FeatureImpactVisualization prediction={predictions[0]} />
-          </TabsContent>
-
-          <TabsContent value="scenario">
-            <ScenarioAnalysis basePrediction={predictions[0] || null} />
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <AESOPredictionAnalytics predictions={predictions} />
-          </TabsContent>
-
-          <TabsContent value="performance">
-            <ModelPerformanceMetrics performance={modelPerformance} />
-          </TabsContent>
-
-          <TabsContent value="accuracy">
-            <PredictionAccuracyTracker />
-          </TabsContent>
-
-          <TabsContent value="backtest">
-            <BacktestingDashboard />
-          </TabsContent>
-        </Tabs>
-      )}
-
-      {/* Optimization Recommendations */}
-      {predictions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Optimization Recommendations</CardTitle>
-            <CardDescription>Smart timing for energy-intensive operations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(() => {
-                const sortedPredictions = [...predictions].sort((a, b) => a.price - b.price);
-                const cheapestHours = sortedPredictions.slice(0, 5);
-                const expensiveHours = sortedPredictions.slice(-5).reverse();
-                
-                return (
-                  <>
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2 text-success">Best Times to Operate (Lowest Prices):</h4>
-                      <div className="space-y-2">
-                        {cheapestHours.map((pred, idx) => (
-                          <div key={idx} className="flex justify-between items-center p-2 rounded bg-success/10">
-                            <span className="text-sm">
-                              {new Date(pred.timestamp).toLocaleString('en-US', { 
-                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                              })}
-                            </span>
-                            <span className="text-sm font-bold">${pred.price.toFixed(2)}/MWh</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2 text-destructive">Times to Avoid (Highest Prices):</h4>
-                      <div className="space-y-2">
-                        {expensiveHours.map((pred, idx) => (
-                          <div key={idx} className="flex justify-between items-center p-2 rounded bg-destructive/10">
-                            <span className="text-sm">
-                              {new Date(pred.timestamp).toLocaleString('en-US', { 
-                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                              })}
-                            </span>
-                            <span className="text-sm font-bold">${pred.price.toFixed(2)}/MWh</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t">
-                      <h4 className="text-sm font-semibold mb-2">Potential Savings:</h4>
-                      <p className="text-sm text-muted-foreground">
-                        By operating during the 5 cheapest hours instead of the 5 most expensive, 
-                        you could save approximately{' '}
-                        <span className="font-bold text-primary">
-                          ${((expensiveHours.reduce((s, p) => s + p.price, 0) / 5) - (cheapestHours.reduce((s, p) => s + p.price, 0) / 5)).toFixed(2)}/MWh
-                        </span>
-                        {' '}per operating hour.
-                      </p>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    </ResponsivePageContainer>
   );
 };
