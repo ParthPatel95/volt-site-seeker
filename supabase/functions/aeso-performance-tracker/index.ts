@@ -41,6 +41,8 @@ serve(async (req) => {
     let validated = 0;
     const errors: number[] = [];
     const absoluteErrors: number[] = [];
+    const percentErrors: number[] = [];
+    const actualPrices: number[] = [];
 
     for (const prediction of predictions) {
       // Get actual price at target timestamp
@@ -59,10 +61,12 @@ serve(async (req) => {
       const predictedPrice = prediction.predicted_price;
       const error = predictedPrice - actualPrice;
       const absoluteError = Math.abs(error);
-      const percentError = (absoluteError / actualPrice) * 100;
+      const percentError = (absoluteError / Math.abs(actualPrice)) * 100;
 
       errors.push(error);
       absoluteErrors.push(absoluteError);
+      percentErrors.push(percentError);
+      actualPrices.push(actualPrice);
 
       // Update prediction with actual values
       const { error: updateError } = await supabase
@@ -82,13 +86,18 @@ serve(async (req) => {
       }
     }
 
-    // Calculate performance metrics
+    if (errors.length === 0) {
+      console.log('No errors to calculate metrics from');
+      return new Response(
+        JSON.stringify({ success: true, message: 'No validated predictions', validated: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Calculate performance metrics correctly
     const rmse = Math.sqrt(errors.reduce((sum, e) => sum + e * e, 0) / errors.length);
     const mae = absoluteErrors.reduce((sum, e) => sum + e, 0) / absoluteErrors.length;
-    const mape = absoluteErrors.reduce((sum, e, i) => {
-      const actual = predictions[i].actual_price || 1;
-      return sum + (e / actual) * 100;
-    }, 0) / absoluteErrors.length;
+    const mape = percentErrors.reduce((sum, e) => sum + e, 0) / percentErrors.length;
 
     console.log(`Performance metrics - RMSE: ${rmse}, MAE: ${mae}, MAPE: ${mape}%`);
 
