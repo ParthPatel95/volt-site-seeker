@@ -131,6 +131,42 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_market_regimes: {
+        Row: {
+          avg_load_24h: number
+          avg_price_24h: number
+          confidence: number
+          created_at: string | null
+          id: string
+          price_volatility_24h: number
+          regime: string
+          renewable_percentage: number
+          timestamp: string
+        }
+        Insert: {
+          avg_load_24h: number
+          avg_price_24h: number
+          confidence: number
+          created_at?: string | null
+          id?: string
+          price_volatility_24h: number
+          regime: string
+          renewable_percentage: number
+          timestamp: string
+        }
+        Update: {
+          avg_load_24h?: number
+          avg_price_24h?: number
+          confidence?: number
+          created_at?: string | null
+          id?: string
+          price_volatility_24h?: number
+          regime?: string
+          renewable_percentage?: number
+          timestamp?: string
+        }
+        Relationships: []
+      }
       aeso_model_parameters: {
         Row: {
           created_at: string
@@ -194,6 +230,7 @@ export type Database = {
           mae: number | null
           mape: number | null
           model_version: string
+          predictions_evaluated: number | null
           r_squared: number | null
           rmse: number | null
           training_period_end: string | null
@@ -207,6 +244,7 @@ export type Database = {
           mae?: number | null
           mape?: number | null
           model_version: string
+          predictions_evaluated?: number | null
           r_squared?: number | null
           rmse?: number | null
           training_period_end?: string | null
@@ -220,6 +258,7 @@ export type Database = {
           mae?: number | null
           mape?: number | null
           model_version?: string
+          predictions_evaluated?: number | null
           r_squared?: number | null
           rmse?: number | null
           training_period_end?: string | null
@@ -306,6 +345,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      aeso_predictions: {
+        Row: {
+          absolute_error: number | null
+          actual_price: number | null
+          confidence: number | null
+          created_at: string | null
+          hours_ahead: number
+          id: string
+          individual_predictions: Json | null
+          model_version: string
+          percent_error: number | null
+          predicted_at: string
+          predicted_price: number
+          prediction_error: number | null
+          prediction_method: string | null
+          target_timestamp: string
+        }
+        Insert: {
+          absolute_error?: number | null
+          actual_price?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          hours_ahead: number
+          id?: string
+          individual_predictions?: Json | null
+          model_version: string
+          percent_error?: number | null
+          predicted_at: string
+          predicted_price: number
+          prediction_error?: number | null
+          prediction_method?: string | null
+          target_timestamp: string
+        }
+        Update: {
+          absolute_error?: number | null
+          actual_price?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          hours_ahead?: number
+          id?: string
+          individual_predictions?: Json | null
+          model_version?: string
+          percent_error?: number | null
+          predicted_at?: string
+          predicted_price?: number
+          prediction_error?: number | null
+          prediction_method?: string | null
+          target_timestamp?: string
+        }
+        Relationships: []
       }
       aeso_price_predictions: {
         Row: {

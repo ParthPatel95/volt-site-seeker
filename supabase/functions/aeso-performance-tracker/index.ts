@@ -92,11 +92,11 @@ serve(async (req) => {
 
     console.log(`Performance metrics - RMSE: ${rmse}, MAE: ${mae}, MAPE: ${mape}%`);
 
-    // Store performance metrics
+    // Store performance metrics using existing table structure
     const { error: metricsError } = await supabase
       .from('aeso_model_performance')
       .insert({
-        evaluated_at: new Date().toISOString(),
+        evaluation_date: new Date().toISOString(),
         predictions_evaluated: validated,
         rmse,
         mae,
@@ -112,7 +112,7 @@ serve(async (req) => {
     const { data: recentPerformance } = await supabase
       .from('aeso_model_performance')
       .select('*')
-      .order('evaluated_at', { ascending: false })
+      .order('evaluation_date', { ascending: false })
       .limit(10);
 
     let needsRetraining = false;
