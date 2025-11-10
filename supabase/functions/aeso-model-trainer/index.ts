@@ -122,6 +122,16 @@ serve(async (req) => {
       n_estimators: 100,
       subsample: 0.8
     };
+    
+    // ========== PHASE 4: OUTLIER DETECTION ==========
+    console.log('\n=== Phase 4: Detecting Price Outliers ===');
+    const outlierThreshold = detectOutliers(mergedData);
+    console.log(`Outlier threshold (Q3 + 3*IQR): $${outlierThreshold.toFixed(2)}/MWh`);
+    
+    // Separate spike vs normal regime data
+    const spikeData = mergedData.filter(d => d.pool_price > outlierThreshold);
+    const normalData = mergedData.filter(d => d.pool_price <= outlierThreshold);
+    console.log(`Found ${spikeData.length} spike records (${(spikeData.length/mergedData.length*100).toFixed(1)}%) and ${normalData.length} normal records`);
 
     console.log('Feature correlations with price:', featureCorrelations);
     console.log('Feature statistics:', featureStats);
@@ -214,6 +224,15 @@ serve(async (req) => {
     console.log(`  MAPE: ${mape.toFixed(2)}%`);
     console.log(`  R²: ${rSquared.toFixed(4)}`);
     
+    // ========== PHASE 4: CALCULATE PREDICTION INTERVALS ==========
+    console.log('\n=== Phase 4: Calculating Prediction Intervals ===');
+    const predictionInterval80 = calculatePredictionInterval(predictions, actuals, 0.8);
+    const predictionInterval95 = calculatePredictionInterval(predictions, actuals, 0.95);
+    
+    console.log(`80% Prediction Interval: ±$${predictionInterval80.upper.toFixed(2)}/MWh`);
+    console.log(`95% Prediction Interval: ±$${predictionInterval95.upper.toFixed(2)}/MWh`);
+    console.log(`Residual Std Dev: $${predictionInterval80.stdDev.toFixed(2)}/MWh`);
+    
     // Log individual model performance
     console.log('\n✅ Individual Model MAE:');
     for (const [model, errors] of Object.entries(modelErrors)) {
@@ -251,7 +270,10 @@ serve(async (req) => {
         mape: mape,
         r_squared: rSquared,
         feature_importance: featureImportance,
-        predictions_evaluated: testSet.length
+        predictions_evaluated: testSet.length,
+        prediction_interval_80: predictionInterval80.upper,
+        prediction_interval_95: predictionInterval95.upper,
+        residual_std_dev: predictionInterval80.stdDev
       });
 
     if (insertError) {
@@ -279,7 +301,7 @@ serve(async (req) => {
     console.log('Ensemble weights by regime:', ensembleWeights);
 
     // Store learned parameters for use by predictor (including scaling parameters and ML models)
-    console.log('Storing learned model parameters with ML weights...');
+    console.log('Storing learned model parameters with Phase 4 enhancements...');
     
     const { error: paramsError } = await supabase
       .from('aeso_model_parameters')
@@ -292,12 +314,13 @@ serve(async (req) => {
           ...featureCorrelations,
           lagged: laggedFeatures,
           regimes: regimeThresholds,
-          ml_models: {
-            linear_weights: linearWeights,
-            ridge_weights: ridgeWeights,
-            weighted_avg_weights: waModel.weights
-          },
-          cv_results: cvResults
+          ensemble_weights: ensembleWeights,
+          outlier_threshold: outlierThreshold,
+          spike_indicators: {
+            low_reserves: true,
+            high_demand: true,
+            extreme_weather: true
+          }
         },
         feature_statistics: featureStats,
         feature_scaling: featureScaling,
@@ -340,7 +363,98 @@ serve(async (req) => {
   }
 });
 
-// XGBoost-style gradient boosting prediction with enhanced features
+// ========== PHASE 4: ADVANCED IMPROVEMENTS ==========
+
+// Outlier detection using IQR method
+function detectOutliers(data: any[]): number {
+  const prices = data.map(d => d.pool_price).sort((a, b) => a - b);
+  const n = prices.length;
+  
+  // Calculate Q1 and Q3
+  const q1Index = Math.floor(n * 0.25);
+  const q3Index = Math.floor(n * 0.75);
+  const q1 = prices[q1Index];
+  const q3 = prices[q3Index];
+  const iqr = q3 - q1;
+  
+  // Outlier threshold: Q3 + 3*IQR (aggressive for capturing extreme spikes)
+  return q3 + 3 * iqr;
+}
+
+// Detect if current conditions indicate potential spike
+function detectSpikeIndicators(conditions: any, stats: any): { 
+  isSpikeLikely: boolean; 
+  indicators: string[];
+  confidence: number;
+} {
+  const indicators: string[] = [];
+  let riskScore = 0;
+  
+  // Low reserves indicator (demand approaching capacity)
+  const reserveMargin = (conditions.ail_mw || 0) / (stats.avgDemand || 10000);
+  if (reserveMargin > 1.1) {
+    indicators.push('high_demand');
+    riskScore += 30;
+  }
+  
+  // Extreme weather (very hot or very cold)
+  const avgTemp = ((conditions.temperature_calgary || 15) + (conditions.temperature_edmonton || 15)) / 2;
+  if (avgTemp < -25 || avgTemp > 32) {
+    indicators.push('extreme_weather');
+    riskScore += 25;
+  }
+  
+  // Very low wind when wind capacity is significant
+  if ((conditions.generation_wind || 0) < 500) {
+    indicators.push('low_wind');
+    riskScore += 20;
+  }
+  
+  // High natural gas prices
+  if ((conditions.natural_gas_price || 0) > 4.0) {
+    indicators.push('high_gas_price');
+    riskScore += 15;
+  }
+  
+  // Peak hour + high demand
+  const hour = new Date(conditions.timestamp || Date.now()).getHours();
+  if ((hour >= 7 && hour <= 22) && reserveMargin > 1.05) {
+    indicators.push('peak_hour_high_demand');
+    riskScore += 10;
+  }
+  
+  return {
+    isSpikeLikely: riskScore >= 50,
+    indicators,
+    confidence: Math.min(100, riskScore)
+  };
+}
+
+// Calculate prediction interval (uncertainty estimate)
+function calculatePredictionInterval(
+  predictions: number[],
+  actuals: number[],
+  confidence: number = 0.8
+): { lower: number; upper: number; stdDev: number } {
+  const n = predictions.length;
+  const residuals = predictions.map((pred, i) => actuals[i] - pred);
+  
+  // Calculate residual standard deviation
+  const meanResidual = residuals.reduce((sum, r) => sum + r, 0) / n;
+  const variance = residuals.reduce((sum, r) => sum + Math.pow(r - meanResidual, 2), 0) / (n - 1);
+  const stdDev = Math.sqrt(variance);
+  
+  // Z-score for confidence level (0.8 = 80% confidence ≈ 1.28, 0.95 = 95% ≈ 1.96)
+  const zScore = confidence === 0.95 ? 1.96 : 1.28;
+  
+  return {
+    lower: -zScore * stdDev,
+    upper: zScore * stdDev,
+    stdDev
+  };
+}
+
+// Enhanced XGBoost-style gradient boosting prediction with enhanced features
 function predictPriceWithXGBoost(
   historicalData: any[],
   currentConditions: any,
@@ -398,6 +512,21 @@ function predictPriceWithXGBoost(
   
   // Apply regime-specific multipliers
   prediction *= getRegimeMultiplier(regime, currentConditions);
+  
+  // ========== PHASE 4: SPIKE DETECTION ==========
+  // Check for price spike indicators
+  const spikeDetection = detectSpikeIndicators(currentConditions, featureStats);
+  
+  if (spikeDetection.isSpikeLikely && spikeDetection.confidence > 60) {
+    // Apply spike premium based on confidence
+    const spikeMultiplier = 1 + (spikeDetection.confidence / 100) * 0.5; // Up to 50% increase
+    prediction *= spikeMultiplier;
+    
+    // Log spike detection
+    if (Math.random() < 0.01) { // Log 1% of cases to avoid spam
+      console.log(`⚠️ Spike detected! Indicators: ${spikeDetection.indicators.join(', ')}, Confidence: ${spikeDetection.confidence}%`);
+    }
+  }
   
   // Handle extreme Alberta price volatility with bounds
   // AESO market can spike to $999.99 but predictions should be conservative

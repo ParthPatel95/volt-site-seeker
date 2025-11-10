@@ -69,6 +69,35 @@ export const ModelPerformanceMetrics = ({ performance }: ModelPerformanceMetrics
               <p className="text-lg font-semibold">{(performance.rSquared * 100).toFixed(1)}%</p>
             </div>
           </div>
+          
+          {(performance.prediction_interval_80 || performance.prediction_interval_95) && (
+            <div className="border-t pt-4 mt-2">
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Prediction Intervals (Phase 4)
+              </h4>
+              <div className="space-y-2">
+                {performance.prediction_interval_80 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">80% Confidence</span>
+                    <span className="font-medium">±${performance.prediction_interval_80.toFixed(2)}/MWh</span>
+                  </div>
+                )}
+                {performance.prediction_interval_95 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">95% Confidence</span>
+                    <span className="font-medium">±${performance.prediction_interval_95.toFixed(2)}/MWh</span>
+                  </div>
+                )}
+                {performance.residual_std_dev && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Std Deviation</span>
+                    <span className="font-medium">${performance.residual_std_dev.toFixed(2)}/MWh</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {featureEntries.length > 0 && (

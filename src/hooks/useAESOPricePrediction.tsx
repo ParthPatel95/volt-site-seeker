@@ -28,6 +28,9 @@ export interface ModelPerformance {
   mape: number;
   rSquared: number;
   featureImportance: Record<string, number>;
+  prediction_interval_80?: number;
+  prediction_interval_95?: number;
+  residual_std_dev?: number;
 }
 
 export const useAESOPricePrediction = () => {
