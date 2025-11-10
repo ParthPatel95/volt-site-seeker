@@ -211,12 +211,20 @@ export const useAESOPricePrediction = () => {
           rmse: trainData.performance.rmse,
           mape: trainData.performance.mape,
           rSquared: trainData.performance.r_squared,
-          featureImportance: trainData.feature_importance
+          featureImportance: trainData.feature_importance,
+          prediction_interval_80: trainData.performance.prediction_interval_80,
+          prediction_interval_95: trainData.performance.prediction_interval_95,
+          residual_std_dev: trainData.performance.residual_std_dev
         });
+        
+        const driftWarning = trainData.monitoring?.requires_retraining 
+          ? ' ⚠️ Model drift detected - retraining recommended' 
+          : '';
         
         toast({
           title: "AI Model Trained",
-          description: `Model accuracy: ${trainData.performance.r_squared.toFixed(2)} R² score, ${trainData.training_samples} samples`,
+          description: `Model accuracy: ${trainData.performance.r_squared.toFixed(2)} R² score, ${trainData.training_samples} samples${driftWarning}`,
+          variant: trainData.monitoring?.requires_retraining ? "destructive" : "default"
         });
       }
       

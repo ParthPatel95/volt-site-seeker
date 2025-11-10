@@ -233,6 +233,49 @@ serve(async (req) => {
     console.log(`95% Prediction Interval: ±$${predictionInterval95.upper.toFixed(2)}/MWh`);
     console.log(`Residual Std Dev: $${predictionInterval80.stdDev.toFixed(2)}/MWh`);
     
+    // ========== PHASE 5: MODEL MONITORING & DRIFT DETECTION ==========
+    console.log('\n=== Phase 5: Calculating Model Drift & Monitoring Metrics ===');
+    
+    // Fetch historical performance for drift calculation
+    const { data: historicalPerf } = await supabase
+      .from('aeso_model_performance')
+      .select('mae, rmse, mape')
+      .order('evaluation_date', { ascending: false })
+      .limit(10);
+    
+    let driftMetrics: DriftMetrics | null = null;
+    let perfWindows: { recent: any; overall: any } | null = null;
+    
+    if (historicalPerf && historicalPerf.length > 0) {
+      // Get historical and current price data for drift comparison
+      const historicalPrices = trainSet.slice(-500).map(d => d.pool_price);
+      const currentPrices = testSet.map(d => d.pool_price);
+      
+      driftMetrics = calculateModelDrift(
+        historicalPerf,
+        { mae, rmse, mape },
+        historicalPrices,
+        currentPrices
+      );
+      
+      console.log('Model Drift Analysis:');
+      console.log(`  Drift Score: ${(driftMetrics.driftScore * 100).toFixed(1)}%`);
+      console.log(`  Performance Drift: ${(driftMetrics.performanceDrift * 100).toFixed(1)}%`);
+      console.log(`  Feature Drift: ${(driftMetrics.featureDrift * 100).toFixed(1)}%`);
+      console.log(`  Requires Retraining: ${driftMetrics.requiresRetraining ? 'YES ⚠️' : 'NO ✅'}`);
+    }
+    
+    // Calculate performance windows (recent vs overall)
+    perfWindows = calculatePerformanceWindow(actuals, predictions, 168);
+    console.log('Performance Windows:');
+    console.log(`  Recent (7 days): MAE=$${perfWindows.recent.mae.toFixed(2)}, RMSE=$${perfWindows.recent.rmse.toFixed(2)}`);
+    console.log(`  Overall: MAE=$${perfWindows.overall.mae.toFixed(2)}, RMSE=$${perfWindows.overall.rmse.toFixed(2)}`);
+    
+    const perfDegradation = perfWindows.recent.mae > perfWindows.overall.mae * 1.2;
+    if (perfDegradation) {
+      console.log('  ⚠️ Recent performance has degraded by >20%');
+    }
+    
     // Log individual model performance
     console.log('\n✅ Individual Model MAE:');
     for (const [model, errors] of Object.entries(modelErrors)) {
@@ -260,7 +303,7 @@ serve(async (req) => {
 
     console.log('Feature importance:', featureImportance);
 
-    // Store model performance
+    // Store model performance with Phase 5 monitoring data
     const { error: insertError } = await supabase
       .from('aeso_model_performance')
       .insert({
@@ -273,7 +316,13 @@ serve(async (req) => {
         predictions_evaluated: testSet.length,
         prediction_interval_80: predictionInterval80.upper,
         prediction_interval_95: predictionInterval95.upper,
-        residual_std_dev: predictionInterval80.stdDev
+        residual_std_dev: predictionInterval80.stdDev,
+        metadata: {
+          drift_metrics: driftMetrics,
+          performance_windows: perfWindows,
+          retraining_recommended: driftMetrics?.requiresRetraining || false,
+          phase: 5
+        }
       });
 
     if (insertError) {
@@ -343,7 +392,18 @@ serve(async (req) => {
         mae: parseFloat(mae.toFixed(2)),
         rmse: parseFloat(rmse.toFixed(2)),
         mape: parseFloat(mape.toFixed(2)),
-        r_squared: parseFloat(rSquared.toFixed(4))
+        r_squared: parseFloat(rSquared.toFixed(4)),
+        prediction_interval_80: parseFloat(predictionInterval80.upper.toFixed(2)),
+        prediction_interval_95: parseFloat(predictionInterval95.upper.toFixed(2)),
+        residual_std_dev: parseFloat(predictionInterval80.stdDev.toFixed(2))
+      },
+      monitoring: {
+        drift_score: driftMetrics?.driftScore || 0,
+        performance_drift: driftMetrics?.performanceDrift || 0,
+        feature_drift: driftMetrics?.featureDrift || 0,
+        requires_retraining: driftMetrics?.requiresRetraining || false,
+        recent_performance: perfWindows?.recent || null,
+        overall_performance: perfWindows?.overall || null
       },
       feature_importance: featureImportance,
       feature_correlations: featureCorrelations
@@ -451,6 +511,98 @@ function calculatePredictionInterval(
     lower: -zScore * stdDev,
     upper: zScore * stdDev,
     stdDev
+  };
+}
+
+// ========== PHASE 5: MODEL MONITORING & DRIFT DETECTION ==========
+
+interface DriftMetrics {
+  featureDrift: number;
+  performanceDrift: number;
+  predictionDrift: number;
+  requiresRetraining: boolean;
+  driftScore: number;
+}
+
+// Calculate model drift comparing historical vs current performance
+function calculateModelDrift(
+  historicalPerformance: { mae: number; rmse: number; mape: number }[],
+  currentPerformance: { mae: number; rmse: number; mape: number },
+  historicalPrices: number[],
+  currentPrices: number[]
+): DriftMetrics {
+  // Performance drift: compare current vs historical average
+  const avgHistoricalMAE = historicalPerformance.reduce((sum, p) => sum + p.mae, 0) / historicalPerformance.length;
+  const avgHistoricalRMSE = historicalPerformance.reduce((sum, p) => sum + p.rmse, 0) / historicalPerformance.length;
+  
+  const maeDrift = Math.abs(currentPerformance.mae - avgHistoricalMAE) / (avgHistoricalMAE + 0.01);
+  const rmseDrift = Math.abs(currentPerformance.rmse - avgHistoricalRMSE) / (avgHistoricalRMSE + 0.01);
+  const performanceDrift = (maeDrift + rmseDrift) / 2;
+  
+  // Feature drift: compare price distributions
+  const histMean = historicalPrices.reduce((sum, p) => sum + p, 0) / historicalPrices.length;
+  const currMean = currentPrices.reduce((sum, p) => sum + p, 0) / currentPrices.length;
+  
+  const histStd = Math.sqrt(
+    historicalPrices.reduce((sum, p) => sum + Math.pow(p - histMean, 2), 0) / historicalPrices.length
+  );
+  const currStd = Math.sqrt(
+    currentPrices.reduce((sum, p) => sum + Math.pow(p - currMean, 2), 0) / currentPrices.length
+  );
+  
+  const meanDrift = Math.abs(currMean - histMean) / (histStd + 0.01);
+  const stdDrift = Math.abs(currStd - histStd) / (histStd + 0.01);
+  const featureDrift = (meanDrift + stdDrift) / 2;
+  
+  // Prediction drift: combined metric
+  const predictionDrift = performanceDrift * 0.7 + featureDrift * 0.3;
+  
+  // Overall drift score
+  const driftScore = performanceDrift * 0.5 + featureDrift * 0.3 + predictionDrift * 0.2;
+  
+  // Retraining thresholds
+  const requiresRetraining = 
+    driftScore > 0.25 || // Overall drift > 25%
+    performanceDrift > 0.30 || // Performance degraded > 30%
+    featureDrift > 0.40; // Feature distribution changed > 40%
+  
+  return {
+    featureDrift,
+    performanceDrift,
+    predictionDrift,
+    requiresRetraining,
+    driftScore
+  };
+}
+
+// Calculate performance over recent window vs overall
+function calculatePerformanceWindow(
+  actualPrices: number[],
+  predictions: number[],
+  windowSize: number = 168 // 7 days of hourly data
+): { recent: any; overall: any } {
+  const recentActual = actualPrices.slice(-Math.min(windowSize, actualPrices.length));
+  const recentPred = predictions.slice(-Math.min(windowSize, predictions.length));
+  
+  const recentErrors = recentActual.map((actual, i) => Math.abs(actual - recentPred[i]));
+  const recentMAE = recentErrors.reduce((sum, err) => sum + err, 0) / recentErrors.length;
+  const recentRMSE = Math.sqrt(
+    recentErrors.reduce((sum, err) => sum + err * err, 0) / recentErrors.length
+  );
+  const recentMAPE = (recentErrors.reduce((sum, err, i) => 
+    sum + Math.abs(err / Math.max(5, recentActual[i])), 0) / recentErrors.length) * 100;
+  
+  const overallErrors = actualPrices.map((actual, i) => Math.abs(actual - predictions[i]));
+  const overallMAE = overallErrors.reduce((sum, err) => sum + err, 0) / overallErrors.length;
+  const overallRMSE = Math.sqrt(
+    overallErrors.reduce((sum, err) => sum + err * err, 0) / overallErrors.length
+  );
+  const overallMAPE = (overallErrors.reduce((sum, err, i) => 
+    sum + Math.abs(err / Math.max(5, actualPrices[i])), 0) / overallErrors.length) * 100;
+  
+  return {
+    recent: { mae: recentMAE, rmse: recentRMSE, mape: recentMAPE },
+    overall: { mae: overallMAE, rmse: overallRMSE, mape: overallMAPE }
   };
 }
 
