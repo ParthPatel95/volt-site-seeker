@@ -436,6 +436,51 @@ export type Database = {
           },
         ]
       }
+      aeso_prediction_explanations: {
+        Row: {
+          confidence_breakdown: Json
+          created_at: string
+          explanation_text: string
+          feature_contributions: Json
+          id: string
+          key_drivers: Json
+          model_version: string
+          predicted_price: number
+          prediction_id: string
+          sensitivity_analysis: Json
+          target_timestamp: string
+          updated_at: string
+        }
+        Insert: {
+          confidence_breakdown: Json
+          created_at?: string
+          explanation_text: string
+          feature_contributions: Json
+          id?: string
+          key_drivers: Json
+          model_version: string
+          predicted_price: number
+          prediction_id: string
+          sensitivity_analysis: Json
+          target_timestamp: string
+          updated_at?: string
+        }
+        Update: {
+          confidence_breakdown?: Json
+          created_at?: string
+          explanation_text?: string
+          feature_contributions?: Json
+          id?: string
+          key_drivers?: Json
+          model_version?: string
+          predicted_price?: number
+          prediction_id?: string
+          sensitivity_analysis?: Json
+          target_timestamp?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aeso_prediction_performance: {
         Row: {
           cache_hit_count: number

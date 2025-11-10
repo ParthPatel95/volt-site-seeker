@@ -9,10 +9,12 @@ interface PredictionExplanationProps {
     text: string;
     feature_contributions: Array<{
       feature: string;
+      key: string;
       value: number;
       contribution: number;
       impact: number;
       direction: string;
+      correlation: number;
     }>;
     key_drivers: {
       top_factors: Array<{
