@@ -28,6 +28,9 @@ verify_jwt = false
 [functions.aeso-weather-collector]
 verify_jwt = false
 
+[functions.aeso-weather-backfill]
+verify_jwt = false
+
 [functions.aeso-prediction-validator]
 verify_jwt = false
 
