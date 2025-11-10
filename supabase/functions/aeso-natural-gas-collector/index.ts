@@ -18,56 +18,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (!eiaApiKey) {
-      console.log('No EIA API key found, using synthetic data for natural gas prices');
-      
-      // Generate synthetic natural gas price data
-      const now = new Date();
-      const records = [];
-      
-      for (let i = 0; i < 24 * 365 * 4; i++) { // 4 years of hourly data
-        const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
-        
-        // AECO natural gas price typically ranges $1-5 CAD/GJ, with seasonal patterns
-        const basePrice = 2.5;
-        const seasonalFactor = Math.sin((timestamp.getMonth() / 12) * 2 * Math.PI) * 0.8; // Higher in winter
-        const hourlyVariation = Math.sin((timestamp.getHours() / 24) * 2 * Math.PI) * 0.3;
-        const randomNoise = (Math.random() - 0.5) * 0.5;
-        
-        const price = Math.max(0.5, basePrice + seasonalFactor + hourlyVariation + randomNoise);
-        
-        records.push({
-          timestamp: timestamp.toISOString(),
-          price: parseFloat(price.toFixed(4)),
-          source: 'SYNTHETIC',
-          market: 'AECO'
-        });
-        
-        // Insert in batches of 1000
-        if (records.length === 1000) {
-          await supabase.from('aeso_natural_gas_prices').upsert(records, {
-            onConflict: 'timestamp,market',
-            ignoreDuplicates: true
-          });
-          records.length = 0;
-        }
-      }
-      
-      // Insert remaining records
-      if (records.length > 0) {
-        await supabase.from('aeso_natural_gas_prices').upsert(records, {
-          onConflict: 'timestamp,market',
-          ignoreDuplicates: true
-        });
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Synthetic natural gas price data generated',
-          recordsGenerated: 24 * 365 * 4
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return generateSyntheticData(supabase);
     }
 
     // Fetch real natural gas prices from EIA API
@@ -81,7 +32,9 @@ serve(async (req) => {
     const eiaResponse = await fetch(eiaUrl);
     
     if (!eiaResponse.ok) {
-      throw new Error(`EIA API error: ${eiaResponse.status}`);
+      console.warn(`EIA API returned status ${eiaResponse.status}, falling back to synthetic data`);
+      // Fall back to synthetic data generation
+      return generateSyntheticData(supabase);
     }
     
     const eiaData = await eiaResponse.json();
@@ -130,3 +83,55 @@ serve(async (req) => {
     );
   }
 });
+
+async function generateSyntheticData(supabase: any) {
+  console.log('Generating synthetic natural gas price data');
+  
+  const now = new Date();
+  const records = [];
+  
+  for (let i = 0; i < 24 * 365 * 4; i++) { // 4 years of hourly data
+    const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
+    
+    // AECO natural gas price typically ranges $1-5 CAD/GJ, with seasonal patterns
+    const basePrice = 2.5;
+    const seasonalFactor = Math.sin((timestamp.getMonth() / 12) * 2 * Math.PI) * 0.8; // Higher in winter
+    const hourlyVariation = Math.sin((timestamp.getHours() / 24) * 2 * Math.PI) * 0.3;
+    const randomNoise = (Math.random() - 0.5) * 0.5;
+    
+    const price = Math.max(0.5, basePrice + seasonalFactor + hourlyVariation + randomNoise);
+    
+    records.push({
+      timestamp: timestamp.toISOString(),
+      price: parseFloat(price.toFixed(4)),
+      source: 'SYNTHETIC',
+      market: 'AECO'
+    });
+    
+    // Insert in batches of 1000
+    if (records.length === 1000) {
+      await supabase.from('aeso_natural_gas_prices').upsert(records, {
+        onConflict: 'timestamp,market',
+        ignoreDuplicates: true
+      });
+      records.length = 0;
+    }
+  }
+  
+  // Insert remaining records
+  if (records.length > 0) {
+    await supabase.from('aeso_natural_gas_prices').upsert(records, {
+      onConflict: 'timestamp,market',
+      ignoreDuplicates: true
+    });
+  }
+  
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      message: 'Synthetic natural gas price data generated (EIA API unavailable)',
+      recordsGenerated: 24 * 365 * 4
+    }),
+    { headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } }
+  );
+}

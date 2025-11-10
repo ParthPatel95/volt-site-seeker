@@ -22,7 +22,7 @@ serve(async (req) => {
     const { data: recordsToBackfill, error: fetchError } = await supabase
       .from('aeso_training_data')
       .select('id, timestamp')
-      .or('temperature.is.null,wind_speed.is.null,cloud_cover.is.null')
+      .or('temperature_calgary.is.null,temperature_edmonton.is.null,wind_speed.is.null,cloud_cover.is.null')
       .order('timestamp', { ascending: true });
 
     if (fetchError) {
@@ -81,9 +81,9 @@ serve(async (req) => {
             const recordTime = new Date(record.timestamp);
             const hour = recordTime.getHours();
             
-            // Average weather from both cities
-            const avgTemp = (weatherData.calgary.hourly.temperature_2m[hour] + 
-                           weatherData.edmonton.hourly.temperature_2m[hour]) / 2;
+            // Get weather from both cities
+            const tempCalgary = weatherData.calgary.hourly.temperature_2m[hour];
+            const tempEdmonton = weatherData.edmonton.hourly.temperature_2m[hour];
             const avgWind = (weatherData.calgary.hourly.windspeed_10m[hour] + 
                            weatherData.edmonton.hourly.windspeed_10m[hour]) / 2;
             const avgCloud = (weatherData.calgary.hourly.cloudcover[hour] + 
@@ -93,11 +93,11 @@ serve(async (req) => {
             const { error: updateError } = await supabase
               .from('aeso_training_data')
               .update({
-                temperature: avgTemp,
+                temperature_calgary: tempCalgary,
+                temperature_edmonton: tempEdmonton,
                 wind_speed: avgWind,
                 cloud_cover: avgCloud,
-                solar_irradiance: solarIrradiance,
-                updated_at: new Date().toISOString()
+                solar_irradiance: solarIrradiance
               })
               .eq('id', record.id);
             
