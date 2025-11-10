@@ -436,6 +436,45 @@ export type Database = {
           },
         ]
       }
+      aeso_prediction_performance: {
+        Row: {
+          cache_hit_count: number
+          cache_hit_rate: number
+          cache_miss_count: number
+          created_at: string
+          horizon_hours: number
+          id: string
+          metadata: Json | null
+          predictions_generated: number
+          request_timestamp: string
+          total_duration_ms: number
+        }
+        Insert: {
+          cache_hit_count?: number
+          cache_hit_rate?: number
+          cache_miss_count?: number
+          created_at?: string
+          horizon_hours: number
+          id?: string
+          metadata?: Json | null
+          predictions_generated?: number
+          request_timestamp?: string
+          total_duration_ms: number
+        }
+        Update: {
+          cache_hit_count?: number
+          cache_hit_rate?: number
+          cache_miss_count?: number
+          created_at?: string
+          horizon_hours?: number
+          id?: string
+          metadata?: Json | null
+          predictions_generated?: number
+          request_timestamp?: string
+          total_duration_ms?: number
+        }
+        Relationships: []
+      }
       aeso_predictions: {
         Row: {
           absolute_error: number | null

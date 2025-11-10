@@ -367,13 +367,13 @@ export const useAESOPricePrediction = () => {
   const getPerformanceMetrics = async () => {
     try {
       const { data, error } = await supabase
-        .from('aeso_prediction_performance')
+        .from('aeso_prediction_performance' as any)
         .select('*')
         .order('request_timestamp', { ascending: false })
         .limit(100);
       
       if (error) throw error;
-      return data;
+      return data as any[];
     } catch (error) {
       console.error('Error fetching performance metrics:', error);
       return null;
