@@ -292,6 +292,44 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const checkAutoRetraining = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-auto-retraining');
+      
+      if (error) throw error;
+      
+      if (data?.retraining_triggered) {
+        const improvement = data.new_performance 
+          ? ` Improved MAE by $${data.new_performance.improvement.toFixed(2)}/MWh` 
+          : '';
+        
+        toast({
+          title: "Auto-Retraining Completed",
+          description: `Model retrained due to: ${data.reason}.${improvement}`,
+        });
+        
+        await fetchModelPerformance();
+      } else {
+        toast({
+          title: "Model Health Check OK",
+          description: `No retraining needed. Current MAE: $${data.current_performance.mae.toFixed(2)}/MWh`,
+        });
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error('Auto-retraining check error:', error);
+      toast({
+        title: "Retraining Check Error",
+        description: error.message || "Failed to check retraining status",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const validatePredictions = async () => {
     setLoading(true);
     try {
@@ -329,6 +367,7 @@ export const useAESOPricePrediction = () => {
     trainModel,
     collectWeatherData,
     validatePredictions,
-    runCompleteBackfill
+    runCompleteBackfill,
+    checkAutoRetraining
   };
 };
