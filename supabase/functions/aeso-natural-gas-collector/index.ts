@@ -22,9 +22,9 @@ serve(async (req) => {
     }
 
     // Fetch real Henry Hub natural gas prices from EIA API as proxy for AECO
-    // Henry Hub Spot Price series: RNGWHHD (daily prices in USD/MMBTU)
-    // Henry Hub is the main North American pricing benchmark and correlates well with AECO
-    console.log('Fetching Henry Hub natural gas prices from EIA API (proxy for AECO)...');
+    // Using futures market data as spot prices are not available in v2 API
+    // Henry Hub natural gas futures (daily prices in USD/MMBTU)
+    console.log('Fetching Henry Hub natural gas futures prices from EIA API (proxy for AECO)...');
     
     const endDate = new Date();
     const startDate = new Date(endDate.getTime() - 365 * 24 * 60 * 60 * 1000 * 4); // 4 years back
@@ -44,8 +44,8 @@ serve(async (req) => {
       const startStr = currentStart.toISOString().split('T')[0];
       const endStr = currentEnd.toISOString().split('T')[0];
       
-      // Henry Hub spot price series
-      const eiaUrl = `https://api.eia.gov/v2/natural-gas/pri/spt/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[series][]=RNGWHHD&start=${startStr}&end=${endStr}&sort[0][column]=period&sort[0][direction]=desc&length=5000`;
+      // Try futures market data for Henry Hub (front-month contract)
+      const eiaUrl = `https://api.eia.gov/v2/natural-gas/pri/fut/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[duoarea][]=RGC&start=${startStr}&end=${endStr}&sort[0][column]=period&sort[0][direction]=desc&length=5000`;
       
       console.log(`Fetching Henry Hub prices from ${startStr} to ${endStr}...`);
       
