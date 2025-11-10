@@ -142,6 +142,9 @@ export type Database = {
           created_at: string
           id: string
           natural_gas_price: number | null
+          natural_gas_price_lag_1d: number | null
+          natural_gas_price_lag_30d: number | null
+          natural_gas_price_lag_7d: number | null
           net_imports: number | null
           price_momentum_3h: number | null
           price_volatility_1h: number | null
@@ -153,6 +156,9 @@ export type Database = {
           created_at?: string
           id?: string
           natural_gas_price?: number | null
+          natural_gas_price_lag_1d?: number | null
+          natural_gas_price_lag_30d?: number | null
+          natural_gas_price_lag_7d?: number | null
           net_imports?: number | null
           price_momentum_3h?: number | null
           price_volatility_1h?: number | null
@@ -164,6 +170,9 @@ export type Database = {
           created_at?: string
           id?: string
           natural_gas_price?: number | null
+          natural_gas_price_lag_1d?: number | null
+          natural_gas_price_lag_30d?: number | null
+          natural_gas_price_lag_7d?: number | null
           net_imports?: number | null
           price_momentum_3h?: number | null
           price_volatility_1h?: number | null
