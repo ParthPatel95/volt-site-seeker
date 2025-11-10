@@ -18,35 +18,64 @@ serve(async (req) => {
     console.log('Calculating enhanced features from training data...');
 
     // Fetch all training data ordered by timestamp
-    const { data: trainingData, error: fetchError } = await supabase
-      .from('aeso_training_data')
-      .select('*')
-      .order('timestamp', { ascending: true });
-
-    if (fetchError) throw fetchError;
-    if (!trainingData || trainingData.length === 0) {
-      throw new Error('No training data available');
+    let allTrainingData = [];
+    let trainingPage = 0;
+    const pageSize = 1000;
+    
+    while (true) {
+      const { data, error } = await supabase
+        .from('aeso_training_data')
+        .select('*')
+        .order('timestamp', { ascending: true })
+        .range(trainingPage * pageSize, (trainingPage + 1) * pageSize - 1);
+      
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      
+      allTrainingData = allTrainingData.concat(data);
+      if (data.length < pageSize) break;
+      trainingPage++;
     }
-
-    console.log(`Processing ${trainingData.length} records...`);
-
-    // Fetch all natural gas prices at once for efficiency
-    const { data: gasPrices, error: gasPricesError } = await supabase
-      .from('aeso_natural_gas_prices')
-      .select('timestamp, price')
-      .order('timestamp', { ascending: true });
-
-    if (gasPricesError) throw gasPricesError;
     
-    console.log(`Building hourly gas price map from ${gasPrices?.length || 0} records...`);
+    const trainingData = allTrainingData;
+    if (trainingData.length === 0) throw new Error('No training data available');
+
+    console.log(`Processing ${trainingData.length} training records...`);
+
+    // Fetch ALL natural gas prices (paginated)
+    let allGasPrices = [];
+    let gasPage = 0;
     
-    // Build hourly gas price map (data is already hourly)
+    while (true) {
+      const { data, error } = await supabase
+        .from('aeso_natural_gas_prices')
+        .select('timestamp, price')
+        .order('timestamp', { ascending: true })
+        .range(gasPage * pageSize, (gasPage + 1) * pageSize - 1);
+      
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      
+      allGasPrices = allGasPrices.concat(data);
+      if (data.length < pageSize) break;
+      gasPage++;
+    }
+    
+    const gasPrices = allGasPrices;
+    
+    console.log(`Building hourly gas price map from ${gasPrices.length} records...`);
+    
+    // Build hourly gas price map (data has timestamps at XX:12:36, round to hour)
     const hourlyGasPrices = new Map<number, number>();
     (gasPrices || []).forEach((gp: any) => {
       const timestamp = new Date(gp.timestamp);
-      timestamp.setUTCMinutes(0, 0, 0); // Round to hour
-      hourlyGasPrices.set(timestamp.getTime(), gp.price);
+      // Round to nearest hour (needed because gas prices are at XX:12:36)
+      timestamp.setUTCMinutes(0, 0, 0);
+      const timeKey = timestamp.getTime();
+      hourlyGasPrices.set(timeKey, gp.price);
     });
+    
+    console.log(`Gas price map built with ${hourlyGasPrices.size} hourly entries`);
     
     const enhancedFeatures = [];
 
@@ -64,7 +93,26 @@ serve(async (req) => {
       // Get hourly natural gas price
       const roundedTime = new Date(currentTime);
       roundedTime.setUTCMinutes(0, 0, 0);
-      const gasPrice = hourlyGasPrices.get(roundedTime.getTime()) || null;
+      const timeKey = roundedTime.getTime();
+      const gasPrice = hourlyGasPrices.get(timeKey) || null;
+      
+      // Debug first record
+      if (i === 0) {
+        console.log(`Debug first record - original timestamp: ${currentTime.toISOString()}`);
+        console.log(`Debug first record - rounded timestamp: ${roundedTime.toISOString()}`);
+        console.log(`Debug first record - timeKey: ${timeKey}`);
+        console.log(`Debug first record - gasPrice: ${gasPrice}`);
+        console.log(`Debug first record - map has ${hourlyGasPrices.size} entries`);
+        // Show first few map entries
+        let count = 0;
+        for (const [key, value] of hourlyGasPrices.entries()) {
+          if (count < 3) {
+            const date = new Date(key);
+            console.log(`  Map entry ${count}: key=${key}, date=${date.toISOString()}, price=${value}`);
+          }
+          count++;
+        }
+      }
       
       // Calculate lagged gas prices
       const time1d = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000);
