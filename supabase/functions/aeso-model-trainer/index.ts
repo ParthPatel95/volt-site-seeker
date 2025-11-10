@@ -144,54 +144,102 @@ serve(async (req) => {
     const scaledTrainSet = applyFeatureScaling(trainSet, featureScaling);
     const scaledTestSet = applyFeatureScaling(testSet, featureScaling);
     console.log('Applied feature scaling to training and test data');
+    
+    // ========== PHASE 3: TRAIN MACHINE LEARNING MODELS ==========
+    console.log('\n=== Phase 3: Training Machine Learning Models ===');
+    
+    // Extract features and targets for ML training
+    const trainFeatures = extractFeaturesForML(trainSet, featureScaling);
+    const trainTargets = trainSet.map(d => d.pool_price);
+    
+    // Train Linear Regression (no regularization)
+    console.log('Training Linear Regression model...');
+    const linearWeights = trainLinearRegression(trainFeatures, trainTargets, 0.0);
+    console.log(`Linear Regression trained with ${linearWeights.length} weights`);
+    
+    // Train Ridge Regression (L2 regularization)
+    console.log('Training Ridge Regression model (lambda=0.1)...');
+    const ridgeWeights = trainLinearRegression(trainFeatures, trainTargets, 0.1);
+    console.log(`Ridge Regression trained with ${ridgeWeights.length} weights`);
+    
+    // K-Fold Cross Validation
+    console.log('\n=== Running K-Fold Cross Validation (k=5) ===');
+    const cvResults = kFoldCrossValidation(trainFeatures, trainTargets, 5, 0.1);
+    console.log(`CV Results - MAE: ${cvResults.avgMAE.toFixed(2)}, RMSE: ${cvResults.avgRMSE.toFixed(2)}, MAPE: ${cvResults.avgMAPE.toFixed(2)}%, R²: ${cvResults.avgR2.toFixed(4)}`);
+    
+    // Train Weighted Average model
+    console.log('Training Weighted Average baseline model...');
+    const recentPrices = trainSet.slice(-168).map(d => d.pool_price); // Last 7 days
+    const waModel = trainWeightedAverageModel(recentPrices);
+    console.log(`Weighted Average model trained with ${waModel.weights.length} weights`);
 
     // ========== PHASE 1: DEBUG PREDICTIONS ==========
-    console.log('\n=== Evaluating Model Performance (Using Scaled Data) ===');
+    console.log('\n=== Evaluating Ensemble Model Performance ===');
     
-    // Evaluate model on test set with regime-aware predictions
+    // Evaluate ensemble on test set
     let totalAbsError = 0;
     let totalSquaredError = 0;
     let totalPercentError = 0;
     const predictions: number[] = [];
     const actuals: number[] = [];
     const modelErrors: Record<string, number[]> = {
-      'base': [],
-      'high_wind': [],
-      'peak_demand': [],
-      'low_demand': []
+      'linear': [],
+      'ridge': [],
+      'weighted_avg': [],
+      'ensemble': []
     };
 
     let debugCount = 0;
-    for (let idx = 0; idx < scaledTestSet.length; idx++) {
-      const testPoint = scaledTestSet[idx];
-      const originalTestPoint = testSet[idx];
-      const regime = detectRegime(originalTestPoint, regimeThresholds);
-      const prediction = predictPriceWithXGBoost(scaledTrainSet, testPoint, featureCorrelations, featureStats, laggedFeatures, regime, xgboostParams, featureScaling);
-      const actual = originalTestPoint.pool_price;
+    for (let idx = 0; idx < testSet.length; idx++) {
+      const testPoint = testSet[idx];
+      
+      // Extract and scale features for this test point
+      const testFeatureArray = extractFeaturesForML([testPoint], featureScaling)[0];
+      const recentTestPrices = trainSet.slice(-168).map(d => d.pool_price).slice(idx);
+      
+      // Get predictions from each model
+      const linearPred = predictWithLinearModel(testFeatureArray, linearWeights);
+      const ridgePred = predictWithLinearModel(testFeatureArray, ridgeWeights);
+      const waPred = predictWithWeightedAverage(recentTestPrices, waModel.weights);
+      
+      // Ensemble prediction (weighted combination)
+      const ensemblePred = (
+        ridgePred * 0.5 +
+        linearPred * 0.3 +
+        waPred * 0.2
+      );
+      const finalPred = Math.max(0, Math.min(999.99, ensemblePred));
+      
+      const actual = testPoint.pool_price;
       
       // Debug first 3 predictions
       if (debugCount < 3) {
         console.log(`\nTest prediction ${debugCount}:`);
         console.log(`  Actual: $${actual.toFixed(2)}`);
-        console.log(`  Predicted: $${prediction.toFixed(2)}`);
-        console.log(`  Error: $${Math.abs(actual - prediction).toFixed(2)}`);
-        console.log(`  Hour: ${new Date(originalTestPoint.timestamp).getUTCHours()}, Wind: ${originalTestPoint.generation_wind}, Demand: ${originalTestPoint.ail_mw}`);
-        console.log(`  Regime: ${regime}`);
+        console.log(`  Linear: $${linearPred.toFixed(2)}, Ridge: $${ridgePred.toFixed(2)}, WA: $${waPred.toFixed(2)}`);
+        console.log(`  Ensemble: $${finalPred.toFixed(2)}`);
+        console.log(`  Error: $${Math.abs(actual - finalPred).toFixed(2)}`);
+        console.log(`  Hour: ${new Date(testPoint.timestamp).getUTCHours()}, Wind: ${testPoint.generation_wind}, Demand: ${testPoint.ail_mw}`);
         debugCount++;
       }
       
-      predictions.push(prediction);
+      predictions.push(finalPred);
       actuals.push(actual);
       
-      const error = Math.abs(prediction - actual);
+      // Track errors by model
+      modelErrors['linear'].push(Math.abs(linearPred - actual));
+      modelErrors['ridge'].push(Math.abs(ridgePred - actual));
+      modelErrors['weighted_avg'].push(Math.abs(waPred - actual));
+      modelErrors['ensemble'].push(Math.abs(finalPred - actual));
+      
+      const error = Math.abs(finalPred - actual);
       totalAbsError += error;
-      totalSquaredError += (prediction - actual) * (prediction - actual);
-      modelErrors[regime].push(error);
+      totalSquaredError += (finalPred - actual) * (finalPred - actual);
       
       // For MAPE: use $5 minimum threshold to avoid division by very small numbers
       // Zero prices are valid but create infinite percentage errors
       const actualForMape = Math.max(5, actual);
-      totalPercentError += Math.abs((prediction - actualForMape) / actualForMape) * 100;
+      totalPercentError += Math.abs((finalPred - actualForMape) / actualForMape) * 100;
     }
 
     // Calculate performance metrics
@@ -210,6 +258,13 @@ serve(async (req) => {
     console.log(`  RMSE: $${rmse.toFixed(2)}/MWh`);
     console.log(`  MAPE: ${mape.toFixed(2)}%`);
     console.log(`  R²: ${rSquared.toFixed(4)}`);
+    
+    // Log individual model performance
+    console.log('\n✅ Individual Model MAE:');
+    for (const [model, errors] of Object.entries(modelErrors)) {
+      const avgError = errors.reduce((sum, e) => sum + e, 0) / errors.length;
+      console.log(`  ${model}: $${avgError.toFixed(2)}/MWh`);
+    }
 
     // Calculate feature importance (filter out null correlations)
     const featureImportance: Record<string, number | null> = {};
@@ -268,8 +323,8 @@ serve(async (req) => {
 
     console.log('Ensemble weights by regime:', ensembleWeights);
 
-    // Store learned parameters for use by predictor (including scaling parameters)
-    console.log('Storing learned model parameters with scaling...');
+    // Store learned parameters for use by predictor (including scaling parameters and ML models)
+    console.log('Storing learned model parameters with ML weights...');
     
     const { error: paramsError } = await supabase
       .from('aeso_model_parameters')
@@ -282,7 +337,12 @@ serve(async (req) => {
           ...featureCorrelations,
           lagged: laggedFeatures,
           regimes: regimeThresholds,
-          ensemble_weights: ensembleWeights
+          ml_models: {
+            linear_weights: linearWeights,
+            ridge_weights: ridgeWeights,
+            weighted_avg_weights: waModel.weights
+          },
+          cv_results: cvResults
         },
         feature_statistics: featureStats,
         feature_scaling: featureScaling,
@@ -324,6 +384,294 @@ serve(async (req) => {
     });
   }
 });
+
+// ========== PHASE 3: MACHINE LEARNING IMPLEMENTATIONS ==========
+
+// Linear Regression using Normal Equation with optional L2 regularization
+function trainLinearRegression(
+  features: number[][],
+  targets: number[],
+  lambda: number = 0.0
+): number[] {
+  const n = features.length;
+  const m = features[0].length;
+  
+  // Add bias term (column of 1s) to features
+  const X = features.map(row => [1, ...row]);
+  
+  // Build X^T * X matrix
+  const XtX: number[][] = Array(m + 1).fill(0).map(() => Array(m + 1).fill(0));
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= m; j++) {
+      let sum = 0;
+      for (let k = 0; k < n; k++) {
+        sum += X[k][i] * X[k][j];
+      }
+      // Add L2 regularization to diagonal (except bias term)
+      if (i === j && i > 0) {
+        sum += lambda;
+      }
+      XtX[i][j] = sum;
+    }
+  }
+  
+  // Build X^T * y vector
+  const Xty: number[] = Array(m + 1).fill(0);
+  for (let i = 0; i <= m; i++) {
+    let sum = 0;
+    for (let k = 0; k < n; k++) {
+      sum += X[k][i] * targets[k];
+    }
+    Xty[i] = sum;
+  }
+  
+  // Solve using Gaussian elimination
+  const weights = gaussianElimination(XtX, Xty);
+  return weights;
+}
+
+function gaussianElimination(A: number[][], b: number[]): number[] {
+  const n = A.length;
+  const augmented = A.map((row, i) => [...row, b[i]]);
+  
+  // Forward elimination
+  for (let i = 0; i < n; i++) {
+    // Find pivot
+    let maxRow = i;
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) {
+        maxRow = k;
+      }
+    }
+    [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+    
+    // Make all rows below this one 0 in current column
+    for (let k = i + 1; k < n; k++) {
+      const factor = augmented[k][i] / augmented[i][i];
+      for (let j = i; j <= n; j++) {
+        augmented[k][j] -= factor * augmented[i][j];
+      }
+    }
+  }
+  
+  // Back substitution
+  const x: number[] = Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    x[i] = augmented[i][n];
+    for (let j = i + 1; j < n; j++) {
+      x[i] -= augmented[i][j] * x[j];
+    }
+    x[i] /= augmented[i][i];
+  }
+  
+  return x;
+}
+
+function predictWithLinearModel(features: number[], weights: number[]): number {
+  // weights[0] is bias, rest are feature weights
+  let prediction = weights[0];
+  for (let i = 0; i < features.length; i++) {
+    prediction += weights[i + 1] * features[i];
+  }
+  return Math.max(0, Math.min(999.99, prediction));
+}
+
+// Weighted Average Model (simple but effective baseline)
+function trainWeightedAverageModel(prices: number[]): { weights: number[] } {
+  // Recent prices matter more - exponential decay weights
+  const weights = prices.map((_, i) => Math.exp(-i / 24)); // 24-hour decay
+  const sumWeights = weights.reduce((a, b) => a + b, 0);
+  return { weights: weights.map(w => w / sumWeights) };
+}
+
+function predictWithWeightedAverage(recentPrices: number[], weights: number[]): number {
+  const n = Math.min(recentPrices.length, weights.length);
+  let prediction = 0;
+  for (let i = 0; i < n; i++) {
+    prediction += recentPrices[i] * weights[i];
+  }
+  return Math.max(0, Math.min(999.99, prediction));
+}
+
+// K-Fold Cross Validation
+function kFoldCrossValidation(
+  features: number[][],
+  targets: number[],
+  k: number = 5,
+  lambda: number = 0.1
+): { avgMAE: number; avgRMSE: number; avgMAPE: number; avgR2: number } {
+  const n = features.length;
+  const foldSize = Math.floor(n / k);
+  
+  let totalMAE = 0, totalRMSE = 0, totalMAPE = 0, totalR2 = 0;
+  
+  for (let fold = 0; fold < k; fold++) {
+    const valStart = fold * foldSize;
+    const valEnd = fold === k - 1 ? n : (fold + 1) * foldSize;
+    
+    // Split into train and validation
+    const trainFeatures: number[][] = [];
+    const trainTargets: number[] = [];
+    const valFeatures: number[][] = [];
+    const valTargets: number[] = [];
+    
+    for (let i = 0; i < n; i++) {
+      if (i >= valStart && i < valEnd) {
+        valFeatures.push(features[i]);
+        valTargets.push(targets[i]);
+      } else {
+        trainFeatures.push(features[i]);
+        trainTargets.push(targets[i]);
+      }
+    }
+    
+    // Train on this fold
+    const weights = trainLinearRegression(trainFeatures, trainTargets, lambda);
+    
+    // Validate
+    const predictions = valFeatures.map(f => predictWithLinearModel(f, weights));
+    const metrics = calculateMetrics(valTargets, predictions);
+    
+    totalMAE += metrics.mae;
+    totalRMSE += metrics.rmse;
+    totalMAPE += metrics.mape;
+    totalR2 += metrics.rSquared;
+  }
+  
+  return {
+    avgMAE: totalMAE / k,
+    avgRMSE: totalRMSE / k,
+    avgMAPE: totalMAPE / k,
+    avgR2: totalR2 / k
+  };
+}
+
+function calculateMetrics(actuals: number[], predictions: number[]): 
+  { mae: number; rmse: number; mape: number; rSquared: number } {
+  const n = actuals.length;
+  let totalAbsError = 0;
+  let totalSquaredError = 0;
+  let totalPercentError = 0;
+  
+  for (let i = 0; i < n; i++) {
+    const error = Math.abs(predictions[i] - actuals[i]);
+    totalAbsError += error;
+    totalSquaredError += Math.pow(predictions[i] - actuals[i], 2);
+    
+    // Use $5 minimum for MAPE to avoid division by very small numbers
+    const actualForMape = Math.max(5, actuals[i]);
+    totalPercentError += Math.abs((predictions[i] - actualForMape) / actualForMape) * 100;
+  }
+  
+  const mae = totalAbsError / n;
+  const rmse = Math.sqrt(totalSquaredError / n);
+  const mape = totalPercentError / n;
+  
+  // R-squared
+  const meanActual = actuals.reduce((sum, val) => sum + val, 0) / n;
+  const totalSS = actuals.reduce((sum, val) => sum + Math.pow(val - meanActual, 2), 0);
+  const residualSS = actuals.reduce((sum, val, i) => sum + Math.pow(val - predictions[i], 2), 0);
+  const rSquared = 1 - (residualSS / totalSS);
+  
+  return { mae, rmse, mape, rSquared };
+}
+
+// Extract features into array format for ML training
+function extractFeaturesForML(data: any[], scaling: Record<string, { mean: number; stdDev: number }>): number[][] {
+  return data.map(record => {
+    const timestamp = new Date(record.timestamp);
+    const hour = timestamp.getUTCHours();
+    const dayOfWeek = timestamp.getUTCDay();
+    const month = timestamp.getUTCMonth() + 1;
+    
+    const rawFeatures = [
+      hour,
+      dayOfWeek,
+      month,
+      record.is_weekend ? 1 : 0,
+      record.is_peak_hour ? 1 : 0,
+      record.temperature_calgary ?? 15,
+      record.temperature_edmonton ?? 15,
+      record.wind_speed ?? 0,
+      record.natural_gas_price ?? 2.5,
+      record.natural_gas_price_lag_1d ?? record.natural_gas_price ?? 2.5,
+      record.natural_gas_price_lag_7d ?? record.natural_gas_price ?? 2.5,
+      record.ail_mw ?? 10000,
+      record.generation_coal ?? 0,
+      record.generation_gas ?? 0,
+      record.generation_hydro ?? 0,
+      record.generation_wind ?? 0,
+      record.generation_other ?? 0,
+      record.net_to_grid_mw ?? 0,
+      record.renewable_percentage ?? 0,
+      record.price_volatility_1h ?? 0,
+      record.price_volatility_24h ?? 0,
+      record.price_momentum ?? 0,
+      record.demand_forecast_error ?? 0,
+      record.hour_sin ?? Math.sin(2 * Math.PI * hour / 24),
+      record.hour_cos ?? Math.cos(2 * Math.PI * hour / 24),
+      record.day_of_week_sin ?? Math.sin(2 * Math.PI * dayOfWeek / 7),
+      record.day_of_week_cos ?? Math.cos(2 * Math.PI * dayOfWeek / 7),
+      record.month_sin ?? Math.sin(2 * Math.PI * month / 12),
+      record.month_cos ?? Math.cos(2 * Math.PI * month / 12),
+      record.price_rolling_avg_6h ?? record.ail_mw ?? 10000,
+      record.price_rolling_avg_24h ?? record.ail_mw ?? 10000,
+      record.wind_rolling_avg_24h ?? record.generation_wind ?? 0,
+      record.demand_rolling_avg_24h ?? record.ail_mw ?? 10000,
+      record.price_rolling_std_24h ?? 0,
+      record.price_min_24h ?? 0,
+      record.price_max_24h ?? 100,
+      record.wind_lag_1h ?? record.generation_wind ?? 0,
+      record.wind_lag_6h ?? record.generation_wind ?? 0,
+      record.wind_lag_24h ?? record.generation_wind ?? 0,
+      record.wind_lag_168h ?? record.generation_wind ?? 0,
+      record.demand_lag_1h ?? record.ail_mw ?? 10000,
+      record.demand_lag_24h ?? record.ail_mw ?? 10000,
+      record.demand_lag_168h ?? record.ail_mw ?? 10000,
+      record.temp_lag_1h ?? record.temperature_calgary ?? 15,
+      record.temp_lag_6h ?? record.temperature_calgary ?? 15,
+      record.temp_lag_24h ?? record.temperature_calgary ?? 15,
+      record.price_lag_1h ?? record.pool_price ?? 30,
+      record.price_lag_2h ?? record.pool_price ?? 30,
+      record.price_lag_3h ?? record.pool_price ?? 30,
+      record.price_lag_6h ?? record.pool_price ?? 30,
+      record.price_lag_12h ?? record.pool_price ?? 30,
+      record.price_lag_24h ?? record.pool_price ?? 30,
+      record.wind_gen_hour_interaction ?? 0,
+      record.temp_demand_interaction ?? 0,
+      record.gas_price_gas_gen_interaction ?? 0,
+      record.weekend_hour_interaction ?? 0,
+      record.temp_extreme_hour_interaction ?? 0
+    ];
+    
+    // Apply scaling
+    const featureNames = [
+      'hour_of_day', 'day_of_week', 'month', 'is_weekend', 'is_peak_hour',
+      'temperature_calgary', 'temperature_edmonton', 'wind_speed',
+      'natural_gas_price', 'natural_gas_price_lag_1d', 'natural_gas_price_lag_7d',
+      'ail_mw', 'generation_coal', 'generation_gas', 'generation_hydro',
+      'generation_wind', 'generation_other', 'net_to_grid_mw', 'renewable_percentage',
+      'price_volatility_1h', 'price_volatility_24h', 'price_momentum', 'demand_forecast_error',
+      'hour_sin', 'hour_cos', 'day_of_week_sin', 'day_of_week_cos', 'month_sin', 'month_cos',
+      'price_rolling_avg_6h', 'price_rolling_avg_24h', 'wind_rolling_avg_24h', 
+      'demand_rolling_avg_24h', 'price_rolling_std_24h', 'price_min_24h', 'price_max_24h',
+      'wind_lag_1h', 'wind_lag_6h', 'wind_lag_24h', 'wind_lag_168h',
+      'demand_lag_1h', 'demand_lag_24h', 'demand_lag_168h',
+      'temp_lag_1h', 'temp_lag_6h', 'temp_lag_24h',
+      'price_lag_1h', 'price_lag_2h', 'price_lag_3h', 'price_lag_6h', 'price_lag_12h', 'price_lag_24h',
+      'wind_gen_hour_interaction', 'temp_demand_interaction', 'gas_price_gas_gen_interaction',
+      'weekend_hour_interaction', 'temp_extreme_hour_interaction'
+    ];
+    
+    return rawFeatures.map((val, i) => {
+      const featureName = featureNames[i];
+      if (scaling[featureName] && scaling[featureName].stdDev !== 0) {
+        return (val - scaling[featureName].mean) / scaling[featureName].stdDev;
+      }
+      return val;
+    });
+  });
+}
 
 // XGBoost-style gradient boosting prediction with enhanced features
 function predictPriceWithXGBoost(
