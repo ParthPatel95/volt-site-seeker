@@ -183,12 +183,22 @@ serve(async (req) => {
     console.log(`  MAPE: ${mape.toFixed(2)}%`);
     console.log(`  R²: ${rSquared.toFixed(4)}`);
 
-    // Calculate feature importance
-    const featureImportance: Record<string, number> = {};
-    const totalCorr = Object.values(featureCorrelations).reduce((sum, val) => sum + Math.abs(val), 0);
+    // Calculate feature importance (filter out null correlations)
+    const featureImportance: Record<string, number | null> = {};
+    const validCorrelations = Object.entries(featureCorrelations).filter(([_, val]) => val !== null && !isNaN(val));
+    const totalCorr = validCorrelations.reduce((sum, [_, val]) => sum + Math.abs(val as number), 0);
     
+    if (totalCorr > 0) {
+      for (const [feature, corr] of validCorrelations) {
+        featureImportance[feature] = Math.abs(corr as number) / totalCorr;
+      }
+    }
+    
+    // Add null for features without valid correlations
     for (const [feature, corr] of Object.entries(featureCorrelations)) {
-      featureImportance[feature] = Math.abs(corr) / totalCorr;
+      if (corr === null || isNaN(corr)) {
+        featureImportance[feature] = null;
+      }
     }
 
     console.log('Feature importance:', featureImportance);
