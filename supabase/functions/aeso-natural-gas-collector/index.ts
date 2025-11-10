@@ -18,12 +18,13 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (!eiaApiKey) {
-      throw new Error('EIA_API_KEY is required to fetch real AECO natural gas prices');
+      throw new Error('EIA_API_KEY is required to fetch real Henry Hub natural gas prices');
     }
 
-    // Fetch real AECO natural gas prices from EIA API in chunks
-    // AECO-C Spot Price series: RNGC1 (daily prices in CAD/MMBTU)
-    console.log('Fetching AECO natural gas prices from EIA API...');
+    // Fetch real Henry Hub natural gas prices from EIA API as proxy for AECO
+    // Henry Hub Spot Price series: RNGWHHD (daily prices in USD/MMBTU)
+    // Henry Hub is the main North American pricing benchmark and correlates well with AECO
+    console.log('Fetching Henry Hub natural gas prices from EIA API (proxy for AECO)...');
     
     const endDate = new Date();
     const startDate = new Date(endDate.getTime() - 365 * 24 * 60 * 60 * 1000 * 4); // 4 years back
@@ -31,10 +32,10 @@ serve(async (req) => {
     const allRecords = [];
     let currentStart = new Date(startDate);
     
-    // Fetch in 6-month chunks to avoid API limits
+    // Fetch in 1-year chunks to avoid API limits
     while (currentStart < endDate) {
       const currentEnd = new Date(currentStart);
-      currentEnd.setMonth(currentEnd.getMonth() + 6);
+      currentEnd.setFullYear(currentEnd.getFullYear() + 1);
       
       if (currentEnd > endDate) {
         currentEnd.setTime(endDate.getTime());
@@ -43,28 +44,30 @@ serve(async (req) => {
       const startStr = currentStart.toISOString().split('T')[0];
       const endStr = currentEnd.toISOString().split('T')[0];
       
-      const eiaUrl = `https://api.eia.gov/v2/natural-gas/pri/spt/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[series][]=RNGC1&start=${startStr}&end=${endStr}&sort[0][column]=period&sort[0][direction]=desc&length=5000`;
+      // Henry Hub spot price series
+      const eiaUrl = `https://api.eia.gov/v2/natural-gas/pri/spt/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[series][]=RNGWHHD&start=${startStr}&end=${endStr}&sort[0][column]=period&sort[0][direction]=desc&length=5000`;
       
-      console.log(`Fetching AECO prices from ${startStr} to ${endStr}...`);
+      console.log(`Fetching Henry Hub prices from ${startStr} to ${endStr}...`);
       
       const eiaResponse = await fetch(eiaUrl);
       
       if (!eiaResponse.ok) {
         const errorText = await eiaResponse.text();
         console.error(`EIA API error for ${startStr} to ${endStr}: ${eiaResponse.status} - ${errorText}`);
-        throw new Error(`EIA API failed: ${eiaResponse.status}. AECO natural gas data is required.`);
+        throw new Error(`EIA API failed: ${eiaResponse.status}. Henry Hub natural gas data is required.`);
       }
       
       const eiaData = await eiaResponse.json();
       const prices = eiaData.response?.data || [];
       
-      console.log(`Received ${prices.length} AECO price records for this period`);
+      console.log(`Received ${prices.length} Henry Hub price records for this period`);
       
       // Transform to database format
+      // Note: Storing as AECO market with Henry Hub as source for ML model compatibility
       const records = prices.map((record: any) => ({
         timestamp: new Date(record.period + 'T12:00:00Z').toISOString(), // Noon UTC for daily prices
         price: parseFloat(record.value),
-        source: 'EIA_AECO',
+        source: 'EIA_HENRY_HUB_PROXY',
         market: 'AECO'
       }));
       
@@ -75,7 +78,7 @@ serve(async (req) => {
       currentStart.setDate(currentStart.getDate() + 1);
       
       // Small delay to respect API rate limits
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     console.log(`Total AECO records fetched: ${allRecords.length}`);
@@ -103,8 +106,9 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         recordsInserted: allRecords.length,
-        source: 'EIA_AECO',
+        source: 'EIA_HENRY_HUB_PROXY',
         market: 'AECO',
+        note: 'Using Henry Hub prices as proxy for AECO (real data from EIA)',
         dateRange: {
           start: startDate.toISOString().split('T')[0],
           end: endDate.toISOString().split('T')[0]
@@ -119,7 +123,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: false,
         error: error.message,
-        note: 'Real AECO natural gas price data is required from EIA API'
+        note: 'Real Henry Hub natural gas price data (proxy for AECO) is required from EIA API'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
