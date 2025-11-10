@@ -254,6 +254,33 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const runCompleteBackfill = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('aeso-complete-backfill');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Backfill & Training Complete",
+        description: `Pipeline completed in ${data.duration_minutes} minutes. Model ready for predictions.`,
+      });
+      
+      await fetchModelPerformance();
+      return data;
+    } catch (error: any) {
+      console.error('Complete backfill error:', error);
+      toast({
+        title: "Pipeline Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const validatePredictions = async () => {
     setLoading(true);
     try {
@@ -290,6 +317,7 @@ export const useAESOPricePrediction = () => {
     collectTrainingData,
     trainModel,
     collectWeatherData,
-    validatePredictions
+    validatePredictions,
+    runCompleteBackfill
   };
 };

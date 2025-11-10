@@ -67,6 +67,9 @@ verify_jwt = false
 [functions.aeso-historical-backfill]
 verify_jwt = false
 
+[functions.aeso-complete-backfill]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 
