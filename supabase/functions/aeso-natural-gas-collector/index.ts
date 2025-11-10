@@ -24,7 +24,7 @@ serve(async (req) => {
       const now = new Date();
       const records = [];
       
-      for (let i = 0; i < 24 * 365 * 2; i++) { // 2 years of hourly data
+      for (let i = 0; i < 24 * 365 * 4; i++) { // 4 years of hourly data
         const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
         
         // AECO natural gas price typically ranges $1-5 CAD/GJ, with seasonal patterns
@@ -64,7 +64,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: 'Synthetic natural gas price data generated',
-          recordsGenerated: 24 * 365 * 2
+          recordsGenerated: 24 * 365 * 4
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -73,7 +73,7 @@ serve(async (req) => {
     // Fetch real natural gas prices from EIA API
     // EIA API for natural gas spot prices at AECO (Alberta)
     const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - 365 * 24 * 60 * 60 * 1000 * 2); // 2 years
+    const startDate = new Date(endDate.getTime() - 365 * 24 * 60 * 60 * 1000 * 4); // 4 years
     
     const eiaUrl = `https://api.eia.gov/v2/natural-gas/pri/spt/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[series][]=RNGC1&start=${startDate.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}&sort[0][column]=period&sort[0][direction]=desc`;
     
