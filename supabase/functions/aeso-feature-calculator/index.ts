@@ -30,6 +30,19 @@ serve(async (req) => {
 
     console.log(`Processing ${trainingData.length} records...`);
 
+    // Fetch all natural gas prices at once for efficiency
+    const { data: gasPrices, error: gasPricesError } = await supabase
+      .from('aeso_natural_gas_prices')
+      .select('timestamp, price')
+      .order('timestamp', { ascending: true });
+
+    if (gasPricesError) throw gasPricesError;
+    
+    console.log(`Interpolating ${gasPrices?.length || 0} daily gas prices to hourly...`);
+    
+    // Interpolate hourly gas prices from daily data
+    const hourlyGasPrices = interpolateHourlyGasPrices(gasPrices || []);
+    
     const enhancedFeatures = [];
 
     for (let i = 0; i < trainingData.length; i++) {
@@ -43,14 +56,13 @@ serve(async (req) => {
       // Calculate price momentum (rate of change)
       const priceMomentum3h = calculateMomentum(trainingData, i, 3);
 
-      // Get natural gas price for this timestamp
-      const { data: gasPrice } = await supabase
-        .from('aeso_natural_gas_prices')
-        .select('price')
-        .lte('timestamp', current.timestamp)
-        .order('timestamp', { ascending: false })
-        .limit(1)
-        .single();
+      // Get interpolated hourly natural gas price
+      const gasPrice = getInterpolatedGasPrice(hourlyGasPrices, currentTime);
+      
+      // Calculate lagged gas prices
+      const gasPrice1DayAgo = getInterpolatedGasPrice(hourlyGasPrices, new Date(currentTime.getTime() - 24 * 60 * 60 * 1000));
+      const gasPrice7DaysAgo = getInterpolatedGasPrice(hourlyGasPrices, new Date(currentTime.getTime() - 7 * 24 * 60 * 60 * 1000));
+      const gasPrice30DaysAgo = getInterpolatedGasPrice(hourlyGasPrices, new Date(currentTime.getTime() - 30 * 24 * 60 * 60 * 1000));
 
       // Calculate renewable curtailment (difference between potential and actual)
       const renewableCurtailment = calculateRenewableCurtailment(current);
@@ -63,7 +75,10 @@ serve(async (req) => {
         price_volatility_1h: priceVolatility1h,
         price_volatility_24h: priceVolatility24h,
         price_momentum_3h: priceMomentum3h,
-        natural_gas_price: gasPrice?.price || null,
+        natural_gas_price: gasPrice,
+        natural_gas_price_lag_1d: gasPrice1DayAgo,
+        natural_gas_price_lag_7d: gasPrice7DaysAgo,
+        natural_gas_price_lag_30d: gasPrice30DaysAgo,
         renewable_curtailment: renewableCurtailment,
         net_imports: netImports
       });
@@ -142,4 +157,51 @@ function calculateRenewableCurtailment(record: any): number {
   const estimatedCurtailment = Math.max(0, potentialWind - windGeneration);
   
   return estimatedCurtailment;
+}
+
+function interpolateHourlyGasPrices(dailyPrices: any[]): Map<string, number> {
+  const hourlyMap = new Map<string, number>();
+  
+  if (dailyPrices.length === 0) return hourlyMap;
+  
+  for (let i = 0; i < dailyPrices.length; i++) {
+    const currentDay = new Date(dailyPrices[i].timestamp);
+    const currentPrice = dailyPrices[i].price;
+    
+    // For each hour of the day, add an entry
+    for (let hour = 0; hour < 24; hour++) {
+      const hourTimestamp = new Date(currentDay);
+      hourTimestamp.setHours(hour, 0, 0, 0);
+      
+      // If we have a next day, interpolate between current and next
+      if (i < dailyPrices.length - 1) {
+        const nextDay = new Date(dailyPrices[i + 1].timestamp);
+        const nextPrice = dailyPrices[i + 1].price;
+        const daysDiff = (nextDay.getTime() - currentDay.getTime()) / (24 * 60 * 60 * 1000);
+        
+        if (daysDiff > 0) {
+          // Linear interpolation
+          const progress = hour / 24;
+          const interpolatedPrice = currentPrice + (nextPrice - currentPrice) * (progress / daysDiff);
+          hourlyMap.set(hourTimestamp.toISOString(), interpolatedPrice);
+        } else {
+          hourlyMap.set(hourTimestamp.toISOString(), currentPrice);
+        }
+      } else {
+        // Last day, just use the price
+        hourlyMap.set(hourTimestamp.toISOString(), currentPrice);
+      }
+    }
+  }
+  
+  return hourlyMap;
+}
+
+function getInterpolatedGasPrice(hourlyPrices: Map<string, number>, timestamp: Date): number | null {
+  // Round timestamp to nearest hour
+  const roundedTime = new Date(timestamp);
+  roundedTime.setMinutes(0, 0, 0);
+  
+  const price = hourlyPrices.get(roundedTime.toISOString());
+  return price !== undefined ? price : null;
 }
