@@ -126,7 +126,7 @@ async function generatePredictions(
   const { data: modelParams } = await supabase
     .from('aeso_model_parameters')
     .select('*')
-    .eq('model_version', 'v2.0-ml-trained')
+    .eq('model_version', MODEL_VERSION)
     .eq('parameter_type', 'learned_coefficients')
     .single();
 
