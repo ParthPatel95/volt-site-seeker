@@ -18,41 +18,72 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (!eiaApiKey) {
-      return generateSyntheticData(supabase);
+      throw new Error('EIA_API_KEY is required to fetch real AECO natural gas prices');
     }
 
-    // Fetch real natural gas prices from EIA API
-    // EIA API for natural gas spot prices at AECO (Alberta)
+    // Fetch real AECO natural gas prices from EIA API in chunks
+    // AECO-C Spot Price series: RNGC1 (daily prices in CAD/MMBTU)
+    console.log('Fetching AECO natural gas prices from EIA API...');
+    
     const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - 365 * 24 * 60 * 60 * 1000 * 4); // 4 years
+    const startDate = new Date(endDate.getTime() - 365 * 24 * 60 * 60 * 1000 * 4); // 4 years back
     
-    const eiaUrl = `https://api.eia.gov/v2/natural-gas/pri/spt/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[series][]=RNGC1&start=${startDate.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}&sort[0][column]=period&sort[0][direction]=desc`;
+    const allRecords = [];
+    let currentStart = new Date(startDate);
     
-    console.log('Fetching natural gas prices from EIA...');
-    const eiaResponse = await fetch(eiaUrl);
-    
-    if (!eiaResponse.ok) {
-      console.warn(`EIA API returned status ${eiaResponse.status}, falling back to synthetic data`);
-      // Fall back to synthetic data generation
-      return generateSyntheticData(supabase);
+    // Fetch in 6-month chunks to avoid API limits
+    while (currentStart < endDate) {
+      const currentEnd = new Date(currentStart);
+      currentEnd.setMonth(currentEnd.getMonth() + 6);
+      
+      if (currentEnd > endDate) {
+        currentEnd.setTime(endDate.getTime());
+      }
+      
+      const startStr = currentStart.toISOString().split('T')[0];
+      const endStr = currentEnd.toISOString().split('T')[0];
+      
+      const eiaUrl = `https://api.eia.gov/v2/natural-gas/pri/spt/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[series][]=RNGC1&start=${startStr}&end=${endStr}&sort[0][column]=period&sort[0][direction]=desc&length=5000`;
+      
+      console.log(`Fetching AECO prices from ${startStr} to ${endStr}...`);
+      
+      const eiaResponse = await fetch(eiaUrl);
+      
+      if (!eiaResponse.ok) {
+        const errorText = await eiaResponse.text();
+        console.error(`EIA API error for ${startStr} to ${endStr}: ${eiaResponse.status} - ${errorText}`);
+        throw new Error(`EIA API failed: ${eiaResponse.status}. AECO natural gas data is required.`);
+      }
+      
+      const eiaData = await eiaResponse.json();
+      const prices = eiaData.response?.data || [];
+      
+      console.log(`Received ${prices.length} AECO price records for this period`);
+      
+      // Transform to database format
+      const records = prices.map((record: any) => ({
+        timestamp: new Date(record.period + 'T12:00:00Z').toISOString(), // Noon UTC for daily prices
+        price: parseFloat(record.value),
+        source: 'EIA_AECO',
+        market: 'AECO'
+      }));
+      
+      allRecords.push(...records);
+      
+      // Move to next chunk
+      currentStart = new Date(currentEnd);
+      currentStart.setDate(currentStart.getDate() + 1);
+      
+      // Small delay to respect API rate limits
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
-    const eiaData = await eiaResponse.json();
-    const prices = eiaData.response?.data || [];
-    
-    console.log(`Received ${prices.length} natural gas price records`);
-    
-    // Transform and insert into database
-    const records = prices.map((record: any) => ({
-      timestamp: new Date(record.period + 'T00:00:00Z').toISOString(),
-      price: parseFloat(record.value),
-      source: 'EIA',
-      market: 'AECO'
-    }));
+    console.log(`Total AECO records fetched: ${allRecords.length}`);
     
     // Insert in batches of 1000
-    for (let i = 0; i < records.length; i += 1000) {
-      const batch = records.slice(i, i + 1000);
+    let inserted = 0;
+    for (let i = 0; i < allRecords.length; i += 1000) {
+      const batch = allRecords.slice(i, i + 1000);
       const { error } = await supabase
         .from('aeso_natural_gas_prices')
         .upsert(batch, {
@@ -61,77 +92,36 @@ serve(async (req) => {
         });
       
       if (error) {
-        console.error('Error inserting natural gas prices:', error);
+        console.error('Error inserting AECO natural gas prices:', error);
         throw error;
       }
+      inserted += batch.length;
+      console.log(`Inserted ${inserted}/${allRecords.length} records`);
     }
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        recordsInserted: records.length,
-        source: 'EIA'
+        recordsInserted: allRecords.length,
+        source: 'EIA_AECO',
+        market: 'AECO',
+        dateRange: {
+          start: startDate.toISOString().split('T')[0],
+          end: endDate.toISOString().split('T')[0]
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in natural gas collector:', error);
+    console.error('Error in AECO natural gas collector:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message,
+        note: 'Real AECO natural gas price data is required from EIA API'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
-
-async function generateSyntheticData(supabase: any) {
-  console.log('Generating synthetic natural gas price data');
-  
-  const now = new Date();
-  const records = [];
-  
-  for (let i = 0; i < 24 * 365 * 4; i++) { // 4 years of hourly data
-    const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
-    
-    // AECO natural gas price typically ranges $1-5 CAD/GJ, with seasonal patterns
-    const basePrice = 2.5;
-    const seasonalFactor = Math.sin((timestamp.getMonth() / 12) * 2 * Math.PI) * 0.8; // Higher in winter
-    const hourlyVariation = Math.sin((timestamp.getHours() / 24) * 2 * Math.PI) * 0.3;
-    const randomNoise = (Math.random() - 0.5) * 0.5;
-    
-    const price = Math.max(0.5, basePrice + seasonalFactor + hourlyVariation + randomNoise);
-    
-    records.push({
-      timestamp: timestamp.toISOString(),
-      price: parseFloat(price.toFixed(4)),
-      source: 'SYNTHETIC',
-      market: 'AECO'
-    });
-    
-    // Insert in batches of 1000
-    if (records.length === 1000) {
-      await supabase.from('aeso_natural_gas_prices').upsert(records, {
-        onConflict: 'timestamp,market',
-        ignoreDuplicates: true
-      });
-      records.length = 0;
-    }
-  }
-  
-  // Insert remaining records
-  if (records.length > 0) {
-    await supabase.from('aeso_natural_gas_prices').upsert(records, {
-      onConflict: 'timestamp,market',
-      ignoreDuplicates: true
-    });
-  }
-  
-  return new Response(
-    JSON.stringify({ 
-      success: true, 
-      message: 'Synthetic natural gas price data generated (EIA API unavailable)',
-      recordsGenerated: 24 * 365 * 4
-    }),
-    { headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } }
-  );
-}
