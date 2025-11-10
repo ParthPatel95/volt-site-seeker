@@ -39,11 +39,14 @@ export const useAESOPricePrediction = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchPredictions = async (horizon: string = '24h') => {
+  const fetchPredictions = async (horizon: string = '24h', useOptimized: boolean = true) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('aeso-price-predictor', {
-        body: { horizon }
+      // Phase 7: Use optimized predictor with caching by default
+      const functionName = useOptimized ? 'aeso-optimized-predictor' : 'aeso-price-predictor';
+      
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: { horizon, forceRefresh: !useOptimized }
       });
 
       // Check for errors in both the error object and data.error
@@ -54,9 +57,14 @@ export const useAESOPricePrediction = () => {
 
       if (data?.success) {
         setPredictions(data.predictions);
+        
+        const perfMsg = data.performance 
+          ? ` (${data.performance.cache_hit_rate_percent}% cached, ${data.performance.total_duration_ms}ms)`
+          : '';
+        
         toast({
           title: "Predictions Generated",
-          description: `${data.predictions.length} price predictions for the next ${horizon}`,
+          description: `${data.predictions.length} price predictions for the next ${horizon}${perfMsg}`,
         });
       }
     } catch (error: any) {
@@ -356,6 +364,22 @@ export const useAESOPricePrediction = () => {
   };
 
 
+  const getPerformanceMetrics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('aeso_prediction_performance')
+        .select('*')
+        .order('request_timestamp', { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching performance metrics:', error);
+      return null;
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -368,6 +392,7 @@ export const useAESOPricePrediction = () => {
     collectWeatherData,
     validatePredictions,
     runCompleteBackfill,
-    checkAutoRetraining
+    checkAutoRetraining,
+    getPerformanceMetrics
   };
 };
