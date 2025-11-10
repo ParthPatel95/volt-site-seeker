@@ -106,6 +106,7 @@ serve(async (req) => {
     }));
 
     console.log(`Training XGBoost model with ${mergedData.length} historical data points and enhanced features`);
+    console.log('Sample merged data point:', JSON.stringify(mergedData[0], null, 2));
 
     // Calculate feature correlations with price (including enhanced features)
     const featureCorrelations = calculateFeatureCorrelations(mergedData);
@@ -126,14 +127,27 @@ serve(async (req) => {
     console.log('Feature statistics:', featureStats);
     console.log('Lagged feature importance:', laggedFeatures);
     console.log('Market regime thresholds:', regimeThresholds);
-
+    
+    // ========== PHASE 1: FEATURE SCALING ==========
+    console.log('\n=== Calculating Feature Scaling Parameters ===');
+    const featureScaling = calculateFeatureScaling(mergedData);
+    console.log('Feature scaling calculated for', Object.keys(featureScaling).length, 'features');
+    
     // Split data: 80% training, 20% testing
     const splitIndex = Math.floor(mergedData.length * 0.8);
     const trainSet = mergedData.slice(0, splitIndex);
     const testSet = mergedData.slice(splitIndex);
 
     console.log(`Training: ${trainSet.length} samples, Testing: ${testSet.length} samples`);
+    
+    // Apply scaling to training and test sets
+    const scaledTrainSet = applyFeatureScaling(trainSet, featureScaling);
+    const scaledTestSet = applyFeatureScaling(testSet, featureScaling);
+    console.log('Applied feature scaling to training and test data');
 
+    // ========== PHASE 1: DEBUG PREDICTIONS ==========
+    console.log('\n=== Evaluating Model Performance (Using Scaled Data) ===');
+    
     // Evaluate model on test set with regime-aware predictions
     let totalAbsError = 0;
     let totalSquaredError = 0;
@@ -147,10 +161,24 @@ serve(async (req) => {
       'low_demand': []
     };
 
-    for (const testPoint of testSet) {
-      const regime = detectRegime(testPoint, regimeThresholds);
-      const prediction = predictPriceWithXGBoost(trainSet, testPoint, featureCorrelations, featureStats, laggedFeatures, regime, xgboostParams);
-      const actual = testPoint.pool_price;
+    let debugCount = 0;
+    for (let idx = 0; idx < scaledTestSet.length; idx++) {
+      const testPoint = scaledTestSet[idx];
+      const originalTestPoint = testSet[idx];
+      const regime = detectRegime(originalTestPoint, regimeThresholds);
+      const prediction = predictPriceWithXGBoost(scaledTrainSet, testPoint, featureCorrelations, featureStats, laggedFeatures, regime, xgboostParams, featureScaling);
+      const actual = originalTestPoint.pool_price;
+      
+      // Debug first 3 predictions
+      if (debugCount < 3) {
+        console.log(`\nTest prediction ${debugCount}:`);
+        console.log(`  Actual: $${actual.toFixed(2)}`);
+        console.log(`  Predicted: $${prediction.toFixed(2)}`);
+        console.log(`  Error: $${Math.abs(actual - prediction).toFixed(2)}`);
+        console.log(`  Hour: ${new Date(originalTestPoint.timestamp).getUTCHours()}, Wind: ${originalTestPoint.generation_wind}, Demand: ${originalTestPoint.ail_mw}`);
+        console.log(`  Regime: ${regime}`);
+        debugCount++;
+      }
       
       predictions.push(prediction);
       actuals.push(actual);
@@ -240,8 +268,8 @@ serve(async (req) => {
 
     console.log('Ensemble weights by regime:', ensembleWeights);
 
-    // Store learned parameters for use by predictor
-    console.log('Storing learned model parameters...');
+    // Store learned parameters for use by predictor (including scaling parameters)
+    console.log('Storing learned model parameters with scaling...');
     
     const { error: paramsError } = await supabase
       .from('aeso_model_parameters')
@@ -257,6 +285,7 @@ serve(async (req) => {
           ensemble_weights: ensembleWeights
         },
         feature_statistics: featureStats,
+        feature_scaling: featureScaling,
         training_samples: trainingData.length
       }, {
         onConflict: 'model_version,parameter_type,parameter_name'
@@ -304,9 +333,11 @@ function predictPriceWithXGBoost(
   featureStats: any,
   laggedFeatures: any,
   regime: string,
-  params: any
+  params: any,
+  featureScaling?: any
 ): number {
   // Initialize with mean price
+  // NOTE: $0 prices are VALID and normal in Alberta market!
   let prediction = featureStats.avgPrice;
   
   // Gradient boosting: iteratively add weak learners
@@ -355,7 +386,8 @@ function predictPriceWithXGBoost(
   
   // Handle extreme Alberta price volatility with bounds
   // AESO market can spike to $999.99 but predictions should be conservative
-  return Math.max(5, Math.min(800, prediction));
+  // NOTE: $0 prices are valid! Don't floor at $5
+  return Math.max(0, Math.min(800, prediction));
 }
 
 // Simplified decision tree builder for gradient boosting with weather integration
@@ -559,8 +591,102 @@ function predictPriceForTraining(
     prediction *= Math.max(0.7, Math.min(1.4, demandFactor));
   }
   
-  // Price floor and ceiling for Alberta market (historically -$100 to $999.99)
+  // Price floor and ceiling for Alberta market
+  // NOTE: $0 prices are valid and normal in Alberta market!
   return Math.max(0, Math.min(999, prediction));
+}
+
+// ========== PHASE 1: FEATURE SCALING FUNCTIONS ==========
+
+function calculateFeatureScaling(data: any[]): Record<string, { mean: number; stdDev: number }> {
+  const features = [
+    'hour_of_day',
+    'day_of_week', 
+    'month',
+    'temperature_calgary',
+    'temperature_edmonton',
+    'wind_speed',
+    'cloud_cover',
+    'solar_irradiance',
+    'generation_wind',
+    'generation_solar',
+    'generation_hydro',
+    'generation_gas',
+    'generation_coal',
+    'ail_mw',
+    'natural_gas_price',
+    'natural_gas_price_lag_1d',
+    'natural_gas_price_lag_7d',
+    'natural_gas_price_lag_30d',
+    'price_volatility_1h',
+    'price_volatility_24h',
+    'price_momentum_3h',
+    'net_imports',
+    'renewable_curtailment'
+  ];
+  
+  const scaling: Record<string, { mean: number; stdDev: number }> = {};
+  
+  for (const feature of features) {
+    const values = data
+      .map(d => {
+        // Extract temporal features from timestamp if needed
+        if (feature === 'hour_of_day') {
+          return new Date(d.timestamp).getUTCHours();
+        }
+        if (feature === 'day_of_week') {
+          return new Date(d.timestamp).getUTCDay();
+        }
+        if (feature === 'month') {
+          return new Date(d.timestamp).getUTCMonth() + 1;
+        }
+        return d[feature];
+      })
+      .filter(v => v !== null && v !== undefined && !isNaN(v));
+    
+    if (values.length === 0) {
+      scaling[feature] = { mean: 0, stdDev: 1 };
+      continue;
+    }
+    
+    const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+    const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+    
+    scaling[feature] = { 
+      mean, 
+      stdDev: stdDev === 0 ? 1 : stdDev // Avoid division by zero
+    };
+  }
+  
+  return scaling;
+}
+
+function applyFeatureScaling(data: any[], scaling: Record<string, { mean: number; stdDev: number }>): any[] {
+  return data.map(record => {
+    const scaled = { ...record };
+    
+    for (const [feature, params] of Object.entries(scaling)) {
+      let value: number;
+      
+      // Extract temporal features from timestamp
+      if (feature === 'hour_of_day') {
+        value = new Date(record.timestamp).getUTCHours();
+      } else if (feature === 'day_of_week') {
+        value = new Date(record.timestamp).getUTCDay();
+      } else if (feature === 'month') {
+        value = new Date(record.timestamp).getUTCMonth() + 1;
+      } else {
+        value = record[feature];
+      }
+      
+      if (value !== null && value !== undefined && !isNaN(value)) {
+        scaled[feature] = (value - params.mean) / params.stdDev;
+      }
+    }
+    
+    return scaled;
+  });
 }
 
 // Calculate correlations between features and price

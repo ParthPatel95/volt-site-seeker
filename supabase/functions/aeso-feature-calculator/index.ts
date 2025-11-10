@@ -182,11 +182,18 @@ serve(async (req) => {
   }
 });
 
-function calculateVolatility(data: any[], currentIndex: number, hoursBack: number): number {
+function calculateVolatility(data: any[], currentIndex: number, hoursBack: number): number | null {
   const startIndex = Math.max(0, currentIndex - hoursBack);
-  const prices = data.slice(startIndex, currentIndex + 1).map(d => d.pool_price);
+  const window = data.slice(startIndex, currentIndex + 1);
   
-  if (prices.length < 2) return 0;
+  // Need at least 2 data points, and require at least 50% of expected window
+  const expectedPoints = Math.min(hoursBack, currentIndex + 1);
+  if (window.length < 2 || window.length < expectedPoints * 0.5) {
+    return null;
+  }
+  
+  const prices = window.map(d => d.pool_price).filter(p => p !== null && p !== undefined);
+  if (prices.length < 2) return null;
   
   const mean = prices.reduce((sum, p) => sum + p, 0) / prices.length;
   const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
@@ -194,13 +201,25 @@ function calculateVolatility(data: any[], currentIndex: number, hoursBack: numbe
   return Math.sqrt(variance);
 }
 
-function calculateMomentum(data: any[], currentIndex: number, hoursBack: number): number {
+function calculateMomentum(data: any[], currentIndex: number, hoursBack: number): number | null {
   const pastIndex = Math.max(0, currentIndex - hoursBack);
   
-  if (pastIndex === currentIndex) return 0;
+  // Not enough data
+  if (pastIndex === currentIndex || currentIndex < hoursBack) return null;
   
   const currentPrice = data[currentIndex].pool_price;
   const pastPrice = data[pastIndex].pool_price;
+  
+  // Handle null/undefined prices
+  if (currentPrice === null || currentPrice === undefined || pastPrice === null || pastPrice === undefined) {
+    return null;
+  }
+  
+  // $0 prices are valid! But we can't calculate momentum from them (division by zero)
+  // Instead, use absolute change when past price is $0
+  if (pastPrice === 0) {
+    return currentPrice * 10; // Scale to percentage-like values (if price goes from $0 to $5, momentum = 50)
+  }
   
   return ((currentPrice - pastPrice) / pastPrice) * 100;
 }
