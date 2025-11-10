@@ -529,6 +529,63 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_retraining_history: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          drift_score: number | null
+          error_message: string | null
+          id: string
+          improvement_mae: number | null
+          new_mae: number | null
+          new_model_version: string | null
+          new_rmse: number | null
+          previous_mae: number | null
+          previous_model_version: string
+          previous_rmse: number | null
+          status: string
+          trigger_reason: string
+          triggered_at: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          drift_score?: number | null
+          error_message?: string | null
+          id?: string
+          improvement_mae?: number | null
+          new_mae?: number | null
+          new_model_version?: string | null
+          new_rmse?: number | null
+          previous_mae?: number | null
+          previous_model_version: string
+          previous_rmse?: number | null
+          status?: string
+          trigger_reason: string
+          triggered_at?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          drift_score?: number | null
+          error_message?: string | null
+          id?: string
+          improvement_mae?: number | null
+          new_mae?: number | null
+          new_model_version?: string | null
+          new_rmse?: number | null
+          previous_mae?: number | null
+          previous_model_version?: string
+          previous_rmse?: number | null
+          status?: string
+          trigger_reason?: string
+          triggered_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aeso_scheduled_tasks: {
         Row: {
           created_at: string | null
