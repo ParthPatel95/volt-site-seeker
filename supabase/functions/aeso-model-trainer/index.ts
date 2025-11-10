@@ -304,14 +304,27 @@ function predictPriceWithXGBoost(
   const learningRate = params.learning_rate;
   const maxDepth = params.max_depth;
   
-  // Calculate feature values including enhanced features
+  // Calculate feature values including weather and enhanced features
   const features = {
     hour: currentConditions.hour_of_day || 12,
     dayOfWeek: currentConditions.day_of_week || 1,
-    temperature: ((currentConditions.temperature_calgary || 0) + (currentConditions.temperature_edmonton || 0)) / 2,
+    isHoliday: currentConditions.is_holiday || false,
+    isWeekend: currentConditions.is_weekend || false,
+    month: currentConditions.month || 1,
+    season: currentConditions.season || 'winter',
+    // Weather features (critical for Alberta market)
+    temperatureCalgary: currentConditions.temperature_calgary || 15,
+    temperatureEdmonton: currentConditions.temperature_edmonton || 15,
+    windSpeed: currentConditions.wind_speed || 0,
+    cloudCover: currentConditions.cloud_cover || 50,
+    solarIrradiance: currentConditions.solar_irradiance || 0,
+    // Generation features
     windGen: currentConditions.generation_wind || 0,
-    demand: currentConditions.ail_mw || 0,
+    solarGen: currentConditions.generation_solar || 0,
+    hydroGen: currentConditions.generation_hydro || 0,
     gasGen: currentConditions.generation_gas || 0,
+    coalGen: currentConditions.generation_coal || 0,
+    demand: currentConditions.ail_mw || 0,
     // Enhanced features
     priceVolatility1h: currentConditions.price_volatility_1h || 0,
     priceVolatility24h: currentConditions.price_volatility_24h || 0,
@@ -335,9 +348,38 @@ function predictPriceWithXGBoost(
   return Math.max(5, Math.min(800, prediction));
 }
 
-// Simplified decision tree builder for gradient boosting
+// Simplified decision tree builder for gradient boosting with weather integration
 function buildDecisionTreePrediction(features: any, correlations: any, stats: any, regime: string, maxDepth: number): number {
   let adjustment = 0;
+  
+  // WEATHER IMPACT - Critical for Alberta's temperature-sensitive demand
+  const avgTemp = (features.temperatureCalgary + features.temperatureEdmonton) / 2;
+  
+  // Extreme cold or heat drives demand up (heating/cooling)
+  if (avgTemp < -20 || avgTemp > 28) {
+    adjustment += Math.abs(avgTemp - 15) * 1.2; // Strong temperature effect
+  } else if (avgTemp < -10 || avgTemp > 24) {
+    adjustment += Math.abs(avgTemp - 15) * 0.8;
+  }
+  
+  // Wind speed affects wind generation reliability
+  if (features.windSpeed > 40) {
+    adjustment += 12; // Very high winds can cause curtailment
+  } else if (features.windSpeed < 10 && features.windGen < 1000) {
+    adjustment += 8; // Low wind = less renewable generation
+  }
+  
+  // Cloud cover affects solar generation
+  if (features.cloudCover > 80 && features.hour >= 8 && features.hour <= 18) {
+    adjustment += 5; // Less solar during daytime
+  } else if (features.cloudCover < 30 && features.solarIrradiance > 500) {
+    adjustment -= 4; // High solar output
+  }
+  
+  // Holiday effect (lower commercial demand)
+  if (features.isHoliday) {
+    adjustment -= 12;
+  }
   
   // Natural gas price is a strong predictor (gas plants are often marginal)
   if (features.naturalGasPrice > 3.5) {
