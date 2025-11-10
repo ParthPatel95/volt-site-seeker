@@ -82,13 +82,63 @@ serve(async (req) => {
     for (let i = 0; i < trainingData.length; i++) {
       const current = trainingData[i];
       const currentTime = new Date(current.timestamp);
+      
+      // ========== PHASE 2: CYCLICAL TEMPORAL FEATURES ==========
+      const hour = currentTime.getUTCHours();
+      const dayOfWeek = currentTime.getUTCDay();
+      const month = currentTime.getUTCMonth() + 1;
+      
+      const hourSin = Math.sin(2 * Math.PI * hour / 24);
+      const hourCos = Math.cos(2 * Math.PI * hour / 24);
+      const dayOfWeekSin = Math.sin(2 * Math.PI * dayOfWeek / 7);
+      const dayOfWeekCos = Math.cos(2 * Math.PI * dayOfWeek / 7);
+      const monthSin = Math.sin(2 * Math.PI * month / 12);
+      const monthCos = Math.cos(2 * Math.PI * month / 12);
 
       // Calculate price volatility (standard deviation over rolling windows)
       const priceVolatility1h = calculateVolatility(trainingData, i, 1);
+      const priceVolatility6h = calculateVolatility(trainingData, i, 6);
       const priceVolatility24h = calculateVolatility(trainingData, i, 24);
 
       // Calculate price momentum (rate of change)
       const priceMomentum3h = calculateMomentum(trainingData, i, 3);
+      const priceMomentum24h = calculateMomentum(trainingData, i, 24);
+      
+      // ========== PHASE 2: ROLLING STATISTICS ==========
+      const priceRollingAvg6h = calculateRollingAverage(trainingData, i, 6, 'pool_price');
+      const priceRollingAvg24h = calculateRollingAverage(trainingData, i, 24, 'pool_price');
+      const windRollingAvg24h = calculateRollingAverage(trainingData, i, 24, 'generation_wind');
+      const demandRollingAvg24h = calculateRollingAverage(trainingData, i, 24, 'ail_mw');
+      const priceRollingStd24h = calculateRollingStdDev(trainingData, i, 24, 'pool_price');
+      
+      // Min/max price in last 24 hours
+      const priceMin24h = calculateRollingMin(trainingData, i, 24, 'pool_price');
+      const priceMax24h = calculateRollingMax(trainingData, i, 24, 'pool_price');
+      
+      // ========== PHASE 2: MORE LAGGED FEATURES ==========
+      // Wind generation lags
+      const windLag1h = i >= 1 ? trainingData[i - 1].generation_wind : null;
+      const windLag6h = i >= 6 ? trainingData[i - 6].generation_wind : null;
+      const windLag24h = i >= 24 ? trainingData[i - 24].generation_wind : null;
+      const windLag168h = i >= 168 ? trainingData[i - 168].generation_wind : null;
+      
+      // Demand lags
+      const demandLag1h = i >= 1 ? trainingData[i - 1].ail_mw : null;
+      const demandLag24h = i >= 24 ? trainingData[i - 24].ail_mw : null;
+      const demandLag168h = i >= 168 ? trainingData[i - 168].ail_mw : null;
+      
+      // Temperature lags
+      const tempLag1h = i >= 1 ? trainingData[i - 1].temperature_calgary : null;
+      const tempLag6h = i >= 6 ? trainingData[i - 6].temperature_calgary : null;
+      const tempLag24h = i >= 24 ? trainingData[i - 24].temperature_calgary : null;
+      
+      // Price lags (for autoregressive component)
+      const priceLag1h = i >= 1 ? trainingData[i - 1].pool_price : null;
+      const priceLag2h = i >= 2 ? trainingData[i - 2].pool_price : null;
+      const priceLag3h = i >= 3 ? trainingData[i - 3].pool_price : null;
+      const priceLag6h = i >= 6 ? trainingData[i - 6].pool_price : null;
+      const priceLag12h = i >= 12 ? trainingData[i - 12].pool_price : null;
+      const priceLag24h = i >= 24 ? trainingData[i - 24].pool_price : null;
 
       // Get hourly natural gas price
       const roundedTime = new Date(currentTime);
@@ -132,18 +182,74 @@ serve(async (req) => {
 
       // Calculate net imports
       const netImports = current.interchange_net || 0;
+      
+      // ========== PHASE 2: FEATURE INTERACTIONS ==========
+      const windGen = current.generation_wind || 0;
+      const demand = current.ail_mw || 0;
+      const temp = current.temperature_calgary || 10;
+      const gasGen = current.generation_gas || 0;
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6 ? 1 : 0;
+      
+      // Interaction features
+      const windGenHourInteraction = windGen * hour; // Wind impact varies by time of day
+      const tempDemandInteraction = temp * demand; // Temperature-driven demand
+      const gasPriceGasGenInteraction = gasPrice ? (gasPrice * gasGen) : null; // Gas cost impact
+      const weekendHourInteraction = isWeekend * hour; // Different patterns on weekends
+      const tempExtreme = Math.abs(temp - 15); // Distance from mild temperature
+      const tempExtremeHourInteraction = tempExtreme * hour; // Peak heating/cooling times
 
       enhancedFeatures.push({
         timestamp: current.timestamp,
+        // Original features
         price_volatility_1h: priceVolatility1h,
+        price_volatility_6h: priceVolatility6h,
         price_volatility_24h: priceVolatility24h,
         price_momentum_3h: priceMomentum3h,
+        price_momentum_24h: priceMomentum24h,
         natural_gas_price: gasPrice,
         natural_gas_price_lag_1d: gasPrice1DayAgo,
         natural_gas_price_lag_7d: gasPrice7DaysAgo,
         natural_gas_price_lag_30d: gasPrice30DaysAgo,
         renewable_curtailment: renewableCurtailment,
-        net_imports: netImports
+        net_imports: netImports,
+        // Phase 2: Cyclical features
+        hour_sin: hourSin,
+        hour_cos: hourCos,
+        day_of_week_sin: dayOfWeekSin,
+        day_of_week_cos: dayOfWeekCos,
+        month_sin: monthSin,
+        month_cos: monthCos,
+        // Phase 2: Rolling statistics
+        price_rolling_avg_6h: priceRollingAvg6h,
+        price_rolling_avg_24h: priceRollingAvg24h,
+        wind_rolling_avg_24h: windRollingAvg24h,
+        demand_rolling_avg_24h: demandRollingAvg24h,
+        price_rolling_std_24h: priceRollingStd24h,
+        price_min_24h: priceMin24h,
+        price_max_24h: priceMax24h,
+        // Phase 2: More lagged features
+        wind_lag_1h: windLag1h,
+        wind_lag_6h: windLag6h,
+        wind_lag_24h: windLag24h,
+        wind_lag_168h: windLag168h,
+        demand_lag_1h: demandLag1h,
+        demand_lag_24h: demandLag24h,
+        demand_lag_168h: demandLag168h,
+        temp_lag_1h: tempLag1h,
+        temp_lag_6h: tempLag6h,
+        temp_lag_24h: tempLag24h,
+        price_lag_1h: priceLag1h,
+        price_lag_2h: priceLag2h,
+        price_lag_3h: priceLag3h,
+        price_lag_6h: priceLag6h,
+        price_lag_12h: priceLag12h,
+        price_lag_24h: priceLag24h,
+        // Phase 2: Feature interactions
+        wind_gen_hour_interaction: windGenHourInteraction,
+        temp_demand_interaction: tempDemandInteraction,
+        gas_price_gas_gen_interaction: gasPriceGasGenInteraction,
+        weekend_hour_interaction: weekendHourInteraction,
+        temp_extreme_hour_interaction: tempExtremeHourInteraction
       });
 
       // Insert in batches of 1000
@@ -249,4 +355,57 @@ function getInterpolatedGasPrice(hourlyPrices: Map<number, number>, timestamp: D
   
   const price = hourlyPrices.get(timeKey);
   return price !== undefined ? price : null;
+}
+
+// ========== PHASE 2: ROLLING STATISTICS FUNCTIONS ==========
+
+function calculateRollingAverage(data: any[], currentIndex: number, hoursBack: number, field: string): number | null {
+  const startIndex = Math.max(0, currentIndex - hoursBack);
+  const window = data.slice(startIndex, currentIndex + 1);
+  
+  if (window.length < 2) return null;
+  
+  const values = window.map(d => d[field]).filter(v => v !== null && v !== undefined);
+  if (values.length === 0) return null;
+  
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
+function calculateRollingStdDev(data: any[], currentIndex: number, hoursBack: number, field: string): number | null {
+  const startIndex = Math.max(0, currentIndex - hoursBack);
+  const window = data.slice(startIndex, currentIndex + 1);
+  
+  if (window.length < 2) return null;
+  
+  const values = window.map(d => d[field]).filter(v => v !== null && v !== undefined);
+  if (values.length < 2) return null;
+  
+  const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+  const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+  
+  return Math.sqrt(variance);
+}
+
+function calculateRollingMin(data: any[], currentIndex: number, hoursBack: number, field: string): number | null {
+  const startIndex = Math.max(0, currentIndex - hoursBack);
+  const window = data.slice(startIndex, currentIndex + 1);
+  
+  if (window.length === 0) return null;
+  
+  const values = window.map(d => d[field]).filter(v => v !== null && v !== undefined);
+  if (values.length === 0) return null;
+  
+  return Math.min(...values);
+}
+
+function calculateRollingMax(data: any[], currentIndex: number, hoursBack: number, field: string): number | null {
+  const startIndex = Math.max(0, currentIndex - hoursBack);
+  const window = data.slice(startIndex, currentIndex + 1);
+  
+  if (window.length === 0) return null;
+  
+  const values = window.map(d => d[field]).filter(v => v !== null && v !== undefined);
+  if (values.length === 0) return null;
+  
+  return Math.max(...values);
 }

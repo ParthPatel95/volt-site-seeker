@@ -619,10 +619,44 @@ function calculateFeatureScaling(data: any[]): Record<string, { mean: number; st
     'natural_gas_price_lag_7d',
     'natural_gas_price_lag_30d',
     'price_volatility_1h',
+    'price_volatility_6h',
     'price_volatility_24h',
     'price_momentum_3h',
+    'price_momentum_24h',
     'net_imports',
-    'renewable_curtailment'
+    'renewable_curtailment',
+    // Phase 2: Cyclical features (already scaled -1 to 1, skip)
+    // Phase 2: Rolling statistics
+    'price_rolling_avg_6h',
+    'price_rolling_avg_24h',
+    'wind_rolling_avg_24h',
+    'demand_rolling_avg_24h',
+    'price_rolling_std_24h',
+    'price_min_24h',
+    'price_max_24h',
+    // Phase 2: More lagged features
+    'wind_lag_1h',
+    'wind_lag_6h',
+    'wind_lag_24h',
+    'wind_lag_168h',
+    'demand_lag_1h',
+    'demand_lag_24h',
+    'demand_lag_168h',
+    'temp_lag_1h',
+    'temp_lag_6h',
+    'temp_lag_24h',
+    'price_lag_1h',
+    'price_lag_2h',
+    'price_lag_3h',
+    'price_lag_6h',
+    'price_lag_12h',
+    'price_lag_24h',
+    // Phase 2: Feature interactions
+    'wind_gen_hour_interaction',
+    'temp_demand_interaction',
+    'gas_price_gas_gen_interaction',
+    'weekend_hour_interaction',
+    'temp_extreme_hour_interaction'
   ];
   
   const scaling: Record<string, { mean: number; stdDev: number }> = {};
@@ -797,6 +831,68 @@ function calculateFeatureCorrelations(data: any[]): Record<string, number> {
     correlations.priceMomentum = calculateCorrelation(
       momentumData.map(d => d.price_momentum_3h),
       momentumData.map(d => d.pool_price)
+    );
+  }
+  
+  // ========== PHASE 2: CYCLICAL FEATURE CORRELATIONS ==========
+  const hourSinData = data.filter(d => d.hour_sin !== null && d.hour_sin !== undefined);
+  if (hourSinData.length > 100) {
+    correlations.hourSin = calculateCorrelation(
+      hourSinData.map(d => d.hour_sin),
+      hourSinData.map(d => d.pool_price)
+    );
+  }
+  
+  const hourCosData = data.filter(d => d.hour_cos !== null && d.hour_cos !== undefined);
+  if (hourCosData.length > 100) {
+    correlations.hourCos = calculateCorrelation(
+      hourCosData.map(d => d.hour_cos),
+      hourCosData.map(d => d.pool_price)
+    );
+  }
+  
+  // ========== PHASE 2: LAGGED PRICE CORRELATIONS ==========
+  const priceLag1hData = data.filter(d => d.price_lag_1h !== null);
+  if (priceLag1hData.length > 100) {
+    correlations.priceLag1h = calculateCorrelation(
+      priceLag1hData.map(d => d.price_lag_1h),
+      priceLag1hData.map(d => d.pool_price)
+    );
+    console.log(`Price lag 1h correlation: ${correlations.priceLag1h.toFixed(4)} (${priceLag1hData.length} samples)`);
+  }
+  
+  const priceLag24hData = data.filter(d => d.price_lag_24h !== null);
+  if (priceLag24hData.length > 100) {
+    correlations.priceLag24h = calculateCorrelation(
+      priceLag24hData.map(d => d.price_lag_24h),
+      priceLag24hData.map(d => d.pool_price)
+    );
+    console.log(`Price lag 24h correlation: ${correlations.priceLag24h.toFixed(4)} (${priceLag24hData.length} samples)`);
+  }
+  
+  // ========== PHASE 2: ROLLING STATISTICS CORRELATIONS ==========
+  const priceRollingAvg24hData = data.filter(d => d.price_rolling_avg_24h !== null);
+  if (priceRollingAvg24hData.length > 100) {
+    correlations.priceRollingAvg24h = calculateCorrelation(
+      priceRollingAvg24hData.map(d => d.price_rolling_avg_24h),
+      priceRollingAvg24hData.map(d => d.pool_price)
+    );
+  }
+  
+  // ========== PHASE 2: FEATURE INTERACTION CORRELATIONS ==========
+  const windGenHourData = data.filter(d => d.wind_gen_hour_interaction !== null);
+  if (windGenHourData.length > 100) {
+    correlations.windGenHourInteraction = calculateCorrelation(
+      windGenHourData.map(d => d.wind_gen_hour_interaction),
+      windGenHourData.map(d => d.pool_price)
+    );
+  }
+  
+  const tempDemandData = data.filter(d => d.temp_demand_interaction !== null);
+  if (tempDemandData.length > 100) {
+    correlations.tempDemandInteraction = calculateCorrelation(
+      tempDemandData.map(d => d.temp_demand_interaction),
+      tempDemandData.map(d => d.pool_price)
     );
   }
   
