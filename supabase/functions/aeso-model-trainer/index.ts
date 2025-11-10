@@ -602,6 +602,68 @@ function calculateFeatureCorrelations(data: any[]): Record<string, number> {
     );
   }
   
+  // Natural gas price (current) - critical for Alberta's gas-heavy generation
+  const gasPriceData = data.filter(d => d.natural_gas_price !== null && d.natural_gas_price !== undefined);
+  if (gasPriceData.length > 100) {
+    correlations.naturalGasPrice = calculateCorrelation(
+      gasPriceData.map(d => d.natural_gas_price),
+      gasPriceData.map(d => d.pool_price)
+    );
+    
+    console.log(`Natural gas price correlation: ${correlations.naturalGasPrice.toFixed(4)} (${gasPriceData.length} samples)`);
+  }
+  
+  // Natural gas price 1-day lag
+  const gasPrice1dData = data.filter(d => d.natural_gas_price_lag_1d !== null && d.natural_gas_price_lag_1d !== undefined);
+  if (gasPrice1dData.length > 100) {
+    correlations.naturalGasPrice1dLag = calculateCorrelation(
+      gasPrice1dData.map(d => d.natural_gas_price_lag_1d),
+      gasPrice1dData.map(d => d.pool_price)
+    );
+    
+    console.log(`Natural gas 1d lag correlation: ${correlations.naturalGasPrice1dLag.toFixed(4)} (${gasPrice1dData.length} samples)`);
+  }
+  
+  // Natural gas price 7-day lag
+  const gasPrice7dData = data.filter(d => d.natural_gas_price_lag_7d !== null && d.natural_gas_price_lag_7d !== undefined);
+  if (gasPrice7dData.length > 100) {
+    correlations.naturalGasPrice7dLag = calculateCorrelation(
+      gasPrice7dData.map(d => d.natural_gas_price_lag_7d),
+      gasPrice7dData.map(d => d.pool_price)
+    );
+    
+    console.log(`Natural gas 7d lag correlation: ${correlations.naturalGasPrice7dLag.toFixed(4)} (${gasPrice7dData.length} samples)`);
+  }
+  
+  // Natural gas price 30-day lag
+  const gasPrice30dData = data.filter(d => d.natural_gas_price_lag_30d !== null && d.natural_gas_price_lag_30d !== undefined);
+  if (gasPrice30dData.length > 100) {
+    correlations.naturalGasPrice30dLag = calculateCorrelation(
+      gasPrice30dData.map(d => d.natural_gas_price_lag_30d),
+      gasPrice30dData.map(d => d.pool_price)
+    );
+    
+    console.log(`Natural gas 30d lag correlation: ${correlations.naturalGasPrice30dLag.toFixed(4)} (${gasPrice30dData.length} samples)`);
+  }
+  
+  // Price volatility
+  const volatilityData = data.filter(d => d.price_volatility_24h !== null);
+  if (volatilityData.length > 100) {
+    correlations.priceVolatility = calculateCorrelation(
+      volatilityData.map(d => d.price_volatility_24h),
+      volatilityData.map(d => d.pool_price)
+    );
+  }
+  
+  // Price momentum
+  const momentumData = data.filter(d => d.price_momentum_3h !== null);
+  if (momentumData.length > 100) {
+    correlations.priceMomentum = calculateCorrelation(
+      momentumData.map(d => d.price_momentum_3h),
+      momentumData.map(d => d.pool_price)
+    );
+  }
+  
   return correlations;
 }
 
