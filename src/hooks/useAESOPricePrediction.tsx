@@ -380,6 +380,34 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const explainPrediction = async (predictionId?: string, timestamp?: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-prediction-explainer', {
+        body: { predictionId, timestamp }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Prediction Explained",
+          description: `Analysis complete for $${data.prediction.price.toFixed(2)}/MWh prediction`,
+        });
+        return data.explanation;
+      }
+    } catch (error: any) {
+      console.error('Error explaining prediction:', error);
+      toast({
+        title: "Explanation Error",
+        description: error.message || "Failed to explain prediction",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -393,6 +421,7 @@ export const useAESOPricePrediction = () => {
     validatePredictions,
     runCompleteBackfill,
     checkAutoRetraining,
-    getPerformanceMetrics
+    getPerformanceMetrics,
+    explainPrediction
   };
 };
