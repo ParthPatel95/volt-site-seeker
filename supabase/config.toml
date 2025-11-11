@@ -97,6 +97,9 @@ verify_jwt = false
 [functions.ai-trading-advisor]
 verify_jwt = false
 
+[functions.aeso-scheduled-retraining]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

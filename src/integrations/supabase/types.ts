@@ -714,58 +714,40 @@ export type Database = {
       }
       aeso_retraining_history: {
         Row: {
-          completed_at: string | null
           created_at: string
-          drift_score: number | null
-          error_message: string | null
+          duration_seconds: number | null
           id: string
-          improvement_mae: number | null
-          new_mae: number | null
-          new_model_version: string | null
-          new_rmse: number | null
-          previous_mae: number | null
-          previous_model_version: string
-          previous_rmse: number | null
-          status: string
-          trigger_reason: string
-          triggered_at: string
-          updated_at: string
+          improvement: number | null
+          performance_after: number | null
+          performance_before: number | null
+          reason: string
+          training_records_after: number | null
+          training_records_before: number | null
+          triggered: boolean
         }
         Insert: {
-          completed_at?: string | null
           created_at?: string
-          drift_score?: number | null
-          error_message?: string | null
+          duration_seconds?: number | null
           id?: string
-          improvement_mae?: number | null
-          new_mae?: number | null
-          new_model_version?: string | null
-          new_rmse?: number | null
-          previous_mae?: number | null
-          previous_model_version: string
-          previous_rmse?: number | null
-          status?: string
-          trigger_reason: string
-          triggered_at?: string
-          updated_at?: string
+          improvement?: number | null
+          performance_after?: number | null
+          performance_before?: number | null
+          reason: string
+          training_records_after?: number | null
+          training_records_before?: number | null
+          triggered?: boolean
         }
         Update: {
-          completed_at?: string | null
           created_at?: string
-          drift_score?: number | null
-          error_message?: string | null
+          duration_seconds?: number | null
           id?: string
-          improvement_mae?: number | null
-          new_mae?: number | null
-          new_model_version?: string | null
-          new_rmse?: number | null
-          previous_mae?: number | null
-          previous_model_version?: string
-          previous_rmse?: number | null
-          status?: string
-          trigger_reason?: string
-          triggered_at?: string
-          updated_at?: string
+          improvement?: number | null
+          performance_after?: number | null
+          performance_before?: number | null
+          reason?: string
+          training_records_after?: number | null
+          training_records_before?: number | null
+          triggered?: boolean
         }
         Relationships: []
       }
