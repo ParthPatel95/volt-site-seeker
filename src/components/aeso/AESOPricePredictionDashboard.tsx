@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Download, TrendingUp, Brain, AlertCircle, CloudSun, CheckCircle, BarChart3 } from 'lucide-react';
+import { RefreshCw, Download, TrendingUp, Brain, AlertCircle, CloudSun, CheckCircle, BarChart3, Zap, Settings } from 'lucide-react';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { PricePredictionChart } from './PricePredictionChart';
 import { FeatureImpactVisualization } from './FeatureImpactVisualization';
@@ -17,9 +17,12 @@ import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
 import { ResponsiveMetricsGrid } from '@/components/ResponsiveGrid';
+import { supabase } from '@/integrations/supabase/client';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
+  const [retrainingModel, setRetrainingModel] = useState(false);
+  const [optimizingParams, setOptimizingParams] = useState(false);
   const { 
     predictions, 
     modelPerformance, 
@@ -68,6 +71,75 @@ export const AESOPricePredictionDashboard = () => {
       await fetchModelPerformance();
     } catch (error) {
       console.error('Phase 7 pipeline error:', error);
+    }
+  };
+
+  const handleRetrainModel = async () => {
+    setRetrainingModel(true);
+    try {
+      toast({
+        title: "Starting Model Retraining",
+        description: "Checking performance and initiating retraining...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('aeso-auto-retraining');
+      
+      if (error) throw error;
+
+      if (data.triggered) {
+        toast({
+          title: "✅ Retraining Complete",
+          description: data.message || "Model has been retrained successfully",
+        });
+        await fetchModelPerformance();
+      } else {
+        toast({
+          title: "Model is Healthy",
+          description: data.message || "No retraining needed at this time",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('Retraining error:', error);
+      toast({
+        title: "Retraining Failed",
+        description: error.message || "Failed to retrain model",
+        variant: "destructive",
+      });
+    } finally {
+      setRetrainingModel(false);
+    }
+  };
+
+  const handleOptimizeHyperparameters = async () => {
+    setOptimizingParams(true);
+    try {
+      toast({
+        title: "Starting Hyperparameter Optimization",
+        description: "Testing different model configurations... This may take a few minutes.",
+      });
+
+      const { data, error } = await supabase.functions.invoke('aeso-hyperparameter-optimizer', {
+        body: { trials: 10 }
+      });
+      
+      if (error) throw error;
+
+      toast({
+        title: "✅ Optimization Complete",
+        description: `Best MAE: $${data.best_trial.mae.toFixed(2)} (${data.trials_completed} trials completed)`,
+      });
+      
+      await fetchModelPerformance();
+    } catch (error) {
+      console.error('Optimization error:', error);
+      toast({
+        title: "Optimization Failed",
+        description: error.message || "Failed to optimize hyperparameters",
+        variant: "destructive",
+      });
+    } finally {
+      setOptimizingParams(false);
     }
   };
 
@@ -120,33 +192,64 @@ export const AESOPricePredictionDashboard = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleRunPhase7} variant="default" size="sm" disabled={loading} className="flex-1 sm:flex-auto bg-gradient-to-r from-primary to-primary/80">
-              <Brain className="h-4 w-4 sm:mr-2" />
-              <span>{loading ? 'Optimizing...' : 'Optimize & Retrain'}</span>
-            </Button>
-            <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
-              <RefreshCw className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Update Data</span>
-            </Button>
-            <Button onClick={handleCollectWeather} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
-              <CloudSun className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Weather</span>
-            </Button>
-            <Button onClick={handleValidatePredictions} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
-              <CheckCircle className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Validate</span>
-            </Button>
-            <Button onClick={handleGeneratePredictions} disabled={loading} className="flex-1 sm:flex-none">
-              <TrendingUp className="h-4 w-4 sm:mr-2" />
-              <span>{loading ? 'Generating...' : 'Forecast'}</span>
-            </Button>
-            {predictions.length > 0 && (
-              <Button onClick={handleExport} variant="outline" size="sm" className="flex-1 sm:flex-none">
-                <Download className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Export</span>
+          <div className="space-y-2">
+            {/* Primary Actions */}
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleRunPhase7} variant="default" size="sm" disabled={loading} className="flex-1 sm:flex-auto bg-gradient-to-r from-primary to-primary/80">
+                <Brain className="h-4 w-4 sm:mr-2" />
+                <span>{loading ? 'Optimizing...' : 'Optimize & Retrain'}</span>
               </Button>
-            )}
+              <Button onClick={handleGeneratePredictions} disabled={loading} size="sm" className="flex-1 sm:flex-none">
+                <TrendingUp className="h-4 w-4 sm:mr-2" />
+                <span>{loading ? 'Generating...' : 'Forecast'}</span>
+              </Button>
+              {predictions.length > 0 && (
+                <Button onClick={handleExport} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                  <Download className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Export</span>
+                </Button>
+              )}
+            </div>
+
+            {/* Model Improvement Actions */}
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                onClick={handleRetrainModel} 
+                variant="outline" 
+                size="sm" 
+                disabled={retrainingModel || loading}
+                className="flex-1 sm:flex-auto border-primary/30 hover:bg-primary/10"
+              >
+                <Zap className="h-4 w-4 sm:mr-2" />
+                <span>{retrainingModel ? 'Retraining...' : 'Retrain Model Now'}</span>
+              </Button>
+              <Button 
+                onClick={handleOptimizeHyperparameters} 
+                variant="outline" 
+                size="sm" 
+                disabled={optimizingParams || loading}
+                className="flex-1 sm:flex-auto border-primary/30 hover:bg-primary/10"
+              >
+                <Settings className="h-4 w-4 sm:mr-2" />
+                <span>{optimizingParams ? 'Optimizing...' : 'Optimize Parameters'}</span>
+              </Button>
+            </div>
+
+            {/* Data Actions */}
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
+                <RefreshCw className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Update Data</span>
+              </Button>
+              <Button onClick={handleCollectWeather} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
+                <CloudSun className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Weather</span>
+              </Button>
+              <Button onClick={handleValidatePredictions} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
+                <CheckCircle className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Validate</span>
+              </Button>
+            </div>
           </div>
         </div>
 
