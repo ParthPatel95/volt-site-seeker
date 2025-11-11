@@ -43,11 +43,25 @@ serve(async (req) => {
         .gte('target_timestamp', now.toISOString())
         .lte('target_timestamp', targetEndTime.toISOString())
         .gte('created_at', cacheThreshold.toISOString())
-        .order('target_timestamp', { ascending: true });
+        .order('target_timestamp', { ascending: true })
+        .order('prediction_timestamp', { ascending: false });
 
       if (!cacheError && cached && cached.length > 0) {
-        cachedPredictions = cached;
-        cacheHitCount = cached.length;
+        // Deduplicate: keep only most recent prediction per hour
+        const uniqueByHour = new Map();
+        cached.forEach(p => {
+          const targetDate = new Date(p.target_timestamp);
+          const hourKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}-${String(targetDate.getHours()).padStart(2, '0')}`;
+          if (!uniqueByHour.has(hourKey)) {
+            uniqueByHour.set(hourKey, p);
+          }
+        });
+        
+        cachedPredictions = Array.from(uniqueByHour.values())
+          .sort((a, b) => new Date(a.target_timestamp).getTime() - new Date(b.target_timestamp).getTime())
+          .slice(0, horizonHours); // Ensure we don't exceed requested hours
+        
+        cacheHitCount = cachedPredictions.length;
         console.log(`✅ Cache hit: ${cacheHitCount} predictions (${(cacheHitCount / horizonHours * 100).toFixed(1)}% coverage)`);
       }
     }
@@ -104,7 +118,7 @@ serve(async (req) => {
       console.log(`✅ Batch generation complete: ${newPredictions.length} predictions in ${batchDuration}ms`);
     }
 
-    // Step 4: Combine cached and new predictions
+    // Step 4: Combine cached and new predictions, ensuring exactly horizonHours predictions
     const allPredictions = [
       ...cachedPredictions.map(p => ({
         timestamp: p.target_timestamp,
@@ -112,12 +126,14 @@ serve(async (req) => {
         price: p.predicted_price,
         confidenceLower: p.confidence_lower || 0,
         confidenceUpper: p.confidence_upper || 0,
-        confidenceScore: p.confidence_score || 0,
+        confidenceScore: p.confidence_score || 0.75,
         features: p.features_used || {},
         cached: true
       })),
       ...newPredictions.map((p: any) => ({ ...p, cached: false }))
-    ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    ]
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    .slice(0, horizonHours); // Hard limit to requested hours
 
     // Step 5: Performance metrics
     const totalDuration = Date.now() - startTime;
