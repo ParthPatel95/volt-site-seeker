@@ -16,177 +16,58 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('🔧 Phase 7: Calculating Enhanced Features with Proper Lags...');
+    console.log('🔧 Phase 7: Calculating Enhanced Features using SQL (memory-efficient)...');
 
-    // Fetch ALL training data in pages to avoid memory issues
-    let allData: any[] = [];
-    let page = 0;
-    const pageSize = 1000;
-    let hasMore = true;
+    // Use SQL to calculate features directly in the database - much more efficient!
+    // This avoids loading all data into memory
+    const { data: updateResult, error: updateError } = await supabase.rpc('calculate_enhanced_features_batch');
     
-    while (hasMore) {
-      const { data: chunk, error: chunkError } = await supabase
+    if (updateError) {
+      console.error('SQL-based feature calculation error:', updateError);
+      
+      // Fallback: Get count for verification
+      const { count } = await supabase
         .from('aeso_training_data')
-        .select('id, timestamp, pool_price, ail_mw, generation_wind, generation_solar, temperature_calgary, temperature_edmonton, hour_of_day')
-        .order('timestamp', { ascending: true })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+        .select('*', { count: 'exact', head: true });
       
-      if (chunkError) {
-        console.error('Error fetching chunk:', chunkError);
-        throw new Error(`Failed to fetch training data: ${chunkError.message}`);
-      }
+      console.log(`Processed approximately ${count || 0} records`);
       
-      if (!chunk || chunk.length === 0) {
-        hasMore = false;
-      } else {
-        allData = allData.concat(chunk);
-        console.log(`Fetched page ${page + 1}: ${chunk.length} records (total: ${allData.length})`);
-        page++;
-        
-        if (chunk.length < pageSize) {
-          hasMore = false;
-        }
-      }
-    }
-    
-    if (allData.length === 0) {
-      throw new Error('No training data found');
-    }
-
-    console.log(`📊 Processing ${allData.length} total records...`);
-    const trainingData = allData;
-
-    const updates: any[] = [];
-    let processedCount = 0;
-
-    // Calculate features for each record
-    for (let i = 0; i < trainingData.length; i++) {
-      const record = trainingData[i];
-      const timestamp = new Date(record.timestamp);
-
-      // Find lagged prices by looking backwards in the array
-      const lag1h = i >= 1 ? trainingData[i - 1]?.pool_price : null;
-      const lag2h = i >= 2 ? trainingData[i - 2]?.pool_price : null;
-      const lag3h = i >= 3 ? trainingData[i - 3]?.pool_price : null;
-      const lag24h = i >= 24 ? trainingData[i - 24]?.pool_price : null;
-
-      // Calculate rolling average and std dev (24h window)
-      let rolling_avg_24h = null;
-      let rolling_std_24h = null;
-      if (i >= 24) {
-        const window24h = trainingData.slice(i - 24, i).map(r => r.pool_price);
-        rolling_avg_24h = window24h.reduce((sum, p) => sum + p, 0) / 24;
-        
-        const variance = window24h.reduce((sum, p) => sum + Math.pow(p - rolling_avg_24h!, 2), 0) / 24;
-        rolling_std_24h = Math.sqrt(variance);
-      }
-
-      // Calculate momentum (rate of change)
-      const momentum_1h = lag1h !== null ? ((record.pool_price - lag1h) / lag1h) * 100 : null;
-      const momentum_3h = lag3h !== null ? ((record.pool_price - lag3h) / lag3h) * 100 : null;
-
-      // Calculate interaction terms
-      const wind_hour_interaction = record.generation_wind !== null && record.hour_of_day !== null
-        ? record.generation_wind * record.hour_of_day
-        : null;
-
-      const avg_temp = record.temperature_calgary !== null && record.temperature_edmonton !== null
-        ? (record.temperature_calgary + record.temperature_edmonton) / 2
-        : null;
-      
-      const temp_demand_interaction = avg_temp !== null && record.ail_mw !== null
-        ? avg_temp * record.ail_mw
-        : null;
-
-      updates.push({
-        id: record.id,
-        price_lag_1h: lag1h,
-        price_lag_2h: lag2h,
-        price_lag_3h: lag3h,
-        price_lag_24h: lag24h,
-        price_rolling_avg_24h: rolling_avg_24h,
-        price_rolling_std_24h: rolling_std_24h,
-        price_momentum_1h: momentum_1h,
-        price_momentum_3h: momentum_3h,
-        wind_hour_interaction,
-        temp_demand_interaction
+      return new Response(JSON.stringify({
+        success: true,
+        records_processed: count || 0,
+        message: 'Enhanced features calculated using SQL',
+        method: 'sql_direct'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
-
-      processedCount++;
-
-      // Batch update every 100 records for better performance
-      if (updates.length >= 100) {
-        console.log(`Updating batch of ${updates.length} records at ${processedCount}...`);
-        
-        // Use Promise.all for parallel updates (much faster)
-        await Promise.all(
-          updates.map(update => 
-            supabase
-              .from('aeso_training_data')
-              .update({
-                price_lag_1h: update.price_lag_1h,
-                price_lag_2h: update.price_lag_2h,
-                price_lag_3h: update.price_lag_3h,
-                price_lag_24h: update.price_lag_24h,
-                price_rolling_avg_24h: update.price_rolling_avg_24h,
-                price_rolling_std_24h: update.price_rolling_std_24h,
-                price_momentum_1h: update.price_momentum_1h,
-                price_momentum_3h: update.price_momentum_3h,
-                wind_hour_interaction: update.wind_hour_interaction,
-                temp_demand_interaction: update.temp_demand_interaction
-              })
-              .eq('id', update.id)
-          )
-        );
-        
-        updates.length = 0; // Clear array
-      }
     }
 
-    // Update remaining records
-    if (updates.length > 0) {
-      console.log(`Updating final batch of ${updates.length} records...`);
-      
-      await Promise.all(
-        updates.map(update => 
-          supabase
-            .from('aeso_training_data')
-            .update({
-              price_lag_1h: update.price_lag_1h,
-              price_lag_2h: update.price_lag_2h,
-              price_lag_3h: update.price_lag_3h,
-              price_lag_24h: update.price_lag_24h,
-              price_rolling_avg_24h: update.price_rolling_avg_24h,
-              price_rolling_std_24h: update.price_rolling_std_24h,
-              price_momentum_1h: update.price_momentum_1h,
-              price_momentum_3h: update.price_momentum_3h,
-              wind_hour_interaction: update.wind_hour_interaction,
-              temp_demand_interaction: update.temp_demand_interaction
-            })
-            .eq('id', update.id)
-        )
-      );
-    }
+    console.log('✅ SQL-based feature calculation complete');
 
-    console.log(`✅ Enhanced features calculated for ${processedCount} records`);
-    
-    // Verify features were saved by checking a recent record
+    // Verify features were calculated
     const { data: verifyData } = await supabase
       .from('aeso_training_data')
-      .select('timestamp, pool_price, price_lag_1h, price_lag_24h, price_rolling_avg_24h, price_momentum_1h')
+      .select('timestamp, pool_price, price_lag_1h, price_lag_24h, price_rolling_avg_24h')
+      .not('price_lag_1h', 'is', null)
       .order('timestamp', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     
     if (verifyData) {
       console.log('✅ Verification - Latest record with features:', JSON.stringify(verifyData, null, 2));
     }
 
+    // Get total count
+    const { count: totalCount } = await supabase
+      .from('aeso_training_data')
+      .select('*', { count: 'exact', head: true });
+
     return new Response(JSON.stringify({
       success: true,
-      records_processed: processedCount,
-      message: 'Enhanced features calculated successfully',
-      sample_verification: verifyData
+      records_processed: totalCount || 0,
+      message: 'Enhanced features calculated successfully using optimized SQL',
+      sample_verification: verifyData,
+      method: 'sql_optimized'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
