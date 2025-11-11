@@ -12,6 +12,7 @@ import { ScenarioAnalysis } from './ScenarioAnalysis';
 import { ModelPerformanceMetrics } from './ModelPerformanceMetrics';
 import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
 import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
+import { ModelStatusDashboard } from './ModelStatusDashboard';
 import { BacktestingDashboard } from './BacktestingDashboard';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
@@ -395,7 +396,10 @@ export const AESOPricePredictionDashboard = () => {
             </TabsContent>
 
             <TabsContent value="accuracy" className="mt-4">
-              <PredictionAccuracyTracker key={modelPerformance?.modelVersion} />
+              <ModelStatusDashboard />
+              <div className="mt-6">
+                <PredictionAccuracyTracker key={modelPerformance?.modelVersion} />
+              </div>
             </TabsContent>
 
             <TabsContent value="backtest" className="mt-4">

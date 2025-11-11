@@ -335,8 +335,11 @@ export type Database = {
           regime_performance: Json | null
           residual_std_dev: number | null
           rmse: number | null
+          smape: number | null
           training_period_end: string | null
           training_period_start: string | null
+          training_quality_score: number | null
+          training_records: number | null
         }
         Insert: {
           created_at?: string | null
@@ -355,8 +358,11 @@ export type Database = {
           regime_performance?: Json | null
           residual_std_dev?: number | null
           rmse?: number | null
+          smape?: number | null
           training_period_end?: string | null
           training_period_start?: string | null
+          training_quality_score?: number | null
+          training_records?: number | null
         }
         Update: {
           created_at?: string | null
@@ -375,8 +381,11 @@ export type Database = {
           regime_performance?: Json | null
           residual_std_dev?: number | null
           rmse?: number | null
+          smape?: number | null
           training_period_end?: string | null
           training_period_start?: string | null
+          training_quality_score?: number | null
+          training_records?: number | null
         }
         Relationships: []
       }
@@ -648,6 +657,8 @@ export type Database = {
       }
       aeso_price_predictions: {
         Row: {
+          absolute_error: number | null
+          actual_price: number | null
           confidence_lower: number | null
           confidence_score: number | null
           confidence_upper: number | null
@@ -656,12 +667,16 @@ export type Database = {
           horizon_hours: number
           id: string
           model_version: string | null
+          percent_error: number | null
           predicted_price: number
           prediction_timestamp: string
+          symmetric_percent_error: number | null
           target_timestamp: string
           validated_at: string | null
         }
         Insert: {
+          absolute_error?: number | null
+          actual_price?: number | null
           confidence_lower?: number | null
           confidence_score?: number | null
           confidence_upper?: number | null
@@ -670,12 +685,16 @@ export type Database = {
           horizon_hours: number
           id?: string
           model_version?: string | null
+          percent_error?: number | null
           predicted_price: number
           prediction_timestamp: string
+          symmetric_percent_error?: number | null
           target_timestamp: string
           validated_at?: string | null
         }
         Update: {
+          absolute_error?: number | null
+          actual_price?: number | null
           confidence_lower?: number | null
           confidence_score?: number | null
           confidence_upper?: number | null
@@ -684,8 +703,10 @@ export type Database = {
           horizon_hours?: number
           id?: string
           model_version?: string | null
+          percent_error?: number | null
           predicted_price?: number
           prediction_timestamp?: string
+          symmetric_percent_error?: number | null
           target_timestamp?: string
           validated_at?: string | null
         }
@@ -5882,7 +5903,61 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      aeso_data_quality_summary: {
+        Row: {
+          latest_timestamp: string | null
+          oldest_recent: string | null
+          total_records: number | null
+          valid_percentage: number | null
+          valid_records: number | null
+          with_lag_features: number | null
+          with_net_demand: number | null
+          with_renewable_pen: number | null
+        }
+        Relationships: []
+      }
+      aeso_model_status: {
+        Row: {
+          available_training_records: number | null
+          mae: number | null
+          model_quality: string | null
+          model_version: string | null
+          predictions_evaluated: number | null
+          r_squared: number | null
+          records_with_features: number | null
+          rmse: number | null
+          smape: number | null
+          trained_at: string | null
+          training_records: number | null
+        }
+        Insert: {
+          available_training_records?: never
+          mae?: number | null
+          model_quality?: never
+          model_version?: string | null
+          predictions_evaluated?: number | null
+          r_squared?: number | null
+          records_with_features?: never
+          rmse?: number | null
+          smape?: never
+          trained_at?: string | null
+          training_records?: number | null
+        }
+        Update: {
+          available_training_records?: never
+          mae?: number | null
+          model_quality?: never
+          model_version?: string | null
+          predictions_evaluated?: number | null
+          r_squared?: number | null
+          records_with_features?: never
+          rmse?: number | null
+          smape?: never
+          trained_at?: string | null
+          training_records?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       bulk_delete_verified_sites: {
@@ -5935,6 +6010,12 @@ export type Database = {
       is_voltscout_approved: { Args: { user_id: string }; Returns: boolean }
       restore_verified_site: { Args: { site_id: string }; Returns: boolean }
       soft_delete_verified_site: { Args: { site_id: string }; Returns: boolean }
+      update_prediction_actuals: {
+        Args: never
+        Returns: {
+          updated_count: number
+        }[]
+      }
     }
     Enums: {
       access_level: "view_only" | "download" | "no_download"

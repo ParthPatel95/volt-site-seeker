@@ -21,9 +21,6 @@ export const PredictionAccuracyTracker = () => {
   const [accuracyData, setAccuracyData] = useState<AccuracyMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [runningPipeline, setRunningPipeline] = useState(false);
-  const [currentModelVersion, setCurrentModelVersion] = useState<string | null>(null);
-  const [accuracyModelVersion, setAccuracyModelVersion] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
     avgMAE: number;
     avgMAPE: number;
@@ -34,62 +31,49 @@ export const PredictionAccuracyTracker = () => {
 
   useEffect(() => {
     fetchAccuracyData();
-    fetchCurrentModelVersion();
   }, []);
-
-  const fetchCurrentModelVersion = async () => {
-    try {
-      const { data } = await supabase
-        .from('aeso_model_performance')
-        .select('model_version')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (data && data.length > 0) {
-        setCurrentModelVersion(data[0].model_version);
-      }
-    } catch (error) {
-      console.error('Error fetching current model version:', error);
-    }
-  };
 
   const fetchAccuracyData = async () => {
     setLoading(true);
     try {
+      // Fetch validated predictions with actuals
       const { data, error } = await supabase
-        .from('aeso_prediction_accuracy')
+        .from('aeso_price_predictions')
         .select('*')
+        .not('actual_price', 'is', null)
         .order('target_timestamp', { ascending: false })
         .limit(168); // Last 7 days
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        setAccuracyData(data);
+        const formattedData = data.map(d => ({
+          target_timestamp: d.target_timestamp,
+          predicted_price: d.predicted_price,
+          actual_price: d.actual_price!,
+          absolute_error: d.absolute_error!,
+          percent_error: d.percent_error || 0,
+          within_confidence: d.confidence_lower 
+            ? d.actual_price! >= d.confidence_lower && d.actual_price! <= d.confidence_upper!
+            : false,
+          horizon_hours: d.horizon_hours
+        }));
         
-        // Get the model version from the most recent accuracy record
-        if (data[0]) {
-          const { data: predData } = await supabase
-            .from('aeso_price_predictions')
-            .select('model_version')
-            .eq('target_timestamp', data[0].target_timestamp)
-            .limit(1);
-          
-          if (predData && predData.length > 0 && predData[0].model_version) {
-            setAccuracyModelVersion(predData[0].model_version);
-          }
-        }
+        setAccuracyData(formattedData);
         
-        const avgMAE = data.reduce((sum, d) => sum + d.absolute_error, 0) / data.length;
-        const avgMAPE = data.reduce((sum, d) => sum + d.percent_error, 0) / data.length;
-        const withinConfidence = data.filter(d => d.within_confidence).length;
+        const avgMAE = formattedData.reduce((sum, d) => sum + d.absolute_error, 0) / formattedData.length;
+        const avgMAPE = formattedData.reduce((sum, d) => sum + (d.percent_error || 0), 0) / formattedData.length;
+        const withinConfidence = formattedData.filter(d => d.within_confidence).length;
         
         setSummary({
           avgMAE,
           avgMAPE,
-          confidenceAccuracy: (withinConfidence / data.length) * 100,
-          totalPredictions: data.length
+          confidenceAccuracy: (withinConfidence / formattedData.length) * 100,
+          totalPredictions: formattedData.length
         });
+      } else {
+        setAccuracyData([]);
+        setSummary(null);
       }
     } catch (error) {
       console.error('Error fetching accuracy data:', error);
@@ -126,76 +110,6 @@ export const PredictionAccuracyTracker = () => {
     }
   };
 
-  const runPhase7Pipeline = async () => {
-    setRunningPipeline(true);
-    try {
-      // Step 1: Calculate Enhanced Features
-      toast({
-        title: "Phase 7 Pipeline: Step 1/3",
-        description: "Calculating enhanced price lag features and Phase 3 features...",
-      });
-      
-      const { data: featuresData, error: featuresError } = await supabase.functions.invoke('aeso-enhanced-feature-calculator');
-      
-      if (featuresError) throw new Error(`Feature calculation failed: ${featuresError.message}`);
-      
-      if (featuresData?.success) {
-        toast({
-          title: "✓ Enhanced Features Calculated",
-          description: `Processed ${featuresData.records_processed} records. Waiting for DB propagation...`,
-        });
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      
-      // Step 2: Filter Data Quality
-      toast({
-        title: "Phase 7 Pipeline: Step 2/3",
-        description: "Filtering invalid data points (outliers, missing features)...",
-      });
-      
-      const { data: qualityData, error: qualityError } = await supabase.functions.invoke('aeso-data-quality-filter');
-      
-      if (qualityError) throw new Error(`Quality filtering failed: ${qualityError.message}`);
-      
-      if (qualityData?.success) {
-        toast({
-          title: "✓ Data Quality Filtered",
-          description: `${qualityData.valid_records} valid records of ${qualityData.total_records} total. Preparing for training...`,
-        });
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-      
-      // Step 3: Train Model
-      toast({
-        title: "Phase 7 Pipeline: Step 3/3",
-        description: "Training regime-specific XGBoost models with Phase 3 features...",
-      });
-      
-      const { data: trainingData, error: trainingError } = await supabase.functions.invoke('aeso-model-trainer');
-      
-      if (trainingError) throw new Error(`Model training failed: ${trainingError.message}`);
-      
-      if (trainingData?.success) {
-        toast({
-          title: "✅ Phase 7 Pipeline Complete!",
-          description: `Model ${trainingData.model_version} trained on ${trainingData.training_records} records. sMAPE: ${trainingData.metrics?.smape}%`,
-        });
-        
-        // Refresh data
-        fetchCurrentModelVersion();
-        fetchAccuracyData();
-      }
-    } catch (error: any) {
-      console.error('Phase 7 pipeline error:', error);
-      toast({
-        title: "Pipeline Failed",
-        description: error.message || "Failed to run Phase 7 pipeline",
-        variant: "destructive"
-      });
-    } finally {
-      setRunningPipeline(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -231,14 +145,14 @@ export const PredictionAccuracyTracker = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            No accuracy data available for the current model ({currentModelVersion || 'unknown'}). 
-            Generate new predictions to create accuracy metrics.
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            After generating predictions, the system will automatically validate them against 
-            available actual prices to provide immediate accuracy feedback.
-          </p>
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              No validated predictions available yet. Generate predictions and wait for actual prices 
+              to become available, or run "Update Prediction Actuals" to match existing predictions 
+              with actual prices.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -254,37 +168,12 @@ export const PredictionAccuracyTracker = () => {
       error: d.absolute_error
     }));
 
-  const isOutdated = currentModelVersion && accuracyModelVersion && currentModelVersion !== accuracyModelVersion;
-
   return (
     <div className="space-y-4">
-      {/* Model Version Warning */}
-      {isOutdated && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Outdated Accuracy Data</strong> - These metrics are from model version {accuracyModelVersion}. 
-                Current model is {currentModelVersion}. Generate new predictions to see updated accuracy.
-              </div>
-              <Button onClick={generateNewPredictions} disabled={generating} size="sm" className="ml-4">
-                <Sparkles className="h-4 w-4 mr-2" />
-                {generating ? 'Generating...' : 'Generate Predictions'}
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Summary Cards */}
       {summary && (
         <>
           <div className="flex justify-end gap-2 mb-4">
-            <Button onClick={runPhase7Pipeline} variant="default" size="sm" disabled={runningPipeline}>
-              <Play className={`h-4 w-4 mr-2 ${runningPipeline ? 'animate-spin' : ''}`} />
-              {runningPipeline ? 'Running Pipeline...' : 'Run Phase 7 Pipeline'}
-            </Button>
             <Button onClick={generateNewPredictions} variant="outline" size="sm" disabled={generating}>
               <Sparkles className={`h-4 w-4 mr-2 ${generating ? 'animate-spin' : ''}`} />
               {generating ? 'Generating...' : 'Generate Predictions'}
