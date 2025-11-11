@@ -57,6 +57,24 @@ Deno.serve(async (req) => {
 
     console.log(`📈 Retrieved ${trainingData.length} historical data points`);
 
+    // Fetch latest weather data for both Calgary and Edmonton
+    console.log('🌤️ Fetching weather data...');
+    const { data: calgaryWeather } = await supabase
+      .from('aeso_weather_forecasts')
+      .select('*')
+      .eq('city', 'Calgary')
+      .order('forecast_timestamp', { ascending: false })
+      .limit(1)
+      .single();
+
+    const { data: edmontonWeather } = await supabase
+      .from('aeso_weather_forecasts')
+      .select('*')
+      .eq('city', 'Edmonton')
+      .order('forecast_timestamp', { ascending: false })
+      .limit(1)
+      .single();
+
     // Calculate baseline prediction using recent averages and patterns
     const recentPrices = trainingData.slice(0, 24).map(d => d.pool_price);
     const avgPrice = recentPrices.reduce((sum, p) => sum + p, 0) / recentPrices.length;
@@ -70,6 +88,13 @@ Deno.serve(async (req) => {
       }
       hourPatterns.get(hour)!.push(d.pool_price);
     });
+
+    // Get latest generation data
+    const latestData = trainingData[0];
+    const avgTemp = ((calgaryWeather?.temperature || 15) + (edmontonWeather?.temperature || 15)) / 2;
+    const windSpeed = calgaryWeather?.wind_speed || 0;
+    const cloudCover = calgaryWeather?.cloud_cover || 50;
+    const windGen = latestData?.generation_wind || 0;
 
     // Generate predictions for next 24 hours
     const predictions: PredictionRecord[] = [];
@@ -100,18 +125,30 @@ Deno.serve(async (req) => {
       const confidenceLower = Math.max(0, predictedPrice - stdDev * 1.5);
       const confidenceUpper = predictedPrice + stdDev * 1.5;
 
+      // Determine if target time is weekend or holiday
+      const dayOfWeek = targetTime.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
       predictions.push({
         prediction_timestamp: now.toISOString(),
         target_timestamp: targetTime.toISOString(),
         predicted_price: Math.round(predictedPrice * 100) / 100,
         confidence_lower: Math.round(confidenceLower * 100) / 100,
         confidence_upper: Math.round(confidenceUpper * 100) / 100,
+        confidence_score: 0.75,
         horizon_hours: horizon,
         model_version: latestModel.model_version,
         features_used: {
-          avg_price: Math.round(avgPrice * 100) / 100,
-          hour_of_day: targetHour,
-          trend_adjustment: Math.round(trendAdjustment * 100) / 100,
+          avgPrice: Math.round(avgPrice * 100) / 100,
+          hour: targetHour,
+          dayOfWeek: dayOfWeek,
+          avgTemp: Math.round(avgTemp * 10) / 10,
+          windSpeed: Math.round(windSpeed * 10) / 10,
+          cloudCover: Math.round(cloudCover),
+          isWeekend: isWeekend,
+          isHoliday: false,
+          windGen: Math.round(windGen),
+          trendAdjustment: Math.round(trendAdjustment * 100) / 100,
         }
       });
     }
