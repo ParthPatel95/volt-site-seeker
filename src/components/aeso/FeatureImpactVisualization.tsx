@@ -13,43 +13,51 @@ export const FeatureImpactVisualization = ({ prediction }: FeatureImpactVisualiz
   }
 
   const features = prediction.features;
+  
+  // Provide defaults for any undefined features
+  const avgTemp = features.avgTemp ?? 15;
+  const windSpeed = features.windSpeed ?? 0;
+  const cloudCover = features.cloudCover ?? 50;
+  const hour = features.hour ?? 12;
+  const isWeekend = features.isWeekend ?? false;
+  const isHoliday = features.isHoliday ?? false;
 
   // Calculate feature impacts (normalized)
   const featureData = [
     { 
       name: 'Temperature', 
-      impact: Math.abs(features.avgTemp - 15) * 2, // Deviation from comfort temp
+      impact: Math.abs(avgTemp - 15) * 2, // Deviation from comfort temp
       icon: ThermometerSun,
-      value: `${features.avgTemp.toFixed(1)}°C`,
-      color: features.avgTemp > 25 || features.avgTemp < -10 ? '#ef4444' : '#22c55e'
+      value: `${avgTemp.toFixed(1)}°C`,
+      color: avgTemp > 25 || avgTemp < -10 ? '#ef4444' : '#22c55e'
     },
     { 
       name: 'Wind Speed', 
-      impact: features.windSpeed * 3, // Higher wind = more renewable
+      impact: windSpeed * 3, // Higher wind = more renewable
       icon: Wind,
-      value: `${features.windSpeed.toFixed(1)} m/s`,
-      color: features.windSpeed > 15 ? '#22c55e' : '#f59e0b'
+      value: `${windSpeed.toFixed(1)} m/s`,
+      color: windSpeed > 15 ? '#22c55e' : '#f59e0b'
     },
     { 
       name: 'Cloud Cover', 
-      impact: (features.cloudCover / 100) * 50,
+      impact: (cloudCover / 100) * 50,
       icon: Cloud,
-      value: `${features.cloudCover.toFixed(0)}%`,
-      color: features.cloudCover > 80 ? '#ef4444' : '#22c55e'
+      value: `${cloudCover.toFixed(0)}%`,
+      color: cloudCover > 80 ? '#ef4444' : '#22c55e'
     },
     { 
       name: 'Hour of Day', 
-      impact: features.hour >= 17 && features.hour <= 20 ? 80 : 40, // Peak hours
+      impact: hour >= 17 && hour <= 20 ? 80 : 40, // Peak hours
       icon: Clock,
-      value: `${features.hour}:00`,
-      color: features.hour >= 17 && features.hour <= 20 ? '#ef4444' : '#22c55e'
+      value: `${hour}:00`,
+      color: hour >= 17 && hour <= 20 ? '#ef4444' : '#22c55e'
     },
     { 
       name: 'Day Type', 
-      impact: features.isWeekend || features.isHoliday ? 30 : 60,
+      impact: isWeekend || isHoliday ? 30 : 60,
       icon: Calendar,
-      value: features.isWeekend ? 'Weekend' : features.isHoliday ? 'Holiday' : 'Weekday',
-      color: features.isWeekend || features.isHoliday ? '#22c55e' : '#ef4444'
+      value: isWeekend ? 'Weekend' : isHoliday ? 'Holiday' : 'Weekday',
+      color: isWeekend || isHoliday ? '#22c55e' : '#ef4444'
     }
   ];
 
@@ -126,25 +134,25 @@ export const FeatureImpactVisualization = ({ prediction }: FeatureImpactVisualiz
         {/* Insights */}
         <div className="mt-4 space-y-2">
           <h4 className="text-sm font-semibold">Key Insights:</h4>
-          {features.isHoliday && (
+          {isHoliday && (
             <div className="text-sm flex items-center gap-2">
               <Zap className="h-4 w-4 text-success" />
               <span>Holiday: Lower demand expected, favorable for operations</span>
             </div>
           )}
-          {features.hour >= 17 && features.hour <= 20 && (
+          {hour >= 17 && hour <= 20 && (
             <div className="text-sm flex items-center gap-2">
               <Zap className="h-4 w-4 text-destructive" />
               <span>Peak Hours: High demand period, prices typically elevated</span>
             </div>
           )}
-          {features.windSpeed > 15 && (
+          {windSpeed > 15 && (
             <div className="text-sm flex items-center gap-2">
               <Zap className="h-4 w-4 text-success" />
               <span>High Wind: Abundant renewable generation may lower prices</span>
             </div>
           )}
-          {(features.avgTemp > 25 || features.avgTemp < -10) && (
+          {(avgTemp > 25 || avgTemp < -10) && (
             <div className="text-sm flex items-center gap-2">
               <Zap className="h-4 w-4 text-destructive" />
               <span>Extreme Temperature: Increased heating/cooling demand expected</span>
