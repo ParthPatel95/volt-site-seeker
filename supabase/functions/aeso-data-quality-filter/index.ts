@@ -24,7 +24,7 @@ serve(async (req) => {
 
     console.log(`Analyzing ${trainingData.length} records...`);
 
-    // Calculate statistics for outlier detection (include zeros, exclude nulls)
+    // Calculate basic statistics (but don't use for aggressive filtering)
     const prices = trainingData.map(r => r.pool_price).filter(p => p !== null);
     prices.sort((a, b) => a - b);
     
@@ -32,15 +32,15 @@ serve(async (req) => {
     const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
     const stdDev = Math.sqrt(variance);
     
-    // IQR method for outlier detection
     const q1Index = Math.floor(prices.length * 0.25);
     const q3Index = Math.floor(prices.length * 0.75);
     const q1 = prices[q1Index];
     const q3 = prices[q3Index];
     const iqr = q3 - q1;
     
-    const lowerBound = Math.max(0, q1 - 3 * iqr); // Prices can't be negative
-    const upperBound = q3 + 3 * iqr;
+    // Only filter truly bad data - energy markets have legitimate spikes
+    const lowerBound = 0; // Only negative prices are invalid
+    const upperBound = 999999; // No upper bound - let model see real volatility
     
     console.log(`Price statistics:`);
     console.log(`  Mean: $${mean.toFixed(2)}, StdDev: $${stdDev.toFixed(2)}`);
@@ -54,7 +54,7 @@ serve(async (req) => {
       .update({ is_valid_record: true })
       .neq('id', '00000000-0000-0000-0000-000000000000'); // Update all
 
-    // Mark negative prices as invalid
+    // Mark negative prices as invalid (only truly bad data)
     const { data: negativeRecords } = await supabase
       .from('aeso_training_data')
       .update({ is_valid_record: false })
@@ -66,28 +66,16 @@ serve(async (req) => {
       console.log(`  Found ${negativeCount} negative price records`);
     }
 
-    // Mark extreme spikes as invalid (>$500/MWh)
-    const { data: spikeRecords } = await supabase
+    // Mark impossibly high prices as invalid (>$2000/MWh is data error, not market condition)
+    const { data: errorRecords } = await supabase
       .from('aeso_training_data')
       .update({ is_valid_record: false })
-      .gt('pool_price', 500)
+      .gt('pool_price', 2000)
       .select('id, pool_price, timestamp');
     
-    const spikeCount = spikeRecords?.length || 0;
-    if (spikeCount > 0) {
-      console.log(`  Found ${spikeCount} extreme spike records`);
-    }
-
-    // Mark statistical outliers as invalid
-    const { data: outlierRecords } = await supabase
-      .from('aeso_training_data')
-      .update({ is_valid_record: false })
-      .or(`pool_price.lt.${lowerBound},pool_price.gt.${upperBound}`)
-      .select('id, pool_price, timestamp');
-    
-    const outlierCount = outlierRecords?.length || 0;
-    if (outlierCount > 0) {
-      console.log(`  Found ${outlierCount} statistical outlier records`);
+    const errorCount = errorRecords?.length || 0;
+    if (errorCount > 0) {
+      console.log(`  Found ${errorCount} impossibly high price records (>$2000)`);
     }
 
     // Count final valid/invalid records
@@ -103,8 +91,7 @@ serve(async (req) => {
 
     const invalidReasons = {
       negative_price: negativeCount,
-      extreme_spike: spikeCount,
-      outlier: outlierCount,
+      data_errors: errorCount,
       missing_critical_data: 0
     };
 
