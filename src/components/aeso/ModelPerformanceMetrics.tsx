@@ -26,6 +26,10 @@ export const ModelPerformanceMetrics = ({ performance }: ModelPerformanceMetrics
 
   const accuracyScore = Math.max(0, 100 - performance.mape);
   
+  // Diagnostic checks
+  const mapeIsSuspicious = performance.mape > 200; // MAPE > 200% indicates issues
+  const hasRegimeData = Object.keys(performance.regimePerformance || {}).length > 0;
+  
   const featureEntries = Object.entries(performance.featureImportance || {})
     .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 5);
@@ -39,6 +43,16 @@ export const ModelPerformanceMetrics = ({ performance }: ModelPerformanceMetrics
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {mapeIsSuspicious && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 mb-4">
+            <p className="text-sm font-medium text-destructive mb-1">⚠️ High Error Detected</p>
+            <p className="text-xs text-muted-foreground">
+              MAPE is unusually high ({performance.mape.toFixed(1)}%). This may indicate missing enhanced features.
+              Try running the Phase 7 pipeline: Calculate Enhanced Features → Filter Data → Retrain Model.
+            </p>
+          </div>
+        )}
+        
         <div className="space-y-4">
           <div>
             <div className="flex justify-between mb-2">

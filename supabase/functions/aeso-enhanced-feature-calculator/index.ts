@@ -116,11 +116,24 @@ serve(async (req) => {
     }
 
     console.log(`✅ Enhanced features calculated for ${processedCount} records`);
+    
+    // Verify features were saved by checking a recent record
+    const { data: verifyData } = await supabase
+      .from('aeso_training_data')
+      .select('timestamp, pool_price, price_lag_1h, price_lag_24h, price_rolling_avg_24h, price_momentum_1h')
+      .order('timestamp', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (verifyData) {
+      console.log('✅ Verification - Latest record with features:', JSON.stringify(verifyData, null, 2));
+    }
 
     return new Response(JSON.stringify({
       success: true,
       records_processed: processedCount,
-      message: 'Enhanced features calculated successfully'
+      message: 'Enhanced features calculated successfully',
+      sample_verification: verifyData
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

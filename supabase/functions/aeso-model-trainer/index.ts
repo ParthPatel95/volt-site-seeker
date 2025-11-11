@@ -64,7 +64,17 @@ serve(async (req) => {
     }
 
     console.log(`✅ Phase 7: Loaded ${trainingData.length} VALID records with built-in enhanced features`);
-    console.log('Sample data point:', JSON.stringify(trainingData[0], null, 2));
+    console.log('Sample data point (first):', JSON.stringify(trainingData[0], null, 2));
+    
+    // Check if enhanced features are actually present
+    const recordsWithLags = trainingData.filter(d => d.price_lag_1h !== null).length;
+    const recordsWithRolling = trainingData.filter(d => d.price_rolling_avg_24h !== null).length;
+    console.log(`📊 Feature Coverage: ${recordsWithLags} records with lag_1h (${(recordsWithLags/trainingData.length*100).toFixed(1)}%), ${recordsWithRolling} with rolling_avg (${(recordsWithRolling/trainingData.length*100).toFixed(1)}%)`);
+    
+    if (recordsWithLags === 0) {
+      console.error('⚠️ WARNING: No lag features found! Enhanced feature calculator may not have run properly.');
+      throw new Error('Enhanced features missing - please run aeso-enhanced-feature-calculator first');
+    }
 
     // Phase 7: Enhanced features are now built into training_data table
     const mergedData = trainingData;
@@ -162,10 +172,10 @@ serve(async (req) => {
       totalSquaredError += (prediction - actual) * (prediction - actual);
       modelErrors[regime].push(error);
       
-      // For MAPE: use $10 minimum threshold for low-price markets
-      // AESO often has prices $0-20, so we need higher threshold
-      const actualForMape = Math.max(10, actual);
-      totalPercentError += Math.abs((prediction - actualForMape) / actualForMape) * 100;
+      // For MAPE: avoid division by zero but don't inflate with high threshold
+      // Use actual price with small epsilon to handle near-zero prices
+      const actualForMape = Math.max(0.01, actual);
+      totalPercentError += Math.abs((prediction - actual) / actualForMape) * 100;
     }
 
     // Calculate performance metrics
@@ -563,7 +573,7 @@ function calculatePerformanceWindow(
     recentErrors.reduce((sum, err) => sum + err * err, 0) / recentErrors.length
   );
   const recentMAPE = (recentErrors.reduce((sum, err, i) => 
-    sum + Math.abs(err / Math.max(5, recentActual[i])), 0) / recentErrors.length) * 100;
+    sum + Math.abs(err / Math.max(0.01, recentActual[i])), 0) / recentErrors.length) * 100;
   
   const overallErrors = actualPrices.map((actual, i) => Math.abs(actual - predictions[i]));
   const overallMAE = overallErrors.reduce((sum, err) => sum + err, 0) / overallErrors.length;
@@ -571,7 +581,7 @@ function calculatePerformanceWindow(
     overallErrors.reduce((sum, err) => sum + err * err, 0) / overallErrors.length
   );
   const overallMAPE = (overallErrors.reduce((sum, err, i) => 
-    sum + Math.abs(err / Math.max(5, actualPrices[i])), 0) / overallErrors.length) * 100;
+    sum + Math.abs(err / Math.max(0.01, actualPrices[i])), 0) / overallErrors.length) * 100;
   
   return {
     recent: { mae: recentMAE, rmse: recentRMSE, mape: recentMAPE },
