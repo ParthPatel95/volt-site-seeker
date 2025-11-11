@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Play, TrendingUp, Target, DollarSign } from "lucide-react";
+import { Play, TrendingUp, Target, DollarSign, Info } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,6 +21,8 @@ export const BacktestingDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [backtestPeriod, setBacktestPeriod] = useState<string>('7');
   const [results, setResults] = useState<BacktestResult[]>([]);
+  const [currentModelVersion, setCurrentModelVersion] = useState<string | null>(null);
+  const [backtestModelVersion, setBacktestModelVersion] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
     totalTrades: number;
     avgError: number;
@@ -27,6 +30,27 @@ export const BacktestingDashboard = () => {
     profitLoss: number;
   } | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchCurrentModelVersion();
+  }, []);
+
+  const fetchCurrentModelVersion = async () => {
+    try {
+      const { data } = await supabase
+        .from('aeso_model_performance')
+        .select('model_version')
+        .order('trained_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        setCurrentModelVersion(data.model_version);
+      }
+    } catch (error) {
+      console.error('Error fetching current model version:', error);
+    }
+  };
 
   const runBacktest = async () => {
     setLoading(true);
@@ -56,11 +80,16 @@ export const BacktestingDashboard = () => {
       // Fetch predictions that were made during this period
       const { data: predictionData, error: predError } = await supabase
         .from('aeso_price_predictions')
-        .select('target_timestamp, predicted_price, prediction_timestamp')
+        .select('target_timestamp, predicted_price, prediction_timestamp, model_version')
         .gte('target_timestamp', startDate.toISOString())
         .order('target_timestamp', { ascending: true });
 
       if (predError) throw predError;
+
+      // Track which model version these predictions are from
+      if (predictionData && predictionData.length > 0 && predictionData[0].model_version) {
+        setBacktestModelVersion(predictionData[0].model_version);
+      }
 
       // Match predictions with actual prices
       const backtestResults: BacktestResult[] = [];
@@ -135,8 +164,21 @@ export const BacktestingDashboard = () => {
     pl: r.profit_loss
   }));
 
+  const isOutdated = currentModelVersion && backtestModelVersion && currentModelVersion !== backtestModelVersion;
+
   return (
     <div className="space-y-4">
+      {/* Model Version Warning */}
+      {isOutdated && summary && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Historical Data</strong> - These backtest results use predictions from model version {backtestModelVersion}. 
+            Current model is {currentModelVersion}. Run a new backtest after generating predictions with the latest model to see updated results.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -144,7 +186,7 @@ export const BacktestingDashboard = () => {
             Backtesting Configuration
           </CardTitle>
           <CardDescription>
-            Test model performance on historical data. Note: This uses stored predictions from before the latest retraining.
+            Test model performance on historical data by comparing past predictions with actual prices.
           </CardDescription>
         </CardHeader>
         <CardContent>

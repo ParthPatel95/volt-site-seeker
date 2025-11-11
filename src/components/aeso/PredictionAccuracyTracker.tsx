@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Target, TrendingUp, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { Target, TrendingUp, CheckCircle, AlertCircle, RefreshCw, Sparkles, Info } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AccuracyMetric {
   target_timestamp: string;
@@ -18,16 +20,38 @@ interface AccuracyMetric {
 export const PredictionAccuracyTracker = () => {
   const [accuracyData, setAccuracyData] = useState<AccuracyMetric[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [currentModelVersion, setCurrentModelVersion] = useState<string | null>(null);
+  const [accuracyModelVersion, setAccuracyModelVersion] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
     avgMAE: number;
     avgMAPE: number;
     confidenceAccuracy: number;
     totalPredictions: number;
   } | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchAccuracyData();
+    fetchCurrentModelVersion();
   }, []);
+
+  const fetchCurrentModelVersion = async () => {
+    try {
+      const { data } = await supabase
+        .from('aeso_model_performance')
+        .select('model_version')
+        .order('trained_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        setCurrentModelVersion(data.model_version);
+      }
+    } catch (error) {
+      console.error('Error fetching current model version:', error);
+    }
+  };
 
   const fetchAccuracyData = async () => {
     setLoading(true);
@@ -42,6 +66,19 @@ export const PredictionAccuracyTracker = () => {
 
       if (data && data.length > 0) {
         setAccuracyData(data);
+        
+        // Get the model version from the most recent accuracy record
+        if (data[0]) {
+          const { data: predData } = await supabase
+            .from('aeso_price_predictions')
+            .select('model_version')
+            .eq('target_timestamp', data[0].target_timestamp)
+            .single();
+          
+          if (predData?.model_version) {
+            setAccuracyModelVersion(predData.model_version);
+          }
+        }
         
         const avgMAE = data.reduce((sum, d) => sum + d.absolute_error, 0) / data.length;
         const avgMAPE = data.reduce((sum, d) => sum + d.percent_error, 0) / data.length;
@@ -58,6 +95,34 @@ export const PredictionAccuracyTracker = () => {
       console.error('Error fetching accuracy data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateNewPredictions = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-predictor');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Predictions Generated",
+        description: "New predictions created with the latest model. Accuracy metrics will update as actual prices come in.",
+      });
+      
+      // Refresh accuracy data after a short delay
+      setTimeout(() => {
+        fetchAccuracyData();
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error generating predictions:', error);
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate new predictions",
+        variant: "destructive"
+      });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -116,15 +181,40 @@ export const PredictionAccuracyTracker = () => {
       error: d.absolute_error
     }));
 
+  const isOutdated = currentModelVersion && accuracyModelVersion && currentModelVersion !== accuracyModelVersion;
+
   return (
     <div className="space-y-4">
+      {/* Model Version Warning */}
+      {isOutdated && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <strong>Outdated Accuracy Data</strong> - These metrics are from model version {accuracyModelVersion}. 
+                Current model is {currentModelVersion}. Generate new predictions to see updated accuracy.
+              </div>
+              <Button onClick={generateNewPredictions} disabled={generating} size="sm" className="ml-4">
+                <Sparkles className="h-4 w-4 mr-2" />
+                {generating ? 'Generating...' : 'Generate Predictions'}
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Summary Cards */}
       {summary && (
         <>
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-2 mb-4">
+            <Button onClick={generateNewPredictions} variant="default" size="sm" disabled={generating}>
+              <Sparkles className={`h-4 w-4 mr-2 ${generating ? 'animate-spin' : ''}`} />
+              {generating ? 'Generating...' : 'Generate New Predictions'}
+            </Button>
             <Button onClick={fetchAccuracyData} variant="outline" size="sm" disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh Data
+              Refresh
             </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
