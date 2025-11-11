@@ -447,6 +447,60 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const getAITradingAdvice = async (
+    market: string = 'aeso',
+    advisoryType: string = 'trading_strategy',
+    userContext: any = {}
+  ) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-trading-advisor', {
+        body: { 
+          market, 
+          advisoryType, 
+          userContext,
+          predictions: predictions.slice(0, 24) // Send current predictions
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "AI Advisory Generated",
+          description: `${data.advisory.outlook} outlook with ${data.advisory.trading_recommendations.length} recommendations`,
+        });
+        
+        return data.advisory;
+      }
+    } catch (error: any) {
+      console.error('Error getting AI advice:', error);
+      
+      // Handle specific AI errors
+      if (error.message?.includes('rate limit')) {
+        toast({
+          title: "Rate Limit Reached",
+          description: "Too many requests. Please try again in a moment.",
+          variant: "destructive"
+        });
+      } else if (error.message?.includes('credits')) {
+        toast({
+          title: "Credits Depleted",
+          description: "Please add credits to continue using AI features.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "AI Advisory Error",
+          description: error.message || "Failed to generate trading advice",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -462,6 +516,7 @@ export const useAESOPricePrediction = () => {
     checkAutoRetraining,
     getPerformanceMetrics,
     explainPrediction,
-    fetchMultiMarketPredictions
+    fetchMultiMarketPredictions,
+    getAITradingAdvice
   };
 };
