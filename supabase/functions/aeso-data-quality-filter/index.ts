@@ -1,10 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { serve, createClient } from "../_shared/imports.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -52,61 +47,66 @@ serve(async (req) => {
     console.log(`  Q1: $${q1.toFixed(2)}, Q3: $${q3.toFixed(2)}, IQR: $${iqr.toFixed(2)}`);
     console.log(`  Valid range: $${lowerBound.toFixed(2)} - $${upperBound.toFixed(2)}`);
 
-    let validCount = 0;
-    let invalidCount = 0;
-    const invalidReasons: Record<string, number> = {
-      negative_price: 0,
-      extreme_spike: 0,
-      outlier: 0,
+    // Use SQL to mark invalid records efficiently (bulk operation)
+    console.log('Marking all records as valid by default...');
+    await supabase
+      .from('aeso_training_data')
+      .update({ is_valid_record: true })
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Update all
+
+    // Mark negative prices as invalid
+    const { data: negativeRecords } = await supabase
+      .from('aeso_training_data')
+      .update({ is_valid_record: false })
+      .lt('pool_price', 0)
+      .select('id, pool_price, timestamp');
+    
+    const negativeCount = negativeRecords?.length || 0;
+    if (negativeCount > 0) {
+      console.log(`  Found ${negativeCount} negative price records`);
+    }
+
+    // Mark extreme spikes as invalid (>$500/MWh)
+    const { data: spikeRecords } = await supabase
+      .from('aeso_training_data')
+      .update({ is_valid_record: false })
+      .gt('pool_price', 500)
+      .select('id, pool_price, timestamp');
+    
+    const spikeCount = spikeRecords?.length || 0;
+    if (spikeCount > 0) {
+      console.log(`  Found ${spikeCount} extreme spike records`);
+    }
+
+    // Mark statistical outliers as invalid
+    const { data: outlierRecords } = await supabase
+      .from('aeso_training_data')
+      .update({ is_valid_record: false })
+      .or(`pool_price.lt.${lowerBound},pool_price.gt.${upperBound}`)
+      .select('id, pool_price, timestamp');
+    
+    const outlierCount = outlierRecords?.length || 0;
+    if (outlierCount > 0) {
+      console.log(`  Found ${outlierCount} statistical outlier records`);
+    }
+
+    // Count final valid/invalid records
+    const { count: validCount } = await supabase
+      .from('aeso_training_data')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_valid_record', true);
+
+    const { count: invalidCount } = await supabase
+      .from('aeso_training_data')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_valid_record', false);
+
+    const invalidReasons = {
+      negative_price: negativeCount,
+      extreme_spike: spikeCount,
+      outlier: outlierCount,
       missing_critical_data: 0
     };
-
-    // Mark invalid records
-    for (const record of trainingData) {
-      let isValid = true;
-      const reasons: string[] = [];
-
-      // Check for negative prices only (zero is valid in energy markets)
-      if (record.pool_price < 0) {
-        isValid = false;
-        reasons.push('negative_price');
-        invalidReasons.negative_price++;
-      }
-
-      // Check for extreme spikes (>$500/MWh is unusual for AESO)
-      if (record.pool_price > 500) {
-        isValid = false;
-        reasons.push('extreme_spike');
-        invalidReasons.extreme_spike++;
-      }
-
-      // Check for statistical outliers
-      if (record.pool_price < lowerBound || record.pool_price > upperBound) {
-        isValid = false;
-        reasons.push('outlier');
-        invalidReasons.outlier++;
-      }
-
-      // Check for missing critical data (optional - don't invalidate if we have price)
-      // if (!record.ail_mw || !record.generation_wind) {
-      //   invalidReasons.missing_critical_data++;
-      // }
-
-      // Update record validity
-      await supabase
-        .from('aeso_training_data')
-        .update({ is_valid_record: isValid })
-        .eq('id', record.id);
-
-      if (isValid) {
-        validCount++;
-      } else {
-        invalidCount++;
-        if (invalidCount <= 5) {
-          console.log(`  Invalid record: $${record.pool_price} at ${record.timestamp} - ${reasons.join(', ')}`);
-        }
-      }
-    }
 
     console.log(`\n✅ Data quality filtering complete:`);
     console.log(`  Valid records: ${validCount} (${(validCount / trainingData.length * 100).toFixed(1)}%)`);
