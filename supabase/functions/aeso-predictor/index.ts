@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 interface PredictionRecord {
+  prediction_timestamp: string;
   target_timestamp: string;
   predicted_price: number;
   confidence_lower: number;
@@ -97,6 +98,7 @@ Deno.serve(async (req) => {
       const confidenceUpper = predictedPrice + stdDev * 1.5;
 
       predictions.push({
+        prediction_timestamp: now.toISOString(),
         target_timestamp: targetTime.toISOString(),
         predicted_price: Math.round(predictedPrice * 100) / 100,
         confidence_lower: Math.round(confidenceLower * 100) / 100,
