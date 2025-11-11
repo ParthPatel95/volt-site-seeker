@@ -501,6 +501,57 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const optimizeHyperparameters = async (trials: number = 5) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('aeso-hyperparameter-optimizer', {
+        body: { trials }
+      });
+      
+      if (error) throw error;
+      
+      console.log('Hyperparameter optimization:', data);
+      return data;
+    } catch (error) {
+      console.error('Error optimizing hyperparameters:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRetrainingHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('aeso_retraining_schedule')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching retraining history:', error);
+      throw error;
+    }
+  };
+
+  const getHyperparameterTrials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('aeso_hyperparameter_trials')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching hyperparameter trials:', error);
+      throw error;
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -517,6 +568,9 @@ export const useAESOPricePrediction = () => {
     getPerformanceMetrics,
     explainPrediction,
     fetchMultiMarketPredictions,
-    getAITradingAdvice
+    getAITradingAdvice,
+    optimizeHyperparameters,
+    getRetrainingHistory,
+    getHyperparameterTrials,
   };
 };

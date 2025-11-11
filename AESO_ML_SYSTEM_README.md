@@ -40,12 +40,25 @@ This is a comprehensive machine learning system for predicting AESO (Alberta Ele
 1. **XGBoost Gradient Boosting** (`aeso-model-trainer`)
    - Advanced gradient boosting with XGBoost-style hyperparameters
    - Feature importance tracking
-   - Automatic hyperparameter optimization
+   - **Phase 6**: Trains on last 90 days for market adaptation
+   - Automatic drift detection and monitoring
 
 2. **LSTM Neural Network** (`aeso-lstm-predictor`)
    - Recurrent neural network for temporal patterns
    - Sequential prediction with attention to recent data
    - Complements gradient boosting with time-series modeling
+
+3. **Phase 6: Advanced ML Optimization**
+   - **Hyperparameter Optimizer** (`aeso-hyperparameter-optimizer`)
+     - Automated hyperparameter tuning with grid search
+     - Cross-validation for robust parameter selection
+     - Tracks all trials and selects best configuration
+   
+   - **Adaptive Retrainer** (`aeso-adaptive-retrainer`)
+     - Automatic retraining based on drift detection
+     - Monitors MAE, MAPE, and R² degradation
+     - Schedules retraining when performance drops
+     - Compares before/after metrics
 
 ### Prediction & Ensemble
 1. **Ensemble Predictor** (`aeso-ensemble-predictor`)
@@ -98,6 +111,10 @@ This is a comprehensive machine learning system for predicting AESO (Alberta Ele
 
 ### Model Management
 - `aeso_model_parameters` - Model hyperparameters and configs
+- `aeso_model_performance` - Historical performance metrics
+- `aeso_model_versions` - Model version tracking
+- `aeso_retraining_schedule` - **(Phase 6)** Auto-retraining schedule
+- `aeso_hyperparameter_trials` - **(Phase 6)** Hyperparameter tuning history
 - `aeso_model_versions` - Version control for models
 - `aeso_model_performance` - Performance metrics over time
 

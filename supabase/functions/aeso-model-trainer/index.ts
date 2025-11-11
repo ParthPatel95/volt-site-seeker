@@ -308,7 +308,18 @@ serve(async (req) => {
 
     console.log('Feature importance:', featureImportance);
 
-    // Store model performance with Phase 5 monitoring data
+    // Store model performance with Phase 6 enhancements
+    const regimePerformance: Record<string, any> = {};
+    for (const [regime, errors] of Object.entries(modelErrors)) {
+      if (errors.length > 0) {
+        const avgError = errors.reduce((sum, e) => sum + e, 0) / errors.length;
+        regimePerformance[regime] = {
+          mae: avgError,
+          sample_count: errors.length
+        };
+      }
+    }
+
     const { error: insertError } = await supabase
       .from('aeso_model_performance')
       .insert({
@@ -322,11 +333,12 @@ serve(async (req) => {
         prediction_interval_80: predictionInterval80.upper,
         prediction_interval_95: predictionInterval95.upper,
         residual_std_dev: predictionInterval80.stdDev,
+        regime_performance: regimePerformance,
+        drift_metrics: driftMetrics,
         metadata: {
-          drift_metrics: driftMetrics,
           performance_windows: perfWindows,
           retraining_recommended: driftMetrics?.requiresRetraining || false,
-          phase: 5
+          phase: 6
         }
       });
 

@@ -182,6 +182,39 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_hyperparameter_trials: {
+        Row: {
+          created_at: string
+          hyperparameters: Json
+          id: string
+          is_best_trial: boolean | null
+          model_version: string
+          performance_metrics: Json
+          training_duration_seconds: number | null
+          trial_number: number
+        }
+        Insert: {
+          created_at?: string
+          hyperparameters: Json
+          id?: string
+          is_best_trial?: boolean | null
+          model_version: string
+          performance_metrics: Json
+          training_duration_seconds?: number | null
+          trial_number: number
+        }
+        Update: {
+          created_at?: string
+          hyperparameters?: Json
+          id?: string
+          is_best_trial?: boolean | null
+          model_version?: string
+          performance_metrics?: Json
+          training_duration_seconds?: number | null
+          trial_number?: number
+        }
+        Relationships: []
+      }
       aeso_market_regimes: {
         Row: {
           avg_load_24h: number
@@ -221,14 +254,18 @@ export type Database = {
       aeso_model_parameters: {
         Row: {
           created_at: string
+          ensemble_config: Json | null
           feature_correlations: Json | null
+          feature_scaling: Json | null
           feature_statistics: Json | null
+          hyperparameters: Json | null
           id: string
           learning_rate: number | null
           max_depth: number | null
           min_samples_split: number | null
           model_version: string
           n_estimators: number | null
+          optimization_history: Json | null
           parameter_name: string
           parameter_type: string
           parameter_value: number
@@ -238,14 +275,18 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          ensemble_config?: Json | null
           feature_correlations?: Json | null
+          feature_scaling?: Json | null
           feature_statistics?: Json | null
+          hyperparameters?: Json | null
           id?: string
           learning_rate?: number | null
           max_depth?: number | null
           min_samples_split?: number | null
           model_version: string
           n_estimators?: number | null
+          optimization_history?: Json | null
           parameter_name: string
           parameter_type: string
           parameter_value: number
@@ -255,14 +296,18 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          ensemble_config?: Json | null
           feature_correlations?: Json | null
+          feature_scaling?: Json | null
           feature_statistics?: Json | null
+          hyperparameters?: Json | null
           id?: string
           learning_rate?: number | null
           max_depth?: number | null
           min_samples_split?: number | null
           model_version?: string
           n_estimators?: number | null
+          optimization_history?: Json | null
           parameter_name?: string
           parameter_type?: string
           parameter_value?: number
@@ -275,42 +320,60 @@ export type Database = {
       aeso_model_performance: {
         Row: {
           created_at: string | null
+          drift_metrics: Json | null
           evaluation_date: string | null
           feature_importance: Json | null
           id: string
           mae: number | null
           mape: number | null
+          metadata: Json | null
           model_version: string
+          prediction_interval_80: number | null
+          prediction_interval_95: number | null
           predictions_evaluated: number | null
           r_squared: number | null
+          regime_performance: Json | null
+          residual_std_dev: number | null
           rmse: number | null
           training_period_end: string | null
           training_period_start: string | null
         }
         Insert: {
           created_at?: string | null
+          drift_metrics?: Json | null
           evaluation_date?: string | null
           feature_importance?: Json | null
           id?: string
           mae?: number | null
           mape?: number | null
+          metadata?: Json | null
           model_version: string
+          prediction_interval_80?: number | null
+          prediction_interval_95?: number | null
           predictions_evaluated?: number | null
           r_squared?: number | null
+          regime_performance?: Json | null
+          residual_std_dev?: number | null
           rmse?: number | null
           training_period_end?: string | null
           training_period_start?: string | null
         }
         Update: {
           created_at?: string | null
+          drift_metrics?: Json | null
           evaluation_date?: string | null
           feature_importance?: Json | null
           id?: string
           mae?: number | null
           mape?: number | null
+          metadata?: Json | null
           model_version?: string
+          prediction_interval_80?: number | null
+          prediction_interval_95?: number | null
           predictions_evaluated?: number | null
           r_squared?: number | null
+          regime_performance?: Json | null
+          residual_std_dev?: number | null
           rmse?: number | null
           training_period_end?: string | null
           training_period_start?: string | null
@@ -666,6 +729,51 @@ export type Database = {
           status?: string
           trigger_reason?: string
           triggered_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aeso_retraining_schedule: {
+        Row: {
+          created_at: string
+          id: string
+          model_version: string
+          performance_after: Json | null
+          performance_before: Json | null
+          scheduled_at: string
+          status: string
+          training_completed_at: string | null
+          training_started_at: string | null
+          trigger_reason: string | null
+          triggered_by: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_version: string
+          performance_after?: Json | null
+          performance_before?: Json | null
+          scheduled_at: string
+          status?: string
+          training_completed_at?: string | null
+          training_started_at?: string | null
+          trigger_reason?: string | null
+          triggered_by: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_version?: string
+          performance_after?: Json | null
+          performance_before?: Json | null
+          scheduled_at?: string
+          status?: string
+          training_completed_at?: string | null
+          training_started_at?: string | null
+          trigger_reason?: string | null
+          triggered_by?: string
           updated_at?: string
         }
         Relationships: []
