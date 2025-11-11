@@ -2,12 +2,8 @@
 // and returns normalized objects for Interchange, Operating Reserve and Energy Storage.
 // CORS enabled for browser calls.
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { serve } from "../_shared/imports.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 function toNumber(val: unknown): number | null {
   const n = typeof val === 'number' ? val : parseFloat(String(val));
