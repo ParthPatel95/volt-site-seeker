@@ -18,17 +18,43 @@ serve(async (req) => {
 
     console.log('🔧 Phase 7: Calculating Enhanced Features with Proper Lags...');
 
-    // Fetch all training data ordered by timestamp
-    const { data: trainingData, error: fetchError } = await supabase
-      .from('aeso_training_data')
-      .select('id, timestamp, pool_price, ail_mw, generation_wind, generation_solar, temperature_calgary, temperature_edmonton, hour_of_day')
-      .order('timestamp', { ascending: true });
-
-    if (fetchError || !trainingData || trainingData.length === 0) {
-      throw new Error(`Failed to fetch training data: ${fetchError?.message || 'No data'}`);
+    // Fetch ALL training data in pages to avoid memory issues
+    let allData: any[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const { data: chunk, error: chunkError } = await supabase
+        .from('aeso_training_data')
+        .select('id, timestamp, pool_price, ail_mw, generation_wind, generation_solar, temperature_calgary, temperature_edmonton, hour_of_day')
+        .order('timestamp', { ascending: true })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+      if (chunkError) {
+        console.error('Error fetching chunk:', chunkError);
+        throw new Error(`Failed to fetch training data: ${chunkError.message}`);
+      }
+      
+      if (!chunk || chunk.length === 0) {
+        hasMore = false;
+      } else {
+        allData = allData.concat(chunk);
+        console.log(`Fetched page ${page + 1}: ${chunk.length} records (total: ${allData.length})`);
+        page++;
+        
+        if (chunk.length < pageSize) {
+          hasMore = false;
+        }
+      }
+    }
+    
+    if (allData.length === 0) {
+      throw new Error('No training data found');
     }
 
-    console.log(`Processing ${trainingData.length} records...`);
+    console.log(`📊 Processing ${allData.length} total records...`);
+    const trainingData = allData;
 
     const updates: any[] = [];
     let processedCount = 0;

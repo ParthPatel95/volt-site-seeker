@@ -614,8 +614,11 @@ export const useAESOPricePrediction = () => {
       if (featuresData?.success) {
         toast({
           title: "✓ Enhanced Features Calculated",
-          description: `Processed ${featuresData.records_processed} records with lag features`,
+          description: `Processed ${featuresData.records_processed} records with lag features. Waiting for DB propagation...`,
         });
+        
+        // Wait 3 seconds for database updates to propagate
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
       
       // Step 2: Filter Data Quality
@@ -631,8 +634,11 @@ export const useAESOPricePrediction = () => {
       if (qualityData?.success) {
         toast({
           title: "✓ Data Quality Filtered",
-          description: `Quality score: ${qualityData.quality_score}% (${qualityData.valid_records}/${qualityData.total_records} valid)`,
+          description: `Quality score: ${qualityData.quality_score}% (${qualityData.valid_records}/${qualityData.total_records} valid). Waiting for DB propagation...`,
         });
+        
+        // Wait 2 seconds for database updates to propagate
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
       
       // Step 3: Retrain Model
