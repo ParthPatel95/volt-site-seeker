@@ -106,11 +106,21 @@ export const useAESOPricePrediction = () => {
         .select('*')
         .gte('target_timestamp', new Date().toISOString())
         .lte('target_timestamp', targetTime.toISOString())
-        .order('target_timestamp', { ascending: true });
+        .order('target_timestamp', { ascending: true })
+        .order('prediction_timestamp', { ascending: false });
 
       if (error) throw error;
 
-      const formattedPredictions: PricePrediction[] = (data || []).map(d => ({
+      // Deduplicate: keep only the most recent prediction for each unique target_timestamp
+      const uniquePredictions = new Map();
+      (data || []).forEach(d => {
+        const targetKey = d.target_timestamp;
+        if (!uniquePredictions.has(targetKey)) {
+          uniquePredictions.set(targetKey, d);
+        }
+      });
+
+      const formattedPredictions: PricePrediction[] = Array.from(uniquePredictions.values()).map(d => ({
         timestamp: d.target_timestamp,
         horizonHours: d.horizon_hours,
         price: d.predicted_price,
@@ -127,7 +137,7 @@ export const useAESOPricePrediction = () => {
           isWeekend: false,
           isHoliday: false
         }
-      }));
+      })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
       setPredictions(formattedPredictions);
     } catch (error) {
