@@ -450,13 +450,17 @@ export type Database = {
         Row: {
           absolute_error: number
           actual_price: number
+          actual_regime: string | null
           created_at: string
           horizon_hours: number
           id: string
           model_version: string | null
           percent_error: number
           predicted_price: number
+          predicted_regime: string | null
           prediction_id: string | null
+          spike_risk: number | null
+          symmetric_percent_error: number | null
           target_timestamp: string
           validated_at: string | null
           within_confidence: boolean | null
@@ -464,13 +468,17 @@ export type Database = {
         Insert: {
           absolute_error: number
           actual_price: number
+          actual_regime?: string | null
           created_at?: string
           horizon_hours: number
           id?: string
           model_version?: string | null
           percent_error: number
           predicted_price: number
+          predicted_regime?: string | null
           prediction_id?: string | null
+          spike_risk?: number | null
+          symmetric_percent_error?: number | null
           target_timestamp: string
           validated_at?: string | null
           within_confidence?: boolean | null
@@ -478,13 +486,17 @@ export type Database = {
         Update: {
           absolute_error?: number
           actual_price?: number
+          actual_regime?: string | null
           created_at?: string
           horizon_hours?: number
           id?: string
           model_version?: string | null
           percent_error?: number
           predicted_price?: number
+          predicted_regime?: string | null
           prediction_id?: string | null
+          spike_risk?: number | null
+          symmetric_percent_error?: number | null
           target_timestamp?: string
           validated_at?: string | null
           within_confidence?: boolean | null
@@ -647,6 +659,7 @@ export type Database = {
           predicted_price: number
           prediction_timestamp: string
           target_timestamp: string
+          validated_at: string | null
         }
         Insert: {
           confidence_lower?: number | null
@@ -660,6 +673,7 @@ export type Database = {
           predicted_price: number
           prediction_timestamp: string
           target_timestamp: string
+          validated_at?: string | null
         }
         Update: {
           confidence_lower?: number | null
@@ -673,6 +687,7 @@ export type Database = {
           predicted_price?: number
           prediction_timestamp?: string
           target_timestamp?: string
+          validated_at?: string | null
         }
         Relationships: []
       }
