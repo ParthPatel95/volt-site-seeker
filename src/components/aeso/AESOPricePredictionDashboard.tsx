@@ -36,9 +36,15 @@ export const AESOPricePredictionDashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchPredictions(horizon);
+    fetchPredictions(horizon, true); // Force refresh on mount to clear cache
     fetchModelPerformance();
   }, []);
+
+  useEffect(() => {
+    if (horizon) {
+      fetchPredictions(horizon, true); // Refetch when horizon changes
+    }
+  }, [horizon]);
 
   const handleGeneratePredictions = async () => {
     await fetchPredictions(horizon);

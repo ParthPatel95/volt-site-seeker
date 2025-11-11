@@ -47,14 +47,12 @@ export const useAESOPricePrediction = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const { toast } = useToast();
 
-  const fetchPredictions = async (horizon: string = '24h', useOptimized: boolean = true) => {
+  const fetchPredictions = async (horizon: string = '24h', forceRefresh: boolean = false) => {
     setLoading(true);
     try {
-      // Phase 7: Use optimized predictor with caching by default
-      const functionName = useOptimized ? 'aeso-optimized-predictor' : 'aeso-price-predictor';
-      
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { horizon, forceRefresh: !useOptimized }
+      // Always use optimized predictor, but allow forcing refresh to bypass cache
+      const { data, error } = await supabase.functions.invoke('aeso-optimized-predictor', {
+        body: { horizon, forceRefresh }
       });
 
       // Check for errors in both the error object and data.error
