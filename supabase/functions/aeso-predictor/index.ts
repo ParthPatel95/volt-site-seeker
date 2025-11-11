@@ -129,12 +129,64 @@ Deno.serve(async (req) => {
 
     console.log(`✅ Generated ${predictions.length} predictions successfully`);
 
+    // Immediately validate predictions against recent actual prices from training data
+    console.log('🔍 Validating predictions against available actual prices...');
+    
+    const validationRecords = [];
+    for (const pred of insertedPreds || []) {
+      // Find actual price close to the target timestamp
+      const { data: actualData } = await supabase
+        .from('aeso_training_data')
+        .select('pool_price, timestamp')
+        .gte('timestamp', new Date(new Date(pred.target_timestamp).getTime() - 30 * 60 * 1000).toISOString())
+        .lte('timestamp', new Date(new Date(pred.target_timestamp).getTime() + 30 * 60 * 1000).toISOString())
+        .order('timestamp', { ascending: true })
+        .limit(1);
+
+      if (actualData && actualData.length > 0) {
+        const actual = actualData[0];
+        const absoluteError = Math.abs(actual.pool_price - pred.predicted_price);
+        const percentError = (absoluteError / actual.pool_price) * 100;
+        const withinConfidence = actual.pool_price >= pred.confidence_lower && 
+                                 actual.pool_price <= pred.confidence_upper;
+
+        validationRecords.push({
+          prediction_id: pred.id,
+          target_timestamp: pred.target_timestamp,
+          predicted_price: pred.predicted_price,
+          actual_price: actual.pool_price,
+          absolute_error: absoluteError,
+          percent_error: percentError,
+          horizon_hours: pred.horizon_hours,
+          model_version: pred.model_version,
+          within_confidence: withinConfidence,
+          validated_at: new Date().toISOString()
+        });
+      }
+    }
+
+    // Insert validation records if any were created
+    if (validationRecords.length > 0) {
+      const { error: validationError } = await supabase
+        .from('aeso_prediction_accuracy')
+        .insert(validationRecords);
+
+      if (validationError) {
+        console.error('⚠️ Error inserting validation records:', validationError);
+      } else {
+        console.log(`✅ Validated ${validationRecords.length} predictions against actual prices`);
+      }
+    } else {
+      console.log('ℹ️ No matching actual prices found for immediate validation');
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         predictions: insertedPreds,
         model_version: latestModel.model_version,
-        count: predictions.length
+        count: predictions.length,
+        validated_count: validationRecords.length
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -106,7 +106,7 @@ export const PredictionAccuracyTracker = () => {
       
       toast({
         title: "Predictions Generated",
-        description: "New predictions created with the latest model. Accuracy metrics will update as actual prices come in.",
+        description: `Created ${data.count} predictions with ${data.validated_count || 0} immediately validated. Accuracy metrics ${data.validated_count > 0 ? 'updated' : 'will update as actual prices become available'}.`,
       });
       
       // Refresh accuracy data after a short delay
@@ -152,18 +152,20 @@ export const PredictionAccuracyTracker = () => {
               <Target className="h-5 w-5" />
               Prediction Accuracy Tracker
             </CardTitle>
-            <Button onClick={fetchAccuracyData} variant="outline" size="sm" disabled={loading}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+            <Button onClick={generateNewPredictions} variant="default" size="sm" disabled={generating}>
+              <Sparkles className={`h-4 w-4 mr-2 ${generating ? 'animate-spin' : ''}`} />
+              {generating ? 'Generating...' : 'Generate Predictions'}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            No accuracy data available yet. Predictions need to be validated against actual prices.
+            No accuracy data available for the current model ({currentModelVersion || 'unknown'}). 
+            Generate new predictions to create accuracy metrics.
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Note: This shows historical validation data. After retraining, new predictions need to be made and validated.
+            After generating predictions, the system will automatically validate them against 
+            available actual prices to provide immediate accuracy feedback.
           </p>
         </CardContent>
       </Card>
