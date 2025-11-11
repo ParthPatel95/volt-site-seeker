@@ -70,6 +70,30 @@ verify_jwt = false
 [functions.aeso-complete-backfill]
 verify_jwt = false
 
+[functions.aeso-enhanced-feature-calculator]
+verify_jwt = false
+
+[functions.aeso-data-quality-filter]
+verify_jwt = false
+
+[functions.aeso-optimized-predictor]
+verify_jwt = false
+
+[functions.aeso-auto-retraining]
+verify_jwt = false
+
+[functions.aeso-prediction-explainer]
+verify_jwt = false
+
+[functions.aeso-hyperparameter-optimizer]
+verify_jwt = false
+
+[functions.multi-market-predictor]
+verify_jwt = false
+
+[functions.ai-trading-advisor]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 
