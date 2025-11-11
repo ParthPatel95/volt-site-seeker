@@ -5850,6 +5850,7 @@ export type Database = {
         Args: { site_ids: string[] }
         Returns: number
       }
+      calculate_enhanced_features_batch: { Args: never; Returns: undefined }
       clean_expired_verification_tokens: { Args: never; Returns: undefined }
       get_all_users_with_details: {
         Args: never
