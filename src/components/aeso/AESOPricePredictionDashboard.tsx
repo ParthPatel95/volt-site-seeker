@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Download, TrendingUp, Brain, AlertCircle, CloudSun, CheckCircle, BarChart3, Zap, Settings } from 'lucide-react';
+import { Download, TrendingUp, Brain, AlertCircle, Zap } from 'lucide-react';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { PricePredictionChart } from './PricePredictionChart';
 import { FeatureImpactVisualization } from './FeatureImpactVisualization';
@@ -14,27 +14,21 @@ import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
 import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
 import { ModelStatusDashboard } from './ModelStatusDashboard';
 import { BacktestingDashboard } from './BacktestingDashboard';
+import { AESOPredictionTester } from './AESOPredictionTester';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
-import { ResponsiveMetricsGrid } from '@/components/ResponsiveGrid';
 import { supabase } from '@/integrations/supabase/client';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
-  const [retrainingModel, setRetrainingModel] = useState(false);
-  const [optimizingParams, setOptimizingParams] = useState(false);
+  const [retraining, setRetraining] = useState(false);
   const { 
     predictions, 
     modelPerformance, 
     loading,
-    currentStep,
     fetchPredictions, 
-    fetchModelPerformance, 
-    collectTrainingData,
-    collectWeatherData,
-    validatePredictions,
-    runPhase7Pipeline
+    fetchModelPerformance
   } = useAESOPricePrediction();
   const { pricing } = useAESOData();
   const { toast } = useToast();
@@ -51,96 +45,37 @@ export const AESOPricePredictionDashboard = () => {
   }, [horizon]);
 
   const handleGeneratePredictions = async () => {
-    await fetchPredictions(horizon);
+    await fetchPredictions(horizon, true);
   };
 
-  const handleCollectData = async () => {
-    await collectTrainingData();
-  };
-
-  const handleCollectWeather = async () => {
-    await collectWeatherData();
-  };
-
-  const handleValidatePredictions = async () => {
-    await validatePredictions();
-  };
-
-  const handleRunPhase7 = async () => {
-    try {
-      await runPhase7Pipeline();
-      await fetchModelPerformance();
-    } catch (error) {
-      console.error('Phase 7 pipeline error:', error);
-    }
-  };
-
-  const handleRetrainModel = async () => {
-    setRetrainingModel(true);
+  const handleFullRetrain = async () => {
+    setRetraining(true);
     try {
       toast({
-        title: "Starting Model Retraining",
-        description: "Checking performance and initiating retraining...",
+        title: "Starting Full System Retrain",
+        description: "This will collect data, train model, and update predictions...",
       });
 
-      const { data, error } = await supabase.functions.invoke('aeso-auto-retraining');
-      
-      if (error) throw error;
-
-      if (data.triggered) {
-        toast({
-          title: "✅ Retraining Complete",
-          description: data.message || "Model has been retrained successfully",
-        });
-        await fetchModelPerformance();
-      } else {
-        toast({
-          title: "Model is Healthy",
-          description: data.message || "No retraining needed at this time",
-          variant: "default",
-        });
-      }
-    } catch (error) {
-      console.error('Retraining error:', error);
-      toast({
-        title: "Retraining Failed",
-        description: error.message || "Failed to retrain model",
-        variant: "destructive",
-      });
-    } finally {
-      setRetrainingModel(false);
-    }
-  };
-
-  const handleOptimizeHyperparameters = async () => {
-    setOptimizingParams(true);
-    try {
-      toast({
-        title: "Starting Hyperparameter Optimization",
-        description: "Testing different model configurations... This may take a few minutes.",
-      });
-
-      const { data, error } = await supabase.functions.invoke('aeso-hyperparameter-optimizer', {
-        body: { trials: 10 }
-      });
+      const { data, error } = await supabase.functions.invoke('aeso-complete-backfill');
       
       if (error) throw error;
 
       toast({
-        title: "✅ Optimization Complete",
-        description: `Best MAE: $${data.best_trial.mae.toFixed(2)} (${data.trials_completed} trials completed)`,
+        title: "✅ Retrain Complete",
+        description: "System fully retrained with latest data",
       });
       
       await fetchModelPerformance();
+      await fetchPredictions(horizon, true);
     } catch (error) {
-      console.error('Optimization error:', error);
+      console.error('Retrain error:', error);
       toast({
-        title: "Optimization Failed",
-        description: error.message || "Failed to optimize hyperparameters",
+        title: "Retrain Failed",
+        description: error.message || "Failed to complete system retrain",
         variant: "destructive",
       });
     } finally {
-      setOptimizingParams(false);
+      setRetraining(false);
     }
   };
 
@@ -192,105 +127,38 @@ export const AESOPricePredictionDashboard = () => {
             </Select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-2">
-            {/* Primary Actions */}
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleRunPhase7} variant="default" size="sm" disabled={loading} className="flex-1 sm:flex-auto bg-gradient-to-r from-primary to-primary/80">
-                <Brain className="h-4 w-4 sm:mr-2" />
-                <span>{loading ? 'Optimizing...' : 'Optimize & Retrain'}</span>
+          {/* Simplified Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={handleGeneratePredictions} 
+              disabled={loading || retraining} 
+              size="lg" 
+              className="flex-1 sm:flex-auto"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              {loading ? 'Generating...' : 'Generate Forecast'}
+            </Button>
+            
+            {predictions.length > 0 && (
+              <Button onClick={handleExport} variant="outline" size="lg" className="flex-1 sm:flex-none">
+                <Download className="h-4 w-4 mr-2" />
+                Export
               </Button>
-              <Button onClick={handleGeneratePredictions} disabled={loading} size="sm" className="flex-1 sm:flex-none">
-                <TrendingUp className="h-4 w-4 sm:mr-2" />
-                <span>{loading ? 'Generating...' : 'Forecast'}</span>
-              </Button>
-              {predictions.length > 0 && (
-                <Button onClick={handleExport} variant="outline" size="sm" className="flex-1 sm:flex-none">
-                  <Download className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Export</span>
-                </Button>
-              )}
-            </div>
-
-            {/* Model Improvement Actions */}
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                onClick={handleRetrainModel} 
-                variant="outline" 
-                size="sm" 
-                disabled={retrainingModel || loading}
-                className="flex-1 sm:flex-auto border-primary/30 hover:bg-primary/10"
-              >
-                <Zap className="h-4 w-4 sm:mr-2" />
-                <span>{retrainingModel ? 'Retraining...' : 'Retrain Model Now'}</span>
-              </Button>
-              <Button 
-                onClick={handleOptimizeHyperparameters} 
-                variant="outline" 
-                size="sm" 
-                disabled={optimizingParams || loading}
-                className="flex-1 sm:flex-auto border-primary/30 hover:bg-primary/10"
-              >
-                <Settings className="h-4 w-4 sm:mr-2" />
-                <span>{optimizingParams ? 'Optimizing...' : 'Optimize Parameters'}</span>
-              </Button>
-            </div>
-
-            {/* Data Actions */}
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
-                <RefreshCw className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Update Data</span>
-              </Button>
-              <Button onClick={handleCollectWeather} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
-                <CloudSun className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Weather</span>
-              </Button>
-              <Button onClick={handleValidatePredictions} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
-                <CheckCircle className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Validate</span>
-              </Button>
-            </div>
+            )}
+            
+            <Button 
+              onClick={handleFullRetrain} 
+              variant="outline" 
+              size="lg" 
+              disabled={retraining || loading}
+              className="flex-1 sm:flex-none border-warning/30 hover:bg-warning/10"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              {retraining ? 'Retraining...' : 'Force Retrain'}
+            </Button>
           </div>
         </div>
 
-        {/* Progress Indicator */}
-        {currentStep > 0 && (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="pt-4 sm:pt-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Brain className="h-5 w-5 text-primary animate-pulse" />
-                    <span className="text-sm font-semibold">Optimization Progress</span>
-                  </div>
-                  <span className="text-sm font-bold text-primary">Step {currentStep}/3</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex gap-1">
-                    {[1, 2, 3].map((step) => (
-                      <div
-                        key={step}
-                        className={`h-2 flex-1 rounded-full transition-all duration-500 ${
-                          step <= currentStep 
-                            ? 'bg-primary' 
-                            : 'bg-muted'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  
-                  <div className="text-xs text-muted-foreground">
-                    {currentStep === 1 && "Calculating enhanced features with price lags and interactions..."}
-                    {currentStep === 2 && "Filtering data quality and removing outliers..."}
-                    {currentStep === 3 && "Retraining AI model with optimized features..."}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Model Performance - Replace with New Dashboard */}
         <ModelStatusDashboard />
@@ -336,13 +204,14 @@ export const AESOPricePredictionDashboard = () => {
         {/* Tabbed Content */}
         {predictions.length > 0 && (
           <Tabs defaultValue="forecast" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
+            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 h-auto">
               <TabsTrigger value="forecast" className="text-xs sm:text-sm">Forecast</TabsTrigger>
               <TabsTrigger value="scenario" className="text-xs sm:text-sm">Scenario</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
               <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
               <TabsTrigger value="accuracy" className="text-xs sm:text-sm">Accuracy</TabsTrigger>
               <TabsTrigger value="backtest" className="text-xs sm:text-sm">Backtest</TabsTrigger>
+              <TabsTrigger value="tests" className="text-xs sm:text-sm">Tests</TabsTrigger>
             </TabsList>
 
             <TabsContent value="forecast" className="space-y-4 sm:space-y-6 mt-4">
@@ -374,6 +243,10 @@ export const AESOPricePredictionDashboard = () => {
 
             <TabsContent value="backtest" className="mt-4">
               <BacktestingDashboard key={modelPerformance?.modelVersion} />
+            </TabsContent>
+
+            <TabsContent value="tests" className="mt-4">
+              <AESOPredictionTester />
             </TabsContent>
           </Tabs>
         )}
