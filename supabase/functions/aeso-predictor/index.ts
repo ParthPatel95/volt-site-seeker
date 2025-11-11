@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     );
 
     console.log('🚀 Starting AESO price prediction generation...');
+    console.log(`⏰ Current time: ${new Date().toISOString()}`);
 
     // Get the latest model performance data
     const { data: modelPerf, error: perfError } = await supabase
@@ -78,6 +79,8 @@ Deno.serve(async (req) => {
     for (const horizon of horizons) {
       const targetTime = new Date(now.getTime() + horizon * 60 * 60 * 1000);
       const targetHour = targetTime.getHours();
+      
+      console.log(`🎯 Generating prediction for ${horizon}h ahead - Target: ${targetTime.toISOString()}, Prediction made at: ${now.toISOString()}`);
       
       // Get hour-specific average
       const hourPrices = hourPatterns.get(targetHour) || [avgPrice];
