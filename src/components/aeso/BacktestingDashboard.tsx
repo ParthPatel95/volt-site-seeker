@@ -40,12 +40,11 @@ export const BacktestingDashboard = () => {
       const { data } = await supabase
         .from('aeso_model_performance')
         .select('model_version')
-        .order('trained_at', { ascending: false })
-        .limit(1)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
       
-      if (data) {
-        setCurrentModelVersion(data.model_version);
+      if (data && data.length > 0) {
+        setCurrentModelVersion(data[0].model_version);
       }
     } catch (error) {
       console.error('Error fetching current model version:', error);

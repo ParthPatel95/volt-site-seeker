@@ -79,6 +79,9 @@ verify_jwt = false
 [functions.aeso-optimized-predictor]
 verify_jwt = false
 
+[functions.aeso-predictor]
+verify_jwt = false
+
 [functions.aeso-auto-retraining]
 verify_jwt = false
 
