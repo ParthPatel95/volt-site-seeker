@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Target, TrendingUp, CheckCircle, AlertCircle, RefreshCw, Sparkles, Info } from "lucide-react";
+import { Target, TrendingUp, CheckCircle, AlertCircle, RefreshCw, Sparkles, Info, Play } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,6 +21,7 @@ export const PredictionAccuracyTracker = () => {
   const [accuracyData, setAccuracyData] = useState<AccuracyMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [runningPipeline, setRunningPipeline] = useState(false);
   const [currentModelVersion, setCurrentModelVersion] = useState<string | null>(null);
   const [accuracyModelVersion, setAccuracyModelVersion] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
@@ -125,6 +126,77 @@ export const PredictionAccuracyTracker = () => {
     }
   };
 
+  const runPhase7Pipeline = async () => {
+    setRunningPipeline(true);
+    try {
+      // Step 1: Calculate Enhanced Features
+      toast({
+        title: "Phase 7 Pipeline: Step 1/3",
+        description: "Calculating enhanced price lag features and Phase 3 features...",
+      });
+      
+      const { data: featuresData, error: featuresError } = await supabase.functions.invoke('aeso-enhanced-feature-calculator');
+      
+      if (featuresError) throw new Error(`Feature calculation failed: ${featuresError.message}`);
+      
+      if (featuresData?.success) {
+        toast({
+          title: "✓ Enhanced Features Calculated",
+          description: `Processed ${featuresData.records_processed} records. Waiting for DB propagation...`,
+        });
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      
+      // Step 2: Filter Data Quality
+      toast({
+        title: "Phase 7 Pipeline: Step 2/3",
+        description: "Filtering invalid data points (outliers, missing features)...",
+      });
+      
+      const { data: qualityData, error: qualityError } = await supabase.functions.invoke('aeso-data-quality-filter');
+      
+      if (qualityError) throw new Error(`Quality filtering failed: ${qualityError.message}`);
+      
+      if (qualityData?.success) {
+        toast({
+          title: "✓ Data Quality Filtered",
+          description: `${qualityData.valid_records} valid records of ${qualityData.total_records} total. Preparing for training...`,
+        });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      // Step 3: Train Model
+      toast({
+        title: "Phase 7 Pipeline: Step 3/3",
+        description: "Training regime-specific XGBoost models with Phase 3 features...",
+      });
+      
+      const { data: trainingData, error: trainingError } = await supabase.functions.invoke('aeso-model-trainer');
+      
+      if (trainingError) throw new Error(`Model training failed: ${trainingError.message}`);
+      
+      if (trainingData?.success) {
+        toast({
+          title: "✅ Phase 7 Pipeline Complete!",
+          description: `Model ${trainingData.model_version} trained on ${trainingData.training_records} records. sMAPE: ${trainingData.metrics?.smape}%`,
+        });
+        
+        // Refresh data
+        fetchCurrentModelVersion();
+        fetchAccuracyData();
+      }
+    } catch (error: any) {
+      console.error('Phase 7 pipeline error:', error);
+      toast({
+        title: "Pipeline Failed",
+        description: error.message || "Failed to run Phase 7 pipeline",
+        variant: "destructive"
+      });
+    } finally {
+      setRunningPipeline(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -209,9 +281,13 @@ export const PredictionAccuracyTracker = () => {
       {summary && (
         <>
           <div className="flex justify-end gap-2 mb-4">
-            <Button onClick={generateNewPredictions} variant="default" size="sm" disabled={generating}>
+            <Button onClick={runPhase7Pipeline} variant="default" size="sm" disabled={runningPipeline}>
+              <Play className={`h-4 w-4 mr-2 ${runningPipeline ? 'animate-spin' : ''}`} />
+              {runningPipeline ? 'Running Pipeline...' : 'Run Phase 7 Pipeline'}
+            </Button>
+            <Button onClick={generateNewPredictions} variant="outline" size="sm" disabled={generating}>
               <Sparkles className={`h-4 w-4 mr-2 ${generating ? 'animate-spin' : ''}`} />
-              {generating ? 'Generating...' : 'Generate New Predictions'}
+              {generating ? 'Generating...' : 'Generate Predictions'}
             </Button>
             <Button onClick={fetchAccuracyData} variant="outline" size="sm" disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
