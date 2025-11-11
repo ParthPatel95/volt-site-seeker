@@ -20,8 +20,11 @@ serve(async (req) => {
 
     console.log('Starting XGBoost-style gradient boosting training with enhanced features...');
 
-    // Fetch all training data with enhanced features (paginate to get all records)
-    console.log('Fetching all training data...');
+    // Fetch RECENT training data (last 90 days) for current market conditions
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 90);
+    
+    console.log(`Fetching training data from ${cutoffDate.toISOString()} onwards...`);
     let trainingData: any[] = [];
     let page = 0;
     const pageSize = 1000;
@@ -31,6 +34,7 @@ serve(async (req) => {
       const { data: chunk, error: chunkError } = await supabase
         .from('aeso_training_data')
         .select('*')
+        .gte('timestamp', cutoffDate.toISOString())
         .order('timestamp', { ascending: true })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       
@@ -68,6 +72,7 @@ serve(async (req) => {
       const { data: chunk, error: chunkError } = await supabase
         .from('aeso_enhanced_features')
         .select('*')
+        .gte('timestamp', cutoffDate.toISOString())
         .order('timestamp', { ascending: true })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       
@@ -201,9 +206,9 @@ serve(async (req) => {
       totalSquaredError += (prediction - actual) * (prediction - actual);
       modelErrors[regime].push(error);
       
-      // For MAPE: use $5 minimum threshold to avoid division by very small numbers
-      // Zero prices are valid but create infinite percentage errors
-      const actualForMape = Math.max(5, actual);
+      // For MAPE: use $10 minimum threshold for low-price markets
+      // AESO often has prices $0-20, so we need higher threshold
+      const actualForMape = Math.max(10, actual);
       totalPercentError += Math.abs((prediction - actualForMape) / actualForMape) * 100;
     }
 
