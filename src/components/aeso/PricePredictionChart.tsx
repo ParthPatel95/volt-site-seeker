@@ -113,8 +113,8 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
                   <TableCell className="text-right">100%</TableCell>
                 </TableRow>
               )}
-              {tableData.map((row, idx) => (
-                <TableRow key={idx}>
+              {tableData.map((row) => (
+                <TableRow key={row.timestamp.toISOString()}>
                   <TableCell className="font-medium">{format(row.timestamp, 'HH:mm')}</TableCell>
                   <TableCell className="text-muted-foreground">{format(row.timestamp, 'MMM dd, yyyy')}</TableCell>
                   <TableCell className="text-right font-semibold">

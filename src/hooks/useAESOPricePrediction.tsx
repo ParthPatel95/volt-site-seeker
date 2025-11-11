@@ -111,12 +111,16 @@ export const useAESOPricePrediction = () => {
 
       if (error) throw error;
 
-      // Deduplicate: keep only the most recent prediction for each unique target_timestamp
+      // Deduplicate: keep only the most recent prediction for each unique hour
+      // Group by hour (not millisecond) to avoid showing same hour multiple times
       const uniquePredictions = new Map();
       (data || []).forEach(d => {
-        const targetKey = d.target_timestamp;
-        if (!uniquePredictions.has(targetKey)) {
-          uniquePredictions.set(targetKey, d);
+        const targetDate = new Date(d.target_timestamp);
+        // Round to the hour to group all predictions for the same hour
+        const hourKey = `${targetDate.getFullYear()}-${targetDate.getMonth()}-${targetDate.getDate()}-${targetDate.getHours()}`;
+        
+        if (!uniquePredictions.has(hourKey)) {
+          uniquePredictions.set(hourKey, d);
         }
       });
 
