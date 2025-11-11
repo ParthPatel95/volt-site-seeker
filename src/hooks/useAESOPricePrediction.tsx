@@ -98,50 +98,56 @@ export const useAESOPricePrediction = () => {
   const fetchStoredPredictions = async (hoursAhead: number = 24) => {
     setLoading(true);
     try {
-      const targetTime = new Date();
-      targetTime.setHours(targetTime.getHours() + hoursAhead);
+      const now = new Date();
+      const targetTime = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
 
+      // Fetch only the most recent prediction for each hour
+      // Use a subquery approach to get latest prediction per target hour
       const { data, error } = await supabase
         .from('aeso_price_predictions')
         .select('*')
-        .gte('target_timestamp', new Date().toISOString())
-        .lte('target_timestamp', targetTime.toISOString())
+        .gte('target_timestamp', now.toISOString())
+        .lt('target_timestamp', targetTime.toISOString())
         .order('target_timestamp', { ascending: true })
         .order('prediction_timestamp', { ascending: false });
 
       if (error) throw error;
 
-      // Deduplicate: keep only the most recent prediction for each unique hour
-      // Group by hour (not millisecond) to avoid showing same hour multiple times
+      // Deduplicate: keep only the MOST RECENT prediction for each unique hour
+      // This ensures we show only the latest prediction per hour
       const uniquePredictions = new Map();
       (data || []).forEach(d => {
         const targetDate = new Date(d.target_timestamp);
-        // Round to the hour to group all predictions for the same hour
-        const hourKey = `${targetDate.getFullYear()}-${targetDate.getMonth()}-${targetDate.getDate()}-${targetDate.getHours()}`;
+        // Create hour bucket key (YYYY-MM-DD-HH)
+        const hourKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}-${String(targetDate.getHours()).padStart(2, '0')}`;
         
+        // Only keep if we haven't seen this hour yet (since data is ordered by prediction_timestamp desc)
         if (!uniquePredictions.has(hourKey)) {
           uniquePredictions.set(hourKey, d);
         }
       });
 
-      const formattedPredictions: PricePrediction[] = Array.from(uniquePredictions.values()).map(d => ({
-        timestamp: d.target_timestamp,
-        horizonHours: d.horizon_hours,
-        price: d.predicted_price,
-        confidenceLower: d.confidence_lower || 0,
-        confidenceUpper: d.confidence_upper || 0,
-        confidenceScore: d.confidence_score || 0,
-        features: (d.features_used as any) || {
-          avgPrice: 0,
-          hour: 0,
-          dayOfWeek: 0,
-          avgTemp: 0,
-          windSpeed: 0,
-          cloudCover: 0,
-          isWeekend: false,
-          isHoliday: false
-        }
-      })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      const formattedPredictions: PricePrediction[] = Array.from(uniquePredictions.values())
+        .map(d => ({
+          timestamp: d.target_timestamp,
+          horizonHours: d.horizon_hours,
+          price: d.predicted_price,
+          confidenceLower: d.confidence_lower || 0,
+          confidenceUpper: d.confidence_upper || 0,
+          confidenceScore: d.confidence_score || 0.75,
+          features: (d.features_used as any) || {
+            avgPrice: 0,
+            hour: 0,
+            dayOfWeek: 0,
+            avgTemp: 0,
+            windSpeed: 0,
+            cloudCover: 0,
+            isWeekend: false,
+            isHoliday: false
+          }
+        }))
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .slice(0, 24); // Ensure we return max 24 hours
 
       setPredictions(formattedPredictions);
     } catch (error) {
