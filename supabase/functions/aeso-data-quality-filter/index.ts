@@ -29,8 +29,8 @@ serve(async (req) => {
 
     console.log(`Analyzing ${trainingData.length} records...`);
 
-    // Calculate statistics for outlier detection
-    const prices = trainingData.map(r => r.pool_price).filter(p => p !== null && p !== 0);
+    // Calculate statistics for outlier detection (include zeros, exclude nulls)
+    const prices = trainingData.map(r => r.pool_price).filter(p => p !== null);
     prices.sort((a, b) => a - b);
     
     const mean = prices.reduce((sum, p) => sum + p, 0) / prices.length;
@@ -55,7 +55,7 @@ serve(async (req) => {
     let validCount = 0;
     let invalidCount = 0;
     const invalidReasons: Record<string, number> = {
-      zero_price: 0,
+      negative_price: 0,
       extreme_spike: 0,
       outlier: 0,
       missing_critical_data: 0
@@ -66,11 +66,11 @@ serve(async (req) => {
       let isValid = true;
       const reasons: string[] = [];
 
-      // Check for zero or negative prices
-      if (record.pool_price === 0 || record.pool_price < 0) {
+      // Check for negative prices only (zero is valid in energy markets)
+      if (record.pool_price < 0) {
         isValid = false;
-        reasons.push('zero_price');
-        invalidReasons.zero_price++;
+        reasons.push('negative_price');
+        invalidReasons.negative_price++;
       }
 
       // Check for extreme spikes (>$500/MWh is unusual for AESO)

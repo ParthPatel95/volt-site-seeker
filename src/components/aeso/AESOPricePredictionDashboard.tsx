@@ -190,7 +190,7 @@ export const AESOPricePredictionDashboard = () => {
                 <BarChart3 className="h-5 w-5 text-primary" />
                 Model Performance
               </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Accuracy metrics for prediction model</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Accuracy metrics using sMAPE (handles zero energy prices correctly)</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveMetricsGrid>
@@ -203,7 +203,7 @@ export const AESOPricePredictionDashboard = () => {
                   <div className="text-xl sm:text-2xl font-bold text-foreground">${modelPerformance.rmse.toFixed(2)}</div>
                 </div>
                 <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
-                  <div className="text-xs sm:text-sm text-muted-foreground">MAPE</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">sMAPE</div>
                   <div className="text-xl sm:text-2xl font-bold text-foreground">{modelPerformance.mape.toFixed(1)}%</div>
                 </div>
                 <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">

@@ -172,15 +172,18 @@ serve(async (req) => {
       totalSquaredError += (prediction - actual) * (prediction - actual);
       modelErrors[regime].push(error);
       
-      // For MAPE: avoid division by zero but don't inflate with high threshold
-      // Use actual price with small epsilon to handle near-zero prices
-      const actualForMape = Math.max(0.01, actual);
-      totalPercentError += Math.abs((prediction - actual) / actualForMape) * 100;
+      // Calculate MAPE properly for energy prices (including zeros)
+      // Use symmetric MAPE (sMAPE) which handles zero values better
+      const denominator = (Math.abs(actual) + Math.abs(prediction)) / 2;
+      if (denominator > 0.01) {
+        totalPercentError += (Math.abs(prediction - actual) / denominator) * 100;
+      }
     }
 
     // Calculate performance metrics
     const mae = totalAbsError / testSet.length;
     const rmse = Math.sqrt(totalSquaredError / testSet.length);
+    // sMAPE (Symmetric MAPE) - handles zero prices in energy markets correctly
     const mape = totalPercentError / testSet.length;
     
     // R-squared
@@ -192,7 +195,7 @@ serve(async (req) => {
     console.log(`✅ Model Performance:`);
     console.log(`  MAE: $${mae.toFixed(2)}/MWh`);
     console.log(`  RMSE: $${rmse.toFixed(2)}/MWh`);
-    console.log(`  MAPE: ${mape.toFixed(2)}%`);
+    console.log(`  sMAPE: ${mape.toFixed(2)}% (Symmetric MAPE - handles zero prices)`);
     console.log(`  R²: ${rSquared.toFixed(4)}`);
     
     // ========== PHASE 4: CALCULATE PREDICTION INTERVALS ==========
