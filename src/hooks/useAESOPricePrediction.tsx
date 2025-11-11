@@ -408,6 +408,45 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const fetchMultiMarketPredictions = async (
+    market: string = 'aeso',
+    horizon: string = '24h',
+    compareMarkets: boolean = false
+  ) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('multi-market-predictor', {
+        body: { market, horizon, compareMarkets }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        setPredictions(data.predictions);
+        
+        const comparisonMsg = compareMarkets && data.market_comparison 
+          ? ` (compared with ${data.market_comparison.markets_analyzed.length - 1} markets)`
+          : '';
+        
+        toast({
+          title: "Multi-Market Predictions",
+          description: `${data.predictions.length} predictions for ${data.market_name}${comparisonMsg}`,
+        });
+        
+        return data;
+      }
+    } catch (error: any) {
+      console.error('Error fetching multi-market predictions:', error);
+      toast({
+        title: "Multi-Market Error",
+        description: error.message || "Failed to fetch predictions",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -422,6 +461,7 @@ export const useAESOPricePrediction = () => {
     runCompleteBackfill,
     checkAutoRetraining,
     getPerformanceMetrics,
-    explainPrediction
+    explainPrediction,
+    fetchMultiMarketPredictions
   };
 };
