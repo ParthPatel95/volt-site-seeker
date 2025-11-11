@@ -286,11 +286,11 @@ export const AESOPricePredictionDashboard = () => {
             </TabsContent>
 
             <TabsContent value="accuracy" className="mt-4">
-              <PredictionAccuracyTracker />
+              <PredictionAccuracyTracker key={modelPerformance?.modelVersion} />
             </TabsContent>
 
             <TabsContent value="backtest" className="mt-4">
-              <BacktestingDashboard />
+              <BacktestingDashboard key={modelPerformance?.modelVersion} />
             </TabsContent>
           </Tabs>
         )}

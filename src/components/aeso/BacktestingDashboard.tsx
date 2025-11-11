@@ -144,7 +144,7 @@ export const BacktestingDashboard = () => {
             Backtesting Configuration
           </CardTitle>
           <CardDescription>
-            Test model performance on historical data
+            Test model performance on historical data. Note: This uses stored predictions from before the latest retraining.
           </CardDescription>
         </CardHeader>
         <CardContent>

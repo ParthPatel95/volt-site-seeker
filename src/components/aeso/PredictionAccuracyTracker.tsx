@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Target, TrendingUp, CheckCircle, AlertCircle } from "lucide-react";
+import { Target, TrendingUp, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 
 interface AccuracyMetric {
@@ -29,6 +30,7 @@ export const PredictionAccuracyTracker = () => {
   }, []);
 
   const fetchAccuracyData = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('aeso_prediction_accuracy')
@@ -63,10 +65,12 @@ export const PredictionAccuracyTracker = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Prediction Accuracy Tracker
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Prediction Accuracy Tracker
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">Loading accuracy metrics...</p>
@@ -79,14 +83,23 @@ export const PredictionAccuracyTracker = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Prediction Accuracy Tracker
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Prediction Accuracy Tracker
+            </CardTitle>
+            <Button onClick={fetchAccuracyData} variant="outline" size="sm" disabled={loading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
             No accuracy data available yet. Predictions need to be validated against actual prices.
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Note: This shows historical validation data. After retraining, new predictions need to be made and validated.
           </p>
         </CardContent>
       </Card>
@@ -107,7 +120,14 @@ export const PredictionAccuracyTracker = () => {
     <div className="space-y-4">
       {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <>
+          <div className="flex justify-end mb-4">
+            <Button onClick={fetchAccuracyData} variant="outline" size="sm" disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh Data
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -156,19 +176,21 @@ export const PredictionAccuracyTracker = () => {
             </CardContent>
           </Card>
         </div>
+        </>
       )}
 
       {/* Accuracy Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Predicted vs Actual Prices
-          </CardTitle>
-          <CardDescription>
-            Comparison of predicted and actual prices over the last 48 hours
-          </CardDescription>
-        </CardHeader>
+      {summary && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Predicted vs Actual Prices
+            </CardTitle>
+            <CardDescription>
+              Comparison of predicted and actual prices over the last 48 hours (Historical data before latest retraining)
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
@@ -211,9 +233,11 @@ export const PredictionAccuracyTracker = () => {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+      )}
 
       {/* Error Distribution */}
-      <Card>
+      {summary && (
+        <Card>
         <CardHeader>
           <CardTitle>Prediction Error Analysis</CardTitle>
           <CardDescription>Distribution of prediction errors by horizon</CardDescription>
@@ -245,6 +269,7 @@ export const PredictionAccuracyTracker = () => {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 };
