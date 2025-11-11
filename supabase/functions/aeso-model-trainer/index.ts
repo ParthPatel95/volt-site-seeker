@@ -79,11 +79,16 @@ serve(async (req) => {
     // Phase 7: Enhanced features are now built into training_data table
     const mergedData = trainingData;
 
+    // ========== DATA IMPUTATION: Fill Missing Features ==========
+    console.log('\n=== Imputing Missing Features (Wind, Demand, Temperature) ===');
+    const imputedData = imputeMissingFeatures(mergedData);
+    console.log(`✅ Imputation complete. Using imputed data for training.`);
+
     // Calculate feature correlations with price (Phase 7: using proper feature names)
-    const featureCorrelations = calculateFeatureCorrelations(mergedData);
-    const featureStats = calculateFeatureStats(mergedData);
-    const laggedFeatures = calculateLaggedFeatures(mergedData);
-    const regimeThresholds = calculateRegimeThresholds(mergedData);
+    const featureCorrelations = calculateFeatureCorrelations(imputedData);
+    const featureStats = calculateFeatureStats(imputedData);
+    const laggedFeatures = calculateLaggedFeatures(imputedData);
+    const regimeThresholds = calculateRegimeThresholds(imputedData);
     
     // XGBoost hyperparameters
     const xgboostParams = {
@@ -96,13 +101,13 @@ serve(async (req) => {
     
     // ========== PHASE 4: OUTLIER DETECTION ==========
     console.log('\n=== Phase 4: Detecting Price Outliers ===');
-    const outlierThreshold = detectOutliers(mergedData);
+    const outlierThreshold = detectOutliers(imputedData);
     console.log(`Outlier threshold (Q3 + 3*IQR): $${outlierThreshold.toFixed(2)}/MWh`);
     
     // Separate spike vs normal regime data
-    const spikeData = mergedData.filter(d => d.pool_price > outlierThreshold);
-    const normalData = mergedData.filter(d => d.pool_price <= outlierThreshold);
-    console.log(`Found ${spikeData.length} spike records (${(spikeData.length/mergedData.length*100).toFixed(1)}%) and ${normalData.length} normal records`);
+    const spikeData = imputedData.filter(d => d.pool_price > outlierThreshold);
+    const normalData = imputedData.filter(d => d.pool_price <= outlierThreshold);
+    console.log(`Found ${spikeData.length} spike records (${(spikeData.length/imputedData.length*100).toFixed(1)}%) and ${normalData.length} normal records`);
 
     console.log('Feature correlations with price:', featureCorrelations);
     console.log('Feature statistics:', featureStats);
@@ -111,13 +116,13 @@ serve(async (req) => {
     
     // ========== PHASE 1: FEATURE SCALING ==========
     console.log('\n=== Calculating Feature Scaling Parameters ===');
-    const featureScaling = calculateFeatureScaling(mergedData);
+    const featureScaling = calculateFeatureScaling(imputedData);
     console.log('Feature scaling calculated for', Object.keys(featureScaling).length, 'features');
     
     // Split data: 80% training, 20% testing
-    const splitIndex = Math.floor(mergedData.length * 0.8);
-    const trainSet = mergedData.slice(0, splitIndex);
-    const testSet = mergedData.slice(splitIndex);
+    const splitIndex = Math.floor(imputedData.length * 0.8);
+    const trainSet = imputedData.slice(0, splitIndex);
+    const testSet = imputedData.slice(splitIndex);
 
     console.log(`Training: ${trainSet.length} samples, Testing: ${testSet.length} samples`);
     
@@ -1393,4 +1398,151 @@ function calculateRegimeThresholds(data: any[]): Record<string, number> {
     peakDemandThreshold,
     lowDemandThreshold
   };
+}
+
+// Impute missing wind, demand, and temperature features
+function imputeMissingFeatures(data: any[]): any[] {
+  console.log('Starting data imputation...');
+  
+  // Calculate hourly averages for each feature
+  const hourlyAverages = {
+    wind: {} as Record<number, number>,
+    demand: {} as Record<number, number>,
+    temp_calgary: {} as Record<number, number>,
+    temp_edmonton: {} as Record<number, number>
+  };
+  
+  // Count features before imputation
+  const beforeCounts = {
+    wind: data.filter(d => d.generation_wind !== null).length,
+    demand: data.filter(d => d.ail_mw !== null).length,
+    temp_calgary: data.filter(d => d.temperature_calgary !== null).length,
+    temp_edmonton: data.filter(d => d.temperature_edmonton !== null).length
+  };
+  
+  // Calculate hourly averages from available data
+  for (let hour = 0; hour < 24; hour++) {
+    const hourData = data.filter(d => d.hour_of_day === hour);
+    
+    const windValues = hourData.filter(d => d.generation_wind !== null).map(d => d.generation_wind);
+    const demandValues = hourData.filter(d => d.ail_mw !== null).map(d => d.ail_mw);
+    const calgaryTempValues = hourData.filter(d => d.temperature_calgary !== null).map(d => d.temperature_calgary);
+    const edmontonTempValues = hourData.filter(d => d.temperature_edmonton !== null).map(d => d.temperature_edmonton);
+    
+    hourlyAverages.wind[hour] = windValues.length > 0 
+      ? windValues.reduce((sum, v) => sum + v, 0) / windValues.length 
+      : 2500; // Default wind generation
+    
+    hourlyAverages.demand[hour] = demandValues.length > 0 
+      ? demandValues.reduce((sum, v) => sum + v, 0) / demandValues.length 
+      : 10000; // Default demand
+    
+    hourlyAverages.temp_calgary[hour] = calgaryTempValues.length > 0 
+      ? calgaryTempValues.reduce((sum, v) => sum + v, 0) / calgaryTempValues.length 
+      : 10; // Default temperature
+    
+    hourlyAverages.temp_edmonton[hour] = edmontonTempValues.length > 0 
+      ? edmontonTempValues.reduce((sum, v) => sum + v, 0) / edmontonTempValues.length 
+      : 10; // Default temperature
+  }
+  
+  console.log('Hourly averages calculated:', {
+    wind: Object.values(hourlyAverages.wind).slice(0, 3),
+    demand: Object.values(hourlyAverages.demand).slice(0, 3),
+    temp: Object.values(hourlyAverages.temp_calgary).slice(0, 3)
+  });
+  
+  // Impute missing values using forward-fill and hourly averages
+  const imputedData = [...data];
+  let lastValidWind: number | null = null;
+  let lastValidDemand: number | null = null;
+  let lastValidCalgaryTemp: number | null = null;
+  let lastValidEdmontonTemp: number | null = null;
+  
+  for (let i = 0; i < imputedData.length; i++) {
+    const record = imputedData[i];
+    const hour = record.hour_of_day;
+    
+    // Wind generation imputation
+    if (record.generation_wind !== null) {
+      lastValidWind = record.generation_wind;
+    } else if (lastValidWind !== null && i > 0 && i < imputedData.length - 1) {
+      // Forward-fill for recent gaps (within 6 hours)
+      const hoursSinceValid = i - imputedData.slice(0, i).reverse().findIndex(d => d.generation_wind !== null);
+      if (hoursSinceValid <= 6) {
+        record.generation_wind = lastValidWind;
+      } else {
+        record.generation_wind = hourlyAverages.wind[hour];
+      }
+    } else {
+      record.generation_wind = hourlyAverages.wind[hour];
+    }
+    
+    // Demand imputation
+    if (record.ail_mw !== null) {
+      lastValidDemand = record.ail_mw;
+    } else if (lastValidDemand !== null && i > 0 && i < imputedData.length - 1) {
+      const hoursSinceValid = i - imputedData.slice(0, i).reverse().findIndex(d => d.ail_mw !== null);
+      if (hoursSinceValid <= 6) {
+        record.ail_mw = lastValidDemand;
+      } else {
+        record.ail_mw = hourlyAverages.demand[hour];
+      }
+    } else {
+      record.ail_mw = hourlyAverages.demand[hour];
+    }
+    
+    // Temperature Calgary imputation
+    if (record.temperature_calgary !== null) {
+      lastValidCalgaryTemp = record.temperature_calgary;
+    } else if (lastValidCalgaryTemp !== null && i > 0 && i < imputedData.length - 1) {
+      const hoursSinceValid = i - imputedData.slice(0, i).reverse().findIndex(d => d.temperature_calgary !== null);
+      if (hoursSinceValid <= 12) {
+        record.temperature_calgary = lastValidCalgaryTemp;
+      } else {
+        record.temperature_calgary = hourlyAverages.temp_calgary[hour];
+      }
+    } else {
+      record.temperature_calgary = hourlyAverages.temp_calgary[hour];
+    }
+    
+    // Temperature Edmonton imputation
+    if (record.temperature_edmonton !== null) {
+      lastValidEdmontonTemp = record.temperature_edmonton;
+    } else if (lastValidEdmontonTemp !== null && i > 0 && i < imputedData.length - 1) {
+      const hoursSinceValid = i - imputedData.slice(0, i).reverse().findIndex(d => d.temperature_edmonton !== null);
+      if (hoursSinceValid <= 12) {
+        record.temperature_edmonton = lastValidEdmontonTemp;
+      } else {
+        record.temperature_edmonton = hourlyAverages.temp_edmonton[hour];
+      }
+    } else {
+      record.temperature_edmonton = hourlyAverages.temp_edmonton[hour];
+    }
+    
+    // Recalculate interaction features after imputation
+    if (record.generation_wind !== null && record.hour_of_day !== null) {
+      record.wind_hour_interaction = record.generation_wind * record.hour_of_day;
+    }
+    
+    if (record.temperature_calgary !== null && record.temperature_edmonton !== null && record.ail_mw !== null) {
+      record.temp_demand_interaction = ((record.temperature_calgary + record.temperature_edmonton) / 2) * record.ail_mw;
+    }
+  }
+  
+  // Count features after imputation
+  const afterCounts = {
+    wind: imputedData.filter(d => d.generation_wind !== null).length,
+    demand: imputedData.filter(d => d.ail_mw !== null).length,
+    temp_calgary: imputedData.filter(d => d.temperature_calgary !== null).length,
+    temp_edmonton: imputedData.filter(d => d.temperature_edmonton !== null).length
+  };
+  
+  console.log('Imputation statistics:');
+  console.log(`  Wind: ${beforeCounts.wind} → ${afterCounts.wind} (+${afterCounts.wind - beforeCounts.wind} imputed)`);
+  console.log(`  Demand: ${beforeCounts.demand} → ${afterCounts.demand} (+${afterCounts.demand - beforeCounts.demand} imputed)`);
+  console.log(`  Temperature (Calgary): ${beforeCounts.temp_calgary} → ${afterCounts.temp_calgary} (+${afterCounts.temp_calgary - beforeCounts.temp_calgary} imputed)`);
+  console.log(`  Temperature (Edmonton): ${beforeCounts.temp_edmonton} → ${afterCounts.temp_edmonton} (+${afterCounts.temp_edmonton - beforeCounts.temp_edmonton} imputed)`);
+  
+  return imputedData;
 }
