@@ -97,43 +97,49 @@ export type Database = {
       }
       aeso_data_quality_reports: {
         Row: {
-          clean_records: number
-          created_at: string | null
-          duplicate_count: number
+          created_at: string
+          enhanced_feature_coverage: Json | null
           id: string
-          issue_details: Json | null
-          missing_value_count: number
-          outlier_count: number
+          missing_data_analysis: Json | null
+          outlier_count: number | null
+          price_statistics: Json | null
+          quality_factors: Json | null
           quality_score: number
-          records_checked: number
+          recent_completeness: number | null
+          recommendations: string[] | null
           report_date: string
-          total_issues: number
+          temporal_gaps: number | null
+          total_records: number
         }
         Insert: {
-          clean_records: number
-          created_at?: string | null
-          duplicate_count: number
+          created_at?: string
+          enhanced_feature_coverage?: Json | null
           id?: string
-          issue_details?: Json | null
-          missing_value_count: number
-          outlier_count: number
+          missing_data_analysis?: Json | null
+          outlier_count?: number | null
+          price_statistics?: Json | null
+          quality_factors?: Json | null
           quality_score: number
-          records_checked: number
-          report_date: string
-          total_issues: number
+          recent_completeness?: number | null
+          recommendations?: string[] | null
+          report_date?: string
+          temporal_gaps?: number | null
+          total_records: number
         }
         Update: {
-          clean_records?: number
-          created_at?: string | null
-          duplicate_count?: number
+          created_at?: string
+          enhanced_feature_coverage?: Json | null
           id?: string
-          issue_details?: Json | null
-          missing_value_count?: number
-          outlier_count?: number
+          missing_data_analysis?: Json | null
+          outlier_count?: number | null
+          price_statistics?: Json | null
+          quality_factors?: Json | null
           quality_score?: number
-          records_checked?: number
+          recent_completeness?: number | null
+          recommendations?: string[] | null
           report_date?: string
-          total_issues?: number
+          temporal_gaps?: number | null
+          total_records?: number
         }
         Relationships: []
       }
