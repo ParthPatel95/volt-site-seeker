@@ -44,6 +44,7 @@ export const useAESOPricePrediction = () => {
   const [predictions, setPredictions] = useState<PricePrediction[]>([]);
   const [modelPerformance, setModelPerformance] = useState<ModelPerformance | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   const { toast } = useToast();
 
   const fetchPredictions = async (horizon: string = '24h', useOptimized: boolean = true) => {
@@ -600,6 +601,7 @@ export const useAESOPricePrediction = () => {
 
   const runPhase7Pipeline = async () => {
     setLoading(true);
+    setCurrentStep(1);
     try {
       // Step 1: Calculate Enhanced Features
       toast({
@@ -622,6 +624,7 @@ export const useAESOPricePrediction = () => {
       }
       
       // Step 2: Filter Data Quality
+      setCurrentStep(2);
       toast({
         title: "Phase 7: Step 2/3",
         description: "Filtering invalid data points (outliers, spikes, zero prices)...",
@@ -642,6 +645,7 @@ export const useAESOPricePrediction = () => {
       }
       
       // Step 3: Retrain Model
+      setCurrentStep(3);
       toast({
         title: "Phase 7: Step 3/3",
         description: "Retraining model with enhanced features and clean data...",
@@ -690,6 +694,7 @@ export const useAESOPricePrediction = () => {
       throw error;
     } finally {
       setLoading(false);
+      setCurrentStep(0);
     }
   };
 
@@ -697,6 +702,7 @@ export const useAESOPricePrediction = () => {
     predictions,
     modelPerformance,
     loading,
+    currentStep,
     fetchPredictions,
     fetchStoredPredictions,
     fetchModelPerformance,

@@ -23,7 +23,8 @@ export const AESOPricePredictionDashboard = () => {
   const { 
     predictions, 
     modelPerformance, 
-    loading, 
+    loading,
+    currentStep,
     fetchPredictions, 
     fetchModelPerformance, 
     collectTrainingData,
@@ -142,6 +143,44 @@ export const AESOPricePredictionDashboard = () => {
             )}
           </div>
         </div>
+
+        {/* Progress Indicator */}
+        {currentStep > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-primary animate-pulse" />
+                    <span className="text-sm font-semibold">Optimization Progress</span>
+                  </div>
+                  <span className="text-sm font-bold text-primary">Step {currentStep}/3</span>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex gap-1">
+                    {[1, 2, 3].map((step) => (
+                      <div
+                        key={step}
+                        className={`h-2 flex-1 rounded-full transition-all duration-500 ${
+                          step <= currentStep 
+                            ? 'bg-primary' 
+                            : 'bg-muted'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground">
+                    {currentStep === 1 && "Calculating enhanced features with price lags and interactions..."}
+                    {currentStep === 2 && "Filtering data quality and removing outliers..."}
+                    {currentStep === 3 && "Retraining AI model with optimized features..."}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Model Performance */}
         {modelPerformance && (
