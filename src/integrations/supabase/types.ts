@@ -868,6 +868,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_trading_advisories: {
+        Row: {
+          advisory_type: string
+          confidence: number
+          created_at: string
+          generated_at: string
+          id: string
+          key_insights: Json
+          market: string
+          model_performance_snapshot: Json | null
+          opportunities: Json | null
+          outlook: string
+          predictions_analyzed: number
+          price_targets: Json | null
+          recommendations: Json
+          risk_assessment: Json
+          summary: string
+        }
+        Insert: {
+          advisory_type?: string
+          confidence: number
+          created_at?: string
+          generated_at?: string
+          id?: string
+          key_insights: Json
+          market: string
+          model_performance_snapshot?: Json | null
+          opportunities?: Json | null
+          outlook: string
+          predictions_analyzed?: number
+          price_targets?: Json | null
+          recommendations: Json
+          risk_assessment: Json
+          summary: string
+        }
+        Update: {
+          advisory_type?: string
+          confidence?: number
+          created_at?: string
+          generated_at?: string
+          id?: string
+          key_insights?: Json
+          market?: string
+          model_performance_snapshot?: Json | null
+          opportunities?: Json | null
+          outlook?: string
+          predictions_analyzed?: number
+          price_targets?: Json | null
+          recommendations?: Json
+          risk_assessment?: Json
+          summary?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           alert_type: Database["public"]["Enums"]["alert_type"]
