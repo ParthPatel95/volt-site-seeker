@@ -2142,6 +2142,60 @@ export type Database = {
         }
         Relationships: []
       }
+      market_configurations: {
+        Row: {
+          created_at: string
+          currency: string
+          features: Json | null
+          id: string
+          market_code: string
+          market_name: string
+          metadata: Json | null
+          predictor_available: boolean
+          region: string
+          spike_threshold: number | null
+          status: string
+          typical_price_max: number | null
+          typical_price_min: number | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          features?: Json | null
+          id?: string
+          market_code: string
+          market_name: string
+          metadata?: Json | null
+          predictor_available?: boolean
+          region: string
+          spike_threshold?: number | null
+          status?: string
+          typical_price_max?: number | null
+          typical_price_min?: number | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          features?: Json | null
+          id?: string
+          market_code?: string
+          market_name?: string
+          metadata?: Json | null
+          predictor_available?: boolean
+          region?: string
+          spike_threshold?: number | null
+          status?: string
+          typical_price_max?: number | null
+          typical_price_min?: number | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       market_timing_analysis: {
         Row: {
           analysis_date: string
@@ -2191,6 +2245,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      multi_market_requests: {
+        Row: {
+          comparison_enabled: boolean
+          created_at: string
+          horizon_hours: number
+          id: string
+          predictions_count: number
+          primary_market: string
+          request_timestamp: string
+        }
+        Insert: {
+          comparison_enabled?: boolean
+          created_at?: string
+          horizon_hours: number
+          id?: string
+          predictions_count?: number
+          primary_market: string
+          request_timestamp?: string
+        }
+        Update: {
+          comparison_enabled?: boolean
+          created_at?: string
+          horizon_hours?: number
+          id?: string
+          predictions_count?: number
+          primary_market?: string
+          request_timestamp?: string
+        }
+        Relationships: []
       }
       news_intelligence: {
         Row: {
