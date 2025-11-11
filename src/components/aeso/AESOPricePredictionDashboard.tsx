@@ -15,6 +15,7 @@ import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
 import { ModelStatusDashboard } from './ModelStatusDashboard';
 import { BacktestingDashboard } from './BacktestingDashboard';
 import { AESOPredictionTester } from './AESOPredictionTester';
+import { RetrainingScheduleStatus } from './RetrainingScheduleStatus';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
@@ -204,13 +205,14 @@ export const AESOPricePredictionDashboard = () => {
         {/* Tabbed Content */}
         {predictions.length > 0 && (
           <Tabs defaultValue="forecast" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 h-auto">
+            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 h-auto">
               <TabsTrigger value="forecast" className="text-xs sm:text-sm">Forecast</TabsTrigger>
               <TabsTrigger value="scenario" className="text-xs sm:text-sm">Scenario</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
               <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
               <TabsTrigger value="accuracy" className="text-xs sm:text-sm">Accuracy</TabsTrigger>
               <TabsTrigger value="backtest" className="text-xs sm:text-sm">Backtest</TabsTrigger>
+              <TabsTrigger value="schedule" className="text-xs sm:text-sm">Schedule</TabsTrigger>
               <TabsTrigger value="tests" className="text-xs sm:text-sm">Tests</TabsTrigger>
             </TabsList>
 
@@ -243,6 +245,10 @@ export const AESOPricePredictionDashboard = () => {
 
             <TabsContent value="backtest" className="mt-4">
               <BacktestingDashboard key={modelPerformance?.modelVersion} />
+            </TabsContent>
+
+            <TabsContent value="schedule" className="mt-4">
+              <RetrainingScheduleStatus />
             </TabsContent>
 
             <TabsContent value="tests" className="mt-4">
