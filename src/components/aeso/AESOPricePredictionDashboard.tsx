@@ -292,38 +292,8 @@ export const AESOPricePredictionDashboard = () => {
           </Card>
         )}
 
-        {/* Model Performance */}
-        {modelPerformance && (
-          <Card className="border-primary/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                Model Performance
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Accuracy metrics using sMAPE (handles zero energy prices correctly)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveMetricsGrid>
-                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
-                  <div className="text-xs sm:text-sm text-muted-foreground">MAE</div>
-                  <div className="text-xl sm:text-2xl font-bold text-foreground">${modelPerformance.mae.toFixed(2)}</div>
-                </div>
-                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
-                  <div className="text-xs sm:text-sm text-muted-foreground">RMSE</div>
-                  <div className="text-xl sm:text-2xl font-bold text-foreground">${modelPerformance.rmse.toFixed(2)}</div>
-                </div>
-                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
-                  <div className="text-xs sm:text-sm text-muted-foreground">sMAPE</div>
-                  <div className="text-xl sm:text-2xl font-bold text-foreground">{modelPerformance.mape.toFixed(1)}%</div>
-                </div>
-                <div className="space-y-1 text-center p-4 rounded-lg bg-muted/50">
-                  <div className="text-xs sm:text-sm text-muted-foreground">R² Score</div>
-                  <div className="text-xl sm:text-2xl font-bold text-foreground">{modelPerformance.rSquared.toFixed(3)}</div>
-                </div>
-              </ResponsiveMetricsGrid>
-            </CardContent>
-          </Card>
-        )}
+        {/* Model Performance - Replace with New Dashboard */}
+        <ModelStatusDashboard />
 
         {/* Smart Alerts */}
         {predictions.length > 0 && (
