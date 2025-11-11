@@ -31,6 +31,13 @@ export interface ModelPerformance {
   prediction_interval_80?: number;
   prediction_interval_95?: number;
   residual_std_dev?: number;
+  regimePerformance?: Record<string, { mae: number; sample_count: number }>;
+  drift_metrics?: {
+    driftScore: number;
+    performanceDrift: number;
+    featureDrift: number;
+    requiresRetraining: boolean;
+  };
 }
 
 export const useAESOPricePrediction = () => {
@@ -147,7 +154,12 @@ export const useAESOPricePrediction = () => {
           rmse: data.rmse || 0,
           mape: data.mape || 0,
           rSquared: data.r_squared || 0,
-          featureImportance: (data.feature_importance as any) || {}
+          featureImportance: (data.feature_importance as any) || {},
+          prediction_interval_80: data.prediction_interval_80,
+          prediction_interval_95: data.prediction_interval_95,
+          residual_std_dev: data.residual_std_dev,
+          regimePerformance: (data.regime_performance as Record<string, { mae: number; sample_count: number }>) || {},
+          drift_metrics: (data.metadata as any)?.drift_metrics || (data.drift_metrics as any),
         });
       }
     } catch (error) {
@@ -552,6 +564,40 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const calculateEnhancedFeatures = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('aeso-enhanced-feature-calculator');
+      
+      if (error) throw error;
+      
+      console.log('Enhanced features calculated:', data);
+      return data;
+    } catch (error) {
+      console.error('Error calculating enhanced features:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterDataQuality = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('aeso-data-quality-filter');
+      
+      if (error) throw error;
+      
+      console.log('Data quality filtering:', data);
+      return data;
+    } catch (error) {
+      console.error('Error filtering data quality:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -572,5 +618,7 @@ export const useAESOPricePrediction = () => {
     optimizeHyperparameters,
     getRetrainingHistory,
     getHyperparameterTrials,
+    calculateEnhancedFeatures,
+    filterDataQuality,
   };
 };

@@ -832,16 +832,27 @@ export type Database = {
           id: string
           interchange_net: number | null
           is_holiday: boolean | null
+          is_valid_record: boolean | null
           is_weekend: boolean | null
           month: number | null
           operating_reserve: number | null
           outage_capacity_mw: number | null
           pool_price: number
+          price_lag_1h: number | null
+          price_lag_24h: number | null
+          price_lag_2h: number | null
+          price_lag_3h: number | null
+          price_momentum_1h: number | null
+          price_momentum_3h: number | null
+          price_rolling_avg_24h: number | null
+          price_rolling_std_24h: number | null
           season: string | null
           solar_irradiance: number | null
+          temp_demand_interaction: number | null
           temperature_calgary: number | null
           temperature_edmonton: number | null
           timestamp: string
+          wind_hour_interaction: number | null
           wind_speed: number | null
         }
         Insert: {
@@ -858,16 +869,27 @@ export type Database = {
           id?: string
           interchange_net?: number | null
           is_holiday?: boolean | null
+          is_valid_record?: boolean | null
           is_weekend?: boolean | null
           month?: number | null
           operating_reserve?: number | null
           outage_capacity_mw?: number | null
           pool_price: number
+          price_lag_1h?: number | null
+          price_lag_24h?: number | null
+          price_lag_2h?: number | null
+          price_lag_3h?: number | null
+          price_momentum_1h?: number | null
+          price_momentum_3h?: number | null
+          price_rolling_avg_24h?: number | null
+          price_rolling_std_24h?: number | null
           season?: string | null
           solar_irradiance?: number | null
+          temp_demand_interaction?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
           timestamp: string
+          wind_hour_interaction?: number | null
           wind_speed?: number | null
         }
         Update: {
@@ -884,16 +906,27 @@ export type Database = {
           id?: string
           interchange_net?: number | null
           is_holiday?: boolean | null
+          is_valid_record?: boolean | null
           is_weekend?: boolean | null
           month?: number | null
           operating_reserve?: number | null
           outage_capacity_mw?: number | null
           pool_price?: number
+          price_lag_1h?: number | null
+          price_lag_24h?: number | null
+          price_lag_2h?: number | null
+          price_lag_3h?: number | null
+          price_momentum_1h?: number | null
+          price_momentum_3h?: number | null
+          price_rolling_avg_24h?: number | null
+          price_rolling_std_24h?: number | null
           season?: string | null
           solar_irradiance?: number | null
+          temp_demand_interaction?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
           timestamp?: string
+          wind_hour_interaction?: number | null
           wind_speed?: number | null
         }
         Relationships: []

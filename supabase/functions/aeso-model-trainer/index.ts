@@ -20,11 +20,11 @@ serve(async (req) => {
 
     console.log('Starting XGBoost-style gradient boosting training with enhanced features...');
 
-    // Fetch RECENT training data (last 90 days) for current market conditions
+    // Phase 7: Fetch RECENT VALID training data (last 90 days) for current market conditions
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 90);
     
-    console.log(`Fetching training data from ${cutoffDate.toISOString()} onwards...`);
+    console.log(`🔧 Phase 7: Fetching VALID training data from ${cutoffDate.toISOString()} onwards...`);
     let trainingData: any[] = [];
     let page = 0;
     const pageSize = 1000;
@@ -35,6 +35,7 @@ serve(async (req) => {
         .from('aeso_training_data')
         .select('*')
         .gte('timestamp', cutoffDate.toISOString())
+        .eq('is_valid_record', true)  // Phase 7: Only valid records
         .order('timestamp', { ascending: true })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       
@@ -62,58 +63,13 @@ serve(async (req) => {
       throw new Error(`Insufficient training data: ${trainingData?.length || 0} records (need at least 24 hours)`);
     }
 
-    // Fetch enhanced features (paginate to get all records)
-    console.log('Fetching enhanced features...');
-    let enhancedFeatures: any[] = [];
-    page = 0;
-    hasMore = true;
-    
-    while (hasMore) {
-      const { data: chunk, error: chunkError } = await supabase
-        .from('aeso_enhanced_features')
-        .select('*')
-        .gte('timestamp', cutoffDate.toISOString())
-        .order('timestamp', { ascending: true })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
-      
-      if (chunkError) {
-        console.warn('Error fetching enhanced features chunk:', chunkError);
-        break;
-      }
-      
-      if (!chunk || chunk.length === 0) {
-        hasMore = false;
-      } else {
-        enhancedFeatures = enhancedFeatures.concat(chunk);
-        console.log(`Fetched enhanced features page ${page + 1}: ${chunk.length} records`);
-        page++;
-        
-        if (chunk.length < pageSize) {
-          hasMore = false;
-        }
-      }
-    }
-    
-    const featureError = enhancedFeatures.length === 0 ? new Error('No enhanced features found') : null;
+    console.log(`✅ Phase 7: Loaded ${trainingData.length} VALID records with built-in enhanced features`);
+    console.log('Sample data point:', JSON.stringify(trainingData[0], null, 2));
 
-    if (featureError) {
-      console.warn('Enhanced features not available, using base features only');
-    }
+    // Phase 7: Enhanced features are now built into training_data table
+    const mergedData = trainingData;
 
-    // Merge enhanced features with training data
-    const enhancedDataMap = new Map(
-      (enhancedFeatures || []).map(f => [f.timestamp, f])
-    );
-    
-    const mergedData = trainingData.map(record => ({
-      ...record,
-      ...enhancedDataMap.get(record.timestamp)
-    }));
-
-    console.log(`Training XGBoost model with ${mergedData.length} historical data points and enhanced features`);
-    console.log('Sample merged data point:', JSON.stringify(mergedData[0], null, 2));
-
-    // Calculate feature correlations with price (including enhanced features)
+    // Calculate feature correlations with price (Phase 7: using proper feature names)
     const featureCorrelations = calculateFeatureCorrelations(mergedData);
     const featureStats = calculateFeatureStats(mergedData);
     const laggedFeatures = calculateLaggedFeatures(mergedData);
@@ -643,7 +599,7 @@ function predictPriceWithXGBoost(
   const learningRate = params.learning_rate;
   const maxDepth = params.max_depth;
   
-  // Calculate feature values including weather and enhanced features
+  // Calculate feature values including weather and Phase 7 enhanced features
   const features = {
     hour: currentConditions.hour_of_day || 12,
     dayOfWeek: currentConditions.day_of_week || 1,
@@ -664,13 +620,24 @@ function predictPriceWithXGBoost(
     gasGen: currentConditions.generation_gas || 0,
     coalGen: currentConditions.generation_coal || 0,
     demand: currentConditions.ail_mw || 0,
-    // Enhanced features
+    // Phase 7: Price lag features (critical for short-term prediction)
+    priceLag1h: currentConditions.price_lag_1h || null,
+    priceLag2h: currentConditions.price_lag_2h || null,
+    priceLag3h: currentConditions.price_lag_3h || null,
+    priceLag24h: currentConditions.price_lag_24h || null,
+    priceRollingAvg24h: currentConditions.price_rolling_avg_24h || null,
+    priceRollingStd24h: currentConditions.price_rolling_std_24h || null,
+    priceMomentum1h: currentConditions.price_momentum_1h || 0,
+    priceMomentum3h: currentConditions.price_momentum_3h || 0,
+    // Enhanced features from aeso_enhanced_features table
     priceVolatility1h: currentConditions.price_volatility_1h || 0,
     priceVolatility24h: currentConditions.price_volatility_24h || 0,
-    priceMomentum3h: currentConditions.price_momentum_3h || 0,
     naturalGasPrice: currentConditions.natural_gas_price || 2.5,
     renewableCurtailment: currentConditions.renewable_curtailment || 0,
-    netImports: currentConditions.net_imports || 0
+    netImports: currentConditions.net_imports || 0,
+    // Phase 7: Interaction features
+    windHourInteraction: currentConditions.wind_hour_interaction || null,
+    tempDemandInteraction: currentConditions.temp_demand_interaction || null
   };
   
   // Simulated gradient boosting with decision trees
@@ -706,6 +673,49 @@ function predictPriceWithXGBoost(
 // Simplified decision tree builder for gradient boosting with weather integration
 function buildDecisionTreePrediction(features: any, correlations: any, stats: any, regime: string, maxDepth: number): number {
   let adjustment = 0;
+  
+  // ========== PHASE 7: PRICE LAG FEATURES (Critical for time-series) ==========
+  // Price 1 hour ago is highly predictive of current price
+  if (features.priceLag1h !== null && features.priceLag1h !== undefined) {
+    // Strong mean reversion: current price tends toward recent prices
+    const lag1hWeight = 0.4; // 40% weight on 1h ago price
+    adjustment += (features.priceLag1h - stats.avgPrice) * lag1hWeight;
+  }
+  
+  // Price 24 hours ago captures daily patterns
+  if (features.priceLag24h !== null && features.priceLag24h !== undefined) {
+    const lag24hWeight = 0.15; // 15% weight on 24h ago price
+    adjustment += (features.priceLag24h - stats.avgPrice) * lag24hWeight;
+  }
+  
+  // Rolling average captures medium-term trends
+  if (features.priceRollingAvg24h !== null && features.priceRollingAvg24h !== undefined) {
+    const rollingWeight = 0.2; // 20% weight on 24h average
+    adjustment += (features.priceRollingAvg24h - stats.avgPrice) * rollingWeight;
+  }
+  
+  // Price momentum 1h (rate of change)
+  if (features.priceMomentum1h !== null && features.priceMomentum1h !== undefined) {
+    // If price is rising fast, expect continuation
+    if (features.priceMomentum1h > 20) {
+      adjustment += 8;
+    } else if (features.priceMomentum1h < -20) {
+      adjustment -= 8;
+    }
+  }
+  
+  // Interaction features
+  if (features.windHourInteraction !== null) {
+    // Wind × Hour interaction captures timing effects
+    const corrWindHour = correlations.windGenHourInteraction || 0;
+    adjustment += features.windHourInteraction * corrWindHour * 0.001;
+  }
+  
+  if (features.tempDemandInteraction !== null) {
+    // Temperature × Demand interaction
+    const corrTempDemand = correlations.tempDemandInteraction || 0;
+    adjustment += features.tempDemandInteraction * corrTempDemand * 0.00001;
+  }
   
   // WEATHER IMPACT - Critical for Alberta's temperature-sensitive demand
   const avgTemp = (features.temperatureCalgary + features.temperatureEdmonton) / 2;
@@ -1192,21 +1202,32 @@ function calculateFeatureCorrelations(data: any[]): Record<string, number> {
     );
   }
   
-  // ========== PHASE 2: FEATURE INTERACTION CORRELATIONS ==========
-  const windGenHourData = data.filter(d => d.wind_gen_hour_interaction !== null);
+  // Wind generation interaction with hour (to detect timing effects)
+  const windGenHourData = data.filter(d => d.wind_hour_interaction !== null);
   if (windGenHourData.length > 100) {
     correlations.windGenHourInteraction = calculateCorrelation(
-      windGenHourData.map(d => d.wind_gen_hour_interaction),
+      windGenHourData.map(d => d.wind_hour_interaction),
       windGenHourData.map(d => d.pool_price)
     );
   }
   
+  // Temperature × Demand interaction
   const tempDemandData = data.filter(d => d.temp_demand_interaction !== null);
   if (tempDemandData.length > 100) {
     correlations.tempDemandInteraction = calculateCorrelation(
       tempDemandData.map(d => d.temp_demand_interaction),
       tempDemandData.map(d => d.pool_price)
     );
+  }
+  
+  // ========== PHASE 7: PRICE MOMENTUM CORRELATIONS ==========
+  const momentum1hData = data.filter(d => d.price_momentum_1h !== null);
+  if (momentum1hData.length > 100) {
+    correlations.priceMomentum1h = calculateCorrelation(
+      momentum1hData.map(d => d.price_momentum_1h),
+      momentum1hData.map(d => d.pool_price)
+    );
+    console.log(`Price momentum 1h correlation: ${correlations.priceMomentum1h.toFixed(4)} (${momentum1hData.length} samples)`);
   }
   
   return correlations;

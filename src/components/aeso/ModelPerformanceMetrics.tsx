@@ -68,9 +68,28 @@ export const ModelPerformanceMetrics = ({ performance }: ModelPerformanceMetrics
               <p className="text-xs text-muted-foreground">R² Score</p>
               <p className="text-lg font-semibold">{(performance.rSquared * 100).toFixed(1)}%</p>
             </div>
+        </div>
+
+        {Object.keys(performance.regimePerformance || {}).length > 0 && (
+          <div className="border-t pt-4 mt-2">
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Regime-Specific Performance (Phase 7)
+            </h4>
+            <div className="space-y-2">
+              {Object.entries(performance.regimePerformance).map(([regime, metrics]: [string, any]) => (
+                <div key={regime} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground capitalize">{regime.replace('_', ' ')}</span>
+                  <span className="font-medium">
+                    MAE: ${metrics.mae.toFixed(2)} ({metrics.sample_count} samples)
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          
-          {(performance.prediction_interval_80 || performance.prediction_interval_95) && (
+        )}
+        
+        {(performance.prediction_interval_80 || performance.prediction_interval_95) && (
             <div className="border-t pt-4 mt-2">
               <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
