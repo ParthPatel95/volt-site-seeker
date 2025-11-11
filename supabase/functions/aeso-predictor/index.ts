@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     console.log('🚀 Starting AESO price prediction with XGBoost model...');
     console.log(`⏰ Current time: ${new Date().toISOString()}`);
 
-    // ========== LOAD TRAINED MODEL PARAMETERS ==========
+    // ========== LOAD TRAINED MODEL PARAMETERS WITH REGIME MODELS ==========
     console.log('📥 Loading trained model parameters...');
     const { data: modelParams, error: paramsError } = await supabase
       .from('aeso_model_parameters')
@@ -48,13 +48,19 @@ Deno.serve(async (req) => {
     const featureCorrelations = modelParams.feature_correlations || {};
     const featureStats = modelParams.feature_statistics || {};
     const featureScaling = modelParams.feature_scaling || {};
-    const regimeThresholds = featureCorrelations.regimes || {};
+    const regimeThresholds = featureCorrelations.regime_thresholds || {
+      normal_max: 100,
+      elevated_max: 200,
+      spike_min: 200
+    };
+    const regimeModels = featureCorrelations.regime_models || {};
     const ensembleWeights = featureCorrelations.ensemble_weights || {};
     const outlierThreshold = featureCorrelations.outlier_threshold || 200;
 
     console.log(`✅ Loaded model version: ${modelParams.model_version}`);
     console.log(`📊 Feature correlations loaded: ${Object.keys(featureCorrelations).length} features`);
-    console.log(`🎯 Regime thresholds: High Wind=${regimeThresholds.highWindThreshold}, Peak Demand=${regimeThresholds.peakDemandThreshold}`);
+    console.log(`🎯 Regime Thresholds: Normal <$${regimeThresholds.normal_max}, Elevated $${regimeThresholds.normal_max}-$${regimeThresholds.elevated_max}, Spike >$${regimeThresholds.spike_min}`);
+    console.log(`📊 Regime Models: ${Object.keys(regimeModels).join(', ') || 'none available'}`);
 
     // Get the latest model performance data
     const { data: modelPerf, error: perfError } = await supabase
@@ -149,20 +155,39 @@ Deno.serve(async (req) => {
         horizon
       );
 
-      // Detect market regime
-      const regime = detectRegime(currentConditions, regimeThresholds);
-      console.log(`  Regime: ${regime}`);
+      // ========== DETECT REGIME AND SELECT MODEL ==========
+      const spikeDetection = detectSpikeIndicators(currentConditions, featureStats);
+      const selectedRegime = spikeDetection.regimePrediction;
+      
+      console.log(`  🎯 Spike Detection: ${spikeDetection.confidence}% confidence, Regime: ${selectedRegime}`);
+      console.log(`  Indicators: ${spikeDetection.indicators.join(', ') || 'none'}`);
+      
+      // Select regime-specific model or fallback to main model
+      let selectedModel = regimeModels[selectedRegime];
+      let modelCorrelations = featureCorrelations;
+      let modelStats = featureStats;
+      let modelParams_xgb = xgboostParams;
+      
+      if (selectedModel) {
+        modelCorrelations = selectedModel.correlations || featureCorrelations;
+        modelStats = selectedModel.stats || featureStats;
+        modelParams_xgb = selectedModel.xgboostParams || xgboostParams;
+        console.log(`  ✅ Using ${selectedRegime} regime model (trained on ${selectedModel.trainSize} samples)`);
+      } else {
+        console.log(`  ⚠️ No ${selectedRegime} regime model, using main model`);
+      }
 
-      // Make prediction using XGBoost model
+      // Make prediction using selected regime model
       const predictedPrice = predictPriceWithXGBoost(
         historicalData,
         currentConditions,
-        featureCorrelations,
-        featureStats,
+        modelCorrelations,
+        modelStats,
         featureCorrelations.lagged || {},
-        regime,
-        xgboostParams,
-        featureScaling
+        selectedRegime,
+        modelParams_xgb,
+        featureScaling,
+        spikeDetection
       );
 
       console.log(`  Predicted: $${predictedPrice.toFixed(2)}/MWh`);
@@ -179,18 +204,21 @@ Deno.serve(async (req) => {
         predicted_price: Math.round(predictedPrice * 100) / 100,
         confidence_lower: Math.round(confidenceLower * 100) / 100,
         confidence_upper: Math.round(confidenceUpper * 100) / 100,
-        confidence_score: Math.max(0.5, 1 - (horizon / 48)), // Decrease confidence with horizon
+        confidence_score: Math.max(0.5, 1 - (horizon / 48)),
         horizon_hours: horizon,
         model_version: modelParams.model_version,
         features_used: {
-          regime,
+          regime: selectedRegime,
+          spikeRisk: spikeDetection.confidence,
+          spikeIndicators: spikeDetection.indicators,
           hour: currentConditions.hour_of_day,
           dayOfWeek: currentConditions.day_of_week,
           windGen: currentConditions.generation_wind,
           demand: currentConditions.ail_mw,
           priceLag1h: currentConditions.price_lag_1h,
           avgTemp: ((currentConditions.temperature_calgary || 0) + (currentConditions.temperature_edmonton || 0)) / 2,
-          enhancedFeaturesUsed: recordsWithLags > 0
+          enhancedFeaturesUsed: recordsWithLags > 0,
+          regimeModelUsed: !!selectedModel
         }
       });
     }
@@ -376,22 +404,6 @@ function getSeasonFromMonth(month: number): string {
   return 'winter';
 }
 
-function detectRegime(dataPoint: any, thresholds: any): string {
-  if (dataPoint.generation_wind !== null && dataPoint.generation_wind > (thresholds.highWindThreshold || 2000)) {
-    return 'high_wind';
-  }
-  
-  if (dataPoint.ail_mw !== null && dataPoint.ail_mw > (thresholds.peakDemandThreshold || 11000)) {
-    return 'peak_demand';
-  }
-  
-  if (dataPoint.ail_mw !== null && dataPoint.ail_mw < (thresholds.lowDemandThreshold || 8000)) {
-    return 'low_demand';
-  }
-  
-  return 'base';
-}
-
 function predictPriceWithXGBoost(
   historicalData: any[],
   currentConditions: any,
@@ -400,7 +412,8 @@ function predictPriceWithXGBoost(
   laggedFeatures: any,
   regime: string,
   params: any,
-  featureScaling?: any
+  featureScaling?: any,
+  spikeDetection?: any
 ): number {
   // Initialize with mean price
   let prediction = featureStats.avgPrice || 50;
@@ -454,13 +467,17 @@ function predictPriceWithXGBoost(
   // Apply regime-specific multipliers
   prediction *= getRegimeMultiplier(regime, currentConditions);
   
-  // Spike detection
-  const spikeDetection = detectSpikeIndicators(currentConditions, featureStats);
-  
-  if (spikeDetection.isSpikeLikely && spikeDetection.confidence > 60) {
-    const spikeMultiplier = 1 + (spikeDetection.confidence / 100) * 0.5;
+  // ========== PHASE 2: APPLY SPIKE DETECTION ADJUSTMENTS ==========
+  if (spikeDetection && spikeDetection.regimePrediction === 'spike') {
+    // Apply spike premium based on confidence
+    const spikeMultiplier = 1 + (spikeDetection.confidence / 100) * 0.6; // Up to 60% increase
     prediction *= spikeMultiplier;
-    console.log(`  ⚠️ Spike detected! Confidence: ${spikeDetection.confidence}%, Indicators: ${spikeDetection.indicators.join(', ')}`);
+    console.log(`  ⚠️ Spike adjustment: ${(spikeMultiplier * 100 - 100).toFixed(1)}% increase`);
+  } else if (spikeDetection && spikeDetection.regimePrediction === 'elevated') {
+    // Moderate increase for elevated regime
+    const elevatedMultiplier = 1 + (spikeDetection.confidence / 100) * 0.3; // Up to 30% increase
+    prediction *= elevatedMultiplier;
+    console.log(`  📈 Elevated regime adjustment: ${(elevatedMultiplier * 100 - 100).toFixed(1)}% increase`);
   }
   
   // Bound predictions (AESO can spike to $999 but be conservative)
@@ -603,50 +620,111 @@ function getRegimeMultiplier(regime: string, conditions: any): number {
   }
 }
 
+// ========== PHASE 2: ENHANCED SPIKE DETECTION (Matches trainer) ==========
 function detectSpikeIndicators(conditions: any, stats: any): { 
   isSpikeLikely: boolean; 
   indicators: string[];
   confidence: number;
+  regimePrediction: 'normal' | 'elevated' | 'spike';
 } {
   const indicators: string[] = [];
   let riskScore = 0;
   
-  // High demand
+  // 1. SUPPLY-DEMAND IMBALANCE (Most critical)
   const reserveMargin = (conditions.ail_mw || 0) / (stats.avgDemand || 10000);
-  if (reserveMargin > 1.1) {
-    indicators.push('high_demand');
-    riskScore += 30;
+  const totalGeneration = (conditions.generation_wind || 0) + (conditions.generation_solar || 0) + 
+                          (conditions.generation_gas || 0) + (conditions.generation_coal || 0) + 
+                          (conditions.generation_hydro || 0);
+  const supplyShortfall = (conditions.ail_mw || 0) - totalGeneration;
+  
+  if (supplyShortfall > 500) {
+    indicators.push('supply_deficit');
+    riskScore += 40;
   }
   
-  // Extreme weather
-  const avgTemp = ((conditions.temperature_calgary || 15) + (conditions.temperature_edmonton || 15)) / 2;
-  if (avgTemp < -25 || avgTemp > 32) {
-    indicators.push('extreme_weather');
+  if (reserveMargin > 1.15) {
+    indicators.push('very_high_demand');
+    riskScore += 35;
+  } else if (reserveMargin > 1.1) {
+    indicators.push('high_demand');
     riskScore += 25;
   }
   
-  // Low wind
-  if ((conditions.generation_wind || 0) < 500) {
-    indicators.push('low_wind');
+  // 2. EXTREME WEATHER CONDITIONS
+  const avgTemp = ((conditions.temperature_calgary || 15) + (conditions.temperature_edmonton || 15)) / 2;
+  if (avgTemp < -30) {
+    indicators.push('extreme_cold');
+    riskScore += 30;
+  } else if (avgTemp > 35) {
+    indicators.push('extreme_heat');
+    riskScore += 30;
+  } else if (avgTemp < -25 || avgTemp > 32) {
+    indicators.push('extreme_weather');
     riskScore += 20;
   }
   
-  // High gas prices
-  if ((conditions.natural_gas_price || 0) > 4.0) {
-    indicators.push('high_gas_price');
+  // 3. LOW RENEWABLE GENERATION
+  const windCapacity = 4500;
+  const windUtilization = (conditions.generation_wind || 0) / windCapacity;
+  
+  if (windUtilization < 0.1 && reserveMargin > 1.05) {
+    indicators.push('low_wind_high_demand');
+    riskScore += 25;
+  } else if ((conditions.generation_wind || 0) < 300) {
+    indicators.push('very_low_wind');
     riskScore += 15;
   }
   
-  // Peak hour + high demand
+  // 4. HIGH FUEL COSTS
+  if ((conditions.natural_gas_price || 0) > 5.0) {
+    indicators.push('very_high_gas_price');
+    riskScore += 20;
+  } else if ((conditions.natural_gas_price || 0) > 4.0) {
+    indicators.push('high_gas_price');
+    riskScore += 12;
+  }
+  
+  // 5. PEAK TIMING + DEMAND
   const hour = new Date(conditions.timestamp || Date.now()).getHours();
-  if ((hour >= 7 && hour <= 22) && reserveMargin > 1.05) {
+  const isPeakHour = (hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 20);
+  
+  if (isPeakHour && reserveMargin > 1.08) {
     indicators.push('peak_hour_high_demand');
+    riskScore += 18;
+  } else if (isPeakHour) {
+    indicators.push('peak_hour');
+    riskScore += 8;
+  }
+  
+  // 6. PRICE MOMENTUM & VOLATILITY
+  if ((conditions.price_momentum_3h || 0) > 50) {
+    indicators.push('strong_upward_momentum');
+    riskScore += 15;
+  }
+  
+  if ((conditions.price_volatility_24h || 0) > 80) {
+    indicators.push('high_volatility');
     riskScore += 10;
   }
   
+  // 7. TRANSMISSION CONSTRAINTS
+  if ((conditions.net_imports || 0) < -800) {
+    indicators.push('exporting_heavily');
+    riskScore += 12;
+  }
+  
+  // Determine regime prediction
+  let regimePrediction: 'normal' | 'elevated' | 'spike' = 'normal';
+  if (riskScore >= 70) {
+    regimePrediction = 'spike';
+  } else if (riskScore >= 40) {
+    regimePrediction = 'elevated';
+  }
+  
   return {
-    isSpikeLikely: riskScore >= 50,
+    isSpikeLikely: riskScore >= 70,
     indicators,
-    confidence: Math.min(100, riskScore)
+    confidence: Math.min(100, riskScore),
+    regimePrediction
   };
 }

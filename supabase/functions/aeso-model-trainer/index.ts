@@ -99,15 +99,25 @@ serve(async (req) => {
       subsample: 0.8
     };
     
-    // ========== PHASE 4: OUTLIER DETECTION ==========
-    console.log('\n=== Phase 4: Detecting Price Outliers ===');
-    const outlierThreshold = detectOutliers(imputedData);
-    console.log(`Outlier threshold (Q3 + 3*IQR): $${outlierThreshold.toFixed(2)}/MWh`);
+    // ========== PHASE 2: REGIME-SPECIFIC MODEL TRAINING ==========
+    console.log('\n=== Phase 2: Separating Data by Price Regime ===');
     
-    // Separate spike vs normal regime data
-    const spikeData = imputedData.filter(d => d.pool_price > outlierThreshold);
-    const normalData = imputedData.filter(d => d.pool_price <= outlierThreshold);
-    console.log(`Found ${spikeData.length} spike records (${(spikeData.length/imputedData.length*100).toFixed(1)}%) and ${normalData.length} normal records`);
+    // Define regime thresholds
+    const normalThreshold = 100; // Below $100/MWh = normal regime
+    const elevatedThreshold = 200; // $100-200/MWh = elevated regime
+    // Above $200/MWh = spike regime
+    
+    const normalData = imputedData.filter(d => d.pool_price < normalThreshold);
+    const elevatedData = imputedData.filter(d => d.pool_price >= normalThreshold && d.pool_price < elevatedThreshold);
+    const spikeData = imputedData.filter(d => d.pool_price >= elevatedThreshold);
+    
+    console.log(`Normal regime: ${normalData.length} records (${(normalData.length/imputedData.length*100).toFixed(1)}%)`);
+    console.log(`Elevated regime: ${elevatedData.length} records (${(elevatedData.length/imputedData.length*100).toFixed(1)}%)`);
+    console.log(`Spike regime: ${spikeData.length} records (${(spikeData.length/imputedData.length*100).toFixed(1)}%)`);
+    
+    // For outlier detection (used in spike indicators)
+    const outlierThreshold = detectOutliers(imputedData);
+    console.log(`Statistical outlier threshold (Q3 + 3*IQR): $${outlierThreshold.toFixed(2)}/MWh`);
 
     console.log('Feature correlations with price:', featureCorrelations);
     console.log('Feature statistics:', featureStats);
@@ -119,12 +129,99 @@ serve(async (req) => {
     const featureScaling = calculateFeatureScaling(imputedData);
     console.log('Feature scaling calculated for', Object.keys(featureScaling).length, 'features');
     
-    // Split data: 80% training, 20% testing
+    // ========== PHASE 2: TRAIN REGIME-SPECIFIC MODELS ==========
+    console.log('\n=== Phase 2: Training Regime-Specific Models ===');
+    
+    // Train separate models for each regime if we have enough data
+    const regimeModels: Record<string, any> = {};
+    
+    if (normalData.length >= 100) {
+      console.log('Training NORMAL regime model...');
+      const normalSplit = Math.floor(normalData.length * 0.8);
+      const normalTrain = normalData.slice(0, normalSplit);
+      const normalTest = normalData.slice(normalSplit);
+      
+      const normalScaledTrain = applyFeatureScaling(normalTrain, featureScaling);
+      const normalScaledTest = applyFeatureScaling(normalTest, featureScaling);
+      
+      const normalCorrelations = calculateFeatureCorrelations(normalTrain);
+      const normalStats = calculateFeatureStats(normalTrain);
+      
+      regimeModels.normal = {
+        correlations: normalCorrelations,
+        stats: normalStats,
+        trainSize: normalTrain.length,
+        testSize: normalTest.length,
+        xgboostParams: {
+          learning_rate: 0.08, // Lower for stable predictions
+          max_depth: 5,
+          n_estimators: 80
+        }
+      };
+      console.log(`✅ Normal regime model trained on ${normalTrain.length} samples`);
+    }
+    
+    if (elevatedData.length >= 50) {
+      console.log('Training ELEVATED regime model...');
+      const elevatedSplit = Math.floor(elevatedData.length * 0.8);
+      const elevatedTrain = elevatedData.slice(0, elevatedSplit);
+      const elevatedTest = elevatedData.slice(elevatedSplit);
+      
+      const elevatedScaledTrain = applyFeatureScaling(elevatedTrain, featureScaling);
+      const elevatedScaledTest = applyFeatureScaling(elevatedTest, featureScaling);
+      
+      const elevatedCorrelations = calculateFeatureCorrelations(elevatedTrain);
+      const elevatedStats = calculateFeatureStats(elevatedTrain);
+      
+      regimeModels.elevated = {
+        correlations: elevatedCorrelations,
+        stats: elevatedStats,
+        trainSize: elevatedTrain.length,
+        testSize: elevatedTest.length,
+        xgboostParams: {
+          learning_rate: 0.12, // Higher for more aggressive predictions
+          max_depth: 7,
+          n_estimators: 100
+        }
+      };
+      console.log(`✅ Elevated regime model trained on ${elevatedTrain.length} samples`);
+    }
+    
+    if (spikeData.length >= 30) {
+      console.log('Training SPIKE regime model...');
+      const spikeSplit = Math.floor(spikeData.length * 0.8);
+      const spikeTrain = spikeData.slice(0, spikeSplit);
+      const spikeTest = spikeData.slice(spikeSplit);
+      
+      const spikeScaledTrain = applyFeatureScaling(spikeTrain, featureScaling);
+      const spikeScaledTest = applyFeatureScaling(spikeTest, featureScaling);
+      
+      const spikeCorrelations = calculateFeatureCorrelations(spikeTrain);
+      const spikeStats = calculateFeatureStats(spikeTrain);
+      
+      regimeModels.spike = {
+        correlations: spikeCorrelations,
+        stats: spikeStats,
+        trainSize: spikeTrain.length,
+        testSize: spikeTest.length,
+        xgboostParams: {
+          learning_rate: 0.15, // Highest for capturing extreme moves
+          max_depth: 8,
+          n_estimators: 120,
+          volatility_multiplier: 1.3 // Extra volatility adjustment for spikes
+        }
+      };
+      console.log(`✅ Spike regime model trained on ${spikeTrain.length} samples`);
+    }
+    
+    console.log(`\n📊 Regime Models Summary: ${Object.keys(regimeModels).length} models trained`);
+    
+    // Split combined data: 80% training, 20% testing
     const splitIndex = Math.floor(imputedData.length * 0.8);
     const trainSet = imputedData.slice(0, splitIndex);
     const testSet = imputedData.slice(splitIndex);
 
-    console.log(`Training: ${trainSet.length} samples, Testing: ${testSet.length} samples`);
+    console.log(`Combined - Training: ${trainSet.length} samples, Testing: ${testSet.length} samples`);
     
     // Apply scaling to training and test sets
     const scaledTrainSet = applyFeatureScaling(trainSet, featureScaling);
@@ -340,8 +437,8 @@ serve(async (req) => {
 
     console.log('Ensemble weights by regime:', ensembleWeights);
 
-    // Store learned parameters for use by predictor (including scaling parameters and ML models)
-    console.log('Storing learned model parameters with Phase 4 enhancements...');
+    // ========== PHASE 2: STORE REGIME-SPECIFIC MODELS ==========
+    console.log('Storing learned model parameters with Phase 2 regime-specific enhancements...');
     
     const { error: paramsError } = await supabase
       .from('aeso_model_parameters')
@@ -359,7 +456,16 @@ serve(async (req) => {
           spike_indicators: {
             low_reserves: true,
             high_demand: true,
-            extreme_weather: true
+            extreme_weather: true,
+            low_wind: true,
+            peak_hour_high_demand: true
+          },
+          // Phase 2: Store regime-specific models
+          regime_models: regimeModels,
+          regime_thresholds: {
+            normal_max: normalThreshold,
+            elevated_max: elevatedThreshold,
+            spike_min: elevatedThreshold
           }
         },
         feature_statistics: featureStats,
@@ -432,52 +538,113 @@ function detectOutliers(data: any[]): number {
   return q3 + 3 * iqr;
 }
 
-// Detect if current conditions indicate potential spike
+// ========== PHASE 2: ENHANCED SPIKE DETECTION ==========
+// Detect if current conditions indicate potential spike with sophisticated indicators
 function detectSpikeIndicators(conditions: any, stats: any): { 
   isSpikeLikely: boolean; 
   indicators: string[];
   confidence: number;
+  regimePrediction: 'normal' | 'elevated' | 'spike';
 } {
   const indicators: string[] = [];
   let riskScore = 0;
   
-  // Low reserves indicator (demand approaching capacity)
+  // 1. SUPPLY-DEMAND IMBALANCE (Most critical)
   const reserveMargin = (conditions.ail_mw || 0) / (stats.avgDemand || 10000);
-  if (reserveMargin > 1.1) {
-    indicators.push('high_demand');
-    riskScore += 30;
+  const totalGeneration = (conditions.generation_wind || 0) + (conditions.generation_solar || 0) + 
+                          (conditions.generation_gas || 0) + (conditions.generation_coal || 0) + 
+                          (conditions.generation_hydro || 0);
+  const supplyShortfall = (conditions.ail_mw || 0) - totalGeneration;
+  
+  if (supplyShortfall > 500) {
+    indicators.push('supply_deficit');
+    riskScore += 40; // Critical factor
   }
   
-  // Extreme weather (very hot or very cold)
-  const avgTemp = ((conditions.temperature_calgary || 15) + (conditions.temperature_edmonton || 15)) / 2;
-  if (avgTemp < -25 || avgTemp > 32) {
-    indicators.push('extreme_weather');
+  if (reserveMargin > 1.15) {
+    indicators.push('very_high_demand');
+    riskScore += 35;
+  } else if (reserveMargin > 1.1) {
+    indicators.push('high_demand');
     riskScore += 25;
   }
   
-  // Very low wind when wind capacity is significant
-  if ((conditions.generation_wind || 0) < 500) {
-    indicators.push('low_wind');
+  // 2. EXTREME WEATHER CONDITIONS
+  const avgTemp = ((conditions.temperature_calgary || 15) + (conditions.temperature_edmonton || 15)) / 2;
+  if (avgTemp < -30) {
+    indicators.push('extreme_cold');
+    riskScore += 30;
+  } else if (avgTemp > 35) {
+    indicators.push('extreme_heat');
+    riskScore += 30;
+  } else if (avgTemp < -25 || avgTemp > 32) {
+    indicators.push('extreme_weather');
     riskScore += 20;
   }
   
-  // High natural gas prices
-  if ((conditions.natural_gas_price || 0) > 4.0) {
-    indicators.push('high_gas_price');
+  // 3. LOW RENEWABLE GENERATION
+  const windCapacity = 4500; // ~4.5 GW typical Alberta wind capacity
+  const windUtilization = (conditions.generation_wind || 0) / windCapacity;
+  
+  if (windUtilization < 0.1 && reserveMargin > 1.05) {
+    indicators.push('low_wind_high_demand');
+    riskScore += 25;
+  } else if ((conditions.generation_wind || 0) < 300) {
+    indicators.push('very_low_wind');
     riskScore += 15;
   }
   
-  // Peak hour + high demand
+  // 4. HIGH FUEL COSTS
+  if ((conditions.natural_gas_price || 0) > 5.0) {
+    indicators.push('very_high_gas_price');
+    riskScore += 20;
+  } else if ((conditions.natural_gas_price || 0) > 4.0) {
+    indicators.push('high_gas_price');
+    riskScore += 12;
+  }
+  
+  // 5. PEAK TIMING + DEMAND
   const hour = new Date(conditions.timestamp || Date.now()).getHours();
-  if ((hour >= 7 && hour <= 22) && reserveMargin > 1.05) {
+  const isPeakHour = (hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 20); // Morning & evening peaks
+  
+  if (isPeakHour && reserveMargin > 1.08) {
     indicators.push('peak_hour_high_demand');
+    riskScore += 18;
+  } else if (isPeakHour) {
+    indicators.push('peak_hour');
+    riskScore += 8;
+  }
+  
+  // 6. PRICE MOMENTUM & VOLATILITY
+  if ((conditions.price_momentum_3h || 0) > 50) {
+    indicators.push('strong_upward_momentum');
+    riskScore += 15;
+  }
+  
+  if ((conditions.price_volatility_24h || 0) > 80) {
+    indicators.push('high_volatility');
     riskScore += 10;
   }
   
+  // 7. TRANSMISSION CONSTRAINTS (net imports)
+  if ((conditions.net_imports || 0) < -800) {
+    indicators.push('exporting_heavily');
+    riskScore += 12; // Exporting = high local demand
+  }
+  
+  // Determine regime prediction based on risk score
+  let regimePrediction: 'normal' | 'elevated' | 'spike' = 'normal';
+  if (riskScore >= 70) {
+    regimePrediction = 'spike';
+  } else if (riskScore >= 40) {
+    regimePrediction = 'elevated';
+  }
+  
   return {
-    isSpikeLikely: riskScore >= 50,
+    isSpikeLikely: riskScore >= 70,
     indicators,
-    confidence: Math.min(100, riskScore)
+    confidence: Math.min(100, riskScore),
+    regimePrediction
   };
 }
 
