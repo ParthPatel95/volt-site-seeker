@@ -114,16 +114,30 @@ serve(async (req) => {
 
       processedCount++;
 
-      // Batch update every 1000 records
-      if (updates.length >= 1000) {
-        console.log(`Updating batch at record ${processedCount}...`);
+      // Batch update every 100 records for better performance
+      if (updates.length >= 100) {
+        console.log(`Updating batch of ${updates.length} records at ${processedCount}...`);
         
-        for (const update of updates) {
-          await supabase
-            .from('aeso_training_data')
-            .update(update)
-            .eq('id', update.id);
-        }
+        // Use Promise.all for parallel updates (much faster)
+        await Promise.all(
+          updates.map(update => 
+            supabase
+              .from('aeso_training_data')
+              .update({
+                price_lag_1h: update.price_lag_1h,
+                price_lag_2h: update.price_lag_2h,
+                price_lag_3h: update.price_lag_3h,
+                price_lag_24h: update.price_lag_24h,
+                price_rolling_avg_24h: update.price_rolling_avg_24h,
+                price_rolling_std_24h: update.price_rolling_std_24h,
+                price_momentum_1h: update.price_momentum_1h,
+                price_momentum_3h: update.price_momentum_3h,
+                wind_hour_interaction: update.wind_hour_interaction,
+                temp_demand_interaction: update.temp_demand_interaction
+              })
+              .eq('id', update.id)
+          )
+        );
         
         updates.length = 0; // Clear array
       }
@@ -133,12 +147,25 @@ serve(async (req) => {
     if (updates.length > 0) {
       console.log(`Updating final batch of ${updates.length} records...`);
       
-      for (const update of updates) {
-        await supabase
-          .from('aeso_training_data')
-          .update(update)
-          .eq('id', update.id);
-      }
+      await Promise.all(
+        updates.map(update => 
+          supabase
+            .from('aeso_training_data')
+            .update({
+              price_lag_1h: update.price_lag_1h,
+              price_lag_2h: update.price_lag_2h,
+              price_lag_3h: update.price_lag_3h,
+              price_lag_24h: update.price_lag_24h,
+              price_rolling_avg_24h: update.price_rolling_avg_24h,
+              price_rolling_std_24h: update.price_rolling_std_24h,
+              price_momentum_1h: update.price_momentum_1h,
+              price_momentum_3h: update.price_momentum_3h,
+              wind_hour_interaction: update.wind_hour_interaction,
+              temp_demand_interaction: update.temp_demand_interaction
+            })
+            .eq('id', update.id)
+        )
+      );
     }
 
     console.log(`✅ Enhanced features calculated for ${processedCount} records`);
