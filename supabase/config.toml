@@ -100,6 +100,9 @@ verify_jwt = false
 [functions.aeso-scheduled-retraining]
 verify_jwt = false
 
+[functions.aeso-data-quality-analyzer]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

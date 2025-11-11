@@ -20,11 +20,11 @@ serve(async (req) => {
 
     console.log('Starting XGBoost-style gradient boosting training with enhanced features...');
 
-    // Phase 7: Fetch RECENT VALID training data (last 90 days) for current market conditions
+    // Phase 8: Fetch EXTENDED training data (last 180 days) for better pattern recognition
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 90);
+    cutoffDate.setDate(cutoffDate.getDate() - 180);
     
-    console.log(`🔧 Phase 7: Fetching VALID training data from ${cutoffDate.toISOString()} onwards...`);
+    console.log(`🔧 Phase 8: Fetching VALID training data from ${cutoffDate.toISOString()} onwards (extended window)...`);
     let trainingData: any[] = [];
     let page = 0;
     const pageSize = 1000;
@@ -63,8 +63,7 @@ serve(async (req) => {
       throw new Error(`Insufficient training data: ${trainingData?.length || 0} records (need at least 24 hours)`);
     }
 
-    console.log(`✅ Phase 7: Loaded ${trainingData.length} VALID records with built-in enhanced features`);
-    console.log('Sample data point (first):', JSON.stringify(trainingData[0], null, 2));
+    console.log(`✅ Phase 8: Loaded ${trainingData.length} VALID records with enhanced features`);
     
     // Check if enhanced features are actually present
     const recordsWithLags = trainingData.filter(d => d.price_lag_1h !== null).length;
@@ -76,8 +75,29 @@ serve(async (req) => {
       throw new Error('Enhanced features missing - please run aeso-enhanced-feature-calculator first');
     }
 
-    // Phase 7: Enhanced features are now built into training_data table
-    const mergedData = trainingData;
+    // Phase 8: OUTLIER DETECTION & REMOVAL - Remove extreme anomalies that hurt model
+    console.log('\n🔍 Phase 8: Detecting and filtering extreme outliers...');
+    const priceData = trainingData.map(d => d.pool_price).sort((a, b) => a - b);
+    const q1 = priceData[Math.floor(priceData.length * 0.25)];
+    const q3 = priceData[Math.floor(priceData.length * 0.75)];
+    const iqr = q3 - q1;
+    const extremeOutlierThreshold = q3 + 4 * iqr; // More aggressive: 4*IQR instead of 3*IQR
+    
+    console.log(`Price distribution: Q1=$${q1}, Q3=$${q3}, IQR=$${iqr.toFixed(2)}`);
+    console.log(`Extreme outlier threshold: $${extremeOutlierThreshold.toFixed(2)}/MWh`);
+    
+    // Keep extreme spikes but cap them to prevent model distortion
+    const cleanedData = trainingData.map(d => {
+      if (d.pool_price > extremeOutlierThreshold) {
+        return { ...d, pool_price: extremeOutlierThreshold }; // Cap extreme values
+      }
+      return d;
+    });
+    
+    const cappedCount = trainingData.filter(d => d.pool_price > extremeOutlierThreshold).length;
+    console.log(`✅ Capped ${cappedCount} extreme outliers (${(cappedCount/trainingData.length*100).toFixed(2)}%)`);
+    
+    const mergedData = cleanedData;
 
     // ========== DATA IMPUTATION: Fill Missing Features ==========
     console.log('\n=== Imputing Missing Features (Wind, Demand, Temperature) ===');
@@ -90,13 +110,15 @@ serve(async (req) => {
     const laggedFeatures = calculateLaggedFeatures(imputedData);
     const regimeThresholds = calculateRegimeThresholds(imputedData);
     
-    // XGBoost hyperparameters
+    // XGBoost hyperparameters - OPTIMIZED for energy price prediction
     const xgboostParams = {
-      learning_rate: 0.1,
-      max_depth: 6,
-      min_samples_split: 10,
-      n_estimators: 100,
-      subsample: 0.8
+      learning_rate: 0.05, // Slower learning for better generalization
+      max_depth: 8, // Deeper trees for complex patterns
+      min_samples_split: 15, // Prevent overfitting
+      n_estimators: 150, // More estimators for better accuracy
+      subsample: 0.85, // Higher subsample for stability
+      colsample_bytree: 0.8, // Feature sampling
+      gamma: 0.1 // Minimum loss reduction for split
     };
     
     // ========== PHASE 2: REGIME-SPECIFIC MODEL TRAINING ==========
@@ -153,9 +175,10 @@ serve(async (req) => {
         trainSize: normalTrain.length,
         testSize: normalTest.length,
         xgboostParams: {
-          learning_rate: 0.08, // Lower for stable predictions
-          max_depth: 5,
-          n_estimators: 80
+          learning_rate: 0.04, // Lower for stable predictions
+          max_depth: 6,
+          n_estimators: 120,
+          gamma: 0.05
         }
       };
       console.log(`✅ Normal regime model trained on ${normalTrain.length} samples`);
@@ -179,9 +202,10 @@ serve(async (req) => {
         trainSize: elevatedTrain.length,
         testSize: elevatedTest.length,
         xgboostParams: {
-          learning_rate: 0.12, // Higher for more aggressive predictions
-          max_depth: 7,
-          n_estimators: 100
+          learning_rate: 0.08, // Moderate for elevated regime
+          max_depth: 8,
+          n_estimators: 140,
+          gamma: 0.15
         }
       };
       console.log(`✅ Elevated regime model trained on ${elevatedTrain.length} samples`);
@@ -205,10 +229,11 @@ serve(async (req) => {
         trainSize: spikeTrain.length,
         testSize: spikeTest.length,
         xgboostParams: {
-          learning_rate: 0.15, // Highest for capturing extreme moves
-          max_depth: 8,
-          n_estimators: 120,
-          volatility_multiplier: 1.3 // Extra volatility adjustment for spikes
+          learning_rate: 0.12, // Aggressive for spikes
+          max_depth: 10, // Deepest for complex spike patterns
+          n_estimators: 180, // Most estimators for accuracy
+          volatility_multiplier: 1.5, // Higher volatility adjustment
+          gamma: 0.2 // More regularization to avoid overfitting
         }
       };
       console.log(`✅ Spike regime model trained on ${spikeTrain.length} samples`);
