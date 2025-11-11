@@ -598,6 +598,95 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const runPhase7Pipeline = async () => {
+    setLoading(true);
+    try {
+      // Step 1: Calculate Enhanced Features
+      toast({
+        title: "Phase 7: Step 1/3",
+        description: "Calculating enhanced price lag features and interactions...",
+      });
+      
+      const { data: featuresData, error: featuresError } = await supabase.functions.invoke('aeso-enhanced-feature-calculator');
+      
+      if (featuresError) throw new Error(`Feature calculation failed: ${featuresError.message}`);
+      
+      if (featuresData?.success) {
+        toast({
+          title: "✓ Enhanced Features Calculated",
+          description: `Processed ${featuresData.records_processed} records with lag features`,
+        });
+      }
+      
+      // Step 2: Filter Data Quality
+      toast({
+        title: "Phase 7: Step 2/3",
+        description: "Filtering invalid data points (outliers, spikes, zero prices)...",
+      });
+      
+      const { data: qualityData, error: qualityError } = await supabase.functions.invoke('aeso-data-quality-filter');
+      
+      if (qualityError) throw new Error(`Data quality filtering failed: ${qualityError.message}`);
+      
+      if (qualityData?.success) {
+        toast({
+          title: "✓ Data Quality Filtered",
+          description: `Quality score: ${qualityData.quality_score}% (${qualityData.valid_records}/${qualityData.total_records} valid)`,
+        });
+      }
+      
+      // Step 3: Retrain Model
+      toast({
+        title: "Phase 7: Step 3/3",
+        description: "Retraining model with enhanced features and clean data...",
+      });
+      
+      const { data: trainData, error: trainError } = await supabase.functions.invoke('aeso-model-trainer');
+      
+      if (trainError) throw new Error(`Model training failed: ${trainError.message}`);
+      
+      if (trainData?.success) {
+        setModelPerformance({
+          modelVersion: trainData.model_version,
+          mae: trainData.performance.mae,
+          rmse: trainData.performance.rmse,
+          mape: trainData.performance.mape,
+          rSquared: trainData.performance.r_squared,
+          featureImportance: trainData.feature_importance,
+          prediction_interval_80: trainData.performance.prediction_interval_80,
+          prediction_interval_95: trainData.performance.prediction_interval_95,
+          residual_std_dev: trainData.performance.residual_std_dev,
+          regimePerformance: trainData.performance.regime_performance || {}
+        });
+        
+        toast({
+          title: "✅ Phase 7 Complete!",
+          description: `Model Excellence achieved! New accuracy: MAE $${trainData.performance.mae.toFixed(2)}, MAPE ${trainData.performance.mape.toFixed(1)}%, R² ${trainData.performance.r_squared.toFixed(3)}`,
+          duration: 10000,
+        });
+        
+        return {
+          success: true,
+          features: featuresData,
+          quality: qualityData,
+          training: trainData
+        };
+      }
+      
+    } catch (error: any) {
+      console.error('Phase 7 Pipeline error:', error);
+      toast({
+        title: "Phase 7 Pipeline Failed",
+        description: error.message || "Failed to complete the pipeline",
+        variant: "destructive",
+        duration: 10000,
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -620,5 +709,6 @@ export const useAESOPricePrediction = () => {
     getHyperparameterTrials,
     calculateEnhancedFeatures,
     filterDataQuality,
+    runPhase7Pipeline,
   };
 };

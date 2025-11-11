@@ -28,7 +28,8 @@ export const AESOPricePredictionDashboard = () => {
     fetchModelPerformance, 
     collectTrainingData,
     collectWeatherData,
-    validatePredictions
+    validatePredictions,
+    runPhase7Pipeline
   } = useAESOPricePrediction();
   const { pricing } = useAESOData();
   const { toast } = useToast();
@@ -52,6 +53,15 @@ export const AESOPricePredictionDashboard = () => {
 
   const handleValidatePredictions = async () => {
     await validatePredictions();
+  };
+
+  const handleRunPhase7 = async () => {
+    try {
+      await runPhase7Pipeline();
+      await fetchModelPerformance();
+    } catch (error) {
+      console.error('Phase 7 pipeline error:', error);
+    }
   };
 
   const handleExport = () => {
@@ -104,6 +114,10 @@ export const AESOPricePredictionDashboard = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-2">
+            <Button onClick={handleRunPhase7} variant="default" size="sm" disabled={loading} className="flex-1 sm:flex-auto bg-gradient-to-r from-primary to-primary/80">
+              <Brain className="h-4 w-4 sm:mr-2" />
+              <span>{loading ? 'Running Phase 7...' : 'Run Phase 7 Pipeline'}</span>
+            </Button>
             <Button onClick={handleCollectData} variant="outline" size="sm" disabled={loading} className="flex-1 sm:flex-none">
               <RefreshCw className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Update Data</span>
