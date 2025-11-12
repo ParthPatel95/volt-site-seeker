@@ -830,6 +830,23 @@ function predictPriceWithXGBoost(
     gasGen: currentConditions.generation_gas || 0,
     coalGen: currentConditions.generation_coal || 0,
     demand: currentConditions.ail_mw || 0,
+    // NEW: System Marginal Price & Spread (critical market indicators)
+    systemMarginalPrice: currentConditions.system_marginal_price || null,
+    smpSpread: currentConditions.smp_pool_price_spread || null,
+    // NEW: Intertie Flows (imports/exports affect supply)
+    intertieBCFlow: currentConditions.intertie_bc_flow || 0,
+    intertieSaskFlow: currentConditions.intertie_sask_flow || 0,
+    intertieMontanaFlow: currentConditions.intertie_montana_flow || 0,
+    totalInterchangeFlow: currentConditions.total_interchange_flow || 0,
+    // NEW: Operating Reserve (grid stability indicators)
+    operatingReservePrice: currentConditions.operating_reserve_price || null,
+    spinningReserveMW: currentConditions.spinning_reserve_mw || null,
+    supplementalReserveMW: currentConditions.supplemental_reserve_mw || null,
+    // NEW: Generation Outages & Capacity (supply constraints)
+    generationOutagesMW: currentConditions.generation_outages_mw || 0,
+    availableCapacityMW: currentConditions.available_capacity_mw || null,
+    reserveMarginPercent: currentConditions.reserve_margin_percent || null,
+    gridStressScore: currentConditions.grid_stress_score || null,
     // Phase 7: Price lag features (critical for short-term prediction)
     priceLag1h: currentConditions.price_lag_1h || null,
     priceLag2h: currentConditions.price_lag_2h || null,
@@ -1017,6 +1034,64 @@ function buildDecisionTreePrediction(features: any, correlations: any, stats: an
     adjustment -= 3; // Importing = lower prices
   }
   
+  // ========== NEW CRITICAL FEATURES ==========
+  
+  // Grid stress score is a composite indicator (0-100)
+  if (features.gridStressScore !== null && features.gridStressScore !== undefined) {
+    if (features.gridStressScore > 70) {
+      adjustment += 40; // Very high stress = major price increase
+    } else if (features.gridStressScore > 50) {
+      adjustment += 25; // High stress
+    } else if (features.gridStressScore > 30) {
+      adjustment += 10; // Moderate stress
+    }
+  }
+  
+  // SMP-Pool price spread indicates market tightness
+  if (features.smpSpread !== null && features.smpSpread !== undefined) {
+    if (Math.abs(features.smpSpread) > 20) {
+      adjustment += features.smpSpread * 0.5; // Large spreads signal market stress
+    }
+  }
+  
+  // Reserve margin (low margin = tight supply = higher prices)
+  if (features.reserveMarginPercent !== null && features.reserveMarginPercent !== undefined) {
+    if (features.reserveMarginPercent < 5) {
+      adjustment += 50; // Critical: very low reserves
+    } else if (features.reserveMarginPercent < 10) {
+      adjustment += 30; // Low reserves
+    } else if (features.reserveMarginPercent < 15) {
+      adjustment += 15; // Moderate reserves
+    }
+  }
+  
+  // Operating reserve price (high OR price = tight grid)
+  if (features.operatingReservePrice !== null && features.operatingReservePrice !== undefined) {
+    if (features.operatingReservePrice > 100) {
+      adjustment += 25;
+    } else if (features.operatingReservePrice > 50) {
+      adjustment += 12;
+    } else if (features.operatingReservePrice > 20) {
+      adjustment += 5;
+    }
+  }
+  
+  // Generation outages reduce available supply
+  if (features.generationOutagesMW > 2000) {
+    adjustment += (features.generationOutagesMW / 100) * 2; // ~40 for 2000MW
+  } else if (features.generationOutagesMW > 1000) {
+    adjustment += (features.generationOutagesMW / 100); // ~20 for 2000MW
+  }
+  
+  // Intertie flows (total interchange)
+  if (features.totalInterchangeFlow !== null && features.totalInterchangeFlow !== undefined) {
+    if (features.totalInterchangeFlow > 500) {
+      adjustment -= 8; // Importing = lower prices
+    } else if (features.totalInterchangeFlow < -500) {
+      adjustment += 10; // Exporting = higher local prices
+    }
+  }
+  
   return adjustment;
 }
 
@@ -1147,6 +1222,24 @@ function calculateFeatureScaling(data: any[]): Record<string, { mean: number; st
     'generation_gas',
     'generation_coal',
     'ail_mw',
+    // NEW: System Marginal Price features
+    'system_marginal_price',
+    'smp_pool_price_spread',
+    // NEW: Intertie flows
+    'intertie_bc_flow',
+    'intertie_sask_flow',
+    'intertie_montana_flow',
+    'total_interchange_flow',
+    // NEW: Operating reserve
+    'operating_reserve_price',
+    'spinning_reserve_mw',
+    'supplemental_reserve_mw',
+    // NEW: Capacity & outages
+    'generation_outages_mw',
+    'available_capacity_mw',
+    'reserve_margin_percent',
+    'grid_stress_score',
+    // Existing enhanced features
     'natural_gas_price',
     'natural_gas_price_lag_1d',
     'natural_gas_price_lag_7d',

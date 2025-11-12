@@ -787,23 +787,38 @@ async function fetchAESOData() {
     }
   }
 
-  const [poolResp, smpResp, loadResp] = await Promise.allSettled([
+  // Fetch all AESO market data in parallel including new enhanced features
+  const [poolResp, smpResp, loadResp, interchangeResp, orResp, genCapResp] = await Promise.allSettled([
     getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`)),
     getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`)),
-    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`))
+    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`)),
+    getJson(withQuery(`${host}/public/interchangecapability-api/v1/capability/interchangeCapability`)),
+    getJson(withQuery(`${host}/public/operatingreserve-api/v1/reserve/operatingReserve`)),
+    getJson(withQuery(`${host}/public/aiescapacity-api/v1/capacity/aiesCapacity`))
   ]);
 
   let pricing: any | undefined;
   let loadData: any | undefined;
-  let generationMix: any | undefined; // Not provided by these endpoints
+  let generationMix: any | undefined;
+  let systemMarginalPrice: number | undefined;
+  let intertieFlows: any | undefined;
+  let operatingReserve: any | undefined;
+  let generationOutages: any | undefined;
 
-  // Pricing: prefer Pool Price; fallback to SMP
+  // Pricing: prefer Pool Price; also extract SMP separately for spread calculation
   try {
     const poolJson: any = poolResp.status === 'fulfilled' ? poolResp.value : null;
     const smpJson: any = smpResp.status === 'fulfilled' ? smpResp.value : null;
 
     const poolArr: any[] = poolJson?.return?.['Pool Price Report'] || poolJson?.['Pool Price Report'] || [];
     const smpArr: any[] = smpJson?.return?.['System Marginal Price Report'] || smpJson?.['System Marginal Price Report'] || [];
+    
+    // Extract System Marginal Price for analysis
+    const smpValue = pickLastNumber(smpArr, ['system_marginal_price', 'SMP', 'smp']);
+    if (smpValue != null) {
+      systemMarginalPrice = Math.round(smpValue * 100) / 100;
+      console.log('System Marginal Price:', systemMarginalPrice, '$/MWh');
+    }
 
     const pickLastNumber = (arr: any[], fields: string[]) => {
       if (!Array.isArray(arr)) return null;
@@ -854,7 +869,9 @@ async function fetchAESOData() {
         off_peak_price: Math.round(p * 0.4 * 100) / 100,
         market_conditions: p > 100 ? 'high' : p > 50 ? 'normal' : 'low',
         timestamp: new Date().toISOString(),
-        source: current === pickLastNumber(poolArr, ['pool_price']) ? 'aeso_api_poolprice' : 'aeso_api_smp'
+        source: current === pickLastNumber(poolArr, ['pool_price']) ? 'aeso_api_poolprice' : 'aeso_api_smp',
+        system_marginal_price: systemMarginalPrice,
+        smp_spread: systemMarginalPrice != null ? Math.round((p - systemMarginalPrice) * 100) / 100 : null
       };
     }
   } catch (e) {
@@ -961,15 +978,115 @@ async function fetchAESOData() {
     console.error('AESO CSD v2 mix parse error:', e);
   }
 
+  // Parse Interchange (Intertie Flows)
+  try {
+    const json: any = interchangeResp.status === 'fulfilled' ? interchangeResp.value : null;
+    const arr: any[] = json?.return?.['Interchange Capability Report'] || json?.['Interchange Capability Report'] || [];
+    
+    if (Array.isArray(arr) && arr.length) {
+      let bcFlow = 0, saskFlow = 0, montanaFlow = 0;
+      
+      for (const record of arr) {
+        const path = String(record?.path || '').toUpperCase();
+        const actual = parseFloat(String(record?.actual || record?.actual_flow || 0));
+        
+        if (path.includes('BC')) bcFlow += actual;
+        else if (path.includes('SASK')) saskFlow += actual;
+        else if (path.includes('MATL') || path.includes('MONTANA')) montanaFlow += actual;
+      }
+      
+      intertieFlows = {
+        bc_flow: Math.round(bcFlow),
+        sask_flow: Math.round(saskFlow),
+        montana_flow: Math.round(montanaFlow),
+        total_flow: Math.round(bcFlow + saskFlow + montanaFlow),
+        timestamp: new Date().toISOString()
+      };
+      console.log('✅ Intertie flows:', intertieFlows);
+    }
+  } catch (e) {
+    console.error('AESO interchange parse error:', e);
+  }
+
+  // Parse Operating Reserve
+  try {
+    const json: any = orResp.status === 'fulfilled' ? orResp.value : null;
+    const arr: any[] = json?.return?.['Operating Reserve Report'] || json?.['Operating Reserve Report'] || [];
+    
+    if (Array.isArray(arr) && arr.length) {
+      const latest = arr[arr.length - 1];
+      const orPrice = parseFloat(String(latest?.operating_reserve_price || latest?.price || 0));
+      const spinMW = parseFloat(String(latest?.spinning_reserve || latest?.spin || 0));
+      const suppMW = parseFloat(String(latest?.supplemental_reserve || latest?.supp || 0));
+      
+      operatingReserve = {
+        price: Math.round(orPrice * 100) / 100,
+        spinning_mw: Math.round(spinMW),
+        supplemental_mw: Math.round(suppMW),
+        total_mw: Math.round(spinMW + suppMW),
+        timestamp: new Date().toISOString()
+      };
+      console.log('✅ Operating Reserve:', operatingReserve);
+    }
+  } catch (e) {
+    console.error('AESO operating reserve parse error:', e);
+  }
+
+  // Parse Generation Capacity & Outages
+  try {
+    const json: any = genCapResp.status === 'fulfilled' ? genCapResp.value : null;
+    const arr: any[] = json?.return?.['AIES Capacity Report'] || json?.['AIES Capacity Report'] || [];
+    
+    if (Array.isArray(arr) && arr.length) {
+      let totalCapacity = 0;
+      let totalOutages = 0;
+      
+      for (const record of arr) {
+        const maxCap = parseFloat(String(record?.maximum_capability || record?.max_capacity || 0));
+        const avail = parseFloat(String(record?.available || record?.available_capacity || 0));
+        
+        totalCapacity += maxCap;
+        if (avail < maxCap) {
+          totalOutages += (maxCap - avail);
+        }
+      }
+      
+      generationOutages = {
+        total_capacity_mw: Math.round(totalCapacity),
+        outages_mw: Math.round(totalOutages),
+        available_mw: Math.round(totalCapacity - totalOutages),
+        outage_count: arr.filter(r => {
+          const maxCap = parseFloat(String(r?.maximum_capability || 0));
+          const avail = parseFloat(String(r?.available || 0));
+          return avail < maxCap;
+        }).length,
+        timestamp: new Date().toISOString()
+      };
+      console.log('✅ Generation outages:', generationOutages);
+    }
+  } catch (e) {
+    console.error('AESO generation capacity parse error:', e);
+  }
+
   console.log('AESO return summary (APIM)', {
     pricingSource: pricing?.source,
     currentPrice: pricing?.current_price,
+    smp: systemMarginalPrice,
     loadSource: loadData?.source,
     mixSource: generationMix?.source,
-    mixUrl: `${host}/public/currentsupplydemand-api/v2/csd/summary/current`
+    hasIntertie: !!intertieFlows,
+    hasOR: !!operatingReserve,
+    hasOutages: !!generationOutages
   });
 
-  return { pricing, loadData, generationMix };
+  return { 
+    pricing, 
+    loadData, 
+    generationMix,
+    intertieFlows,
+    operatingReserve,
+    generationOutages
+  };
 }
 
 async function fetchMISOData() {

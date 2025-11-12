@@ -46,10 +46,17 @@ serve(async (req) => {
     }
     
     const poolPrice = aesoData.pricing.current_price;
+    const systemMarginalPrice = aesoData.pricing.system_marginal_price;
+    const smpSpread = aesoData.pricing.smp_spread;
     
     console.log('Pool price:', poolPrice);
+    console.log('System Marginal Price:', systemMarginalPrice);
+    console.log('SMP-Pool Spread:', smpSpread);
     console.log('AESO pricing data:', JSON.stringify(aesoData.pricing, null, 2));
-    console.log('AESO load data:', JSON.stringify(aesoData.load, null, 2));
+    console.log('AESO load data:', JSON.stringify(aesoData.loadData, null, 2));
+    console.log('Intertie flows:', JSON.stringify(aesoData.intertieFlows, null, 2));
+    console.log('Operating reserve:', JSON.stringify(aesoData.operatingReserve, null, 2));
+    console.log('Generation outages:', JSON.stringify(aesoData.generationOutages, null, 2));
     
     // Validate pool price exists (can be zero or negative - both are valid market prices)
     if (poolPrice === undefined || poolPrice === null) {
@@ -98,14 +105,33 @@ serve(async (req) => {
 
     // Extract generation mix data
     const generationData = aesoData.generationMix || {};
+    const intertieData = aesoData.intertieFlows || {};
+    const orData = aesoData.operatingReserve || {};
+    const outageData = aesoData.generationOutages || {};
     
     console.log('Generation mix data:', generationData);
     
-    // Create training data record
+    // Calculate grid stress score (0-100)
+    const demand = aesoData.loadData?.current_demand_mw || 0;
+    const availableCapacity = outageData.available_mw || 0;
+    const reserveMargin = availableCapacity > 0 && demand > 0 
+      ? ((availableCapacity - demand) / demand) * 100 
+      : null;
+    
+    const gridStressScore = calculateGridStressScore(
+      poolPrice,
+      reserveMargin,
+      orData.price || 0,
+      outageData.outages_mw || 0
+    );
+    
+    // Create training data record with enhanced features
     const trainingData = {
       timestamp: currentTime.toISOString(),
       pool_price: poolPrice,
-      ail_mw: aesoData.loadData?.current_demand_mw || null,
+      system_marginal_price: systemMarginalPrice,
+      smp_pool_price_spread: smpSpread,
+      ail_mw: demand || null,
       temperature_calgary: calgaryWeather?.temperature || null,
       temperature_edmonton: edmontonWeather?.temperature || null,
       wind_speed: calgaryWeather?.wind_speed || null,
@@ -116,9 +142,26 @@ serve(async (req) => {
       generation_wind: generationData.wind_mw || 0,
       generation_solar: generationData.solar_mw || 0,
       generation_hydro: generationData.hydro_mw || 0,
-      interchange_net: 0,
-      operating_reserve: 0,
-      outage_capacity_mw: 0,
+      // Intertie flows (positive = import, negative = export)
+      intertie_bc_flow: intertieData.bc_flow || 0,
+      intertie_sask_flow: intertieData.sask_flow || 0,
+      intertie_montana_flow: intertieData.montana_flow || 0,
+      total_interchange_flow: intertieData.total_flow || 0,
+      interchange_net: intertieData.total_flow || 0, // Keep for backward compatibility
+      // Operating Reserve
+      operating_reserve_price: orData.price || null,
+      spinning_reserve_mw: orData.spinning_mw || null,
+      supplemental_reserve_mw: orData.supplemental_mw || null,
+      operating_reserve: orData.total_mw || 0, // Keep for backward compatibility
+      // Generation Outages & Capacity
+      generation_outages_mw: outageData.outages_mw || 0,
+      available_capacity_mw: outageData.available_mw || null,
+      outage_capacity_mw: outageData.outages_mw || 0, // Keep for backward compatibility
+      transmission_outages_count: 0, // Will be enhanced in future with transmission API
+      // Market Indicators
+      reserve_margin_percent: reserveMargin,
+      grid_stress_score: gridStressScore,
+      // Temporal features
       is_holiday: isHoliday,
       is_weekend: isWeekend,
       day_of_week: dayOfWeek,
@@ -203,4 +246,42 @@ function calculateSolarIrradiance(cloudCover: number, hour: number): number {
 function calculateOutageCapacity(outages: any): number {
   if (!outages || !Array.isArray(outages)) return 0;
   return outages.reduce((sum: number, outage: any) => sum + (outage.capacity || 0), 0);
+}
+
+function calculateGridStressScore(
+  poolPrice: number,
+  reserveMargin: number | null,
+  orPrice: number,
+  outagesMW: number
+): number {
+  // Grid stress score (0-100): combines price, reserve margin, OR price, outages
+  let score = 0;
+  
+  // Price component (0-40 points): higher price = more stress
+  if (poolPrice > 200) score += 40;
+  else if (poolPrice > 100) score += 30;
+  else if (poolPrice > 50) score += 15;
+  else if (poolPrice > 20) score += 5;
+  
+  // Reserve margin component (0-30 points): lower margin = more stress
+  if (reserveMargin !== null) {
+    if (reserveMargin < 5) score += 30;
+    else if (reserveMargin < 10) score += 20;
+    else if (reserveMargin < 15) score += 10;
+    else if (reserveMargin < 20) score += 5;
+  }
+  
+  // Operating reserve price component (0-20 points)
+  if (orPrice > 100) score += 20;
+  else if (orPrice > 50) score += 15;
+  else if (orPrice > 20) score += 10;
+  else if (orPrice > 10) score += 5;
+  
+  // Outages component (0-10 points): more outages = more stress
+  if (outagesMW > 2000) score += 10;
+  else if (outagesMW > 1000) score += 7;
+  else if (outagesMW > 500) score += 4;
+  else if (outagesMW > 0) score += 2;
+  
+  return Math.min(100, score);
 }

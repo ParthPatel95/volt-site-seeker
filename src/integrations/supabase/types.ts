@@ -844,6 +844,7 @@ export type Database = {
       aeso_training_data: {
         Row: {
           ail_mw: number | null
+          available_capacity_mw: number | null
           cloud_cover: number | null
           cooling_degree_days: number | null
           created_at: string | null
@@ -852,19 +853,25 @@ export type Database = {
           generation_coal: number | null
           generation_gas: number | null
           generation_hydro: number | null
+          generation_outages_mw: number | null
           generation_solar: number | null
           generation_wind: number | null
+          grid_stress_score: number | null
           heating_degree_days: number | null
           hour_of_day: number | null
           hour_of_week: number | null
           id: string
           interchange_net: number | null
+          intertie_bc_flow: number | null
+          intertie_montana_flow: number | null
+          intertie_sask_flow: number | null
           is_holiday: boolean | null
           is_valid_record: boolean | null
           is_weekend: boolean | null
           month: number | null
           net_demand: number | null
           operating_reserve: number | null
+          operating_reserve_price: number | null
           outage_capacity_mw: number | null
           pool_price: number
           price_lag_1h: number | null
@@ -877,18 +884,27 @@ export type Database = {
           price_rolling_avg_24h: number | null
           price_rolling_std_24h: number | null
           renewable_penetration: number | null
+          reserve_margin_percent: number | null
           season: string | null
+          smp_pool_price_spread: number | null
           solar_irradiance: number | null
+          spinning_reserve_mw: number | null
+          supplemental_reserve_mw: number | null
+          system_marginal_price: number | null
           temp_demand_interaction: number | null
           temperature_calgary: number | null
           temperature_edmonton: number | null
           timestamp: string
+          total_interchange_flow: number | null
+          transmission_constraint_hours: number | null
+          transmission_outages_count: number | null
           wind_hour_interaction: number | null
           wind_ramp_rate: number | null
           wind_speed: number | null
         }
         Insert: {
           ail_mw?: number | null
+          available_capacity_mw?: number | null
           cloud_cover?: number | null
           cooling_degree_days?: number | null
           created_at?: string | null
@@ -897,19 +913,25 @@ export type Database = {
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
+          generation_outages_mw?: number | null
           generation_solar?: number | null
           generation_wind?: number | null
+          grid_stress_score?: number | null
           heating_degree_days?: number | null
           hour_of_day?: number | null
           hour_of_week?: number | null
           id?: string
           interchange_net?: number | null
+          intertie_bc_flow?: number | null
+          intertie_montana_flow?: number | null
+          intertie_sask_flow?: number | null
           is_holiday?: boolean | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
           month?: number | null
           net_demand?: number | null
           operating_reserve?: number | null
+          operating_reserve_price?: number | null
           outage_capacity_mw?: number | null
           pool_price: number
           price_lag_1h?: number | null
@@ -922,18 +944,27 @@ export type Database = {
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
           renewable_penetration?: number | null
+          reserve_margin_percent?: number | null
           season?: string | null
+          smp_pool_price_spread?: number | null
           solar_irradiance?: number | null
+          spinning_reserve_mw?: number | null
+          supplemental_reserve_mw?: number | null
+          system_marginal_price?: number | null
           temp_demand_interaction?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
           timestamp: string
+          total_interchange_flow?: number | null
+          transmission_constraint_hours?: number | null
+          transmission_outages_count?: number | null
           wind_hour_interaction?: number | null
           wind_ramp_rate?: number | null
           wind_speed?: number | null
         }
         Update: {
           ail_mw?: number | null
+          available_capacity_mw?: number | null
           cloud_cover?: number | null
           cooling_degree_days?: number | null
           created_at?: string | null
@@ -942,19 +973,25 @@ export type Database = {
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
+          generation_outages_mw?: number | null
           generation_solar?: number | null
           generation_wind?: number | null
+          grid_stress_score?: number | null
           heating_degree_days?: number | null
           hour_of_day?: number | null
           hour_of_week?: number | null
           id?: string
           interchange_net?: number | null
+          intertie_bc_flow?: number | null
+          intertie_montana_flow?: number | null
+          intertie_sask_flow?: number | null
           is_holiday?: boolean | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
           month?: number | null
           net_demand?: number | null
           operating_reserve?: number | null
+          operating_reserve_price?: number | null
           outage_capacity_mw?: number | null
           pool_price?: number
           price_lag_1h?: number | null
@@ -967,12 +1004,20 @@ export type Database = {
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
           renewable_penetration?: number | null
+          reserve_margin_percent?: number | null
           season?: string | null
+          smp_pool_price_spread?: number | null
           solar_irradiance?: number | null
+          spinning_reserve_mw?: number | null
+          supplemental_reserve_mw?: number | null
+          system_marginal_price?: number | null
           temp_demand_interaction?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
           timestamp?: string
+          total_interchange_flow?: number | null
+          transmission_constraint_hours?: number | null
+          transmission_outages_count?: number | null
           wind_hour_interaction?: number | null
           wind_ramp_rate?: number | null
           wind_speed?: number | null
