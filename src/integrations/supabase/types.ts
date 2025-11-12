@@ -849,7 +849,11 @@ export type Database = {
           cooling_degree_days: number | null
           created_at: string | null
           day_of_week: number | null
+          demand_forecast_error: number | null
+          demand_lag_3h: number | null
+          demand_lag_6h: number | null
           demand_ramp_rate: number | null
+          demand_volatility_6h: number | null
           generation_coal: number | null
           generation_gas: number | null
           generation_hydro: number | null
@@ -868,21 +872,31 @@ export type Database = {
           is_holiday: boolean | null
           is_valid_record: boolean | null
           is_weekend: boolean | null
+          market_stress_score: number | null
           month: number | null
           net_demand: number | null
           operating_reserve: number | null
           operating_reserve_price: number | null
           outage_capacity_mw: number | null
           pool_price: number
+          price_acceleration: number | null
+          price_demand_ratio: number | null
           price_lag_1h: number | null
           price_lag_24h: number | null
           price_lag_2h: number | null
           price_lag_3h: number | null
+          price_lag_48h: number | null
+          price_lag_72h: number | null
           price_momentum_1h: number | null
           price_momentum_3h: number | null
           price_ramp_rate: number | null
           price_rolling_avg_24h: number | null
           price_rolling_std_24h: number | null
+          price_spike_probability: number | null
+          price_volatility_12h: number | null
+          price_volatility_3h: number | null
+          price_volatility_6h: number | null
+          renewable_capacity_factor: number | null
           renewable_penetration: number | null
           reserve_margin_percent: number | null
           season: string | null
@@ -890,7 +904,9 @@ export type Database = {
           solar_irradiance: number | null
           spinning_reserve_mw: number | null
           supplemental_reserve_mw: number | null
+          supply_cushion: number | null
           system_marginal_price: number | null
+          temp_demand_hour_interaction: number | null
           temp_demand_interaction: number | null
           temperature_calgary: number | null
           temperature_edmonton: number | null
@@ -898,9 +914,14 @@ export type Database = {
           total_interchange_flow: number | null
           transmission_constraint_hours: number | null
           transmission_outages_count: number | null
+          volatility_trend: number | null
           wind_hour_interaction: number | null
+          wind_lag_3h: number | null
+          wind_lag_6h: number | null
           wind_ramp_rate: number | null
+          wind_solar_demand_interaction: number | null
           wind_speed: number | null
+          wind_volatility_6h: number | null
         }
         Insert: {
           ail_mw?: number | null
@@ -909,7 +930,11 @@ export type Database = {
           cooling_degree_days?: number | null
           created_at?: string | null
           day_of_week?: number | null
+          demand_forecast_error?: number | null
+          demand_lag_3h?: number | null
+          demand_lag_6h?: number | null
           demand_ramp_rate?: number | null
+          demand_volatility_6h?: number | null
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
@@ -928,21 +953,31 @@ export type Database = {
           is_holiday?: boolean | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
+          market_stress_score?: number | null
           month?: number | null
           net_demand?: number | null
           operating_reserve?: number | null
           operating_reserve_price?: number | null
           outage_capacity_mw?: number | null
           pool_price: number
+          price_acceleration?: number | null
+          price_demand_ratio?: number | null
           price_lag_1h?: number | null
           price_lag_24h?: number | null
           price_lag_2h?: number | null
           price_lag_3h?: number | null
+          price_lag_48h?: number | null
+          price_lag_72h?: number | null
           price_momentum_1h?: number | null
           price_momentum_3h?: number | null
           price_ramp_rate?: number | null
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
+          price_spike_probability?: number | null
+          price_volatility_12h?: number | null
+          price_volatility_3h?: number | null
+          price_volatility_6h?: number | null
+          renewable_capacity_factor?: number | null
           renewable_penetration?: number | null
           reserve_margin_percent?: number | null
           season?: string | null
@@ -950,7 +985,9 @@ export type Database = {
           solar_irradiance?: number | null
           spinning_reserve_mw?: number | null
           supplemental_reserve_mw?: number | null
+          supply_cushion?: number | null
           system_marginal_price?: number | null
+          temp_demand_hour_interaction?: number | null
           temp_demand_interaction?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
@@ -958,9 +995,14 @@ export type Database = {
           total_interchange_flow?: number | null
           transmission_constraint_hours?: number | null
           transmission_outages_count?: number | null
+          volatility_trend?: number | null
           wind_hour_interaction?: number | null
+          wind_lag_3h?: number | null
+          wind_lag_6h?: number | null
           wind_ramp_rate?: number | null
+          wind_solar_demand_interaction?: number | null
           wind_speed?: number | null
+          wind_volatility_6h?: number | null
         }
         Update: {
           ail_mw?: number | null
@@ -969,7 +1011,11 @@ export type Database = {
           cooling_degree_days?: number | null
           created_at?: string | null
           day_of_week?: number | null
+          demand_forecast_error?: number | null
+          demand_lag_3h?: number | null
+          demand_lag_6h?: number | null
           demand_ramp_rate?: number | null
+          demand_volatility_6h?: number | null
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
@@ -988,21 +1034,31 @@ export type Database = {
           is_holiday?: boolean | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
+          market_stress_score?: number | null
           month?: number | null
           net_demand?: number | null
           operating_reserve?: number | null
           operating_reserve_price?: number | null
           outage_capacity_mw?: number | null
           pool_price?: number
+          price_acceleration?: number | null
+          price_demand_ratio?: number | null
           price_lag_1h?: number | null
           price_lag_24h?: number | null
           price_lag_2h?: number | null
           price_lag_3h?: number | null
+          price_lag_48h?: number | null
+          price_lag_72h?: number | null
           price_momentum_1h?: number | null
           price_momentum_3h?: number | null
           price_ramp_rate?: number | null
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
+          price_spike_probability?: number | null
+          price_volatility_12h?: number | null
+          price_volatility_3h?: number | null
+          price_volatility_6h?: number | null
+          renewable_capacity_factor?: number | null
           renewable_penetration?: number | null
           reserve_margin_percent?: number | null
           season?: string | null
@@ -1010,7 +1066,9 @@ export type Database = {
           solar_irradiance?: number | null
           spinning_reserve_mw?: number | null
           supplemental_reserve_mw?: number | null
+          supply_cushion?: number | null
           system_marginal_price?: number | null
+          temp_demand_hour_interaction?: number | null
           temp_demand_interaction?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
@@ -1018,9 +1076,14 @@ export type Database = {
           total_interchange_flow?: number | null
           transmission_constraint_hours?: number | null
           transmission_outages_count?: number | null
+          volatility_trend?: number | null
           wind_hour_interaction?: number | null
+          wind_lag_3h?: number | null
+          wind_lag_6h?: number | null
           wind_ramp_rate?: number | null
+          wind_solar_demand_interaction?: number | null
           wind_speed?: number | null
+          wind_volatility_6h?: number | null
         }
         Relationships: []
       }
