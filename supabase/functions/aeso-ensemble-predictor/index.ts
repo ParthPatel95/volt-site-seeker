@@ -11,197 +11,248 @@ serve(async (req) => {
   }
 
   try {
-    const { hours_ahead = 1 } = await req.json();
-    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log(`Making ensemble prediction for ${hours_ahead} hours ahead...`);
+    console.log('🎯 Starting ensemble prediction...');
+    const startTime = Date.now();
 
-    // Get current features and context
-    const { data: latestData, error: fetchError } = await supabase
+    // Parse request
+    const { hoursAhead = 24, useAdaptiveWeights = true } = await req.json().catch(() => ({}));
+
+    // Step 1: Get recent data for all models
+    const { data: recentData, error: dataError } = await supabase
       .from('aeso_training_data')
       .select('*')
+      .not('pool_price', 'is', null)
+      .not('price_lag_1h', 'is', null)
       .order('timestamp', { ascending: false })
-      .limit(48);
+      .limit(720); // Last 30 days
 
-    if (fetchError) throw fetchError;
-    if (!latestData || latestData.length === 0) {
-      throw new Error('No recent data available');
+    if (dataError || !recentData?.length) {
+      throw new Error('Failed to fetch recent data for ensemble');
     }
 
-    const latest = latestData[0];
+    console.log(`✅ Loaded ${recentData.length} records for ensemble`);
 
-    // Get enhanced features
-    const { data: features } = await supabase
-      .from('aeso_enhanced_features')
-      .select('*')
-      .eq('timestamp', latest.timestamp)
-      .single();
+    // Step 2: Get optimal weights (if using adaptive weights)
+    let weights = {
+      ml: 0.4,
+      ma: 0.2,
+      arima: 0.2,
+      seasonal: 0.2
+    };
 
-    // Get current regime
-    const { data: regime } = await supabase
-      .from('aeso_market_regimes')
-      .select('*')
-      .eq('timestamp', latest.timestamp)
-      .single();
+    if (useAdaptiveWeights) {
+      const { data: latestWeights } = await supabase
+        .from('aeso_model_weights')
+        .select('*')
+        .order('effective_date', { ascending: false })
+        .limit(1)
+        .single();
 
-    // Get all model parameters for ensemble
-    const { data: models, error: modelsError } = await supabase
-      .from('aeso_model_parameters')
-      .select('*')
-      .order('trained_at', { ascending: false });
-
-    if (modelsError) throw modelsError;
-
-    console.log(`Found ${models?.length || 0} models for ensemble`);
-
-    // Make prediction with each model
-    const predictions = [];
-    
-    for (const model of models || []) {
-      try {
-        const prediction = await makeSingleModelPrediction(
-          model,
-          latest,
-          features,
-          regime,
-          latestData,
-          hours_ahead
-        );
-        predictions.push({
-          model_id: model.id,
-          model_version: model.model_version,
-          prediction: prediction.predicted_price,
-          confidence: model.accuracy || 0.5,
-          rmse: model.rmse || 10
-        });
-      } catch (error) {
-        console.error(`Error with model ${model.id}:`, error);
+      if (latestWeights) {
+        weights = {
+          ml: latestWeights.ml_weight,
+          ma: latestWeights.ma_weight,
+          arima: latestWeights.arima_weight,
+          seasonal: latestWeights.seasonal_weight
+        };
+        console.log('📊 Using adaptive weights:', weights);
       }
     }
 
-    if (predictions.length === 0) {
-      throw new Error('No models available for ensemble prediction');
+    // Step 3: Generate predictions from each model
+    const ensemblePredictions = [];
+    const currentTime = new Date(recentData[0].timestamp);
+
+    for (let h = 1; h <= hoursAhead; h++) {
+      const targetTime = new Date(currentTime.getTime() + h * 60 * 60 * 1000);
+      
+      // Model 1: ML-based predictor (using recent trends and features)
+      const mlPrice = predictMLModel(recentData, h);
+      
+      // Model 2: Moving Average (simple but robust)
+      const maPrice = predictMovingAverage(recentData, h);
+      
+      // Model 3: ARIMA-style (autoregressive with hour-of-day adjustment)
+      const arimaPrice = predictARIMA(recentData, targetTime, h);
+      
+      // Model 4: Seasonal decomposition (day-of-week + hour patterns)
+      const seasonalPrice = predictSeasonal(recentData, targetTime);
+
+      // Calculate ensemble prediction
+      const ensemblePrice = 
+        weights.ml * mlPrice +
+        weights.ma * maPrice +
+        weights.arima * arimaPrice +
+        weights.seasonal * seasonalPrice;
+
+      // Calculate prediction uncertainty (std of individual predictions)
+      const predictions = [mlPrice, maPrice, arimaPrice, seasonalPrice];
+      const mean = predictions.reduce((a, b) => a + b, 0) / predictions.length;
+      const variance = predictions.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / predictions.length;
+      const stdDev = Math.sqrt(variance);
+
+      // 95% confidence interval (±1.96 * std)
+      const confidenceLower = ensemblePrice - 1.96 * stdDev;
+      const confidenceUpper = ensemblePrice + 1.96 * stdDev;
+
+      ensemblePredictions.push({
+        target_timestamp: targetTime.toISOString(),
+        ml_predictor_price: mlPrice,
+        moving_average_price: maPrice,
+        arima_price: arimaPrice,
+        seasonal_price: seasonalPrice,
+        ensemble_price: ensemblePrice,
+        ml_weight: weights.ml,
+        ma_weight: weights.ma,
+        arima_weight: weights.arima,
+        seasonal_weight: weights.seasonal,
+        prediction_std: stdDev,
+        confidence_interval_lower: confidenceLower,
+        confidence_interval_upper: confidenceUpper,
+        model_version: 'ensemble_v1'
+      });
     }
 
-    console.log(`Generated ${predictions.length} individual predictions`);
-
-    // Combine predictions using weighted average based on accuracy
-    const totalWeight = predictions.reduce((sum, p) => sum + p.confidence, 0);
-    const ensemblePrediction = predictions.reduce(
-      (sum, p) => sum + (p.prediction * p.confidence / totalWeight),
-      0
-    );
-
-    // Calculate ensemble confidence (higher when models agree)
-    const predictionStdDev = calculateStdDev(predictions.map(p => p.prediction));
-    const ensembleConfidence = Math.max(0.3, 1 - (predictionStdDev / 50)); // Lower std = higher confidence
-
-    // Store ensemble prediction
+    // Step 4: Store predictions
     const { error: insertError } = await supabase
-      .from('aeso_predictions')
-      .insert({
-        predicted_at: new Date().toISOString(),
-        target_timestamp: new Date(Date.now() + hours_ahead * 60 * 60 * 1000).toISOString(),
-        hours_ahead,
-        predicted_price: ensemblePrediction,
-        confidence: ensembleConfidence,
-        model_version: 'ensemble_v1',
-        prediction_method: 'weighted_ensemble',
-        individual_predictions: predictions
-      });
+      .from('aeso_ensemble_predictions')
+      .insert(ensemblePredictions);
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('❌ Error storing ensemble predictions:', insertError);
+      throw insertError;
+    }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        prediction: {
-          hours_ahead,
-          predicted_price: Math.round(ensemblePrediction * 100) / 100,
-          confidence: Math.round(ensembleConfidence * 100) / 100,
-          individual_predictions: predictions.length,
-          prediction_range: {
-            min: Math.min(...predictions.map(p => p.prediction)),
-            max: Math.max(...predictions.map(p => p.prediction))
-          }
-        }
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✅ Ensemble prediction complete (${duration}s)`);
+    console.log(`📊 Generated ${ensemblePredictions.length} ensemble predictions`);
+
+    return new Response(JSON.stringify({
+      success: true,
+      duration_seconds: parseFloat(duration),
+      predictions: ensemblePredictions,
+      weights_used: weights,
+      message: `Generated ${ensemblePredictions.length} ensemble predictions`
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
   } catch (error) {
-    console.error('Error in ensemble predictor:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error('❌ Ensemble prediction error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
 
-async function makeSingleModelPrediction(
-  model: any,
-  latest: any,
-  features: any,
-  regime: any,
-  history: any[],
-  hoursAhead: number
-): Promise<{ predicted_price: number }> {
-  // Extract model coefficients
-  const coeffs = model.coefficients || {};
+// Model 1: ML-based predictor using recent trends
+function predictMLModel(data: any[], hoursAhead: number): number {
+  const latest = data[0];
   
-  // Build feature vector
-  const X = {
-    hour: new Date(latest.timestamp).getHours(),
-    day_of_week: new Date(latest.timestamp).getDay(),
-    month: new Date(latest.timestamp).getMonth() + 1,
-    ail_mw: latest.ail_mw || 0,
-    tng_mw: latest.tng_mw || 0,
-    generation_wind: latest.generation_wind || 0,
-    generation_solar: latest.generation_solar || 0,
-    temperature: latest.temperature || 15,
-    wind_speed: latest.wind_speed || 0,
-    price_lag_1h: history[1]?.pool_price || latest.pool_price,
-    price_lag_24h: history[23]?.pool_price || latest.pool_price,
-    price_volatility_1h: features?.price_volatility_1h || 0,
-    price_volatility_24h: features?.price_volatility_24h || 0,
-    natural_gas_price: features?.natural_gas_price || 2.5,
-    renewable_curtailment: features?.renewable_curtailment || 0,
-    regime_factor: getRegimeFactor(regime?.regime)
-  };
+  // Use lag features and momentum
+  const lag1 = latest.price_lag_1h || latest.pool_price;
+  const lag24 = latest.price_lag_24h || latest.pool_price;
+  const momentum1h = latest.price_momentum_1h || 0;
+  const volatility24h = latest.price_rolling_std_24h || 10;
   
-  // Apply model coefficients with XGBoost-style boosting adjustments
-  let prediction = coeffs.intercept || 50;
+  // Simple linear combination of features (mimicking ML model)
+  let prediction = 
+    0.5 * lag1 +
+    0.3 * lag24 +
+    0.15 * momentum1h +
+    0.05 * volatility24h;
   
-  for (const [feature, value] of Object.entries(X)) {
-    const coeff = coeffs[feature] || 0;
-    prediction += coeff * (value as number);
+  // Apply hour-ahead decay (predictions get closer to moving average over time)
+  const decayFactor = Math.exp(-hoursAhead / 24);
+  const movingAvg = latest.price_rolling_avg_24h || latest.pool_price;
+  prediction = prediction * decayFactor + movingAvg * (1 - decayFactor);
+  
+  return Math.max(0, prediction);
+}
+
+// Model 2: Moving Average with exponential weighting
+function predictMovingAverage(data: any[], hoursAhead: number): number {
+  const weights = [0.3, 0.25, 0.2, 0.15, 0.1]; // Exponentially decaying weights
+  let weightedSum = 0;
+  let totalWeight = 0;
+  
+  for (let i = 0; i < Math.min(5, data.length); i++) {
+    const price = data[i].pool_price;
+    if (price && price > 0) {
+      weightedSum += price * weights[i];
+      totalWeight += weights[i];
+    }
   }
   
-  // Apply time-ahead adjustment (uncertainty increases with horizon)
-  const horizonAdjustment = 1 + (hoursAhead - 1) * 0.05;
+  return totalWeight > 0 ? weightedSum / totalWeight : data[0].pool_price;
+}
+
+// Model 3: ARIMA-style autoregressive model
+function predictARIMA(data: any[], targetTime: Date, hoursAhead: number): number {
+  const latest = data[0];
+  const hourOfDay = targetTime.getHours();
   
-  return {
-    predicted_price: Math.max(0, prediction * horizonAdjustment)
-  };
+  // Autoregressive component (weighted recent prices)
+  const ar1 = latest.pool_price;
+  const ar2 = data[1]?.pool_price || ar1;
+  const ar24 = data[23]?.pool_price || ar1;
+  
+  // Calculate hour-of-day adjustment
+  const hourlyPrices = data.slice(0, 168) // Last week
+    .filter(d => new Date(d.timestamp).getHours() === hourOfDay)
+    .map(d => d.pool_price);
+  
+  const hourlyAvg = hourlyPrices.length > 0
+    ? hourlyPrices.reduce((a, b) => a + b, 0) / hourlyPrices.length
+    : ar1;
+  
+  const overallAvg = data.slice(0, 168).reduce((sum, d) => sum + d.pool_price, 0) / Math.min(168, data.length);
+  const seasonalFactor = hourlyAvg / overallAvg;
+  
+  // ARIMA prediction: AR(2) with seasonal adjustment
+  const prediction = (0.6 * ar1 + 0.3 * ar2 + 0.1 * ar24) * seasonalFactor;
+  
+  return Math.max(0, prediction);
 }
 
-function getRegimeFactor(regime: string | undefined): number {
-  const factors: Record<string, number> = {
-    'high_price': 1.5,
-    'low_price': 0.7,
-    'high_demand': 1.3,
-    'volatile': 1.2,
-    'renewable_surge': 0.8,
-    'normal': 1.0
-  };
-  return factors[regime || 'normal'] || 1.0;
-}
-
-function calculateStdDev(values: number[]): number {
-  const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-  const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
-  return Math.sqrt(variance);
+// Model 4: Seasonal decomposition (day + hour patterns)
+function predictSeasonal(data: any[], targetTime: Date): number {
+  const dayOfWeek = targetTime.getDay();
+  const hourOfDay = targetTime.getHours();
+  
+  // Calculate day-of-week pattern (last 4 weeks)
+  const dayPrices = data.slice(0, 672) // Last 4 weeks
+    .filter(d => new Date(d.timestamp).getDay() === dayOfWeek)
+    .map(d => d.pool_price);
+  
+  const dayAvg = dayPrices.length > 0
+    ? dayPrices.reduce((a, b) => a + b, 0) / dayPrices.length
+    : data[0].pool_price;
+  
+  // Calculate hour-of-day pattern
+  const hourPrices = data.slice(0, 168) // Last week
+    .filter(d => new Date(d.timestamp).getHours() === hourOfDay)
+    .map(d => d.pool_price);
+  
+  const hourAvg = hourPrices.length > 0
+    ? hourPrices.reduce((a, b) => a + b, 0) / hourPrices.length
+    : data[0].pool_price;
+  
+  // Combine day and hour patterns
+  const overallAvg = data.slice(0, 168).reduce((sum, d) => sum + d.pool_price, 0) / Math.min(168, data.length);
+  const dayFactor = dayAvg / overallAvg;
+  const hourFactor = hourAvg / overallAvg;
+  
+  // Seasonal prediction
+  const prediction = overallAvg * dayFactor * hourFactor;
+  
+  return Math.max(0, prediction);
 }
