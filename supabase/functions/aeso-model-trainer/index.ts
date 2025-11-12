@@ -256,10 +256,34 @@ serve(async (req) => {
     // ========== PHASE 1 & 2: ENHANCED FEATURES (Phase 3 ML removed to reduce function size) ==========
     console.log('Enhanced features ready with scaling applied');
 
-    // ========== PHASE 1: DEBUG PREDICTIONS ==========
-    console.log('\n=== Evaluating Model Performance (Using Scaled Data) ===');
+    // ========== PHASE 1: ML-POWERED PREDICTIONS ==========
+    console.log('\n=== Evaluating Model Performance with ML Predictor ===');
     
-    // Evaluate model on test set with regime-aware predictions
+    // Train ML model with historical patterns
+    console.log('🤖 Training ML model on historical patterns...');
+    const { error: mlTrainError } = await supabase.functions.invoke('aeso-ml-predictor', {
+      body: {
+        mode: 'train',
+        historicalData: trainSet.map(d => ({
+          pool_price: d.pool_price,
+          hour_of_day: d.hour_of_day,
+          day_of_week: d.day_of_week,
+          ail_mw: d.ail_mw,
+          generation_wind: d.generation_wind,
+          temperature_avg: (d.temperature_calgary + d.temperature_edmonton) / 2,
+          net_demand: d.net_demand,
+          renewable_penetration: d.renewable_penetration
+        }))
+      }
+    });
+    
+    if (mlTrainError) {
+      console.warn('⚠️ ML training failed, falling back to statistical model');
+    } else {
+      console.log('✅ ML model trained successfully');
+    }
+    
+    // Evaluate model on test set with ML predictions
     let totalAbsError = 0;
     let totalSquaredError = 0;
     let totalPercentError = 0;
@@ -273,11 +297,61 @@ serve(async (req) => {
     };
 
     let debugCount = 0;
-    for (let idx = 0; idx < scaledTestSet.length; idx++) {
+    
+    // Use ML predictor for first 100 test samples, then fall back to statistical
+    const mlPredictionLimit = Math.min(100, testSet.length);
+    
+    for (let idx = 0; idx < testSet.length; idx++) {
       const testPoint = scaledTestSet[idx];
       const originalTestPoint = testSet[idx];
       const regime = detectRegime(originalTestPoint, regimeThresholds);
-      const prediction = predictPriceWithXGBoost(scaledTrainSet, testPoint, featureCorrelations, featureStats, laggedFeatures, regime, xgboostParams, featureScaling);
+      
+      let prediction: number;
+      
+      // Use ML predictor for subset of predictions
+      if (idx < mlPredictionLimit && !mlTrainError) {
+        const features = {
+          hour_of_day: originalTestPoint.hour_of_day,
+          day_of_week: originalTestPoint.day_of_week,
+          month: originalTestPoint.month,
+          ail_mw: originalTestPoint.ail_mw,
+          generation_wind: originalTestPoint.generation_wind,
+          temperature_avg: (originalTestPoint.temperature_calgary + originalTestPoint.temperature_edmonton) / 2,
+          price_lag_1h: originalTestPoint.price_lag_1h,
+          price_lag_24h: originalTestPoint.price_lag_24h,
+          price_rolling_avg_24h: originalTestPoint.price_rolling_avg_24h,
+          net_demand: originalTestPoint.net_demand,
+          renewable_penetration: originalTestPoint.renewable_penetration
+        };
+        
+        const { data: mlPrediction, error: mlError } = await supabase.functions.invoke('aeso-ml-predictor', {
+          body: {
+            mode: 'predict',
+            features,
+            historicalData: trainSet.slice(-5).map(d => ({
+              pool_price: d.pool_price,
+              timestamp: d.timestamp
+            }))
+          }
+        });
+        
+        if (!mlError && mlPrediction?.predicted_price) {
+          prediction = mlPrediction.predicted_price;
+          
+          if (debugCount < 3) {
+            console.log(`\n🤖 ML Prediction ${debugCount}:`);
+            console.log(`  Confidence: ${(mlPrediction.confidence * 100).toFixed(1)}%`);
+            console.log(`  Reasoning: ${mlPrediction.reasoning}`);
+          }
+        } else {
+          // Fallback to statistical model
+          prediction = predictPriceWithXGBoost(scaledTrainSet, testPoint, featureCorrelations, featureStats, laggedFeatures, regime, xgboostParams, featureScaling);
+        }
+      } else {
+        // Use statistical model for remaining predictions
+        prediction = predictPriceWithXGBoost(scaledTrainSet, testPoint, featureCorrelations, featureStats, laggedFeatures, regime, xgboostParams, featureScaling);
+      }
+      
       const actual = originalTestPoint.pool_price;
       
       // Debug first 3 predictions
