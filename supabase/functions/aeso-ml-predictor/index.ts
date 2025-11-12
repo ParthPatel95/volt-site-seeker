@@ -150,11 +150,29 @@ Current Conditions:
 - Demand (AIL): ${features.ail_mw?.toFixed(0)} MW
 - Wind Generation: ${features.generation_wind?.toFixed(0)} MW
 - Temperature: ${features.temperature_avg?.toFixed(1)}°C
+
+Price History:
 - Price lag 1h: $${features.price_lag_1h?.toFixed(2)}/MWh
 - Price lag 24h: $${features.price_lag_24h?.toFixed(2)}/MWh
+- Price lag 48h: $${features.price_lag_48h?.toFixed(2)}/MWh
 - Rolling avg 24h: $${features.price_rolling_avg_24h?.toFixed(2)}/MWh
+
+Market Dynamics:
 - Net demand: ${features.net_demand?.toFixed(0)} MW
 - Renewable penetration: ${features.renewable_penetration?.toFixed(1)}%
+- Supply cushion: ${features.supply_cushion?.toFixed(0)} MW
+- Price/Demand ratio: $${features.price_demand_ratio?.toFixed(4)}/MW
+
+Volatility & Stress:
+- Price volatility 3h: $${features.price_volatility_3h?.toFixed(2)}/MWh
+- Price volatility 12h: $${features.price_volatility_12h?.toFixed(2)}/MWh
+- Market stress score: ${features.market_stress_score?.toFixed(1)}/100
+- Spike probability: ${features.price_spike_probability?.toFixed(1)}%
+
+Advanced Indicators:
+- Price acceleration: $${features.price_acceleration?.toFixed(2)}/MWh²
+- Volatility trend: ${features.volatility_trend?.toFixed(1)}%
+- Demand forecast error: ${features.demand_forecast_error?.toFixed(0)} MW
 
 Recent Historical Context:
 ${historicalData ? `Last 5 hours prices: ${historicalData.slice(-5).map((d: any) => `$${d.pool_price.toFixed(2)}`).join(', ')}` : 'Not available'}`;

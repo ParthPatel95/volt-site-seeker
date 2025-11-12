@@ -38,14 +38,20 @@ Deno.serve(async (req) => {
 
     console.log(`✅ Enhanced features calculated for ${count || 'all'} records`);
 
-    // Get sample of Phase 3 features
+    // Get sample of Phase 2 & 3 features
     const { data: sampleData } = await supabase
       .from('aeso_training_data')
-      .select('net_demand, renewable_penetration, hour_of_week, heating_degree_days, demand_ramp_rate, wind_ramp_rate')
+      .select(`
+        price_lag_48h, price_lag_72h,
+        price_volatility_3h, price_volatility_6h, price_volatility_12h,
+        market_stress_score, price_spike_probability,
+        supply_cushion, price_acceleration,
+        net_demand, renewable_penetration
+      `)
       .order('timestamp', { ascending: false })
       .limit(5);
 
-    console.log('Sample Phase 3 features:', JSON.stringify(sampleData, null, 2));
+    console.log('Sample Phase 2 & 3 features:', JSON.stringify(sampleData, null, 2));
 
     return new Response(
       JSON.stringify({

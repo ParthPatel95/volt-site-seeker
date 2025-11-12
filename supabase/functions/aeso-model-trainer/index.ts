@@ -311,17 +311,42 @@ serve(async (req) => {
       // Use ML predictor for subset of predictions
       if (idx < mlPredictionLimit && !mlTrainError) {
         const features = {
+          // Basic features
           hour_of_day: originalTestPoint.hour_of_day,
           day_of_week: originalTestPoint.day_of_week,
           month: originalTestPoint.month,
           ail_mw: originalTestPoint.ail_mw,
           generation_wind: originalTestPoint.generation_wind,
           temperature_avg: (originalTestPoint.temperature_calgary + originalTestPoint.temperature_edmonton) / 2,
+          
+          // Phase 1 features
           price_lag_1h: originalTestPoint.price_lag_1h,
           price_lag_24h: originalTestPoint.price_lag_24h,
           price_rolling_avg_24h: originalTestPoint.price_rolling_avg_24h,
           net_demand: originalTestPoint.net_demand,
-          renewable_penetration: originalTestPoint.renewable_penetration
+          renewable_penetration: originalTestPoint.renewable_penetration,
+          
+          // Phase 2 extended lags
+          price_lag_48h: originalTestPoint.price_lag_48h,
+          price_lag_72h: originalTestPoint.price_lag_72h,
+          
+          // Phase 2 volatility
+          price_volatility_3h: originalTestPoint.price_volatility_3h,
+          price_volatility_6h: originalTestPoint.price_volatility_6h,
+          price_volatility_12h: originalTestPoint.price_volatility_12h,
+          
+          // Phase 2 interactions
+          temp_demand_hour_interaction: originalTestPoint.temp_demand_hour_interaction,
+          wind_solar_demand_interaction: originalTestPoint.wind_solar_demand_interaction,
+          price_demand_ratio: originalTestPoint.price_demand_ratio,
+          
+          // Phase 2 day-ahead indicators
+          price_acceleration: originalTestPoint.price_acceleration,
+          volatility_trend: originalTestPoint.volatility_trend,
+          demand_forecast_error: originalTestPoint.demand_forecast_error,
+          supply_cushion: originalTestPoint.supply_cushion,
+          market_stress_score: originalTestPoint.market_stress_score,
+          price_spike_probability: originalTestPoint.price_spike_probability
         };
         
         const { data: mlPrediction, error: mlError } = await supabase.functions.invoke('aeso-ml-predictor', {
