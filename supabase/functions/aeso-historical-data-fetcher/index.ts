@@ -160,10 +160,27 @@ serve(async (req) => {
             generation_wind: null,
             generation_solar: null,
             generation_hydro: null,
+            // Legacy columns
             interchange_net: null,
             operating_reserve: null,
             outage_capacity_mw: null,
-            is_holiday: false, // Could be enriched later
+            // New enhanced market features (not available for historical data)
+            system_marginal_price: null,
+            smp_pool_price_spread: null,
+            intertie_bc_flow: null,
+            intertie_sask_flow: null,
+            intertie_montana_flow: null,
+            total_interchange_flow: null,
+            operating_reserve_price: null,
+            spinning_reserve_mw: null,
+            supplemental_reserve_mw: null,
+            generation_outages_mw: null,
+            available_capacity_mw: null,
+            reserve_margin_percent: null,
+            grid_stress_score: null,
+            transmission_outages_count: null,
+            // Temporal features
+            is_holiday: false,
             is_weekend: isWeekend,
             day_of_week: dayOfWeek,
             hour_of_day: hour,

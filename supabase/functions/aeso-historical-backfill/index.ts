@@ -126,7 +126,7 @@ serve(async (req) => {
           trainingRecords.push({
             timestamp: timestamp.toISOString(),
             pool_price: poolPrice,
-            ail_mw: parseFloat(priceRecord.forecast_pool_price) || null, // Use available demand proxy
+            ail_mw: parseFloat(priceRecord.forecast_pool_price) || null,
             temperature_calgary: calgaryWeather?.temperature || null,
             temperature_edmonton: edmontonWeather?.temperature || null,
             wind_speed: calgaryWeather?.wind_speed || null,
@@ -137,9 +137,26 @@ serve(async (req) => {
             generation_wind: parseFloat(matchingGen?.wind_mw) || 0,
             generation_solar: parseFloat(matchingGen?.solar_mw) || 0,
             generation_hydro: parseFloat(matchingGen?.hydro_mw) || 0,
+            // Legacy columns (keep for backward compatibility)
             interchange_net: 0,
             operating_reserve: 0,
             outage_capacity_mw: 0,
+            // New enhanced market features (set to null for historical data - not available)
+            system_marginal_price: null,
+            smp_pool_price_spread: null,
+            intertie_bc_flow: null,
+            intertie_sask_flow: null,
+            intertie_montana_flow: null,
+            total_interchange_flow: null,
+            operating_reserve_price: null,
+            spinning_reserve_mw: null,
+            supplemental_reserve_mw: null,
+            generation_outages_mw: null,
+            available_capacity_mw: null,
+            reserve_margin_percent: null,
+            grid_stress_score: null,
+            transmission_outages_count: 0,
+            // Temporal features
             is_holiday: isHoliday,
             is_weekend: isWeekend,
             day_of_week: dayOfWeek,

@@ -30,6 +30,7 @@ import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
 import { useAESOEnhancedData } from '@/hooks/useAESOEnhancedData';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
+import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { AESOMarketAnalyticsPanel } from './intelligence/AESOMarketAnalyticsPanel';
 import { AESOForecastPanel } from './intelligence/AESOForecastPanel';
 import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
@@ -69,6 +70,12 @@ export function AESOMarketComprehensive() {
     loading: marketLoading,
     refetch: refetchMarket
   } = useAESOMarketData();
+
+  // AESO Price Prediction hook for model training
+  const {
+    runCompletePipeline,
+    loading: pipelineLoading
+  } = useAESOPricePrediction();
 
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
@@ -152,14 +159,25 @@ export function AESOMarketComprehensive() {
               Real-time market data with advanced analytics for Alberta&apos;s electricity system
             </p>
           </div>
-          <Button 
-            onClick={handleRefreshAll}
-            disabled={loading}
-            className="bg-gradient-to-r from-red-600 to-red-700 flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            <span className="text-sm">Refresh All Data</span>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-2">
+            <Button 
+              onClick={handleRefreshAll}
+              disabled={loading}
+              className="bg-gradient-to-r from-red-600 to-red-700 flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <span className="text-sm">Refresh All Data</span>
+            </Button>
+            <Button 
+              onClick={runCompletePipeline}
+              disabled={pipelineLoading || loading}
+              variant="outline"
+              className="flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4 border-2 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+            >
+              <Brain className={`w-4 h-4 mr-2 ${pipelineLoading ? 'animate-pulse' : ''}`} />
+              <span className="text-sm">Train Model with New Features</span>
+            </Button>
+          </div>
         </div>
 
 

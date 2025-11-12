@@ -716,6 +716,75 @@ export const useAESOPricePrediction = () => {
     }
   };
 
+  const runCompletePipeline = async () => {
+    setLoading(true);
+    setCurrentStep(1);
+    
+    try {
+      toast({
+        title: "🚀 Running Complete Pipeline",
+        description: "Collecting data, calculating features, and retraining model with new AESO market features...",
+        duration: 5000,
+      });
+      
+      const { data, error } = await supabase.functions.invoke('aeso-complete-pipeline');
+      
+      if (error) {
+        console.error('Complete pipeline error:', error);
+        throw error;
+      }
+      
+      if (!data.success) {
+        throw new Error('Pipeline failed - check logs for details');
+      }
+      
+      // Extract performance metrics from the results
+      const performanceStep = data.steps.find((s: any) => s.name === 'Performance Metrics');
+      
+      if (performanceStep?.success && performanceStep.metrics) {
+        setModelPerformance({
+          mae: performanceStep.metrics.mae,
+          rmse: performanceStep.metrics.rmse,
+          mape: performanceStep.metrics.smape, // Using sMAPE
+          rSquared: performanceStep.metrics.r_squared,
+          modelVersion: performanceStep.metrics.model_version || 'enhanced_v1',
+          featureImportance: {},
+          prediction_interval_80: 0,
+          prediction_interval_95: 0,
+          residual_std_dev: 0,
+          regimePerformance: {}
+        });
+        
+        toast({
+          title: "✅ Pipeline Complete!",
+          description: `Model trained with enhanced features! sMAPE: ${performanceStep.metrics.smape?.toFixed(2)}%, MAE: $${performanceStep.metrics.mae?.toFixed(2)}, Training records: ${performanceStep.metrics.training_records}`,
+          duration: 10000,
+        });
+      } else {
+        toast({
+          title: "⚠️ Pipeline Completed with Warnings",
+          description: "Pipeline finished but some steps may have failed. Check the console for details.",
+          duration: 8000,
+        });
+      }
+      
+      return data;
+      
+    } catch (error: any) {
+      console.error('Complete pipeline error:', error);
+      toast({
+        title: "Pipeline Failed",
+        description: error.message || "Failed to complete the pipeline",
+        variant: "destructive",
+        duration: 10000,
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+      setCurrentStep(0);
+    }
+  };
+
   return {
     predictions,
     modelPerformance,
@@ -740,5 +809,6 @@ export const useAESOPricePrediction = () => {
     calculateEnhancedFeatures,
     filterDataQuality,
     runPhase7Pipeline,
+    runCompletePipeline,
   };
 };
