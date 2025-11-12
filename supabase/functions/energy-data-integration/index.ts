@@ -813,13 +813,7 @@ async function fetchAESOData() {
     const poolArr: any[] = poolJson?.return?.['Pool Price Report'] || poolJson?.['Pool Price Report'] || [];
     const smpArr: any[] = smpJson?.return?.['System Marginal Price Report'] || smpJson?.['System Marginal Price Report'] || [];
     
-    // Extract System Marginal Price for analysis
-    const smpValue = pickLastNumber(smpArr, ['system_marginal_price', 'SMP', 'smp']);
-    if (smpValue != null) {
-      systemMarginalPrice = Math.round(smpValue * 100) / 100;
-      console.log('System Marginal Price:', systemMarginalPrice, '$/MWh');
-    }
-
+    // Define helper function before using it
     const pickLastNumber = (arr: any[], fields: string[]) => {
       if (!Array.isArray(arr)) return null;
       for (let i = arr.length - 1; i >= 0; i--) {
@@ -830,6 +824,13 @@ async function fetchAESOData() {
       }
       return null;
     };
+    
+    // Extract System Marginal Price for analysis
+    const smpValue = pickLastNumber(smpArr, ['system_marginal_price', 'SMP', 'smp']);
+    if (smpValue != null) {
+      systemMarginalPrice = Math.round(smpValue * 100) / 100;
+      console.log('System Marginal Price:', systemMarginalPrice, '$/MWh');
+    }
 
     let current = pickLastNumber(poolArr, ['pool_price']);
     // Calculate average over longer period for more accurate market representation
