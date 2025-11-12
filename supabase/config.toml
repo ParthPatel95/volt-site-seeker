@@ -112,6 +112,9 @@ verify_jwt = false
 [functions.aeso-cv-validator]
 verify_jwt = false
 
+[functions.aeso-ensemble-predictor]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

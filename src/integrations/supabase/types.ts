@@ -233,6 +233,75 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_ensemble_predictions: {
+        Row: {
+          actual_price: number | null
+          arima_price: number | null
+          arima_weight: number | null
+          confidence_interval_lower: number | null
+          confidence_interval_upper: number | null
+          created_at: string | null
+          ensemble_error: number | null
+          ensemble_price: number
+          ensemble_smape: number | null
+          id: string
+          ma_weight: number | null
+          ml_predictor_price: number | null
+          ml_weight: number | null
+          model_version: string | null
+          moving_average_price: number | null
+          prediction_std: number | null
+          prediction_timestamp: string | null
+          seasonal_price: number | null
+          seasonal_weight: number | null
+          target_timestamp: string
+        }
+        Insert: {
+          actual_price?: number | null
+          arima_price?: number | null
+          arima_weight?: number | null
+          confidence_interval_lower?: number | null
+          confidence_interval_upper?: number | null
+          created_at?: string | null
+          ensemble_error?: number | null
+          ensemble_price: number
+          ensemble_smape?: number | null
+          id?: string
+          ma_weight?: number | null
+          ml_predictor_price?: number | null
+          ml_weight?: number | null
+          model_version?: string | null
+          moving_average_price?: number | null
+          prediction_std?: number | null
+          prediction_timestamp?: string | null
+          seasonal_price?: number | null
+          seasonal_weight?: number | null
+          target_timestamp: string
+        }
+        Update: {
+          actual_price?: number | null
+          arima_price?: number | null
+          arima_weight?: number | null
+          confidence_interval_lower?: number | null
+          confidence_interval_upper?: number | null
+          created_at?: string | null
+          ensemble_error?: number | null
+          ensemble_price?: number
+          ensemble_smape?: number | null
+          id?: string
+          ma_weight?: number | null
+          ml_predictor_price?: number | null
+          ml_weight?: number | null
+          model_version?: string | null
+          moving_average_price?: number | null
+          prediction_std?: number | null
+          prediction_timestamp?: string | null
+          seasonal_price?: number | null
+          seasonal_weight?: number | null
+          target_timestamp?: string
+        }
+        Relationships: []
+      }
       aeso_hyperparameter_trials: {
         Row: {
           created_at: string
@@ -476,6 +545,51 @@ export type Database = {
           performance_metrics?: Json | null
           training_config?: Json | null
           version_name?: string
+        }
+        Relationships: []
+      }
+      aeso_model_weights: {
+        Row: {
+          arima_recent_smape: number | null
+          arima_weight: number
+          created_at: string | null
+          effective_date: string
+          evaluation_period_days: number | null
+          id: string
+          ma_recent_smape: number | null
+          ma_weight: number
+          ml_recent_smape: number | null
+          ml_weight: number
+          seasonal_recent_smape: number | null
+          seasonal_weight: number
+        }
+        Insert: {
+          arima_recent_smape?: number | null
+          arima_weight: number
+          created_at?: string | null
+          effective_date: string
+          evaluation_period_days?: number | null
+          id?: string
+          ma_recent_smape?: number | null
+          ma_weight: number
+          ml_recent_smape?: number | null
+          ml_weight: number
+          seasonal_recent_smape?: number | null
+          seasonal_weight: number
+        }
+        Update: {
+          arima_recent_smape?: number | null
+          arima_weight?: number
+          created_at?: string | null
+          effective_date?: string
+          evaluation_period_days?: number | null
+          id?: string
+          ma_recent_smape?: number | null
+          ma_weight?: number
+          ml_recent_smape?: number | null
+          ml_weight?: number
+          seasonal_recent_smape?: number | null
+          seasonal_weight?: number
         }
         Relationships: []
       }

@@ -32,6 +32,7 @@ import { useAESOEnhancedData } from '@/hooks/useAESOEnhancedData';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { useAESOCrossValidation } from '@/hooks/useAESOCrossValidation';
+import { useAESOEnsemble } from '@/hooks/useAESOEnsemble';
 import { AESOMarketAnalyticsPanel } from './intelligence/AESOMarketAnalyticsPanel';
 import { AESOForecastPanel } from './intelligence/AESOForecastPanel';
 import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
@@ -84,6 +85,13 @@ export function AESOMarketComprehensive() {
     loading: cvLoading,
     results: cvResults
   } = useAESOCrossValidation();
+
+  // AESO Ensemble Predictor hook
+  const {
+    generateEnsemblePredictions,
+    loading: ensembleLoading,
+    predictions: ensemblePredictions
+  } = useAESOEnsemble();
 
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
@@ -193,6 +201,15 @@ export function AESOMarketComprehensive() {
             >
               <Target className={`w-4 h-4 mr-2 ${cvLoading ? 'animate-pulse' : ''}`} />
               <span className="text-sm">Run Time Series CV</span>
+            </Button>
+            <Button 
+              onClick={() => generateEnsemblePredictions(24)}
+              disabled={ensembleLoading || loading}
+              variant="outline"
+              className="flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4 border-2 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+            >
+              <BarChart3 className={`w-4 h-4 mr-2 ${ensembleLoading ? 'animate-pulse' : ''}`} />
+              <span className="text-sm">Generate Ensemble Predictions</span>
             </Button>
           </div>
         </div>
