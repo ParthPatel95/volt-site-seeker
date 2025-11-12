@@ -95,6 +95,51 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_cv_folds: {
+        Row: {
+          created_at: string | null
+          fold_number: number
+          id: string
+          mae: number | null
+          mape: number | null
+          model_version: string | null
+          rmse: number | null
+          smape: number | null
+          train_end_date: string
+          train_start_date: string
+          validation_end_date: string
+          validation_start_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          fold_number: number
+          id?: string
+          mae?: number | null
+          mape?: number | null
+          model_version?: string | null
+          rmse?: number | null
+          smape?: number | null
+          train_end_date: string
+          train_start_date: string
+          validation_end_date: string
+          validation_start_date: string
+        }
+        Update: {
+          created_at?: string | null
+          fold_number?: number
+          id?: string
+          mae?: number | null
+          mape?: number | null
+          model_version?: string | null
+          rmse?: number | null
+          smape?: number | null
+          train_end_date?: string
+          train_start_date?: string
+          validation_end_date?: string
+          validation_start_date?: string
+        }
+        Relationships: []
+      }
       aeso_data_quality_reports: {
         Row: {
           created_at: string
@@ -6062,6 +6107,16 @@ export type Database = {
       }
       calculate_enhanced_features_batch: { Args: never; Returns: undefined }
       clean_expired_verification_tokens: { Args: never; Returns: undefined }
+      generate_time_series_cv_folds: {
+        Args: { num_folds?: number; validation_window_hours?: number }
+        Returns: {
+          fold_number: number
+          train_end: string
+          train_start: string
+          validation_end: string
+          validation_start: string
+        }[]
+      }
       get_all_users_with_details: {
         Args: never
         Returns: {
