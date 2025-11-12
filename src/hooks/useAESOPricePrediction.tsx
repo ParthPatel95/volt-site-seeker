@@ -742,12 +742,13 @@ export const useAESOPricePrediction = () => {
       const performanceStep = data.steps.find((s: any) => s.name === 'Performance Metrics');
       
       if (performanceStep?.success && performanceStep.metrics) {
+        const metrics = performanceStep.metrics;
         setModelPerformance({
-          mae: performanceStep.metrics.mae,
-          rmse: performanceStep.metrics.rmse,
-          mape: performanceStep.metrics.smape, // Using sMAPE
-          rSquared: performanceStep.metrics.r_squared,
-          modelVersion: performanceStep.metrics.model_version || 'enhanced_v1',
+          mae: metrics.mae,
+          rmse: metrics.rmse,
+          mape: metrics.smape || metrics.mape, // Prefer sMAPE over MAPE
+          rSquared: metrics.r_squared,
+          modelVersion: metrics.model_version || 'enhanced_v1',
           featureImportance: {},
           prediction_interval_80: 0,
           prediction_interval_95: 0,
@@ -755,9 +756,12 @@ export const useAESOPricePrediction = () => {
           regimePerformance: {}
         });
         
+        const trainingRecords = metrics.training_records || metrics.predictions_evaluated || 0;
+        const smapeValue = metrics.smape || metrics.mape || 0;
+        
         toast({
           title: "✅ Pipeline Complete!",
-          description: `Model trained with enhanced features! sMAPE: ${performanceStep.metrics.smape?.toFixed(2)}%, MAE: $${performanceStep.metrics.mae?.toFixed(2)}, Training records: ${performanceStep.metrics.training_records}`,
+          description: `Model trained with enhanced features! sMAPE: ${smapeValue.toFixed(2)}%, MAE: $${metrics.mae?.toFixed(2)}, Training records: ${trainingRecords}`,
           duration: 10000,
         });
       } else {

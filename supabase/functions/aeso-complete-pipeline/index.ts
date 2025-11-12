@@ -176,21 +176,27 @@ serve(async (req) => {
         console.warn('Performance retrieval failed:', perfError);
       } else {
         console.log('✅ Performance metrics retrieved');
-        console.log(`   sMAPE: ${perfData.smape?.toFixed(2)}%`);
+        const smape = perfData.smape || perfData.mape; // Use sMAPE if available, fallback to MAPE
+        const trainingRecords = perfData.training_records || perfData.predictions_evaluated;
+        
+        console.log(`   sMAPE: ${smape?.toFixed(2)}%`);
         console.log(`   MAE: $${perfData.mae?.toFixed(2)}/MWh`);
         console.log(`   RMSE: $${perfData.rmse?.toFixed(2)}/MWh`);
         console.log(`   R²: ${perfData.r_squared?.toFixed(4)}`);
+        console.log(`   Training Records: ${trainingRecords}`);
         
         results.steps.push({
           step: 5,
           name: 'Performance Metrics',
           success: true,
           metrics: {
-            smape: perfData.smape,
+            smape: smape,
+            mape: perfData.mape,
             mae: perfData.mae,
             rmse: perfData.rmse,
             r_squared: perfData.r_squared,
-            training_records: perfData.training_records,
+            training_records: trainingRecords,
+            predictions_evaluated: perfData.predictions_evaluated,
             model_version: perfData.model_version
           }
         });

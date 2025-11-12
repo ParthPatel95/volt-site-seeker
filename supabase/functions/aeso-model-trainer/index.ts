@@ -311,7 +311,8 @@ serve(async (req) => {
     const mae = totalAbsError / testSet.length;
     const rmse = Math.sqrt(totalSquaredError / testSet.length);
     // sMAPE (Symmetric MAPE) - handles zero prices in energy markets correctly
-    const mape = totalPercentError / testSet.length;
+    const smape = totalPercentError / testSet.length;
+    const mape = smape; // For backwards compatibility
     
     // R-squared
     const meanActual = actuals.reduce((sum, val) => sum + val, 0) / actuals.length;
@@ -322,8 +323,9 @@ serve(async (req) => {
     console.log(`✅ Model Performance:`);
     console.log(`  MAE: $${mae.toFixed(2)}/MWh`);
     console.log(`  RMSE: $${rmse.toFixed(2)}/MWh`);
-    console.log(`  sMAPE: ${mape.toFixed(2)}% (Symmetric MAPE - handles zero prices)`);
+    console.log(`  sMAPE: ${smape.toFixed(2)}% (Symmetric MAPE - handles zero prices)`);
     console.log(`  R²: ${rSquared.toFixed(4)}`);
+    console.log(`  Training Records: ${trainSet.length}, Test Records: ${testSet.length}`);
     
     // ========== PHASE 4: CALCULATE PREDICTION INTERVALS ==========
     console.log('\n=== Phase 4: Calculating Prediction Intervals ===');
@@ -423,9 +425,11 @@ serve(async (req) => {
         mae: mae,
         rmse: rmse,
         mape: mape,
+        smape: smape, // Add sMAPE field
         r_squared: rSquared,
         feature_importance: featureImportance,
         predictions_evaluated: testSet.length,
+        training_records: trainSet.length, // Add training records count
         prediction_interval_80: predictionInterval80.upper,
         prediction_interval_95: predictionInterval95.upper,
         residual_std_dev: predictionInterval80.stdDev,
@@ -434,7 +438,7 @@ serve(async (req) => {
         metadata: {
           performance_windows: perfWindows,
           retraining_recommended: driftMetrics?.requiresRetraining || false,
-          phase: 6
+          phase: 8 // Updated phase number
         }
       });
 
