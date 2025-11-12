@@ -31,6 +31,7 @@ import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
 import { useAESOEnhancedData } from '@/hooks/useAESOEnhancedData';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
+import { useAESOCrossValidation } from '@/hooks/useAESOCrossValidation';
 import { AESOMarketAnalyticsPanel } from './intelligence/AESOMarketAnalyticsPanel';
 import { AESOForecastPanel } from './intelligence/AESOForecastPanel';
 import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
@@ -76,6 +77,13 @@ export function AESOMarketComprehensive() {
     runCompletePipeline,
     loading: pipelineLoading
   } = useAESOPricePrediction();
+
+  // AESO Cross-Validation hook
+  const {
+    runCrossValidation,
+    loading: cvLoading,
+    results: cvResults
+  } = useAESOCrossValidation();
 
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
@@ -176,6 +184,15 @@ export function AESOMarketComprehensive() {
             >
               <Brain className={`w-4 h-4 mr-2 ${pipelineLoading ? 'animate-pulse' : ''}`} />
               <span className="text-sm">Train Model with New Features</span>
+            </Button>
+            <Button 
+              onClick={() => runCrossValidation(5, 168)}
+              disabled={cvLoading || loading}
+              variant="outline"
+              className="flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4 border-2 border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+            >
+              <Target className={`w-4 h-4 mr-2 ${cvLoading ? 'animate-pulse' : ''}`} />
+              <span className="text-sm">Run Time Series CV</span>
             </Button>
           </div>
         </div>
