@@ -165,51 +165,51 @@ export function AESOMarketComprehensive() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-2 sm:p-4 lg:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
-          <div className="min-w-0 flex-1">
+        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
+          <div className="min-w-0">
             <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-foreground flex items-center flex-wrap gap-2">
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600 flex-shrink-0" />
               <span className="break-words leading-tight">AESO Market & Intelligence Hub</span>
             </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-muted-foreground break-words mt-1">
+            <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mt-1">
               Real-time market data with advanced analytics for Alberta&apos;s electricity system
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button 
               onClick={handleRefreshAll}
               disabled={loading}
-              className="bg-gradient-to-r from-red-600 to-red-700 flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4"
+              className="bg-gradient-to-r from-red-600 to-red-700 flex-shrink-0 min-h-[44px] px-3 sm:px-4"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              <span className="text-sm">Refresh All Data</span>
+              <span className="text-sm whitespace-nowrap">Refresh All Data</span>
             </Button>
             <Button 
               onClick={runCompletePipeline}
               disabled={pipelineLoading || loading}
               variant="outline"
-              className="flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4 border-2 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+              className="flex-shrink-0 min-h-[44px] px-3 sm:px-4 border-2 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
             >
               <Brain className={`w-4 h-4 mr-2 ${pipelineLoading ? 'animate-pulse' : ''}`} />
-              <span className="text-sm">Train Model with New Features</span>
+              <span className="text-sm whitespace-nowrap">Train Model</span>
             </Button>
             <Button 
               onClick={() => runCrossValidation(5, 168)}
               disabled={cvLoading || loading}
               variant="outline"
-              className="flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4 border-2 border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+              className="flex-shrink-0 min-h-[44px] px-3 sm:px-4 border-2 border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
             >
               <Target className={`w-4 h-4 mr-2 ${cvLoading ? 'animate-pulse' : ''}`} />
-              <span className="text-sm">Run Time Series CV</span>
+              <span className="text-sm whitespace-nowrap">Run CV</span>
             </Button>
             <Button 
               onClick={() => generateEnsemblePredictions(24)}
               disabled={ensembleLoading || loading}
               variant="outline"
-              className="flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4 border-2 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+              className="flex-shrink-0 min-h-[44px] px-3 sm:px-4 border-2 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
             >
               <BarChart3 className={`w-4 h-4 mr-2 ${ensembleLoading ? 'animate-pulse' : ''}`} />
-              <span className="text-sm">Generate Ensemble Predictions</span>
+              <span className="text-sm whitespace-nowrap">Ensemble 24h</span>
             </Button>
           </div>
         </div>
