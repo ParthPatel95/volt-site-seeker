@@ -57,21 +57,21 @@ serve(async (req) => {
       });
     }
 
-    // STEP 2: Calculate enhanced features (lag features, rolling averages, etc.)
-    console.log('\n🔧 STEP 2: Calculating enhanced features...');
+    // STEP 2: Calculate basic enhanced features (lag features, rolling averages, etc.)
+    console.log('\n🔧 STEP 2: Calculating basic enhanced features...');
     try {
       const { error: featuresError } = await supabase.rpc('calculate_enhanced_features_batch');
       
       if (featuresError) {
-        console.error('Enhanced features calculation failed:', featuresError);
+        console.error('Basic features calculation failed:', featuresError);
         results.steps.push({
           step: 2,
-          name: 'Enhanced Features',
+          name: 'Basic Enhanced Features',
           success: false,
           error: featuresError.message
         });
       } else {
-        console.log('✅ Enhanced features calculated');
+        console.log('✅ Basic enhanced features calculated');
         
         // Get count of records with features
         const { count } = await supabase
@@ -81,16 +81,48 @@ serve(async (req) => {
         
         results.steps.push({
           step: 2,
-          name: 'Enhanced Features',
+          name: 'Basic Enhanced Features',
           success: true,
           recordsWithFeatures: count
         });
       }
     } catch (error: any) {
-      console.error('Enhanced features error:', error);
+      console.error('Basic features error:', error);
       results.steps.push({
         step: 2,
-        name: 'Enhanced Features',
+        name: 'Basic Enhanced Features',
+        success: false,
+        error: error.message
+      });
+    }
+
+    // STEP 2.5: Calculate advanced features (Fourier, Natural Gas, Interactions)
+    console.log('\n🚀 STEP 2.5: Calculating advanced features (Fourier + Gas + Interactions)...');
+    try {
+      const { data: advancedData, error: advancedError } = await supabase.functions.invoke('aeso-advanced-feature-engineer');
+      
+      if (advancedError) {
+        console.warn('Advanced features calculation failed:', advancedError);
+        results.steps.push({
+          step: 2.5,
+          name: 'Advanced Features',
+          success: false,
+          error: advancedError.message
+        });
+      } else {
+        console.log('✅ Advanced features calculated:', advancedData.stats);
+        results.steps.push({
+          step: 2.5,
+          name: 'Advanced Features',
+          success: true,
+          stats: advancedData.stats
+        });
+      }
+    } catch (error: any) {
+      console.warn('Advanced features error:', error);
+      results.steps.push({
+        step: 2.5,
+        name: 'Advanced Features',
         success: false,
         error: error.message
       });
@@ -128,34 +160,60 @@ serve(async (req) => {
       });
     }
 
-    // STEP 4: Train the model with enhanced features
-    console.log('\n🤖 STEP 4: Training model with enhanced features...');
+    // STEP 4: Train stacked ensemble with sMAPE optimization
+    console.log('\n🎯 STEP 4: Training stacked ensemble (5 models + meta-learner)...');
     try {
-      const { data: trainData, error: trainError } = await supabase.functions.invoke('aeso-model-trainer');
+      const { data: stackedData, error: stackedError } = await supabase.functions.invoke('aeso-stacked-ensemble-trainer');
       
-      if (trainError) {
-        console.error('Model training failed:', trainError);
+      if (stackedError) {
+        console.warn('Stacked ensemble training failed, falling back to basic model:', stackedError);
         results.steps.push({
           step: 4,
-          name: 'Model Training',
+          name: 'Stacked Ensemble Training',
           success: false,
-          error: trainError.message
+          error: stackedError.message
         });
-        results.success = false;
+        
+        // Fallback to basic model
+        console.log('\n🤖 STEP 4 (Fallback): Training basic model...');
+        const { data: trainData, error: trainError } = await supabase.functions.invoke('aeso-model-trainer');
+        
+        if (trainError) {
+          console.error('Fallback model training failed:', trainError);
+          results.steps.push({
+            step: 4.1,
+            name: 'Basic Model Training (Fallback)',
+            success: false,
+            error: trainError.message
+          });
+          results.success = false;
+        } else {
+          console.log('✅ Basic model training completed');
+          results.steps.push({
+            step: 4.1,
+            name: 'Basic Model Training (Fallback)',
+            success: true,
+            performance: trainData
+          });
+        }
       } else {
-        console.log('✅ Model training completed');
+        console.log('✅ Stacked ensemble training completed:', stackedData.metrics);
         results.steps.push({
           step: 4,
-          name: 'Model Training',
+          name: 'Stacked Ensemble Training',
           success: true,
-          performance: trainData
+          model_version: stackedData.model_version,
+          metrics: stackedData.metrics,
+          base_models: stackedData.base_model_smapes,
+          ensemble_weights: stackedData.ensemble_weights,
+          improvement: stackedData.improvement
         });
       }
     } catch (error: any) {
-      console.error('Model training error:', error);
+      console.error('Stacked ensemble training error:', error);
       results.steps.push({
         step: 4,
-        name: 'Model Training',
+        name: 'Stacked Ensemble Training',
         success: false,
         error: error.message
       });

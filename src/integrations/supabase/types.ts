@@ -1013,6 +1013,23 @@ export type Database = {
           demand_lag_6h: number | null
           demand_ramp_rate: number | null
           demand_volatility_6h: number | null
+          fourier_annual_cos_1: number | null
+          fourier_annual_cos_2: number | null
+          fourier_annual_sin_1: number | null
+          fourier_annual_sin_2: number | null
+          fourier_daily_cos_1: number | null
+          fourier_daily_cos_2: number | null
+          fourier_daily_sin_1: number | null
+          fourier_daily_sin_2: number | null
+          fourier_weekly_cos: number | null
+          fourier_weekly_sin: number | null
+          gas_demand_interaction: number | null
+          gas_price_aeco: number | null
+          gas_price_lag_24h: number | null
+          gas_price_ma_7d: number | null
+          gas_price_momentum: number | null
+          gas_temp_interaction: number | null
+          gas_wind_interaction: number | null
           generation_coal: number | null
           generation_gas: number | null
           generation_hydro: number | null
@@ -1028,7 +1045,10 @@ export type Database = {
           intertie_bc_flow: number | null
           intertie_montana_flow: number | null
           intertie_sask_flow: number | null
+          is_evening_peak: number | null
           is_holiday: boolean | null
+          is_morning_ramp: number | null
+          is_overnight: number | null
           is_valid_record: boolean | null
           is_weekend: boolean | null
           market_stress_score: number | null
@@ -1057,6 +1077,7 @@ export type Database = {
           price_volatility_6h: number | null
           renewable_capacity_factor: number | null
           renewable_penetration: number | null
+          renewable_volatility: number | null
           reserve_margin_percent: number | null
           season: string | null
           smp_pool_price_spread: number | null
@@ -1067,6 +1088,8 @@ export type Database = {
           system_marginal_price: number | null
           temp_demand_hour_interaction: number | null
           temp_demand_interaction: number | null
+          temp_extreme_cold: number | null
+          temp_extreme_hot: number | null
           temperature_calgary: number | null
           temperature_edmonton: number | null
           timestamp: string
@@ -1074,6 +1097,7 @@ export type Database = {
           transmission_constraint_hours: number | null
           transmission_outages_count: number | null
           volatility_trend: number | null
+          weekend_demand_factor: number | null
           wind_hour_interaction: number | null
           wind_lag_3h: number | null
           wind_lag_6h: number | null
@@ -1094,6 +1118,23 @@ export type Database = {
           demand_lag_6h?: number | null
           demand_ramp_rate?: number | null
           demand_volatility_6h?: number | null
+          fourier_annual_cos_1?: number | null
+          fourier_annual_cos_2?: number | null
+          fourier_annual_sin_1?: number | null
+          fourier_annual_sin_2?: number | null
+          fourier_daily_cos_1?: number | null
+          fourier_daily_cos_2?: number | null
+          fourier_daily_sin_1?: number | null
+          fourier_daily_sin_2?: number | null
+          fourier_weekly_cos?: number | null
+          fourier_weekly_sin?: number | null
+          gas_demand_interaction?: number | null
+          gas_price_aeco?: number | null
+          gas_price_lag_24h?: number | null
+          gas_price_ma_7d?: number | null
+          gas_price_momentum?: number | null
+          gas_temp_interaction?: number | null
+          gas_wind_interaction?: number | null
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
@@ -1109,7 +1150,10 @@ export type Database = {
           intertie_bc_flow?: number | null
           intertie_montana_flow?: number | null
           intertie_sask_flow?: number | null
+          is_evening_peak?: number | null
           is_holiday?: boolean | null
+          is_morning_ramp?: number | null
+          is_overnight?: number | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
           market_stress_score?: number | null
@@ -1138,6 +1182,7 @@ export type Database = {
           price_volatility_6h?: number | null
           renewable_capacity_factor?: number | null
           renewable_penetration?: number | null
+          renewable_volatility?: number | null
           reserve_margin_percent?: number | null
           season?: string | null
           smp_pool_price_spread?: number | null
@@ -1148,6 +1193,8 @@ export type Database = {
           system_marginal_price?: number | null
           temp_demand_hour_interaction?: number | null
           temp_demand_interaction?: number | null
+          temp_extreme_cold?: number | null
+          temp_extreme_hot?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
           timestamp: string
@@ -1155,6 +1202,7 @@ export type Database = {
           transmission_constraint_hours?: number | null
           transmission_outages_count?: number | null
           volatility_trend?: number | null
+          weekend_demand_factor?: number | null
           wind_hour_interaction?: number | null
           wind_lag_3h?: number | null
           wind_lag_6h?: number | null
@@ -1175,6 +1223,23 @@ export type Database = {
           demand_lag_6h?: number | null
           demand_ramp_rate?: number | null
           demand_volatility_6h?: number | null
+          fourier_annual_cos_1?: number | null
+          fourier_annual_cos_2?: number | null
+          fourier_annual_sin_1?: number | null
+          fourier_annual_sin_2?: number | null
+          fourier_daily_cos_1?: number | null
+          fourier_daily_cos_2?: number | null
+          fourier_daily_sin_1?: number | null
+          fourier_daily_sin_2?: number | null
+          fourier_weekly_cos?: number | null
+          fourier_weekly_sin?: number | null
+          gas_demand_interaction?: number | null
+          gas_price_aeco?: number | null
+          gas_price_lag_24h?: number | null
+          gas_price_ma_7d?: number | null
+          gas_price_momentum?: number | null
+          gas_temp_interaction?: number | null
+          gas_wind_interaction?: number | null
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
@@ -1190,7 +1255,10 @@ export type Database = {
           intertie_bc_flow?: number | null
           intertie_montana_flow?: number | null
           intertie_sask_flow?: number | null
+          is_evening_peak?: number | null
           is_holiday?: boolean | null
+          is_morning_ramp?: number | null
+          is_overnight?: number | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
           market_stress_score?: number | null
@@ -1219,6 +1287,7 @@ export type Database = {
           price_volatility_6h?: number | null
           renewable_capacity_factor?: number | null
           renewable_penetration?: number | null
+          renewable_volatility?: number | null
           reserve_margin_percent?: number | null
           season?: string | null
           smp_pool_price_spread?: number | null
@@ -1229,6 +1298,8 @@ export type Database = {
           system_marginal_price?: number | null
           temp_demand_hour_interaction?: number | null
           temp_demand_interaction?: number | null
+          temp_extreme_cold?: number | null
+          temp_extreme_hot?: number | null
           temperature_calgary?: number | null
           temperature_edmonton?: number | null
           timestamp?: string
@@ -1236,6 +1307,7 @@ export type Database = {
           transmission_constraint_hours?: number | null
           transmission_outages_count?: number | null
           volatility_trend?: number | null
+          weekend_demand_factor?: number | null
           wind_hour_interaction?: number | null
           wind_lag_3h?: number | null
           wind_lag_6h?: number | null
