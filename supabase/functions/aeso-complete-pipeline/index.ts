@@ -58,7 +58,7 @@ serve(async (req) => {
     // Step 3: Advanced Feature Engineering (Phase 2)
     console.log('Step 3/5: Calculating advanced features (Phase 2)...');
     try {
-      const { data: advancedData, error: advancedError } = await supabase.functions.invoke('aeso-advanced-features');
+      const { data: advancedData, error: advancedError } = await supabase.functions.invoke('aeso-advanced-feature-engineer');
       
       if (advancedError) throw advancedError;
       
