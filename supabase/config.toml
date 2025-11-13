@@ -49,6 +49,12 @@ verify_jwt = false
 [functions.aeso-ensemble-predictor]
 verify_jwt = false
 
+[functions.aeso-predict-realtime]
+verify_jwt = false
+
+[functions.aeso-drift-detector]
+verify_jwt = false
+
 [functions.aeso-performance-tracker]
 verify_jwt = false
 
