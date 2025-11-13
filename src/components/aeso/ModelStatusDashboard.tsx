@@ -95,67 +95,55 @@ export const ModelStatusDashboard = () => {
   const runFullPipeline = async () => {
     setRunningPipeline(true);
     try {
-      // Step 1: Calculate Enhanced Features
       toast({
-        title: "Step 1/3: Calculating Features",
-        description: "Computing enhanced price lag features and Phase 3 indicators...",
+        title: "🚀 Starting Complete ML Pipeline",
+        description: "Running data collection, advanced feature engineering, quality analysis, and stacked ensemble training...",
+        duration: 5000,
       });
       
-      const { data: featuresData, error: featuresError } = await supabase.functions.invoke('aeso-enhanced-feature-calculator');
+      const { data, error } = await supabase.functions.invoke('aeso-complete-pipeline');
       
-      if (featuresError) throw new Error(`Feature calculation failed: ${featuresError.message}`);
-      
-      if (featuresData?.success) {
-        toast({
-          title: "✓ Features Calculated",
-          description: `Processed ${featuresData.records_processed} records.`,
-        });
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      if (error) {
+        throw new Error(`Pipeline failed: ${error.message}`);
       }
       
-      // Step 2: Filter Data Quality
+      if (!data?.success) {
+        throw new Error(data?.error || 'Pipeline completed with errors');
+      }
+      
+      // Show detailed results
+      const steps = data.steps || {};
+      let description = `Pipeline completed in ${(data.duration_ms / 1000).toFixed(1)}s\n`;
+      
+      if (steps.data_collection?.success) {
+        description += `✓ Data Collection\n`;
+      }
+      if (steps.feature_engineering?.success) {
+        description += `✓ Advanced Features: ${steps.advanced_features?.stats?.updated_records || 0} records\n`;
+      }
+      if (steps.quality_analysis?.success) {
+        description += `✓ Quality Analysis\n`;
+      }
+      if (steps.model_training?.success) {
+        const metrics = steps.model_training.metrics;
+        description += `✓ Stacked Ensemble: sMAPE ${metrics?.test_smape?.toFixed(2) || 'N/A'}%`;
+      }
+      
       toast({
-        title: "Step 2/3: Filtering Data",
-        description: "Removing invalid records and outliers...",
+        title: "✅ Pipeline Complete!",
+        description,
+        duration: 15000,
       });
       
-      const { data: qualityData, error: qualityError } = await supabase.functions.invoke('aeso-data-quality-filter');
-      
-      if (qualityError) throw new Error(`Quality filtering failed: ${qualityError.message}`);
-      
-      if (qualityData?.success) {
-        toast({
-          title: "✓ Data Filtered",
-          description: `${qualityData.valid_records} valid records of ${qualityData.total_records} total.`,
-        });
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-      
-      // Step 3: Train Model
-      toast({
-        title: "Step 3/3: Training Model",
-        description: "Training regime-specific XGBoost models...",
-      });
-      
-      const { data: trainingData, error: trainingError } = await supabase.functions.invoke('aeso-model-trainer');
-      
-      if (trainingError) throw new Error(`Model training failed: ${trainingError.message}`);
-      
-      if (trainingData?.success) {
-        toast({
-          title: "✅ Pipeline Complete!",
-          description: `Model ${trainingData.model_version} trained. sMAPE: ${trainingData.metrics?.smape}%`,
-        });
-        
-        // Refresh status
-        await fetchSystemStatus();
-      }
+      // Refresh status
+      await fetchSystemStatus();
     } catch (error: any) {
       console.error('Pipeline error:', error);
       toast({
         title: "Pipeline Failed",
         description: error.message || "Failed to run training pipeline",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 10000,
       });
     } finally {
       setRunningPipeline(false);
