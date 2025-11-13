@@ -723,7 +723,7 @@ export const useAESOPricePrediction = () => {
     try {
       toast({
         title: "🚀 Running Complete Pipeline",
-        description: "Collecting data, calculating features, and retraining model with new AESO market features...",
+        description: "Collecting data, calculating features, and retraining model (this may take 2-3 minutes)...",
         duration: 5000,
       });
       
@@ -731,6 +731,12 @@ export const useAESOPricePrediction = () => {
       
       if (error) {
         console.error('Complete pipeline error:', error);
+        
+        // Check if it's a timeout error
+        if (error.message?.includes('timeout') || error.message?.includes('504') || error.message?.includes('Gateway Timeout')) {
+          throw new Error('Model training timeout - The training process is still running in the background. Please wait 2-3 minutes and check the performance metrics below.');
+        }
+        
         throw error;
       }
       
@@ -776,12 +782,30 @@ export const useAESOPricePrediction = () => {
       
     } catch (error: any) {
       console.error('Complete pipeline error:', error);
-      toast({
-        title: "Pipeline Failed",
-        description: error.message || "Failed to complete the pipeline",
-        variant: "destructive",
-        duration: 10000,
-      });
+      
+      // Check for timeout/gateway errors
+      const errorMsg = error.message || '';
+      const isTimeout = errorMsg.includes('timeout') || 
+                       errorMsg.includes('504') || 
+                       errorMsg.includes('Gateway Timeout') ||
+                       errorMsg.includes('Failed to send a request');
+      
+      if (isTimeout) {
+        toast({
+          title: "⏱️ Training In Progress",
+          description: "Model training takes 2-3 minutes and may continue in the background. Refresh the page to check results.",
+          variant: "default",
+          duration: 15000,
+        });
+      } else {
+        toast({
+          title: "Pipeline Failed",
+          description: error.message || "Failed to complete the pipeline",
+          variant: "destructive",
+          duration: 10000,
+        });
+      }
+      
       throw error;
     } finally {
       setLoading(false);
