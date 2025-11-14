@@ -57,6 +57,9 @@ serve(async (req) => {
     console.log('Intertie flows:', JSON.stringify(aesoData.intertieFlows, null, 2));
     console.log('Operating reserve:', JSON.stringify(aesoData.operatingReserve, null, 2));
     console.log('Generation outages:', JSON.stringify(aesoData.generationOutages, null, 2));
+    console.log('Wind forecast:', aesoData.windForecast ? `${aesoData.windForecast.forecasts?.length || 0} hours available` : 'Not available');
+    console.log('Solar forecast:', aesoData.solarForecast ? `${aesoData.solarForecast.forecasts?.length || 0} hours available` : 'Not available');
+    console.log('Load forecast:', aesoData.loadForecast ? `${aesoData.loadForecast.forecasts?.length || 0} hours available` : 'Not available');
     
     // Validate pool price exists (can be zero or negative - both are valid market prices)
     if (poolPrice === undefined || poolPrice === null) {
@@ -142,6 +145,19 @@ serve(async (req) => {
       generation_wind: generationData.wind_mw || 0,
       generation_solar: generationData.solar_mw || 0,
       generation_hydro: generationData.hydro_mw || 0,
+      // Generation & Load Forecasts from AESO API
+      wind_forecast_1h: aesoData.windForecast?.forecasts?.[0]?.forecast_mw || null,
+      wind_forecast_3h: aesoData.windForecast?.forecasts?.[2]?.forecast_mw || null,
+      wind_forecast_24h: aesoData.windForecast?.forecasts?.[23]?.forecast_mw || null,
+      solar_forecast_1h: aesoData.solarForecast?.forecasts?.[0]?.forecast_mw || null,
+      solar_forecast_3h: aesoData.solarForecast?.forecasts?.[2]?.forecast_mw || null,
+      solar_forecast_24h: aesoData.solarForecast?.forecasts?.[23]?.forecast_mw || null,
+      load_forecast_1h: aesoData.loadForecast?.forecasts?.[0]?.forecast_mw || null,
+      load_forecast_3h: aesoData.loadForecast?.forecasts?.[2]?.forecast_mw || null,
+      load_forecast_24h: aesoData.loadForecast?.forecasts?.[23]?.forecast_mw || null,
+      pool_price_forecast_1h: aesoData.pricing?.forecast_1h || null,
+      pool_price_forecast_3h: aesoData.pricing?.forecast_3h || null,
+      pool_price_forecast_24h: aesoData.pricing?.forecast_24h || null,
       // Intertie flows (positive = import, negative = export)
       intertie_bc_flow: intertieData.bc_flow || 0,
       intertie_sask_flow: intertieData.sask_flow || 0,
