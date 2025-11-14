@@ -744,11 +744,11 @@ export const useAESOPricePrediction = () => {
         throw new Error('Pipeline failed - check logs for details');
       }
       
-      // Extract performance metrics from the results
-      const performanceStep = data.steps.find((s: any) => s.name === 'Performance Metrics');
+      // Extract performance metrics from the results (steps is an object, not array)
+      const modelTrainingStep = data.steps?.model_training;
       
-      if (performanceStep?.success && performanceStep.metrics) {
-        const metrics = performanceStep.metrics;
+      if (modelTrainingStep?.success && modelTrainingStep.metrics) {
+        const metrics = modelTrainingStep.metrics;
         setModelPerformance({
           mae: metrics.mae,
           rmse: metrics.rmse,
