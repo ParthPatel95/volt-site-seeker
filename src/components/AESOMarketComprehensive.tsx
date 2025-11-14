@@ -23,7 +23,8 @@ import {
   BarChart3,
   Brain,
   Factory,
-  Calendar
+  Calendar,
+  Settings
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -40,6 +41,7 @@ import { AESOAlertsPanel } from './intelligence/AESOAlertsPanel';
 import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
 import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
 import { AESOPricePredictionDashboard } from './aeso/AESOPricePredictionDashboard';
+import { AESOTrainingManager } from './aeso/AESOTrainingManager';
 
 export function AESOMarketComprehensive() {
   // Use working dashboard data source
@@ -183,33 +185,6 @@ export function AESOMarketComprehensive() {
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               <span className="text-sm whitespace-nowrap">Refresh All Data</span>
-            </Button>
-            <Button 
-              onClick={runCompletePipeline}
-              disabled={pipelineLoading || loading}
-              variant="outline"
-              className="flex-shrink-0 min-h-[44px] px-3 sm:px-4 border-2 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
-            >
-              <Brain className={`w-4 h-4 mr-2 ${pipelineLoading ? 'animate-pulse' : ''}`} />
-              <span className="text-sm whitespace-nowrap">Train Model</span>
-            </Button>
-            <Button 
-              onClick={() => runCrossValidation(5, 168)}
-              disabled={cvLoading || loading}
-              variant="outline"
-              className="flex-shrink-0 min-h-[44px] px-3 sm:px-4 border-2 border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
-            >
-              <Target className={`w-4 h-4 mr-2 ${cvLoading ? 'animate-pulse' : ''}`} />
-              <span className="text-sm whitespace-nowrap">Run CV</span>
-            </Button>
-            <Button 
-              onClick={() => generateEnsemblePredictions(24)}
-              disabled={ensembleLoading || loading}
-              variant="outline"
-              className="flex-shrink-0 min-h-[44px] px-3 sm:px-4 border-2 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
-            >
-              <BarChart3 className={`w-4 h-4 mr-2 ${ensembleLoading ? 'animate-pulse' : ''}`} />
-              <span className="text-sm whitespace-nowrap">Ensemble 24h</span>
             </Button>
           </div>
         </div>
@@ -480,9 +455,28 @@ export function AESOMarketComprehensive() {
             <AESOHistoricalPricing />
           </TabsContent>
 
-          {/* AI Price Predictions Tab */}
+          {/* AI Price Predictions Tab with Sub-tabs */}
           <TabsContent value="predictions" className="space-y-4 sm:space-y-6">
-            <AESOPricePredictionDashboard />
+            <Tabs defaultValue="predictions" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="predictions" className="flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  Predictions
+                </TabsTrigger>
+                <TabsTrigger value="training" className="flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Training & Management
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="predictions">
+                <AESOPricePredictionDashboard />
+              </TabsContent>
+              
+              <TabsContent value="training">
+                <AESOTrainingManager />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* Generation Tab */}
