@@ -1051,6 +1051,9 @@ export type Database = {
           is_overnight: number | null
           is_valid_record: boolean | null
           is_weekend: boolean | null
+          load_forecast_1h: number | null
+          load_forecast_24h: number | null
+          load_forecast_3h: number | null
           market_stress_score: number | null
           month: number | null
           net_demand: number | null
@@ -1058,6 +1061,9 @@ export type Database = {
           operating_reserve_price: number | null
           outage_capacity_mw: number | null
           pool_price: number
+          pool_price_forecast_1h: number | null
+          pool_price_forecast_24h: number | null
+          pool_price_forecast_3h: number | null
           price_acceleration: number | null
           price_demand_ratio: number | null
           price_lag_1h: number | null
@@ -1081,6 +1087,9 @@ export type Database = {
           reserve_margin_percent: number | null
           season: string | null
           smp_pool_price_spread: number | null
+          solar_forecast_1h: number | null
+          solar_forecast_24h: number | null
+          solar_forecast_3h: number | null
           solar_irradiance: number | null
           spinning_reserve_mw: number | null
           supplemental_reserve_mw: number | null
@@ -1098,6 +1107,9 @@ export type Database = {
           transmission_outages_count: number | null
           volatility_trend: number | null
           weekend_demand_factor: number | null
+          wind_forecast_1h: number | null
+          wind_forecast_24h: number | null
+          wind_forecast_3h: number | null
           wind_hour_interaction: number | null
           wind_lag_3h: number | null
           wind_lag_6h: number | null
@@ -1156,6 +1168,9 @@ export type Database = {
           is_overnight?: number | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
+          load_forecast_1h?: number | null
+          load_forecast_24h?: number | null
+          load_forecast_3h?: number | null
           market_stress_score?: number | null
           month?: number | null
           net_demand?: number | null
@@ -1163,6 +1178,9 @@ export type Database = {
           operating_reserve_price?: number | null
           outage_capacity_mw?: number | null
           pool_price: number
+          pool_price_forecast_1h?: number | null
+          pool_price_forecast_24h?: number | null
+          pool_price_forecast_3h?: number | null
           price_acceleration?: number | null
           price_demand_ratio?: number | null
           price_lag_1h?: number | null
@@ -1186,6 +1204,9 @@ export type Database = {
           reserve_margin_percent?: number | null
           season?: string | null
           smp_pool_price_spread?: number | null
+          solar_forecast_1h?: number | null
+          solar_forecast_24h?: number | null
+          solar_forecast_3h?: number | null
           solar_irradiance?: number | null
           spinning_reserve_mw?: number | null
           supplemental_reserve_mw?: number | null
@@ -1203,6 +1224,9 @@ export type Database = {
           transmission_outages_count?: number | null
           volatility_trend?: number | null
           weekend_demand_factor?: number | null
+          wind_forecast_1h?: number | null
+          wind_forecast_24h?: number | null
+          wind_forecast_3h?: number | null
           wind_hour_interaction?: number | null
           wind_lag_3h?: number | null
           wind_lag_6h?: number | null
@@ -1261,6 +1285,9 @@ export type Database = {
           is_overnight?: number | null
           is_valid_record?: boolean | null
           is_weekend?: boolean | null
+          load_forecast_1h?: number | null
+          load_forecast_24h?: number | null
+          load_forecast_3h?: number | null
           market_stress_score?: number | null
           month?: number | null
           net_demand?: number | null
@@ -1268,6 +1295,9 @@ export type Database = {
           operating_reserve_price?: number | null
           outage_capacity_mw?: number | null
           pool_price?: number
+          pool_price_forecast_1h?: number | null
+          pool_price_forecast_24h?: number | null
+          pool_price_forecast_3h?: number | null
           price_acceleration?: number | null
           price_demand_ratio?: number | null
           price_lag_1h?: number | null
@@ -1291,6 +1321,9 @@ export type Database = {
           reserve_margin_percent?: number | null
           season?: string | null
           smp_pool_price_spread?: number | null
+          solar_forecast_1h?: number | null
+          solar_forecast_24h?: number | null
+          solar_forecast_3h?: number | null
           solar_irradiance?: number | null
           spinning_reserve_mw?: number | null
           supplemental_reserve_mw?: number | null
@@ -1308,6 +1341,9 @@ export type Database = {
           transmission_outages_count?: number | null
           volatility_trend?: number | null
           weekend_demand_factor?: number | null
+          wind_forecast_1h?: number | null
+          wind_forecast_24h?: number | null
+          wind_forecast_3h?: number | null
           wind_hour_interaction?: number | null
           wind_lag_3h?: number | null
           wind_lag_6h?: number | null
