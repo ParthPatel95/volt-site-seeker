@@ -794,30 +794,22 @@ async function fetchAESOData() {
     loadResp, 
     interchangeResp, 
     orResp, 
-    genCapResp,
-    windForecastResp,
-    solarForecastResp,
-    loadForecastResp
+    genCapResp
   ] = await Promise.allSettled([
     getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`)),
     getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`)),
     getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`)),
     getJson(withQuery(`${host}/public/interchangecapability-api/v1/capability/interchangeCapability`)),
     getJson(withQuery(`${host}/public/operatingreserve-api/v1/reserve/operatingReserve`)),
-    getJson(withQuery(`${host}/public/aiescapacity-api/v1/capacity/aiesCapacity`)),
-    // Add generation forecast endpoints
-    getJson(withQuery(`${host}/public/actualforecast-api/v1/wind/forecast`)),
-    getJson(withQuery(`${host}/public/actualforecast-api/v1/solar/forecast`)),
-    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/forecast`))
+    getJson(withQuery(`${host}/public/aiescapacity-api/v1/capacity/aiesCapacity`))
+    // Note: AESO does not provide public wind/solar/load forecast endpoints via APIM
+    // Only historical/actual data is available through these APIs
   ]);
 
   let pricing: any | undefined;
   let loadData: any | undefined;
   let generationMix: any | undefined;
   let systemMarginalPrice: number | undefined;
-  let windForecast: any | undefined;
-  let solarForecast: any | undefined;
-  let loadForecast: any | undefined;
   let intertieFlows: any | undefined;
   let operatingReserve: any | undefined;
   let generationOutages: any | undefined;
@@ -1086,84 +1078,6 @@ async function fetchAESOData() {
     console.error('AESO generation capacity parse error:', e);
   }
 
-  // Parse Wind Generation Forecast
-  try {
-    const json: any = windForecastResp.status === 'fulfilled' ? windForecastResp.value : null;
-    const arr: any[] = json?.return?.['Wind Forecast'] || json?.['Wind Forecast'] || json?.data || [];
-    
-    if (Array.isArray(arr) && arr.length) {
-      const forecasts = arr.map(record => ({
-        timestamp: record?.forecast_datetime || record?.begin_datetime_utc || record?.timestamp,
-        forecast_mw: parseFloat(String(record?.forecast_wind_generation || record?.wind_forecast || 0)),
-        actual_mw: parseFloat(String(record?.actual_wind_generation || record?.wind_actual || 0))
-      })).filter(f => f.forecast_mw > 0);
-      
-      if (forecasts.length) {
-        windForecast = {
-          forecasts: forecasts.slice(0, 24), // Next 24 hours
-          latest_forecast_mw: forecasts[0]?.forecast_mw || 0,
-          source: 'aeso_api_wind_forecast',
-          timestamp: new Date().toISOString()
-        };
-        console.log('✅ Wind forecast:', windForecast.forecasts.length, 'hours');
-      }
-    }
-  } catch (e) {
-    console.error('AESO wind forecast parse error:', e);
-  }
-
-  // Parse Solar Generation Forecast
-  try {
-    const json: any = solarForecastResp.status === 'fulfilled' ? solarForecastResp.value : null;
-    const arr: any[] = json?.return?.['Solar Forecast'] || json?.['Solar Forecast'] || json?.data || [];
-    
-    if (Array.isArray(arr) && arr.length) {
-      const forecasts = arr.map(record => ({
-        timestamp: record?.forecast_datetime || record?.begin_datetime_utc || record?.timestamp,
-        forecast_mw: parseFloat(String(record?.forecast_solar_generation || record?.solar_forecast || 0)),
-        actual_mw: parseFloat(String(record?.actual_solar_generation || record?.solar_actual || 0))
-      })).filter(f => f.forecast_mw > 0);
-      
-      if (forecasts.length) {
-        solarForecast = {
-          forecasts: forecasts.slice(0, 24), // Next 24 hours
-          latest_forecast_mw: forecasts[0]?.forecast_mw || 0,
-          source: 'aeso_api_solar_forecast',
-          timestamp: new Date().toISOString()
-        };
-        console.log('✅ Solar forecast:', solarForecast.forecasts.length, 'hours');
-      }
-    }
-  } catch (e) {
-    console.error('AESO solar forecast parse error:', e);
-  }
-
-  // Parse Load Forecast (extended forecast beyond current load)
-  try {
-    const json: any = loadForecastResp.status === 'fulfilled' ? loadForecastResp.value : null;
-    const arr: any[] = json?.return?.['Load Forecast'] || json?.['Actual Forecast Report'] || json?.data || [];
-    
-    if (Array.isArray(arr) && arr.length) {
-      const forecasts = arr.map(record => ({
-        timestamp: record?.forecast_datetime || record?.begin_datetime_utc || record?.timestamp,
-        forecast_mw: parseFloat(String(record?.forecast_alberta_internal_load || record?.forecast_AIL || 0))
-      })).filter(f => f.forecast_mw > 0);
-      
-      if (forecasts.length) {
-        loadForecast = {
-          forecasts: forecasts.slice(0, 168), // Next 7 days (168 hours)
-          peak_forecast_7day_mw: Math.max(...forecasts.map(f => f.forecast_mw)),
-          average_forecast_24h_mw: forecasts.slice(0, 24).reduce((sum, f) => sum + f.forecast_mw, 0) / Math.min(24, forecasts.length),
-          source: 'aeso_api_load_forecast',
-          timestamp: new Date().toISOString()
-        };
-        console.log('✅ Load forecast:', loadForecast.forecasts.length, 'hours, peak:', loadForecast.peak_forecast_7day_mw);
-      }
-    }
-  } catch (e) {
-    console.error('AESO load forecast parse error:', e);
-  }
-
   console.log('AESO return summary (APIM)', {
     pricingSource: pricing?.source,
     currentPrice: pricing?.current_price,
@@ -1172,10 +1086,8 @@ async function fetchAESOData() {
     mixSource: generationMix?.source,
     hasIntertie: !!intertieFlows,
     hasOR: !!operatingReserve,
-    hasOutages: !!generationOutages,
-    hasWindForecast: !!windForecast,
-    hasSolarForecast: !!solarForecast,
-    hasLoadForecast: !!loadForecast
+    hasOutages: !!generationOutages
+    // Note: Wind, solar, and load forecasts are not available via public AESO APIM endpoints
   });
 
   return { 
@@ -1184,10 +1096,7 @@ async function fetchAESOData() {
     generationMix,
     intertieFlows,
     operatingReserve,
-    generationOutages,
-    windForecast,
-    solarForecast,
-    loadForecast
+    generationOutages
   };
 }
 
@@ -1884,96 +1793,12 @@ async function fetchPJMData() {
 
 // ========== SPP DATA FETCHING ==========
 async function fetchSPPData() {
-  console.log('Fetching SPP data...');
-  
-  let pricing: any | undefined;
-  let loadData: any | undefined;
-  let generationMix: any | undefined;
-
-  // SPP has portal.spp.org but most data requires authentication
-  // Provide estimated values based on typical SPP market characteristics
-  
-  pricing = {
-    current_price: 28.75,
-    average_price: 26.50,
-    peak_price: 46.00,
-    off_peak_price: 14.40,
-    market_conditions: 'low',
-    timestamp: new Date().toISOString(),
-    source: 'spp_estimated'
-  };
-
-  loadData = {
-    current_demand_mw: 42000,
-    peak_forecast_mw: 48000,
-    reserve_margin: 20.0,
-    timestamp: new Date().toISOString(),
-    source: 'spp_estimated'
-  };
-
-  generationMix = {
-    total_generation_mw: 44000,
-    natural_gas_mw: 15400,
-    coal_mw: 13200,
-    wind_mw: 12100,
-    nuclear_mw: 2200,
-    solar_mw: 660,
-    hydro_mw: 220,
-    other_mw: 220,
-    renewable_percentage: 29.5,
-    timestamp: new Date().toISOString(),
-    source: 'spp_estimated'
-  };
-
-  console.log('✅ SPP data (estimated)');
-
-  return { pricing, loadData, generationMix };
+  console.log('⚠️ SPP: No public API available - returning null');
+  return null;
 }
 
 // ========== IESO (Ontario) DATA FETCHING ==========
 async function fetchIESOData() {
-  console.log('Fetching IESO (Ontario) data...');
-  
-  let pricing: any | undefined;
-  let loadData: any | undefined;
-  let generationMix: any | undefined;
-
-  // IESO has public APIs but they require authentication
-  // Provide estimated values based on typical IESO market characteristics
-  
-  pricing = {
-    current_price: 32.50,
-    average_price: 29.80,
-    peak_price: 52.00,
-    off_peak_price: 16.25,
-    market_conditions: 'normal',
-    timestamp: new Date().toISOString(),
-    source: 'ieso_estimated'
-  };
-
-  loadData = {
-    current_demand_mw: 15500,
-    peak_forecast_mw: 17800,
-    reserve_margin: 22.0,
-    timestamp: new Date().toISOString(),
-    source: 'ieso_estimated'
-  };
-
-  generationMix = {
-    total_generation_mw: 16200,
-    nuclear_mw: 9500,
-    hydro_mw: 4800,
-    natural_gas_mw: 1200,
-    wind_mw: 600,
-    solar_mw: 80,
-    coal_mw: 0,
-    other_mw: 20,
-    renewable_percentage: 33.8,
-    timestamp: new Date().toISOString(),
-    source: 'ieso_estimated'
-  };
-
-  console.log('✅ IESO data (estimated)');
-
-  return { pricing, loadData, generationMix };
+  console.log('⚠️ IESO: No public API available - returning null');
+  return null;
 }
