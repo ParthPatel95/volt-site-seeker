@@ -61,6 +61,47 @@ serve(async (req) => {
     console.log('Solar forecast:', aesoData.solarForecast ? `${aesoData.solarForecast.forecasts?.length || 0} hours available` : 'Not available');
     console.log('Load forecast:', aesoData.loadForecast ? `${aesoData.loadForecast.forecasts?.length || 0} hours available` : 'Not available');
     
+    // NEW: Fetch actual forecast data from AESO API
+    const forecastApiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
+                           Deno.env.get('AESO_API_KEY') ||
+                           Deno.env.get('AESO_SUB_KEY') ||
+                           Deno.env.get('AESO_SUBSCRIPTION_KEY_SECONDARY');
+    
+    let loadForecastData = null;
+    if (forecastApiKey) {
+      try {
+        const formatDate = (date: Date) => {
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${month}${day}${year}`;
+        };
+        
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const forecastResponse = await fetch(
+          `https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad?startDate=${formatDate(now)}&endDate=${formatDate(tomorrow)}`,
+          { 
+            headers: { 
+              'Accept': 'application/json',
+              'Ocp-Apim-Subscription-Key': forecastApiKey
+            } 
+          }
+        );
+        
+        if (forecastResponse.ok) {
+          loadForecastData = await forecastResponse.json();
+          console.log('✅ Fetched load forecast data from AESO API:', loadForecastData?.return?.['Actual Forecast']?.length || 0, 'hours');
+        } else {
+          console.warn('Load forecast API returned:', forecastResponse.status);
+        }
+      } catch (e) {
+        console.warn('Could not fetch load forecast:', e);
+      }
+    }
+    
     // Validate pool price exists (can be zero or negative - both are valid market prices)
     if (poolPrice === undefined || poolPrice === null) {
       console.error('ERROR: Pool price is undefined/null despite pricing object existing');
@@ -106,6 +147,7 @@ serve(async (req) => {
       .limit(1)
       .single();
 
+    
     // Extract generation mix data
     const generationData = aesoData.generationMix || {};
     const intertieData = aesoData.intertieFlows || {};
@@ -113,6 +155,29 @@ serve(async (req) => {
     const outageData = aesoData.generationOutages || {};
     
     console.log('Generation mix data:', generationData);
+    
+    // Extract forecast values from AESO Actual Forecast API
+    let loadForecast1h = null, loadForecast3h = null, loadForecast24h = null;
+    if (loadForecastData?.return?.['Actual Forecast']) {
+      const forecasts = loadForecastData.return['Actual Forecast'];
+      // Sort by forecast hour to get 1h, 3h, 24h ahead
+      forecasts.sort((a: any, b: any) => {
+        const aTime = new Date(`${a.forecast_date} ${a.forecast_hour_ending.split(' ')[0]}`);
+        const bTime = new Date(`${b.forecast_date} ${b.forecast_hour_ending.split(' ')[0]}`);
+        return aTime.getTime() - bTime.getTime();
+      });
+      
+      // Extract forecasts at specific horizons (1h, 3h, 24h ahead)
+      if (forecasts.length > 0) loadForecast1h = parseFloat(forecasts[0]?.forecast_ail) || null;
+      if (forecasts.length > 2) loadForecast3h = parseFloat(forecasts[2]?.forecast_ail) || null;
+      if (forecasts.length > 23) loadForecast24h = parseFloat(forecasts[23]?.forecast_ail) || null;
+      
+      console.log('📊 Load forecasts extracted:', {
+        '1h': loadForecast1h,
+        '3h': loadForecast3h,
+        '24h': loadForecast24h
+      });
+    }
     
     // Calculate grid stress score (0-100)
     const demand = aesoData.loadData?.current_demand_mw || 0;
@@ -145,7 +210,11 @@ serve(async (req) => {
       generation_wind: generationData.wind_mw || 0,
       generation_solar: generationData.solar_mw || 0,
       generation_hydro: generationData.hydro_mw || 0,
-      // Note: Wind, solar, load, and pool price forecasts are not available via AESO public API
+      // NEW: Actual load forecasts from AESO Actual Forecast API
+      load_forecast_1h: loadForecast1h,
+      load_forecast_3h: loadForecast3h,
+      load_forecast_24h: loadForecast24h,
+      // Note: Wind, solar, and pool price forecasts are NOT available via AESO public API
       // These fields exist in the database but will remain null
       wind_forecast_1h: null,
       wind_forecast_3h: null,
@@ -153,9 +222,6 @@ serve(async (req) => {
       solar_forecast_1h: null,
       solar_forecast_3h: null,
       solar_forecast_24h: null,
-      load_forecast_1h: null,
-      load_forecast_3h: null,
-      load_forecast_24h: null,
       pool_price_forecast_1h: null,
       pool_price_forecast_3h: null,
       pool_price_forecast_24h: null,
