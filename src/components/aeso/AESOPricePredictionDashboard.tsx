@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, TrendingUp, Brain, AlertCircle, Zap } from 'lucide-react';
+import { Download, TrendingUp, Brain, AlertCircle } from 'lucide-react';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { PricePredictionChart } from './PricePredictionChart';
 import { FeatureImpactVisualization } from './FeatureImpactVisualization';
@@ -14,16 +14,12 @@ import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
 import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
 import { ModelStatusDashboard } from './ModelStatusDashboard';
 import { BacktestingDashboard } from './BacktestingDashboard';
-import { AESOPredictionTester } from './AESOPredictionTester';
-import { RetrainingScheduleStatus } from './RetrainingScheduleStatus';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
-import { supabase } from '@/integrations/supabase/client';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
-  const [retraining, setRetraining] = useState(false);
   const { 
     predictions, 
     modelPerformance, 
@@ -47,37 +43,6 @@ export const AESOPricePredictionDashboard = () => {
 
   const handleGeneratePredictions = async () => {
     await fetchPredictions(horizon, true);
-  };
-
-  const handleFullRetrain = async () => {
-    setRetraining(true);
-    try {
-      toast({
-        title: "Starting Full System Retrain",
-        description: "This will collect data, train model, and update predictions...",
-      });
-
-      const { data, error } = await supabase.functions.invoke('aeso-complete-backfill');
-      
-      if (error) throw error;
-
-      toast({
-        title: "✅ Retrain Complete",
-        description: "System fully retrained with latest data",
-      });
-      
-      await fetchModelPerformance();
-      await fetchPredictions(horizon, true);
-    } catch (error) {
-      console.error('Retrain error:', error);
-      toast({
-        title: "Retrain Failed",
-        description: error.message || "Failed to complete system retrain",
-        variant: "destructive",
-      });
-    } finally {
-      setRetraining(false);
-    }
   };
 
   const handleExport = () => {
@@ -128,41 +93,26 @@ export const AESOPricePredictionDashboard = () => {
             </Select>
           </div>
 
-          {/* Simplified Action Buttons */}
+          {/* Action Buttons */}
           <div className="flex flex-wrap gap-2">
             <Button 
               onClick={handleGeneratePredictions} 
-              disabled={loading || retraining} 
+              disabled={loading} 
               size="lg" 
               className="flex-1 sm:flex-auto"
             >
               <TrendingUp className="h-4 w-4 mr-2" />
-              {loading ? 'Generating...' : 'Generate Forecast'}
+              {loading ? 'Generating...' : 'Refresh Forecast'}
             </Button>
             
             {predictions.length > 0 && (
               <Button onClick={handleExport} variant="outline" size="lg" className="flex-1 sm:flex-none">
                 <Download className="h-4 w-4 mr-2" />
-                Export
+                Export Data
               </Button>
             )}
-            
-            <Button 
-              onClick={handleFullRetrain} 
-              variant="outline" 
-              size="lg" 
-              disabled={retraining || loading}
-              className="flex-1 sm:flex-none border-warning/30 hover:bg-warning/10"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              {retraining ? 'Retraining...' : 'Force Retrain'}
-            </Button>
           </div>
         </div>
-
-
-        {/* Model Performance - Replace with New Dashboard */}
-        <ModelStatusDashboard />
 
         {/* Smart Alerts */}
         {predictions.length > 0 && (
@@ -205,15 +155,11 @@ export const AESOPricePredictionDashboard = () => {
         {/* Tabbed Content */}
         {predictions.length > 0 && (
           <Tabs defaultValue="forecast" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 h-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
               <TabsTrigger value="forecast" className="text-xs sm:text-sm">Forecast</TabsTrigger>
-              <TabsTrigger value="scenario" className="text-xs sm:text-sm">Scenario</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
-              <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
-              <TabsTrigger value="accuracy" className="text-xs sm:text-sm">Accuracy</TabsTrigger>
-              <TabsTrigger value="backtest" className="text-xs sm:text-sm">Backtest</TabsTrigger>
-              <TabsTrigger value="schedule" className="text-xs sm:text-sm">Schedule</TabsTrigger>
-              <TabsTrigger value="tests" className="text-xs sm:text-sm">Tests</TabsTrigger>
+              <TabsTrigger value="performance" className="text-xs sm:text-sm">Model Insights</TabsTrigger>
+              <TabsTrigger value="scenario" className="text-xs sm:text-sm">What-If</TabsTrigger>
             </TabsList>
 
             <TabsContent value="forecast" className="space-y-4 sm:space-y-6 mt-4">
@@ -224,35 +170,19 @@ export const AESOPricePredictionDashboard = () => {
               <FeatureImpactVisualization prediction={predictions[0]} />
             </TabsContent>
 
-            <TabsContent value="scenario" className="mt-4">
-              <ScenarioAnalysis basePrediction={predictions[0] || null} />
-            </TabsContent>
-
             <TabsContent value="analytics" className="mt-4">
               <AESOPredictionAnalytics predictions={predictions} />
             </TabsContent>
 
-            <TabsContent value="performance" className="mt-4">
-              <ModelPerformanceMetrics performance={modelPerformance} />
-            </TabsContent>
-
-            <TabsContent value="accuracy" className="mt-4">
+            <TabsContent value="performance" className="space-y-6 mt-4">
               <ModelStatusDashboard />
-              <div className="mt-6">
-                <PredictionAccuracyTracker key={modelPerformance?.modelVersion} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="backtest" className="mt-4">
+              <ModelPerformanceMetrics performance={modelPerformance} />
+              <PredictionAccuracyTracker key={modelPerformance?.modelVersion} />
               <BacktestingDashboard key={modelPerformance?.modelVersion} />
             </TabsContent>
 
-            <TabsContent value="schedule" className="mt-4">
-              <RetrainingScheduleStatus />
-            </TabsContent>
-
-            <TabsContent value="tests" className="mt-4">
-              <AESOPredictionTester />
+            <TabsContent value="scenario" className="mt-4">
+              <ScenarioAnalysis basePrediction={predictions[0] || null} />
             </TabsContent>
           </Tabs>
         )}
