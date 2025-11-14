@@ -8,27 +8,31 @@ const corsHeaders = {
 
 const MODEL_VERSION = 'v3.0-xgboost-enhanced';
 
-// Background training function
-async function trainModelInBackground() {
+// Background training function with database status tracking
+async function trainModelInBackground(jobId: string) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    console.log('🚀 Starting background model training...');
+    console.log(`🚀 Starting background model training for job ${jobId}...`);
 
-    // Fetch last 30 days of data (2K record limit for speed)
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 30);
-    
-    console.log(`📥 Fetching data from ${cutoffDate.toISOString()}...`);
+    // Update status to in_progress
+    await supabase
+      .from('aeso_retraining_schedule')
+      .update({ 
+        status: 'in_progress',
+        training_started_at: new Date().toISOString()
+      })
+      .eq('id', jobId);
+
+    // Fetch ALL available data (no date or record limits for full training)
+    console.log(`📥 Fetching ALL available training data...`);
     const { data: trainingData, error: fetchError } = await supabase
       .from('aeso_training_data')
       .select('*')
-      .gte('timestamp', cutoffDate.toISOString())
       .eq('is_valid_record', true)
-      .order('timestamp', { ascending: true })
-      .limit(2000);
+      .order('timestamp', { ascending: true });
 
     if (fetchError || !trainingData || trainingData.length < 100) {
       throw new Error(`Insufficient data: ${trainingData?.length || 0} records`);
@@ -109,8 +113,35 @@ async function trainModelInBackground() {
       console.log('✅ Model performance saved to database');
     }
 
+    // Update job status to completed
+    await supabase
+      .from('aeso_retraining_schedule')
+      .update({ 
+        status: 'completed',
+        training_completed_at: new Date().toISOString(),
+        performance_after: {
+          mae,
+          rmse,
+          smape,
+          r_squared: r2,
+          training_records: trainingData.length
+        }
+      })
+      .eq('id', jobId);
+
+    console.log(`✅ Training job ${jobId} completed successfully`);
+
   } catch (error) {
-    console.error('❌ Background training error:', error);
+    console.error(`❌ Background training error for job ${jobId}:`, error);
+    
+    // Update job status to failed
+    await supabase
+      .from('aeso_retraining_schedule')
+      .update({ 
+        status: 'failed',
+        training_completed_at: new Date().toISOString()
+      })
+      .eq('id', jobId);
   }
 }
 
@@ -119,24 +150,48 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     console.log('🎯 Model training request received');
 
+    // Create a training job record
+    const { data: job, error: jobError } = await supabase
+      .from('aeso_retraining_schedule')
+      .insert({
+        model_version: MODEL_VERSION,
+        scheduled_at: new Date().toISOString(),
+        status: 'pending',
+        triggered_by: 'manual',
+        trigger_reason: 'Manual training with full dataset'
+      })
+      .select()
+      .single();
+
+    if (jobError || !job) {
+      throw new Error(`Failed to create training job: ${jobError?.message}`);
+    }
+
+    console.log(`📋 Created training job ${job.id}`);
     
-    // Execute training (using reduced dataset to avoid timeout)
-    await trainModelInBackground();
+    // Start training in background (non-blocking)
+    EdgeRuntime.waitUntil(trainModelInBackground(job.id));
     
-    // Return success
+    // Return immediately with job ID
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Model training started in background',
+        job_id: job.id,
         model_version: MODEL_VERSION,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        note: 'Training will process all available data. Check job status for completion.'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
+        status: 202 // Accepted
       }
     );
 
