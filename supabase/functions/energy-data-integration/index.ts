@@ -1,4 +1,5 @@
 import { serve } from "../_shared/imports.ts";
+import { fetchSPPData, fetchIESOData } from "./markets/simple.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1789,16 +1790,4 @@ async function fetchPJMData() {
   console.log('✅ PJM load and generation (estimated)');
 
   return { pricing, loadData, generationMix };
-}
-
-// ========== SPP DATA FETCHING ==========
-async function fetchSPPData() {
-  console.log('⚠️ SPP: No public API available - returning null');
-  return null;
-}
-
-// ========== IESO (Ontario) DATA FETCHING ==========
-async function fetchIESOData() {
-  console.log('⚠️ IESO: No public API available - returning null');
-  return null;
 }
