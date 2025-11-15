@@ -26,8 +26,10 @@ import {
   Trash2,
   Lock,
   Unlock,
-  Loader2
+  Loader2,
+  BarChart3
 } from 'lucide-react';
+import { UserAnalytics } from './UserAnalytics';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,6 +120,7 @@ export function UserManagementSystem() {
     password: ''
   });
   const [activeTab, setActiveTab] = useState('users');
+  const [selectedUserForAnalytics, setSelectedUserForAnalytics] = useState<string | null>(null);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
@@ -537,10 +540,11 @@ export function UserManagementSystem() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="permissions">Permissions</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="create">Create User</TabsTrigger>
         </TabsList>
 
@@ -604,6 +608,13 @@ export function UserManagementSystem() {
                         </Button>
                       </DropdownMenuTrigger>
                        <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setSelectedUserForAnalytics(user.id);
+                          setActiveTab('analytics');
+                        }}>
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          View Analytics
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditDialog(user)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
@@ -732,6 +743,32 @@ export function UserManagementSystem() {
               </CardContent>
             </Card>
           ))}
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          {selectedUserForAnalytics ? (
+            <div className="space-y-4">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSelectedUserForAnalytics(null);
+                  setActiveTab('users');
+                }}
+                className="mb-4"
+              >
+                ← Back to Users
+              </Button>
+              <UserAnalytics userId={selectedUserForAnalytics} />
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-muted-foreground text-center">
+                  Select a user from the Users tab to view their analytics
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="create" className="space-y-4">

@@ -33,11 +33,15 @@ import { RealTimeMarketData } from '@/components/realtime/RealTimeMarketData';
 import { ExternalAPIIntegrations } from '@/components/integrations/ExternalAPIIntegrations';
 import { BottomNavigationWrapper } from '@/components/BottomNavigationWrapper';
 import SecureShare from './SecureShare';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Initialize analytics tracking
+  useAnalytics();
 
   useEffect(() => {
     const checkMobile = () => {
