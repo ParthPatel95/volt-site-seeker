@@ -152,19 +152,47 @@ Deno.serve(async (req) => {
         }
 
       case 'delete':
-        // Delete user from auth (this will cascade to profiles and related tables)
-        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-        
-        if (deleteError) {
-          throw deleteError;
-        }
+        try {
+          // First delete user_permissions (must be done before deleting user)
+          const { error: permError } = await supabaseAdmin
+            .from('user_permissions')
+            .delete()
+            .eq('user_id', userId);
+          
+          if (permError) {
+            console.error('Error deleting user permissions:', permError);
+            throw new Error(`Failed to delete user permissions: ${permError.message}`);
+          }
 
-        console.log(`Successfully deleted user: ${userId}`);
-        
-        return new Response(
-          JSON.stringify({ success: true, message: 'User deleted successfully' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+          // Then delete user_roles
+          const { error: roleError } = await supabaseAdmin
+            .from('user_roles')
+            .delete()
+            .eq('user_id', userId);
+          
+          if (roleError) {
+            console.error('Error deleting user roles:', roleError);
+            throw new Error(`Failed to delete user roles: ${roleError.message}`);
+          }
+
+          // Finally delete user from auth (this will cascade to profiles and other auth-related tables)
+          const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+          
+          if (deleteError) {
+            console.error('Error deleting auth user:', deleteError);
+            throw new Error(`Failed to delete user: ${deleteError.message}`);
+          }
+
+          console.log(`Successfully deleted user: ${userId}`);
+          
+          return new Response(
+            JSON.stringify({ success: true, message: 'User deleted successfully' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          console.error('Error in delete operation:', error);
+          throw new Error(`Database error deleting user: ${error.message}`);
+        }
 
       case 'reset-password':
         // Send password reset email
