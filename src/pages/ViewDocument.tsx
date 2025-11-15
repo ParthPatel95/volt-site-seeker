@@ -23,41 +23,10 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   
-  // Store current URL for auth redirect - use URL parameters for iOS Safari compatibility
-  useEffect(() => {
-    if (token && !authLoading) {
-      // If user is not authenticated, redirect to login with return URL in query params
-      if (!user) {
-        const currentUrl = window.location.pathname + window.location.search;
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        
-        console.log('[ViewDocument] User not authenticated, redirecting to login', {
-          currentUrl,
-          isIOS,
-          userAgent: navigator.userAgent
-        });
-        
-        // Use URL parameter (most reliable for iOS Safari) + storage as backup
-        const returnUrlParam = encodeURIComponent(currentUrl);
-        localStorage.setItem('authReturnUrl', currentUrl);
-        sessionStorage.setItem('authReturnUrl', currentUrl);
-        
-        // iOS Safari: Use window.location for more reliable navigation
-        if (isIOS) {
-          window.location.href = `/?returnUrl=${returnUrlParam}`;
-        } else {
-          navigate(`/?returnUrl=${returnUrlParam}`);
-        }
-        return;
-      }
-      
-      console.log('[ViewDocument] User authenticated, proceeding with document load');
-    }
-  }, [token, user, authLoading, navigate]);
-
+  // Fetch link data - no authentication required (security via token)
   const { data: linkData, isLoading, error } = useQuery({
     queryKey: ['secure-link', token],
-    enabled: !!token && !!user && !authLoading, // Only run query when authenticated
+    enabled: !!token, // Security via token, no platform auth required
     queryFn: async () => {
       console.log('[ViewDocument] Starting query for token:', token);
       if (!token) throw new Error('No token provided');
