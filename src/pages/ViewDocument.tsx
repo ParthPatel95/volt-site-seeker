@@ -20,6 +20,19 @@ export default function ViewDocument() {
   const [ndaSigned, setNdaSigned] = useState(false);
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
+  
+  // Store current URL for auth redirect on mount and cleanup on unmount
+  useEffect(() => {
+    if (token) {
+      const currentUrl = window.location.pathname + window.location.search;
+      sessionStorage.setItem('authReturnUrl', currentUrl);
+    }
+    
+    // Cleanup on unmount or successful load
+    return () => {
+      sessionStorage.removeItem('authReturnUrl');
+    };
+  }, [token]);
 
   const { data: linkData, isLoading, error } = useQuery({
     queryKey: ['secure-link', token],
