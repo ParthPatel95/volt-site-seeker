@@ -51,11 +51,9 @@ export const Dashboard = () => {
     sppPricing,
     sppLoad,
     sppGeneration,
-    sppUnavailable,
     iesoPricing,
     iesoLoad,
     iesoGeneration,
-    iesoUnavailable,
     isLoading,
     marketMetrics,
     refreshData: refreshDataHook
@@ -343,11 +341,7 @@ export const Dashboard = () => {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">SPP (Southwest)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                    {sppUnavailable ? (
-                      <span className="text-muted-foreground text-base">Data unavailable</span>
-                    ) : sppPricing ? (
-                      `$${sppPricing.current_price.toFixed(2)}`
-                    ) : (
+                    {sppPricing ? `$${sppPricing.current_price.toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
                     )}
                   </p>
@@ -428,11 +422,7 @@ export const Dashboard = () => {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">IESO Price (Ontario)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                    {iesoUnavailable ? (
-                      <span className="text-muted-foreground text-base">Data unavailable</span>
-                    ) : iesoPricing ? (
-                      `$${convertToUSD(iesoPricing.current_price).toFixed(2)}`
-                    ) : (
+                    {iesoPricing ? `$${convertToUSD(iesoPricing.current_price).toFixed(2)}` : (
                       <span className="text-muted-foreground">Loading...</span>
                     )}
                   </p>
