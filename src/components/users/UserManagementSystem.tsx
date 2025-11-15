@@ -26,10 +26,9 @@ import {
   Trash2,
   Lock,
   Unlock,
-  Loader2,
-  BarChart3
+  Loader2
 } from 'lucide-react';
-import { UserAnalytics } from './UserAnalytics';
+import { AllUsersAnalytics } from './AllUsersAnalytics';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,7 +119,6 @@ export function UserManagementSystem() {
     password: ''
   });
   const [activeTab, setActiveTab] = useState('users');
-  const [selectedUserForAnalytics, setSelectedUserForAnalytics] = useState<string | null>(null);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
@@ -608,13 +606,6 @@ export function UserManagementSystem() {
                         </Button>
                       </DropdownMenuTrigger>
                        <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          setSelectedUserForAnalytics(user.id);
-                          setActiveTab('analytics');
-                        }}>
-                          <BarChart3 className="w-4 h-4 mr-2" />
-                          View Analytics
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditDialog(user)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
@@ -746,29 +737,7 @@ export function UserManagementSystem() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          {selectedUserForAnalytics ? (
-            <div className="space-y-4">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSelectedUserForAnalytics(null);
-                  setActiveTab('users');
-                }}
-                className="mb-4"
-              >
-                ← Back to Users
-              </Button>
-              <UserAnalytics userId={selectedUserForAnalytics} />
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-muted-foreground text-center">
-                  Select a user from the Users tab to view their analytics
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          <AllUsersAnalytics />
         </TabsContent>
 
         <TabsContent value="create" className="space-y-4">
