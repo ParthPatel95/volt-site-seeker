@@ -461,10 +461,10 @@ async function fetchERCOTData() {
   
   try {
     pricingResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-905-cd/spp_node_zone_hub`, { page: 1, size: 100000 }) };
-    await delay(1000); // Reduced delay - 1 second between calls
+    await delay(2000); // 2 seconds between calls to avoid rate limiting
     
     loadResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np6-345-cd/act_sys_load_by_wzn`, { page: 1, size: 100000 }) };
-    await delay(1000); // Reduced delay
+    await delay(2000); // 2 seconds between calls
     
     // Use 2D Aggregated Generation Summary endpoint
     genMixResp = { status: 'fulfilled' as const, value: await getJson(`${baseUrl}/np3-910-er/2d_agg_gen_summary`, { page: 1, size: 100 }) };
@@ -615,15 +615,6 @@ async function fetchERCOTData() {
         const solarMW = parseFloat(latestRecord[5] || '0');
         const otherRenewableMW = parseFloat(latestRecord[6] || '0');
         
-        // Estimate breakdown of non-renewable (typical ERCOT mix)
-        // Gas: ~60%, Coal: ~25%, Nuclear: ~15%
-        const gasMW = nonRenewableMW * 0.60;
-        const coalMW = nonRenewableMW * 0.25;
-        const nuclearMW = nonRenewableMW * 0.15;
-        
-        const renewableMW = windMW + solarMW + otherRenewableMW;
-        const renewablePercentage = totalMW > 0 ? (renewableMW / totalMW) * 100 : 0;
-        
         console.log('ERCOT generation breakdown:', {
           total: totalMW,
           nonRenewable: nonRenewableMW,
@@ -632,7 +623,35 @@ async function fetchERCOTData() {
           otherRenewable: otherRenewableMW
         });
         
+        // Validate data makes sense
+        const renewableMW = windMW + solarMW + otherRenewableMW;
+        const totalComponentsMW = nonRenewableMW + renewableMW;
+        
+        // If components don't match total, use a different calculation approach
         if (totalMW > 10000 && totalMW < 200000) { // Sanity check: 10 GW to 200 GW
+          let gasMW, coalMW, nuclearMW;
+          
+          // If nonRenewable seems valid (less than total), use it
+          if (nonRenewableMW > 0 && nonRenewableMW < totalMW * 1.5) {
+            // Estimate breakdown of non-renewable (typical ERCOT mix)
+            // Gas: ~60%, Coal: ~25%, Nuclear: ~15%
+            gasMW = nonRenewableMW * 0.60;
+            coalMW = nonRenewableMW * 0.25;
+            nuclearMW = nonRenewableMW * 0.15;
+          } else {
+            // Calculate non-renewable as difference from total
+            const calculatedNonRenewable = Math.max(0, totalMW - renewableMW);
+            gasMW = calculatedNonRenewable * 0.60;
+            coalMW = calculatedNonRenewable * 0.25;
+            nuclearMW = calculatedNonRenewable * 0.15;
+          }
+          
+          const renewablePercentage = totalMW > 0 ? (renewableMW / totalMW) * 100 : 0;
+          
+          // Calculate other_mw to make everything add up correctly
+          const accountedMW = gasMW + coalMW + nuclearMW + windMW + solarMW + otherRenewableMW;
+          const otherMW = Math.max(0, totalMW - accountedMW);
+          
           generationMix = {
             total_generation_mw: Math.round(totalMW),
             coal_mw: Math.round(coalMW),
@@ -641,8 +660,8 @@ async function fetchERCOTData() {
             wind_mw: Math.round(windMW),
             solar_mw: Math.round(solarMW),
             hydro_mw: Math.round(otherRenewableMW),
-            other_mw: Math.round(totalMW - (coalMW + gasMW + nuclearMW + windMW + solarMW + otherRenewableMW)),
-            renewable_percentage: Math.round(renewablePercentage * 100) / 100,
+            other_mw: Math.round(otherMW),
+            renewable_percentage: Math.max(0, Math.min(100, Math.round(renewablePercentage * 100) / 100)),
             timestamp: new Date().toISOString(),
             source: 'ercot_api_gen_mix'
           };
@@ -1022,25 +1041,30 @@ async function fetchAESOData() {
   // Parse Operating Reserve
   try {
     const json: any = orResp.status === 'fulfilled' ? orResp.value : null;
-    const arr: any[] = json?.return?.['Operating Reserve Report'] || json?.['Operating Reserve Report'] || [];
     
-    if (Array.isArray(arr) && arr.length) {
-      const latest = arr[arr.length - 1];
-      const orPrice = parseFloat(String(latest?.operating_reserve_price || latest?.price || 0));
-      const spinMW = parseFloat(String(latest?.spinning_reserve || latest?.spin || 0));
-      const suppMW = parseFloat(String(latest?.supplemental_reserve || latest?.supp || 0));
+    if (orResp.status === 'rejected') {
+      console.log('⚠️ AESO Operating Reserve endpoint unavailable (404 expected)');
+    } else {
+      const arr: any[] = json?.return?.['Operating Reserve Report'] || json?.['Operating Reserve Report'] || [];
       
-      operatingReserve = {
-        price: Math.round(orPrice * 100) / 100,
-        spinning_mw: Math.round(spinMW),
-        supplemental_mw: Math.round(suppMW),
-        total_mw: Math.round(spinMW + suppMW),
-        timestamp: new Date().toISOString()
-      };
-      console.log('✅ Operating Reserve:', operatingReserve);
+      if (Array.isArray(arr) && arr.length) {
+        const latest = arr[arr.length - 1];
+        const orPrice = parseFloat(String(latest?.operating_reserve_price || latest?.price || 0));
+        const spinMW = parseFloat(String(latest?.spinning_reserve || latest?.spin || 0));
+        const suppMW = parseFloat(String(latest?.supplemental_reserve || latest?.supp || 0));
+        
+        operatingReserve = {
+          price: Math.round(orPrice * 100) / 100,
+          spinning_mw: Math.round(spinMW),
+          supplemental_mw: Math.round(suppMW),
+          total_mw: Math.round(spinMW + suppMW),
+          timestamp: new Date().toISOString()
+        };
+        console.log('✅ Operating Reserve:', operatingReserve);
+      }
     }
   } catch (e) {
-    console.error('AESO operating reserve parse error:', e);
+    console.log('⚠️ AESO operating reserve not available:', String(e).substring(0, 100));
   }
 
   // Parse Generation Capacity & Outages
