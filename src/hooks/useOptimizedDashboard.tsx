@@ -62,6 +62,7 @@ export const useOptimizedDashboard = () => {
     loadData: sppLoad, 
     generationMix: sppGeneration,
     loading: sppLoading,
+    isUnavailable: sppUnavailable,
     refetch: refetchSPP
   } = useSPPData();
 
@@ -70,6 +71,7 @@ export const useOptimizedDashboard = () => {
     loadData: iesoLoad, 
     generationMix: iesoGeneration,
     loading: iesoLoading,
+    isUnavailable: iesoUnavailable,
     refetch: refetchIESO
   } = useIESOData();
 
@@ -131,10 +133,12 @@ export const useOptimizedDashboard = () => {
     sppPricing,
     sppLoad,
     sppGeneration,
+    sppUnavailable,
     iesoPricing,
     iesoLoad,
     iesoGeneration,
-    isLoading: ercotLoading || aesoLoading || misoLoading || caisoLoading || nyisoLoading || pjmLoading || sppLoading || iesoLoading,
+    iesoUnavailable,
+    isLoading: ercotLoading || aesoLoading || misoLoading || caisoLoading || nyisoLoading || pjmLoading || (sppLoading && !sppUnavailable) || (iesoLoading && !iesoUnavailable),
     marketMetrics,
     refreshData
   };
