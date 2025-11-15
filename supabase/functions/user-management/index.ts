@@ -103,8 +103,15 @@ Deno.serve(async (req) => {
           }
 
           // Add permissions
-          if (permissions && permissions.length > 0) {
-            const permissionInserts = permissions.map((permission: string) => ({
+          let permissionsToInsert = permissions || [];
+          
+          // If creating admin@voltscout.com, automatically grant AESO training permission
+          if (email === 'admin@voltscout.com' && !permissionsToInsert.includes('aeso.training-management')) {
+            permissionsToInsert = [...permissionsToInsert, 'aeso.training-management'];
+          }
+          
+          if (permissionsToInsert.length > 0) {
+            const permissionInserts = permissionsToInsert.map((permission: string) => ({
               user_id: authData.user.id,
               permission
             }));

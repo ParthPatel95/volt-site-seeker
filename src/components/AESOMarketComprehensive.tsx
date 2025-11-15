@@ -42,8 +42,10 @@ import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
 import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
 import { AESOPricePredictionDashboard } from './aeso/AESOPricePredictionDashboard';
 import { AESOTrainingManager } from './aeso/AESOTrainingManager';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export function AESOMarketComprehensive() {
+  const { hasPermission } = usePermissions();
   // Use working dashboard data source
   const { 
     aesoPricing: pricing, 
@@ -458,24 +460,28 @@ export function AESOMarketComprehensive() {
           {/* AI Price Predictions Tab with Sub-tabs */}
           <TabsContent value="predictions" className="space-y-4 sm:space-y-6">
             <Tabs defaultValue="predictions" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className={hasPermission('aeso.training-management') ? "grid w-full grid-cols-2" : "grid w-full grid-cols-1"}>
                 <TabsTrigger value="predictions" className="flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   Predictions
                 </TabsTrigger>
-                <TabsTrigger value="training" className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Training & Management
-                </TabsTrigger>
+                {hasPermission('aeso.training-management') && (
+                  <TabsTrigger value="training" className="flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
+                    Training & Management
+                  </TabsTrigger>
+                )}
               </TabsList>
               
               <TabsContent value="predictions">
                 <AESOPricePredictionDashboard />
               </TabsContent>
               
-              <TabsContent value="training">
-                <AESOTrainingManager />
-              </TabsContent>
+              {hasPermission('aeso.training-management') && (
+                <TabsContent value="training">
+                  <AESOTrainingManager />
+                </TabsContent>
+              )}
             </Tabs>
           </TabsContent>
 
