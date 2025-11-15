@@ -50,14 +50,11 @@ export const useSPPData = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isUnavailable = !isLoading && data === null;
-
   return {
     pricing: data?.pricing as SPPPricing | undefined,
     loadData: data?.loadData as SPPLoadData | undefined,
     generationMix: data?.generationMix as SPPGenerationMix | undefined,
     loading: isLoading,
-    isUnavailable,
     refetch
   };
 };

@@ -50,14 +50,11 @@ export const useIESOData = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isUnavailable = !isLoading && data === null;
-
   return {
     pricing: data?.pricing as IESOPricing | undefined,
     loadData: data?.loadData as IESOLoadData | undefined,
     generationMix: data?.generationMix as IESOGenerationMix | undefined,
     loading: isLoading,
-    isUnavailable,
     refetch
   };
 };
