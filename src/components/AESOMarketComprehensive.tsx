@@ -460,28 +460,46 @@ export function AESOMarketComprehensive() {
           {/* AI Price Predictions Tab with Sub-tabs */}
           <TabsContent value="predictions" className="space-y-4 sm:space-y-6">
             <Tabs defaultValue="predictions" className="space-y-4">
-              <TabsList className={hasPermission('aeso.training-management') ? "grid w-full grid-cols-2" : "grid w-full grid-cols-1"}>
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="predictions" className="flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   Predictions
                 </TabsTrigger>
-                {hasPermission('aeso.training-management') && (
-                  <TabsTrigger value="training" className="flex items-center gap-2">
+                <TabsTrigger 
+                  value="training" 
+                  className="flex items-center gap-2"
+                  disabled={!hasPermission('aeso.training-management')}
+                >
+                  {!hasPermission('aeso.training-management') && (
+                    <Shield className="w-4 h-4" />
+                  )}
+                  {hasPermission('aeso.training-management') && (
                     <Settings className="w-4 h-4" />
-                    Training & Management
-                  </TabsTrigger>
-                )}
+                  )}
+                  Training & Management
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="predictions">
                 <AESOPricePredictionDashboard />
               </TabsContent>
               
-              {hasPermission('aeso.training-management') && (
-                <TabsContent value="training">
+              <TabsContent value="training">
+                {hasPermission('aeso.training-management') ? (
                   <AESOTrainingManager />
-                </TabsContent>
-              )}
+                ) : (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
+                      <p className="text-muted-foreground">
+                        You need "AESO Model Training" permission to access this section.
+                        Please contact your administrator.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
             </Tabs>
           </TabsContent>
 
