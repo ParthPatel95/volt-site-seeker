@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Zap, AlertCircle, Bitcoin, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AccessRequestForm } from '@/components/AccessRequestForm';
 import { EnhancedLogo } from './EnhancedLogo';
 
@@ -27,8 +27,16 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Store and retrieve the return URL - check both localStorage and sessionStorage for mobile compatibility
-  const returnUrl = localStorage.getItem('authReturnUrl') || sessionStorage.getItem('authReturnUrl') || '/app';
+  // Get return URL from URL params (most reliable for iOS Safari) or storage as fallback
+  const [searchParams] = useSearchParams();
+  const returnUrlParam = searchParams.get('returnUrl');
+  const returnUrl = returnUrlParam || localStorage.getItem('authReturnUrl') || sessionStorage.getItem('authReturnUrl') || '/app';
+  
+  console.log('[Auth] Return URL resolved:', returnUrl, {
+    fromParam: !!returnUrlParam,
+    fromLocalStorage: !!localStorage.getItem('authReturnUrl'),
+    fromSessionStorage: !!sessionStorage.getItem('authReturnUrl')
+  });
 
   useEffect(() => {
     // Check if user has a GridBazaar account but not VoltScout approval
@@ -86,21 +94,27 @@ export function Auth({ onAuthStateChange }: AuthProps) {
           .rpc('is_voltscout_approved', { user_id: data.user.id });
 
         if (isApproved) {
-          toast({
-            title: "Welcome back!",
-            description: "You have successfully signed in.",
-          });
-          
           console.log('[Auth] Login successful, redirecting to:', returnUrl);
           
           // Clear the return URL from both storages
           localStorage.removeItem('authReturnUrl');
           sessionStorage.removeItem('authReturnUrl');
           
-          // Small delay to ensure auth state is fully established on mobile
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully signed in.",
+          });
+          
+          // Longer delay for iOS Safari to ensure auth state is fully established
           setTimeout(() => {
-            navigate(returnUrl, { replace: true });
-          }, 100);
+            // Use window.location for iOS Safari reliability
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+              console.log('[Auth] iOS device detected, using window.location');
+              window.location.href = returnUrl;
+            } else {
+              navigate(returnUrl, { replace: true });
+            }
+          }, 300);
         } else {
           // Check if they have a GridBazaar profile
           const { data: gridBazaarProfile } = await supabase

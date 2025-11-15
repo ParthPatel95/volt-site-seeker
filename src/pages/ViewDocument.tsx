@@ -23,17 +23,31 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   
-  // Store current URL for auth redirect - use localStorage for better mobile compatibility
+  // Store current URL for auth redirect - use URL parameters for iOS Safari compatibility
   useEffect(() => {
     if (token && !authLoading) {
-      const currentUrl = window.location.pathname + window.location.search;
-      
-      // If user is not authenticated, store URL and redirect to login
+      // If user is not authenticated, redirect to login with return URL in query params
       if (!user) {
-        console.log('[ViewDocument] User not authenticated, storing return URL and redirecting to login');
+        const currentUrl = window.location.pathname + window.location.search;
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        console.log('[ViewDocument] User not authenticated, redirecting to login', {
+          currentUrl,
+          isIOS,
+          userAgent: navigator.userAgent
+        });
+        
+        // Use URL parameter (most reliable for iOS Safari) + storage as backup
+        const returnUrlParam = encodeURIComponent(currentUrl);
         localStorage.setItem('authReturnUrl', currentUrl);
         sessionStorage.setItem('authReturnUrl', currentUrl);
-        navigate('/');
+        
+        // iOS Safari: Use window.location for more reliable navigation
+        if (isIOS) {
+          window.location.href = `/?returnUrl=${returnUrlParam}`;
+        } else {
+          navigate(`/?returnUrl=${returnUrlParam}`);
+        }
         return;
       }
       
@@ -254,6 +268,8 @@ export default function ViewDocument() {
   }
 
   if (error || !linkData) {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 text-center">
@@ -266,16 +282,33 @@ export default function ViewDocument() {
           <p className="text-muted-foreground mb-6">
             {error instanceof Error ? error.message : 'This document is not available'}
           </p>
+          {isIOS && (
+            <p className="text-xs text-muted-foreground mb-4">
+              iOS device detected. If you're having trouble accessing the document after login, 
+              try using Safari in non-private mode or refresh the page.
+            </p>
+          )}
           <div className="flex flex-col gap-3">
             <Button 
-              onClick={() => window.location.reload()} 
+              onClick={() => {
+                console.log('[ViewDocument] Retry button clicked, clearing storage and reloading');
+                localStorage.removeItem('authReturnUrl');
+                sessionStorage.removeItem('authReturnUrl');
+                window.location.reload();
+              }} 
               className="w-full"
             >
               Try Again
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => navigate('/app')} 
+              onClick={() => {
+                if (isIOS) {
+                  window.location.href = '/app';
+                } else {
+                  navigate('/app');
+                }
+              }} 
               className="w-full"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
