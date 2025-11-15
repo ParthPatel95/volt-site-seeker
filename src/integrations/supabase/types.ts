@@ -4204,6 +4204,88 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feature_usage: {
+        Row: {
+          action_type: string
+          created_at: string
+          feature_name: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          feature_name: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          feature_name?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feature_usage_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_page_visits: {
+        Row: {
+          created_at: string
+          id: string
+          page_path: string
+          page_title: string | null
+          session_id: string | null
+          time_spent_seconds: number | null
+          user_id: string
+          visit_timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_path: string
+          page_title?: string | null
+          session_id?: string | null
+          time_spent_seconds?: number | null
+          user_id: string
+          visit_timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_path?: string
+          page_title?: string | null
+          session_id?: string | null
+          time_spent_seconds?: number | null
+          user_id?: string
+          visit_timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_page_visits_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           created_at: string | null
@@ -4275,6 +4357,39 @@ export type Database = {
           granted_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          ip_address: string | null
+          session_end: string | null
+          session_start: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          ip_address?: string | null
+          session_end?: string | null
+          session_start?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          ip_address?: string | null
+          session_end?: string | null
+          session_start?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -6354,6 +6469,21 @@ export type Database = {
           phone: string
           roles: string[]
           updated_at: string
+        }[]
+      }
+      get_user_analytics_summary: {
+        Args: { target_user_id: string }
+        Returns: {
+          avg_session_duration_minutes: number
+          last_login: string
+          most_used_features: Json
+          most_visited_pages: Json
+          total_feature_uses: number
+          total_login_count: number
+          total_page_visits: number
+          total_sessions: number
+          unique_features_used: number
+          unique_pages_visited: number
         }[]
       }
       get_user_details: {
