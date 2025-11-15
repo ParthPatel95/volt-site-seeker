@@ -9,11 +9,13 @@ import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ViewDocument() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const documentId = searchParams.get('doc');
   const [passwordVerified, setPasswordVerified] = useState(false);
@@ -21,48 +23,66 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   
-  // Store current URL for auth redirect
+  // Store current URL for auth redirect - use localStorage for better mobile compatibility
   useEffect(() => {
-    if (token) {
+    if (token && !authLoading) {
       const currentUrl = window.location.pathname + window.location.search;
-      sessionStorage.setItem('authReturnUrl', currentUrl);
+      
+      // If user is not authenticated, store URL and redirect to login
+      if (!user) {
+        console.log('[ViewDocument] User not authenticated, storing return URL and redirecting to login');
+        localStorage.setItem('authReturnUrl', currentUrl);
+        sessionStorage.setItem('authReturnUrl', currentUrl);
+        navigate('/');
+        return;
+      }
+      
+      console.log('[ViewDocument] User authenticated, proceeding with document load');
     }
-  }, [token]);
+  }, [token, user, authLoading, navigate]);
 
   const { data: linkData, isLoading, error } = useQuery({
     queryKey: ['secure-link', token],
+    enabled: !!token && !!user && !authLoading, // Only run query when authenticated
     queryFn: async () => {
+      console.log('[ViewDocument] Starting query for token:', token);
       if (!token) throw new Error('No token provided');
 
-      const { data: link, error: linkError } = await supabase
-        .from('secure_links')
-        .select(`
-          *,
-          document:secure_documents(*),
-          bundle:document_bundles(
+      try {
+        const { data: link, error: linkError } = await supabase
+          .from('secure_links')
+          .select(`
             *,
-            bundle_documents(
-              document:secure_documents(*)
+            document:secure_documents(*),
+            bundle:document_bundles(
+              *,
+              bundle_documents(
+                document:secure_documents(*)
+              )
             )
-          )
-        `)
-        .eq('link_token', token)
-        .single();
+          `)
+          .eq('link_token', token)
+          .single();
 
-      if (linkError) throw linkError;
+        if (linkError) {
+          console.error('[ViewDocument] Link fetch error:', linkError);
+          throw linkError;
+        }
+        
+        console.log('[ViewDocument] Link data fetched successfully');
 
-      // Check if link is valid
-      if (link.status === 'revoked') {
-        throw new Error('This link has been revoked');
-      }
+        // Check if link is valid
+        if (link.status === 'revoked') {
+          throw new Error('This link has been revoked');
+        }
 
-      if (link.status === 'expired' || (link.expires_at && new Date(link.expires_at) < new Date())) {
-        throw new Error('This link has expired');
-      }
+        if (link.status === 'expired' || (link.expires_at && new Date(link.expires_at) < new Date())) {
+          throw new Error('This link has expired');
+        }
 
-      if (link.max_views && link.current_views >= link.max_views) {
-        throw new Error('This link has reached its maximum views');
-      }
+        if (link.max_views && link.current_views >= link.max_views) {
+          throw new Error('This link has reached its maximum views');
+        }
 
       // Handle bundle vs single document
       if (link.bundle_id) {
@@ -149,9 +169,34 @@ export default function ViewDocument() {
       } else {
         throw new Error('Invalid link: no document or bundle associated');
       }
+      } catch (queryError: any) {
+        console.error('[ViewDocument] Query error:', queryError);
+        throw queryError;
+      }
     },
     retry: false
   });
+
+  // Handle query errors
+  useEffect(() => {
+    if (error) {
+      console.error('[ViewDocument] Query failed:', error);
+      toast({
+        title: 'Error Loading Document',
+        description: error instanceof Error ? error.message : 'Failed to load the document. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  }, [error, toast]);
+
+  // Clear stored auth return URL once document loads successfully
+  useEffect(() => {
+    if (linkData && user) {
+      console.log('[ViewDocument] Document loaded successfully, cleaning up auth return URLs');
+      localStorage.removeItem('authReturnUrl');
+      sessionStorage.removeItem('authReturnUrl');
+    }
+  }, [linkData, user]);
 
   // Increment view count when link is accessed
   useEffect(() => {
@@ -197,10 +242,13 @@ export default function ViewDocument() {
     };
   }, [linkData, toast]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">{authLoading ? 'Checking authentication...' : 'Loading document...'}</p>
+        </div>
       </div>
     );
   }
@@ -218,6 +266,22 @@ export default function ViewDocument() {
           <p className="text-muted-foreground mb-6">
             {error instanceof Error ? error.message : 'This document is not available'}
           </p>
+          <div className="flex flex-col gap-3">
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="w-full"
+            >
+              Try Again
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/app')} 
+              className="w-full"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Go Home
+            </Button>
+          </div>
         </Card>
       </div>
     );
