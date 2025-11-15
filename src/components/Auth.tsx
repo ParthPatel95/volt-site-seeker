@@ -26,6 +26,9 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   const [hasGridBazaarAccount, setHasGridBazaarAccount] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Store and retrieve the return URL
+  const returnUrl = sessionStorage.getItem('authReturnUrl') || '/app';
 
   useEffect(() => {
     // Check if user has a GridBazaar account but not VoltScout approval
@@ -87,8 +90,9 @@ export function Auth({ onAuthStateChange }: AuthProps) {
             title: "Welcome back!",
             description: "You have successfully signed in.",
           });
-          // Redirect to app after successful sign in
-          navigate('/app');
+          // Clear the return URL from storage and redirect
+          sessionStorage.removeItem('authReturnUrl');
+          navigate(returnUrl);
         } else {
           // Check if they have a GridBazaar profile
           const { data: gridBazaarProfile } = await supabase
