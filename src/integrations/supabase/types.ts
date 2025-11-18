@@ -1008,9 +1008,11 @@ export type Database = {
           cooling_degree_days: number | null
           created_at: string | null
           day_of_week: number | null
+          day_type: number | null
           demand_forecast_error: number | null
           demand_lag_3h: number | null
           demand_lag_6h: number | null
+          demand_quantile_90th_24h: number | null
           demand_ramp_rate: number | null
           demand_volatility_6h: number | null
           fourier_annual_cos_1: number | null
@@ -1066,14 +1068,20 @@ export type Database = {
           pool_price_forecast_3h: number | null
           price_acceleration: number | null
           price_demand_ratio: number | null
+          price_lag_12h: number | null
+          price_lag_168h: number | null
           price_lag_1h: number | null
           price_lag_24h: number | null
           price_lag_2h: number | null
           price_lag_3h: number | null
           price_lag_48h: number | null
+          price_lag_6h: number | null
           price_lag_72h: number | null
           price_momentum_1h: number | null
           price_momentum_3h: number | null
+          price_quantile_10th_24h: number | null
+          price_quantile_50th_24h: number | null
+          price_quantile_90th_24h: number | null
           price_ramp_rate: number | null
           price_rolling_avg_24h: number | null
           price_rolling_std_24h: number | null
@@ -1125,9 +1133,11 @@ export type Database = {
           cooling_degree_days?: number | null
           created_at?: string | null
           day_of_week?: number | null
+          day_type?: number | null
           demand_forecast_error?: number | null
           demand_lag_3h?: number | null
           demand_lag_6h?: number | null
+          demand_quantile_90th_24h?: number | null
           demand_ramp_rate?: number | null
           demand_volatility_6h?: number | null
           fourier_annual_cos_1?: number | null
@@ -1183,14 +1193,20 @@ export type Database = {
           pool_price_forecast_3h?: number | null
           price_acceleration?: number | null
           price_demand_ratio?: number | null
+          price_lag_12h?: number | null
+          price_lag_168h?: number | null
           price_lag_1h?: number | null
           price_lag_24h?: number | null
           price_lag_2h?: number | null
           price_lag_3h?: number | null
           price_lag_48h?: number | null
+          price_lag_6h?: number | null
           price_lag_72h?: number | null
           price_momentum_1h?: number | null
           price_momentum_3h?: number | null
+          price_quantile_10th_24h?: number | null
+          price_quantile_50th_24h?: number | null
+          price_quantile_90th_24h?: number | null
           price_ramp_rate?: number | null
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
@@ -1242,9 +1258,11 @@ export type Database = {
           cooling_degree_days?: number | null
           created_at?: string | null
           day_of_week?: number | null
+          day_type?: number | null
           demand_forecast_error?: number | null
           demand_lag_3h?: number | null
           demand_lag_6h?: number | null
+          demand_quantile_90th_24h?: number | null
           demand_ramp_rate?: number | null
           demand_volatility_6h?: number | null
           fourier_annual_cos_1?: number | null
@@ -1300,14 +1318,20 @@ export type Database = {
           pool_price_forecast_3h?: number | null
           price_acceleration?: number | null
           price_demand_ratio?: number | null
+          price_lag_12h?: number | null
+          price_lag_168h?: number | null
           price_lag_1h?: number | null
           price_lag_24h?: number | null
           price_lag_2h?: number | null
           price_lag_3h?: number | null
           price_lag_48h?: number | null
+          price_lag_6h?: number | null
           price_lag_72h?: number | null
           price_momentum_1h?: number | null
           price_momentum_3h?: number | null
+          price_quantile_10th_24h?: number | null
+          price_quantile_50th_24h?: number | null
+          price_quantile_90th_24h?: number | null
           price_ramp_rate?: number | null
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
