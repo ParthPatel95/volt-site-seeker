@@ -12,7 +12,14 @@ serve(async (req) => {
   }
 
   try {
-    const { features, historicalData, mode = 'predict' } = await req.json();
+    const requestBody = await req.json();
+    const { 
+      features, 
+      historicalData, 
+      trainingData,
+      predictionData,
+      mode = 'predict' 
+    } = requestBody;
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -121,6 +128,98 @@ Statistics:
       return new Response(JSON.stringify({
         success: true,
         analysis,
+        model: 'gemini-2.5-flash'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+
+    } else if (mode === 'validate') {
+      // Validate mode: Generate predictions for multiple data points
+      console.log(`Generating predictions for ${predictionData?.length || 0} validation records...`);
+      
+      if (!predictionData || predictionData.length === 0) {
+        throw new Error('predictionData is required for validate mode');
+      }
+
+      // Batch predictions for efficiency - process in chunks of 20
+      const predictions = [];
+      const chunkSize = 20;
+      
+      for (let i = 0; i < predictionData.length; i += chunkSize) {
+        const chunk = predictionData.slice(i, i + chunkSize);
+        
+        const systemPrompt = `You are an expert electricity price forecasting model for the Alberta (AESO) market.
+Predict pool prices in $/MWh for each provided record. Return predictions as an array.`;
+
+        const recordsText = chunk.map((record, idx) => `
+Record ${idx + 1}:
+- Time: Hour ${record.hour_of_day}, Day ${record.day_of_week}, Month ${record.month}
+- Demand: ${record.ail_mw?.toFixed(0)} MW
+- Wind Gen: ${record.generation_wind?.toFixed(0)} MW
+- Price lags: 1h=$${record.price_lag_1h?.toFixed(2)}, 24h=$${record.price_lag_24h?.toFixed(2)}
+- Renewable: ${record.renewable_penetration?.toFixed(1)}%`).join('\n');
+
+        const userPrompt = `Predict pool price for these ${chunk.length} records:\n${recordsText}`;
+
+        try {
+          const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+              ],
+              tools: [{
+                type: 'function',
+                function: {
+                  name: 'predict_prices',
+                  description: 'Predict electricity pool prices for multiple records',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      predictions: {
+                        type: 'array',
+                        items: { type: 'number' },
+                        description: 'Array of predicted prices in $/MWh'
+                      }
+                    },
+                    required: ['predictions']
+                  }
+                }
+              }],
+              tool_choice: { type: 'function', function: { name: 'predict_prices' } }
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const toolCall = data.choices[0]?.message?.tool_calls?.[0];
+            if (toolCall?.function?.arguments) {
+              const args = JSON.parse(toolCall.function.arguments);
+              predictions.push(...(args.predictions || []));
+            } else {
+              // Fill with nulls if prediction failed
+              predictions.push(...Array(chunk.length).fill(null));
+            }
+          } else {
+            predictions.push(...Array(chunk.length).fill(null));
+          }
+        } catch (error) {
+          console.error('Batch prediction error:', error);
+          predictions.push(...Array(chunk.length).fill(null));
+        }
+      }
+
+      console.log(`✅ Generated ${predictions.filter(p => p !== null).length}/${predictions.length} predictions`);
+      
+      return new Response(JSON.stringify({
+        success: true,
+        predictions,
         model: 'gemini-2.5-flash'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
