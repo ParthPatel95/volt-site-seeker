@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function ViewDocument() {
-  const { token } = useParams<{ token: string }>();
+  const { token: routeToken } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -22,6 +22,20 @@ export default function ViewDocument() {
   const [ndaSigned, setNdaSigned] = useState(false);
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
+  
+  // iOS Safari fallback: Extract token directly from URL if useParams fails
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const fallbackToken = isIOS && !routeToken ? window.location.pathname.split('/').pop() : null;
+  const token = routeToken || fallbackToken;
+  
+  console.log('[ViewDocument] Token extraction:', {
+    isIOS,
+    routeToken,
+    fallbackToken,
+    finalToken: token,
+    pathname: window.location.pathname,
+    href: window.location.href
+  });
   
   // Fetch link data - no authentication required (security via token)
   const { data: linkData, isLoading, error } = useQuery({
@@ -225,12 +239,47 @@ export default function ViewDocument() {
     };
   }, [linkData, toast]);
 
+  // Show loading immediately if no token is detected
+  if (!token) {
+    console.error('[ViewDocument] No token found in URL:', {
+      pathname: window.location.pathname,
+      search: window.location.search,
+      isIOS
+    });
+    
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 rounded-full bg-destructive/10">
+              <Lock className="w-8 h-8 text-destructive" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Invalid Link</h1>
+          <p className="text-muted-foreground mb-6">
+            No secure token found in the URL. Please check your link and try again.
+          </p>
+          {isIOS && (
+            <p className="text-xs text-muted-foreground mb-4">
+              iOS device detected. Try opening the link in Safari (not private mode) or copying and pasting the full URL.
+            </p>
+          )}
+          <Button onClick={() => navigate('/app')} className="w-full">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Home
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{authLoading ? 'Checking authentication...' : 'Loading document...'}</p>
+          {isIOS && <p className="text-xs text-muted-foreground mt-2">iOS device detected</p>}
         </div>
       </div>
     );
