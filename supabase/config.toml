@@ -133,6 +133,15 @@ verify_jwt = false
 [functions.aeso-phase1-features]
 verify_jwt = false
 
+[functions.aeso-phase2-features]
+verify_jwt = false
+
+[functions.aeso-phase3-features]
+verify_jwt = false
+
+[functions.aeso-phase4-features]
+verify_jwt = false
+
 [functions.crypto-details]
 verify_jwt = false
 

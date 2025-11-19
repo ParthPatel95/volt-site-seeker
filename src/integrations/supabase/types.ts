@@ -1009,11 +1009,13 @@ export type Database = {
           created_at: string | null
           day_of_week: number | null
           day_type: number | null
+          demand_bin: number | null
           demand_forecast_error: number | null
           demand_lag_3h: number | null
           demand_lag_6h: number | null
           demand_quantile_90th_24h: number | null
           demand_ramp_rate: number | null
+          demand_squared: number | null
           demand_volatility_6h: number | null
           fourier_annual_cos_1: number | null
           fourier_annual_cos_2: number | null
@@ -1026,7 +1028,9 @@ export type Database = {
           fourier_weekly_cos: number | null
           fourier_weekly_sin: number | null
           gas_demand_interaction: number | null
+          gas_generation_ratio: number | null
           gas_price_aeco: number | null
+          gas_price_demand_cross: number | null
           gas_price_lag_24h: number | null
           gas_price_ma_7d: number | null
           gas_price_momentum: number | null
@@ -1067,6 +1071,9 @@ export type Database = {
           pool_price_forecast_24h: number | null
           pool_price_forecast_3h: number | null
           price_acceleration: number | null
+          price_bin: number | null
+          price_cubed: number | null
+          price_demand_cross: number | null
           price_demand_ratio: number | null
           price_lag_12h: number | null
           price_lag_168h: number | null
@@ -1079,6 +1086,7 @@ export type Database = {
           price_lag_72h: number | null
           price_momentum_1h: number | null
           price_momentum_3h: number | null
+          price_per_mw_demand: number | null
           price_quantile_10th_24h: number | null
           price_quantile_50th_24h: number | null
           price_quantile_90th_24h: number | null
@@ -1086,11 +1094,16 @@ export type Database = {
           price_rolling_avg_24h: number | null
           price_rolling_std_24h: number | null
           price_spike_probability: number | null
+          price_squared: number | null
+          price_to_ma_ratio: number | null
           price_volatility_12h: number | null
           price_volatility_3h: number | null
           price_volatility_6h: number | null
+          renewable_bin: number | null
           renewable_capacity_factor: number | null
           renewable_penetration: number | null
+          renewable_price_cross: number | null
+          renewable_ratio: number | null
           renewable_volatility: number | null
           reserve_margin_percent: number | null
           season: string | null
@@ -1108,7 +1121,9 @@ export type Database = {
           temp_extreme_cold: number | null
           temp_extreme_hot: number | null
           temperature_calgary: number | null
+          temperature_demand_cross: number | null
           temperature_edmonton: number | null
+          time_bin: number | null
           timestamp: string
           total_interchange_flow: number | null
           transmission_constraint_hours: number | null
@@ -1118,12 +1133,14 @@ export type Database = {
           wind_forecast_1h: number | null
           wind_forecast_24h: number | null
           wind_forecast_3h: number | null
+          wind_generation_squared: number | null
           wind_hour_interaction: number | null
           wind_lag_3h: number | null
           wind_lag_6h: number | null
           wind_ramp_rate: number | null
           wind_solar_demand_interaction: number | null
           wind_speed: number | null
+          wind_speed_generation_cross: number | null
           wind_volatility_6h: number | null
         }
         Insert: {
@@ -1134,11 +1151,13 @@ export type Database = {
           created_at?: string | null
           day_of_week?: number | null
           day_type?: number | null
+          demand_bin?: number | null
           demand_forecast_error?: number | null
           demand_lag_3h?: number | null
           demand_lag_6h?: number | null
           demand_quantile_90th_24h?: number | null
           demand_ramp_rate?: number | null
+          demand_squared?: number | null
           demand_volatility_6h?: number | null
           fourier_annual_cos_1?: number | null
           fourier_annual_cos_2?: number | null
@@ -1151,7 +1170,9 @@ export type Database = {
           fourier_weekly_cos?: number | null
           fourier_weekly_sin?: number | null
           gas_demand_interaction?: number | null
+          gas_generation_ratio?: number | null
           gas_price_aeco?: number | null
+          gas_price_demand_cross?: number | null
           gas_price_lag_24h?: number | null
           gas_price_ma_7d?: number | null
           gas_price_momentum?: number | null
@@ -1192,6 +1213,9 @@ export type Database = {
           pool_price_forecast_24h?: number | null
           pool_price_forecast_3h?: number | null
           price_acceleration?: number | null
+          price_bin?: number | null
+          price_cubed?: number | null
+          price_demand_cross?: number | null
           price_demand_ratio?: number | null
           price_lag_12h?: number | null
           price_lag_168h?: number | null
@@ -1204,6 +1228,7 @@ export type Database = {
           price_lag_72h?: number | null
           price_momentum_1h?: number | null
           price_momentum_3h?: number | null
+          price_per_mw_demand?: number | null
           price_quantile_10th_24h?: number | null
           price_quantile_50th_24h?: number | null
           price_quantile_90th_24h?: number | null
@@ -1211,11 +1236,16 @@ export type Database = {
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
           price_spike_probability?: number | null
+          price_squared?: number | null
+          price_to_ma_ratio?: number | null
           price_volatility_12h?: number | null
           price_volatility_3h?: number | null
           price_volatility_6h?: number | null
+          renewable_bin?: number | null
           renewable_capacity_factor?: number | null
           renewable_penetration?: number | null
+          renewable_price_cross?: number | null
+          renewable_ratio?: number | null
           renewable_volatility?: number | null
           reserve_margin_percent?: number | null
           season?: string | null
@@ -1233,7 +1263,9 @@ export type Database = {
           temp_extreme_cold?: number | null
           temp_extreme_hot?: number | null
           temperature_calgary?: number | null
+          temperature_demand_cross?: number | null
           temperature_edmonton?: number | null
+          time_bin?: number | null
           timestamp: string
           total_interchange_flow?: number | null
           transmission_constraint_hours?: number | null
@@ -1243,12 +1275,14 @@ export type Database = {
           wind_forecast_1h?: number | null
           wind_forecast_24h?: number | null
           wind_forecast_3h?: number | null
+          wind_generation_squared?: number | null
           wind_hour_interaction?: number | null
           wind_lag_3h?: number | null
           wind_lag_6h?: number | null
           wind_ramp_rate?: number | null
           wind_solar_demand_interaction?: number | null
           wind_speed?: number | null
+          wind_speed_generation_cross?: number | null
           wind_volatility_6h?: number | null
         }
         Update: {
@@ -1259,11 +1293,13 @@ export type Database = {
           created_at?: string | null
           day_of_week?: number | null
           day_type?: number | null
+          demand_bin?: number | null
           demand_forecast_error?: number | null
           demand_lag_3h?: number | null
           demand_lag_6h?: number | null
           demand_quantile_90th_24h?: number | null
           demand_ramp_rate?: number | null
+          demand_squared?: number | null
           demand_volatility_6h?: number | null
           fourier_annual_cos_1?: number | null
           fourier_annual_cos_2?: number | null
@@ -1276,7 +1312,9 @@ export type Database = {
           fourier_weekly_cos?: number | null
           fourier_weekly_sin?: number | null
           gas_demand_interaction?: number | null
+          gas_generation_ratio?: number | null
           gas_price_aeco?: number | null
+          gas_price_demand_cross?: number | null
           gas_price_lag_24h?: number | null
           gas_price_ma_7d?: number | null
           gas_price_momentum?: number | null
@@ -1317,6 +1355,9 @@ export type Database = {
           pool_price_forecast_24h?: number | null
           pool_price_forecast_3h?: number | null
           price_acceleration?: number | null
+          price_bin?: number | null
+          price_cubed?: number | null
+          price_demand_cross?: number | null
           price_demand_ratio?: number | null
           price_lag_12h?: number | null
           price_lag_168h?: number | null
@@ -1329,6 +1370,7 @@ export type Database = {
           price_lag_72h?: number | null
           price_momentum_1h?: number | null
           price_momentum_3h?: number | null
+          price_per_mw_demand?: number | null
           price_quantile_10th_24h?: number | null
           price_quantile_50th_24h?: number | null
           price_quantile_90th_24h?: number | null
@@ -1336,11 +1378,16 @@ export type Database = {
           price_rolling_avg_24h?: number | null
           price_rolling_std_24h?: number | null
           price_spike_probability?: number | null
+          price_squared?: number | null
+          price_to_ma_ratio?: number | null
           price_volatility_12h?: number | null
           price_volatility_3h?: number | null
           price_volatility_6h?: number | null
+          renewable_bin?: number | null
           renewable_capacity_factor?: number | null
           renewable_penetration?: number | null
+          renewable_price_cross?: number | null
+          renewable_ratio?: number | null
           renewable_volatility?: number | null
           reserve_margin_percent?: number | null
           season?: string | null
@@ -1358,7 +1405,9 @@ export type Database = {
           temp_extreme_cold?: number | null
           temp_extreme_hot?: number | null
           temperature_calgary?: number | null
+          temperature_demand_cross?: number | null
           temperature_edmonton?: number | null
+          time_bin?: number | null
           timestamp?: string
           total_interchange_flow?: number | null
           transmission_constraint_hours?: number | null
@@ -1368,12 +1417,14 @@ export type Database = {
           wind_forecast_1h?: number | null
           wind_forecast_24h?: number | null
           wind_forecast_3h?: number | null
+          wind_generation_squared?: number | null
           wind_hour_interaction?: number | null
           wind_lag_3h?: number | null
           wind_lag_6h?: number | null
           wind_ramp_rate?: number | null
           wind_solar_demand_interaction?: number | null
           wind_speed?: number | null
+          wind_speed_generation_cross?: number | null
           wind_volatility_6h?: number | null
         }
         Relationships: []
