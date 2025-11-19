@@ -372,14 +372,17 @@ async function fetchAESOData() {
     'User-Agent': 'LovableEnergy/1.0'
   };
 
-  async function getJson(url: string) {
+  async function getJson(url: string, isOptional = false) {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
     try {
       const res = await fetch(url, { headers, signal: ctrl.signal });
       const text = await res.text();
       if (!res.ok) {
-        console.error('AESO APIM not OK', res.status, res.statusText, 'for', url, 'body:', text.slice(0, 300));
+        // Only log errors for non-optional endpoints (core data)
+        if (!isOptional) {
+          console.error('AESO APIM not OK', res.status, res.statusText, 'for', url, 'body:', text.slice(0, 300));
+        }
         return null as any;
       }
       try { return JSON.parse(text); } catch (e) {
@@ -387,7 +390,9 @@ async function fetchAESOData() {
         return null as any;
       }
     } catch (e) {
-      console.error('AESO APIM fetch error:', String(e));
+      if (!isOptional && String(e) !== 'timeout') {
+        console.error('AESO APIM fetch error:', String(e));
+      }
       return null as any;
     } finally {
       clearTimeout(timeout);
@@ -403,12 +408,12 @@ async function fetchAESOData() {
     orResp, 
     genCapResp
   ] = await Promise.allSettled([
-    getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`)),
-    getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`)),
-    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`)),
-    getJson(withQuery(`${host}/public/interchangecapability-api/v1/capability/interchangeCapability`)),
-    getJson(withQuery(`${host}/public/operatingreserve-api/v1/reserve/operatingReserve`)),
-    getJson(withQuery(`${host}/public/aiescapacity-api/v1/capacity/aiesCapacity`))
+    getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`), false),
+    getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`), false),
+    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`), false),
+    getJson(withQuery(`${host}/public/interchangecapability-api/v1/capability/interchangeCapability`), true), // Optional
+    getJson(withQuery(`${host}/public/operatingreserve-api/v1/reserve/operatingReserve`), true), // Optional
+    getJson(withQuery(`${host}/public/aiescapacity-api/v1/capacity/aiesCapacity`), true) // Optional
     // Note: AESO does not provide public wind/solar/load forecast endpoints via APIM
     // Only historical/actual data is available through these APIs
   ]);
