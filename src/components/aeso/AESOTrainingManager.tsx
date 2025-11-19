@@ -11,13 +11,19 @@ import {
   CheckCircle2, 
   XCircle, 
   Clock,
-  RefreshCw
+  RefreshCw,
+  Settings
 } from 'lucide-react';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { useAESOCrossValidation } from '@/hooks/useAESOCrossValidation';
 import { useAESOEnsemble } from '@/hooks/useAESOEnsemble';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ModelStatusDashboard } from './ModelStatusDashboard';
+import { ModelPerformanceMetrics } from './ModelPerformanceMetrics';
+import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
+import { BacktestingDashboard } from './BacktestingDashboard';
 
 interface TrainingJob {
   id: string;
@@ -35,10 +41,12 @@ export function AESOTrainingManager() {
   const [currentJob, setCurrentJob] = useState<TrainingJob | null>(null);
   const [jobHistory, setJobHistory] = useState<TrainingJob[]>([]);
   const [loading, setLoading] = useState(false);
+  const [modelPerformance, setModelPerformance] = useState<any>(null);
 
   const {
     runCompletePipeline,
-    loading: pipelineLoading
+    loading: pipelineLoading,
+    fetchModelPerformance
   } = useAESOPricePrediction();
 
   const {
@@ -84,6 +92,7 @@ export function AESOTrainingManager() {
   // Real-time subscription to training job updates
   useEffect(() => {
     fetchTrainingJobs();
+    fetchModelPerformance().then(setModelPerformance);
 
     const channel = supabase
       .channel('training-updates')
@@ -173,7 +182,19 @@ export function AESOTrainingManager() {
   };
 
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue="training" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="training" className="flex items-center gap-2">
+          <Settings className="w-4 h-4" />
+          Training Controls
+        </TabsTrigger>
+        <TabsTrigger value="insights" className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4" />
+          Model Insights
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="training" className="space-y-6">
       {/* Training Actions */}
       <Card>
         <CardHeader>
@@ -344,6 +365,14 @@ export function AESOTrainingManager() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="insights" className="space-y-6">
+        <ModelStatusDashboard />
+        <ModelPerformanceMetrics performance={modelPerformance} />
+        <PredictionAccuracyTracker key={modelPerformance?.modelVersion} />
+        <BacktestingDashboard key={modelPerformance?.modelVersion} />
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -9,11 +9,7 @@ import { PricePredictionChart } from './PricePredictionChart';
 import { FeatureImpactVisualization } from './FeatureImpactVisualization';
 import { PricePredictionAlerts } from './PricePredictionAlerts';
 import { ScenarioAnalysis } from './ScenarioAnalysis';
-import { ModelPerformanceMetrics } from './ModelPerformanceMetrics';
 import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
-import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
-import { ModelStatusDashboard } from './ModelStatusDashboard';
-import { BacktestingDashboard } from './BacktestingDashboard';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
@@ -155,10 +151,9 @@ export const AESOPricePredictionDashboard = () => {
         {/* Tabbed Content */}
         {predictions.length > 0 && (
           <Tabs defaultValue="forecast" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+            <TabsList className="grid w-full grid-cols-3 h-auto">
               <TabsTrigger value="forecast" className="text-xs sm:text-sm">Forecast</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
-              <TabsTrigger value="performance" className="text-xs sm:text-sm">Model Insights</TabsTrigger>
               <TabsTrigger value="scenario" className="text-xs sm:text-sm">What-If</TabsTrigger>
             </TabsList>
 
@@ -172,13 +167,6 @@ export const AESOPricePredictionDashboard = () => {
 
             <TabsContent value="analytics" className="mt-4">
               <AESOPredictionAnalytics predictions={predictions} />
-            </TabsContent>
-
-            <TabsContent value="performance" className="space-y-6 mt-4">
-              <ModelStatusDashboard />
-              <ModelPerformanceMetrics performance={modelPerformance} />
-              <PredictionAccuracyTracker key={modelPerformance?.modelVersion} />
-              <BacktestingDashboard key={modelPerformance?.modelVersion} />
             </TabsContent>
 
             <TabsContent value="scenario" className="mt-4">
