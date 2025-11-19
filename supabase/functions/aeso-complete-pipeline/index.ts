@@ -38,42 +38,76 @@ serve(async (req) => {
       steps.data_collection = { success: false, error: error.message };
     }
 
-    // Step 2: Basic Feature Engineering
-    console.log('Step 2/5: Calculating basic enhanced features...');
+    // Step 2: Phase 1 Features (Extended Lags & Quantiles)
+    console.log('Step 2/6: Calculating Phase 1 features...');
     try {
-      const { data: featuresData, error: featuresError } = await supabase.functions.invoke('aeso-enhanced-feature-calculator');
+      const { data: phase1Data, error: phase1Error } = await supabase.functions.invoke('aeso-phase1-features');
       
-      if (featuresError) throw featuresError;
+      if (phase1Error) throw phase1Error;
       
-      steps.feature_engineering = {
+      steps.phase1_features = {
         success: true,
-        records_processed: featuresData?.records_processed || 0
+        records_processed: phase1Data?.records_processed || 0
       };
-      console.log(`✅ Basic Features: ${steps.feature_engineering.records_processed} records`);
+      console.log(`✅ Phase 1 Features: ${steps.phase1_features.records_processed} records`);
     } catch (error: any) {
-      console.error('❌ Feature engineering failed:', error.message);
-      steps.feature_engineering = { success: false, error: error.message };
+      console.error('❌ Phase 1 feature engineering failed:', error.message);
+      steps.phase1_features = { success: false, error: error.message };
     }
 
-    // Step 3: Advanced Feature Engineering (Phase 2)
-    console.log('Step 3/5: Calculating advanced features (Phase 2)...');
+    // Step 3: Phase 2 Features (Fourier Transforms & Timing)
+    console.log('Step 3/6: Calculating Phase 2 features...');
     try {
-      const { data: advancedData, error: advancedError } = await supabase.functions.invoke('aeso-advanced-feature-engineer');
+      const { data: phase2Data, error: phase2Error } = await supabase.functions.invoke('aeso-phase2-features');
       
-      if (advancedError) throw advancedError;
+      if (phase2Error) throw phase2Error;
       
-      steps.advanced_features = {
+      steps.phase2_features = {
         success: true,
-        stats: advancedData?.stats || {}
+        stats: phase2Data?.stats || {}
       };
-      console.log(`✅ Advanced Features: ${advancedData?.stats?.updated_records || 0} records`);
+      console.log(`✅ Phase 2 Features: ${phase2Data?.stats?.updated_records || 0} records`);
     } catch (error: any) {
-      console.error('❌ Advanced feature engineering failed:', error.message);
-      steps.advanced_features = { success: false, error: error.message };
+      console.error('❌ Phase 2 feature engineering failed:', error.message);
+      steps.phase2_features = { success: false, error: error.message };
     }
 
-    // Step 4: Data Quality Analysis
-    console.log('Step 4/5: Running data quality analysis...');
+    // Step 4: Phase 3 Features (Gas Prices & Interactions)
+    console.log('Step 4/6: Calculating Phase 3 features...');
+    try {
+      const { data: phase3Data, error: phase3Error } = await supabase.functions.invoke('aeso-phase3-features');
+      
+      if (phase3Error) throw phase3Error;
+      
+      steps.phase3_features = {
+        success: true,
+        stats: phase3Data?.stats || {}
+      };
+      console.log(`✅ Phase 3 Features: ${phase3Data?.stats?.updated_records || 0} records`);
+    } catch (error: any) {
+      console.error('❌ Phase 3 feature engineering failed:', error.message);
+      steps.phase3_features = { success: false, error: error.message };
+    }
+
+    // Step 5: Phase 4 Features (Advanced Polynomials & Ratios)
+    console.log('Step 5/6: Calculating Phase 4 features...');
+    try {
+      const { data: phase4Data, error: phase4Error } = await supabase.functions.invoke('aeso-phase4-features');
+      
+      if (phase4Error) throw phase4Error;
+      
+      steps.phase4_features = {
+        success: true,
+        stats: phase4Data?.stats || {}
+      };
+      console.log(`✅ Phase 4 Features: ${phase4Data?.stats?.updated_records || 0} records`);
+    } catch (error: any) {
+      console.error('❌ Phase 4 feature engineering failed:', error.message);
+      steps.phase4_features = { success: false, error: error.message };
+    }
+
+    // Step 6: Data Quality Analysis
+    console.log('Step 6/7: Running data quality analysis...');
     try {
       const { data: qualityData, error: qualityError } = await supabase.functions.invoke('aeso-data-quality-filter');
       
@@ -90,8 +124,8 @@ serve(async (req) => {
       steps.quality_analysis = { success: false, error: error.message };
     }
 
-    // Step 5: Stacked Ensemble Model Training
-    console.log('Step 5/5: Training stacked ensemble model...');
+    // Step 7: Stacked Ensemble Model Training
+    console.log('Step 7/7: Training stacked ensemble model...');
     try {
       const { data: trainingData, error: trainingError } = await supabase.functions.invoke('aeso-stacked-ensemble-trainer');
       
@@ -123,7 +157,10 @@ serve(async (req) => {
         steps,
         summary: {
           data_collected: steps.data_collection?.records || 0,
-          features_engineered: steps.advanced_features?.stats?.updated_records || 0,
+          phase1_records: steps.phase1_features?.records_processed || 0,
+          phase2_records: steps.phase2_features?.stats?.updated_records || 0,
+          phase3_records: steps.phase3_features?.stats?.updated_records || 0,
+          phase4_records: steps.phase4_features?.stats?.updated_records || 0,
           valid_records: steps.quality_analysis?.valid_records || 0,
           model_version: steps.model_training?.model_version,
           test_smape: steps.model_training?.metrics?.test_smape
