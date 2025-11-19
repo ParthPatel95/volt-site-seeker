@@ -6474,6 +6474,14 @@ export type Database = {
           success: boolean
         }[]
       }
+      calculate_phase2_features_batch: {
+        Args: never
+        Returns: {
+          batch_timestamp: string
+          success: boolean
+          total_records: number
+        }[]
+      }
       clean_expired_verification_tokens: { Args: never; Returns: undefined }
       generate_time_series_cv_folds: {
         Args: { num_folds?: number; validation_window_hours?: number }
