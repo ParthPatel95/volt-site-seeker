@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAESOPhase1Features } from '@/hooks/useAESOPhase1Features';
 import { useAESOPhase2Features } from '@/hooks/useAESOPhase2Features';
+import { useAESOPhase3Features } from '@/hooks/useAESOPhase3Features';
+import { useAESOPhase4Features } from '@/hooks/useAESOPhase4Features';
 
 interface TestResult {
   name: string;
@@ -21,6 +23,8 @@ export const AESOPredictionTester = () => {
   const { toast } = useToast();
   const { calculatePhase1Features, loading: phase1Loading } = useAESOPhase1Features();
   const { calculatePhase2Features, loading: phase2Loading } = useAESOPhase2Features();
+  const { calculatePhase3Features, loading: phase3Loading } = useAESOPhase3Features();
+  const { calculatePhase4Features, loading: phase4Loading } = useAESOPhase4Features();
 
   const updateResult = (name: string, status: TestResult['status'], message: string, duration?: number) => {
     setResults(prev => {
@@ -159,6 +163,42 @@ export const AESOPredictionTester = () => {
         }
       } catch (error) {
         updateResult('Phase 2 Features', 'failed', `Phase 2 error: ${error.message}`, Date.now() - start7);
+      }
+
+      // Test 7.5: Phase 3 Features
+      updateResult('Phase 3 Features', 'running', 'Calculating Phase 3 features...');
+      const start7_5 = Date.now();
+      try {
+        const phase3Result = await calculatePhase3Features();
+        if (phase3Result && phase3Result.success) {
+          const totalFeatures = phase3Result.stats.gas_features + phase3Result.stats.interaction_features + 
+                               phase3Result.stats.volatility_features + phase3Result.stats.momentum_features;
+          updateResult('Phase 3 Features', 'passed', 
+            `Phase 3: ${phase3Result.stats.updated_records} records with ${totalFeatures} gas/weather/interaction features`, 
+            Date.now() - start7_5);
+        } else {
+          updateResult('Phase 3 Features', 'failed', 'Phase 3 calculation failed', Date.now() - start7_5);
+        }
+      } catch (error) {
+        updateResult('Phase 3 Features', 'failed', `Phase 3 error: ${error.message}`, Date.now() - start7_5);
+      }
+
+      // Test 7.75: Phase 4 Features
+      updateResult('Phase 4 Features', 'running', 'Calculating Phase 4 features...');
+      const start7_75 = Date.now();
+      try {
+        const phase4Result = await calculatePhase4Features();
+        if (phase4Result && phase4Result.success) {
+          const totalFeatures = phase4Result.stats.polynomial_features + phase4Result.stats.ratio_features + 
+                               phase4Result.stats.cross_features + phase4Result.stats.binning_features;
+          updateResult('Phase 4 Features', 'passed', 
+            `Phase 4: ${phase4Result.stats.updated_records} records with ${totalFeatures} advanced features`, 
+            Date.now() - start7_75);
+        } else {
+          updateResult('Phase 4 Features', 'failed', 'Phase 4 calculation failed', Date.now() - start7_75);
+        }
+      } catch (error) {
+        updateResult('Phase 4 Features', 'failed', `Phase 4 error: ${error.message}`, Date.now() - start7_75);
       }
 
       // Test 8: Cache System
