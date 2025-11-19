@@ -6466,7 +6466,14 @@ export type Database = {
         Args: { site_ids: string[] }
         Returns: number
       }
-      calculate_enhanced_features_batch: { Args: never; Returns: undefined }
+      calculate_enhanced_features_batch: {
+        Args: never
+        Returns: {
+          batch_timestamp: string
+          records_processed: number
+          success: boolean
+        }[]
+      }
       clean_expired_verification_tokens: { Args: never; Returns: undefined }
       generate_time_series_cv_folds: {
         Args: { num_folds?: number; validation_window_hours?: number }
