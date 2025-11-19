@@ -236,15 +236,40 @@ function calculateRMSE(actual: number[], predicted: number[]): number {
 }
 
 function trainGradientBoostingModel(data: any[]) {
-  // Simulate gradient boosting with enhanced features
-  const features = ['price_lag_1h', 'price_lag_24h', 'net_demand', 'renewable_penetration', 
-                   'gas_price_aeco', 'fourier_daily_sin_1', 'fourier_daily_cos_1', 'market_stress_score'];
+  // Enhanced features including all Phase 1-4 features
+  const features = [
+    // Base price features
+    'price_lag_1h', 'price_lag_2h', 'price_lag_3h', 'price_lag_6h', 'price_lag_12h', 'price_lag_24h', 'price_lag_48h', 'price_lag_72h', 'price_lag_168h',
+    'price_rolling_avg_24h', 'price_rolling_std_24h', 'price_momentum_1h', 'price_momentum_3h',
+    // Phase 1: Quantiles & day type
+    'price_quantile_10th_24h', 'price_quantile_50th_24h', 'price_quantile_90th_24h', 'demand_quantile_90th_24h', 'day_type',
+    // Phase 2: Fourier transforms
+    'fourier_daily_sin_1', 'fourier_daily_cos_1', 'fourier_daily_sin_2', 'fourier_daily_cos_2',
+    'fourier_weekly_sin', 'fourier_weekly_cos', 'fourier_annual_sin_1', 'fourier_annual_cos_1', 'fourier_annual_sin_2', 'fourier_annual_cos_2',
+    // Phase 2: Gas features
+    'gas_price_aeco', 'gas_price_lag_24h', 'gas_price_momentum', 'gas_price_ma_7d',
+    'gas_temp_interaction', 'gas_demand_interaction', 'gas_wind_interaction',
+    // Phase 2: Timing features
+    'is_morning_ramp', 'is_evening_peak', 'is_overnight', 'temp_extreme_cold', 'temp_extreme_hot',
+    // Phase 4: Polynomial features
+    'price_squared', 'price_cubed', 'demand_squared', 'wind_generation_squared',
+    // Phase 4: Ratio features
+    'price_per_mw_demand', 'renewable_ratio', 'gas_generation_ratio', 'price_to_ma_ratio',
+    // Phase 4: Cross features
+    'price_demand_cross', 'renewable_price_cross', 'gas_price_demand_cross', 'temperature_demand_cross', 'wind_speed_generation_cross',
+    // Phase 4: Binning features
+    'price_bin', 'demand_bin', 'time_bin', 'renewable_bin',
+    // Core demand/supply features
+    'net_demand', 'renewable_penetration', 'ail_mw', 'market_stress_score', 'grid_stress_score'
+  ];
   
   const correlations: Record<string, number> = {};
   features.forEach(f => {
-    const values = data.filter(d => d[f] !== null).map(d => d[f]);
-    const prices = data.filter(d => d[f] !== null).map(d => d.pool_price);
-    correlations[f] = calculateCorrelation(values, prices);
+    const values = data.filter(d => d[f] !== null && !isNaN(d[f])).map(d => d[f]);
+    const prices = data.filter(d => d[f] !== null && !isNaN(d[f])).map(d => d.pool_price);
+    if (values.length > 10) {
+      correlations[f] = calculateCorrelation(values, prices);
+    }
   });
 
   return {
@@ -278,14 +303,27 @@ function predictGradientBoosting(record: any, model: any): number {
 }
 
 function trainRidgeRegression(data: any[]) {
-  const features = ['price_lag_1h', 'ail_mw', 'generation_wind', 'temperature_calgary', 
-                   'hour_of_day', 'day_of_week', 'gas_price_aeco'];
+  const features = [
+    // Price lags including Phase 1 extended lags
+    'price_lag_1h', 'price_lag_6h', 'price_lag_12h', 'price_lag_24h', 'price_lag_168h',
+    'price_rolling_avg_24h', 'price_rolling_std_24h',
+    // Phase 1 quantiles
+    'price_quantile_50th_24h', 'demand_quantile_90th_24h',
+    // Phase 2 Fourier features (key timing patterns)
+    'fourier_daily_cos_1', 'fourier_weekly_sin', 'fourier_annual_sin_1',
+    // Phase 2 gas features
+    'gas_price_aeco', 'gas_price_ma_7d', 'gas_demand_interaction',
+    // Phase 4 ratio features
+    'price_per_mw_demand', 'renewable_ratio', 'price_to_ma_ratio',
+    // Core features
+    'ail_mw', 'generation_wind', 'temperature_calgary', 'hour_of_day', 'day_of_week', 'net_demand'
+  ];
   
   const coefficients: Record<string, number> = {};
   features.forEach(f => {
-    const values = data.filter(d => d[f] !== null).map(d => d[f]);
-    const prices = data.filter(d => d[f] !== null).map(d => d.pool_price);
-    if (values.length > 0) {
+    const values = data.filter(d => d[f] !== null && !isNaN(d[f])).map(d => d[f]);
+    const prices = data.filter(d => d[f] !== null && !isNaN(d[f])).map(d => d.pool_price);
+    if (values.length > 10) {
       coefficients[f] = calculateCorrelation(values, prices) * 0.8; // Ridge regularization
     }
   });
@@ -328,20 +366,34 @@ function trainLSTMModel(data: any[]) {
 }
 
 function predictLSTM(record: any, model: any): number {
-  // Use recent price momentum and pattern matching
+  // Enhanced LSTM prediction using Phase 1-4 features
   const recentAvg = record.price_rolling_avg_24h || record.price_lag_1h || 50;
   const momentum = record.price_momentum_1h || 0;
   const volatility = record.price_volatility_6h || 10;
 
   let prediction = recentAvg + (momentum * 0.5);
   
-  // Add LSTM-style temporal adjustments
-  if (record.hour_of_day >= 7 && record.hour_of_day <= 9) {
-    prediction *= 1.1; // Morning ramp
-  } else if (record.hour_of_day >= 17 && record.hour_of_day <= 20) {
-    prediction *= 1.15; // Evening peak
-  } else if (record.hour_of_day >= 1 && record.hour_of_day <= 5) {
-    prediction *= 0.9; // Overnight low
+  // Phase 2: Timing features (morning_ramp, evening_peak, overnight)
+  if (record.is_morning_ramp === 1 || (record.hour_of_day >= 7 && record.hour_of_day <= 9)) {
+    prediction *= 1.1;
+  } else if (record.is_evening_peak === 1 || (record.hour_of_day >= 17 && record.hour_of_day <= 20)) {
+    prediction *= 1.15;
+  } else if (record.is_overnight === 1 || (record.hour_of_day >= 1 && record.hour_of_day <= 5)) {
+    prediction *= 0.9;
+  }
+
+  // Phase 4: Use polynomial and ratio features
+  if (record.price_per_mw_demand) {
+    prediction += (record.price_per_mw_demand - 0.01) * 500; // Adjust based on demand efficiency
+  }
+  
+  if (record.renewable_ratio && record.renewable_ratio > 0.6) {
+    prediction *= 0.95; // Lower prices with high renewable penetration
+  }
+
+  // Phase 2: Gas price impact
+  if (record.gas_price_aeco) {
+    prediction += (record.gas_price_aeco - 2.5) * 5;
   }
 
   return Math.max(0, prediction);
@@ -362,18 +414,31 @@ function trainQuantileRegression(data: any[]) {
 }
 
 function predictQuantile(record: any, model: any): number {
-  // Adjust quantile based on conditions
+  // Enhanced quantile prediction using Phase 1-4 features
   let baseQuantile = model.quantiles.q50;
+
+  // Phase 1: Use actual quantile features
+  if (record.price_quantile_90th_24h && record.price_quantile_10th_24h) {
+    const priceRange = record.price_quantile_90th_24h - record.price_quantile_10th_24h;
+    if (priceRange > 50) {
+      baseQuantile = model.quantiles.q90; // High volatility = higher prices
+    }
+  }
 
   if (record.market_stress_score > 40) {
     baseQuantile = model.quantiles.q90;
-  } else if (record.renewable_penetration > 60) {
+  } else if (record.renewable_penetration > 60 || (record.renewable_ratio && record.renewable_ratio > 0.6)) {
     baseQuantile = model.quantiles.q10;
   }
 
-  // Adjust for gas prices
+  // Phase 2: Adjust for gas prices and interactions
   if (record.gas_price_aeco && record.gas_price_aeco > 3) {
     baseQuantile *= 1.2;
+  }
+  
+  // Phase 4: Cross features influence
+  if (record.gas_price_demand_cross && record.gas_price_demand_cross > 300000) {
+    baseQuantile *= 1.15;
   }
 
   return Math.max(0, baseQuantile);
@@ -407,16 +472,28 @@ function trainSeasonalModel(data: any[]) {
 function predictSeasonal(record: any, model: any): number {
   const basePrice = model.hourlyAvg[record.hour_of_day] || 50;
   
-  // Apply Fourier-based seasonal adjustments
+  // Phase 2: Enhanced Fourier-based seasonal adjustments (all transforms)
   let adjustment = 1.0;
-  if (record.fourier_daily_sin_1) {
-    adjustment += record.fourier_daily_sin_1 * 0.1;
-  }
-  if (record.fourier_weekly_sin) {
-    adjustment += record.fourier_weekly_sin * 0.05;
-  }
-  if (record.fourier_annual_sin_1) {
-    adjustment += record.fourier_annual_sin_1 * 0.08;
+  
+  // Daily patterns (2 harmonics)
+  if (record.fourier_daily_sin_1) adjustment += record.fourier_daily_sin_1 * 0.1;
+  if (record.fourier_daily_cos_1) adjustment += record.fourier_daily_cos_1 * 0.1;
+  if (record.fourier_daily_sin_2) adjustment += record.fourier_daily_sin_2 * 0.05;
+  if (record.fourier_daily_cos_2) adjustment += record.fourier_daily_cos_2 * 0.05;
+  
+  // Weekly patterns
+  if (record.fourier_weekly_sin) adjustment += record.fourier_weekly_sin * 0.05;
+  if (record.fourier_weekly_cos) adjustment += record.fourier_weekly_cos * 0.05;
+  
+  // Annual patterns (2 harmonics)
+  if (record.fourier_annual_sin_1) adjustment += record.fourier_annual_sin_1 * 0.08;
+  if (record.fourier_annual_cos_1) adjustment += record.fourier_annual_cos_1 * 0.08;
+  if (record.fourier_annual_sin_2) adjustment += record.fourier_annual_sin_2 * 0.04;
+  if (record.fourier_annual_cos_2) adjustment += record.fourier_annual_cos_2 * 0.04;
+
+  // Phase 1: Day type adjustment (weekday vs weekend/holiday behavior)
+  if (record.day_type === 0) {
+    adjustment *= 0.95; // Weekend/holiday typically lower
   }
 
   return Math.max(0, basePrice * adjustment);
