@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertCircle, Loader2, PlayCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAESOPhase1Features } from '@/hooks/useAESOPhase1Features';
+import { useAESOPhase2Features } from '@/hooks/useAESOPhase2Features';
 
 interface TestResult {
   name: string;
@@ -17,6 +19,8 @@ export const AESOPredictionTester = () => {
   const [testing, setTesting] = useState(false);
   const [results, setResults] = useState<TestResult[]>([]);
   const { toast } = useToast();
+  const { calculatePhase1Features, loading: phase1Loading } = useAESOPhase1Features();
+  const { calculatePhase2Features, loading: phase2Loading } = useAESOPhase2Features();
 
   const updateResult = (name: string, status: TestResult['status'], message: string, duration?: number) => {
     setResults(prev => {
@@ -38,7 +42,8 @@ export const AESOPredictionTester = () => {
       'Model Performance',
       'Prediction Generation',
       'Data Quality',
-      'Feature Calculation',
+      'Phase 1 Features',
+      'Phase 2 Features',
       'Cache System',
       'Error Handling'
     ];
@@ -124,24 +129,41 @@ export const AESOPredictionTester = () => {
           `${validPercent.toFixed(1)}% data validity`, Date.now() - start5);
       }
 
-      // Test 6: Feature Calculation
-      updateResult('Feature Calculation', 'running', 'Testing feature engineering...');
+      // Test 6: Phase 1 Features
+      updateResult('Phase 1 Features', 'running', 'Calculating Phase 1 features...');
       const start6 = Date.now();
-      const { data: featureData, error: featureError } = await supabase
-        .from('aeso_training_data')
-        .select('price_lag_1h, price_lag_24h, rolling_avg_7d')
-        .not('price_lag_1h', 'is', null)
-        .limit(1);
-      
-      if (featureError || !featureData || featureData.length === 0) {
-        updateResult('Feature Calculation', 'warning', 'Enhanced features not calculated', Date.now() - start6);
-      } else {
-        updateResult('Feature Calculation', 'passed', 'Enhanced features available', Date.now() - start6);
+      try {
+        const phase1Result = await calculatePhase1Features();
+        if (phase1Result && phase1Result.success) {
+          updateResult('Phase 1 Features', 'passed', 
+            `Phase 1: ${phase1Result.records_processed} records with extended lags, quantiles, day_type`, 
+            Date.now() - start6);
+        } else {
+          updateResult('Phase 1 Features', 'failed', 'Phase 1 calculation failed', Date.now() - start6);
+        }
+      } catch (error) {
+        updateResult('Phase 1 Features', 'failed', `Phase 1 error: ${error.message}`, Date.now() - start6);
       }
 
-      // Test 7: Cache System
-      updateResult('Cache System', 'running', 'Testing prediction cache...');
+      // Test 7: Phase 2 Features
+      updateResult('Phase 2 Features', 'running', 'Calculating Phase 2 features...');
       const start7 = Date.now();
+      try {
+        const phase2Result = await calculatePhase2Features();
+        if (phase2Result && phase2Result.success) {
+          updateResult('Phase 2 Features', 'passed', 
+            `Phase 2: ${phase2Result.stats.updated_records} records with Fourier transforms & timing`, 
+            Date.now() - start7);
+        } else {
+          updateResult('Phase 2 Features', 'failed', 'Phase 2 calculation failed', Date.now() - start7);
+        }
+      } catch (error) {
+        updateResult('Phase 2 Features', 'failed', `Phase 2 error: ${error.message}`, Date.now() - start7);
+      }
+
+      // Test 8: Cache System
+      updateResult('Cache System', 'running', 'Testing prediction cache...');
+      const start8 = Date.now();
       const { data: cacheData, error: cacheError } = await supabase
         .from('aeso_price_predictions')
         .select('target_timestamp, predicted_price')
@@ -149,24 +171,24 @@ export const AESOPredictionTester = () => {
         .limit(1);
       
       if (cacheError) {
-        updateResult('Cache System', 'warning', 'Cache unavailable', Date.now() - start7);
+        updateResult('Cache System', 'warning', 'Cache unavailable', Date.now() - start8);
       } else {
         updateResult('Cache System', 'passed', 
-          `${cacheData.length > 0 ? 'Cache active' : 'Cache empty'}`, Date.now() - start7);
+          `${cacheData.length > 0 ? 'Cache active' : 'Cache empty'}`, Date.now() - start8);
       }
 
-      // Test 8: Error Handling
+      // Test 9: Error Handling
       updateResult('Error Handling', 'running', 'Testing error recovery...');
-      const start8 = Date.now();
+      const start9 = Date.now();
       const { error: testError } = await supabase
         .from('aeso_training_data')
         .select('nonexistent_column')
         .limit(1);
       
       if (testError) {
-        updateResult('Error Handling', 'passed', 'Error handling working correctly', Date.now() - start8);
+        updateResult('Error Handling', 'passed', 'Error handling working correctly', Date.now() - start9);
       } else {
-        updateResult('Error Handling', 'warning', 'Error handling needs verification', Date.now() - start8);
+        updateResult('Error Handling', 'warning', 'Error handling needs verification', Date.now() - start9);
       }
 
       // Summary
