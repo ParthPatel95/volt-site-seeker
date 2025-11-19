@@ -399,32 +399,26 @@ async function fetchAESOData() {
     }
   }
 
-  // Fetch all AESO market data in parallel including forecasts and generation data
+  // Fetch all AESO market data in parallel
+  // Note: interchangecapability-api and operatingreserve-api do not exist in AESO APIM
+  // Available APIs: poolprice, systemmarginalprice, actualforecast, aiesgencapacity, operatingreserveoffercontrol
   const [
     poolResp, 
     smpResp, 
-    loadResp, 
-    interchangeResp, 
-    orResp, 
-    genCapResp
+    loadResp
   ] = await Promise.allSettled([
     getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`), false),
     getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`), false),
-    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`), false),
-    getJson(withQuery(`${host}/public/interchangecapability-api/v1/capability/interchangeCapability`), true), // Optional
-    getJson(withQuery(`${host}/public/operatingreserve-api/v1/reserve/operatingReserve`), true), // Optional
-    getJson(withQuery(`${host}/public/aiescapacity-api/v1/capacity/aiesCapacity`), true) // Optional
+    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`), false)
     // Note: AESO does not provide public wind/solar/load forecast endpoints via APIM
-    // Only historical/actual data is available through these APIs
+    // interchangecapability-api, operatingreserve-api, and aiescapacity-api are not available
   ]);
 
   let pricing: any | undefined;
   let loadData: any | undefined;
   let generationMix: any | undefined;
   let systemMarginalPrice: number | undefined;
-  let intertieFlows: any | undefined;
-  let operatingReserve: any | undefined;
-  let generationOutages: any | undefined;
+  // Note: intertieFlows, operatingReserve, and generationOutages are not available from AESO APIM
 
   // Pricing: prefer Pool Price; also extract SMP separately for spread calculation
   try {
@@ -600,120 +594,23 @@ async function fetchAESOData() {
     console.error('AESO CSD v2 mix parse error:', e);
   }
 
-  // Parse Interchange (Intertie Flows)
-  try {
-    const json: any = interchangeResp.status === 'fulfilled' ? interchangeResp.value : null;
-    const arr: any[] = json?.return?.['Interchange Capability Report'] || json?.['Interchange Capability Report'] || [];
-    
-    if (Array.isArray(arr) && arr.length) {
-      let bcFlow = 0, saskFlow = 0, montanaFlow = 0;
-      
-      for (const record of arr) {
-        const path = String(record?.path || '').toUpperCase();
-        const actual = parseFloat(String(record?.actual || record?.actual_flow || 0));
-        
-        if (path.includes('BC')) bcFlow += actual;
-        else if (path.includes('SASK')) saskFlow += actual;
-        else if (path.includes('MATL') || path.includes('MONTANA')) montanaFlow += actual;
-      }
-      
-      intertieFlows = {
-        bc_flow: Math.round(bcFlow),
-        sask_flow: Math.round(saskFlow),
-        montana_flow: Math.round(montanaFlow),
-        total_flow: Math.round(bcFlow + saskFlow + montanaFlow),
-        timestamp: new Date().toISOString()
-      };
-      console.log('✅ Intertie flows:', intertieFlows);
-    }
-  } catch (e) {
-    console.error('AESO interchange parse error:', e);
-  }
-
-  // Parse Operating Reserve
-  try {
-    const json: any = orResp.status === 'fulfilled' ? orResp.value : null;
-    
-    if (orResp.status === 'rejected') {
-      console.log('⚠️ AESO Operating Reserve endpoint unavailable (404 expected)');
-    } else {
-      const arr: any[] = json?.return?.['Operating Reserve Report'] || json?.['Operating Reserve Report'] || [];
-      
-      if (Array.isArray(arr) && arr.length) {
-        const latest = arr[arr.length - 1];
-        const orPrice = parseFloat(String(latest?.operating_reserve_price || latest?.price || 0));
-        const spinMW = parseFloat(String(latest?.spinning_reserve || latest?.spin || 0));
-        const suppMW = parseFloat(String(latest?.supplemental_reserve || latest?.supp || 0));
-        
-        operatingReserve = {
-          price: Math.round(orPrice * 100) / 100,
-          spinning_mw: Math.round(spinMW),
-          supplemental_mw: Math.round(suppMW),
-          total_mw: Math.round(spinMW + suppMW),
-          timestamp: new Date().toISOString()
-        };
-        console.log('✅ Operating Reserve:', operatingReserve);
-      }
-    }
-  } catch (e) {
-    console.log('⚠️ AESO operating reserve not available:', String(e).substring(0, 100));
-  }
-
-  // Parse Generation Capacity & Outages
-  try {
-    const json: any = genCapResp.status === 'fulfilled' ? genCapResp.value : null;
-    const arr: any[] = json?.return?.['AIES Capacity Report'] || json?.['AIES Capacity Report'] || [];
-    
-    if (Array.isArray(arr) && arr.length) {
-      let totalCapacity = 0;
-      let totalOutages = 0;
-      
-      for (const record of arr) {
-        const maxCap = parseFloat(String(record?.maximum_capability || record?.max_capacity || 0));
-        const avail = parseFloat(String(record?.available || record?.available_capacity || 0));
-        
-        totalCapacity += maxCap;
-        if (avail < maxCap) {
-          totalOutages += (maxCap - avail);
-        }
-      }
-      
-      generationOutages = {
-        total_capacity_mw: Math.round(totalCapacity),
-        outages_mw: Math.round(totalOutages),
-        available_mw: Math.round(totalCapacity - totalOutages),
-        outage_count: arr.filter(r => {
-          const maxCap = parseFloat(String(r?.maximum_capability || 0));
-          const avail = parseFloat(String(r?.available || 0));
-          return avail < maxCap;
-        }).length,
-        timestamp: new Date().toISOString()
-      };
-      console.log('✅ Generation outages:', generationOutages);
-    }
-  } catch (e) {
-    console.error('AESO generation capacity parse error:', e);
-  }
+  // Note: Interchange, Operating Reserve, and Generation Capacity APIs are not available in AESO APIM
+  // These features would require alternative data sources or different API endpoints
 
   console.log('AESO return summary (APIM)', {
     pricingSource: pricing?.source,
     currentPrice: pricing?.current_price,
     smp: systemMarginalPrice,
     loadSource: loadData?.source,
-    mixSource: generationMix?.source,
-    hasIntertie: !!intertieFlows,
-    hasOR: !!operatingReserve,
-    hasOutages: !!generationOutages
-    // Note: Wind, solar, and load forecasts are not available via public AESO APIM endpoints
+    mixSource: generationMix?.source
+    // Note: Wind, solar, load forecasts, interchange, operating reserve, and generation capacity
+    // are not available via public AESO APIM endpoints
   });
 
   return { 
     pricing, 
     loadData, 
-    generationMix,
-    intertieFlows,
-    operatingReserve,
-    generationOutages
+    generationMix
   };
 }
 
