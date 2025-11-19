@@ -22,13 +22,14 @@ serve(async (req) => {
     const { hoursAhead = 24, useAdaptiveWeights = true } = await req.json().catch(() => ({}));
 
     // Step 1: Get recent data for all models
+    // Phase 1 Improvement: Use 730 days (2 years) for better long-term patterns
     const { data: recentData, error: dataError } = await supabase
       .from('aeso_training_data')
       .select('*')
       .not('pool_price', 'is', null)
       .not('price_lag_1h', 'is', null)
       .order('timestamp', { ascending: false })
-      .limit(720); // Last 30 days
+      .limit(17520); // Last 730 days (2 years)
 
     if (dataError || !recentData?.length) {
       throw new Error('Failed to fetch recent data for ensemble');
@@ -83,11 +84,14 @@ serve(async (req) => {
       const seasonalPrice = predictSeasonal(recentData, targetTime);
 
       // Calculate ensemble prediction
-      const ensemblePrice = 
+      const rawEnsemblePrice = 
         weights.ml * mlPrice +
         weights.ma * maPrice +
         weights.arima * arimaPrice +
         weights.seasonal * seasonalPrice;
+      
+      // Phase 1 Improvement: Clip predictions to realistic range [$0-$1000]
+      const ensemblePrice = Math.max(0, Math.min(1000, rawEnsemblePrice));
 
       // Calculate prediction uncertainty (std of individual predictions)
       const predictions = [mlPrice, maPrice, arimaPrice, seasonalPrice];

@@ -59,13 +59,14 @@ async function trainModelInBackground(jobId: string) {
       const lag1h = d.price_lag_1h ?? avgPrice;
       const lag24h = d.price_lag_24h ?? avgPrice;
       
-      let pred = lag1h * 0.6 + lag24h * 0.3 + avgPrice * 0.1;
+      let rawPred = lag1h * 0.6 + lag24h * 0.3 + avgPrice * 0.1;
       
       // Hour adjustments
-      if (hour >= 17 && hour <= 20) pred *= 1.12; // Peak
-      if (hour >= 0 && hour <= 5) pred *= 0.88; // Off-peak
+      if (hour >= 17 && hour <= 20) rawPred *= 1.12; // Peak
+      if (hour >= 0 && hour <= 5) rawPred *= 0.88; // Off-peak
       
-      return pred;
+      // Phase 1 Improvement: Clip predictions to realistic range [$0-$1000]
+      return Math.max(0, Math.min(1000, rawPred));
     });
 
     // Calculate metrics

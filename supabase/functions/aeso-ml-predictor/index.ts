@@ -201,7 +201,10 @@ Record ${idx + 1}:
             const toolCall = data.choices[0]?.message?.tool_calls?.[0];
             if (toolCall?.function?.arguments) {
               const args = JSON.parse(toolCall.function.arguments);
-              predictions.push(...(args.predictions || []));
+              const rawPredictions = args.predictions || [];
+              // Phase 1 Improvement: Clip all predictions to realistic range [$0-$1000]
+              const clippedPredictions = rawPredictions.map(p => Math.max(0, Math.min(1000, p)));
+              predictions.push(...clippedPredictions);
             } else {
               // Fill with nulls if prediction failed
               predictions.push(...Array(chunk.length).fill(null));
@@ -339,7 +342,13 @@ ${historicalData ? `Last 5 hours prices: ${historicalData.slice(-5).map((d: any)
 
       const data = await response.json();
       const toolCall = data.choices[0].message.tool_calls?.[0];
-      const prediction = toolCall ? JSON.parse(toolCall.function.arguments) : null;
+      const rawPrediction = toolCall ? JSON.parse(toolCall.function.arguments) : null;
+      
+      // Phase 1 Improvement: Clip prediction to realistic range [$0-$1000]
+      const prediction = rawPrediction ? {
+        ...rawPrediction,
+        predicted_price: Math.max(0, Math.min(1000, rawPrediction.predicted_price))
+      } : null;
 
       console.log('✅ Prediction:', prediction);
 
