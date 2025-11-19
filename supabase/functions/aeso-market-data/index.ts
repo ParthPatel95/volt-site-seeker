@@ -112,28 +112,28 @@ serve(async (req: Request) => {
     let poolParticipants: any = null;
 
     if (apimKey) {
-      // Energy Merit Order (60 days delay)
+      // Energy Merit Order (60 days delay) - API may not be available
       try {
         const res = await fetchWithKey(`https://apimgw.aeso.ca/public/energymeritorder-api/v1/meritOrder/energy?startDate=${encodeURIComponent(d60ISO)}`, apimKey);
         if (res.ok) energyMeritOrder = await res.json();
-        else console.error('EMO fetch non-OK', res.status, res.statusText);
-      } catch (e) { console.warn('EMO fetch failed', e); }
+        // Silent fail - optional data
+      } catch (e) { /* Silent - optional data */ }
 
-      // AIES Gen Capacity (today)
+      // AIES Gen Capacity (today) - Optional endpoint
       try {
         const res = await fetchWithKey(`https://apimgw.aeso.ca/public/aiesgencapacity-api/v1/AIESGenCapacity?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) aiesGenCapacity = await res.json();
-        else console.error('AIES Gen Capacity non-OK', res.status, res.statusText);
-      } catch (e) { console.warn('AIES Gen Capacity fetch failed', e); }
+        // Silent fail - optional data
+      } catch (e) { /* Silent - optional data */ }
 
-      // Asset List
+      // Asset List - Optional
       try {
         const res = await fetchWithKey('https://apimgw.aeso.ca/public/assetlist-api/v1/assetlist', apimKey);
         if (res.ok) assetList = await res.json();
-        else console.error('Asset List non-OK', res.status, res.statusText);
-      } catch (e) { console.warn('Asset List fetch failed', e); }
+        // Silent fail - optional data
+      } catch (e) { /* Silent - optional data */ }
 
-      // Intertie Outage Report (13 months window) - try multiple known endpoints
+      // Intertie Outage Report (13 months window) - Multiple endpoint attempts (most are deprecated)
       try {
         const intertieUrls = [
           `https://apimgw.aeso.ca/public/itc-api/v1/outage?startDate=${itcStartStr}&endDate=${itcEndStr}`,
@@ -145,37 +145,37 @@ serve(async (req: Request) => {
         for (const url of intertieUrls) {
           const res = await fetchWithKey(url, apimKey);
           if (res.ok) { intertieOutages = await res.json(); break; }
-          else console.error('Intertie Outage non-OK', res.status, res.statusText, 'url:', url);
+          // Silent fail - trying multiple deprecated endpoints
         }
-      } catch (e) { console.warn('Intertie Outage fetch failed', e); }
+      } catch (e) { /* Silent - optional data */ }
 
-      // Load Outage Forecast (today)
+      // Load Outage Forecast (today) - Optional
       try {
         const res = await fetchWithKey(`https://apimgw.aeso.ca/public/loadoutageforecast-api/v1/loadOutageReport?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) loadOutageForecast = await res.json();
-        else console.error('Load Outage Forecast non-OK', res.status, res.statusText);
-      } catch (e) { console.warn('Load Outage Forecast fetch failed', e); }
+        // Silent fail - optional data
+      } catch (e) { /* Silent - optional data */ }
 
-      // Metered Volume (today, limited scope)
+      // Metered Volume (today, limited scope) - Optional
       try {
         const res = await fetchWithKey(`https://apimgw.aeso.ca/public/meteredvolume-api/v1/meteredvolume/details?startDate=${encodeURIComponent(todayISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) meteredVolume = await res.json();
-        else console.error('Metered Volume non-OK', res.status, res.statusText);
-      } catch (e) { console.warn('Metered Volume fetch failed', e); }
+        // Silent fail - optional data
+      } catch (e) { /* Silent - optional data */ }
 
-      // Operating Reserve Offer Control (60 days delay)
+      // Operating Reserve Offer Control (60 days delay) - Optional
       try {
         const res = await fetchWithKey(`https://apimgw.aeso.ca/public/operatingreserveoffercontrol-api/v1/operatingReserveOfferControl?startDate=${encodeURIComponent(d60ISO)}&endDate=${encodeURIComponent(todayISO)}`, apimKey);
         if (res.ok) operatingReserveOfferControl = await res.json();
-        else console.error('OR Offer Control non-OK', res.status, res.statusText);
-      } catch (e) { console.warn('OR Offer Control fetch failed', e); }
+        // Silent fail - optional data
+      } catch (e) { /* Silent - optional data */ }
 
-      // Pool Participant list
+      // Pool Participant list - Optional
       try {
         const res = await fetchWithKey('https://apimgw.aeso.ca/public/poolparticipant-api/v1/poolparticipantlist', apimKey);
         if (res.ok) poolParticipants = await res.json();
-        else console.error('Pool Participant non-OK', res.status, res.statusText);
-      } catch (e) { console.warn('Pool Participant fetch failed', e); }
+        // Silent fail - optional data
+      } catch (e) { /* Silent - optional data */ }
     } else {
       console.warn('AESO subscription key not configured for extended datasets');
     }
