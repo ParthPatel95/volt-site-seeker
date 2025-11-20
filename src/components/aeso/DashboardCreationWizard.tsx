@@ -31,24 +31,17 @@ interface WidgetSelection {
 
 const AESO_DATA_SOURCES = [
   { value: 'historical_pricing', label: 'Historical Pool Prices', icon: TrendingUp, description: 'Track AESO pool price trends over time' },
-  { value: 'price_predictions', label: 'Price Predictions', icon: Activity, description: 'AI-powered price forecasts' },
-  { value: 'generation_mix', label: 'Generation Mix', icon: PieChart, description: 'Wind, solar, gas, coal, hydro generation' },
-  { value: 'operating_reserve', label: 'Operating Reserve', icon: Gauge, description: 'Reserve capacity and pricing' },
-  { value: 'interchange', label: 'Interchange Flows', icon: LineChart, description: 'BC, SK, MT intertie flows' },
-  { value: 'natural_gas', label: 'Natural Gas Prices', icon: BarChart3, description: 'AECO gas pricing trends' },
-  { value: 'market_regimes', label: 'Market Regimes', icon: Activity, description: 'Market state classification' },
-  { value: 'model_performance', label: 'Model Performance', icon: TrendingUp, description: 'Prediction accuracy metrics' },
-  { value: 'prediction_accuracy', label: 'Prediction Accuracy', icon: LineChart, description: 'Historical accuracy tracking' },
+  { value: 'predictions', label: 'Price Predictions', icon: Activity, description: 'AI-powered price forecasts' },
+  { value: 'generation', label: 'Generation Mix', icon: PieChart, description: 'Wind, solar, gas, coal, hydro generation' },
+  { value: 'market_data', label: 'Market Data', icon: Gauge, description: 'Operating reserves, interchange flows, and gas prices' },
+  { value: 'analytics', label: 'Market Analytics', icon: TrendingUp, description: 'Market regimes, model performance, and accuracy tracking' },
+  { value: 'weather', label: 'Weather Data', icon: LineChart, description: 'Temperature and weather impacts' },
 ];
 
 const ERCOT_DATA_SOURCES = [
-  { value: 'pricing', label: 'Current Pricing', icon: TrendingUp, description: 'Real-time ERCOT pricing data' },
-  { value: 'load_data', label: 'Load Data', icon: Activity, description: 'Demand and reserve margins' },
-  { value: 'generation_mix', label: 'Generation Mix', icon: PieChart, description: 'Fuel type breakdown' },
-  { value: 'zone_lmps', label: 'Zone LMPs', icon: BarChart3, description: 'Locational marginal prices by zone' },
-  { value: 'ancillary_prices', label: 'Ancillary Services', icon: Gauge, description: 'Regulation and reserve pricing' },
-  { value: 'intertie_flows', label: 'Intertie Flows', icon: LineChart, description: 'Import/export flows' },
-  { value: 'constraints', label: 'Constraints', icon: Activity, description: 'System constraints and shadow prices' },
+  { value: 'market_data', label: 'Market Data', icon: TrendingUp, description: 'Real-time pricing, load, and LMPs' },
+  { value: 'generation', label: 'Generation Mix', icon: PieChart, description: 'Fuel type breakdown and generation sources' },
+  { value: 'analytics', label: 'System Analytics', icon: Activity, description: 'Constraints, reserves, and system metrics' },
 ];
 
 const WIDGET_TYPES = [
