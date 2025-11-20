@@ -4,6 +4,17 @@ import { useAESODashboardData, WidgetConfig } from '@/hooks/useAESODashboardData
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
+const SERIES_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--secondary))',
+  'hsl(var(--accent))',
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
+
 interface ChartWidgetProps {
   config: WidgetConfig;
 }
@@ -38,6 +49,9 @@ export function ChartWidget({ config }: ChartWidgetProps) {
   }
 
   const chartData = data?.chartData || data?.hourlyData || [];
+  const samplePoint = chartData[0] || {};
+  const numericKeys = Object.keys(samplePoint).filter((key) => typeof samplePoint[key] === 'number');
+  const seriesKeys = numericKeys.filter((key) => key !== 'time' && key !== 'date');
 
   if (!chartData || chartData.length === 0) {
     return (
@@ -74,19 +88,16 @@ export function ChartWidget({ config }: ChartWidgetProps) {
               <YAxis fontSize={12} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="price" stroke="hsl(var(--primary))" strokeWidth={2} />
-              {chartData[0]?.predicted && (
-                <Line type="monotone" dataKey="predicted" stroke="hsl(var(--secondary))" strokeWidth={2} strokeDasharray="5 5" />
-              )}
-              {chartData[0]?.load && (
-                <Line type="monotone" dataKey="load" stroke="hsl(var(--accent))" strokeWidth={2} />
-              )}
-              {chartData[0]?.mae && (
-                <>
-                  <Line type="monotone" dataKey="mae" stroke="hsl(var(--chart-1))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="rmse" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                </>
-              )}
+              {seriesKeys.map((key, index) => (
+                <Line
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={SERIES_COLORS[index % SERIES_COLORS.length]}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         );
@@ -99,7 +110,13 @@ export function ChartWidget({ config }: ChartWidgetProps) {
               <YAxis fontSize={12} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="price" fill="hsl(var(--primary))" />
+              {seriesKeys.map((key, index) => (
+                <Bar
+                  key={key}
+                  dataKey={key}
+                  fill={SERIES_COLORS[index % SERIES_COLORS.length]}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         );
@@ -112,7 +129,16 @@ export function ChartWidget({ config }: ChartWidgetProps) {
               <YAxis fontSize={12} />
               <Tooltip />
               <Legend />
-              <Area type="monotone" dataKey="price" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.6} />
+              {seriesKeys.map((key, index) => (
+                <Area
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={SERIES_COLORS[index % SERIES_COLORS.length]}
+                  fill={SERIES_COLORS[index % SERIES_COLORS.length]}
+                  fillOpacity={0.3}
+                />
+              ))}
             </AreaChart>
           </ResponsiveContainer>
         );

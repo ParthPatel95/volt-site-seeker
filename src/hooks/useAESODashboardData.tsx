@@ -51,7 +51,13 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
   useEffect(() => {
     fetchData();
-  }, [widgetConfig.dataSource, widgetConfig.dataFilters]);
+  }, [
+    widgetConfig.dataSource,
+    widgetConfig.dataFilters?.timeRange,
+    widgetConfig.dataFilters?.aggregation,
+    (widgetConfig as any).market,
+    (widgetConfig as any).refreshKey,
+  ]);
 
   const fetchData = async () => {
     setLoading(true);
