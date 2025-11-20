@@ -4,10 +4,12 @@ import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2 } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Zap } from 'lucide-react';
 import { DashboardCreationWizard, DashboardConfig } from '@/components/aeso/DashboardCreationWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Phase4FeaturesPanel } from '@/components/aeso/Phase4FeaturesPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AESODashboards() {
   const navigate = useNavigate();
@@ -112,6 +114,20 @@ export default function AESODashboards() {
           </Button>
         </div>
 
+        <Tabs defaultValue="dashboards" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="dashboards">
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              My Dashboards
+            </TabsTrigger>
+            <TabsTrigger value="features">
+              <Zap className="w-4 h-4 mr-2" />
+              Phase 4 Features
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboards" className="space-y-6 mt-6">
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -209,6 +225,12 @@ export default function AESODashboards() {
             ))}
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="features" className="mt-6">
+            <Phase4FeaturesPanel />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <DashboardCreationWizard
