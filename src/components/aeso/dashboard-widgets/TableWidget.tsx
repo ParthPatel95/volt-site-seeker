@@ -40,7 +40,7 @@ export function TableWidget({ config }: TableWidgetProps) {
     );
   }
 
-  const tableData = data?.chartData || data?.hourlyData || [];
+  const tableData = data?.tableData || data?.chartData || data?.hourlyData || [];
   const columns = tableData.length > 0 ? Object.keys(tableData[0]) : [];
 
   return (

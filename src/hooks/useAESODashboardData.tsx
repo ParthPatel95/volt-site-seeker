@@ -130,21 +130,42 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
   const fetchHistoricalData = async () => {
     const timeRange = widgetConfig.dataFilters.timeRange || '24hours';
     
-    if (timeRange === '24hours') {
-      await fetchDailyData();
-      if (dailyData) {
-        setData(dailyData);
+    try {
+      let historicalData;
+      
+      if (timeRange === '24hours') {
+        const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+          body: { timeframe: 'daily' }
+        });
+        if (error || data?.error) throw error || new Error(data?.error);
+        historicalData = data;
+      } else if (timeRange === '7days' || timeRange === '30days') {
+        const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+          body: { timeframe: 'monthly' }
+        });
+        if (error || data?.error) throw error || new Error(data?.error);
+        historicalData = data;
+      } else if (timeRange === '90days' || timeRange === '12months') {
+        const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
+          body: { timeframe: 'yearly' }
+        });
+        if (error || data?.error) throw error || new Error(data?.error);
+        historicalData = data;
       }
-    } else if (timeRange === '7days' || timeRange === '30days') {
-      await fetchMonthlyData();
-      if (monthlyData) {
-        setData(monthlyData);
+      
+      if (historicalData) {
+        setData({
+          ...historicalData,
+          chartData: historicalData.chartData || historicalData.rawHourlyData?.map((d: any) => ({
+            time: new Date(d.datetime).toLocaleTimeString(),
+            date: d.date,
+            price: d.price,
+          })) || [],
+        });
       }
-    } else if (timeRange === '90days' || timeRange === '12months') {
-      await fetchYearlyData();
-      if (yearlyData) {
-        setData(yearlyData);
-      }
+    } catch (error) {
+      console.error('Error fetching historical data:', error);
+      setData({ chartData: [], statistics: {} });
     }
   };
 
@@ -180,22 +201,32 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
     // Fetch real-time data from API
     const { data: apiData, error: apiError } = await supabase.functions.invoke('energy-data-integration');
     
+    // Always fetch past 15 entries from database for table view
+    const { data: pastData, error: dbError } = await supabase
+      .from('aeso_training_data')
+      .select('timestamp, pool_price, ail_mw, system_marginal_price')
+      .order('timestamp', { ascending: false })
+      .limit(15);
+
     if (apiError) {
       console.error('Failed to fetch real-time market data:', apiError);
-      // Fallback to database data
-      const { data: marketData, error } = await supabase
-        .from('aeso_training_data')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
+      
+      if (dbError) {
+        console.error('Failed to fetch database data:', dbError);
+        throw dbError;
+      }
 
       setData({
-        currentPrice: marketData?.[0]?.pool_price || 0,
-        currentLoad: marketData?.[0]?.ail_mw || 0,
+        currentPrice: pastData?.[0]?.pool_price || 0,
+        currentLoad: pastData?.[0]?.ail_mw || 0,
         change: 0,
-        chartData: marketData?.slice(0, 24).map(d => ({
+        tableData: pastData?.map(d => ({
+          timestamp: new Date(d.timestamp).toLocaleString(),
+          pool_price: d.pool_price,
+          ail_mw: d.ail_mw,
+          smp: d.system_marginal_price,
+        })) || [],
+        chartData: pastData?.map(d => ({
           time: new Date(d.timestamp).toLocaleTimeString(),
           price: d.pool_price,
           load: d.ail_mw,
@@ -219,6 +250,17 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         change,
         marketConditions: aesoData.pricing.market_conditions || 'normal',
         timestamp: aesoData.pricing.timestamp,
+        tableData: pastData?.map(d => ({
+          timestamp: new Date(d.timestamp).toLocaleString(),
+          pool_price: d.pool_price,
+          ail_mw: d.ail_mw,
+          smp: d.system_marginal_price,
+        })) || [],
+        chartData: pastData?.map(d => ({
+          time: new Date(d.timestamp).toLocaleTimeString(),
+          price: d.pool_price,
+          load: d.ail_mw,
+        })).reverse() || [],
       });
     }
   };
