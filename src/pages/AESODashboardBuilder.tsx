@@ -199,12 +199,10 @@ export default function AESODashboardBuilder() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-12 bg-muted rounded w-1/3" />
-            <div className="h-96 bg-muted rounded" />
-          </div>
+      <div className="space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-12 bg-muted rounded w-1/3" />
+          <div className="h-96 bg-muted rounded" />
         </div>
       </div>
     );
@@ -212,8 +210,8 @@ export default function AESODashboardBuilder() {
 
   if (!dashboard) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
-        <div className="max-w-7xl mx-auto text-center">
+      <div className="space-y-6">
+        <div className="text-center py-12">
           <h2 className="text-2xl font-bold mb-4">Dashboard not found</h2>
           <Button onClick={() => navigate('/app/aeso-dashboards')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -225,8 +223,8 @@ export default function AESODashboardBuilder() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <>
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
             <Button
@@ -477,6 +475,6 @@ export default function AESODashboardBuilder() {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
