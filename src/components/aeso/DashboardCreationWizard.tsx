@@ -8,7 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Zap, Activity, TrendingUp, BarChart3, PieChart, Gauge, LineChart, Table } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Zap, Activity, TrendingUp, BarChart3, PieChart, Gauge, LineChart, Table, Loader2 } from 'lucide-react';
+import { analyzeAndRecommendWidget } from '@/utils/widgetTypeSelector';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardCreationWizardProps {
   open: boolean;
@@ -59,6 +61,8 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
   const [description, setDescription] = useState('');
   const [market, setMarket] = useState<'aeso' | 'ercot'>('aeso');
   const [selectedWidgets, setSelectedWidgets] = useState<WidgetSelection[]>([]);
+  const [analyzingWidgets, setAnalyzingWidgets] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const dataSources = market === 'aeso' ? AESO_DATA_SOURCES : ERCOT_DATA_SOURCES;
 
@@ -80,11 +84,40 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
     handleReset();
   };
 
-  const toggleWidget = (dataSource: string) => {
+  const toggleWidget = async (dataSource: string) => {
     const exists = selectedWidgets.find(w => w.dataSource === dataSource);
     if (exists) {
       setSelectedWidgets(selectedWidgets.filter(w => w.dataSource !== dataSource));
-    } else {
+      return;
+    }
+
+    // Add to analyzing set
+    setAnalyzingWidgets(prev => new Set(prev).add(dataSource));
+
+    try {
+      // Analyze data and recommend widget type
+      const recommendation = await analyzeAndRecommendWidget(dataSource);
+      
+      const sourceLabel = dataSources.find(d => d.value === dataSource)?.label || dataSource;
+      
+      setSelectedWidgets([
+        ...selectedWidgets,
+        {
+          dataSource,
+          widgetType: recommendation.widgetType,
+          title: sourceLabel,
+        },
+      ]);
+
+      if (recommendation.confidence > 0.8) {
+        toast({
+          title: "Widget optimized",
+          description: `Selected ${recommendation.widgetType.replace('_', ' ')} for ${sourceLabel} based on data structure`,
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing widget:', error);
+      // Fallback to line chart
       setSelectedWidgets([
         ...selectedWidgets,
         {
@@ -93,6 +126,12 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
           title: dataSources.find(d => d.value === dataSource)?.label || dataSource,
         },
       ]);
+    } finally {
+      setAnalyzingWidgets(prev => {
+        const next = new Set(prev);
+        next.delete(dataSource);
+        return next;
+      });
     }
   };
 
@@ -187,22 +226,35 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
                   const Icon = source.icon;
                   const isSelected = selectedWidgets.some(w => w.dataSource === source.value);
                   
+                  const isAnalyzing = analyzingWidgets.has(source.value);
+                  
                   return (
                     <Card
                       key={source.value}
-                      className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:border-primary/50'}`}
-                      onClick={() => toggleWidget(source.value)}
+                      className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:border-primary/50'} ${isAnalyzing ? 'opacity-60' : ''}`}
+                      onClick={() => !isAnalyzing && toggleWidget(source.value)}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleWidget(source.value)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
+                          {isAnalyzing ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-primary mt-0.5" />
+                          ) : (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleWidget(source.value)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
                           <Icon className="w-5 h-5 text-primary mt-0.5" />
                           <div className="flex-1">
-                            <CardTitle className="text-base">{source.label}</CardTitle>
+                            <CardTitle className="text-base">
+                              {source.label}
+                              {isAnalyzing && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Analyzing...
+                                </Badge>
+                              )}
+                            </CardTitle>
                             <CardDescription className="text-sm mt-1">
                               {source.description}
                             </CardDescription>
