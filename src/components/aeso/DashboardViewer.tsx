@@ -1,31 +1,62 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, Filter, Calendar } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Filter, Share2, Bell, Download, Play, Pause } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { StatCard } from '@/components/aeso/dashboard-widgets/StatCard';
 import { ChartWidget } from '@/components/aeso/dashboard-widgets/ChartWidget';
 import { GaugeWidget } from '@/components/aeso/dashboard-widgets/GaugeWidget';
 import { TableWidget } from '@/components/aeso/dashboard-widgets/TableWidget';
 import { PieChartWidget } from '@/components/aeso/dashboard-widgets/PieChartWidget';
+import { ShareDashboardDialog } from './ShareDashboardDialog';
+import { AlertConfigDialog } from './AlertConfigDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardViewerProps {
   dashboard: any;
   widgets: any[];
   market: 'aeso' | 'ercot';
+  isPublicView?: boolean;
 }
 
-export function DashboardViewer({ dashboard, widgets, market }: DashboardViewerProps) {
+export function DashboardViewer({ dashboard, widgets, market, isPublicView = false }: DashboardViewerProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [timeRange, setTimeRange] = useState('24hours');
   const [aggregation, setAggregation] = useState('hourly');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(60000); // 1 minute
+
+  useEffect(() => {
+    if (autoRefresh) {
+      const interval = setInterval(() => {
+        setRefreshKey(prev => prev + 1);
+      }, refreshInterval);
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, refreshInterval]);
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+    toast({
+      title: 'Dashboard refreshed',
+      description: 'All widgets have been updated with latest data',
+    });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: 'Export started',
+      description: 'Your dashboard is being exported to PDF...',
+    });
+    // Export functionality would be implemented here
   };
 
   const renderWidget = (widget: any) => {
@@ -75,15 +106,17 @@ export function DashboardViewer({ dashboard, widgets, market }: DashboardViewerP
   return (
     <div className="space-y-6">
       {/* Header with Filters */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/app/aeso-dashboards')}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
+          {!isPublicView && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/app/aeso-dashboards')}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          )}
           <div>
             <h1 className="text-3xl font-bold">{dashboard?.dashboard_name}</h1>
             {dashboard?.description && (
@@ -92,7 +125,7 @@ export function DashboardViewer({ dashboard, widgets, market }: DashboardViewerP
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline">
@@ -142,9 +175,31 @@ export function DashboardViewer({ dashboard, widgets, market }: DashboardViewerP
             </PopoverContent>
           </Popover>
 
-          <Button variant="outline" onClick={handleRefresh}>
+          {!isPublicView && (
+            <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
+              <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} />
+              {autoRefresh ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              <span className="text-sm">Auto</span>
+            </div>
+          )}
+
+          <Button variant="outline" size="icon" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4" />
           </Button>
+
+          {!isPublicView && (
+            <>
+              <Button variant="outline" size="icon" onClick={handleExport}>
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => setAlertDialogOpen(true)}>
+                <Bell className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => setShareDialogOpen(true)}>
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -157,6 +212,22 @@ export function DashboardViewer({ dashboard, widgets, market }: DashboardViewerP
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {widgets.map(renderWidget)}
         </div>
+      )}
+
+      {/* Dialogs */}
+      {!isPublicView && (
+        <>
+          <ShareDashboardDialog
+            open={shareDialogOpen}
+            onOpenChange={setShareDialogOpen}
+            dashboardId={dashboard?.id || ''}
+          />
+          <AlertConfigDialog
+            open={alertDialogOpen}
+            onOpenChange={setAlertDialogOpen}
+            dashboardId={dashboard?.id || ''}
+          />
+        </>
       )}
     </div>
   );

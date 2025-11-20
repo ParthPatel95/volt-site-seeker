@@ -36,6 +36,7 @@ import SecureShare from './SecureShare';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import AESODashboards from './AESODashboards';
 import AESODashboard from './AESODashboard';
+import SharedDashboardView from './SharedDashboardView';
 import AESODashboardBuilder from './AESODashboardBuilder';
 import ShareDashboard from './ShareDashboard';
 
@@ -126,6 +127,7 @@ const VoltScout = () => {
                <Route path="aeso-dashboard/:id" element={<AESODashboard />} />
                <Route path="aeso-dashboard-builder/:id" element={<AESODashboardBuilder />} />
                <Route path="aeso-dashboard-share/:id" element={<ShareDashboard />} />
+               <Route path="/shared/:token" element={<SharedDashboardView />} />
                {/* Redirect any unknown paths to dashboard */}
                <Route path="*" element={<Navigate to="/app" replace />} />
               </Routes>
