@@ -71,7 +71,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         case 'market_data':
           await fetchMarketData();
           break;
-        case 'generation_mix':
+        case 'generation':
           await fetchGenerationData();
           break;
         case 'operating_reserve':
@@ -151,26 +151,74 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
   };
 
   const fetchMarketData = async () => {
-    const { data: marketData, error } = await supabase
-      .from('aeso_training_data')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(100);
+    // Fetch real-time data from API
+    const { data: apiData, error: apiError } = await supabase.functions.invoke('energy-data-integration');
+    
+    if (apiError) {
+      console.error('Failed to fetch real-time market data:', apiError);
+      // Fallback to database data
+      const { data: marketData, error } = await supabase
+        .from('aeso_training_data')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(100);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    setData({
-      currentPrice: marketData?.[0]?.pool_price || 0,
-      currentLoad: marketData?.[0]?.ail_mw || 0,
-      chartData: marketData?.map(d => ({
-        time: new Date(d.timestamp).toLocaleTimeString(),
-        price: d.pool_price,
-        load: d.ail_mw,
-      })).reverse() || [],
-    });
+      setData({
+        currentPrice: marketData?.[0]?.pool_price || 0,
+        currentLoad: marketData?.[0]?.ail_mw || 0,
+        change: 0,
+        chartData: marketData?.slice(0, 24).map(d => ({
+          time: new Date(d.timestamp).toLocaleTimeString(),
+          price: d.pool_price,
+          load: d.ail_mw,
+        })).reverse() || [],
+      });
+      return;
+    }
+
+    // Use real-time API data
+    const aesoData = apiData?.aeso;
+    if (aesoData?.pricing && aesoData?.loadData) {
+      const currentPrice = aesoData.pricing.current_price || 0;
+      const averagePrice = aesoData.pricing.average_price || currentPrice;
+      const change = averagePrice > 0 ? ((currentPrice - averagePrice) / averagePrice) * 100 : 0;
+
+      setData({
+        currentPrice,
+        currentLoad: aesoData.loadData.current_demand_mw || 0,
+        peakForecast: aesoData.loadData.peak_forecast_mw || 0,
+        smp: aesoData.pricing.system_marginal_price || 0,
+        change,
+        marketConditions: aesoData.pricing.market_conditions || 'normal',
+        timestamp: aesoData.pricing.timestamp,
+      });
+    }
   };
 
   const fetchGenerationData = async () => {
+    // Fetch real-time generation mix from API
+    const { data: apiData, error: apiError } = await supabase.functions.invoke('energy-data-integration');
+    
+    if (!apiError && apiData?.aeso?.generationMix) {
+      const genMix = apiData.aeso.generationMix;
+      setData({
+        wind: genMix.wind_mw || 0,
+        solar: genMix.solar_mw || 0,
+        gas: genMix.natural_gas_mw || 0,
+        coal: genMix.coal_mw || 0,
+        hydro: genMix.hydro_mw || 0,
+        nuclear: genMix.nuclear_mw || 0,
+        other: genMix.other_mw || 0,
+        totalGeneration: genMix.total_generation_mw || 0,
+        renewablePercentage: genMix.renewable_percentage || 0,
+        timestamp: genMix.timestamp,
+      });
+      return;
+    }
+
+    // Fallback to database
     const { data: genData, error } = await supabase
       .from('aeso_training_data')
       .select('generation_wind, generation_solar, generation_gas, generation_coal, generation_hydro, timestamp')
