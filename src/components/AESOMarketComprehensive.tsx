@@ -197,44 +197,46 @@ export function AESOMarketComprehensive() {
 
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4 sm:space-y-6">
-          <div className="w-full overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-auto min-w-full h-auto flex-nowrap gap-1 sm:gap-1.5 p-1 bg-muted/50 dark:bg-muted rounded-lg">
-              <TabsTrigger value="market" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
-                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Market Data</span>
-                <span className="sm:hidden">Market</span>
-              </TabsTrigger>
-              <TabsTrigger value="predictions" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
-                <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">AI Predictions</span>
-                <span className="sm:hidden">AI</span>
-              </TabsTrigger>
-              <TabsTrigger value="historical" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
-                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Historical</span>
-                <span className="sm:hidden">History</span>
-              </TabsTrigger>
-              <TabsTrigger value="generation" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
-                <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden md:inline">Generation</span>
-                <span className="md:hidden">Gen</span>
-              </TabsTrigger>
-              <TabsTrigger value="forecast" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
-                <Wind className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden md:inline">Forecasts</span>
-                <span className="md:hidden">Cast</span>
-              </TabsTrigger>
-              <TabsTrigger value="outages-alerts" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
-                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden md:inline">Outages & Alerts</span>
-                <span className="md:hidden">Alerts</span>
-              </TabsTrigger>
-              <TabsTrigger value="custom-dashboards" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
-                <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden md:inline">Dashboards</span>
-                <span className="md:hidden">Custom</span>
-              </TabsTrigger>
-            </TabsList>
+          <div className="relative w-full">
+            <div className="w-full overflow-x-auto overflow-y-hidden scrollbar-thin pb-1">
+              <TabsList className="inline-flex w-max h-auto flex-nowrap gap-1 sm:gap-1.5 p-1 bg-muted/50 dark:bg-muted rounded-lg">
+                <TabsTrigger value="market" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
+                  <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Market Data</span>
+                  <span className="sm:hidden">Market</span>
+                </TabsTrigger>
+                <TabsTrigger value="predictions" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
+                  <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">AI Predictions</span>
+                  <span className="sm:hidden">AI</span>
+                </TabsTrigger>
+                <TabsTrigger value="historical" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Historical</span>
+                  <span className="sm:hidden">History</span>
+                </TabsTrigger>
+                <TabsTrigger value="generation" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
+                  <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden md:inline">Generation</span>
+                  <span className="md:hidden">Gen</span>
+                </TabsTrigger>
+                <TabsTrigger value="forecast" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
+                  <Wind className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden md:inline">Forecasts</span>
+                  <span className="md:hidden">Cast</span>
+                </TabsTrigger>
+                <TabsTrigger value="outages-alerts" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
+                  <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden md:inline">Outages & Alerts</span>
+                  <span className="md:hidden">Alerts</span>
+                </TabsTrigger>
+                <TabsTrigger value="custom-dashboards" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
+                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden md:inline">Dashboards</span>
+                  <span className="md:hidden">Custom</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
 
           {/* Market Data Tab */}
