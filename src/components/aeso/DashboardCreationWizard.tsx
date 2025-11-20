@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Zap, Activity, TrendingUp, BarChart3, PieChart, Gauge, LineChart, Table, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Zap, Activity, TrendingUp, BarChart3, PieChart, Gauge, LineChart, Table, Loader2, Sparkles } from 'lucide-react';
 import { analyzeAndRecommendWidget } from '@/utils/widgetTypeSelector';
 import { useToast } from '@/hooks/use-toast';
+import { DashboardTemplateSelector } from './DashboardTemplateSelector';
+import { DashboardTemplate } from '@/utils/dashboardTemplates';
 
 interface DashboardCreationWizardProps {
   open: boolean;
@@ -62,6 +64,7 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
   const [market, setMarket] = useState<'aeso' | 'ercot'>('aeso');
   const [selectedWidgets, setSelectedWidgets] = useState<WidgetSelection[]>([]);
   const [analyzingWidgets, setAnalyzingWidgets] = useState<Set<string>>(new Set());
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const { toast } = useToast();
 
   const dataSources = market === 'aeso' ? AESO_DATA_SOURCES : ERCOT_DATA_SOURCES;
@@ -82,6 +85,21 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
       widgets: selectedWidgets,
     });
     handleReset();
+  };
+
+  const handleTemplateSelect = (template: DashboardTemplate) => {
+    setName(template.name);
+    setDescription(template.description);
+    setSelectedWidgets(template.widgets.map(w => ({
+      dataSource: w.dataSource,
+      widgetType: w.widgetType,
+      title: w.title,
+    })));
+    setStep(3); // Jump to review step
+    toast({
+      title: 'Template loaded',
+      description: `"${template.name}" template applied with ${template.widgets.length} widgets`,
+    });
   };
 
   const toggleWidget = async (dataSource: string) => {
@@ -166,6 +184,17 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
                   placeholder="Describe what this dashboard will monitor..."
                   rows={3}
                 />
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowTemplateSelector(true)}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Or start with a pre-built template
+                </Button>
               </div>
             </div>
           )}
@@ -305,6 +334,12 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
           </div>
         </DialogFooter>
       </DialogContent>
+
+      <DashboardTemplateSelector
+        open={showTemplateSelector}
+        onOpenChange={setShowTemplateSelector}
+        onSelectTemplate={handleTemplateSelect}
+      />
     </Dialog>
   );
 }
