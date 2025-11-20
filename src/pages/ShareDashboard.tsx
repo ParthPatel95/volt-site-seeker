@@ -114,13 +114,13 @@ export default function ShareDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <>
+      <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(`/aeso-dashboard-builder/${id}`)}
+            onClick={() => navigate(`/app/aeso-dashboard-builder/${id}`)}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -329,6 +329,6 @@ export default function ShareDashboard() {
           </Card>
         </div>
       </div>
-    </div>
+    </>
   );
 }

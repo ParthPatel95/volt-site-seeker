@@ -20,7 +20,7 @@ export function CustomDashboardsPanel() {
                 Create personalized analytics dashboards with AESO market data
               </CardDescription>
             </div>
-            <Button size="lg" onClick={() => navigate('/aeso-dashboards')}>
+            <Button size="lg" onClick={() => navigate('/app/aeso-dashboards')}>
               <Plus className="w-4 h-4 mr-2" />
               Create Dashboard
             </Button>
@@ -60,19 +60,19 @@ export function CustomDashboardsPanel() {
           <div className="mt-6 p-4 bg-muted/50 rounded-lg">
             <h4 className="font-semibold mb-2">Quick Start Templates</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/aeso-dashboards')}>
+              <Button variant="outline" className="justify-start" onClick={() => navigate('/app/aeso-dashboards')}>
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 Executive Summary
               </Button>
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/aeso-dashboards')}>
+              <Button variant="outline" className="justify-start" onClick={() => navigate('/app/aeso-dashboards')}>
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 Operations Dashboard
               </Button>
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/aeso-dashboards')}>
+              <Button variant="outline" className="justify-start" onClick={() => navigate('/app/aeso-dashboards')}>
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 Analytics Dashboard
               </Button>
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/aeso-dashboards')}>
+              <Button variant="outline" className="justify-start" onClick={() => navigate('/app/aeso-dashboards')}>
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 Forecasting Dashboard
               </Button>
@@ -80,7 +80,7 @@ export function CustomDashboardsPanel() {
           </div>
 
           <div className="mt-4 flex justify-end">
-            <Button variant="link" onClick={() => navigate('/aeso-dashboards')}>
+            <Button variant="link" onClick={() => navigate('/app/aeso-dashboards')}>
               View All Dashboards
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

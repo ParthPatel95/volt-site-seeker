@@ -34,6 +34,9 @@ import { ExternalAPIIntegrations } from '@/components/integrations/ExternalAPIIn
 import { BottomNavigationWrapper } from '@/components/BottomNavigationWrapper';
 import SecureShare from './SecureShare';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import AESODashboards from './AESODashboards';
+import AESODashboardBuilder from './AESODashboardBuilder';
+import ShareDashboard from './ShareDashboard';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -118,6 +121,9 @@ const VoltScout = () => {
                <Route path="voice-search" element={<VoiceSearch />} />
                <Route path="risk-management" element={<RiskManagement />} />
                <Route path="advanced-features" element={<AdvancedFeatures />} />
+               <Route path="aeso-dashboards" element={<AESODashboards />} />
+               <Route path="aeso-dashboard-builder/:id" element={<AESODashboardBuilder />} />
+               <Route path="aeso-dashboard-share/:id" element={<ShareDashboard />} />
                {/* Redirect any unknown paths to dashboard */}
                <Route path="*" element={<Navigate to="/app" replace />} />
               </Routes>
