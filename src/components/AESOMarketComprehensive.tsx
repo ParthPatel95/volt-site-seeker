@@ -197,42 +197,42 @@ export function AESOMarketComprehensive() {
 
         {/* Tabbed Interface */}
         <Tabs defaultValue="market" className="space-y-4">
-          <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full min-w-max sm:min-w-0" style={{gridTemplateColumns: 'repeat(6, minmax(80px, 1fr))'}}>
-              <TabsTrigger value="market" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden sm:inline truncate">Market Data</span>
-                <span className="sm:hidden truncate">Market</span>
+          <div className="w-full overflow-x-auto scrollbar-hide">
+            <TabsList className="inline-flex w-auto min-w-full h-auto flex-nowrap gap-1 p-1 bg-muted rounded-lg">
+              <TabsTrigger value="market" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Market Data</span>
+                <span className="sm:hidden">Market</span>
               </TabsTrigger>
-              <TabsTrigger value="predictions" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <Brain className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden sm:inline truncate">AI Predictions</span>
-                <span className="sm:hidden truncate">AI</span>
+              <TabsTrigger value="predictions" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+                <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden sm:inline">AI Predictions</span>
+                <span className="sm:hidden">AI</span>
               </TabsTrigger>
-              <TabsTrigger value="historical" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden sm:inline truncate">Historical</span>
-                <span className="sm:hidden truncate">History</span>
+              <TabsTrigger value="historical" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Historical</span>
+                <span className="sm:hidden">History</span>
               </TabsTrigger>
-              <TabsTrigger value="generation" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <Activity className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Generation</span>
-                <span className="lg:hidden truncate">Gen</span>
+              <TabsTrigger value="generation" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+                <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden md:inline">Generation</span>
+                <span className="md:hidden">Gen</span>
               </TabsTrigger>
-              <TabsTrigger value="forecast" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <Wind className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Forecasts</span>
-                <span className="lg:hidden truncate">Cast</span>
+              <TabsTrigger value="forecast" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+                <Wind className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden md:inline">Forecasts</span>
+                <span className="md:hidden">Cast</span>
               </TabsTrigger>
-              <TabsTrigger value="outages-alerts" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Outages & Alerts</span>
-                <span className="lg:hidden truncate">Alerts</span>
+              <TabsTrigger value="outages-alerts" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden md:inline">Outages & Alerts</span>
+                <span className="md:hidden">Alerts</span>
               </TabsTrigger>
-              <TabsTrigger value="custom-dashboards" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
-                <Target className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="hidden lg:inline truncate">Custom Dashboards</span>
-                <span className="lg:hidden truncate">Custom</span>
+              <TabsTrigger value="custom-dashboards" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+                <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden md:inline">Dashboards</span>
+                <span className="md:hidden">Custom</span>
               </TabsTrigger>
             </TabsList>
           </div>
