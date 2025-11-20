@@ -168,27 +168,27 @@ export function AESOMarketComprehensive() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-2 sm:p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-950 dark:to-blue-950/30">
+      <div className="container-responsive py-3 sm:py-4 lg:py-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-foreground flex items-center flex-wrap gap-2">
-              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600 flex-shrink-0" />
-              <span className="break-words leading-tight">AESO Market & Intelligence Hub</span>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
+              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-red-600 flex-shrink-0" />
+              <span className="leading-tight">AESO Market & Intelligence Hub</span>
             </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mt-1 sm:mt-2">
               Real-time market data with advanced analytics for Alberta&apos;s electricity system
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <Button 
               onClick={handleRefreshAll}
               disabled={loading}
-              className="bg-gradient-to-r from-red-600 to-red-700 flex-shrink-0 min-h-[44px] px-3 sm:px-4"
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 touch-target text-sm sm:text-base px-4 sm:px-5 py-2 sm:py-2.5 whitespace-nowrap"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              <span className="text-sm whitespace-nowrap">Refresh All Data</span>
+              <span>Refresh All Data</span>
             </Button>
           </div>
         </div>
@@ -196,40 +196,40 @@ export function AESOMarketComprehensive() {
 
 
         {/* Tabbed Interface */}
-        <Tabs defaultValue="market" className="space-y-4">
-          <div className="w-full overflow-x-auto scrollbar-hide">
-            <TabsList className="inline-flex w-auto min-w-full h-auto flex-nowrap gap-1 p-1 bg-muted rounded-lg">
-              <TabsTrigger value="market" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+        <Tabs defaultValue="market" className="space-y-4 sm:space-y-6">
+          <div className="w-full overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="inline-flex w-auto min-w-full h-auto flex-nowrap gap-1 sm:gap-1.5 p-1 bg-muted/50 dark:bg-muted rounded-lg">
+              <TabsTrigger value="market" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
                 <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Market Data</span>
                 <span className="sm:hidden">Market</span>
               </TabsTrigger>
-              <TabsTrigger value="predictions" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+              <TabsTrigger value="predictions" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
                 <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">AI Predictions</span>
                 <span className="sm:hidden">AI</span>
               </TabsTrigger>
-              <TabsTrigger value="historical" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+              <TabsTrigger value="historical" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
                 <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Historical</span>
                 <span className="sm:hidden">History</span>
               </TabsTrigger>
-              <TabsTrigger value="generation" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+              <TabsTrigger value="generation" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
                 <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden md:inline">Generation</span>
                 <span className="md:hidden">Gen</span>
               </TabsTrigger>
-              <TabsTrigger value="forecast" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+              <TabsTrigger value="forecast" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
                 <Wind className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden md:inline">Forecasts</span>
                 <span className="md:hidden">Cast</span>
               </TabsTrigger>
-              <TabsTrigger value="outages-alerts" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+              <TabsTrigger value="outages-alerts" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
                 <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden md:inline">Outages & Alerts</span>
                 <span className="md:hidden">Alerts</span>
               </TabsTrigger>
-              <TabsTrigger value="custom-dashboards" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 whitespace-nowrap">
+              <TabsTrigger value="custom-dashboards" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth">
                 <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden md:inline">Dashboards</span>
                 <span className="md:hidden">Custom</span>
@@ -240,25 +240,25 @@ export function AESOMarketComprehensive() {
           {/* Market Data Tab */}
           <TabsContent value="market" className="space-y-4 sm:space-y-6">
             {/* Main Data Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
               {/* Real-time Pricing */}
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="shadow-mobile">
+                <CardHeader className="pb-2 sm:pb-3">
                   <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="flex items-center">
-                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-yellow-600" />
-                      <span className="text-sm sm:text-base">System Marginal Price</span>
+                    <div className="flex items-center min-w-0">
+                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-yellow-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base lg:text-lg truncate">System Marginal Price</span>
                     </div>
                     {priceTimestamp && (
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
                         Updated: {new Date(priceTimestamp).toLocaleTimeString()}
                       </Badge>
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CardContent className="padding-responsive">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div className="space-y-2 min-w-0">
                         <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
                         <div className="space-y-1">
@@ -289,21 +289,21 @@ export function AESOMarketComprehensive() {
               </Card>
 
               {/* System Load & Demand */}
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="shadow-mobile">
+                <CardHeader className="pb-2 sm:pb-3">
                   <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="flex items-center">
-                      <Gauge className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-                      <span className="text-sm sm:text-base">System Load & Demand</span>
+                    <div className="flex items-center min-w-0">
+                      <Gauge className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base lg:text-lg truncate">System Load & Demand</span>
                     </div>
                     {loadData?.forecast_date && (
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
                         Updated: {new Date(loadData.forecast_date).toLocaleTimeString()}
                       </Badge>
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="padding-responsive">
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2 min-w-0">
                        <p className="text-xs sm:text-sm text-muted-foreground truncate">Current Demand</p>
@@ -341,21 +341,21 @@ export function AESOMarketComprehensive() {
             </div>
 
             {/* Additional Market Data */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
               {/* Operating Reserve - Always show with fallback data */}
-              <Card>
-                  <CardHeader className="pb-3">
+              <Card className="shadow-mobile">
+                  <CardHeader className="pb-2 sm:pb-3">
                     <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0">
+                      <div className="flex items-center min-w-0 flex-1">
                         <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-orange-600 flex-shrink-0" />
                         <span className="text-sm sm:text-base truncate">Operating Reserve</span>
                       </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
                         Updated: {new Date().toLocaleTimeString()}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="padding-responsive">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-xs sm:text-sm text-muted-foreground truncate">Total Reserve</span>
@@ -380,19 +380,19 @@ export function AESOMarketComprehensive() {
                 </Card>
               
               {/* Interchange - Always show with fallback data */}
-              <Card>
-                  <CardHeader className="pb-3">
+              <Card className="shadow-mobile">
+                  <CardHeader className="pb-2 sm:pb-3">
                     <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0">
+                      <div className="flex items-center min-w-0 flex-1">
                         <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
                         <span className="text-sm sm:text-base truncate">Interchange</span>
                       </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
                         Updated: {new Date().toLocaleTimeString()}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="padding-responsive">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-BC</span>
@@ -417,19 +417,19 @@ export function AESOMarketComprehensive() {
                 </Card>
               
               {/* Energy Storage - Always show with fallback data */}
-              <Card>
-                  <CardHeader className="pb-3">
+              <Card className="shadow-mobile">
+                  <CardHeader className="pb-2 sm:pb-3">
                     <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0">
+                      <div className="flex items-center min-w-0 flex-1">
                         <Battery className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600 flex-shrink-0" />
                         <span className="text-sm sm:text-base truncate">Energy Storage</span>
                       </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
                         Updated: {new Date().toLocaleTimeString()}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="padding-responsive">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-xs sm:text-sm text-muted-foreground truncate">Charging</span>
