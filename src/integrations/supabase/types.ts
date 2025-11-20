@@ -95,6 +95,42 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_custom_dashboards: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dashboard_name: string
+          description: string | null
+          id: string
+          is_template: boolean | null
+          layout_config: Json | null
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dashboard_name: string
+          description?: string | null
+          id?: string
+          is_template?: boolean | null
+          layout_config?: Json | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dashboard_name?: string
+          description?: string | null
+          id?: string
+          is_template?: boolean | null
+          layout_config?: Json | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aeso_cv_folds: {
         Row: {
           created_at: string | null
@@ -139,6 +175,100 @@ export type Database = {
           validation_start_date?: string
         }
         Relationships: []
+      }
+      aeso_dashboard_views: {
+        Row: {
+          id: string
+          session_duration: number | null
+          shared_dashboard_id: string
+          user_agent: string | null
+          viewed_at: string
+          viewer_email: string | null
+          viewer_ip: string | null
+          viewer_name: string | null
+        }
+        Insert: {
+          id?: string
+          session_duration?: number | null
+          shared_dashboard_id: string
+          user_agent?: string | null
+          viewed_at?: string
+          viewer_email?: string | null
+          viewer_ip?: string | null
+          viewer_name?: string | null
+        }
+        Update: {
+          id?: string
+          session_duration?: number | null
+          shared_dashboard_id?: string
+          user_agent?: string | null
+          viewed_at?: string
+          viewer_email?: string | null
+          viewer_ip?: string | null
+          viewer_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aeso_dashboard_views_shared_dashboard_id_fkey"
+            columns: ["shared_dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_shared_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aeso_dashboard_widgets: {
+        Row: {
+          created_at: string
+          dashboard_id: string
+          data_filters: Json | null
+          data_source: string
+          height: number
+          id: string
+          position_x: number
+          position_y: number
+          updated_at: string
+          widget_config: Json
+          widget_type: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          dashboard_id: string
+          data_filters?: Json | null
+          data_source: string
+          height?: number
+          id?: string
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+          widget_config?: Json
+          widget_type: string
+          width?: number
+        }
+        Update: {
+          created_at?: string
+          dashboard_id?: string
+          data_filters?: Json | null
+          data_source?: string
+          height?: number
+          id?: string
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+          widget_config?: Json
+          widget_type?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aeso_dashboard_widgets_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       aeso_data_quality_reports: {
         Row: {
@@ -999,6 +1129,80 @@ export type Database = {
           task_type?: string
         }
         Relationships: []
+      }
+      aeso_shared_dashboards: {
+        Row: {
+          access_level: string
+          allowed_domains: string[] | null
+          allowed_ips: string[] | null
+          created_at: string
+          created_by: string | null
+          current_views: number | null
+          custom_branding: Json | null
+          dashboard_id: string
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          max_views: number | null
+          password_hash: string | null
+          recipient_email: string | null
+          recipient_name: string | null
+          require_otp: boolean | null
+          share_token: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          access_level?: string
+          allowed_domains?: string[] | null
+          allowed_ips?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          current_views?: number | null
+          custom_branding?: Json | null
+          dashboard_id: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          max_views?: number | null
+          password_hash?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          require_otp?: boolean | null
+          share_token: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          access_level?: string
+          allowed_domains?: string[] | null
+          allowed_ips?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          current_views?: number | null
+          custom_branding?: Json | null
+          dashboard_id?: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          max_views?: number | null
+          password_hash?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          require_otp?: boolean | null
+          share_token?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aeso_shared_dashboards_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       aeso_training_data: {
         Row: {

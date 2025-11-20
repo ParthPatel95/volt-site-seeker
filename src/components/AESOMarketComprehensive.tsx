@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
 import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
 import { AESOPricePredictionDashboard } from './aeso/AESOPricePredictionDashboard';
 import { AESOTrainingManager } from './aeso/AESOTrainingManager';
+import { CustomDashboardsPanel } from './aeso/CustomDashboardsPanel';
 import { usePermissions } from '@/hooks/usePermissions';
 
 export function AESOMarketComprehensive() {
@@ -226,6 +228,11 @@ export function AESOMarketComprehensive() {
                 <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden lg:inline truncate">Outages & Alerts</span>
                 <span className="lg:hidden truncate">Alerts</span>
+              </TabsTrigger>
+              <TabsTrigger value="custom-dashboards" className="flex items-center justify-center space-x-1 text-xs sm:text-sm px-1 sm:px-2 lg:px-4 min-w-0">
+                <Target className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden lg:inline truncate">Custom Dashboards</span>
+                <span className="lg:hidden truncate">Custom</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -634,6 +641,10 @@ export function AESOMarketComprehensive() {
                 loading={enhancedLoading}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="custom-dashboards" className="space-y-4 sm:space-y-6">
+            <CustomDashboardsPanel />
           </TabsContent>
 
         </Tabs>

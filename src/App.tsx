@@ -14,6 +14,8 @@ import VoltScout from "./pages/VoltScout";
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 import ViewDocument from "./pages/ViewDocument";
+import AESODashboards from "./pages/AESODashboards";
+import AESODashboardBuilder from "./pages/AESODashboardBuilder";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,8 @@ const App = () => (
             } />
             <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
             <Route path="/view/:token" element={<ViewDocument />} />
+            <Route path="/aeso-dashboards" element={<AESODashboards />} />
+            <Route path="/aeso-dashboard-builder/:id" element={<AESODashboardBuilder />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
