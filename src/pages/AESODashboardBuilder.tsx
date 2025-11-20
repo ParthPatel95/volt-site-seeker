@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, Share2, Plus, LineChart, BarChart3, Gauge, Table } from 'lucide-react';
+import { ArrowLeft, Save, Share2, Plus, LineChart, BarChart3, Gauge, Table, AreaChart, PieChart, Activity, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -14,6 +14,8 @@ import { GaugeWidget } from '@/components/aeso/dashboard-widgets/GaugeWidget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DATA_SOURCES } from '@/hooks/useAESODashboardData';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Widget {
   i: string;
@@ -224,53 +226,84 @@ export default function AESODashboardBuilder() {
 
         <div className="grid grid-cols-12 gap-6 min-h-[calc(100vh-200px)]">
           {/* Widget Palette */}
-          <div className="col-span-2 bg-card rounded-lg border p-4 space-y-2">
-            <h3 className="font-semibold mb-4">Add Widgets</h3>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              size="sm"
-              onClick={() => addWidget('line_chart')}
-            >
-              <LineChart className="w-4 h-4 mr-2" />
-              Line Chart
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              size="sm"
-              onClick={() => addWidget('bar_chart')}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Bar Chart
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              size="sm"
-              onClick={() => addWidget('area_chart')}
-            >
-              <LineChart className="w-4 h-4 mr-2" />
-              Area Chart
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              size="sm"
-              onClick={() => addWidget('stat_card')}
-            >
-              <Gauge className="w-4 h-4 mr-2" />
-              Stat Card
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
-              size="sm"
-              onClick={() => addWidget('gauge')}
-            >
-              <Gauge className="w-4 h-4 mr-2" />
-              Gauge
-            </Button>
+          <div className="col-span-2 bg-card rounded-lg border">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold">Add Widgets</h3>
+            </div>
+            <ScrollArea className="h-[calc(100vh-300px)]">
+              <div className="p-4 space-y-2">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Charts</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => addWidget('line_chart')}
+                  >
+                    <LineChart className="w-4 h-4 mr-2" />
+                    Line Chart
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => addWidget('bar_chart')}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Bar Chart
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => addWidget('area_chart')}
+                  >
+                    <AreaChart className="w-4 h-4 mr-2" />
+                    Area Chart
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => addWidget('pie_chart')}
+                  >
+                    <PieChart className="w-4 h-4 mr-2" />
+                    Pie Chart
+                  </Button>
+                </div>
+
+                <div className="space-y-1 pt-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Indicators</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => addWidget('stat_card')}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Stat Card
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => addWidget('gauge')}
+                  >
+                    <Gauge className="w-4 h-4 mr-2" />
+                    Gauge
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => addWidget('table')}
+                  >
+                    <Table className="w-4 h-4 mr-2" />
+                    Data Table
+                  </Button>
+                </div>
+              </div>
+            </ScrollArea>
           </div>
 
           {/* Canvas */}
@@ -299,71 +332,99 @@ export default function AESODashboardBuilder() {
           </div>
 
           {/* Properties Panel */}
-          <div className="col-span-2 bg-card rounded-lg border p-4">
-            <h3 className="font-semibold mb-4">Properties</h3>
-            {selectedWidget ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={selectedWidget.widget_config.title || ''}
-                    onChange={(e) => updateWidgetConfig(selectedWidget.i, {
-                      widget_config: { ...selectedWidget.widget_config, title: e.target.value }
-                    })}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Data Source</Label>
-                  <Select
-                    value={selectedWidget.data_source}
-                    onValueChange={(value) => updateWidgetConfig(selectedWidget.i, { data_source: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="historical_pricing">Historical Pricing</SelectItem>
-                      <SelectItem value="predictions">Predictions</SelectItem>
-                      <SelectItem value="market_data">Market Data</SelectItem>
-                      <SelectItem value="generation">Generation</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="col-span-2 bg-card rounded-lg border">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold">Properties</h3>
+            </div>
+            <ScrollArea className="h-[calc(100vh-300px)]">
+              <div className="p-4">
+                {selectedWidget ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input
+                        value={selectedWidget.widget_config.title || ''}
+                        onChange={(e) => updateWidgetConfig(selectedWidget.i, {
+                          widget_config: { ...selectedWidget.widget_config, title: e.target.value }
+                        })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Data Source</Label>
+                      <Select
+                        value={selectedWidget.data_source}
+                        onValueChange={(value) => updateWidgetConfig(selectedWidget.i, { data_source: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DATA_SOURCES.map(source => (
+                            <SelectItem key={source.value} value={source.value}>
+                              {source.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Time Range</Label>
-                  <Select
-                    value={selectedWidget.data_filters.timeRange || '30days'}
-                    onValueChange={(value) => updateWidgetConfig(selectedWidget.i, {
-                      data_filters: { ...selectedWidget.data_filters, timeRange: value }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="24hours">Last 24 Hours</SelectItem>
-                      <SelectItem value="30days">Last 30 Days</SelectItem>
-                      <SelectItem value="12months">Last 12 Months</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-2">
+                      <Label>Time Range</Label>
+                      <Select
+                        value={selectedWidget.data_filters.timeRange || '30days'}
+                        onValueChange={(value) => updateWidgetConfig(selectedWidget.i, {
+                          data_filters: { ...selectedWidget.data_filters, timeRange: value }
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="24hours">Last 24 Hours</SelectItem>
+                          <SelectItem value="30days">Last 30 Days</SelectItem>
+                          <SelectItem value="12months">Last 12 Months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => deleteWidget(selectedWidget.i)}
-                >
-                  Delete Widget
-                </Button>
+                    <div className="space-y-2">
+                      <Label>Widget Type</Label>
+                      <Select
+                        value={selectedWidget.widget_type}
+                        onValueChange={(value) => updateWidgetConfig(selectedWidget.i, { widget_type: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="line_chart">Line Chart</SelectItem>
+                          <SelectItem value="bar_chart">Bar Chart</SelectItem>
+                          <SelectItem value="area_chart">Area Chart</SelectItem>
+                          <SelectItem value="pie_chart">Pie Chart</SelectItem>
+                          <SelectItem value="gauge">Gauge</SelectItem>
+                          <SelectItem value="stat_card">Stat Card</SelectItem>
+                          <SelectItem value="table">Data Table</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => deleteWidget(selectedWidget.i)}
+                    >
+                      Delete Widget
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Click a widget to configure its properties
+                  </p>
+                )}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Click a widget to configure its properties
-              </p>
-            )}
+            </ScrollArea>
           </div>
         </div>
       </div>
