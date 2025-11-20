@@ -35,6 +35,7 @@ import { BottomNavigationWrapper } from '@/components/BottomNavigationWrapper';
 import SecureShare from './SecureShare';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import AESODashboards from './AESODashboards';
+import AESODashboard from './AESODashboard';
 import AESODashboardBuilder from './AESODashboardBuilder';
 import ShareDashboard from './ShareDashboard';
 
@@ -122,6 +123,7 @@ const VoltScout = () => {
                <Route path="risk-management" element={<RiskManagement />} />
                <Route path="advanced-features" element={<AdvancedFeatures />} />
                <Route path="aeso-dashboards" element={<AESODashboards />} />
+               <Route path="aeso-dashboard/:id" element={<AESODashboard />} />
                <Route path="aeso-dashboard-builder/:id" element={<AESODashboardBuilder />} />
                <Route path="aeso-dashboard-share/:id" element={<ShareDashboard />} />
                {/* Redirect any unknown paths to dashboard */}

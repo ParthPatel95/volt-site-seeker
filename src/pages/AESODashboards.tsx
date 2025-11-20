@@ -4,27 +4,17 @@ import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Sparkles, Wrench } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2 } from 'lucide-react';
+import { DashboardCreationWizard, DashboardConfig } from '@/components/aeso/DashboardCreationWizard';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AESODashboards() {
   const navigate = useNavigate();
-  const { dashboards, loading, fetchDashboards, createDashboard, deleteDashboard, duplicateDashboard } = useAESODashboards();
+  const { toast } = useToast();
+  const { dashboards, loading, fetchDashboards, deleteDashboard, duplicateDashboard } = useAESODashboards();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newDashboardName, setNewDashboardName] = useState('');
-  const [newDashboardDescription, setNewDashboardDescription] = useState('');
-  const [creationMode, setCreationMode] = useState<'manual' | 'ai'>('ai');
+  const [showWizard, setShowWizard] = useState(false);
 
   useEffect(() => {
     fetchDashboards();
@@ -35,17 +25,59 @@ export default function AESODashboards() {
     dashboard.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCreateDashboard = async () => {
-    if (!newDashboardName.trim()) return;
-    
-    const result = await createDashboard(newDashboardName, newDashboardDescription);
-    if (result) {
-      setShowCreateDialog(false);
-      setNewDashboardName('');
-      setNewDashboardDescription('');
-      // Navigate with state to indicate if AI should be shown
-      navigate(`/app/aeso-dashboard-builder/${result.id}`, { 
-        state: { showAI: creationMode === 'ai' } 
+  const handleCreateDashboard = async (config: DashboardConfig) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Create dashboard
+      const { data: dashboard, error: dashboardError } = await supabase
+        .from('aeso_custom_dashboards')
+        .insert({
+          dashboard_name: config.name,
+          description: config.description,
+          created_by: user.id,
+          layout_config: { lg: [], md: [], sm: [] },
+        })
+        .select()
+        .single();
+
+      if (dashboardError) throw dashboardError;
+
+      // Create widgets
+      if (config.widgets.length > 0) {
+        const widgetInserts = config.widgets.map((widget, index) => ({
+          dashboard_id: dashboard.id,
+          widget_type: widget.widgetType,
+          widget_config: { title: widget.title },
+          data_source: widget.dataSource,
+          data_filters: { timeRange: '24hours', aggregation: 'hourly' },
+          position_x: (index % 3) * 4,
+          position_y: Math.floor(index / 3) * 4,
+          width: 4,
+          height: 4,
+        }));
+
+        const { error: widgetsError } = await supabase
+          .from('aeso_dashboard_widgets')
+          .insert(widgetInserts);
+
+        if (widgetsError) throw widgetsError;
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Dashboard created successfully',
+      });
+
+      await fetchDashboards();
+      navigate(`/app/aeso-dashboard/${dashboard.id}`);
+    } catch (error) {
+      console.error('Error creating dashboard:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create dashboard',
+        variant: 'destructive',
       });
     }
   };
@@ -74,7 +106,7 @@ export default function AESODashboards() {
               Create and manage custom analytics dashboards
             </p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} size="lg">
+          <Button onClick={() => setShowWizard(true)} size="lg">
             <Plus className="w-4 h-4 mr-2" />
             Create Dashboard
           </Button>
@@ -109,7 +141,7 @@ export default function AESODashboards() {
               <p className="text-muted-foreground mb-4 text-center">
                 Create your first custom dashboard to start analyzing AESO market data
               </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
+              <Button onClick={() => setShowWizard(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Dashboard
               </Button>
@@ -121,7 +153,7 @@ export default function AESODashboards() {
               <Card
                 key={dashboard.id}
                 className="group cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-primary/50"
-                onClick={() => navigate(`/app/aeso-dashboard-builder/${dashboard.id}`)}
+                onClick={() => navigate(`/app/aeso-dashboard/${dashboard.id}`)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -132,7 +164,7 @@ export default function AESODashboards() {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/app/aeso-dashboard-builder/${dashboard.id}`);
+                          navigate(`/app/aeso-dashboard/${dashboard.id}`);
                         }}
                       >
                         <Edit className="w-4 h-4" />
@@ -179,119 +211,11 @@ export default function AESODashboards() {
         )}
       </div>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create New Dashboard</DialogTitle>
-            <DialogDescription>
-              Choose how you'd like to build your dashboard
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Tabs value={creationMode} onValueChange={(v) => setCreationMode(v as 'manual' | 'ai')} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="ai" className="gap-2">
-                <Sparkles className="w-4 h-4" />
-                AI Assistant
-              </TabsTrigger>
-              <TabsTrigger value="manual" className="gap-2">
-                <Wrench className="w-4 h-4" />
-                Manual Build
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="ai" className="space-y-4 mt-4">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-primary mt-0.5" />
-                  <div className="space-y-1">
-                    <h4 className="font-medium">AI-Powered Dashboard Creation</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Describe what you want to visualize and our AI will create the perfect widgets for you. 
-                      You can chat with the AI to add, modify, or remove widgets anytime.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="ai-name">Dashboard Name</Label>
-                  <Input
-                    id="ai-name"
-                    value={newDashboardName}
-                    onChange={(e) => setNewDashboardName(e.target.value)}
-                    placeholder="e.g., AI-Generated Market Overview"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="ai-description">Description (Optional)</Label>
-                  <Textarea
-                    id="ai-description"
-                    value={newDashboardDescription}
-                    onChange={(e) => setNewDashboardDescription(e.target.value)}
-                    placeholder="Describe what insights you want to see..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="manual" className="space-y-4 mt-4">
-              <div className="bg-muted/50 border rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Wrench className="w-5 h-5 text-muted-foreground mt-0.5" />
-                  <div className="space-y-1">
-                    <h4 className="font-medium">Manual Dashboard Builder</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Build your dashboard from scratch by selecting and configuring widgets yourself. 
-                      Full control over widget types, data sources, and layout.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="manual-name">Dashboard Name</Label>
-                  <Input
-                    id="manual-name"
-                    value={newDashboardName}
-                    onChange={(e) => setNewDashboardName(e.target.value)}
-                    placeholder="e.g., Custom Analytics Dashboard"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="manual-description">Description (Optional)</Label>
-                  <Textarea
-                    id="manual-description"
-                    value={newDashboardDescription}
-                    onChange={(e) => setNewDashboardDescription(e.target.value)}
-                    placeholder="Describe what this dashboard will show..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateDashboard} disabled={!newDashboardName.trim()}>
-              {creationMode === 'ai' ? (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Create with AI
-                </>
-              ) : (
-                <>Create Dashboard</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DashboardCreationWizard
+        open={showWizard}
+        onOpenChange={setShowWizard}
+        onCreate={handleCreateDashboard}
+      />
     </>
   );
 }
