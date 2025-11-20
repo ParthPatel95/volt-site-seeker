@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, Share2, Plus, LineChart, BarChart3, Gauge, Table, AreaChart, PieChart, Activity, TrendingUp, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Share2, Plus, LineChart, BarChart3, Gauge, Table, AreaChart, PieChart, Activity, TrendingUp, Sparkles, Settings, Layout } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -14,6 +14,8 @@ import { GaugeWidget } from '@/components/aeso/dashboard-widgets/GaugeWidget';
 import { TableWidget } from '@/components/aeso/dashboard-widgets/TableWidget';
 import { PieChartWidget } from '@/components/aeso/dashboard-widgets/PieChartWidget';
 import { AIDashboardChat } from '@/components/aeso/AIDashboardChat';
+import { WidgetCustomizationModal } from '@/components/aeso/WidgetCustomizationModal';
+import { LayoutPresetsManager, LayoutPreset } from '@/components/aeso/LayoutPresetsManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -44,6 +46,9 @@ export default function AESODashboardBuilder() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [showLayoutPresets, setShowLayoutPresets] = useState(false);
+  const [layoutPresets, setLayoutPresets] = useState<LayoutPreset[]>([]);
 
   // Check if we should show AI chat based on navigation state
   useEffect(() => {
@@ -157,6 +162,41 @@ export default function AESODashboardBuilder() {
     });
   };
 
+  const handleSaveLayoutPreset = (preset: Omit<LayoutPreset, 'id'>) => {
+    const newPreset: LayoutPreset = {
+      ...preset,
+      id: `preset-${Date.now()}`,
+    };
+    setLayoutPresets([...layoutPresets, newPreset]);
+  };
+
+  const handleLoadLayoutPreset = (presetId: string) => {
+    const preset = layoutPresets.find(p => p.id === presetId);
+    if (preset) {
+      // Apply the preset layout to widgets
+      const updatedWidgets = widgets.map((widget, idx) => {
+        const presetLayout = preset.layout[idx];
+        return presetLayout ? { ...widget, ...presetLayout } : widget;
+      });
+      setWidgets(updatedWidgets);
+    }
+  };
+
+  const handleDeleteLayoutPreset = (presetId: string) => {
+    setLayoutPresets(layoutPresets.filter(p => p.id !== presetId));
+  };
+
+  const handleSaveWidgetCustomization = (customization: any) => {
+    if (selectedWidget) {
+      updateWidgetConfig(selectedWidget.i, {
+        widget_config: {
+          ...selectedWidget.widget_config,
+          customization,
+        },
+      });
+    }
+  };
+
   const renderWidget = (widget: Widget) => {
     const config = {
       title: widget.widget_config.title || 'Widget',
@@ -187,11 +227,17 @@ export default function AESODashboardBuilder() {
     return (
       <div
         key={widget.i}
-        className={`cursor-pointer transition-all ${
+        className={`group relative cursor-pointer transition-all rounded-lg ${
           selectedWidget?.i === widget.i ? 'ring-2 ring-primary' : ''
         }`}
         onClick={() => setSelectedWidget(widget)}
       >
+        <div className="drag-handle absolute top-2 left-2 opacity-0 group-hover:opacity-100 cursor-move z-10 bg-primary/10 hover:bg-primary/20 rounded p-1 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/>
+            <circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/>
+          </svg>
+        </div>
         {widgetContent}
       </div>
     );
@@ -248,6 +294,10 @@ export default function AESODashboardBuilder() {
             >
               <Sparkles className="w-4 h-4 mr-2" />
               AI Assistant
+            </Button>
+            <Button variant="outline" onClick={() => setShowLayoutPresets(true)}>
+              <Layout className="w-4 h-4 mr-2" />
+              Layouts
             </Button>
             <Button variant="outline" onClick={() => navigate(`/app/aeso-dashboard-share/${id}`)}>
               <Share2 className="w-4 h-4 mr-2" />
@@ -463,6 +513,16 @@ export default function AESODashboardBuilder() {
                     >
                       Delete Widget
                     </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => setShowCustomization(true)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Customize
+                    </Button>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -475,6 +535,23 @@ export default function AESODashboardBuilder() {
           )}
         </div>
       </div>
+
+      <WidgetCustomizationModal
+        open={showCustomization}
+        onOpenChange={setShowCustomization}
+        widget={selectedWidget}
+        onSave={handleSaveWidgetCustomization}
+      />
+
+      <LayoutPresetsManager
+        open={showLayoutPresets}
+        onOpenChange={setShowLayoutPresets}
+        currentLayout={widgets.map(w => ({ i: w.i, x: w.x, y: w.y, w: w.w, h: w.h }))}
+        presets={layoutPresets}
+        onSavePreset={handleSaveLayoutPreset}
+        onLoadPreset={handleLoadLayoutPreset}
+        onDeletePreset={handleDeleteLayoutPreset}
+      />
     </>
   );
 }
