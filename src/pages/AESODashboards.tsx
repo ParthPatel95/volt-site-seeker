@@ -4,7 +4,7 @@ import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2 } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Sparkles, Wrench } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AESODashboards() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function AESODashboards() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newDashboardName, setNewDashboardName] = useState('');
   const [newDashboardDescription, setNewDashboardDescription] = useState('');
+  const [creationMode, setCreationMode] = useState<'manual' | 'ai'>('ai');
 
   useEffect(() => {
     fetchDashboards();
@@ -41,7 +43,10 @@ export default function AESODashboards() {
       setShowCreateDialog(false);
       setNewDashboardName('');
       setNewDashboardDescription('');
-      navigate(`/app/aeso-dashboard-builder/${result.id}`);
+      // Navigate with state to indicate if AI should be shown
+      navigate(`/app/aeso-dashboard-builder/${result.id}`, { 
+        state: { showAI: creationMode === 'ai' } 
+      });
     }
   };
 
@@ -175,40 +180,114 @@ export default function AESODashboards() {
       </div>
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Dashboard</DialogTitle>
             <DialogDescription>
-              Give your dashboard a name and description to get started
+              Choose how you'd like to build your dashboard
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Dashboard Name</Label>
-              <Input
-                id="name"
-                value={newDashboardName}
-                onChange={(e) => setNewDashboardName(e.target.value)}
-                placeholder="e.g., Executive Summary"
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
-                value={newDashboardDescription}
-                onChange={(e) => setNewDashboardDescription(e.target.value)}
-                placeholder="Describe what this dashboard will show..."
-                rows={3}
-              />
-            </div>
-          </div>
+          
+          <Tabs value={creationMode} onValueChange={(v) => setCreationMode(v as 'manual' | 'ai')} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="ai" className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                AI Assistant
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="gap-2">
+                <Wrench className="w-4 h-4" />
+                Manual Build
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="ai" className="space-y-4 mt-4">
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="font-medium">AI-Powered Dashboard Creation</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Describe what you want to visualize and our AI will create the perfect widgets for you. 
+                      You can chat with the AI to add, modify, or remove widgets anytime.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="ai-name">Dashboard Name</Label>
+                  <Input
+                    id="ai-name"
+                    value={newDashboardName}
+                    onChange={(e) => setNewDashboardName(e.target.value)}
+                    placeholder="e.g., AI-Generated Market Overview"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ai-description">Description (Optional)</Label>
+                  <Textarea
+                    id="ai-description"
+                    value={newDashboardDescription}
+                    onChange={(e) => setNewDashboardDescription(e.target.value)}
+                    placeholder="Describe what insights you want to see..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="manual" className="space-y-4 mt-4">
+              <div className="bg-muted/50 border rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Wrench className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="font-medium">Manual Dashboard Builder</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Build your dashboard from scratch by selecting and configuring widgets yourself. 
+                      Full control over widget types, data sources, and layout.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="manual-name">Dashboard Name</Label>
+                  <Input
+                    id="manual-name"
+                    value={newDashboardName}
+                    onChange={(e) => setNewDashboardName(e.target.value)}
+                    placeholder="e.g., Custom Analytics Dashboard"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="manual-description">Description (Optional)</Label>
+                  <Textarea
+                    id="manual-description"
+                    value={newDashboardDescription}
+                    onChange={(e) => setNewDashboardDescription(e.target.value)}
+                    placeholder="Describe what this dashboard will show..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleCreateDashboard} disabled={!newDashboardName.trim()}>
-              Create Dashboard
+              {creationMode === 'ai' ? (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create with AI
+                </>
+              ) : (
+                <>Create Dashboard</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ interface Widget {
 export default function AESODashboardBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { getDashboardById, updateDashboard } = useAESODashboards();
   const { toast } = useToast();
   const [dashboard, setDashboard] = useState<any>(null);
@@ -43,6 +44,13 @@ export default function AESODashboardBuilder() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
+
+  // Check if we should show AI chat based on navigation state
+  useEffect(() => {
+    if (location.state?.showAI) {
+      setShowAIChat(true);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     loadDashboard();
