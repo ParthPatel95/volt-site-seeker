@@ -160,6 +160,9 @@ verify_jwt = false
 [functions.validate-dashboard-share]
 verify_jwt = false
 
+[functions.aeso-dashboard-ai]
+verify_jwt = true
+
 # Authentication required endpoints
 [functions.api-key-management]
 verify_jwt = true

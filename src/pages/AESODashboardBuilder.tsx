@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, Share2, Plus, LineChart, BarChart3, Gauge, Table, AreaChart, PieChart, Activity, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Save, Share2, Plus, LineChart, BarChart3, Gauge, Table, AreaChart, PieChart, Activity, TrendingUp, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -11,6 +11,9 @@ import 'react-resizable/css/styles.css';
 import { StatCard } from '@/components/aeso/dashboard-widgets/StatCard';
 import { ChartWidget } from '@/components/aeso/dashboard-widgets/ChartWidget';
 import { GaugeWidget } from '@/components/aeso/dashboard-widgets/GaugeWidget';
+import { TableWidget } from '@/components/aeso/dashboard-widgets/TableWidget';
+import { PieChartWidget } from '@/components/aeso/dashboard-widgets/PieChartWidget';
+import { AIDashboardChat } from '@/components/aeso/AIDashboardChat';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,6 +42,7 @@ export default function AESODashboardBuilder() {
   const [dashboardName, setDashboardName] = useState('');
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
+  const [showAIChat, setShowAIChat] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -117,6 +121,21 @@ export default function AESODashboardBuilder() {
     }
   };
 
+  const handleAIWidgets = (aiWidgets: any[]) => {
+    const newWidgets = aiWidgets.map(w => ({
+      i: `widget-${Date.now()}-${Math.random()}`,
+      x: 0,
+      y: Infinity,
+      w: w.w || 6,
+      h: w.h || 4,
+      widget_type: w.widget_type,
+      widget_config: w.widget_config,
+      data_source: w.data_source,
+      data_filters: w.data_filters,
+    }));
+    setWidgets([...widgets, ...newWidgets]);
+  };
+
   const handleSave = async () => {
     if (!id) return;
     // TODO: Save widgets to database via API
@@ -148,6 +167,10 @@ export default function AESODashboardBuilder() {
         case 'bar_chart':
         case 'area_chart':
           return <ChartWidget config={config} />;
+        case 'pie_chart':
+          return <PieChartWidget config={config} />;
+        case 'table':
+          return <TableWidget config={config} />;
         default:
           return <div className="p-4">Unknown widget type</div>;
       }
@@ -213,6 +236,13 @@ export default function AESODashboardBuilder() {
             />
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant={showAIChat ? "default" : "outline"} 
+              onClick={() => setShowAIChat(!showAIChat)}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Assistant
+            </Button>
             <Button variant="outline" onClick={() => navigate(`/app/aeso-dashboard-share/${id}`)}>
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -226,7 +256,8 @@ export default function AESODashboardBuilder() {
 
         <div className="grid grid-cols-12 gap-6 min-h-[calc(100vh-200px)]">
           {/* Widget Palette */}
-          <div className="col-span-2 bg-card rounded-lg border">
+          {!showAIChat && (
+            <div className="col-span-2 bg-card rounded-lg border">
             <div className="p-4 border-b">
               <h3 className="font-semibold">Add Widgets</h3>
             </div>
@@ -305,9 +336,17 @@ export default function AESODashboardBuilder() {
               </div>
             </ScrollArea>
           </div>
+          )}
+
+          {/* AI Chat Panel */}
+          {showAIChat && (
+            <div className="col-span-3 bg-card rounded-lg border">
+              <AIDashboardChat onWidgetsGenerated={handleAIWidgets} />
+            </div>
+          )}
 
           {/* Canvas */}
-          <div className="col-span-8 bg-card rounded-lg border p-6 overflow-auto">
+          <div className={`${showAIChat ? 'col-span-7' : 'col-span-8'} bg-card rounded-lg border p-6 overflow-auto`}>
             {widgets.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center">
@@ -332,7 +371,8 @@ export default function AESODashboardBuilder() {
           </div>
 
           {/* Properties Panel */}
-          <div className="col-span-2 bg-card rounded-lg border">
+          {!showAIChat && (
+            <div className="col-span-2 bg-card rounded-lg border">
             <div className="p-4 border-b">
               <h3 className="font-semibold">Properties</h3>
             </div>
@@ -426,6 +466,7 @@ export default function AESODashboardBuilder() {
               </div>
             </ScrollArea>
           </div>
+          )}
         </div>
       </div>
     </div>
