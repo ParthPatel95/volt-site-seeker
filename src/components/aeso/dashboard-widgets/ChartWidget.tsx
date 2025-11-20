@@ -39,6 +39,30 @@ export function ChartWidget({ config }: ChartWidgetProps) {
 
   const chartData = data?.chartData || data?.hourlyData || [];
 
+  if (!chartData || chartData.length === 0) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="text-sm">{config.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-64">
+          <div className="text-center text-muted-foreground">
+            <p className="text-sm">No data available</p>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={refetch}
+              className="mt-2"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const renderChart = () => {
     switch (config.widgetType) {
       case 'line_chart':
@@ -46,13 +70,22 @@ export function ChartWidget({ config }: ChartWidgetProps) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" fontSize={12} />
+              <XAxis dataKey={(entry) => entry.time || entry.date} fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip />
               <Legend />
               <Line type="monotone" dataKey="price" stroke="hsl(var(--primary))" strokeWidth={2} />
               {chartData[0]?.predicted && (
                 <Line type="monotone" dataKey="predicted" stroke="hsl(var(--secondary))" strokeWidth={2} strokeDasharray="5 5" />
+              )}
+              {chartData[0]?.load && (
+                <Line type="monotone" dataKey="load" stroke="hsl(var(--accent))" strokeWidth={2} />
+              )}
+              {chartData[0]?.mae && (
+                <>
+                  <Line type="monotone" dataKey="mae" stroke="hsl(var(--chart-1))" strokeWidth={2} />
+                  <Line type="monotone" dataKey="rmse" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                </>
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -62,7 +95,7 @@ export function ChartWidget({ config }: ChartWidgetProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" fontSize={12} />
+              <XAxis dataKey={(entry) => entry.time || entry.date} fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip />
               <Legend />
@@ -75,7 +108,7 @@ export function ChartWidget({ config }: ChartWidgetProps) {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" fontSize={12} />
+              <XAxis dataKey={(entry) => entry.time || entry.date} fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip />
               <Legend />

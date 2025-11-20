@@ -48,6 +48,19 @@ export function PieChartWidget({ config }: PieChartWidgetProps) {
 
   const pieData = data?.pieData || data?.chartData?.slice(0, 8) || [];
 
+  if (!pieData || pieData.length === 0) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="text-sm">{config.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-64">
+          <p className="text-sm text-muted-foreground">No data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>

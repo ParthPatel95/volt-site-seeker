@@ -74,6 +74,15 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         case 'generation':
           await fetchGenerationData();
           break;
+        case 'predictions':
+          await fetchPredictionData();
+          break;
+        case 'analytics':
+          await fetchModelPerformance();
+          break;
+        case 'weather':
+          await fetchWeatherForecasts();
+          break;
         case 'operating_reserve':
           await fetchOperatingReserve();
           break;
@@ -113,17 +122,23 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
   };
 
   const fetchHistoricalData = async () => {
-    const timeRange = widgetConfig.dataFilters.timeRange || '30days';
+    const timeRange = widgetConfig.dataFilters.timeRange || '24hours';
     
     if (timeRange === '24hours') {
       await fetchDailyData();
-      setData(dailyData);
-    } else if (timeRange === '30days') {
+      if (dailyData) {
+        setData(dailyData);
+      }
+    } else if (timeRange === '7days' || timeRange === '30days') {
       await fetchMonthlyData();
-      setData(monthlyData);
-    } else if (timeRange === '12months') {
+      if (monthlyData) {
+        setData(monthlyData);
+      }
+    } else if (timeRange === '90days' || timeRange === '12months') {
       await fetchYearlyData();
-      setData(yearlyData);
+      if (yearlyData) {
+        setData(yearlyData);
+      }
     }
   };
 
@@ -135,11 +150,16 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
       .order('target_timestamp', { ascending: true })
       .limit(48);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Prediction data fetch error:', error);
+      setData({ chartData: [] });
+      return;
+    }
     
     setData({
       chartData: predictions?.map(p => ({
         time: new Date(p.target_timestamp).toLocaleTimeString(),
+        price: p.predicted_price,
         predicted: p.predicted_price,
         actual: p.actual_price,
       })) || [],
@@ -203,7 +223,19 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
     
     if (!apiError && apiData?.aeso?.generationMix) {
       const genMix = apiData.aeso.generationMix;
+      
+      // Format for pie chart
+      const pieData = [
+        { name: 'Wind', value: genMix.wind_mw || 0 },
+        { name: 'Solar', value: genMix.solar_mw || 0 },
+        { name: 'Gas', value: genMix.natural_gas_mw || 0 },
+        { name: 'Coal', value: genMix.coal_mw || 0 },
+        { name: 'Hydro', value: genMix.hydro_mw || 0 },
+        { name: 'Other', value: genMix.other_mw || 0 },
+      ].filter(item => item.value > 0); // Only show sources with generation
+      
       setData({
+        pieData,
         wind: genMix.wind_mw || 0,
         solar: genMix.solar_mw || 0,
         gas: genMix.natural_gas_mw || 0,
@@ -229,7 +261,16 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     const latest = genData?.[0];
     if (latest) {
+      const pieData = [
+        { name: 'Wind', value: latest.generation_wind || 0 },
+        { name: 'Solar', value: latest.generation_solar || 0 },
+        { name: 'Gas', value: latest.generation_gas || 0 },
+        { name: 'Coal', value: latest.generation_coal || 0 },
+        { name: 'Hydro', value: latest.generation_hydro || 0 },
+      ].filter(item => item.value > 0);
+      
       setData({
+        pieData,
         wind: latest.generation_wind || 0,
         solar: latest.generation_solar || 0,
         gas: latest.generation_gas || 0,
@@ -330,16 +371,20 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
       .order('evaluation_date', { ascending: false })
       .limit(20);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Model performance fetch error:', error);
+      setData({ chartData: [] });
+      return;
+    }
 
     setData({
       latest: perfData?.[0] || {},
       chartData: perfData?.map(d => ({
-        date: new Date(d.evaluation_date || '').toLocaleDateString(),
-        mae: d.mae,
-        rmse: d.rmse,
-        smape: d.smape,
-        rSquared: d.r_squared,
+        time: new Date(d.evaluation_date || '').toLocaleDateString(),
+        mae: d.mae || 0,
+        rmse: d.rmse || 0,
+        smape: d.smape || 0,
+        price: d.mae || 0, // Use MAE as primary metric for simple charts
       })).reverse() || [],
     });
   };
@@ -365,21 +410,34 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
   };
 
   const fetchWeatherForecasts = async () => {
+    // For now, return placeholder data since we don't have weather API integration
     const { data: weatherData, error } = await supabase
-      .from('aeso_weather_forecasts')
-      .select('*')
-      .order('target_timestamp', { ascending: true })
-      .limit(48);
+      .from('aeso_training_data')
+      .select('temperature_calgary, temperature_edmonton, wind_speed, cloud_cover, timestamp')
+      .order('timestamp', { ascending: false })
+      .limit(24);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Weather data fetch error:', error);
+      setData({
+        chartData: [],
+        current: { temperature: 0, windSpeed: 0, cloudCover: 0 }
+      });
+      return;
+    }
 
     setData({
+      current: weatherData?.[0] ? {
+        temperature: weatherData[0].temperature_calgary || 0,
+        windSpeed: weatherData[0].wind_speed || 0,
+        cloudCover: weatherData[0].cloud_cover || 0,
+      } : {},
       chartData: weatherData?.map(d => ({
-        time: new Date(d.target_timestamp).toLocaleString(),
-        temperature: d.temperature,
+        time: new Date(d.timestamp).toLocaleTimeString(),
+        temperature: d.temperature_calgary,
         windSpeed: d.wind_speed,
         cloudCover: d.cloud_cover,
-      })) || [],
+      })).reverse() || [],
     });
   };
 
