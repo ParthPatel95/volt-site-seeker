@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, Filter, Share2, Bell, Download, Play, Pause } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Filter, Share2, Bell, Download, Play, Pause, Sparkles, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,9 @@ import { TableWidget } from '@/components/aeso/dashboard-widgets/TableWidget';
 import { PieChartWidget } from '@/components/aeso/dashboard-widgets/PieChartWidget';
 import { ShareDashboardDialog } from './ShareDashboardDialog';
 import { AlertConfigDialog } from './AlertConfigDialog';
+import { AIAssistantSidebar } from './AIAssistantSidebar';
+import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
+import { QuickSuggestionsPanel } from './QuickSuggestionsPanel';
 import { useToast } from '@/hooks/use-toast';
 
 interface DashboardViewerProps {
@@ -33,6 +36,7 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(60000); // 1 minute
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
 
   useEffect(() => {
     if (autoRefresh) {
@@ -103,8 +107,18 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
     );
   };
 
+  const dashboardContext = {
+    dashboardName: dashboard?.dashboard_name || 'Dashboard',
+    market,
+    timeRange,
+    widgets: widgets || []
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="flex h-screen overflow-hidden">
+      {/* Main Dashboard Area */}
+      <div className={`flex-1 overflow-auto transition-all ${aiAssistantOpen ? 'mr-96' : ''}`}>
+        <div className="space-y-6 p-6">
       {/* Header with Filters */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
@@ -189,19 +203,53 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
 
           {!isPublicView && (
             <>
-              <Button variant="outline" size="icon" onClick={handleExport}>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleExport}
+                title="Export Dashboard"
+              >
                 <Download className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => setAlertDialogOpen(true)}>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => setAlertDialogOpen(true)}
+                title="Configure Alerts"
+              >
                 <Bell className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => setShareDialogOpen(true)}>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => setShareDialogOpen(true)}
+                title="Share Dashboard"
+              >
                 <Share2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant={aiAssistantOpen ? "default" : "outline"}
+                size="icon" 
+                onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
+                title="AI Assistant"
+              >
+                {aiAssistantOpen ? <X className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
               </Button>
             </>
           )}
         </div>
       </div>
+
+      {/* AI Insights Panel */}
+      {!isPublicView && dashboard?.id && (
+        <div className="mb-6">
+          <AutomatedInsightsPanel
+            dashboardId={dashboard.id}
+            market={market}
+            timeRange={timeRange}
+          />
+        </div>
+      )}
 
       {/* Widgets Grid */}
       {widgets.length === 0 ? (
@@ -214,20 +262,29 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
         </div>
       )}
 
-      {/* Dialogs */}
-      {!isPublicView && (
-        <>
-          <ShareDashboardDialog
-            open={shareDialogOpen}
-            onOpenChange={setShareDialogOpen}
-            dashboardId={dashboard?.id || ''}
-          />
-          <AlertConfigDialog
-            open={alertDialogOpen}
-            onOpenChange={setAlertDialogOpen}
-            dashboardId={dashboard?.id || ''}
-          />
-        </>
+        {/* Dialogs */}
+        {!isPublicView && (
+          <>
+            <ShareDashboardDialog
+              open={shareDialogOpen}
+              onOpenChange={setShareDialogOpen}
+              dashboardId={dashboard?.id || ''}
+            />
+            <AlertConfigDialog
+              open={alertDialogOpen}
+              onOpenChange={setAlertDialogOpen}
+              dashboardId={dashboard?.id || ''}
+            />
+          </>
+        )}
+      </div>
+    </div>
+
+      {/* AI Assistant Sidebar */}
+      {aiAssistantOpen && !isPublicView && (
+        <div className="fixed right-0 top-0 h-screen w-96 shadow-2xl z-50">
+          <AIAssistantSidebar dashboardContext={dashboardContext} />
+        </div>
       )}
     </div>
   );

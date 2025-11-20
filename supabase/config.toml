@@ -163,6 +163,12 @@ verify_jwt = false
 [functions.aeso-dashboard-ai]
 verify_jwt = true
 
+[functions.dashboard-ai-assistant]
+verify_jwt = true
+
+[functions.dashboard-insights]
+verify_jwt = true
+
 # Authentication required endpoints
 [functions.api-key-management]
 verify_jwt = true
