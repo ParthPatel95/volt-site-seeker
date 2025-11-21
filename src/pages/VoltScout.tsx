@@ -31,7 +31,6 @@ import { AdvancedReportingEngine } from '@/components/reports/AdvancedReportingE
 import { UserManagementSystem } from '@/components/users/UserManagementSystem';
 import { RealTimeMarketData } from '@/components/realtime/RealTimeMarketData';
 import { ExternalAPIIntegrations } from '@/components/integrations/ExternalAPIIntegrations';
-import { BottomNavigationWrapper } from '@/components/BottomNavigationWrapper';
 import SecureShare from './SecureShare';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import AESODashboards from './AESODashboards';
@@ -133,9 +132,6 @@ const VoltScout = () => {
               </Routes>
             </div>
           </div>
-          
-          {/* Bottom navigation for mobile */}
-          {isMobile && <BottomNavigationWrapper />}
         </div>
       </div>
     </AuthWrapper>
