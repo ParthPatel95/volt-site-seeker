@@ -154,6 +154,13 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
       }
       
       if (historicalData) {
+        // Build table data from raw hourly data or chart data
+        const tableData = (historicalData.rawHourlyData || historicalData.chartData || []).map((d: any) => ({
+          timestamp: d.datetime || d.date || d.time,
+          pool_price: d.price?.toFixed(2) || 'N/A',
+          hour: d.hour !== undefined ? d.hour : new Date(d.datetime || d.date).getHours(),
+        }));
+
         setData({
           ...historicalData,
           chartData: historicalData.chartData || historicalData.rawHourlyData?.map((d: any) => ({
@@ -161,11 +168,13 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
             date: d.date,
             price: d.price,
           })) || [],
+          tableData, // Add structured table data
+          hourlyData: tableData, // Also provide as hourlyData for compatibility
         });
       }
     } catch (error) {
       console.error('Error fetching historical data:', error);
-      setData({ chartData: [], statistics: {} });
+      setData({ chartData: [], tableData: [], hourlyData: [] });
     }
   };
 
@@ -179,9 +188,17 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) {
       console.error('Prediction data fetch error:', error);
-      setData({ chartData: [] });
+      setData({ chartData: [], tableData: [] });
       return;
     }
+
+    const tableData = predictions?.map(p => ({
+      target_time: new Date(p.target_timestamp).toLocaleString(),
+      predicted_price: p.predicted_price?.toFixed(2),
+      actual_price: p.actual_price?.toFixed(2) || 'Pending',
+      confidence: p.confidence_score?.toFixed(2) || 'N/A',
+      horizon_hours: p.horizon_hours,
+    })) || [];
     
     setData({
       chartData: predictions?.map(p => ({
@@ -190,6 +207,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         predicted: p.predicted_price,
         actual: p.actual_price,
       })) || [],
+      tableData,
       statistics: {
         avgPredicted: predictions?.reduce((sum, p) => sum + p.predicted_price, 0) / (predictions?.length || 1),
         accuracy: predictions?.filter(p => p.actual_price).length || 0,
@@ -337,6 +355,15 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
       .limit(48);
 
     if (error) throw error;
+
+    const tableData = ensembleData?.map(p => ({
+      target_time: new Date(p.target_timestamp).toLocaleString(),
+      ensemble_price: p.ensemble_price?.toFixed(2),
+      ml_price: p.ml_predictor_price?.toFixed(2) || 'N/A',
+      arima_price: p.arima_price?.toFixed(2) || 'N/A',
+      actual_price: p.actual_price?.toFixed(2) || 'Pending',
+      error: p.ensemble_error?.toFixed(2) || 'N/A',
+    })) || [];
     
     setData({
       chartData: ensembleData?.map(p => ({
@@ -346,6 +373,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         ml: p.ml_predictor_price,
         arima: p.arima_price,
       })) || [],
+      tableData,
       statistics: {
         avgEnsemble: ensembleData?.reduce((sum, p) => sum + p.ensemble_price, 0) / (ensembleData?.length || 1),
         avgError: ensembleData?.reduce((sum, p) => sum + (p.ensemble_error || 0), 0) / (ensembleData?.length || 1),
@@ -362,6 +390,14 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) throw error;
 
+    const tableData = reserveData?.map(d => ({
+      timestamp: new Date(d.timestamp).toLocaleString(),
+      operating_reserve: d.operating_reserve?.toFixed(2) || 'N/A',
+      operating_reserve_price: d.operating_reserve_price?.toFixed(2) || 'N/A',
+      spinning_reserve: d.spinning_reserve_mw?.toFixed(2) || 'N/A',
+      supplemental_reserve: d.supplemental_reserve_mw?.toFixed(2) || 'N/A',
+    })) || [];
+
     setData({
       current: reserveData?.[0] || {},
       chartData: reserveData?.map(d => ({
@@ -370,6 +406,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         spinning: d.spinning_reserve_mw,
         supplemental: d.supplemental_reserve_mw,
       })).reverse() || [],
+      tableData,
     });
   };
 
@@ -382,6 +419,14 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) throw error;
 
+    const tableData = interchangeData?.map(d => ({
+      timestamp: new Date(d.timestamp).toLocaleString(),
+      bc_flow: d.intertie_bc_flow?.toFixed(2) || 'N/A',
+      sask_flow: d.intertie_sask_flow?.toFixed(2) || 'N/A',
+      montana_flow: d.intertie_montana_flow?.toFixed(2) || 'N/A',
+      net_interchange: d.interchange_net?.toFixed(2) || 'N/A',
+    })) || [];
+
     setData({
       current: interchangeData?.[0] || {},
       chartData: interchangeData?.map(d => ({
@@ -391,6 +436,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         montana: d.intertie_montana_flow,
         net: d.interchange_net,
       })).reverse() || [],
+      tableData,
     });
   };
 
@@ -403,12 +449,20 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) throw error;
 
+    const tableData = gasData?.map(d => ({
+      timestamp: new Date(d.timestamp).toLocaleString(),
+      price: d.price?.toFixed(2) || 'N/A',
+      market: d.market || 'AECO',
+      source: d.source || 'N/A',
+    })) || [];
+
     setData({
       currentPrice: gasData?.[0]?.price || 0,
       chartData: gasData?.map(d => ({
         time: new Date(d.timestamp).toLocaleDateString(),
         price: d.price,
       })).reverse() || [],
+      tableData,
     });
   };
 
@@ -421,9 +475,18 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) {
       console.error('Model performance fetch error:', error);
-      setData({ chartData: [] });
+      setData({ chartData: [], tableData: [] });
       return;
     }
+
+    const tableData = perfData?.map(d => ({
+      evaluation_date: new Date(d.evaluation_date || '').toLocaleDateString(),
+      model_version: d.model_version || 'N/A',
+      mae: d.mae?.toFixed(2) || 'N/A',
+      rmse: d.rmse?.toFixed(2) || 'N/A',
+      smape: d.smape?.toFixed(2) || 'N/A',
+      r_squared: d.r_squared?.toFixed(3) || 'N/A',
+    })) || [];
 
     setData({
       latest: perfData?.[0] || {},
@@ -432,8 +495,9 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         mae: d.mae || 0,
         rmse: d.rmse || 0,
         smape: d.smape || 0,
-        price: d.mae || 0, // Use MAE as primary metric for simple charts
+        price: d.mae || 0,
       })).reverse() || [],
+      tableData,
     });
   };
 
@@ -446,6 +510,14 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) throw error;
 
+    const tableData = regimeData?.map(d => ({
+      timestamp: new Date(d.timestamp).toLocaleString(),
+      regime: d.regime || 'N/A',
+      confidence: (d.confidence * 100).toFixed(1) + '%',
+      avg_price_24h: d.avg_price_24h?.toFixed(2) || 'N/A',
+      price_volatility: d.price_volatility_24h?.toFixed(2) || 'N/A',
+    })) || [];
+
     setData({
       current: regimeData?.[0] || {},
       chartData: regimeData?.map(d => ({
@@ -454,6 +526,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         confidence: d.confidence,
         avgPrice: d.avg_price_24h,
       })).reverse() || [],
+      tableData,
     });
   };
 
@@ -469,10 +542,19 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
       console.error('Weather data fetch error:', error);
       setData({
         chartData: [],
+        tableData: [],
         current: { temperature: 0, windSpeed: 0, cloudCover: 0 }
       });
       return;
     }
+
+    const tableData = weatherData?.map(d => ({
+      timestamp: new Date(d.timestamp).toLocaleString(),
+      temperature_calgary: d.temperature_calgary?.toFixed(1) + '°C' || 'N/A',
+      temperature_edmonton: d.temperature_edmonton?.toFixed(1) + '°C' || 'N/A',
+      wind_speed: d.wind_speed?.toFixed(1) + ' m/s' || 'N/A',
+      cloud_cover: d.cloud_cover?.toFixed(0) + '%' || 'N/A',
+    })) || [];
 
     setData({
       current: weatherData?.[0] ? {
@@ -486,6 +568,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         windSpeed: d.wind_speed,
         cloudCover: d.cloud_cover,
       })).reverse() || [],
+      tableData,
     });
   };
 
@@ -498,14 +581,24 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) throw error;
 
+    const tableData = featuresData?.map(d => ({
+      timestamp: new Date(d.timestamp).toLocaleString(),
+      natural_gas_price: d.natural_gas_price?.toFixed(2) || 'N/A',
+      price_volatility_24h: d.price_volatility_24h?.toFixed(2) || 'N/A',
+      price_momentum_3h: d.price_momentum_3h?.toFixed(2) || 'N/A',
+      net_imports: d.net_imports?.toFixed(2) || 'N/A',
+      renewable_curtailment: d.renewable_curtailment?.toFixed(2) || 'N/A',
+    })) || [];
+
     setData({
       current: featuresData?.[0] || {},
       chartData: featuresData?.map(d => ({
-        time: new Date(d.timestamp).toLocaleString(),
-        priceVolatility1h: d.price_volatility_1h,
-        priceVolatility24h: d.price_volatility_24h,
-        priceMomentum: d.price_momentum_3h,
+        time: new Date(d.timestamp).toLocaleTimeString(),
+        gasPrice: d.natural_gas_price,
+        volatility: d.price_volatility_24h,
+        momentum: d.price_momentum_3h,
       })).reverse() || [],
+      tableData,
     });
   };
 
@@ -518,6 +611,15 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
 
     if (error) throw error;
 
+    const tableData = accuracyData?.map(d => ({
+      target_time: new Date(d.target_timestamp).toLocaleString(),
+      predicted_price: d.predicted_price?.toFixed(2),
+      actual_price: d.actual_price?.toFixed(2),
+      absolute_error: d.absolute_error?.toFixed(2),
+      smape: d.symmetric_percent_error?.toFixed(2) + '%',
+      horizon_hours: d.horizon_hours,
+    })) || [];
+
     setData({
       chartData: accuracyData?.map(d => ({
         time: new Date(d.target_timestamp).toLocaleString(),
@@ -526,6 +628,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         error: d.absolute_error,
         smape: d.symmetric_percent_error,
       })).reverse() || [],
+      tableData,
       statistics: {
         avgError: accuracyData?.reduce((sum, d) => sum + d.absolute_error, 0) / (accuracyData?.length || 1),
         avgSmape: accuracyData?.reduce((sum, d) => sum + (d.symmetric_percent_error || 0), 0) / (accuracyData?.length || 1),
@@ -547,6 +650,13 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
     const avgLoad = statsData?.reduce((sum, d) => sum + (d.ail_mw || 0), 0) / totalRecords;
     const avgRenewable = statsData?.reduce((sum, d) => sum + (d.renewable_penetration || 0), 0) / totalRecords;
 
+    const tableData = statsData?.slice(0, 100).map(d => ({
+      timestamp: new Date(d.timestamp).toLocaleString(),
+      pool_price: d.pool_price?.toFixed(2),
+      ail_mw: d.ail_mw?.toFixed(2) || 'N/A',
+      renewable_penetration: d.renewable_penetration?.toFixed(2) + '%' || 'N/A',
+    })) || [];
+
     setData({
       statistics: {
         totalRecords,
@@ -560,6 +670,7 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
         price: d.pool_price,
         load: d.ail_mw,
       })).reverse() || [],
+      tableData,
     });
   };
 
