@@ -17,6 +17,9 @@ import { DataAPIPanel } from '@/components/aeso/DataAPIPanel';
 import { ComparativeAnalysisPanel } from '@/components/aeso/ComparativeAnalysisPanel';
 import { AdvancedWidgetsPanel } from '@/components/aeso/AdvancedWidgetsPanel';
 import { CustomCalculationsPanel } from '@/components/aeso/CustomCalculationsPanel';
+import { PerformanceOptimizationPanel } from '@/components/aeso/PerformanceOptimizationPanel';
+import { MobileExperiencePanel } from '@/components/aeso/MobileExperiencePanel';
+import { DashboardAnalyticsPanel } from '@/components/aeso/DashboardAnalyticsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AESODashboards() {
@@ -123,7 +126,7 @@ export default function AESODashboards() {
         </div>
 
         <Tabs defaultValue="dashboards" className="w-full">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-13">
             <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
@@ -134,6 +137,9 @@ export default function AESODashboards() {
             <TabsTrigger value="comparison">Compare</TabsTrigger>
             <TabsTrigger value="widgets">Widgets</TabsTrigger>
             <TabsTrigger value="calculations">Calculations</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboards" className="space-y-6 mt-6">
@@ -271,6 +277,18 @@ export default function AESODashboards() {
 
           <TabsContent value="calculations" className="mt-6">
             <CustomCalculationsPanel />
+          </TabsContent>
+
+          <TabsContent value="performance" className="mt-6">
+            <PerformanceOptimizationPanel />
+          </TabsContent>
+
+          <TabsContent value="mobile" className="mt-6">
+            <MobileExperiencePanel />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-6">
+            <DashboardAnalyticsPanel />
           </TabsContent>
         </Tabs>
       </div>
