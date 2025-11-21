@@ -14,6 +14,9 @@ import { ScheduledReportsPanel } from '@/components/aeso/ScheduledReportsPanel';
 import { ExportOptionsPanel } from '@/components/aeso/ExportOptionsPanel';
 import { ReportBuilderPanel } from '@/components/aeso/ReportBuilderPanel';
 import { DataAPIPanel } from '@/components/aeso/DataAPIPanel';
+import { ComparativeAnalysisPanel } from '@/components/aeso/ComparativeAnalysisPanel';
+import { AdvancedWidgetsPanel } from '@/components/aeso/AdvancedWidgetsPanel';
+import { CustomCalculationsPanel } from '@/components/aeso/CustomCalculationsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AESODashboards() {
@@ -120,35 +123,17 @@ export default function AESODashboards() {
         </div>
 
         <Tabs defaultValue="dashboards" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="dashboards">
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              Dashboards
-            </TabsTrigger>
-            <TabsTrigger value="features">
-              <Zap className="w-4 h-4 mr-2" />
-              Features
-            </TabsTrigger>
-            <TabsTrigger value="alerts">
-              <Bell className="w-4 h-4 mr-2" />
-              Alerts
-            </TabsTrigger>
-            <TabsTrigger value="reports">
-              <FileText className="w-4 h-4 mr-2" />
-              Reports
-            </TabsTrigger>
-            <TabsTrigger value="export">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </TabsTrigger>
-            <TabsTrigger value="builder">
-              <LayoutTemplate className="w-4 h-4 mr-2" />
-              Builder
-            </TabsTrigger>
-            <TabsTrigger value="api">
-              <Key className="w-4 h-4 mr-2" />
-              API
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-10">
+            <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
+            <TabsTrigger value="features">Features</TabsTrigger>
+            <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="export">Export</TabsTrigger>
+            <TabsTrigger value="builder">Builder</TabsTrigger>
+            <TabsTrigger value="api">API</TabsTrigger>
+            <TabsTrigger value="comparison">Compare</TabsTrigger>
+            <TabsTrigger value="widgets">Widgets</TabsTrigger>
+            <TabsTrigger value="calculations">Calculations</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboards" className="space-y-6 mt-6">
@@ -274,6 +259,18 @@ export default function AESODashboards() {
 
           <TabsContent value="api" className="mt-6">
             <DataAPIPanel />
+          </TabsContent>
+
+          <TabsContent value="comparison" className="mt-6">
+            <ComparativeAnalysisPanel />
+          </TabsContent>
+
+          <TabsContent value="widgets" className="mt-6">
+            <AdvancedWidgetsPanel />
+          </TabsContent>
+
+          <TabsContent value="calculations" className="mt-6">
+            <CustomCalculationsPanel />
           </TabsContent>
         </Tabs>
       </div>
