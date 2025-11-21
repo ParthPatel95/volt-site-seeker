@@ -8,9 +8,13 @@ import {
   Eye, 
   MousePointerClick, 
   TrendingUp,
-  Users
+  Users,
+  Calendar,
+  Globe,
+  Smartphone,
+  BarChart3
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface UserAnalytics {
   user_id: string;
@@ -28,6 +32,18 @@ interface UserAnalytics {
   most_used_features: Array<{ feature: string; uses: number }>;
 }
 
+interface PageActivity {
+  page: string;
+  visits: number;
+  uniqueUsers: number;
+}
+
+interface FeatureActivity {
+  feature: string;
+  uses: number;
+  uniqueUsers: number;
+}
+
 export function AllUsersAnalytics() {
   const [allAnalytics, setAllAnalytics] = useState<UserAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +54,9 @@ export function AllUsersAnalytics() {
     totalFeatureUses: 0,
     avgSessionDuration: 0
   });
+  const [topPages, setTopPages] = useState<PageActivity[]>([]);
+  const [topFeatures, setTopFeatures] = useState<FeatureActivity[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAllAnalytics();
@@ -124,6 +143,86 @@ export function AllUsersAnalytics() {
       totals.avgSessionDuration = totals.avgSessionDuration / validAnalytics.length || 0;
 
       setTotals(totals);
+
+      // Fetch global page activity
+      const { data: pageData } = await supabase
+        .from('user_page_visits')
+        .select('page_path, user_id');
+
+      if (pageData) {
+        const pageMap = new Map<string, Set<string>>();
+        pageData.forEach(visit => {
+          if (!pageMap.has(visit.page_path)) {
+            pageMap.set(visit.page_path, new Set());
+          }
+          pageMap.get(visit.page_path)!.add(visit.user_id);
+        });
+
+        const pages: PageActivity[] = Array.from(pageMap.entries()).map(([page, users]) => ({
+          page,
+          visits: pageData.filter(v => v.page_path === page).length,
+          uniqueUsers: users.size
+        }));
+
+        pages.sort((a, b) => b.visits - a.visits);
+        setTopPages(pages.slice(0, 10));
+      }
+
+      // Fetch global feature activity
+      const { data: featureData } = await supabase
+        .from('user_feature_usage')
+        .select('feature_name, user_id');
+
+      if (featureData) {
+        const featureMap = new Map<string, Set<string>>();
+        featureData.forEach(usage => {
+          if (!featureMap.has(usage.feature_name)) {
+            featureMap.set(usage.feature_name, new Set());
+          }
+          featureMap.get(usage.feature_name)!.add(usage.user_id);
+        });
+
+        const features: FeatureActivity[] = Array.from(featureMap.entries()).map(([feature, users]) => ({
+          feature,
+          uses: featureData.filter(f => f.feature_name === feature).length,
+          uniqueUsers: users.size
+        }));
+
+        features.sort((a, b) => b.uses - a.uses);
+        setTopFeatures(features.slice(0, 10));
+      }
+
+      // Fetch recent activity
+      const { data: recentSessions } = await supabase
+        .from('user_sessions')
+        .select(`
+          id,
+          user_id,
+          session_start,
+          session_end,
+          duration_seconds,
+          user_agent
+        `)
+        .order('session_start', { ascending: false })
+        .limit(10);
+
+      if (recentSessions) {
+        const sessionsWithUsers = await Promise.all(
+          recentSessions.map(async (session) => {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', session.user_id)
+              .single();
+
+            return {
+              ...session,
+              user: userData
+            };
+          })
+        );
+        setRecentActivity(sessionsWithUsers);
+      }
     } catch (error) {
       console.error('Error fetching all analytics:', error);
     } finally {
@@ -152,6 +251,34 @@ export function AllUsersAnalytics() {
       </Card>
     );
   }
+
+  const parseUserAgent = (userAgent: string) => {
+    if (!userAgent) return { browser: 'Unknown', os: 'Unknown', device: 'Desktop' };
+    
+    let browser = 'Unknown';
+    let os = 'Unknown';
+    let device = 'Desktop';
+
+    // Browser detection
+    if (userAgent.includes('Chrome')) browser = 'Chrome';
+    else if (userAgent.includes('Firefox')) browser = 'Firefox';
+    else if (userAgent.includes('Safari')) browser = 'Safari';
+    else if (userAgent.includes('Edge')) browser = 'Edge';
+
+    // OS detection
+    if (userAgent.includes('Windows')) os = 'Windows';
+    else if (userAgent.includes('Mac')) os = 'macOS';
+    else if (userAgent.includes('Linux')) os = 'Linux';
+    else if (userAgent.includes('Android')) os = 'Android';
+    else if (userAgent.includes('iOS')) os = 'iOS';
+
+    // Device detection
+    if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iOS')) {
+      device = 'Mobile';
+    }
+
+    return { browser, os, device };
+  };
 
   return (
     <div className="space-y-6">
@@ -225,6 +352,120 @@ export function AllUsersAnalytics() {
         </Card>
       </div>
 
+      {/* Global Activity Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Pages Across All Users */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-blue-600" />
+              Most Visited Pages
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topPages.length > 0 ? (
+                topPages.map((page, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{page.page}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {page.uniqueUsers} {page.uniqueUsers === 1 ? 'user' : 'users'}
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="ml-2">
+                      {page.visits} visits
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No page visits recorded</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Features Across All Users */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MousePointerClick className="w-5 h-5 text-green-600" />
+              Most Used Features
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topFeatures.length > 0 ? (
+                topFeatures.map((feature, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{feature.feature}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {feature.uniqueUsers} {feature.uniqueUsers === 1 ? 'user' : 'users'}
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="ml-2">
+                      {feature.uses} uses
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No feature usage recorded</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity Log */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="w-5 h-5 text-purple-600" />
+            Recent User Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {recentActivity.length > 0 ? (
+              recentActivity.map((session) => {
+                const { browser, os, device } = parseUserAgent(session.user_agent || '');
+                return (
+                  <div key={session.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium">{session.user?.full_name || session.user?.email || 'Unknown User'}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDistanceToNow(new Date(session.session_start), { addSuffix: true })}
+                        {session.duration_seconds && (
+                          <>
+                            <span className="mx-1">•</span>
+                            <Clock className="w-3 h-3" />
+                            {Math.floor(session.duration_seconds / 60)}m {session.duration_seconds % 60}s
+                          </>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                        <Globe className="w-3 h-3" />
+                        {browser} on {os}
+                        <span className="mx-1">•</span>
+                        <Smartphone className="w-3 h-3" />
+                        {device}
+                      </div>
+                    </div>
+                    <Badge variant={session.session_end ? 'secondary' : 'default'}>
+                      {session.session_end ? 'Completed' : 'Active'}
+                    </Badge>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-muted-foreground text-center py-4">No recent activity</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Individual User Analytics */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Individual User Activity</h3>
@@ -232,16 +473,24 @@ export function AllUsersAnalytics() {
           {allAnalytics.map((userAnalytics) => (
             <Card key={userAnalytics.user_id} className="overflow-hidden">
               <CardHeader className="bg-muted/50 pb-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <CardTitle className="text-base">{userAnalytics.full_name}</CardTitle>
                     <p className="text-sm text-muted-foreground">{userAnalytics.email}</p>
                   </div>
-                  {userAnalytics.last_login && (
-                    <Badge variant="outline">
-                      Last seen: {format(new Date(userAnalytics.last_login), 'MMM d, yyyy HH:mm')}
+                  <div className="flex gap-2 flex-wrap">
+                    {userAnalytics.last_login ? (
+                      <Badge variant="outline">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {formatDistanceToNow(new Date(userAnalytics.last_login), { addSuffix: true })}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">Never logged in</Badge>
+                    )}
+                    <Badge variant={userAnalytics.total_sessions > 0 ? 'default' : 'secondary'}>
+                      {userAnalytics.total_sessions > 0 ? 'Active' : 'Inactive'}
                     </Badge>
-                  )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-4">
