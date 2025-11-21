@@ -126,21 +126,23 @@ export default function AESODashboards() {
         </div>
 
         <Tabs defaultValue="dashboards" className="w-full">
-          <TabsList className="grid w-full grid-cols-13">
-            <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
-            <TabsTrigger value="features">Features</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="export">Export</TabsTrigger>
-            <TabsTrigger value="builder">Builder</TabsTrigger>
-            <TabsTrigger value="api">API</TabsTrigger>
-            <TabsTrigger value="comparison">Compare</TabsTrigger>
-            <TabsTrigger value="widgets">Widgets</TabsTrigger>
-            <TabsTrigger value="calculations">Calculations</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="mobile">Mobile</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto">
+            <TabsList className="inline-flex w-auto min-w-full">
+              <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
+              <TabsTrigger value="features">Features</TabsTrigger>
+              <TabsTrigger value="alerts">Alerts</TabsTrigger>
+              <TabsTrigger value="reports">Reports</TabsTrigger>
+              <TabsTrigger value="export">Export</TabsTrigger>
+              <TabsTrigger value="builder">Builder</TabsTrigger>
+              <TabsTrigger value="api">API</TabsTrigger>
+              <TabsTrigger value="comparison">Compare</TabsTrigger>
+              <TabsTrigger value="widgets">Widgets</TabsTrigger>
+              <TabsTrigger value="calculations">Calculations</TabsTrigger>
+              <TabsTrigger value="performance">Performance</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="dashboards" className="space-y-6 mt-6">
 
