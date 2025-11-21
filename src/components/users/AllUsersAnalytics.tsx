@@ -38,12 +38,6 @@ interface PageActivity {
   uniqueUsers: number;
 }
 
-interface FeatureActivity {
-  feature: string;
-  uses: number;
-  uniqueUsers: number;
-}
-
 export function AllUsersAnalytics() {
   const [allAnalytics, setAllAnalytics] = useState<UserAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +49,6 @@ export function AllUsersAnalytics() {
     avgSessionDuration: 0
   });
   const [topPages, setTopPages] = useState<PageActivity[]>([]);
-  const [topFeatures, setTopFeatures] = useState<FeatureActivity[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<any>(null);
@@ -197,30 +190,6 @@ export function AllUsersAnalytics() {
 
         pages.sort((a, b) => b.visits - a.visits);
         setTopPages(pages.slice(0, 10));
-      }
-
-      // Fetch global feature activity
-      const { data: featureData } = await supabase
-        .from('user_feature_usage')
-        .select('feature_name, user_id');
-
-      if (featureData) {
-        const featureMap = new Map<string, Set<string>>();
-        featureData.forEach(usage => {
-          if (!featureMap.has(usage.feature_name)) {
-            featureMap.set(usage.feature_name, new Set());
-          }
-          featureMap.get(usage.feature_name)!.add(usage.user_id);
-        });
-
-        const features: FeatureActivity[] = Array.from(featureMap.entries()).map(([feature, users]) => ({
-          feature,
-          uses: featureData.filter(f => f.feature_name === feature).length,
-          uniqueUsers: users.size
-        }));
-
-        features.sort((a, b) => b.uses - a.uses);
-        setTopFeatures(features.slice(0, 10));
       }
 
       // Fetch recent activity grouped by user
@@ -430,7 +399,7 @@ export function AllUsersAnalytics() {
       </div>
 
       {/* Global Activity Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
         {/* Top Pages Across All Users */}
         <Card>
           <CardHeader>
@@ -457,37 +426,6 @@ export function AllUsersAnalytics() {
                 ))
               ) : (
                 <p className="text-muted-foreground text-center py-4">No page visits recorded</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Features Across All Users */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MousePointerClick className="w-5 h-5 text-green-600" />
-              Most Used Features
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {topFeatures.length > 0 ? (
-                topFeatures.map((feature, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{feature.feature}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {feature.uniqueUsers} {feature.uniqueUsers === 1 ? 'user' : 'users'}
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className="ml-2">
-                      {feature.uses} uses
-                    </Badge>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-center py-4">No feature usage recorded</p>
               )}
             </div>
           </CardContent>
