@@ -154,22 +154,39 @@ export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
       }
       
       if (historicalData) {
-        // Build table data from raw hourly data or chart data
-        const tableData = (historicalData.rawHourlyData || historicalData.chartData || []).map((d: any) => ({
+        // Build table data from raw hourly data or existing chart data
+        const sourceForTable = (Array.isArray(historicalData.rawHourlyData) && historicalData.rawHourlyData.length > 0)
+          ? historicalData.rawHourlyData
+          : (historicalData.chartData || []);
+
+        const tableData = sourceForTable.map((d: any) => ({
           timestamp: d.datetime || d.date || d.time,
-          pool_price: d.price?.toFixed(2) || 'N/A',
-          hour: d.hour !== undefined ? d.hour : new Date(d.datetime || d.date).getHours(),
+          pool_price: typeof d.price === 'number' ? d.price.toFixed(2) : d.price ?? 'N/A',
+          hour: d.hour !== undefined
+            ? d.hour
+            : d.datetime || d.date
+              ? new Date(d.datetime || d.date).getHours()
+              : undefined,
         }));
 
-        setData({
-          ...historicalData,
-          chartData: historicalData.chartData || historicalData.rawHourlyData?.map((d: any) => ({
+        // For charts: if the edge function already provided aggregated chartData (monthly/yearly), use it as-is.
+        // For daily/raw views, derive a simple time/price series from rawHourlyData.
+        let chartDataForWidget: any[] = [];
+        if (Array.isArray(historicalData.chartData) && historicalData.chartData.length > 0) {
+          chartDataForWidget = historicalData.chartData;
+        } else if (Array.isArray(historicalData.rawHourlyData) && historicalData.rawHourlyData.length > 0) {
+          chartDataForWidget = historicalData.rawHourlyData.map((d: any) => ({
             time: new Date(d.datetime).toLocaleTimeString(),
             date: d.date,
             price: d.price,
-          })) || [],
-          tableData, // Add structured table data
-          hourlyData: tableData, // Also provide as hourlyData for compatibility
+          }));
+        }
+
+        setData({
+          ...historicalData,
+          chartData: chartDataForWidget,
+          tableData,
+          hourlyData: chartDataForWidget,
         });
       }
     } catch (error) {
