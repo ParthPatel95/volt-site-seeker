@@ -4,13 +4,16 @@ import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Zap, Bell, FileText } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Zap, Bell, FileText, Download, LayoutTemplate, Key } from 'lucide-react';
 import { DashboardCreationWizard, DashboardConfig } from '@/components/aeso/DashboardCreationWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Phase4FeaturesPanel } from '@/components/aeso/Phase4FeaturesPanel';
 import { AlertManagementPanel } from '@/components/aeso/AlertManagementPanel';
 import { ScheduledReportsPanel } from '@/components/aeso/ScheduledReportsPanel';
+import { ExportOptionsPanel } from '@/components/aeso/ExportOptionsPanel';
+import { ReportBuilderPanel } from '@/components/aeso/ReportBuilderPanel';
+import { DataAPIPanel } from '@/components/aeso/DataAPIPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AESODashboards() {
@@ -117,14 +120,14 @@ export default function AESODashboards() {
         </div>
 
         <Tabs defaultValue="dashboards" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboards">
               <LayoutDashboard className="w-4 h-4 mr-2" />
-              My Dashboards
+              Dashboards
             </TabsTrigger>
             <TabsTrigger value="features">
               <Zap className="w-4 h-4 mr-2" />
-              Phase 4 Features
+              Features
             </TabsTrigger>
             <TabsTrigger value="alerts">
               <Bell className="w-4 h-4 mr-2" />
@@ -133,6 +136,18 @@ export default function AESODashboards() {
             <TabsTrigger value="reports">
               <FileText className="w-4 h-4 mr-2" />
               Reports
+            </TabsTrigger>
+            <TabsTrigger value="export">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </TabsTrigger>
+            <TabsTrigger value="builder">
+              <LayoutTemplate className="w-4 h-4 mr-2" />
+              Builder
+            </TabsTrigger>
+            <TabsTrigger value="api">
+              <Key className="w-4 h-4 mr-2" />
+              API
             </TabsTrigger>
           </TabsList>
 
@@ -247,6 +262,18 @@ export default function AESODashboards() {
 
           <TabsContent value="reports" className="mt-6">
             <ScheduledReportsPanel />
+          </TabsContent>
+
+          <TabsContent value="export" className="mt-6">
+            <ExportOptionsPanel />
+          </TabsContent>
+
+          <TabsContent value="builder" className="mt-6">
+            <ReportBuilderPanel />
+          </TabsContent>
+
+          <TabsContent value="api" className="mt-6">
+            <DataAPIPanel />
           </TabsContent>
         </Tabs>
       </div>
