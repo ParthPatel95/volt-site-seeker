@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAESODashboards } from '@/hooks/useAESODashboards';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2 } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Lock } from 'lucide-react';
 import { DashboardCreationWizard, DashboardConfig } from '@/components/aeso/DashboardCreationWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -12,9 +13,27 @@ import { useToast } from '@/hooks/use-toast';
 export default function AESODashboards() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
   const { dashboards, loading, fetchDashboards, deleteDashboard, duplicateDashboard } = useAESODashboards();
   const [searchQuery, setSearchQuery] = useState('');
   const [showWizard, setShowWizard] = useState(false);
+
+  // Check permission
+  if (!permissionsLoading && !hasPermission('feature.aeso-market-hub')) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Lock className="w-16 h-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
+            <p className="text-muted-foreground text-center">
+              You don't have permission to access Energy Dashboards. Please contact admin.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchDashboards();
