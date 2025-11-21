@@ -100,7 +100,7 @@ export default function AESODashboards() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Custom Dashboards
+              Energy Dashboards
             </h1>
             <p className="text-muted-foreground mt-2">
               Create and manage custom analytics dashboards
@@ -139,7 +139,7 @@ export default function AESODashboards() {
               <LayoutDashboard className="w-16 h-16 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No dashboards yet</h3>
               <p className="text-muted-foreground mb-4 text-center">
-                Create your first custom dashboard to start analyzing AESO market data
+                Create your first energy dashboard to start analyzing AESO market data
               </p>
               <Button onClick={() => setShowWizard(true)}>
                 <Plus className="w-4 h-4 mr-2" />

@@ -14,7 +14,7 @@ export function CustomDashboardsPanel() {
             <div>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <LayoutDashboard className="w-6 h-6 text-primary" />
-                Custom Dashboards
+                Energy Dashboards
               </CardTitle>
               <CardDescription className="mt-2">
                 Create personalized analytics dashboards with AESO market data
