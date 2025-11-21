@@ -231,7 +231,7 @@ serve(async (req) => {
       }
     );
   }
-})
+});
 
 async function testERCOTSubscription() {
   console.log('\n=== ERCOT API SUBSCRIPTION TEST ===\n');

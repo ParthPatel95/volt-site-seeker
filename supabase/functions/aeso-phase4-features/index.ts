@@ -50,7 +50,10 @@ Deno.serve(async (req) => {
       const updates = [];
 
       for (const record of batch) {
-        const update: any = { id: record.id };
+        const update: any = { 
+          id: record.id,
+          timestamp: record.timestamp // Required NOT NULL field
+        };
 
         // === POLYNOMIAL FEATURES ===
         // Price squared and cubed (capture non-linear price dynamics)
