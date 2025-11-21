@@ -277,9 +277,28 @@ serve(async (req) => {
       );
     }
 
-    // Validate we have data
+    // Validate we have data - return empty structure if no data instead of error
     if (!historicalData || historicalData.length === 0) {
-      throw new Error('No historical data available from AESO API');
+      console.log('No historical data available from AESO API - returning empty dataset');
+      return new Response(JSON.stringify({
+        chartData: [],
+        rawHourlyData: [],
+        statistics: {
+          average: 0,
+          peak: 0,
+          low: 0,
+          volatility: 0
+        },
+        peakHours: [],
+        distribution: [],
+        seasonalPattern: [],
+        hourlyPattern: [],
+        predictions: null,
+        patterns: null,
+        lastUpdated: new Date().toISOString()
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // For custom timeframe, process the data to include all necessary fields
