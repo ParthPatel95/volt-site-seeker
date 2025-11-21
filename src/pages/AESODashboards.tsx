@@ -4,23 +4,10 @@ import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Zap, Bell, FileText, Download, LayoutTemplate, Key } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2 } from 'lucide-react';
 import { DashboardCreationWizard, DashboardConfig } from '@/components/aeso/DashboardCreationWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Phase4FeaturesPanel } from '@/components/aeso/Phase4FeaturesPanel';
-import { AlertManagementPanel } from '@/components/aeso/AlertManagementPanel';
-import { ScheduledReportsPanel } from '@/components/aeso/ScheduledReportsPanel';
-import { ExportOptionsPanel } from '@/components/aeso/ExportOptionsPanel';
-import { ReportBuilderPanel } from '@/components/aeso/ReportBuilderPanel';
-import { DataAPIPanel } from '@/components/aeso/DataAPIPanel';
-import { ComparativeAnalysisPanel } from '@/components/aeso/ComparativeAnalysisPanel';
-import { AdvancedWidgetsPanel } from '@/components/aeso/AdvancedWidgetsPanel';
-import { CustomCalculationsPanel } from '@/components/aeso/CustomCalculationsPanel';
-import { PerformanceOptimizationPanel } from '@/components/aeso/PerformanceOptimizationPanel';
-import { MobileExperiencePanel } from '@/components/aeso/MobileExperiencePanel';
-import { DashboardAnalyticsPanel } from '@/components/aeso/DashboardAnalyticsPanel';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AESODashboards() {
   const navigate = useNavigate();
@@ -125,27 +112,6 @@ export default function AESODashboards() {
           </Button>
         </div>
 
-        <Tabs defaultValue="dashboards" className="w-full">
-          <div className="w-full overflow-x-auto">
-            <TabsList className="inline-flex w-auto min-w-full">
-              <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
-              <TabsTrigger value="features">Features</TabsTrigger>
-              <TabsTrigger value="alerts">Alerts</TabsTrigger>
-              <TabsTrigger value="reports">Reports</TabsTrigger>
-              <TabsTrigger value="export">Export</TabsTrigger>
-              <TabsTrigger value="builder">Builder</TabsTrigger>
-              <TabsTrigger value="api">API</TabsTrigger>
-              <TabsTrigger value="comparison">Compare</TabsTrigger>
-              <TabsTrigger value="widgets">Widgets</TabsTrigger>
-              <TabsTrigger value="calculations">Calculations</TabsTrigger>
-              <TabsTrigger value="performance">Performance</TabsTrigger>
-              <TabsTrigger value="mobile">Mobile</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="dashboards" className="space-y-6 mt-6">
-
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -243,56 +209,6 @@ export default function AESODashboards() {
             ))}
           </div>
         )}
-          </TabsContent>
-
-          <TabsContent value="features" className="mt-6">
-            <Phase4FeaturesPanel />
-          </TabsContent>
-
-          <TabsContent value="alerts" className="mt-6">
-            <AlertManagementPanel />
-          </TabsContent>
-
-          <TabsContent value="reports" className="mt-6">
-            <ScheduledReportsPanel />
-          </TabsContent>
-
-          <TabsContent value="export" className="mt-6">
-            <ExportOptionsPanel />
-          </TabsContent>
-
-          <TabsContent value="builder" className="mt-6">
-            <ReportBuilderPanel />
-          </TabsContent>
-
-          <TabsContent value="api" className="mt-6">
-            <DataAPIPanel />
-          </TabsContent>
-
-          <TabsContent value="comparison" className="mt-6">
-            <ComparativeAnalysisPanel />
-          </TabsContent>
-
-          <TabsContent value="widgets" className="mt-6">
-            <AdvancedWidgetsPanel />
-          </TabsContent>
-
-          <TabsContent value="calculations" className="mt-6">
-            <CustomCalculationsPanel />
-          </TabsContent>
-
-          <TabsContent value="performance" className="mt-6">
-            <PerformanceOptimizationPanel />
-          </TabsContent>
-
-          <TabsContent value="mobile" className="mt-6">
-            <MobileExperiencePanel />
-          </TabsContent>
-
-          <TabsContent value="analytics" className="mt-6">
-            <DashboardAnalyticsPanel />
-          </TabsContent>
-        </Tabs>
       </div>
 
       <DashboardCreationWizard

@@ -17,6 +17,7 @@ import { AlertConfigDialog } from './AlertConfigDialog';
 import { AIAssistantSidebar } from './AIAssistantSidebar';
 import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
 import { QuickSuggestionsPanel } from './QuickSuggestionsPanel';
+import { DashboardToolbar } from './DashboardToolbar';
 import { useToast } from '@/hooks/use-toast';
 
 interface DashboardViewerProps {
@@ -142,7 +143,7 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
         <div className="flex items-center gap-2 flex-wrap">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </Button>
@@ -214,14 +215,6 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
               <Button 
                 variant="outline" 
                 size="icon" 
-                onClick={() => setAlertDialogOpen(true)}
-                title="Configure Alerts"
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
                 onClick={() => setShareDialogOpen(true)}
                 title="Share Dashboard"
               >
@@ -239,6 +232,18 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
           )}
         </div>
       </div>
+
+      {/* Advanced Dashboard Toolbar */}
+      {!isPublicView && dashboard?.id && (
+        <div className="flex items-center justify-end">
+          <DashboardToolbar 
+            dashboardId={dashboard.id}
+            market={market}
+            onExport={handleExport}
+            onAlert={() => setAlertDialogOpen(true)}
+          />
+        </div>
+      )}
 
       {/* AI Insights Panel */}
       {!isPublicView && dashboard?.id && (
