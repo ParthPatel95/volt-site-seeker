@@ -18,7 +18,11 @@ export default function AESODashboards() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showWizard, setShowWizard] = useState(false);
 
-  // Check permission
+  useEffect(() => {
+    fetchDashboards();
+  }, []);
+
+  // Check permission after hooks
   if (!permissionsLoading && !hasPermission('feature.energy-dashboards')) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -34,10 +38,6 @@ export default function AESODashboards() {
       </div>
     );
   }
-
-  useEffect(() => {
-    fetchDashboards();
-  }, []);
 
   const filteredDashboards = dashboards.filter(dashboard =>
     dashboard.dashboard_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
