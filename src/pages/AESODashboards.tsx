@@ -19,7 +19,7 @@ export default function AESODashboards() {
   const [showWizard, setShowWizard] = useState(false);
 
   // Check permission
-  if (!permissionsLoading && !hasPermission('feature.aeso-market-hub')) {
+  if (!permissionsLoading && !hasPermission('feature.energy-dashboards')) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="max-w-md">
