@@ -67,7 +67,7 @@ export function AESOHistoricalPricing() {
   } = useAESOHistoricalPricing();
 
   const [uptimePercentage, setUptimePercentage] = useState('95');
-  const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365'>('30');
+  const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365' | '730' | '1095' | '1460'>('30');
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
@@ -2202,7 +2202,7 @@ export function AESOHistoricalPricing() {
                     </label>
                     <Select 
                       value={timePeriod} 
-                      onValueChange={(value: '30' | '90' | '180' | '365') => setTimePeriod(value)}
+                      onValueChange={(value: '30' | '90' | '180' | '365' | '730' | '1095' | '1460') => setTimePeriod(value)}
                       disabled={loadingCustomPeriod}
                     >
                       <SelectTrigger>
@@ -2213,6 +2213,9 @@ export function AESOHistoricalPricing() {
                         <SelectItem value="90">Last 90 days</SelectItem>
                         <SelectItem value="180">Last 180 days</SelectItem>
                         <SelectItem value="365">Last year</SelectItem>
+                        <SelectItem value="730">Last 2 years</SelectItem>
+                        <SelectItem value="1095">Last 3 years</SelectItem>
+                        <SelectItem value="1460">Last 4 years</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
