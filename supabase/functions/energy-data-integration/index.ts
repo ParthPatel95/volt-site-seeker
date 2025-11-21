@@ -102,11 +102,135 @@ async function getERCOTAuthToken(): Promise<string | null> {
 
 async function fetchERCOTData() {
   const apiKey = Deno.env.get('ERCOT_API_KEY') || '';
-  if (!apiKey) return { pricing: undefined, loadData: undefined, generationMix: undefined };
+  if (!apiKey) {
+    console.warn('⚠️ ERCOT API key not configured');
+    return { pricing: undefined, loadData: undefined, generationMix: undefined };
+  }
+  
   const authToken = await getERCOTAuthToken();
-  if (!authToken) return { pricing: undefined, loadData: undefined, generationMix: undefined };
-  // Simplified - returns minimal data
-  return { pricing: undefined, loadData: undefined, generationMix: undefined };
+  if (!authToken) {
+    console.warn('⚠️ ERCOT authentication failed');
+    return { pricing: undefined, loadData: undefined, generationMix: undefined };
+  }
+
+  console.log('🔄 Fetching ERCOT data...');
+  
+  const headers = {
+    'Ocp-Apim-Subscription-Key': apiKey,
+    'Authorization': `Bearer ${authToken}`,
+    'Accept': 'application/json',
+    'User-Agent': 'LovableEnergy/1.0'
+  };
+
+  try {
+    // Fetch Settlement Point Prices (Real-Time)
+    const pricingUrl = 'https://api.ercot.com/api/public-reports/np6-788-cd/spp_hrly_avrg_agg';
+    const loadUrl = 'https://api.ercot.com/api/public-reports/np3-565-cd/lf_by_model_weather_zone';
+    const genMixUrl = 'https://api.ercot.com/api/public-reports/np6-345-cd/fuel_mix';
+
+    const [pricingRes, loadRes, genMixRes] = await Promise.allSettled([
+      fetch(pricingUrl, { headers }),
+      fetch(loadUrl, { headers }),
+      fetch(genMixUrl, { headers })
+    ]);
+
+    let pricing, loadData, generationMix;
+
+    // Process pricing data
+    if (pricingRes.status === 'fulfilled' && pricingRes.value.ok) {
+      try {
+        const pricingData = await pricingRes.value.json();
+        console.log('✅ ERCOT pricing data fetched');
+        
+        // Extract latest pricing
+        if (pricingData.data && pricingData.data.length > 0) {
+          const latest = pricingData.data[0];
+          const prices = pricingData.data.slice(0, 24).map((d: any) => parseFloat(d.settlementPointPrice || 0));
+          
+          pricing = {
+            current_price: parseFloat(latest.settlementPointPrice || 0),
+            average_price: prices.reduce((a: number, b: number) => a + b, 0) / prices.length,
+            peak_price: Math.max(...prices),
+            off_peak_price: Math.min(...prices),
+            market_conditions: parseFloat(latest.settlementPointPrice || 0) > 100 ? 'high' : 'normal',
+            timestamp: new Date().toISOString(),
+            source: 'ercot_api_spp'
+          };
+        }
+      } catch (error) {
+        console.error('Error parsing ERCOT pricing:', error);
+      }
+    } else {
+      console.warn('⚠️ ERCOT pricing fetch failed:', pricingRes.status === 'fulfilled' ? pricingRes.value.status : 'rejected');
+    }
+
+    // Process load data
+    if (loadRes.status === 'fulfilled' && loadRes.value.ok) {
+      try {
+        const loadDataRaw = await loadRes.value.json();
+        console.log('✅ ERCOT load data fetched');
+        
+        if (loadDataRaw.data && loadDataRaw.data.length > 0) {
+          const latest = loadDataRaw.data[0];
+          loadData = {
+            current_demand_mw: parseFloat(latest.systemLoad || 0),
+            peak_forecast_mw: parseFloat(latest.peakDemand || latest.systemLoad || 0) * 1.15,
+            reserve_margin: 15,
+            timestamp: new Date().toISOString(),
+            source: 'ercot_api_load'
+          };
+        }
+      } catch (error) {
+        console.error('Error parsing ERCOT load:', error);
+      }
+    } else {
+      console.warn('⚠️ ERCOT load fetch failed:', loadRes.status === 'fulfilled' ? loadRes.value.status : 'rejected');
+    }
+
+    // Process generation mix
+    if (genMixRes.status === 'fulfilled' && genMixRes.value.ok) {
+      try {
+        const genMixData = await genMixRes.value.json();
+        console.log('✅ ERCOT generation mix fetched');
+        
+        if (genMixData.data && genMixData.data.length > 0) {
+          const latest = genMixData.data[0];
+          const totalGen = parseFloat(latest.totalGeneration || 0);
+          
+          generationMix = {
+            total_generation_mw: totalGen,
+            coal_mw: parseFloat(latest.coal || 0),
+            natural_gas_mw: parseFloat(latest.gas || 0),
+            nuclear_mw: parseFloat(latest.nuclear || 0),
+            wind_mw: parseFloat(latest.wind || 0),
+            solar_mw: parseFloat(latest.solar || 0),
+            hydro_mw: parseFloat(latest.hydro || 0),
+            other_mw: parseFloat(latest.other || 0),
+            renewable_percentage: totalGen > 0 
+              ? ((parseFloat(latest.wind || 0) + parseFloat(latest.solar || 0) + parseFloat(latest.hydro || 0)) / totalGen * 100)
+              : 0,
+            timestamp: new Date().toISOString(),
+            source: 'ercot_api_fuel_mix'
+          };
+        }
+      } catch (error) {
+        console.error('Error parsing ERCOT generation mix:', error);
+      }
+    } else {
+      console.warn('⚠️ ERCOT generation mix fetch failed:', genMixRes.status === 'fulfilled' ? genMixRes.value.status : 'rejected');
+    }
+
+    console.log('ERCOT data summary:', {
+      hasPricing: !!pricing,
+      hasLoad: !!loadData,
+      hasGenMix: !!generationMix
+    });
+
+    return { pricing, loadData, generationMix };
+  } catch (error) {
+    console.error('❌ Error fetching ERCOT data:', error);
+    return { pricing: undefined, loadData: undefined, generationMix: undefined };
+  }
 }
 
 async function fetchSPPData() {
