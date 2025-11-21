@@ -21,7 +21,7 @@ import {
 
 // Define navigation items with priorities for mobile
 const navigationItems = [
-  { id: 'dashboard', path: '/app', icon: Home, label: 'Dashboard', priority: 1 },
+  { id: 'dashboard', path: '/app', icon: Home, label: 'Home', priority: 1 },
   { id: 'search', path: '/app/global-search', icon: Search, label: 'Search', priority: 2 },
   { id: 'power', path: '/app/power-infrastructure', icon: Factory, label: 'Power', priority: 3 },
   { id: 'btc', path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Lab', priority: 4 },

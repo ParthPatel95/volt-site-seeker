@@ -157,7 +157,7 @@ export function DashboardCreationWizard({ open, onOpenChange, onCreate }: Dashbo
     <Dialog open={open} onOpenChange={(open) => { onOpenChange(open); if (!open) handleReset(); }}>
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Create Custom Dashboard</DialogTitle>
+          <DialogTitle>Create Energy Dashboard</DialogTitle>
           <DialogDescription>
             Step {step} of 3: {step === 1 ? 'Basic Info' : step === 2 ? 'Select Market' : 'Select Widgets'}
           </DialogDescription>
