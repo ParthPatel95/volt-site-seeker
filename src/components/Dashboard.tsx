@@ -171,8 +171,12 @@ export const Dashboard = () => {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-muted-foreground">ERCOT (Texas)</p>
                   <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                    {ercotPricing ? `$${ercotPricing.current_price.toFixed(2)}` : (
+                    {isLoading ? (
                       <span className="text-muted-foreground">Loading...</span>
+                    ) : ercotPricing ? (
+                      `$${ercotPricing.current_price.toFixed(2)}`
+                    ) : (
+                      <span className="text-muted-foreground">Data unavailable</span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">per MWh</p>
