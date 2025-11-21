@@ -51,7 +51,7 @@ export function AllUsersAnalytics() {
       const { data: sessions, error: sessionsError } = await supabase
         .from('user_sessions')
         .select('user_id')
-        .order('login_at', { ascending: false });
+        .order('session_start', { ascending: false });
 
       if (sessionsError) throw sessionsError;
 
