@@ -57,6 +57,9 @@ export function AllUsersAnalytics() {
   const [topPages, setTopPages] = useState<PageActivity[]>([]);
   const [topFeatures, setTopFeatures] = useState<FeatureActivity[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     fetchAllAnalytics();
@@ -192,7 +195,7 @@ export function AllUsersAnalytics() {
         setTopFeatures(features.slice(0, 10));
       }
 
-      // Fetch recent activity
+      // Fetch recent activity grouped by user
       const { data: recentSessions } = await supabase
         .from('user_sessions')
         .select(`
@@ -204,24 +207,50 @@ export function AllUsersAnalytics() {
           user_agent
         `)
         .order('session_start', { ascending: false })
-        .limit(10);
+        .limit(50);
 
       if (recentSessions) {
-        const sessionsWithUsers = await Promise.all(
-          recentSessions.map(async (session) => {
+        // Group by user
+        const userSessionMap = new Map<string, any[]>();
+        recentSessions.forEach(session => {
+          if (!userSessionMap.has(session.user_id)) {
+            userSessionMap.set(session.user_id, []);
+          }
+          userSessionMap.get(session.user_id)!.push(session);
+        });
+
+        // Get user data for each unique user
+        const groupedActivity = await Promise.all(
+          Array.from(userSessionMap.entries()).map(async ([userId, sessions]) => {
             const { data: userData } = await supabase
               .from('profiles')
               .select('email, full_name')
-              .eq('id', session.user_id)
+              .eq('id', userId)
               .single();
 
+            const latestSession = sessions[0];
+            const totalSessions = sessions.length;
+            const { browser, os, device } = parseUserAgent(latestSession.user_agent || '');
+
             return {
-              ...session,
-              user: userData
+              user_id: userId,
+              user: userData,
+              sessions,
+              latestSession,
+              totalSessions,
+              browser,
+              os,
+              device
             };
           })
         );
-        setRecentActivity(sessionsWithUsers);
+
+        // Sort by most recent activity
+        groupedActivity.sort((a, b) => 
+          new Date(b.latestSession.session_start).getTime() - new Date(a.latestSession.session_start).getTime()
+        );
+
+        setRecentActivity(groupedActivity.slice(0, 10));
       }
     } catch (error) {
       console.error('Error fetching all analytics:', error);
@@ -278,6 +307,54 @@ export function AllUsersAnalytics() {
     }
 
     return { browser, os, device };
+  };
+
+  const fetchUserDetails = async (userId: string) => {
+    setLoadingDetails(true);
+    try {
+      // Fetch all sessions for this user
+      const { data: sessions } = await supabase
+        .from('user_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('session_start', { ascending: false });
+
+      // Fetch page visits
+      const { data: pageVisits } = await supabase
+        .from('user_page_visits')
+        .select('*')
+        .eq('user_id', userId)
+        .order('visited_at', { ascending: false })
+        .limit(20);
+
+      // Fetch feature usage
+      const { data: featureUsage } = await supabase
+        .from('user_feature_usage')
+        .select('*')
+        .eq('user_id', userId)
+        .order('used_at', { ascending: false })
+        .limit(20);
+
+      setUserDetails({
+        sessions: sessions || [],
+        pageVisits: pageVisits || [],
+        featureUsage: featureUsage || []
+      });
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleUserClick = (userId: string) => {
+    if (expandedUser === userId) {
+      setExpandedUser(null);
+      setUserDetails(null);
+    } else {
+      setExpandedUser(userId);
+      fetchUserDetails(userId);
+    }
   };
 
   return (
@@ -428,34 +505,119 @@ export function AllUsersAnalytics() {
         <CardContent>
           <div className="space-y-3">
             {recentActivity.length > 0 ? (
-              recentActivity.map((session) => {
-                const { browser, os, device } = parseUserAgent(session.user_agent || '');
+              recentActivity.map((userActivity) => {
+                const isExpanded = expandedUser === userActivity.user_id;
                 return (
-                  <div key={session.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium">{session.user?.full_name || session.user?.email || 'Unknown User'}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDistanceToNow(new Date(session.session_start), { addSuffix: true })}
-                        {session.duration_seconds && (
-                          <>
-                            <span className="mx-1">•</span>
-                            <Clock className="w-3 h-3" />
-                            {Math.floor(session.duration_seconds / 60)}m {session.duration_seconds % 60}s
-                          </>
-                        )}
+                  <div key={userActivity.user_id} className="border rounded-lg overflow-hidden">
+                    <div 
+                      className="flex items-center justify-between p-3 bg-muted/50 hover:bg-muted/70 cursor-pointer transition-colors"
+                      onClick={() => handleUserClick(userActivity.user_id)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium">{userActivity.user?.full_name || userActivity.user?.email || 'Unknown User'}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
+                          <Calendar className="w-3 h-3" />
+                          {formatDistanceToNow(new Date(userActivity.latestSession.session_start), { addSuffix: true })}
+                          <span className="mx-1">•</span>
+                          <Badge variant="outline" className="text-xs">
+                            {userActivity.totalSessions} {userActivity.totalSessions === 1 ? 'session' : 'sessions'}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                          <Globe className="w-3 h-3" />
+                          {userActivity.browser} on {userActivity.os}
+                          <span className="mx-1">•</span>
+                          <Smartphone className="w-3 h-3" />
+                          {userActivity.device}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                        <Globe className="w-3 h-3" />
-                        {browser} on {os}
-                        <span className="mx-1">•</span>
-                        <Smartphone className="w-3 h-3" />
-                        {device}
+                      <div className="flex items-center gap-2">
+                        <Badge variant={userActivity.latestSession.session_end ? 'secondary' : 'default'}>
+                          {userActivity.latestSession.session_end ? 'Inactive' : 'Active'}
+                        </Badge>
+                        <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-                    <Badge variant={session.session_end ? 'secondary' : 'default'}>
-                      {session.session_end ? 'Completed' : 'Active'}
-                    </Badge>
+                    
+                    {isExpanded && (
+                      <div className="p-4 bg-background border-t">
+                        {loadingDetails ? (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        ) : userDetails ? (
+                          <div className="space-y-4">
+                            {/* Login Sessions */}
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                Login Sessions ({userDetails.sessions.length})
+                              </h4>
+                              <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {userDetails.sessions.map((session: any) => (
+                                  <div key={session.id} className="text-xs p-2 bg-muted/30 rounded flex items-center justify-between">
+                                    <span>{format(new Date(session.session_start), 'MMM d, yyyy h:mm a')}</span>
+                                    {session.duration_seconds && (
+                                      <span className="text-muted-foreground">
+                                        {Math.floor(session.duration_seconds / 60)}m {session.duration_seconds % 60}s
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Pages Visited */}
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                <Eye className="w-4 h-4" />
+                                Pages Visited ({userDetails.pageVisits.length})
+                              </h4>
+                              <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {userDetails.pageVisits.length > 0 ? (
+                                  userDetails.pageVisits.map((visit: any) => (
+                                    <div key={visit.id} className="text-xs p-2 bg-muted/30 rounded flex items-center justify-between">
+                                      <span className="font-mono truncate flex-1">{visit.page_path}</span>
+                                      <span className="text-muted-foreground ml-2">
+                                        {format(new Date(visit.visited_at), 'MMM d, h:mm a')}
+                                      </span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">No pages visited</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Features Used */}
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                <MousePointerClick className="w-4 h-4" />
+                                Features Used ({userDetails.featureUsage.length})
+                              </h4>
+                              <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {userDetails.featureUsage.length > 0 ? (
+                                  userDetails.featureUsage.map((usage: any) => (
+                                    <div key={usage.id} className="text-xs p-2 bg-muted/30 rounded flex items-center justify-between">
+                                      <span className="font-medium">{usage.feature_name}</span>
+                                      <span className="text-muted-foreground ml-2">
+                                        {format(new Date(usage.used_at), 'MMM d, h:mm a')}
+                                      </span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">No features used</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                 );
               })
