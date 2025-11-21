@@ -61,6 +61,34 @@ export function AllUsersAnalytics() {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  const parseUserAgent = (userAgent: string) => {
+    if (!userAgent) return { browser: 'Unknown', os: 'Unknown', device: 'Desktop' };
+    
+    let browser = 'Unknown';
+    let os = 'Unknown';
+    let device = 'Desktop';
+
+    // Browser detection
+    if (userAgent.includes('Chrome')) browser = 'Chrome';
+    else if (userAgent.includes('Firefox')) browser = 'Firefox';
+    else if (userAgent.includes('Safari')) browser = 'Safari';
+    else if (userAgent.includes('Edge')) browser = 'Edge';
+
+    // OS detection
+    if (userAgent.includes('Windows')) os = 'Windows';
+    else if (userAgent.includes('Mac')) os = 'macOS';
+    else if (userAgent.includes('Linux')) os = 'Linux';
+    else if (userAgent.includes('Android')) os = 'Android';
+    else if (userAgent.includes('iOS')) os = 'iOS';
+
+    // Device detection
+    if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iOS')) {
+      device = 'Mobile';
+    }
+
+    return { browser, os, device };
+  };
+
   useEffect(() => {
     fetchAllAnalytics();
   }, []);
@@ -280,34 +308,6 @@ export function AllUsersAnalytics() {
       </Card>
     );
   }
-
-  const parseUserAgent = (userAgent: string) => {
-    if (!userAgent) return { browser: 'Unknown', os: 'Unknown', device: 'Desktop' };
-    
-    let browser = 'Unknown';
-    let os = 'Unknown';
-    let device = 'Desktop';
-
-    // Browser detection
-    if (userAgent.includes('Chrome')) browser = 'Chrome';
-    else if (userAgent.includes('Firefox')) browser = 'Firefox';
-    else if (userAgent.includes('Safari')) browser = 'Safari';
-    else if (userAgent.includes('Edge')) browser = 'Edge';
-
-    // OS detection
-    if (userAgent.includes('Windows')) os = 'Windows';
-    else if (userAgent.includes('Mac')) os = 'macOS';
-    else if (userAgent.includes('Linux')) os = 'Linux';
-    else if (userAgent.includes('Android')) os = 'Android';
-    else if (userAgent.includes('iOS')) os = 'iOS';
-
-    // Device detection
-    if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iOS')) {
-      device = 'Mobile';
-    }
-
-    return { browser, os, device };
-  };
 
   const fetchUserDetails = async (userId: string) => {
     setLoadingDetails(true);
