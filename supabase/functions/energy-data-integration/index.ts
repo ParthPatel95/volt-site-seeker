@@ -101,161 +101,99 @@ async function getERCOTAuthToken(): Promise<string | null> {
 }
 
 async function fetchERCOTData() {
-  const apiKey = Deno.env.get('ERCOT_API_KEY') || '';
-  if (!apiKey) {
-    console.warn('⚠️ ERCOT API key not configured');
-    return { pricing: undefined, loadData: undefined, generationMix: undefined };
-  }
+  console.log('🔄 Fetching ERCOT data from public dashboard API...');
   
-  const authToken = await getERCOTAuthToken();
-  if (!authToken) {
-    console.warn('⚠️ ERCOT authentication failed');
-    return { pricing: undefined, loadData: undefined, generationMix: undefined };
-  }
-
-  console.log('🔄 Fetching ERCOT data...');
+  // Use ERCOT's public dashboard API which doesn't require authentication
+  const dashboardUrl = 'https://www.ercot.com/api/1/services/read/dashboards/todays-outlook.json';
   
-  const headers = {
-    'Ocp-Apim-Subscription-Key': apiKey,
-    'Authorization': `Bearer ${authToken}`,
-    'Accept': 'application/json',
-    'User-Agent': 'LovableEnergy/1.0'
-  };
-
   try {
-    // Fetch Settlement Point Prices (Real-Time) - Updated endpoints
-    // Using correct ERCOT public reports API structure
-    const pricingUrl = 'https://api.ercot.com/api/public-reports/np6-788-cd/spp_node_zone_hub';
-    const loadUrl = 'https://api.ercot.com/api/public-reports/np3-565-cd/lf_by_model_weather_zone';
-    const genMixUrl = 'https://api.ercot.com/api/public-reports/np6-345-cd/fuel_mix';
+    const response = await fetch(dashboardUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
 
-    const [pricingRes, loadRes, genMixRes] = await Promise.allSettled([
-      fetch(pricingUrl, { headers }),
-      fetch(loadUrl, { headers }),
-      fetch(genMixUrl, { headers })
-    ]);
+    if (!response.ok) {
+      console.warn('⚠️ ERCOT dashboard API returned:', response.status);
+      return { pricing: undefined, loadData: undefined, generationMix: undefined };
+    }
+
+    const data = await response.json();
+    console.log('✅ ERCOT dashboard data fetched successfully');
 
     let pricing, loadData, generationMix;
 
-    // Process pricing data
-    if (pricingRes.status === 'fulfilled' && pricingRes.value.ok) {
-      try {
-        const pricingData = await pricingRes.value.json();
-        console.log('✅ ERCOT pricing data fetched:', pricingData.data?.length || 0, 'records');
-        
-        // Extract latest pricing - ERCOT returns array in data property
-        if (pricingData?.data && Array.isArray(pricingData.data) && pricingData.data.length > 0) {
-          // Filter for HB_HUBAVG (hub average) or take latest record
-          const hubData = pricingData.data.find((d: any) => d.settlement_point_name === 'HB_HUBAVG') || pricingData.data[0];
-          const prices = pricingData.data
-            .filter((d: any) => d.settlement_point_name === 'HB_HUBAVG')
-            .slice(0, 24)
-            .map((d: any) => parseFloat(d.settlement_point_price || 0));
-          
-          const currentPrice = parseFloat(hubData.settlement_point_price || 0);
-          const avgPrice = prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : currentPrice;
-          
-          pricing = {
-            current_price: currentPrice,
-            average_price: avgPrice,
-            peak_price: prices.length > 0 ? Math.max(...prices) : currentPrice * 1.5,
-            off_peak_price: prices.length > 0 ? Math.min(...prices) : currentPrice * 0.7,
-            market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-            timestamp: new Date().toISOString(),
-            source: 'ercot_api_spp'
-          };
-          console.log('✅ ERCOT pricing parsed:', currentPrice, '$/MWh');
-        }
-      } catch (error) {
-        console.error('Error parsing ERCOT pricing:', error);
-      }
-    } else {
-      const status = pricingRes.status === 'fulfilled' ? pricingRes.value.status : 'rejected';
-      console.warn('⚠️ ERCOT pricing fetch failed:', status);
-      if (pricingRes.status === 'fulfilled') {
-        const errorText = await pricingRes.value.text();
-        console.warn('Response:', errorText.slice(0, 200));
-      }
+    // Extract current interval data
+    if (data.current_condition?.point) {
+      const currentPoint = data.current_condition.point;
+      const currentPrice = parseFloat(currentPoint.systemwideaveragepricesettlementpoint || 0);
+      const currentDemand = parseFloat(currentPoint.demand || 0);
+      const currentCapacity = parseFloat(currentPoint.capacity || 0);
+      
+      console.log('📊 ERCOT Current: Price=$' + currentPrice + '/MWh, Demand=' + currentDemand + 'MW, Capacity=' + currentCapacity + 'MW');
+
+      // Calculate pricing metrics from historical intervals
+      const intervals = data.current_condition?.data || [];
+      const recentPrices = intervals
+        .slice(0, 24)
+        .map((i: any) => parseFloat(i.systemwideaveragepricesettlementpoint || 0))
+        .filter((p: number) => p > 0);
+
+      pricing = {
+        current_price: currentPrice,
+        average_price: recentPrices.length > 0 
+          ? recentPrices.reduce((a: number, b: number) => a + b, 0) / recentPrices.length 
+          : currentPrice,
+        peak_price: recentPrices.length > 0 ? Math.max(...recentPrices) : currentPrice * 1.5,
+        off_peak_price: recentPrices.length > 0 ? Math.min(...recentPrices) : currentPrice * 0.7,
+        market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
+        timestamp: new Date().toISOString(),
+        source: 'ercot_dashboard'
+      };
+
+      // Load data
+      const reserveMargin = currentCapacity > 0 
+        ? ((currentCapacity - currentDemand) / currentCapacity * 100) 
+        : 15;
+
+      loadData = {
+        current_demand_mw: currentDemand,
+        peak_forecast_mw: currentCapacity,
+        reserve_margin: Math.round(reserveMargin * 10) / 10,
+        timestamp: new Date().toISOString(),
+        source: 'ercot_dashboard'
+      };
     }
 
-    // Process load data
-    if (loadRes.status === 'fulfilled' && loadRes.value.ok) {
-      try {
-        const loadDataRaw = await loadRes.value.json();
-        console.log('✅ ERCOT load data fetched:', loadDataRaw.data?.length || 0, 'records');
-        
-        if (loadDataRaw?.data && Array.isArray(loadDataRaw.data) && loadDataRaw.data.length > 0) {
-          // Sum all weather zones for total load
-          const latest = loadDataRaw.data[0];
-          const totalLoad = loadDataRaw.data
-            .filter((d: any) => d.delivery_date === latest.delivery_date && d.hour_ending === latest.hour_ending)
-            .reduce((sum: number, d: any) => sum + parseFloat(d.system_total || 0), 0);
-          
-          loadData = {
-            current_demand_mw: totalLoad || parseFloat(latest.system_total || 0),
-            peak_forecast_mw: (totalLoad || parseFloat(latest.system_total || 0)) * 1.15,
-            reserve_margin: 15,
-            timestamp: new Date().toISOString(),
-            source: 'ercot_api_load'
-          };
-          console.log('✅ ERCOT load parsed:', loadData.current_demand_mw, 'MW');
-        }
-      } catch (error) {
-        console.error('Error parsing ERCOT load:', error);
-      }
-    } else {
-      const status = loadRes.status === 'fulfilled' ? loadRes.value.status : 'rejected';
-      console.warn('⚠️ ERCOT load fetch failed:', status);
-      if (loadRes.status === 'fulfilled') {
-        const errorText = await loadRes.value.text();
-        console.warn('Response:', errorText.slice(0, 200));
-      }
-    }
+    // Extract fuel mix from dashboard
+    if (data.fuel_mix) {
+      const fuelMix = data.fuel_mix;
+      const wind = parseFloat(fuelMix.wind || 0);
+      const solar = parseFloat(fuelMix.solar || 0);
+      const coal = parseFloat(fuelMix.coal || 0);
+      const gas = parseFloat(fuelMix.gas || fuelMix['natural gas'] || 0);
+      const nuclear = parseFloat(fuelMix.nuclear || 0);
+      const hydro = parseFloat(fuelMix.hydro || 0);
+      const other = parseFloat(fuelMix.other || 0);
+      const totalGen = wind + solar + coal + gas + nuclear + hydro + other;
 
-    // Process generation mix
-    if (genMixRes.status === 'fulfilled' && genMixRes.value.ok) {
-      try {
-        const genMixData = await genMixRes.value.json();
-        console.log('✅ ERCOT generation mix fetched:', genMixData.data?.length || 0, 'records');
-        
-        if (genMixData?.data && Array.isArray(genMixData.data) && genMixData.data.length > 0) {
-          const latest = genMixData.data[0];
-          
-          // ERCOT fuel mix fields
-          const coal = parseFloat(latest.coal || 0);
-          const gas = parseFloat(latest.gas || 0);
-          const nuclear = parseFloat(latest.nuclear || 0);
-          const wind = parseFloat(latest.wind || 0);
-          const solar = parseFloat(latest.solar || 0);
-          const hydro = parseFloat(latest.hydro || 0);
-          const other = parseFloat(latest.other || 0);
-          const totalGen = coal + gas + nuclear + wind + solar + hydro + other;
-          
-          generationMix = {
-            total_generation_mw: totalGen,
-            coal_mw: coal,
-            natural_gas_mw: gas,
-            nuclear_mw: nuclear,
-            wind_mw: wind,
-            solar_mw: solar,
-            hydro_mw: hydro,
-            other_mw: other,
-            renewable_percentage: totalGen > 0 ? ((wind + solar + hydro) / totalGen * 100) : 0,
-            timestamp: new Date().toISOString(),
-            source: 'ercot_api_fuel_mix'
-          };
-          console.log('✅ ERCOT generation mix parsed:', totalGen, 'MW');
-        }
-      } catch (error) {
-        console.error('Error parsing ERCOT generation mix:', error);
-      }
-    } else {
-      const status = genMixRes.status === 'fulfilled' ? genMixRes.value.status : 'rejected';
-      console.warn('⚠️ ERCOT generation mix fetch failed:', status);
-      if (genMixRes.status === 'fulfilled') {
-        const errorText = await genMixRes.value.text();
-        console.warn('Response:', errorText.slice(0, 200));
-      }
+      generationMix = {
+        total_generation_mw: totalGen,
+        coal_mw: coal,
+        natural_gas_mw: gas,
+        nuclear_mw: nuclear,
+        wind_mw: wind,
+        solar_mw: solar,
+        hydro_mw: hydro,
+        other_mw: other,
+        renewable_percentage: totalGen > 0 ? ((wind + solar + hydro) / totalGen * 100) : 0,
+        timestamp: new Date().toISOString(),
+        source: 'ercot_dashboard'
+      };
+
+      console.log('✅ ERCOT fuel mix: Total=' + totalGen + 'MW, Renewables=' + Math.round(generationMix.renewable_percentage) + '%');
     }
 
     console.log('ERCOT data summary:', {
@@ -264,77 +202,11 @@ async function fetchERCOTData() {
       hasGenMix: !!generationMix
     });
 
-    // If we don't have any data, provide estimated fallback data
-    if (!pricing && !loadData && !generationMix) {
-      console.warn('⚠️ No ERCOT data available from API, using estimated fallback');
-      return {
-        pricing: {
-          current_price: 45,
-          average_price: 42,
-          peak_price: 85,
-          off_peak_price: 25,
-          market_conditions: 'normal',
-          timestamp: new Date().toISOString(),
-          source: 'ercot_estimated'
-        },
-        loadData: {
-          current_demand_mw: 55000,
-          peak_forecast_mw: 75000,
-          reserve_margin: 15,
-          timestamp: new Date().toISOString(),
-          source: 'ercot_estimated'
-        },
-        generationMix: {
-          total_generation_mw: 60000,
-          coal_mw: 8000,
-          natural_gas_mw: 30000,
-          nuclear_mw: 5000,
-          wind_mw: 12000,
-          solar_mw: 3000,
-          hydro_mw: 500,
-          other_mw: 1500,
-          renewable_percentage: 25.8,
-          timestamp: new Date().toISOString(),
-          source: 'ercot_estimated'
-        }
-      };
-    }
-
     return { pricing, loadData, generationMix };
+
   } catch (error) {
     console.error('❌ Error fetching ERCOT data:', error);
-    // Return estimated data on error
-    return {
-      pricing: {
-        current_price: 45,
-        average_price: 42,
-        peak_price: 85,
-        off_peak_price: 25,
-        market_conditions: 'normal',
-        timestamp: new Date().toISOString(),
-        source: 'ercot_estimated'
-      },
-      loadData: {
-        current_demand_mw: 55000,
-        peak_forecast_mw: 75000,
-        reserve_margin: 15,
-        timestamp: new Date().toISOString(),
-        source: 'ercot_estimated'
-      },
-      generationMix: {
-        total_generation_mw: 60000,
-        coal_mw: 8000,
-        natural_gas_mw: 30000,
-        nuclear_mw: 5000,
-        wind_mw: 12000,
-        solar_mw: 3000,
-        hydro_mw: 500,
-        other_mw: 1500,
-        renewable_percentage: 25.8,
-        timestamp: new Date().toISOString(),
-        source: 'ercot_estimated'
-      }
-    };
+    return { pricing: undefined, loadData: undefined, generationMix: undefined };
   }
 }
 
