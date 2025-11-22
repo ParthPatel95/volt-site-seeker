@@ -101,113 +101,306 @@ async function getERCOTAuthToken(): Promise<string | null> {
 }
 
 async function fetchERCOTData() {
-  console.log('🔄 Fetching ERCOT data from public dashboard API...');
-  
-  // Use ERCOT's public dashboard API which doesn't require authentication
-  const dashboardUrl = 'https://www.ercot.com/api/1/services/read/dashboards/todays-outlook.json';
-  
-  try {
-    const response = await fetch(dashboardUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
+  console.log('🔄 Fetching ERCOT data from ERCOT EMIL API (with HTML fallback)...');
+
+  let pricing: any | undefined;
+  let loadData: any | undefined;
+  let generationMix: any | undefined;
+
+  const apiKey = (
+    Deno.env.get('ERCOT_API_KEY') ||
+    Deno.env.get('ERCOT_API_KEY_SECONDARY') ||
+    ''
+  ).trim();
+
+  // --- Primary: EMIL JSON API ---
+  if (apiKey) {
+    try {
+      const apiPricing = await fetchERCOTPricingFromEmil(apiKey);
+      if (apiPricing) {
+        pricing = apiPricing;
       }
-    });
-
-    if (!response.ok) {
-      console.warn('⚠️ ERCOT dashboard API returned:', response.status);
-      return { pricing: undefined, loadData: undefined, generationMix: undefined };
+    } catch (error) {
+      console.error('❌ ERCOT EMIL pricing API error:', error);
     }
+  } else {
+    console.warn('⚠️ ERCOT API key not configured; skipping EMIL pricing fetch');
+  }
 
-    const data = await response.json();
-    console.log('✅ ERCOT dashboard data fetched successfully');
-
-    let pricing, loadData, generationMix;
-
-    // Extract current interval data
-    if (data.current_condition?.point) {
-      const currentPoint = data.current_condition.point;
-      const currentPrice = parseFloat(currentPoint.systemwideaveragepricesettlementpoint || 0);
-      const currentDemand = parseFloat(currentPoint.demand || 0);
-      const currentCapacity = parseFloat(currentPoint.capacity || 0);
-      
-      console.log('📊 ERCOT Current: Price=$' + currentPrice + '/MWh, Demand=' + currentDemand + 'MW, Capacity=' + currentCapacity + 'MW');
-
-      // Calculate pricing metrics from historical intervals
-      const intervals = data.current_condition?.data || [];
-      const recentPrices = intervals
-        .slice(0, 24)
-        .map((i: any) => parseFloat(i.systemwideaveragepricesettlementpoint || 0))
-        .filter((p: number) => p > 0);
-
-      pricing = {
-        current_price: currentPrice,
-        average_price: recentPrices.length > 0 
-          ? recentPrices.reduce((a: number, b: number) => a + b, 0) / recentPrices.length 
-          : currentPrice,
-        peak_price: recentPrices.length > 0 ? Math.max(...recentPrices) : currentPrice * 1.5,
-        off_peak_price: recentPrices.length > 0 ? Math.min(...recentPrices) : currentPrice * 0.7,
-        market_conditions: currentPrice > 100 ? 'high' : currentPrice > 50 ? 'normal' : 'low',
-        timestamp: new Date().toISOString(),
-        source: 'ercot_dashboard'
-      };
-
-      // Load data
-      const reserveMargin = currentCapacity > 0 
-        ? ((currentCapacity - currentDemand) / currentCapacity * 100) 
-        : 15;
-
-      loadData = {
-        current_demand_mw: currentDemand,
-        peak_forecast_mw: currentCapacity,
-        reserve_margin: Math.round(reserveMargin * 10) / 10,
-        timestamp: new Date().toISOString(),
-        source: 'ercot_dashboard'
-      };
+  // --- Fallback: HTML scrape from ERCOT public website ---
+  if (!pricing) {
+    try {
+      const htmlPricing = await fetchERCOTPricingFromHtml();
+      if (htmlPricing) {
+        pricing = htmlPricing;
+      }
+    } catch (error) {
+      console.error('❌ ERCOT HTML pricing fallback error:', error);
     }
+  }
 
-    // Extract fuel mix from dashboard
-    if (data.fuel_mix) {
-      const fuelMix = data.fuel_mix;
-      const wind = parseFloat(fuelMix.wind || 0);
-      const solar = parseFloat(fuelMix.solar || 0);
-      const coal = parseFloat(fuelMix.coal || 0);
-      const gas = parseFloat(fuelMix.gas || fuelMix['natural gas'] || 0);
-      const nuclear = parseFloat(fuelMix.nuclear || 0);
-      const hydro = parseFloat(fuelMix.hydro || 0);
-      const other = parseFloat(fuelMix.other || 0);
-      const totalGen = wind + solar + coal + gas + nuclear + hydro + other;
-
-      generationMix = {
-        total_generation_mw: totalGen,
-        coal_mw: coal,
-        natural_gas_mw: gas,
-        nuclear_mw: nuclear,
-        wind_mw: wind,
-        solar_mw: solar,
-        hydro_mw: hydro,
-        other_mw: other,
-        renewable_percentage: totalGen > 0 ? ((wind + solar + hydro) / totalGen * 100) : 0,
-        timestamp: new Date().toISOString(),
-        source: 'ercot_dashboard'
-      };
-
-      console.log('✅ ERCOT fuel mix: Total=' + totalGen + 'MW, Renewables=' + Math.round(generationMix.renewable_percentage) + '%');
-    }
-
-    console.log('ERCOT data summary:', {
-      hasPricing: !!pricing,
-      hasLoad: !!loadData,
-      hasGenMix: !!generationMix
-    });
-
-    return { pricing, loadData, generationMix };
-
-  } catch (error) {
-    console.error('❌ Error fetching ERCOT data:', error);
+  if (!pricing) {
+    console.error('❌ ERCOT pricing unavailable from all sources');
     return { pricing: undefined, loadData: undefined, generationMix: undefined };
   }
+
+  // For now we do not have reliable public APIs for actual real‑time load & fuel mix via EMIL.
+  // Frontend already handles missing loadData / generationMix gracefully.
+  console.log('ERCOT pricing obtained from source:', pricing.source);
+
+  return { pricing, loadData, generationMix };
+}
+
+async function fetchERCOTPricingFromEmil(apiKey: string) {
+  console.log('📡 Fetching ERCOT Settlement Point Prices from EMIL API…');
+
+  const token = await getERCOTAuthToken().catch((error) => {
+    console.error('ERCOT OAuth token fetch failed (will try without token):', error);
+    return null;
+  });
+
+  const headers: Record<string, string> = {
+    'Ocp-Apim-Subscription-Key': apiKey,
+    'Accept': 'application/json',
+    'Cache-Control': 'no-cache',
+    'User-Agent': 'LovableEnergy/1.0',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const url =
+    'https://api.ercot.com/api/public-reports/np6-788-cd/spp_hrly_avrg_agg';
+
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
+
+  try {
+    const res = await fetch(url, { headers, signal: ctrl.signal });
+    const text = await res.text();
+
+    if (!res.ok) {
+      console.warn(
+        '⚠️ ERCOT EMIL pricing API returned',
+        res.status,
+        res.statusText,
+        'body preview:',
+        text.slice(0, 300),
+      );
+      return null;
+    }
+
+    let json: any;
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      console.error('❌ ERCOT EMIL pricing JSON parse error:', e);
+      console.error('Response preview:', text.slice(0, 300));
+      return null;
+    }
+
+    const rawRows: any[] =
+      Array.isArray(json) ? json : json?.data || json?._embedded?.results || [];
+
+    console.log('ERCOT EMIL pricing raw rows:', rawRows.length);
+
+    if (!rawRows.length) {
+      return null;
+    }
+
+    type NormalizedRow = {
+      deliveryTime: Date;
+      settlementPoint: string;
+      price: number;
+    };
+
+    const normalized: NormalizedRow[] = rawRows
+      .map((row: any): NormalizedRow | null => {
+        const dateStr: string =
+          row.DeliveryDate ||
+          row.DELIVERYDATE ||
+          row.DlvryDt ||
+          row.DELIVERY_DATE ||
+          '';
+        const hourStr: string =
+          row.DeliveryHour ||
+          row.DLVRYHR ||
+          row.HourEnding ||
+          row.HOUR ||
+          '';
+        const settlementPoint: string =
+          row.SettlementPoint ||
+          row.SPP_NODE ||
+          row.SettlementPointName ||
+          row.SPP_SETTLEMENT_POINT ||
+          '';
+
+        const priceRaw =
+          row.SettlementPointPrice ??
+          row.SPP ??
+          row.SPPPrice ??
+          row.Price ??
+          row.SETTLEMENTPOINTPRICE ??
+          row.SETTLEMENT_POINT_PRICE;
+
+        const price = parseFloat(String(priceRaw ?? 'NaN'));
+        if (!Number.isFinite(price)) return null;
+
+        if (!dateStr || !hourStr) return null;
+
+        let hour = parseInt(String(hourStr), 10);
+        if (!Number.isFinite(hour)) {
+          const match = String(hourStr).match(/\d+/);
+          if (!match) return null;
+          hour = parseInt(match[0], 10);
+        }
+
+        const [month, day, year] = dateStr.split(/[/-]/).map((p) => parseInt(p, 10));
+        if (!year || !month || !day) return null;
+
+        const deliveryTime = new Date(Date.UTC(year, month - 1, day, hour - 1, 0, 0));
+
+        return { deliveryTime, settlementPoint, price };
+      })
+      .filter((r: NormalizedRow | null): r is NormalizedRow => !!r);
+
+    if (!normalized.length) {
+      console.warn('⚠️ No normalizable ERCOT EMIL rows found');
+      return null;
+    }
+
+    const hubRows = normalized.filter(
+      (r) => r.settlementPoint === 'HB_HUBAVG',
+    );
+
+    if (!hubRows.length) {
+      console.warn('⚠️ No HB_HUBAVG rows in ERCOT EMIL response');
+      return null;
+    }
+
+    hubRows.sort(
+      (a, b) => a.deliveryTime.getTime() - b.deliveryTime.getTime(),
+    );
+
+    const latest = hubRows[hubRows.length - 1];
+    const recent = hubRows.slice(-24);
+    const prices = recent.map((r) => r.price).filter((p) => p > 0);
+
+    const average_price =
+      prices.length > 0
+        ? prices.reduce((a, b) => a + b, 0) / prices.length
+        : latest.price;
+    const peak_price = prices.length > 0 ? Math.max(...prices) : latest.price;
+    const off_peak_price =
+      prices.length > 0 ? Math.min(...prices) : latest.price * 0.7;
+
+    const market_conditions =
+      latest.price > 150 ? 'high' : latest.price > 75 ? 'normal' : 'low';
+
+    return {
+      current_price: latest.price,
+      average_price,
+      peak_price,
+      off_peak_price,
+      market_conditions,
+      timestamp: latest.deliveryTime.toISOString(),
+      source: 'ercot_emil_spp_hrly_avrg_agg',
+    };
+  } catch (error) {
+    console.error('❌ ERCOT EMIL pricing fetch error:', error);
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchERCOTPricingFromHtml() {
+  console.log('📄 Fetching ERCOT pricing from DAM SPP HTML fallback…');
+
+  const damSppUrl = 'https://www.ercot.com/content/cdr/html/dam_spp.html';
+  const res = await fetch(damSppUrl, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    },
+  });
+
+  if (!res.ok) {
+    console.error('❌ Failed to fetch DAM SPP HTML:', res.status, res.statusText);
+    return null;
+  }
+
+  const html = await res.text();
+  const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs) || [];
+  console.log('📋 ERCOT DAM SPP rows found:', rows.length);
+
+  type HourlyPoint = { timestamp: Date; price: number };
+  const hourly: HourlyPoint[] = [];
+
+  for (const row of rows) {
+    const cells = row.match(/<td[^>]*>(.*?)<\/td>/gs) || [];
+    if (cells.length < 3) continue;
+
+    const cellValues = cells.map((cell) =>
+      cell.replace(/<[^>]*>/g, '').trim(),
+    );
+    const dateStr = cellValues[0];
+    const hourStr = cellValues[1];
+
+    const priceStr = cellValues
+      .slice(2)
+      .find((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0);
+
+    if (!dateStr || !hourStr || !priceStr) continue;
+
+    const price = parseFloat(priceStr);
+    if (!Number.isFinite(price)) continue;
+
+    try {
+      const [month, day, year] = dateStr.split(/[/-]/).map((p) => parseInt(p, 10));
+      let hour = parseInt(hourStr, 10);
+      if (!Number.isFinite(hour)) {
+        const m = hourStr.match(/\d+/);
+        if (m) hour = parseInt(m[0], 10);
+      }
+      const ts = new Date(Date.UTC(year, month - 1, day, hour - 1, 0, 0));
+      hourly.push({ timestamp: ts, price });
+    } catch {
+      // Skip invalid dates
+    }
+  }
+
+  if (!hourly.length) {
+    console.warn('⚠️ No hourly price points parsed from DAM SPP HTML');
+    return null;
+  }
+
+  hourly.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  const latest = hourly[hourly.length - 1];
+  const recent = hourly.slice(-24);
+  const prices = recent.map((p) => p.price).filter((v) => v > 0);
+
+  const average_price =
+    prices.length > 0
+      ? prices.reduce((a, b) => a + b, 0) / prices.length
+      : latest.price;
+  const peak_price = prices.length > 0 ? Math.max(...prices) : latest.price;
+  const off_peak_price =
+    prices.length > 0 ? Math.min(...prices) : latest.price * 0.7;
+
+  const market_conditions =
+    latest.price > 150 ? 'high' : latest.price > 75 ? 'normal' : 'low';
+
+  return {
+    current_price: latest.price,
+    average_price,
+    peak_price,
+    off_peak_price,
+    market_conditions,
+    timestamp: latest.timestamp.toISOString(),
+    source: 'ercot_dam_spp_html',
+  };
 }
 
 async function fetchSPPData() {
