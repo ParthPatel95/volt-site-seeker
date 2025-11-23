@@ -1,9 +1,11 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EnhancedCard } from '@/components/ui/enhanced-card';
 import { Badge } from '@/components/ui/badge';
 import { Leaf, Users, Building, Award } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function ESGAnalysisPanel() {
+  const isMobile = useIsMobile();
+  
   const esgData = {
     overallScore: 72,
     environmentalScore: 78,
@@ -26,120 +28,121 @@ export function ESGAnalysisPanel() {
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 60) return 'text-amber-600';
+    return 'text-destructive';
   };
 
   const getScoreBg = (score: number) => {
-    if (score >= 80) return 'bg-green-100 border-green-200';
-    if (score >= 60) return 'bg-yellow-100 border-yellow-200';
-    return 'bg-red-100 border-red-200';
+    if (score >= 80) return 'bg-green-50 dark:bg-green-950/20 border-green-200';
+    if (score >= 60) return 'bg-amber-50 dark:bg-amber-950/20 border-amber-200';
+    return 'bg-destructive/10 border-destructive/20';
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Leaf className="w-5 h-5 mr-2" />
-            ESG Analysis
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className={`text-center ${getScoreBg(esgData.overallScore)}`}>
-              <CardContent className="p-4">
-                <Award className="w-6 h-6 mx-auto mb-2" />
-                <div className="text-sm font-medium">Overall ESG</div>
-                <div className={`text-2xl font-bold ${getScoreColor(esgData.overallScore)}`}>
-                  {esgData.overallScore}
-                </div>
-              </CardContent>
-            </Card>
+    <div className="space-y-6 p-2 sm:p-4">
+      <EnhancedCard
+        title="ESG Analysis"
+        icon={Leaf}
+        priority="high"
+        collapsible={isMobile}
+        defaultExpanded={true}
+      >
+        <div className="space-y-6">
+          {/* Score Cards */}
+          <div className={`${isMobile ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 md:grid-cols-4 gap-4'}`}>
+            <div className={`text-center p-4 rounded-lg border ${getScoreBg(esgData.overallScore)}`}>
+              <Award className={`w-6 h-6 mx-auto mb-2 ${getScoreColor(esgData.overallScore)}`} />
+              <div className="text-xs sm:text-sm font-medium text-foreground">Overall ESG</div>
+              <div className={`text-xl sm:text-2xl font-bold ${getScoreColor(esgData.overallScore)}`}>
+                {esgData.overallScore}
+              </div>
+            </div>
 
-            <Card className={`text-center ${getScoreBg(esgData.environmentalScore)}`}>
-              <CardContent className="p-4">
-                <Leaf className="w-6 h-6 mx-auto mb-2" />
-                <div className="text-sm font-medium">Environmental</div>
-                <div className={`text-2xl font-bold ${getScoreColor(esgData.environmentalScore)}`}>
-                  {esgData.environmentalScore}
-                </div>
-              </CardContent>
-            </Card>
+            <div className={`text-center p-4 rounded-lg border ${getScoreBg(esgData.environmentalScore)}`}>
+              <Leaf className={`w-6 h-6 mx-auto mb-2 ${getScoreColor(esgData.environmentalScore)}`} />
+              <div className="text-xs sm:text-sm font-medium text-foreground">Environmental</div>
+              <div className={`text-xl sm:text-2xl font-bold ${getScoreColor(esgData.environmentalScore)}`}>
+                {esgData.environmentalScore}
+              </div>
+            </div>
 
-            <Card className={`text-center ${getScoreBg(esgData.socialScore)}`}>
-              <CardContent className="p-4">
-                <Users className="w-6 h-6 mx-auto mb-2" />
-                <div className="text-sm font-medium">Social</div>
-                <div className={`text-2xl font-bold ${getScoreColor(esgData.socialScore)}`}>
-                  {esgData.socialScore}
-                </div>
-              </CardContent>
-            </Card>
+            <div className={`text-center p-4 rounded-lg border ${getScoreBg(esgData.socialScore)}`}>
+              <Users className={`w-6 h-6 mx-auto mb-2 ${getScoreColor(esgData.socialScore)}`} />
+              <div className="text-xs sm:text-sm font-medium text-foreground">Social</div>
+              <div className={`text-xl sm:text-2xl font-bold ${getScoreColor(esgData.socialScore)}`}>
+                {esgData.socialScore}
+              </div>
+            </div>
 
-            <Card className={`text-center ${getScoreBg(esgData.governanceScore)}`}>
-              <CardContent className="p-4">
-                <Building className="w-6 h-6 mx-auto mb-2" />
-                <div className="text-sm font-medium">Governance</div>
-                <div className={`text-2xl font-bold ${getScoreColor(esgData.governanceScore)}`}>
-                  {esgData.governanceScore}
-                </div>
-              </CardContent>
-            </Card>
+            <div className={`text-center p-4 rounded-lg border ${getScoreBg(esgData.governanceScore)}`}>
+              <Building className={`w-6 h-6 mx-auto mb-2 ${getScoreColor(esgData.governanceScore)}`} />
+              <div className="text-xs sm:text-sm font-medium text-foreground">Governance</div>
+              <div className={`text-xl sm:text-2xl font-bold ${getScoreColor(esgData.governanceScore)}`}>
+                {esgData.governanceScore}
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="border-green-200">
-              <CardContent className="p-4">
-                <h4 className="font-semibold mb-3">Environmental Metrics</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Carbon Footprint</span>
-                    <span className="font-medium">{esgData.carbonFootprint} MT CO2e</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Renewable Energy</span>
-                    <span className="font-medium">{esgData.renewablePercent}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${esgData.renewablePercent}%` }}
-                    />
-                  </div>
+          {/* Detailed Metrics */}
+          <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}`}>
+            <EnhancedCard
+              title="Environmental Metrics"
+              icon={Leaf}
+              priority="medium"
+              className="border-green-200 bg-green-50/30 dark:bg-green-950/20"
+            >
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-2 rounded-md bg-muted/50">
+                  <span className="text-sm text-foreground">Carbon Footprint</span>
+                  <span className="font-semibold text-foreground">{esgData.carbonFootprint} MT CO2e</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200">
-              <CardContent className="p-4">
-                <h4 className="font-semibold mb-3">Sustainability Commitments</h4>
-                <div className="space-y-1">
-                  {esgData.sustainabilityCommitments.slice(0, 3).map((commitment, index) => (
-                    <div key={index} className="flex items-center text-sm">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-                      {commitment}
-                    </div>
-                  ))}
+                <div className="flex justify-between items-center p-2 rounded-md bg-muted/50">
+                  <span className="text-sm text-foreground">Renewable Energy</span>
+                  <span className="font-semibold text-foreground">{esgData.renewablePercent}%</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="w-full bg-muted rounded-full h-2.5">
+                  <div 
+                    className="bg-green-600 h-2.5 rounded-full transition-all duration-500"
+                    style={{ width: `${esgData.renewablePercent}%` }}
+                  />
+                </div>
+              </div>
+            </EnhancedCard>
 
-          <Card className="border-yellow-200 bg-yellow-50">
-            <CardContent className="p-4">
-              <h4 className="font-semibold mb-3">Areas for Improvement</h4>
+            <EnhancedCard
+              title="Sustainability Commitments"
+              icon={Award}
+              priority="medium"
+              className="border-blue-200 bg-blue-50/30 dark:bg-blue-950/20"
+            >
               <div className="space-y-2">
-                {esgData.riskFactors.map((risk, index) => (
-                  <Badge key={index} variant="outline" className="mr-2 mb-1">
-                    {risk}
-                  </Badge>
+                {esgData.sustainabilityCommitments.map((commitment, index) => (
+                  <div key={index} className="flex items-start gap-2 p-2 rounded-md bg-muted/50">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-1.5 flex-shrink-0" />
+                    <span className="text-sm text-foreground">{commitment}</span>
+                  </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </CardContent>
-      </Card>
+            </EnhancedCard>
+          </div>
+
+          {/* Risk Factors */}
+          <EnhancedCard
+            title="Areas for Improvement"
+            icon={Building}
+            priority="medium"
+            className="border-amber-200 bg-amber-50/30 dark:bg-amber-950/20"
+          >
+            <div className="flex flex-wrap gap-2">
+              {esgData.riskFactors.map((risk, index) => (
+                <Badge key={index} variant="outline" className="border-amber-400 text-amber-700 dark:text-amber-400">
+                  {risk}
+                </Badge>
+              ))}
+            </div>
+          </EnhancedCard>
+        </div>
+      </EnhancedCard>
     </div>
   );
 }
