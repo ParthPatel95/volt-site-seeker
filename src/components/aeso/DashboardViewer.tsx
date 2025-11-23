@@ -12,7 +12,6 @@ import { ChartWidget } from '@/components/aeso/dashboard-widgets/ChartWidget';
 import { GaugeWidget } from '@/components/aeso/dashboard-widgets/GaugeWidget';
 import { TableWidget } from '@/components/aeso/dashboard-widgets/TableWidget';
 import { PieChartWidget } from '@/components/aeso/dashboard-widgets/PieChartWidget';
-import { ShareDashboardDialog } from './ShareDashboardDialog';
 import { AlertConfigDialog } from './AlertConfigDialog';
 import { AIAssistantSidebar } from './AIAssistantSidebar';
 import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
@@ -40,7 +39,6 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
   const [timeRange, setTimeRange] = useState('24hours');
   const [aggregation, setAggregation] = useState('hourly');
   const [refreshKey, setRefreshKey] = useState(0);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(60000); // 1 minute
@@ -223,9 +221,9 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
                 <Download className="h-4 w-4" />
               </Button>
               <Button 
-                variant="outline" 
+                variant="outline"
                 size="icon" 
-                onClick={() => setShareDialogOpen(true)}
+                onClick={() => setShowShareDialog(true)}
                 title="Share Dashboard"
               >
                 <Share2 className="h-4 w-4" />
@@ -237,14 +235,6 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
                 title="Collaboration"
               >
                 <MessageSquare className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline"
-                size="icon" 
-                onClick={() => setShowShareDialog(true)}
-                title="Share Dashboard"
-              >
-                <Share2 className="h-4 w-4" />
               </Button>
               <Button 
                 variant="outline"
@@ -309,11 +299,6 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
         {/* Dialogs */}
         {!isPublicView && (
           <>
-            <ShareDashboardDialog
-              open={shareDialogOpen}
-              onOpenChange={setShareDialogOpen}
-              dashboardId={dashboard?.id || ''}
-            />
             <AlertConfigDialog
               open={alertDialogOpen}
               onOpenChange={setAlertDialogOpen}
