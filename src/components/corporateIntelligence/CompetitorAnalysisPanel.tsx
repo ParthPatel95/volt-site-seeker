@@ -1,9 +1,11 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EnhancedCard } from '@/components/ui/enhanced-card';
 import { Badge } from '@/components/ui/badge';
-import { Users, TrendingDown, TrendingUp } from 'lucide-react';
+import { Users, TrendingDown, TrendingUp, Target } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function CompetitorAnalysisPanel() {
+  const isMobile = useIsMobile();
+  
   const competitors = [
     {
       name: 'TechCorp Industries',
@@ -20,70 +22,97 @@ export function CompetitorAnalysisPanel() {
       trend: 'down',
       strengths: ['Innovation', 'Agility'],
       weaknesses: ['Small scale', 'Limited resources']
+    },
+    {
+      name: 'Global Energy Systems',
+      marketShare: 18.5,
+      powerUsage: 55.3,
+      trend: 'up',
+      strengths: ['Scale', 'Distribution'],
+      weaknesses: ['Legacy systems', 'Slow innovation']
     }
   ];
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            Competitor Analysis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {competitors.map((competitor, index) => (
-              <Card key={index} className="border-l-4 border-l-orange-500">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <h4 className="font-semibold">{competitor.name}</h4>
-                    {competitor.trend === 'up' ? (
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-red-600" />
-                    )}
+    <div className="space-y-6 p-2 sm:p-4">
+      <EnhancedCard
+        title="Competitor Analysis"
+        icon={Users}
+        priority="high"
+        collapsible={isMobile}
+        defaultExpanded={true}
+      >
+        <div className="space-y-4">
+          {competitors.map((competitor, index) => (
+            <EnhancedCard
+              key={index}
+              title={competitor.name}
+              icon={Target}
+              priority="medium"
+              className="border-l-4 border-l-orange-500"
+              headerActions={
+                competitor.trend === 'up' ? (
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                ) : (
+                  <TrendingDown className="w-5 h-5 text-destructive" />
+                )
+              }
+            >
+              <div className="space-y-4">
+                {/* Metrics Grid */}
+                <div className={`${isMobile ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-4'}`}>
+                  <div className="p-3 rounded-md bg-muted/50">
+                    <span className="text-xs text-muted-foreground block mb-1">Market Share</span>
+                    <div className="font-bold text-lg text-foreground">{competitor.marketShare}%</div>
                   </div>
+                  <div className="p-3 rounded-md bg-muted/50">
+                    <span className="text-xs text-muted-foreground block mb-1">Power Usage</span>
+                    <div className="font-bold text-lg text-foreground">{competitor.powerUsage} MW</div>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <span className="text-sm text-gray-500">Market Share</span>
-                      <div className="font-bold">{competitor.marketShare}%</div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-500">Power Usage</span>
-                      <div className="font-bold">{competitor.powerUsage} MW</div>
-                    </div>
+                {/* Strengths */}
+                <div className="space-y-2">
+                  <span className="text-sm font-semibold text-green-600 dark:text-green-400 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Strengths
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {competitor.strengths.map((strength, i) => (
+                      <Badge 
+                        key={i} 
+                        variant="outline" 
+                        className="text-xs border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/30"
+                      >
+                        {strength}
+                      </Badge>
+                    ))}
                   </div>
+                </div>
 
-                  <div className="mb-2">
-                    <span className="text-sm font-medium text-green-700">Strengths:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {competitor.strengths.map((strength, i) => (
-                        <Badge key={i} variant="outline" className="text-xs border-green-200">
-                          {strength}
-                        </Badge>
-                      ))}
-                    </div>
+                {/* Weaknesses */}
+                <div className="space-y-2">
+                  <span className="text-sm font-semibold text-destructive flex items-center gap-2">
+                    <TrendingDown className="w-4 h-4" />
+                    Weaknesses
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {competitor.weaknesses.map((weakness, i) => (
+                      <Badge 
+                        key={i} 
+                        variant="outline" 
+                        className="text-xs border-destructive/30 bg-destructive/10"
+                      >
+                        {weakness}
+                      </Badge>
+                    ))}
                   </div>
-
-                  <div>
-                    <span className="text-sm font-medium text-red-700">Weaknesses:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {competitor.weaknesses.map((weakness, i) => (
-                        <Badge key={i} variant="outline" className="text-xs border-red-200">
-                          {weakness}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                </div>
+              </div>
+            </EnhancedCard>
+          ))}
+        </div>
+      </EnhancedCard>
     </div>
   );
 }
