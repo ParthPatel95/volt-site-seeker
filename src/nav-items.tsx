@@ -2,6 +2,7 @@
 import React, { ReactNode } from 'react';
 import { TestRunner } from "@/components/TestRunner";
 import ComprehensiveFeaturesTest from './pages/ComprehensiveFeaturesTest';
+import BackendTests from './pages/BackendTests';
 
 export interface NavItem {
   title: string;
@@ -20,5 +21,10 @@ export const navItems: NavItem[] = [
     title: 'System Test Runner',
     to: '/system-tests',
     page: <TestRunner />
+  },
+  {
+    title: 'Backend Test Suite',
+    to: '/backend-tests',
+    page: <BackendTests />
   }
 ];
