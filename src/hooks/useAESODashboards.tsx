@@ -16,6 +16,10 @@ export interface Dashboard {
   updated_at: string;
   is_template: boolean;
   thumbnail_url: string | null;
+  view_count?: number;
+  tags?: string[];
+  is_starred?: boolean;
+  widget_count?: number;
 }
 
 export interface DashboardWidget {
@@ -39,13 +43,30 @@ export const useAESODashboards = () => {
   const fetchDashboards = async () => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('aeso_custom_dashboards')
-        .select('*')
+        .select(`
+          *,
+          dashboard_tags(tag),
+          dashboard_stars!left(user_id),
+          aeso_dashboard_widgets(id)
+        `)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      setDashboards((data || []) as Dashboard[]);
+      
+      // Transform data to include computed fields
+      const transformedData = (data || []).map((d: any) => ({
+        ...d,
+        tags: d.dashboard_tags?.map((t: any) => t.tag) || [],
+        is_starred: user ? d.dashboard_stars?.some((s: any) => s.user_id === user.id) : false,
+        widget_count: d.aeso_dashboard_widgets?.length || 0,
+        layout_config: d.layout_config || { lg: [], md: [], sm: [] },
+      }));
+      
+      setDashboards(transformedData as Dashboard[]);
     } catch (error) {
       console.error('Error fetching dashboards:', error);
       toast({
@@ -231,6 +252,97 @@ export const useAESODashboards = () => {
     }
   };
 
+  const toggleStar = async (dashboardId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const dashboard = dashboards.find(d => d.id === dashboardId);
+      
+      if (dashboard?.is_starred) {
+        // Unstar
+        const { error } = await supabase
+          .from('dashboard_stars')
+          .delete()
+          .eq('dashboard_id', dashboardId)
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+      } else {
+        // Star
+        const { error } = await supabase
+          .from('dashboard_stars')
+          .insert({ dashboard_id: dashboardId, user_id: user.id });
+        
+        if (error) throw error;
+      }
+
+      await fetchDashboards();
+      return true;
+    } catch (error) {
+      console.error('Error toggling star:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update favorite status',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  const trackView = async (dashboardId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('dashboard_view_logs')
+        .insert({ dashboard_id: dashboardId, user_id: user.id });
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
+
+  const updateTags = async (dashboardId: string, tags: string[]) => {
+    try {
+      // Delete existing tags
+      await supabase
+        .from('dashboard_tags')
+        .delete()
+        .eq('dashboard_id', dashboardId);
+
+      // Insert new tags
+      if (tags.length > 0) {
+        const tagInserts = tags.map(tag => ({
+          dashboard_id: dashboardId,
+          tag,
+        }));
+        
+        const { error } = await supabase
+          .from('dashboard_tags')
+          .insert(tagInserts);
+        
+        if (error) throw error;
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Tags updated successfully',
+      });
+
+      await fetchDashboards();
+      return true;
+    } catch (error) {
+      console.error('Error updating tags:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update tags',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   return {
     dashboards,
     loading,
@@ -240,5 +352,8 @@ export const useAESODashboards = () => {
     deleteDashboard,
     duplicateDashboard,
     getDashboardById,
+    toggleStar,
+    trackView,
+    updateTags,
   };
 };

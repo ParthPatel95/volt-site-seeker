@@ -106,6 +106,7 @@ export type Database = {
           layout_config: Json | null
           thumbnail_url: string | null
           updated_at: string
+          view_count: number | null
         }
         Insert: {
           created_at?: string
@@ -117,6 +118,7 @@ export type Database = {
           layout_config?: Json | null
           thumbnail_url?: string | null
           updated_at?: string
+          view_count?: number | null
         }
         Update: {
           created_at?: string
@@ -128,6 +130,7 @@ export type Database = {
           layout_config?: Json | null
           thumbnail_url?: string | null
           updated_at?: string
+          view_count?: number | null
         }
         Relationships: []
       }
@@ -2266,6 +2269,93 @@ export type Database = {
           symbol?: string
         }
         Relationships: []
+      }
+      dashboard_stars: {
+        Row: {
+          created_at: string
+          dashboard_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dashboard_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dashboard_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_stars_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_tags: {
+        Row: {
+          created_at: string
+          dashboard_id: string
+          id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          dashboard_id: string
+          id?: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          dashboard_id?: string
+          id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_tags_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_view_logs: {
+        Row: {
+          dashboard_id: string
+          id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          dashboard_id: string
+          id?: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          dashboard_id?: string
+          id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_view_logs_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       distress_alerts: {
         Row: {

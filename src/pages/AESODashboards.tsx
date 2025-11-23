@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAESODashboards } from '@/hooks/useAESODashboards';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, LayoutDashboard, Edit, Share2, Copy, Trash2, Lock } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Lock, Tag as TagIcon } from 'lucide-react';
 import { DashboardCreationWizard, DashboardConfig } from '@/components/aeso/DashboardCreationWizard';
+import { DashboardGalleryCard } from '@/components/aeso/DashboardGalleryCard';
+import { DashboardFilters } from '@/components/aeso/DashboardFilters';
+import { DashboardTagEditor } from '@/components/aeso/DashboardTagEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,9 +17,12 @@ export default function AESODashboards() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { hasPermission, loading: permissionsLoading } = usePermissions();
-  const { dashboards, loading, fetchDashboards, deleteDashboard, duplicateDashboard } = useAESODashboards();
+  const { dashboards, loading, fetchDashboards, deleteDashboard, duplicateDashboard, toggleStar, trackView, updateTags } = useAESODashboards();
   const [searchQuery, setSearchQuery] = useState('');
   const [showWizard, setShowWizard] = useState(false);
+  const [filterType, setFilterType] = useState<'all' | 'starred' | 'recent'>('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [editingTagsFor, setEditingTagsFor] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboards();
@@ -39,10 +45,44 @@ export default function AESODashboards() {
     );
   }
 
-  const filteredDashboards = dashboards.filter(dashboard =>
-    dashboard.dashboard_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dashboard.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Get all unique tags from dashboards
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    dashboards.forEach(d => {
+      d.tags?.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [dashboards]);
+
+  // Apply filters
+  const filteredDashboards = useMemo(() => {
+    let filtered = dashboards;
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(dashboard =>
+        dashboard.dashboard_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        dashboard.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply type filter
+    if (filterType === 'starred') {
+      filtered = filtered.filter(d => d.is_starred);
+    } else if (filterType === 'recent') {
+      // Sort by view count for "recent" (you could also track actual recent views)
+      filtered = [...filtered].sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+    }
+
+    // Apply tag filter
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(d =>
+        selectedTags.some(tag => d.tags?.includes(tag))
+      );
+    }
+
+    return filtered;
+  }, [dashboards, searchQuery, filterType, selectedTags]);
 
   const handleCreateDashboard = async (config: DashboardConfig) => {
     try {
@@ -113,6 +153,26 @@ export default function AESODashboards() {
     }
   };
 
+  const handleToggleStar = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await toggleStar(id);
+  };
+
+  const handleView = (id: string) => {
+    trackView(id);
+    navigate(`/app/aeso-dashboard/${id}`);
+  };
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleSaveTags = async (dashboardId: string, tags: string[]) => {
+    await updateTags(dashboardId, tags);
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -131,13 +191,25 @@ export default function AESODashboards() {
           </Button>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search dashboards..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+        {/* Search and Filters */}
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search dashboards..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <DashboardFilters
+            selectedFilter={filterType}
+            selectedTags={selectedTags}
+            availableTags={availableTags}
+            onFilterChange={setFilterType}
+            onTagToggle={handleTagToggle}
+            onClearTags={() => setSelectedTags([])}
           />
         </div>
 
@@ -169,62 +241,16 @@ export default function AESODashboards() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredDashboards.map(dashboard => (
-              <Card
+              <DashboardGalleryCard
                 key={dashboard.id}
-                className="group cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-primary/50"
-                onClick={() => navigate(`/app/aeso-dashboard/${dashboard.id}`)}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <LayoutDashboard className="w-8 h-8 text-primary" />
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/app/aeso-dashboard/${dashboard.id}`);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/app/aeso-dashboard-share/${dashboard.id}`);
-                        }}
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => handleDuplicate(dashboard.id, e)}
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => handleDelete(dashboard.id, e)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CardTitle className="mt-4">{dashboard.dashboard_name}</CardTitle>
-                  <CardDescription>
-                    {dashboard.description || 'No description'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground">
-                    Updated {new Date(dashboard.updated_at).toLocaleDateString()}
-                  </div>
-                </CardContent>
-              </Card>
+                dashboard={dashboard}
+                onView={() => handleView(dashboard.id)}
+                onEdit={() => navigate(`/app/aeso-dashboard/${dashboard.id}`)}
+                onShare={() => navigate(`/app/aeso-dashboard-share/${dashboard.id}`)}
+                onDuplicate={(e) => handleDuplicate(dashboard.id, e)}
+                onDelete={(e) => handleDelete(dashboard.id, e)}
+                onToggleStar={(e) => handleToggleStar(dashboard.id, e)}
+              />
             ))}
           </div>
         )}
@@ -235,6 +261,15 @@ export default function AESODashboards() {
         onOpenChange={setShowWizard}
         onCreate={handleCreateDashboard}
       />
+
+      {editingTagsFor && (
+        <DashboardTagEditor
+          open={!!editingTagsFor}
+          onOpenChange={(open) => !open && setEditingTagsFor(null)}
+          currentTags={dashboards.find(d => d.id === editingTagsFor)?.tags || []}
+          onSave={(tags) => handleSaveTags(editingTagsFor, tags)}
+        />
+      )}
     </>
   );
 }
