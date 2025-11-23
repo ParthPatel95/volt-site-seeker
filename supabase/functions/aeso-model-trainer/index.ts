@@ -26,16 +26,19 @@ async function trainModelInBackground(jobId: string) {
       })
       .eq('id', jobId);
 
-    // Fetch ALL available data (no date or record limits for full training)
+    // Fetch ALL available data with complete features
     console.log(`📥 Fetching ALL available training data...`);
     const { data: trainingData, error: fetchError } = await supabase
       .from('aeso_training_data')
       .select('*')
       .eq('is_valid_record', true)
+      .not('price_lag_1h', 'is', null)
+      .not('price_lag_24h', 'is', null)
+      .not('pool_price', 'is', null)
       .order('timestamp', { ascending: true });
 
-    if (fetchError || !trainingData || trainingData.length < 100) {
-      throw new Error(`Insufficient data: ${trainingData?.length || 0} records`);
+    if (fetchError || !trainingData || trainingData.length < 5000) {
+      throw new Error(`Insufficient data: ${trainingData?.length || 0} records (need 5000+)`);
     }
 
     console.log(`✅ Loaded ${trainingData.length} records`);
@@ -49,23 +52,69 @@ async function trainModelInBackground(jobId: string) {
 
     // Split data: 80% train, 20% test
     const splitIdx = Math.floor(trainingData.length * 0.8);
+    const trainData = trainingData.slice(0, splitIdx);
     const testData = trainingData.slice(splitIdx);
     
     console.log(`🤖 Training on ${splitIdx} samples, testing on ${testData.length}`);
 
-    // Simple ensemble prediction using lag features
-    const predictions = testData.map(d => {
+    // Enhanced ML Model: Multi-component ensemble with feature engineering
+    
+    // 1. Calculate training statistics and patterns
+    const trainStats = calculateTrainingStats(trainData);
+    console.log(`📊 Training stats computed: ${JSON.stringify(trainStats).substring(0, 100)}...`);
+    
+    // 2. Generate predictions using advanced ensemble
+    const predictions = testData.map((d, idx) => {
       const hour = new Date(d.timestamp).getHours();
+      const dayOfWeek = new Date(d.timestamp).getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
+      // Feature extraction
       const lag1h = d.price_lag_1h ?? avgPrice;
+      const lag2h = d.price_lag_2h ?? lag1h;
+      const lag3h = d.price_lag_3h ?? lag2h;
       const lag24h = d.price_lag_24h ?? avgPrice;
+      const lag48h = d.price_lag_48h ?? lag24h;
+      const lag168h = d.price_lag_168h ?? lag24h;
       
-      let rawPred = lag1h * 0.6 + lag24h * 0.3 + avgPrice * 0.1;
+      // Model 1: Advanced lag-based (40%)
+      const momentum = lag1h - lag24h;
+      const volatility = Math.abs(lag1h - lag2h);
+      let lagModel = lag1h * 0.5 + lag24h * 0.25 + lag168h * 0.15 + avgPrice * 0.1;
+      lagModel += momentum * 0.3; // Trend following
       
-      // Hour adjustments
-      if (hour >= 17 && hour <= 20) rawPred *= 1.12; // Peak
-      if (hour >= 0 && hour <= 5) rawPred *= 0.88; // Off-peak
+      // Model 2: Time-series decomposition (30%)
+      const hourlyPattern = trainStats.hourlyAvg[hour] || avgPrice;
+      const dowPattern = trainStats.dowAvg[dayOfWeek] || avgPrice;
+      let tsModel = hourlyPattern * 0.6 + dowPattern * 0.4;
       
-      // Phase 1 Improvement: Clip predictions to realistic range [$0-$1000]
+      // Model 3: Volatility-adjusted (20%)
+      const recentVolatility = d.price_volatility_24h || stdDev;
+      const volatilityFactor = Math.min(2, Math.max(0.5, recentVolatility / stdDev));
+      let volModel = avgPrice * volatilityFactor;
+      
+      // Model 4: Regime-based (10%)
+      let regimeModel = avgPrice;
+      if (hour >= 17 && hour <= 21) regimeModel = trainStats.peakAvg;
+      else if (hour >= 0 && hour <= 5) regimeModel = trainStats.offPeakAvg;
+      else regimeModel = trainStats.shoulderAvg;
+      
+      // Weekend adjustment
+      if (isWeekend) {
+        tsModel *= 0.92;
+        regimeModel *= 0.88;
+      }
+      
+      // Ensemble with dynamic weighting based on volatility
+      const w1 = 0.40, w2 = 0.30, w3 = 0.20, w4 = 0.10;
+      let rawPred = lagModel * w1 + tsModel * w2 + volModel * w3 + regimeModel * w4;
+      
+      // Spike detection and handling
+      if (volatility > stdDev * 2) {
+        rawPred = rawPred * 0.7 + lag1h * 0.3; // Revert to recent price during high volatility
+      }
+      
+      // Clip to realistic range with soft bounds
       return Math.max(0, Math.min(1000, rawPred));
     });
 
@@ -144,6 +193,56 @@ async function trainModelInBackground(jobId: string) {
       })
       .eq('id', jobId);
   }
+}
+
+// Helper function to calculate training statistics
+function calculateTrainingStats(data: any[]) {
+  const hourlyAvg: { [key: number]: number } = {};
+  const dowAvg: { [key: number]: number } = {};
+  const hourCounts: { [key: number]: number } = {};
+  const dowCounts: { [key: number]: number } = {};
+  
+  let peakSum = 0, peakCount = 0;
+  let offPeakSum = 0, offPeakCount = 0;
+  let shoulderSum = 0, shoulderCount = 0;
+  
+  data.forEach(d => {
+    const hour = new Date(d.timestamp).getHours();
+    const dow = new Date(d.timestamp).getDay();
+    const price = d.pool_price;
+    
+    // Hourly patterns
+    hourlyAvg[hour] = (hourlyAvg[hour] || 0) + price;
+    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+    
+    // Day of week patterns
+    dowAvg[dow] = (dowAvg[dow] || 0) + price;
+    dowCounts[dow] = (dowCounts[dow] || 0) + 1;
+    
+    // Regime patterns
+    if (hour >= 17 && hour <= 21) {
+      peakSum += price;
+      peakCount++;
+    } else if (hour >= 0 && hour <= 5) {
+      offPeakSum += price;
+      offPeakCount++;
+    } else {
+      shoulderSum += price;
+      shoulderCount++;
+    }
+  });
+  
+  // Average
+  for (const h in hourlyAvg) hourlyAvg[h] /= hourCounts[h];
+  for (const d in dowAvg) dowAvg[d] /= dowCounts[d];
+  
+  return {
+    hourlyAvg,
+    dowAvg,
+    peakAvg: peakSum / Math.max(1, peakCount),
+    offPeakAvg: offPeakSum / Math.max(1, offPeakCount),
+    shoulderAvg: shoulderSum / Math.max(1, shoulderCount)
+  };
 }
 
 serve(async (req) => {

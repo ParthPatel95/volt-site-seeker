@@ -38,6 +38,7 @@ import AESODashboard from './AESODashboard';
 import SharedDashboardView from './SharedDashboardView';
 import { DashboardBuilder } from '@/components/aeso/DashboardBuilder';
 import ShareDashboard from './ShareDashboard';
+import ModelImprovement from './ModelImprovement';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -126,6 +127,7 @@ const VoltScout = () => {
                <Route path="aeso-dashboard/:id" element={<AESODashboard />} />
                <Route path="aeso-dashboard-builder/:id" element={<DashboardBuilder />} />
                <Route path="aeso-dashboard-share/:id" element={<ShareDashboard />} />
+               <Route path="model-improvement" element={<ModelImprovement />} />
                <Route path="/shared/:token" element={<SharedDashboardView />} />
                {/* Redirect any unknown paths to dashboard */}
                <Route path="*" element={<Navigate to="/app" replace />} />
