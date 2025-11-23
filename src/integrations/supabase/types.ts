@@ -2270,6 +2270,130 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_activity_log: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string
+          dashboard_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string
+          dashboard_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string
+          dashboard_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_activity_log_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_collaborators: {
+        Row: {
+          added_at: string
+          added_by: string
+          dashboard_id: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by: string
+          dashboard_id: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string
+          dashboard_id?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_collaborators_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          dashboard_id: string
+          id: string
+          is_resolved: boolean | null
+          mentioned_users: string[] | null
+          parent_comment_id: string | null
+          updated_at: string
+          user_id: string
+          widget_id: string | null
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          dashboard_id: string
+          id?: string
+          is_resolved?: boolean | null
+          mentioned_users?: string[] | null
+          parent_comment_id?: string | null
+          updated_at?: string
+          user_id: string
+          widget_id?: string | null
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          dashboard_id?: string
+          id?: string
+          is_resolved?: boolean | null
+          mentioned_users?: string[] | null
+          parent_comment_id?: string | null
+          updated_at?: string
+          user_id?: string
+          widget_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_comments_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dashboard_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dashboard_stars: {
         Row: {
           created_at: string
@@ -2321,6 +2445,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dashboard_tags_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "aeso_custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_versions: {
+        Row: {
+          change_description: string | null
+          created_at: string
+          created_by: string
+          dashboard_id: string
+          dashboard_snapshot: Json
+          id: string
+          version_number: number
+          widgets_snapshot: Json
+        }
+        Insert: {
+          change_description?: string | null
+          created_at?: string
+          created_by: string
+          dashboard_id: string
+          dashboard_snapshot: Json
+          id?: string
+          version_number: number
+          widgets_snapshot: Json
+        }
+        Update: {
+          change_description?: string | null
+          created_at?: string
+          created_by?: string
+          dashboard_id?: string
+          dashboard_snapshot?: Json
+          id?: string
+          version_number?: number
+          widgets_snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_versions_dashboard_id_fkey"
             columns: ["dashboard_id"]
             isOneToOne: false
             referencedRelation: "aeso_custom_dashboards"

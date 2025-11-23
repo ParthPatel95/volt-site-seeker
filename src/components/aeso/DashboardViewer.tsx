@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, Filter, Share2, Bell, Download, Play, Pause, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Filter, Share2, Bell, Download, Play, Pause, Sparkles, X, MessageSquare, History } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
@@ -18,7 +18,12 @@ import { AIAssistantSidebar } from './AIAssistantSidebar';
 import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
 import { QuickSuggestionsPanel } from './QuickSuggestionsPanel';
 import { DashboardToolbar } from './DashboardToolbar';
+import { DashboardComments } from './DashboardComments';
+import { DashboardPresence } from './DashboardPresence';
+import { DashboardVersionHistory } from './DashboardVersionHistory';
+import { DashboardActivityFeed } from './DashboardActivityFeed';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface DashboardViewerProps {
   dashboard: any;
@@ -38,6 +43,7 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(60000); // 1 minute
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [showCollaboration, setShowCollaboration] = useState(false);
 
   useEffect(() => {
     if (autoRefresh) {
@@ -221,6 +227,14 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
                 <Share2 className="h-4 w-4" />
               </Button>
               <Button 
+                variant={showCollaboration ? "default" : "outline"}
+                size="icon" 
+                onClick={() => setShowCollaboration(!showCollaboration)}
+                title="Collaboration"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+              <Button 
                 variant={aiAssistantOpen ? "default" : "outline"}
                 size="icon" 
                 onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
@@ -229,6 +243,11 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
                 {aiAssistantOpen ? <X className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
               </Button>
             </>
+          )}
+          
+          {/* Live Presence Indicator */}
+          {!isPublicView && dashboard?.id && (
+            <DashboardPresence dashboardId={dashboard.id} />
           )}
         </div>
       </div>
@@ -289,6 +308,48 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
       {aiAssistantOpen && !isPublicView && (
         <div className="fixed right-0 top-0 h-screen w-96 shadow-2xl z-50">
           <AIAssistantSidebar dashboardContext={dashboardContext} />
+        </div>
+      )}
+
+      {/* Collaboration Sidebar */}
+      {showCollaboration && !isPublicView && dashboard?.id && (
+        <div className="fixed right-0 top-0 h-screen w-96 shadow-2xl z-50 bg-background border-l">
+          <div className="h-full flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-semibold">Collaboration</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowCollaboration(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <Tabs defaultValue="comments" className="flex-1 flex flex-col">
+              <TabsList className="mx-4 mt-2">
+                <TabsTrigger value="comments" className="flex-1">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Comments
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex-1">
+                  <History className="w-4 h-4 mr-2" />
+                  History
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="flex-1 overflow-auto p-4">
+                <TabsContent value="comments" className="m-0 space-y-4">
+                  <DashboardComments dashboardId={dashboard.id} />
+                  <DashboardActivityFeed dashboardId={dashboard.id} />
+                </TabsContent>
+
+                <TabsContent value="history" className="m-0">
+                  <DashboardVersionHistory dashboardId={dashboard.id} />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
         </div>
       )}
     </div>
