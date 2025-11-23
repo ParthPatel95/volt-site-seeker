@@ -9,6 +9,8 @@ import { Plus, Search, LayoutDashboard, Lock, Tag as TagIcon } from 'lucide-reac
 import { DashboardCreationWizard, DashboardConfig } from '@/components/aeso/DashboardCreationWizard';
 import { DashboardGalleryCard } from '@/components/aeso/DashboardGalleryCard';
 import { DashboardFilters } from '@/components/aeso/DashboardFilters';
+import { DashboardShareDialog } from '@/components/aeso/DashboardShareDialog';
+import { DashboardAnalyticsView } from '@/components/aeso/DashboardAnalyticsView';
 import { DashboardTagEditor } from '@/components/aeso/DashboardTagEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +25,9 @@ export default function AESODashboards() {
   const [filterType, setFilterType] = useState<'all' | 'starred' | 'recent'>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [editingTagsFor, setEditingTagsFor] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [analyticsDialogOpen, setAnalyticsDialogOpen] = useState(false);
+  const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboards();
@@ -173,6 +178,20 @@ export default function AESODashboards() {
     await updateTags(dashboardId, tags);
   };
 
+  const handleShare = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedDashboardId(id);
+    setShareDialogOpen(true);
+  };
+
+  const handleViewAnalytics = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedDashboardId(id);
+    setAnalyticsDialogOpen(true);
+  };
+
+  const selectedDashboard = dashboards?.find(d => d.id === selectedDashboardId);
+
   return (
     <>
       <div className="space-y-6">
@@ -246,10 +265,11 @@ export default function AESODashboards() {
                 dashboard={dashboard}
                 onView={() => handleView(dashboard.id)}
                 onEdit={() => navigate(`/app/aeso-dashboard-builder/${dashboard.id}`)}
-                onShare={() => navigate(`/app/aeso-dashboard-share/${dashboard.id}`)}
+                onShare={() => handleShare(dashboard.id, {} as React.MouseEvent)}
                 onDuplicate={(e) => handleDuplicate(dashboard.id, e)}
                 onDelete={(e) => handleDelete(dashboard.id, e)}
                 onToggleStar={(e) => handleToggleStar(dashboard.id, e)}
+                onViewAnalytics={(e) => handleViewAnalytics(dashboard.id, e)}
               />
             ))}
           </div>
@@ -269,6 +289,24 @@ export default function AESODashboards() {
           currentTags={dashboards.find(d => d.id === editingTagsFor)?.tags || []}
           onSave={(tags) => handleSaveTags(editingTagsFor, tags)}
         />
+      )}
+
+      {selectedDashboard && (
+        <>
+          <DashboardShareDialog
+            open={shareDialogOpen}
+            onOpenChange={setShareDialogOpen}
+            dashboardId={selectedDashboard.id}
+            dashboardName={selectedDashboard.dashboard_name}
+          />
+          
+          <DashboardAnalyticsView
+            open={analyticsDialogOpen}
+            onOpenChange={setAnalyticsDialogOpen}
+            dashboardId={selectedDashboard.id}
+            dashboardName={selectedDashboard.dashboard_name}
+          />
+        </>
       )}
     </>
   );
