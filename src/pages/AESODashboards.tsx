@@ -33,24 +33,7 @@ export default function AESODashboards() {
     fetchDashboards();
   }, []);
 
-  // Check permission after hooks
-  if (!permissionsLoading && !hasPermission('feature.energy-dashboards')) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Lock className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
-            <p className="text-muted-foreground text-center">
-              You don't have permission to access Energy Dashboards. Please contact admin.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Get all unique tags from dashboards
+  // Get all unique tags from dashboards - MUST be before any returns
   const availableTags = useMemo(() => {
     const tagSet = new Set<string>();
     dashboards.forEach(d => {
@@ -59,7 +42,7 @@ export default function AESODashboards() {
     return Array.from(tagSet).sort();
   }, [dashboards]);
 
-  // Apply filters
+  // Apply filters - MUST be before any returns
   const filteredDashboards = useMemo(() => {
     let filtered = dashboards;
 
@@ -88,6 +71,23 @@ export default function AESODashboards() {
 
     return filtered;
   }, [dashboards, searchQuery, filterType, selectedTags]);
+
+  // Check permission AFTER all hooks
+  if (!permissionsLoading && !hasPermission('feature.energy-dashboards')) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Lock className="w-16 h-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
+            <p className="text-muted-foreground text-center">
+              You don't have permission to access Energy Dashboards. Please contact admin.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleCreateDashboard = async (config: DashboardConfig) => {
     try {
