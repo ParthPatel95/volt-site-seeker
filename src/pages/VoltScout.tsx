@@ -36,7 +36,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import AESODashboards from './AESODashboards';
 import AESODashboard from './AESODashboard';
 import SharedDashboardView from './SharedDashboardView';
-import AESODashboardBuilder from './AESODashboardBuilder';
+import { DashboardBuilder } from '@/components/aeso/DashboardBuilder';
 import ShareDashboard from './ShareDashboard';
 
 const VoltScout = () => {
@@ -124,7 +124,7 @@ const VoltScout = () => {
                <Route path="advanced-features" element={<AdvancedFeatures />} />
                <Route path="aeso-dashboards" element={<AESODashboards />} />
                <Route path="aeso-dashboard/:id" element={<AESODashboard />} />
-               <Route path="aeso-dashboard-builder/:id" element={<AESODashboardBuilder />} />
+               <Route path="aeso-dashboard-builder/:id" element={<DashboardBuilder />} />
                <Route path="aeso-dashboard-share/:id" element={<ShareDashboard />} />
                <Route path="/shared/:token" element={<SharedDashboardView />} />
                {/* Redirect any unknown paths to dashboard */}
