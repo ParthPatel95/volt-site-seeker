@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, Filter, Share2, Bell, Download, Play, Pause, Sparkles, X, MessageSquare, History } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Filter, Share2, Bell, Download, Play, Pause, Sparkles, X, MessageSquare, History, BarChart3 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
@@ -22,6 +22,8 @@ import { DashboardComments } from './DashboardComments';
 import { DashboardPresence } from './DashboardPresence';
 import { DashboardVersionHistory } from './DashboardVersionHistory';
 import { DashboardActivityFeed } from './DashboardActivityFeed';
+import { DashboardShareDialog } from './DashboardShareDialog';
+import { DashboardAnalyticsView } from './DashboardAnalyticsView';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -44,6 +46,8 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
   const [refreshInterval, setRefreshInterval] = useState(60000); // 1 minute
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
     if (autoRefresh) {
@@ -235,6 +239,22 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
                 <MessageSquare className="h-4 w-4" />
               </Button>
               <Button 
+                variant="outline"
+                size="icon" 
+                onClick={() => setShowShareDialog(true)}
+                title="Share Dashboard"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline"
+                size="icon" 
+                onClick={() => setShowAnalytics(true)}
+                title="Analytics"
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+              <Button 
                 variant={aiAssistantOpen ? "default" : "outline"}
                 size="icon" 
                 onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
@@ -298,6 +318,18 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
               open={alertDialogOpen}
               onOpenChange={setAlertDialogOpen}
               dashboardId={dashboard?.id || ''}
+            />
+            <DashboardShareDialog
+              open={showShareDialog}
+              onOpenChange={setShowShareDialog}
+              dashboardId={dashboard?.id || ''}
+              dashboardName={dashboard?.dashboard_name || 'Dashboard'}
+            />
+            <DashboardAnalyticsView
+              open={showAnalytics}
+              onOpenChange={setShowAnalytics}
+              dashboardId={dashboard?.id || ''}
+              dashboardName={dashboard?.dashboard_name || 'Dashboard'}
             />
           </>
         )}

@@ -2,7 +2,7 @@ import { Dashboard } from '@/hooks/useAESODashboards';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LayoutDashboard, Edit, Share2, Copy, Trash2, Star, Eye, Activity } from 'lucide-react';
+import { LayoutDashboard, Edit, Share2, Copy, Trash2, Star, Eye, Activity, BarChart3 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface DashboardGalleryCardProps {
@@ -13,6 +13,7 @@ interface DashboardGalleryCardProps {
   onDuplicate: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
   onToggleStar: (e: React.MouseEvent) => void;
+  onViewAnalytics?: (e: React.MouseEvent) => void;
 }
 
 export function DashboardGalleryCard({
@@ -23,6 +24,7 @@ export function DashboardGalleryCard({
   onDuplicate,
   onDelete,
   onToggleStar,
+  onViewAnalytics,
 }: DashboardGalleryCardProps) {
   return (
     <Card
@@ -129,6 +131,16 @@ export function DashboardGalleryCard({
           >
             <Copy className="w-4 h-4" />
           </Button>
+          {onViewAnalytics && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={onViewAnalytics}
+            >
+              <BarChart3 className="w-4 h-4" />
+            </Button>
+          )}
           <Button
             size="icon"
             variant="ghost"
