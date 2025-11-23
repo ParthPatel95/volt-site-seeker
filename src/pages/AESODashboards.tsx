@@ -245,7 +245,7 @@ export default function AESODashboards() {
                 key={dashboard.id}
                 dashboard={dashboard}
                 onView={() => handleView(dashboard.id)}
-                onEdit={() => navigate(`/app/aeso-dashboard/${dashboard.id}`)}
+                onEdit={() => navigate(`/app/aeso-dashboard-builder/${dashboard.id}`)}
                 onShare={() => navigate(`/app/aeso-dashboard-share/${dashboard.id}`)}
                 onDuplicate={(e) => handleDuplicate(dashboard.id, e)}
                 onDelete={(e) => handleDelete(dashboard.id, e)}
