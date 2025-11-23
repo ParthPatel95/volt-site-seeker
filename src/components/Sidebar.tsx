@@ -60,6 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navigationItems = [
     { path: '/app', icon: Home, label: 'Home', permission: 'feature.dashboard' },
     { path: '/app/aeso-dashboards', icon: LayoutDashboard, label: 'Energy Dashboards', permission: 'feature.energy-dashboards' },
+    { path: '/app/model-improvement', icon: Brain, label: 'Model Improvement', permission: 'feature.model-improvement' },
     { path: '/app/aeso-market-hub', icon: MapPin, label: 'AESO Market Hub', permission: 'feature.aeso-market-hub' },
     { path: '/app/ercot-market-hub', icon: Zap, label: 'ERCOT Market Hub', permission: 'feature.ercot-market-hub' },
     { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates', permission: 'feature.energy-rates' },
