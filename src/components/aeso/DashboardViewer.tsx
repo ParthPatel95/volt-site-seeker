@@ -12,6 +12,12 @@ import { ChartWidget } from '@/components/aeso/dashboard-widgets/ChartWidget';
 import { GaugeWidget } from '@/components/aeso/dashboard-widgets/GaugeWidget';
 import { TableWidget } from '@/components/aeso/dashboard-widgets/TableWidget';
 import { PieChartWidget } from '@/components/aeso/dashboard-widgets/PieChartWidget';
+import { AdvancedChartWidget } from '@/components/aeso/dashboard-widgets/AdvancedChartWidget';
+import { HeatmapWidget } from '@/components/aeso/dashboard-widgets/HeatmapWidget';
+import { CandlestickWidget } from '@/components/aeso/dashboard-widgets/CandlestickWidget';
+import { ScatterPlotWidget } from '@/components/aeso/dashboard-widgets/ScatterPlotWidget';
+import { DistributionWidget } from '@/components/aeso/dashboard-widgets/DistributionWidget';
+import { EnhancedStatCard } from '@/components/aeso/dashboard-widgets/EnhancedStatCard';
 import { AlertConfigDialog } from './AlertConfigDialog';
 import { AIAssistantSidebar } from './AIAssistantSidebar';
 import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
@@ -89,13 +95,25 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
     const widgetContent = (() => {
       switch (widget.widget_type || widget.widgetType) {
         case 'stat_card':
-          return <StatCard config={config} />;
+          return <EnhancedStatCard config={config} />;
         case 'gauge':
           return <GaugeWidget config={config} />;
         case 'line_chart':
         case 'bar_chart':
         case 'area_chart':
           return <ChartWidget config={config} />;
+        case 'advanced_chart':
+        case 'advanced_line_chart':
+          return <AdvancedChartWidget config={config} />;
+        case 'heatmap':
+          return <HeatmapWidget config={config} />;
+        case 'candlestick':
+          return <CandlestickWidget config={config} />;
+        case 'scatter_plot':
+          return <ScatterPlotWidget config={config} />;
+        case 'distribution':
+        case 'histogram':
+          return <DistributionWidget config={config} />;
         case 'pie_chart':
           return <PieChartWidget config={config} />;
         case 'table':

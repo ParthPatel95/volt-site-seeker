@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Zap, Activity, TrendingUp, BarChart3, PieChart, Gauge, LineChart, Table, Loader2, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Zap, Activity, TrendingUp, BarChart3, PieChart, Gauge, LineChart, Table, Loader2, Sparkles, GitCompare, Calendar, BarChart2 } from 'lucide-react';
 import { analyzeAndRecommendWidget } from '@/utils/widgetTypeSelector';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardTemplateSelector } from './DashboardTemplateSelector';
@@ -49,10 +49,15 @@ const ERCOT_DATA_SOURCES = [
 ];
 
 const WIDGET_TYPES = [
-  { value: 'stat_card', label: 'Stat Card', icon: TrendingUp },
+  { value: 'stat_card', label: 'Stat Card', icon: Sparkles },
   { value: 'line_chart', label: 'Line Chart', icon: LineChart },
+  { value: 'advanced_chart', label: 'Advanced Chart', icon: Activity },
   { value: 'bar_chart', label: 'Bar Chart', icon: BarChart3 },
   { value: 'pie_chart', label: 'Pie Chart', icon: PieChart },
+  { value: 'candlestick', label: 'Candlestick', icon: BarChart2 },
+  { value: 'heatmap', label: 'Heatmap', icon: Calendar },
+  { value: 'scatter_plot', label: 'Scatter Plot', icon: GitCompare },
+  { value: 'distribution', label: 'Distribution', icon: BarChart3 },
   { value: 'gauge', label: 'Gauge', icon: Gauge },
   { value: 'table', label: 'Table', icon: Table },
 ];
