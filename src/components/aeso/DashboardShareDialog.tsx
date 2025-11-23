@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,13 @@ export function DashboardShareDialog({
   const [maxViews, setMaxViews] = useState<number | undefined>();
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // Load existing shares when dialog opens
+  useEffect(() => {
+    if (open && dashboardId) {
+      getShareLinks(dashboardId);
+    }
+  }, [open, dashboardId]);
 
   const handleCreateShare = async () => {
     if (!recipientEmail) {
