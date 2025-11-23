@@ -73,12 +73,13 @@ serve(async (req: Request) => {
   }
 
   try {
-    console.log('aeso-market-data: fetching CSD v2 summary...');
+    console.log('aeso-market-data: fetching CSD summary...');
     let csd: any = null;
     try {
       csd = await fetchCSDSummary();
+      console.log('✅ CSD summary fetched successfully');
     } catch (err) {
-      console.error('CSD v2 summary fetch failed, continuing with reports only:', err);
+      console.warn('⚠️ CSD summary fetch failed, continuing with reports only:', err.message);
     }
 
     // Also fetch additional AESO APIM datasets per official docs
@@ -181,10 +182,13 @@ serve(async (req: Request) => {
     }
 
     // The payload shape per docs exposes fields under a top-level VO or directly.
-    // Handle common shapes defensively
+    // Handle common shapes defensively with fallbacks
     const ts = csd?.effective_datetime_utc || csd?.effective_datetime_mpt || csd?.timestamp || new Date().toISOString();
-    const genList = csd?.generation_data_list || csd?.generationDataList || csd?.generation || [];
-    const interchangeList = csd?.interchange_list || csd?.interchangeList || [];
+    const genList = Array.isArray(csd?.generation_data_list) ? csd.generation_data_list : 
+                    Array.isArray(csd?.generationDataList) ? csd.generationDataList :
+                    Array.isArray(csd?.generation) ? csd.generation : [];
+    const interchangeList = Array.isArray(csd?.interchange_list) ? csd.interchange_list :
+                            Array.isArray(csd?.interchangeList) ? csd.interchangeList : [];
 
     // Interchange mapping by path keyword
     let bc = 0, sk = 0, mt = 0, total = 0;
@@ -220,6 +224,7 @@ serve(async (req: Request) => {
 
     const payload = {
       success: true,
+      dataAvailable: csd !== null,
       aeso: {
         interchange: {
           alberta_british_columbia: Math.round(bc),
@@ -227,15 +232,14 @@ serve(async (req: Request) => {
           alberta_montana: Math.round(mt),
           total_net_interchange: Math.round(total),
           timestamp: ts,
-          source: 'aeso_api_csd_v2'
+          source: csd ? 'aeso_api_csd_v2' : 'fallback_data'
         },
         operatingReserve: {
           total_reserve_mw: Math.round(totalReserve),
-          // Detailed split not available in real-time CSD: set to 0 to avoid fabrication
           spinning_reserve_mw: 0,
           supplemental_reserve_mw: 0,
           timestamp: ts,
-          source: 'aeso_api_csd_v2'
+          source: csd ? 'aeso_api_csd_v2' : 'fallback_data'
         },
         energyStorage: {
           charging_mw: Math.round(charging),
@@ -243,27 +247,36 @@ serve(async (req: Request) => {
           net_storage_mw: Math.round(storageNet),
           state_of_charge_percent: null,
           timestamp: ts,
-          source: 'aeso_api_csd_v2'
+          source: csd ? 'aeso_api_csd_v2' : 'fallback_data'
         },
         reports: {
-          energyMeritOrder: energyMeritOrder,
-          aiesGenCapacity: aiesGenCapacity,
-          assetList: assetList,
-          intertieOutages: intertieOutages,
-          loadOutageForecast: loadOutageForecast,
-          meteredVolume: meteredVolume,
-          operatingReserveOfferControl: operatingReserveOfferControl,
-          poolParticipants: poolParticipants
+          energyMeritOrder: energyMeritOrder || null,
+          aiesGenCapacity: aiesGenCapacity || null,
+          assetList: assetList || null,
+          intertieOutages: intertieOutages || null,
+          loadOutageForecast: loadOutageForecast || null,
+          meteredVolume: meteredVolume || null,
+          operatingReserveOfferControl: operatingReserveOfferControl || null,
+          poolParticipants: poolParticipants || null
         }
       }
     };
+    
+    console.log(`✅ Returning payload with ${csd ? 'live' : 'fallback'} data`);
+    
     return new Response(JSON.stringify(payload), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
       status: 200,
     });
-  } catch (e) {
-    console.error('aeso-market-data error:', e);
-    return new Response(JSON.stringify({ success: false, error: String(e) }), {
+  } catch (e: any) {
+    console.error('❌ aeso-market-data critical error:', e);
+    // Return a safe fallback response even on catastrophic failure
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: e?.message || String(e),
+      timestamp: new Date().toISOString(),
+      fallback: true
+    }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
       status: 200,
     });
