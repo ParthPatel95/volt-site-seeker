@@ -1,716 +1,273 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Zap, 
-  TrendingUp, 
   Activity,
   Gauge,
   Wind,
-  Sun,
-  Fuel,
   RefreshCw,
   MapPin,
-  DollarSign,
-  Battery,
-  Cable,
-  ArrowLeftRight,
   Shield,
-  AlertTriangle,
-  Target,
-  BarChart3,
-  Brain,
-  Factory,
-  Calendar,
-  Settings
+  ArrowLeftRight,
+  Calendar
 } from 'lucide-react';
-import { useAESOData } from '@/hooks/useAESOData';
-import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
-import { useAESOEnhancedData } from '@/hooks/useAESOEnhancedData';
-import { useAESOMarketData } from '@/hooks/useAESOMarketData';
-import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
-import { useAESOCrossValidation } from '@/hooks/useAESOCrossValidation';
-import { useAESOEnsemble } from '@/hooks/useAESOEnsemble';
-import { AESOMarketAnalyticsPanel } from './intelligence/AESOMarketAnalyticsPanel';
-import { AESOForecastPanel } from './intelligence/AESOForecastPanel';
-import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
-import { AESOAlertsPanel } from './intelligence/AESOAlertsPanel';
-import { AESOInvestmentPanel } from './intelligence/AESOInvestmentPanel';
 import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
-import { AESOPricePredictionDashboard } from './aeso/AESOPricePredictionDashboard';
-import { AESOTrainingManager } from './aeso/AESOTrainingManager';
-import { CustomDashboardsPanel } from './aeso/CustomDashboardsPanel';
-import { usePermissions } from '@/hooks/usePermissions';
 
 export function AESOMarketComprehensive() {
-  const { hasPermission } = usePermissions();
-  // Use working dashboard data source
   const { 
     aesoPricing: pricing, 
     aesoLoad: loadData, 
     aesoGeneration: generationMix, 
-    isLoading: basicLoading, 
+    isLoading: loading, 
     refreshData 
   } = useOptimizedDashboard();
 
-  // Enhanced AESO data hook
-  const {
-    windSolarForecast,
-    assetOutages,
-    historicalPrices,
-    marketAnalytics,
-    alerts,
-    loading: enhancedLoading,
-    refetchAll: refetchEnhanced,
-    dismissAlert,
-    clearAllAlerts
-  } = useAESOEnhancedData();
-
-  // AESO Market data hook for real market data
-  const {
-    operatingReserve,
-    interchange,
-    energyStorage,
-    loading: marketLoading,
-    refetch: refetchMarket
-  } = useAESOMarketData();
-
-  // AESO Price Prediction hook for model training
-  const {
-    runCompletePipeline,
-    loading: pipelineLoading
-  } = useAESOPricePrediction();
-
-  // AESO Cross-Validation hook
-  const {
-    runCrossValidation,
-    loading: cvLoading,
-    results: cvResults
-  } = useAESOCrossValidation();
-
-  // AESO Ensemble Predictor hook
-  const {
-    generateEnsemblePredictions,
-    loading: ensembleLoading,
-    predictions: ensemblePredictions
-  } = useAESOEnsemble();
-
-  const { exchangeRate, convertToUSD } = useExchangeRate();
-
-  const loading = basicLoading || enhancedLoading || marketLoading;
-
-  const formatPrice = (cadPrice: number) => {
-    return {
-      cad: `CA$${cadPrice.toFixed(2)}`,
-      usd: `CA$${cadPrice.toFixed(2)}`  // Remove USD conversion as requested
-    };
-  };
-
-  const handleRefreshAll = () => {
-    refreshData();
-    refetchEnhanced();
-    refetchMarket();
-  };
-
-  // Use real market data when available - same logic as working Dashboard
   const currentPrice = pricing?.current_price ?? 0;
-  const hasValidPrice = pricing !== null && pricing !== undefined;
-  const priceTimestamp = pricing?.timestamp;
-
-  // Calculate 95% uptime average price using REAL historical data
-  const calculate95UptimeAverage = (averagePrice: number, currentPrice: number) => {
-    // Use real historical data from historicalPrices if available
-    if (historicalPrices?.prices && historicalPrices.prices.length > 0) {
-      const prices = historicalPrices.prices.map(p => p.pool_price).sort((a, b) => a - b);
-      // Calculate 95th percentile - exclude top 5%
-      const index95 = Math.floor(prices.length * 0.95);
-      const prices95 = prices.slice(0, index95);
-      const uptimeAverage = prices95.reduce((sum, p) => sum + p, 0) / prices95.length;
-      
-      return {
-        uptimeAverage: uptimeAverage,
-        uptimePercentage: 95,
-        excludedPrices: prices.length - prices95.length,
-        totalDataPoints: prices.length
-      };
-    }
-    // If no historical data, return the average as best estimate
-    return {
-      uptimeAverage: averagePrice,
-      uptimePercentage: 95,
-      excludedPrices: 0,
-      totalDataPoints: 0
-    };
-  };
-
-  const uptimeData = calculate95UptimeAverage(pricing?.average_price || 0, currentPrice);
-
-  // Intelligence helper functions
-  const getMarketStressValue = () => {
-    if (marketAnalytics?.market_stress_score) {
-      return `${marketAnalytics.market_stress_score}/100`;
-    }
-    return null;
-  };
-
-  const getMarketStressLevel = () => {
-    if (marketAnalytics?.market_stress_score) {
-      const score = marketAnalytics.market_stress_score;
-      if (score > 70) return 'High Stress';
-      if (score > 40) return 'Moderate';
-      return 'Low Stress';
-    }
-    return null;
-  };
+  const averagePrice = pricing?.average_price ?? 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-950 dark:to-blue-950/30">
-      <div className="container-responsive py-3 sm:py-4 lg:py-6 space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
-              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-red-600 flex-shrink-0" />
-              <span className="leading-tight">AESO Market & Intelligence Hub</span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+              <MapPin className="w-6 h-6 text-red-600" />
+              AESO Market Hub
             </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mt-1 sm:mt-2">
-              Real-time market data with advanced analytics for Alberta&apos;s electricity system
+            <p className="text-sm text-muted-foreground mt-1">
+              Alberta Energy System Operator - Real-Time Market Data
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={handleRefreshAll}
-              disabled={loading}
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 touch-target text-sm sm:text-base px-4 sm:px-5 py-2 sm:py-2.5 whitespace-nowrap"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh All Data</span>
-            </Button>
-          </div>
+          <Button 
+            onClick={refreshData}
+            disabled={loading}
+            size="lg"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
-
-
-        {/* Tabbed Interface */}
-        <Tabs defaultValue="market" className="space-y-4 sm:space-y-6">
-          <div className="relative w-full">
-            <div className="w-full overflow-x-auto overflow-y-hidden scrollbar-thin pb-1">
-              <TabsList className="inline-flex w-max h-auto flex-nowrap gap-1 sm:gap-1.5 p-1 bg-muted/50 dark:bg-muted rounded-lg">
-                <TabsTrigger value="market" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Market Data</span>
-                  <span className="sm:hidden">Market</span>
-                </TabsTrigger>
-                <TabsTrigger value="predictions" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">AI Predictions</span>
-                  <span className="sm:hidden">AI</span>
-                </TabsTrigger>
-                <TabsTrigger value="historical" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Historical</span>
-                  <span className="sm:hidden">History</span>
-                </TabsTrigger>
-                <TabsTrigger value="generation" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Generation</span>
-                  <span className="md:hidden">Gen</span>
-                </TabsTrigger>
-                <TabsTrigger value="forecast" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Wind className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Forecasts</span>
-                  <span className="md:hidden">Cast</span>
-                </TabsTrigger>
-                <TabsTrigger value="outages-alerts" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Outages & Alerts</span>
-                  <span className="md:hidden">Alerts</span>
-                </TabsTrigger>
-                <TabsTrigger value="custom-dashboards" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Dashboards</span>
-                  <span className="md:hidden">Custom</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
+        {/* Tabs */}
+        <Tabs defaultValue="market" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="market">
+              <Zap className="w-4 h-4 mr-2" />
+              Market Data
+            </TabsTrigger>
+            <TabsTrigger value="generation">
+              <Activity className="w-4 h-4 mr-2" />
+              Generation
+            </TabsTrigger>
+            <TabsTrigger value="historical">
+              <Calendar className="w-4 h-4 mr-2" />
+              Historical
+            </TabsTrigger>
+          </TabsList>
 
           {/* Market Data Tab */}
-          <TabsContent value="market" className="space-y-4 sm:space-y-6">
-            {/* Main Data Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-              {/* Real-time Pricing */}
-              <Card className="shadow-mobile">
-                <CardHeader className="pb-2 sm:pb-3">
-                  <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="flex items-center min-w-0">
-                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-yellow-600 flex-shrink-0" />
-                      <span className="text-sm sm:text-base lg:text-lg truncate">System Marginal Price</span>
-                    </div>
-                    {priceTimestamp && (
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date(priceTimestamp).toLocaleTimeString()}
+          <TabsContent value="market" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Pricing Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-yellow-600" />
+                    System Marginal Price
+                    {pricing?.timestamp && (
+                      <Badge variant="outline" className="ml-auto text-xs">
+                        {new Date(pricing.timestamp).toLocaleTimeString()}
                       </Badge>
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="padding-responsive">
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2 min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
-                        <div className="space-y-1">
-                          <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                            {hasValidPrice ? `CA$${currentPrice.toFixed(2)}/MWh` : 'Loading...'}
-                          </p>
-                        </div>
-                        <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="text-xs">
-                          {currentPrice > 60 ? 'HIGH DEMAND' : 'NORMAL'}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2 min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Average Price (30-Day, 95% Uptime)</p>
-                        <div className="space-y-1">
-                          <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
-                            CA${uptimeData.uptimeAverage.toFixed(2)}/MWh
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Uptime: {uptimeData.uptimePercentage}%</span>
-                            <span>•</span>
-                            <span>{uptimeData.excludedPrices} high prices excluded</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Current Price</p>
+                    <p className="text-3xl font-bold">
+                      {loading ? 'Loading...' : `CA$${currentPrice.toFixed(2)}/MWh`}
+                    </p>
+                    <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="mt-2">
+                      {currentPrice > 60 ? 'HIGH DEMAND' : 'NORMAL'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">30-Day Average</p>
+                    <p className="text-xl font-semibold">CA${averagePrice.toFixed(2)}/MWh</p>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* System Load & Demand */}
-              <Card className="shadow-mobile">
-                <CardHeader className="pb-2 sm:pb-3">
-                  <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="flex items-center min-w-0">
-                      <Gauge className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm sm:text-base lg:text-lg truncate">System Load & Demand</span>
-                    </div>
-                    {loadData?.forecast_date && (
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date(loadData.forecast_date).toLocaleTimeString()}
-                      </Badge>
-                    )}
+              {/* Load Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gauge className="w-5 h-5 text-blue-600" />
+                    System Load & Demand
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="padding-responsive">
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Current Demand</p>
-                       <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                         {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '—'} GW
-                       </p>
-                       <p className="text-xs text-muted-foreground break-all">
-                         {loadData?.current_demand_mw?.toFixed(0) || '—'} MW
-                       </p>
-                    </div>
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Peak Forecast</p>
-                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
-                         {loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '—'} GW
-                       </p>
-                       <p className="text-xs text-muted-foreground break-all">
-                         {loadData?.peak_forecast_mw?.toFixed(0) || '—'} MW
-                       </p>
-                    </div>
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Capacity Margin</p>
-                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
-                         {loadData?.capacity_margin?.toFixed(1) || '—'}%
-                       </p>
-                    </div>
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Reserve Margin</p>
-                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
-                         {loadData?.reserve_margin?.toFixed(1) || '—'}%
-                       </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Additional Market Data */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-              {/* Operating Reserve - Always show with fallback data */}
-              <Card className="shadow-mobile">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0 flex-1">
-                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-orange-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base truncate">Operating Reserve</span>
-                      </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date().toLocaleTimeString()}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="padding-responsive">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Total Reserve</span>
-                        <span className="font-semibold text-sm break-all">
-                          {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.12).toFixed(0) : '1,250'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Spinning Reserve</span>
-                        <span className="font-semibold text-sm break-all">
-                          {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.07).toFixed(0) : '750'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Supplemental Reserve</span>
-                        <span className="font-semibold text-sm break-all">
-                          {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.05).toFixed(0) : '500'} MW
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              
-              {/* Interchange - Always show with fallback data */}
-              <Card className="shadow-mobile">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0 flex-1">
-                        <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base truncate">Interchange</span>
-                      </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date().toLocaleTimeString()}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="padding-responsive">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-BC</span>
-                        <span className="font-semibold text-sm break-all text-red-600">-150 MW</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-SK</span>
-                        <span className="font-semibold text-sm break-all text-green-600">+125 MW</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-MT</span>
-                        <span className="font-semibold text-sm break-all text-red-600">-25 MW</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-sm font-medium truncate">Net Total</span>
-                          <span className="font-bold text-sm break-all text-red-600">-50 MW</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              
-              {/* Energy Storage - Always show with fallback data */}
-              <Card className="shadow-mobile">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0 flex-1">
-                        <Battery className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base truncate">Energy Storage</span>
-                      </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date().toLocaleTimeString()}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="padding-responsive">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Charging</span>
-                        <span className="font-semibold text-sm break-all">
-                          {generationMix?.renewable_percentage ? Math.round(generationMix.renewable_percentage).toFixed(0) : '25'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Discharging</span>
-                        <span className="font-semibold text-sm break-all">
-                          {generationMix?.renewable_percentage ? Math.round(100 - generationMix.renewable_percentage).toFixed(0) : '45'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Net Storage</span>
-                        <span className="font-semibold text-sm break-all text-red-600">-20 MW</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-sm font-medium truncate">State of Charge</span>
-                          <span className="font-bold text-sm break-all">75.5%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-            </div>
-          </TabsContent>
-
-          {/* Historical Pricing Tab */}
-          <TabsContent value="historical" className="space-y-4 sm:space-y-6">
-            <AESOHistoricalPricing />
-          </TabsContent>
-
-          {/* AI Price Predictions Tab with Sub-tabs */}
-          <TabsContent value="predictions" className="space-y-4 sm:space-y-6">
-            <Tabs defaultValue="predictions" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="predictions" className="flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  Predictions
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="training" 
-                  className="flex items-center gap-2"
-                  disabled={!hasPermission('aeso.training-management')}
-                >
-                  {!hasPermission('aeso.training-management') && (
-                    <Shield className="w-4 h-4" />
-                  )}
-                  {hasPermission('aeso.training-management') && (
-                    <Settings className="w-4 h-4" />
-                  )}
-                  Training & Management
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="predictions">
-                <AESOPricePredictionDashboard />
-              </TabsContent>
-              
-              <TabsContent value="training">
-                {hasPermission('aeso.training-management') ? (
-                  <AESOTrainingManager />
-                ) : (
-                  <Card>
-                    <CardContent className="p-8 text-center">
-                      <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
-                      <p className="text-muted-foreground">
-                        You need "AESO Model Training" permission to access this section.
-                        Please contact your administrator.
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Current Demand</p>
+                      <p className="text-2xl font-bold">
+                        {loadData?.current_demand_mw 
+                          ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW`
+                          : '—'}
                       </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-            </Tabs>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Peak Forecast</p>
+                      <p className="text-xl font-semibold">
+                        {loadData?.peak_forecast_mw 
+                          ? `${(loadData.peak_forecast_mw / 1000).toFixed(1)} GW`
+                          : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Reserve Margin</p>
+                      <p className="text-xl font-semibold">
+                        {loadData?.reserve_margin?.toFixed(1) || '—'}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Capacity Margin</p>
+                      <p className="text-xl font-semibold">
+                        {loadData?.capacity_margin?.toFixed(1) || '—'}%
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Market Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Shield className="w-4 h-4 text-orange-600" />
+                    Reserve Margin
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">
+                    {loadData?.reserve_margin 
+                      ? `${loadData.reserve_margin.toFixed(1)}%`
+                      : '—'}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">System flexibility</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Wind className="w-4 h-4 text-green-600" />
+                    Renewable Generation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">
+                    {generationMix?.renewable_percentage 
+                      ? `${generationMix.renewable_percentage.toFixed(1)}%`
+                      : '—'}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {generationMix?.wind_mw && generationMix?.solar_mw
+                      ? `${((generationMix.wind_mw + generationMix.solar_mw) / 1000).toFixed(1)} GW`
+                      : 'Wind & Solar'}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Generation Tab */}
-          <TabsContent value="generation" className="space-y-4 sm:space-y-6">
+          <TabsContent value="generation" className="space-y-6">
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <div className="flex items-center">
-                    <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600" />
-                    <span className="text-sm sm:text-base">Current Generation Mix</span>
-                  </div>
-                  {generationMix?.timestamp && (
-                    <Badge variant="outline" className="text-xs self-start sm:self-auto">
-                      Updated: {new Date(generationMix.timestamp).toLocaleTimeString()}
-                    </Badge>
-                  )}
-                </CardTitle>
+              <CardHeader>
+                <CardTitle>Generation Mix</CardTitle>
               </CardHeader>
               <CardContent>
-                {generationMix ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
-                      <div className="text-center p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg min-w-0">
-                        <Fuel className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-blue-500 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">Natural Gas</p>
-                        <p className="text-sm sm:text-base lg:text-xl font-bold break-all">
-                          {generationMix.natural_gas_mw ? (generationMix.natural_gas_mw / 1000).toFixed(1) : '0.0'} GW
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {generationMix.total_generation_mw ? ((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%
-                        </p>
-                      </div>
-                      <div className="text-center p-2 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg min-w-0">
-                        <Wind className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-green-500 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">Wind</p>
-                        <p className="text-sm sm:text-base lg:text-xl font-bold break-all">
-                          {generationMix.wind_mw ? (generationMix.wind_mw / 1000).toFixed(1) : '0.0'} GW
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {generationMix.total_generation_mw ? ((generationMix.wind_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%
-                        </p>
-                      </div>
-                      <div className="text-center p-2 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg min-w-0">
-                        <Sun className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-yellow-500 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">Solar</p>
-                        <p className="text-sm sm:text-base lg:text-xl font-bold break-all">
-                          {generationMix.solar_mw ? (generationMix.solar_mw / 1000).toFixed(1) : '0.0'} GW
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {generationMix.total_generation_mw ? ((generationMix.solar_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%
-                        </p>
-                      </div>
-                      <div className="text-center p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg min-w-0">
-                        <Activity className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-blue-600 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">Hydro</p>
-                        <p className="text-sm sm:text-base lg:text-xl font-bold break-all">
-                          {generationMix.hydro_mw ? (generationMix.hydro_mw / 1000).toFixed(1) : '0.0'} GW
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {generationMix.total_generation_mw ? ((generationMix.hydro_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%
-                        </p>
-                      </div>
-                      <div className="text-center p-2 sm:p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg min-w-0">
-                        <Fuel className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-gray-600 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">Coal</p>
-                        <p className="text-sm sm:text-base lg:text-xl font-bold break-all">
-                          {generationMix.coal_mw ? (generationMix.coal_mw / 1000).toFixed(1) : '0.0'} GW
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {generationMix.total_generation_mw ? ((generationMix.coal_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%
-                        </p>
-                      </div>
-                      <div className="text-center p-2 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg min-w-0">
-                        <Zap className="w-4 h-4 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 text-purple-500 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">Other</p>
-                        <p className="text-sm sm:text-base lg:text-xl font-bold break-all">
-                          {generationMix.other_mw ? (generationMix.other_mw / 1000).toFixed(1) : '0.0'} GW
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {generationMix.total_generation_mw ? ((generationMix.other_mw / generationMix.total_generation_mw) * 100).toFixed(1) : '0.0'}%
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg gap-2">
-                      <div className="min-w-0">
-                        <span className="text-base sm:text-lg font-medium">Renewable Generation</span>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Wind + Hydro + Solar</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 text-sm sm:text-lg px-2 sm:px-3 py-1">
-                          {generationMix.renewable_percentage?.toFixed(1) || '0.0'}%
-                        </Badge>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                          Total: {generationMix.total_generation_mw ? (generationMix.total_generation_mw / 1000).toFixed(1) : '0.0'} GW
-                        </p>
-                      </div>
-                    </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Coal</p>
+                    <p className="text-xl font-semibold">
+                      {generationMix?.coal_mw 
+                        ? `${(generationMix.coal_mw / 1000).toFixed(1)} GW`
+                        : '—'}
+                    </p>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-muted-foreground">Loading generation data...</p>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Natural Gas</p>
+                    <p className="text-xl font-semibold">
+                      {generationMix?.natural_gas_mw 
+                        ? `${(generationMix.natural_gas_mw / 1000).toFixed(1)} GW`
+                        : '—'}
+                    </p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="forecast">
-            <AESOForecastPanel 
-              windSolarForecast={windSolarForecast}
-              loading={enhancedLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value="outages-alerts" className="space-y-4 sm:space-y-6">
-            {/* Alerts Section */}
-            <div>
-              <AESOAlertsPanel 
-                alerts={alerts}
-                onDismissAlert={dismissAlert}
-                onClearAll={clearAllAlerts}
-              />
-            </div>
-            
-            {/* Outages Section */}
-            <div>
-              <AESOOutagesPanel 
-                assetOutages={assetOutages}
-                loading={enhancedLoading}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="custom-dashboards" className="space-y-4 sm:space-y-6">
-            <CustomDashboardsPanel />
-          </TabsContent>
-
-        </Tabs>
-
-        {/* Real-time Market Overview (moved below tabs) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-blue-100 truncate pr-2">Current Price</CardTitle>
-              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-blue-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                {formatPrice(currentPrice).cad.split('/')[0]}
-              </div>
-              <p className="text-xs text-blue-200 break-all leading-tight mt-1">
-                {formatPrice(currentPrice).usd.split('/')[0]}/MWh
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-green-100 truncate pr-2">System Load</CardTitle>
-              <Gauge className="h-3 w-3 sm:h-4 sm:w-4 text-green-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                {loadData?.current_demand_mw ? `${(loadData.current_demand_mw / 1000).toFixed(1)} GW` : 'Loading...'}
-              </div>
-              <p className="text-xs text-green-200 break-words leading-tight mt-1">Current demand</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-purple-100 truncate pr-2">Renewables</CardTitle>
-              <Wind className="h-3 w-3 sm:h-4 sm:w-4 text-purple-200 flex-shrink-0" />
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
-                {generationMix?.renewable_percentage ? `${generationMix.renewable_percentage.toFixed(1)}%` : 'Loading...'}
-              </div>
-              <p className="text-xs text-purple-200 break-words leading-tight mt-1">Of total generation</p>
-            </CardContent>
-          </Card>
-
-          {marketAnalytics?.market_stress_score && (
-            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-                <CardTitle className="text-xs sm:text-sm font-medium text-orange-100 truncate pr-2">Market Stress</CardTitle>
-                <Brain className="h-3 w-3 sm:h-4 sm:w-4 text-orange-200 flex-shrink-0" />
-              </CardHeader>
-              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold leading-tight">
-                  {getMarketStressValue()}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Hydro</p>
+                    <p className="text-xl font-semibold">
+                      {generationMix?.hydro_mw 
+                        ? `${(generationMix.hydro_mw / 1000).toFixed(1)} GW`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Wind</p>
+                    <p className="text-xl font-semibold">
+                      {generationMix?.wind_mw 
+                        ? `${(generationMix.wind_mw / 1000).toFixed(1)} GW`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Solar</p>
+                    <p className="text-xl font-semibold">
+                      {generationMix?.solar_mw 
+                        ? `${(generationMix.solar_mw / 1000).toFixed(1)} GW`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Other</p>
+                    <p className="text-xl font-semibold">
+                      {generationMix?.other_mw 
+                        ? `${(generationMix.other_mw / 1000).toFixed(1)} GW`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Total Generation</p>
+                    <p className="text-2xl font-bold">
+                      {generationMix?.total_generation_mw 
+                        ? `${(generationMix.total_generation_mw / 1000).toFixed(1)} GW`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Renewable %</p>
+                    <p className="text-xl font-semibold text-green-600">
+                      {generationMix?.renewable_percentage?.toFixed(1) || '—'}%
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-orange-200 break-words leading-tight mt-1">
-                  {getMarketStressLevel()}
-                </p>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </TabsContent>
+
+          {/* Historical Tab */}
+          <TabsContent value="historical">
+            <AESOHistoricalPricing />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
