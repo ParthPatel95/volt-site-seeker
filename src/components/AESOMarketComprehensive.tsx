@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ResponsiveTabs } from '@/components/ui/responsive-tabs';
+import { NavigationItem } from '@/hooks/useResponsiveNavigation';
 import { 
   Zap, 
   TrendingUp, 
@@ -48,6 +50,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 
 export function AESOMarketComprehensive() {
   const { hasPermission } = usePermissions();
+  const [activeTab, setActiveTab] = React.useState('market');
+  
   // Use working dashboard data source
   const { 
     aesoPricing: pricing, 
@@ -149,6 +153,17 @@ export function AESOMarketComprehensive() {
 
   const uptimeData = calculate95UptimeAverage(pricing?.average_price || 0, currentPrice);
 
+  // Navigation items for responsive tabs
+  const navigationItems: NavigationItem[] = [
+    { id: 'market', label: 'Market Data', icon: Zap, priority: 1 },
+    { id: 'predictions', label: 'AI Predictions', icon: Brain, priority: 2 },
+    { id: 'historical', label: 'Historical', icon: Calendar, priority: 3 },
+    { id: 'generation', label: 'Generation', icon: Activity, priority: 4 },
+    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 5 },
+    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 6 },
+    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 7 },
+  ];
+
   // Intelligence helper functions
   const getMarketStressValue = () => {
     if (marketAnalytics?.market_stress_score) {
@@ -196,48 +211,14 @@ export function AESOMarketComprehensive() {
 
 
         {/* Tabbed Interface */}
-        <Tabs defaultValue="market" className="space-y-4 sm:space-y-6">
-          <div className="relative w-full">
-            <div className="w-full overflow-x-auto overflow-y-hidden scrollbar-thin pb-1">
-              <TabsList className="inline-flex w-max h-auto flex-nowrap gap-1 sm:gap-1.5 p-1 bg-muted/50 dark:bg-muted rounded-lg">
-                <TabsTrigger value="market" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Market Data</span>
-                  <span className="sm:hidden">Market</span>
-                </TabsTrigger>
-                <TabsTrigger value="predictions" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">AI Predictions</span>
-                  <span className="sm:hidden">AI</span>
-                </TabsTrigger>
-                <TabsTrigger value="historical" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">Historical</span>
-                  <span className="sm:hidden">History</span>
-                </TabsTrigger>
-                <TabsTrigger value="generation" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Generation</span>
-                  <span className="md:hidden">Gen</span>
-                </TabsTrigger>
-                <TabsTrigger value="forecast" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Wind className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Forecasts</span>
-                  <span className="md:hidden">Cast</span>
-                </TabsTrigger>
-                <TabsTrigger value="outages-alerts" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Outages & Alerts</span>
-                  <span className="md:hidden">Alerts</span>
-                </TabsTrigger>
-                <TabsTrigger value="custom-dashboards" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 whitespace-nowrap touch-target transition-smooth flex-shrink-0">
-                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Dashboards</span>
-                  <span className="md:hidden">Custom</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <ResponsiveTabs
+            items={navigationItems}
+            defaultValue="market"
+            onValueChange={setActiveTab}
+          >
+            <></>
+          </ResponsiveTabs>
 
           {/* Market Data Tab */}
           <TabsContent value="market" className="space-y-4 sm:space-y-6">
