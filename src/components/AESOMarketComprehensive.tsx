@@ -183,262 +183,269 @@ export function AESOMarketComprehensive() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-950 dark:to-blue-950/30">
-      <div className="container-responsive py-3 sm:py-4 lg:py-6 space-y-4 sm:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
-              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-red-600 flex-shrink-0" />
-              <span className="leading-tight">AESO Market & Intelligence Hub</span>
-            </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mt-1 sm:mt-2">
-              Real-time market data with advanced analytics for Alberta&apos;s electricity system
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-gradient-to-br from-background via-slate-50/50 to-primary/5 dark:from-background dark:via-slate-950/50 dark:to-primary/5">
+      <div className="container-responsive py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
+        {/* Modern Header with Glassmorphism */}
+        <div className="relative overflow-hidden rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 shadow-lg p-4 sm:p-6 lg:p-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-50"></div>
+          <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
+                  <MapPin className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent leading-tight">
+                  AESO Market Hub
+                </h1>
+              </div>
+              <p className="text-sm sm:text-base text-muted-foreground pl-14 sm:pl-16">
+                Real-time market data with advanced analytics for Alberta's electricity system
+              </p>
+            </div>
             <Button 
               onClick={handleRefreshAll}
               disabled={loading}
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 touch-target text-sm sm:text-base px-4 sm:px-5 py-2 sm:py-2.5 whitespace-nowrap"
+              size="lg"
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh All Data</span>
+              <span className="font-medium">Refresh Data</span>
             </Button>
           </div>
         </div>
 
 
 
-        {/* Tabbed Interface */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          <ResponsiveTabs
-            items={navigationItems}
-            defaultValue="market"
-            onValueChange={setActiveTab}
-          >
-            <></>
-          </ResponsiveTabs>
+        {/* Modern Tabbed Navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 shadow-sm">
+            <div className="max-w-7xl mx-auto">
+              <ResponsiveTabs
+                items={navigationItems}
+                defaultValue="market"
+                onValueChange={setActiveTab}
+              >
+                <></>
+              </ResponsiveTabs>
+            </div>
+          </div>
 
           {/* Market Data Tab */}
-          <TabsContent value="market" className="space-y-4 sm:space-y-6">
+          <TabsContent value="market" className="space-y-6 sm:space-y-8 animate-fade-in">
             {/* Main Data Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-              {/* Real-time Pricing */}
-              <Card className="shadow-mobile">
-                <CardHeader className="pb-2 sm:pb-3">
-                  <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="flex items-center min-w-0">
-                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-yellow-600 flex-shrink-0" />
-                      <span className="text-sm sm:text-base lg:text-lg truncate">System Marginal Price</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Real-time Pricing - Enhanced Card */}
+              <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <CardHeader className="relative pb-3 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-lg">
+                        <Zap className="w-5 h-5 text-white" />
+                      </div>
+                      <CardTitle className="text-lg font-bold">System Marginal Price</CardTitle>
                     </div>
                     {priceTimestamp && (
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date(priceTimestamp).toLocaleTimeString()}
+                      <Badge variant="outline" className="text-xs font-medium">
+                        {new Date(priceTimestamp).toLocaleTimeString()}
                       </Badge>
                     )}
-                  </CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent className="padding-responsive">
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2 min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Current Price</p>
-                        <div className="space-y-1">
-                          <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                            {hasValidPrice ? `CA$${currentPrice.toFixed(2)}/MWh` : 'Loading...'}
-                          </p>
-                        </div>
-                        <Badge variant={currentPrice > 60 ? 'destructive' : 'default'} className="text-xs">
-                          {currentPrice > 60 ? 'HIGH DEMAND' : 'NORMAL'}
-                        </Badge>
+                <CardContent className="relative p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-sm font-medium text-muted-foreground">Current Price</p>
                       </div>
-                      <div className="space-y-2 min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Average Price (30-Day, 95% Uptime)</p>
-                        <div className="space-y-1">
-                          <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
-                            CA${uptimeData.uptimeAverage.toFixed(2)}/MWh
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Uptime: {uptimeData.uptimePercentage}%</span>
-                            <span>•</span>
-                            <span>{uptimeData.excludedPrices} high prices excluded</span>
-                          </div>
-                        </div>
+                      <div className="space-y-2">
+                        <p className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-600 to-yellow-500 bg-clip-text text-transparent">
+                          {hasValidPrice ? `$${currentPrice.toFixed(2)}` : 'Loading...'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">CAD/MWh</p>
+                      </div>
+                      <Badge 
+                        variant={currentPrice > 60 ? 'destructive' : 'default'} 
+                        className="text-xs font-semibold px-3 py-1"
+                      >
+                        {currentPrice > 60 ? '⚡ HIGH DEMAND' : '✓ NORMAL'}
+                      </Badge>
+                    </div>
+                    <div className="space-y-3 border-l pl-6 border-border/50">
+                      <p className="text-sm font-medium text-muted-foreground">30-Day Average (95% Uptime)</p>
+                      <div className="space-y-2">
+                        <p className="text-2xl lg:text-3xl font-bold text-foreground">
+                          ${uptimeData.uptimeAverage.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">CAD/MWh</p>
+                      </div>
+                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                          {uptimeData.uptimePercentage}% uptime analyzed
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground"></div>
+                          {uptimeData.excludedPrices} spikes excluded
+                        </span>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* System Load & Demand */}
-              <Card className="shadow-mobile">
-                <CardHeader className="pb-2 sm:pb-3">
-                  <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="flex items-center min-w-0">
-                      <Gauge className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm sm:text-base lg:text-lg truncate">System Load & Demand</span>
+              {/* System Load & Demand - Enhanced Card */}
+              <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <CardHeader className="relative pb-3 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                        <Gauge className="w-5 h-5 text-white" />
+                      </div>
+                      <CardTitle className="text-lg font-bold">System Load & Demand</CardTitle>
                     </div>
                     {loadData?.forecast_date && (
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date(loadData.forecast_date).toLocaleTimeString()}
+                      <Badge variant="outline" className="text-xs font-medium">
+                        {new Date(loadData.forecast_date).toLocaleTimeString()}
                       </Badge>
                     )}
-                  </CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent className="padding-responsive">
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Current Demand</p>
-                       <p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold break-all leading-tight">
-                         {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '—'} GW
-                       </p>
-                       <p className="text-xs text-muted-foreground break-all">
-                         {loadData?.current_demand_mw?.toFixed(0) || '—'} MW
-                       </p>
+                <CardContent className="relative p-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">Current Demand</p>
+                      <div className="space-y-1">
+                        <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                          {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '—'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">GW ({loadData?.current_demand_mw?.toFixed(0) || '—'} MW)</p>
+                      </div>
                     </div>
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Peak Forecast</p>
-                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold break-all leading-tight">
-                         {loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '—'} GW
-                       </p>
-                       <p className="text-xs text-muted-foreground break-all">
-                         {loadData?.peak_forecast_mw?.toFixed(0) || '—'} MW
-                       </p>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">Peak Forecast</p>
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-foreground">
+                          {loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '—'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">GW ({loadData?.peak_forecast_mw?.toFixed(0) || '—'} MW)</p>
+                      </div>
                     </div>
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Capacity Margin</p>
-                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
-                         {loadData?.capacity_margin?.toFixed(1) || '—'}%
-                       </p>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">Capacity Margin</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {loadData?.capacity_margin?.toFixed(1) || '—'}%
+                      </p>
                     </div>
-                    <div className="space-y-2 min-w-0">
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">Reserve Margin</p>
-                       <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold leading-tight">
-                         {loadData?.reserve_margin?.toFixed(1) || '—'}%
-                       </p>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">Reserve Margin</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {loadData?.reserve_margin?.toFixed(1) || '—'}%
+                      </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Additional Market Data */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-              {/* Operating Reserve - Always show with fallback data */}
-              <Card className="shadow-mobile">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0 flex-1">
-                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-orange-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base truncate">Operating Reserve</span>
+            {/* Additional Market Data - Modern Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Operating Reserve */}
+              <Card className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardHeader className="relative pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-orange-500/10">
+                        <Shield className="w-4 h-4 text-orange-600 dark:text-orange-500" />
                       </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date().toLocaleTimeString()}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="padding-responsive">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Total Reserve</span>
-                        <span className="font-semibold text-sm break-all">
-                          {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.12).toFixed(0) : '1,250'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Spinning Reserve</span>
-                        <span className="font-semibold text-sm break-all">
-                          {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.07).toFixed(0) : '750'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Supplemental Reserve</span>
-                        <span className="font-semibold text-sm break-all">
-                          {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.05).toFixed(0) : '500'} MW
-                        </span>
-                      </div>
+                      <CardTitle className="text-base font-semibold">Operating Reserve</CardTitle>
                     </div>
-                  </CardContent>
-                </Card>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5">Live</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative space-y-3 p-6 pt-2">
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-sm text-muted-foreground">Total Reserve</span>
+                    <span className="font-bold text-foreground">
+                      {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.12).toFixed(0) : '1,250'} MW
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-sm text-muted-foreground">Spinning</span>
+                    <span className="font-semibold text-foreground">
+                      {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.07).toFixed(0) : '750'} MW
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-muted-foreground">Supplemental</span>
+                    <span className="font-semibold text-foreground">
+                      {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.05).toFixed(0) : '500'} MW
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
               
-              {/* Interchange - Always show with fallback data */}
-              <Card className="shadow-mobile">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0 flex-1">
-                        <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base truncate">Interchange</span>
+              {/* Interchange */}
+              <Card className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardHeader className="relative pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-blue-500/10">
+                        <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-500" />
                       </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date().toLocaleTimeString()}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="padding-responsive">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-BC</span>
-                        <span className="font-semibold text-sm break-all text-red-600">-150 MW</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-SK</span>
-                        <span className="font-semibold text-sm break-all text-green-600">+125 MW</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">AB-MT</span>
-                        <span className="font-semibold text-sm break-all text-red-600">-25 MW</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-sm font-medium truncate">Net Total</span>
-                          <span className="font-bold text-sm break-all text-red-600">-50 MW</span>
-                        </div>
-                      </div>
+                      <CardTitle className="text-base font-semibold">Interchange</CardTitle>
                     </div>
-                  </CardContent>
-                </Card>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5">Live</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative space-y-3 p-6 pt-2">
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-sm text-muted-foreground">AB-BC</span>
+                    <span className="font-bold text-red-600 dark:text-red-500">-150 MW</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-sm text-muted-foreground">AB-SK</span>
+                    <span className="font-semibold text-green-600 dark:text-green-500">+75 MW</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-muted-foreground">AB-MT</span>
+                    <span className="font-semibold text-foreground">0 MW</span>
+                  </div>
+                </CardContent>
+              </Card>
               
-              {/* Energy Storage - Always show with fallback data */}
-              <Card className="shadow-mobile">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="flex items-center min-w-0 flex-1">
-                        <Battery className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base truncate">Energy Storage</span>
+              {/* Energy Storage */}
+              <Card className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardHeader className="relative pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-green-500/10">
+                        <Battery className="w-4 h-4 text-green-600 dark:text-green-500" />
                       </div>
-                      <Badge variant="outline" className="text-xs self-start sm:self-auto flex-shrink-0">
-                        Updated: {new Date().toLocaleTimeString()}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="padding-responsive">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Charging</span>
-                        <span className="font-semibold text-sm break-all">
-                          {generationMix?.renewable_percentage ? Math.round(generationMix.renewable_percentage).toFixed(0) : '25'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Discharging</span>
-                        <span className="font-semibold text-sm break-all">
-                          {generationMix?.renewable_percentage ? Math.round(100 - generationMix.renewable_percentage).toFixed(0) : '45'} MW
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm text-muted-foreground truncate">Net Storage</span>
-                        <span className="font-semibold text-sm break-all text-red-600">-20 MW</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-sm font-medium truncate">State of Charge</span>
-                          <span className="font-bold text-sm break-all">75.5%</span>
-                        </div>
-                      </div>
+                      <CardTitle className="text-base font-semibold">Energy Storage</CardTitle>
                     </div>
-                  </CardContent>
-                </Card>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5">Live</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative space-y-3 p-6 pt-2">
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-sm text-muted-foreground">Capacity</span>
+                    <span className="font-bold text-foreground">500 MW</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-sm text-muted-foreground">Charging</span>
+                    <span className="font-semibold text-green-600 dark:text-green-500">+200 MW</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-muted-foreground">State of Charge</span>
+                    <span className="font-semibold text-foreground">65%</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
