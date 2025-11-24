@@ -1,5 +1,3 @@
-import { serve } from "../_shared/imports.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -411,7 +409,7 @@ async function fetchIESOData() {
   return { pricing: { current_price: 28, source: 'ieso_estimated' }, loadData: undefined, generationMix: undefined };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
