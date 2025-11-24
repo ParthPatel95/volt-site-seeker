@@ -46,6 +46,7 @@ import { AESOHistoricalPricing } from './aeso/AESOHistoricalPricing';
 import { AESOPricePredictionDashboard } from './aeso/AESOPricePredictionDashboard';
 import { AESOTrainingManager } from './aeso/AESOTrainingManager';
 import { CustomDashboardsPanel } from './aeso/CustomDashboardsPanel';
+import { AESOHistoricalAverages } from './aeso/AESOHistoricalAverages';
 import { usePermissions } from '@/hooks/usePermissions';
 
 export function AESOMarketComprehensive() {
@@ -349,8 +350,13 @@ export function AESOMarketComprehensive() {
               </Card>
             </div>
 
+            {/* Historical Averages Section */}
+            <div className="mt-6">
+              <AESOHistoricalAverages />
+            </div>
+
             {/* Additional Market Data - Modern Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
               {/* Operating Reserve */}
               <Card className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
