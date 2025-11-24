@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, TrendingUp, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { applyMonthlyUptimeFilter } from '@/utils/uptimeFilter';
+import { AESOHistoricalDetailDialog } from './AESOHistoricalDetailDialog';
 
 interface PeriodData {
   period: string;
@@ -13,6 +14,17 @@ interface PeriodData {
   dataPoints: number;
   loading: boolean;
   error: string | null;
+  detailedData?: {
+    allHourlyData: Array<{ ts: string; price: number }>;
+    removedHours: Array<{ ts: string; price: number }>;
+    stats: {
+      min: number;
+      max: number;
+      median: number;
+      stdDev: number;
+      totalMWh: number;
+    };
+  };
 }
 
 export function AESOHistoricalAverages() {
@@ -22,6 +34,8 @@ export function AESOHistoricalAverages() {
     { period: '1 Year', days: 365, average: null, dataPoints: 0, loading: false, error: null },
     { period: '2 Years', days: 730, average: null, dataPoints: 0, loading: false, error: null },
   ]);
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodData | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const fetchPeriodData = async (index: number) => {
     const period = periods[index];
@@ -75,16 +89,35 @@ export function AESOHistoricalAverages() {
         ? filtered.filteredData.reduce((sum, d) => sum + d.price, 0) / filtered.filteredData.length
         : null;
 
+      // Calculate statistics
+      const prices = filtered.filteredData.map(d => d.price);
+      const sortedPrices = [...prices].sort((a, b) => a - b);
+      const median = sortedPrices[Math.floor(sortedPrices.length / 2)] || 0;
+      const mean = average || 0;
+      const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
+      const stdDev = Math.sqrt(variance);
+
       console.log(`${period.period}: Average with 95% uptime = $${average?.toFixed(2)}, Data points: ${filtered.filteredData.length}, Removed: ${filtered.removedCount}`);
 
-      // Update state
+      // Update state with detailed data
       setPeriods(prev => prev.map((p, i) => 
         i === index ? { 
           ...p, 
           average, 
           dataPoints: filtered.filteredData.length,
           loading: false, 
-          error: null 
+          error: null,
+          detailedData: {
+            allHourlyData: filtered.filteredData,
+            removedHours: filtered.removedData,
+            stats: {
+              min: Math.min(...prices),
+              max: Math.max(...prices),
+              median,
+              stdDev,
+              totalMWh: filtered.filteredData.length
+            }
+          }
         } : p
       ));
 
@@ -139,7 +172,13 @@ export function AESOHistoricalAverages() {
         {periods.map((period, index) => (
           <Card 
             key={period.period}
-            className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
+            className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer"
+            onClick={() => {
+              if (period.detailedData && !period.loading && !period.error) {
+                setSelectedPeriod(period);
+                setDialogOpen(true);
+              }
+            }}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <CardHeader className="relative pb-3">
@@ -184,6 +223,26 @@ export function AESOHistoricalAverages() {
           </Card>
         ))}
       </div>
+
+      <AESOHistoricalDetailDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        data={selectedPeriod ? {
+          period: selectedPeriod.period,
+          days: selectedPeriod.days,
+          average: selectedPeriod.average || 0,
+          dataPoints: selectedPeriod.dataPoints,
+          allHourlyData: selectedPeriod.detailedData?.allHourlyData || [],
+          removedHours: selectedPeriod.detailedData?.removedHours || [],
+          stats: selectedPeriod.detailedData?.stats || {
+            min: 0,
+            max: 0,
+            median: 0,
+            stdDev: 0,
+            totalMWh: 0
+          }
+        } : null}
+      />
     </div>
   );
 }
