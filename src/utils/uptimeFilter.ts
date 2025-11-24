@@ -2,6 +2,7 @@ import { HourlyDataPoint } from '@/services/historicalDataService';
 
 export interface MonthlyFilterResult {
   filteredData: HourlyDataPoint[];
+  removedData: HourlyDataPoint[];
   removedCount: number;
   missingCount: number;
   monthWarnings: string[];
@@ -20,6 +21,7 @@ export function applyMonthlyUptimeFilter(
   if (uptimePercentage >= 100) {
     return {
       filteredData: data,
+      removedData: [],
       removedCount: 0,
       missingCount: 0,
       monthWarnings: [],
@@ -29,6 +31,7 @@ export function applyMonthlyUptimeFilter(
   if (uptimePercentage <= 0) {
     return {
       filteredData: [],
+      removedData: data,
       removedCount: data.length,
       missingCount: 0,
       monthWarnings: ['Uptime set to 0%: No data under current filter.'],
@@ -38,18 +41,20 @@ export function applyMonthlyUptimeFilter(
   // Group data by calendar month
   const monthlyBuckets = groupByMonth(data);
   const filteredData: HourlyDataPoint[] = [];
+  const removedData: HourlyDataPoint[] = [];
   const monthWarnings: string[] = [];
   let totalRemoved = 0;
   let totalMissing = 0;
 
   // Process each month
   for (const [monthKey, monthData] of Object.entries(monthlyBuckets)) {
-    const { filtered, removed, missing, warning } = filterMonth(
+    const { filtered, removed, missing, warning, removedHours } = filterMonth(
       monthData,
       uptimePercentage
     );
 
     filteredData.push(...filtered);
+    removedData.push(...removedHours);
     totalRemoved += removed;
     totalMissing += missing;
 
@@ -60,9 +65,11 @@ export function applyMonthlyUptimeFilter(
 
   // Sort by timestamp
   filteredData.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+  removedData.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
 
   return {
     filteredData,
+    removedData,
     removedCount: totalRemoved,
     missingCount: totalMissing,
     monthWarnings,
@@ -96,6 +103,7 @@ function filterMonth(
   uptimePercentage: number
 ): {
   filtered: HourlyDataPoint[];
+  removedHours: HourlyDataPoint[];
   removed: number;
   missing: number;
   warning: string | null;
@@ -112,6 +120,7 @@ function filterMonth(
 
   // Sort by price (descending) and remove top N
   const sorted = [...monthData].sort((a, b) => b.price - a.price);
+  const removedHours = sorted.slice(0, removeHours);
   const filtered = sorted.slice(removeHours).sort((a, b) => 
     new Date(a.ts).getTime() - new Date(b.ts).getTime()
   );
@@ -125,6 +134,7 @@ function filterMonth(
 
   return {
     filtered,
+    removedHours,
     removed: removeHours,
     missing: missingHours,
     warning,
