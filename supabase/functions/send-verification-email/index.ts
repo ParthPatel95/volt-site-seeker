@@ -1,4 +1,5 @@
-import { serve, createClient, Resend } from "../_shared/imports.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { Resend } from "https://esm.sh/resend@3.2.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,7 @@ interface VerificationEmailRequest {
   is_resend?: boolean;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

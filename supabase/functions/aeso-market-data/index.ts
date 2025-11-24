@@ -2,8 +2,11 @@
 // and returns normalized objects for Interchange, Operating Reserve and Energy Storage.
 // CORS enabled for browser calls.
 
-import { serve } from "../_shared/imports.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
+};
 
 function toNumber(val: unknown): number | null {
   const n = typeof val === 'number' ? val : parseFloat(String(val));
@@ -66,7 +69,7 @@ async function fetchCSDSummary() {
   throw new Error('CSD summary fetch failed for v2 and v1');
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: { ...corsHeaders } });
