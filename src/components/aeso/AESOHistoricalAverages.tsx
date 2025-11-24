@@ -146,14 +146,14 @@ export function AESOHistoricalAverages() {
   }, []);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Historical Price Averages (95% Uptime)
+          <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+            <span className="truncate">Historical Price Averages (95% Uptime)</span>
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Average pool prices with highest 5% of hours excluded
           </p>
         </div>
@@ -162,17 +162,18 @@ export function AESOHistoricalAverages() {
           disabled={periods.some(p => p.loading)}
           variant="outline"
           size="sm"
+          className="self-start sm:self-auto"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${periods.some(p => p.loading) ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${periods.some(p => p.loading) ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {periods.map((period, index) => (
           <Card 
             key={period.period}
-            className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer"
+            className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer active:scale-[0.98]"
             onClick={() => {
               if (period.detailedData && !period.loading && !period.error) {
                 setSelectedPeriod(period);
@@ -181,21 +182,21 @@ export function AESOHistoricalAverages() {
             }}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <CardHeader className="relative pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">{period.period}</CardTitle>
+            <CardHeader className="relative pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm sm:text-base font-semibold truncate">{period.period}</CardTitle>
                 {period.loading ? (
-                  <Badge variant="outline" className="text-[10px] px-2 py-0.5">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 flex-shrink-0">
                     <RefreshCw className="w-3 h-3 animate-spin" />
                   </Badge>
                 ) : period.error ? (
-                  <Badge variant="destructive" className="text-[10px] px-2 py-0.5">Error</Badge>
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 flex-shrink-0">Error</Badge>
                 ) : (
-                  <Badge variant="outline" className="text-[10px] px-2 py-0.5">95%</Badge>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 flex-shrink-0">95%</Badge>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="relative space-y-3">
+            <CardContent className="relative space-y-2 sm:space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
               {period.loading ? (
                 <div className="space-y-2">
                   <div className="h-8 bg-muted animate-pulse rounded"></div>
@@ -206,16 +207,16 @@ export function AESOHistoricalAverages() {
                   <p className="text-sm text-destructive">{period.error}</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex items-baseline gap-1.5 sm:gap-2">
+                    <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                       ${period.average?.toFixed(2) || '—'}
                     </p>
-                    <span className="text-sm text-muted-foreground">CAD/MWh</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">CAD/MWh</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>{period.dataPoints.toLocaleString()} hours analyzed</span>
+                  <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                    <TrendingUp className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{period.dataPoints.toLocaleString()} hours analyzed</span>
                   </div>
                 </div>
               )}
