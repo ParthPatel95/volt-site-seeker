@@ -24,14 +24,14 @@ serve(async (req) => {
     const { data: modelStatus, error: statusError } = await supabase
       .from('aeso_model_status')
       .select('*')
-      .order('last_trained', { ascending: false })
+      .order('trained_at', { ascending: false })
       .limit(1)
       .single();
 
     if (statusError) {
       console.log('⚠️ No model found - triggering initial training');
       
-      const { data: backfillData, error: backfillError } = await supabase.functions.invoke('aeso-complete-backfill');
+      const { data: backfillData, error: backfillError } = await supabase.functions.invoke('aeso-ml-trainer');
       
       if (backfillError) throw backfillError;
 
@@ -47,7 +47,7 @@ serve(async (req) => {
     }
 
     const now = new Date();
-    const lastTrained = new Date(modelStatus.last_trained);
+    const lastTrained = new Date(modelStatus.trained_at);
     const hoursSinceTraining = (now.getTime() - lastTrained.getTime()) / (1000 * 60 * 60);
     
     console.log(`📊 Model Status:`);
@@ -55,14 +55,14 @@ serve(async (req) => {
     console.log(`  - Hours since training: ${hoursSinceTraining.toFixed(1)}`);
     console.log(`  - sMAPE: ${modelStatus.smape?.toFixed(2)}%`);
     console.log(`  - Training records: ${modelStatus.training_records}`);
-    console.log(`  - Data quality: ${modelStatus.data_quality_percent?.toFixed(1)}%`);
+    console.log(`  - Data quality: ${modelStatus.model_quality}`);
 
     // Step 2: Determine if retraining is needed
     const reasons: string[] = [];
     let shouldRetrain = false;
 
-    // Reason 1: Model performance degraded (sMAPE > 50%)
-    if (modelStatus.smape && modelStatus.smape > 50) {
+    // Reason 1: Model performance degraded (sMAPE > 40%)
+    if (modelStatus.smape && modelStatus.smape > 40) {
       reasons.push(`Poor accuracy (sMAPE: ${modelStatus.smape.toFixed(1)}%)`);
       shouldRetrain = true;
     }
@@ -73,14 +73,8 @@ serve(async (req) => {
       shouldRetrain = true;
     }
 
-    // Reason 3: Low data quality
-    if (modelStatus.data_quality_percent && modelStatus.data_quality_percent < 80) {
-      reasons.push(`Low data quality (${modelStatus.data_quality_percent.toFixed(1)}%)`);
-      shouldRetrain = true;
-    }
-
-    // Reason 4: Insufficient training data
-    if (modelStatus.training_records < 1000) {
+    // Reason 3: Insufficient training data
+    if (modelStatus.training_records < 5000) {
       reasons.push(`Insufficient data (${modelStatus.training_records} records)`);
       shouldRetrain = true;
     }
@@ -117,7 +111,7 @@ serve(async (req) => {
     
     const retrainingStart = Date.now();
     
-    const { data: backfillData, error: backfillError } = await supabase.functions.invoke('aeso-complete-backfill');
+    const { data: backfillData, error: backfillError } = await supabase.functions.invoke('aeso-ml-trainer');
     
     if (backfillError) throw backfillError;
 
@@ -127,7 +121,7 @@ serve(async (req) => {
     const { data: newModelStatus, error: newStatusError } = await supabase
       .from('aeso_model_status')
       .select('*')
-      .order('last_trained', { ascending: false })
+      .order('trained_at', { ascending: false })
       .limit(1)
       .single();
 
