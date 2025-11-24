@@ -105,7 +105,9 @@ export const ModelImprovementDashboard = () => {
   const triggerImprovedTraining = async () => {
     setIsTraining(true);
     toast.info("Starting model training with all available data...", {
-      description: `Training on ${dataQuality?.records_with_lags?.toLocaleString()} records`
+      description: dataQuality?.records_with_lags 
+        ? `Training on ${dataQuality.records_with_lags.toLocaleString()} records`
+        : "Loading training data..."
     });
 
     try {
@@ -170,7 +172,7 @@ export const ModelImprovementDashboard = () => {
               {latestMetric?.training_records.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {dataQuality && `of ${dataQuality.records_with_lags.toLocaleString()} available`}
+              {dataQuality?.records_with_lags && `of ${dataQuality.records_with_lags.toLocaleString()} available`}
             </p>
           </CardContent>
         </Card>
@@ -271,7 +273,7 @@ export const ModelImprovementDashboard = () => {
               <div>
                 <p className="font-medium">All Available Data</p>
                 <p className="text-sm text-muted-foreground">
-                  Training on {dataQuality?.records_with_lags.toLocaleString()} records with complete features (vs. previous 1,000)
+                  Training on {dataQuality?.records_with_lags?.toLocaleString() || "~29K"} records with complete features (vs. previous 1,000)
                 </p>
               </div>
             </div>
