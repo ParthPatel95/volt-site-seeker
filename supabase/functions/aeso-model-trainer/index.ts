@@ -26,7 +26,7 @@ async function trainModelInBackground(jobId: string) {
       })
       .eq('id', jobId);
 
-    // Fetch ALL available data with complete features
+    // Fetch ALL available data with complete features (Supabase has 1000 row default limit)
     console.log(`📥 Fetching ALL available training data with complete features...`);
     const { data: trainingData, error: fetchError } = await supabase
       .from('aeso_training_data')
@@ -36,7 +36,8 @@ async function trainModelInBackground(jobId: string) {
       .not('price_lag_24h', 'is', null)
       .not('pool_price', 'is', null)
       .gt('pool_price', 0)
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: true })
+      .limit(35000); // Explicitly set high limit to get all available data
 
     if (fetchError) {
       console.error('Fetch error:', fetchError);

@@ -59,6 +59,13 @@ export const ModelImprovementDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('is_valid_record', true);
 
+      const { count: recordsWithLags } = await supabase
+        .from('aeso_training_data')
+        .select('*', { count: 'exact', head: true })
+        .not('price_lag_1h', 'is', null)
+        .not('price_lag_24h', 'is', null)
+        .gt('pool_price', 0);
+
       const { data: lagData } = await supabase
         .from('aeso_training_data')
         .select('price_lag_1h, ail_mw, generation_wind')
@@ -83,6 +90,7 @@ export const ModelImprovementDashboard = () => {
       setDataQuality({
         total_records: totalCount || 0,
         valid_records: validCount || 0,
+        records_with_lags: recordsWithLags || 0,
         missing_lag_features: missingLag,
         missing_demand: missingDemand,
         missing_generation: missingGen,
@@ -96,7 +104,9 @@ export const ModelImprovementDashboard = () => {
 
   const triggerImprovedTraining = async () => {
     setIsTraining(true);
-    toast.info("Starting improved model training...");
+    toast.info("Starting model training with all available data...", {
+      description: `Training on ${dataQuality?.records_with_lags?.toLocaleString()} records`
+    });
 
     try {
       const { data, error } = await supabase.functions.invoke('aeso-model-trainer', {
@@ -105,8 +115,16 @@ export const ModelImprovementDashboard = () => {
 
       if (error) throw error;
 
-      toast.success("Model training completed! Check performance metrics.");
-      fetchPerformanceHistory();
+      toast.success("Training job started!", {
+        description: "Background training in progress. Refresh in 30s to see results."
+      });
+      
+      // Poll for completion
+      setTimeout(() => {
+        fetchPerformanceHistory();
+        checkDataQuality();
+      }, 30000);
+      
     } catch (error: any) {
       toast.error(`Training failed: ${error.message}`);
     } finally {
@@ -152,7 +170,7 @@ export const ModelImprovementDashboard = () => {
               {latestMetric?.training_records.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {dataQuality && `${((latestMetric?.training_records / dataQuality.valid_records) * 100).toFixed(1)}% of available`}
+              {dataQuality && `of ${dataQuality.records_with_lags.toLocaleString()} available`}
             </p>
           </CardContent>
         </Card>
@@ -253,7 +271,7 @@ export const ModelImprovementDashboard = () => {
               <div>
                 <p className="font-medium">All Available Data</p>
                 <p className="text-sm text-muted-foreground">
-                  Training on {dataQuality?.valid_records.toLocaleString()} records instead of 1,000
+                  Training on {dataQuality?.records_with_lags.toLocaleString()} records with complete features (vs. previous 1,000)
                 </p>
               </div>
             </div>
