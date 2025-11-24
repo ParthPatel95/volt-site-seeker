@@ -27,7 +27,7 @@ async function trainModelInBackground(jobId: string) {
       .eq('id', jobId);
 
     // Fetch ALL available data with complete features
-    console.log(`📥 Fetching ALL available training data...`);
+    console.log(`📥 Fetching ALL available training data with complete features...`);
     const { data: trainingData, error: fetchError } = await supabase
       .from('aeso_training_data')
       .select('*')
@@ -35,10 +35,16 @@ async function trainModelInBackground(jobId: string) {
       .not('price_lag_1h', 'is', null)
       .not('price_lag_24h', 'is', null)
       .not('pool_price', 'is', null)
+      .gt('pool_price', 0)
       .order('timestamp', { ascending: true });
 
-    if (fetchError || !trainingData || trainingData.length < 5000) {
-      throw new Error(`Insufficient data: ${trainingData?.length || 0} records (need 5000+)`);
+    if (fetchError) {
+      console.error('Fetch error:', fetchError);
+      throw new Error(`Data fetch failed: ${fetchError.message}`);
+    }
+
+    if (!trainingData || trainingData.length < 1000) {
+      throw new Error(`Insufficient data: ${trainingData?.length || 0} records (need at least 1000 with complete lag features)`);
     }
 
     console.log(`✅ Loaded ${trainingData.length} records`);
@@ -55,67 +61,54 @@ async function trainModelInBackground(jobId: string) {
     const trainData = trainingData.slice(0, splitIdx);
     const testData = trainingData.slice(splitIdx);
     
-    console.log(`🤖 Training on ${splitIdx} samples, testing on ${testData.length}`);
+    console.log(`🤖 Training on ${trainData.length} samples, testing on ${testData.length}`);
 
-    // Enhanced ML Model: Multi-component ensemble with feature engineering
-    
-    // 1. Calculate training statistics and patterns
+    // Calculate training statistics for patterns
     const trainStats = calculateTrainingStats(trainData);
-    console.log(`📊 Training stats computed: ${JSON.stringify(trainStats).substring(0, 100)}...`);
+    console.log(`📊 Training stats: hourly patterns computed`);
     
-    // 2. Generate predictions using advanced ensemble
-    const predictions = testData.map((d, idx) => {
+    // Improved ensemble prediction with proper weighting
+    const predictions = testData.map((d) => {
       const hour = new Date(d.timestamp).getHours();
       const dayOfWeek = new Date(d.timestamp).getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
-      // Feature extraction
+      // Core features with safe fallbacks
       const lag1h = d.price_lag_1h ?? avgPrice;
-      const lag2h = d.price_lag_2h ?? lag1h;
-      const lag3h = d.price_lag_3h ?? lag2h;
       const lag24h = d.price_lag_24h ?? avgPrice;
-      const lag48h = d.price_lag_48h ?? lag24h;
       const lag168h = d.price_lag_168h ?? lag24h;
       
-      // Model 1: Advanced lag-based (40%)
-      const momentum = lag1h - lag24h;
-      const volatility = Math.abs(lag1h - lag2h);
-      let lagModel = lag1h * 0.5 + lag24h * 0.25 + lag168h * 0.15 + avgPrice * 0.1;
-      lagModel += momentum * 0.3; // Trend following
+      // Model 1: Lag-based trend (50%) - most reliable
+      const shortTrend = lag1h * 0.7 + lag24h * 0.3;
       
-      // Model 2: Time-series decomposition (30%)
-      const hourlyPattern = trainStats.hourlyAvg[hour] || avgPrice;
-      const dowPattern = trainStats.dowAvg[dayOfWeek] || avgPrice;
-      let tsModel = hourlyPattern * 0.6 + dowPattern * 0.4;
+      // Model 2: Seasonal pattern (30%)
+      const hourlyAvg = trainStats.hourlyAvg[hour] || avgPrice;
+      const dowAvg = trainStats.dowAvg[dayOfWeek] || avgPrice;
+      const seasonal = hourlyAvg * 0.7 + dowAvg * 0.3;
       
-      // Model 3: Volatility-adjusted (20%)
-      const recentVolatility = d.price_volatility_24h || stdDev;
-      const volatilityFactor = Math.min(2, Math.max(0.5, recentVolatility / stdDev));
-      let volModel = avgPrice * volatilityFactor;
+      // Model 3: Long-term average (20%) - stability
+      const longTerm = lag168h * 0.5 + avgPrice * 0.5;
       
-      // Model 4: Regime-based (10%)
-      let regimeModel = avgPrice;
-      if (hour >= 17 && hour <= 21) regimeModel = trainStats.peakAvg;
-      else if (hour >= 0 && hour <= 5) regimeModel = trainStats.offPeakAvg;
-      else regimeModel = trainStats.shoulderAvg;
+      // Ensemble
+      let prediction = shortTrend * 0.50 + seasonal * 0.30 + longTerm * 0.20;
       
-      // Weekend adjustment
+      // Weekend adjustment (typically lower demand/prices)
       if (isWeekend) {
-        tsModel *= 0.92;
-        regimeModel *= 0.88;
+        prediction *= 0.95;
       }
       
-      // Ensemble with dynamic weighting based on volatility
-      const w1 = 0.40, w2 = 0.30, w3 = 0.20, w4 = 0.10;
-      let rawPred = lagModel * w1 + tsModel * w2 + volModel * w3 + regimeModel * w4;
-      
-      // Spike detection and handling
-      if (volatility > stdDev * 2) {
-        rawPred = rawPred * 0.7 + lag1h * 0.3; // Revert to recent price during high volatility
+      // Peak hour boost
+      if (hour >= 17 && hour <= 20) {
+        prediction *= 1.08;
       }
       
-      // Clip to realistic range with soft bounds
-      return Math.max(0, Math.min(1000, rawPred));
+      // Off-peak reduction
+      if (hour >= 1 && hour <= 5) {
+        prediction *= 0.92;
+      }
+      
+      // Clip to realistic range
+      return Math.max(0, Math.min(1000, prediction));
     });
 
     // Calculate metrics
