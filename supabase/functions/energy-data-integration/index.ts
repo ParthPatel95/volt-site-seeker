@@ -410,122 +410,6 @@ async function fetchIESOData() {
   return { pricing: { current_price: 28, source: 'ieso_estimated' }, loadData: undefined, generationMix: undefined };
 }
 
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    // Check if this is a test request to verify ERCOT subscription
-    const url = new URL(req.url);
-    if (url.searchParams.get('test') === 'ercot-auth') {
-      return await testERCOTSubscription();
-    }
-
-    console.log('Fetching unified energy data from 8 markets (ERCOT, AESO, MISO, CAISO, NYISO, PJM, SPP, IESO)...');
-
-    // Helper to add timeout to each market fetch (15 seconds max per market)
-    const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, marketName: string): Promise<T> => {
-      return Promise.race([
-        promise,
-        new Promise<T>((_, reject) => 
-          setTimeout(() => reject(new Error(`${marketName} fetch timeout after ${timeoutMs}ms`)), timeoutMs)
-        )
-      ]);
-    };
-
-    // Fetch all market data in parallel with individual timeouts
-    // AESO timeout increased to 30s to handle API latency
-    const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult, iesoResult] = await Promise.allSettled([
-      withTimeout(fetchERCOTData(), 15000, 'ERCOT'),
-      withTimeout(fetchAESODataWithRetry(), 30000, 'AESO'),
-      withTimeout(fetchMISOData(), 10000, 'MISO'),
-      withTimeout(fetchCAISOData(), 10000, 'CAISO'),
-      withTimeout(fetchNYISOData(), 12000, 'NYISO'),
-      withTimeout(fetchPJMData(), 10000, 'PJM'),
-      withTimeout(fetchSPPData(), 8000, 'SPP'),
-      withTimeout(fetchIESOData(), 10000, 'IESO')
-    ]);
-    
-    console.log('Market fetch results:', {
-      ercot: ercotResult.status,
-      aeso: aesoResult.status,
-      miso: misoResult.status,
-      caiso: caisoResult.status,
-      nyiso: nyisoResult.status,
-      pjm: pjmResult.status,
-      spp: sppResult.status,
-      ieso: iesoResult.status
-    });
-
-    const response: EnergyDataResponse = {
-      success: true,
-      ercot: ercotResult.status === 'fulfilled' ? ercotResult.value : undefined,
-      aeso: aesoResult.status === 'fulfilled' ? aesoResult.value : undefined,
-      miso: misoResult.status === 'fulfilled' ? misoResult.value : undefined,
-      caiso: caisoResult.status === 'fulfilled' ? caisoResult.value : undefined,
-      nyiso: nyisoResult.status === 'fulfilled' ? nyisoResult.value : undefined,
-      pjm: pjmResult.status === 'fulfilled' ? pjmResult.value : undefined,
-      spp: sppResult.status === 'fulfilled' ? sppResult.value : undefined,
-      ieso: iesoResult.status === 'fulfilled' ? iesoResult.value : undefined
-    };
-
-    console.log('Energy data processing complete:', {
-      ercotSuccess: ercotResult.status === 'fulfilled',
-      aesoSuccess: aesoResult.status === 'fulfilled',
-      misoSuccess: misoResult.status === 'fulfilled',
-      caisoSuccess: caisoResult.status === 'fulfilled',
-      nyisoSuccess: nyisoResult.status === 'fulfilled',
-      pjmSuccess: pjmResult.status === 'fulfilled',
-      sppSuccess: sppResult.status === 'fulfilled'
-    });
-
-    // Ensure response serialization doesn't fail
-    try {
-      const responseBody = JSON.stringify(response);
-      return new Response(responseBody, { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
-    } catch (serializationError) {
-      console.error('Response serialization error:', serializationError);
-      // Return a simplified response if full response fails
-      return new Response(
-        JSON.stringify({ 
-          success: true,
-          ercot: ercotResult.status === 'fulfilled' ? { pricing: ercotResult.value?.pricing } : undefined,
-          aeso: aesoResult.status === 'fulfilled' ? { pricing: aesoResult.value?.pricing } : undefined,
-          miso: misoResult.status === 'fulfilled' ? { pricing: misoResult.value?.pricing } : undefined,
-          caiso: caisoResult.status === 'fulfilled' ? { pricing: caisoResult.value?.pricing } : undefined,
-          nyiso: nyisoResult.status === 'fulfilled' ? { pricing: nyisoResult.value?.pricing } : undefined,
-          pjm: pjmResult.status === 'fulfilled' ? { pricing: pjmResult.value?.pricing } : undefined,
-          spp: sppResult.status === 'fulfilled' ? { pricing: sppResult.value?.pricing } : undefined,
-          ieso: iesoResult.status === 'fulfilled' ? { pricing: iesoResult.value?.pricing } : undefined
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
-    }
-
-  } catch (error) {
-    console.error('Error in energy data integration:', error);
-    
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Energy data service is offline' 
-      }),
-      { 
-        status: 503, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
-  }
-});
-
 async function testERCOTSubscription() {
   console.log('\n=== ERCOT API SUBSCRIPTION TEST ===\n');
   
@@ -1679,3 +1563,120 @@ async function fetchPJMData() {
 
   return { pricing, loadData, generationMix };
 }
+
+// ========== MAIN HANDLER ==========
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Check if this is a test request to verify ERCOT subscription
+    const url = new URL(req.url);
+    if (url.searchParams.get('test') === 'ercot-auth') {
+      return await testERCOTSubscription();
+    }
+
+    console.log('Fetching unified energy data from 8 markets (ERCOT, AESO, MISO, CAISO, NYISO, PJM, SPP, IESO)...');
+
+    // Helper to add timeout to each market fetch (15 seconds max per market)
+    const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, marketName: string): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+          setTimeout(() => reject(new Error(`${marketName} fetch timeout after ${timeoutMs}ms`)), timeoutMs)
+        )
+      ]);
+    };
+
+    // Fetch all market data in parallel with individual timeouts
+    // AESO timeout increased to 30s to handle API latency
+    const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult, iesoResult] = await Promise.allSettled([
+      withTimeout(fetchERCOTData(), 15000, 'ERCOT'),
+      withTimeout(fetchAESODataWithRetry(), 30000, 'AESO'),
+      withTimeout(fetchMISOData(), 10000, 'MISO'),
+      withTimeout(fetchCAISOData(), 10000, 'CAISO'),
+      withTimeout(fetchNYISOData(), 12000, 'NYISO'),
+      withTimeout(fetchPJMData(), 10000, 'PJM'),
+      withTimeout(fetchSPPData(), 8000, 'SPP'),
+      withTimeout(fetchIESOData(), 10000, 'IESO')
+    ]);
+    
+    console.log('Market fetch results:', {
+      ercot: ercotResult.status,
+      aeso: aesoResult.status,
+      miso: misoResult.status,
+      caiso: caisoResult.status,
+      nyiso: nyisoResult.status,
+      pjm: pjmResult.status,
+      spp: sppResult.status,
+      ieso: iesoResult.status
+    });
+
+    const response: EnergyDataResponse = {
+      success: true,
+      ercot: ercotResult.status === 'fulfilled' ? ercotResult.value : undefined,
+      aeso: aesoResult.status === 'fulfilled' ? aesoResult.value : undefined,
+      miso: misoResult.status === 'fulfilled' ? misoResult.value : undefined,
+      caiso: caisoResult.status === 'fulfilled' ? caisoResult.value : undefined,
+      nyiso: nyisoResult.status === 'fulfilled' ? nyisoResult.value : undefined,
+      pjm: pjmResult.status === 'fulfilled' ? pjmResult.value : undefined,
+      spp: sppResult.status === 'fulfilled' ? sppResult.value : undefined,
+      ieso: iesoResult.status === 'fulfilled' ? iesoResult.value : undefined
+    };
+
+    console.log('Energy data processing complete:', {
+      ercotSuccess: ercotResult.status === 'fulfilled',
+      aesoSuccess: aesoResult.status === 'fulfilled',
+      misoSuccess: misoResult.status === 'fulfilled',
+      caisoSuccess: caisoResult.status === 'fulfilled',
+      nyisoSuccess: nyisoResult.status === 'fulfilled',
+      pjmSuccess: pjmResult.status === 'fulfilled',
+      sppSuccess: sppResult.status === 'fulfilled'
+    });
+
+    // Ensure response serialization doesn't fail
+    try {
+      const responseBody = JSON.stringify(response);
+      return new Response(responseBody, { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    } catch (serializationError) {
+      console.error('Response serialization error:', serializationError);
+      // Return a simplified response if full response fails
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          ercot: ercotResult.status === 'fulfilled' ? { pricing: ercotResult.value?.pricing } : undefined,
+          aeso: aesoResult.status === 'fulfilled' ? { pricing: aesoResult.value?.pricing } : undefined,
+          miso: misoResult.status === 'fulfilled' ? { pricing: misoResult.value?.pricing } : undefined,
+          caiso: caisoResult.status === 'fulfilled' ? { pricing: caisoResult.value?.pricing } : undefined,
+          nyiso: nyisoResult.status === 'fulfilled' ? { pricing: nyisoResult.value?.pricing } : undefined,
+          pjm: pjmResult.status === 'fulfilled' ? { pricing: pjmResult.value?.pricing } : undefined,
+          spp: sppResult.status === 'fulfilled' ? { pricing: sppResult.value?.pricing } : undefined,
+          ieso: iesoResult.status === 'fulfilled' ? { pricing: iesoResult.value?.pricing } : undefined
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
+
+  } catch (error) {
+    console.error('Error in energy data integration:', error);
+    
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: 'Energy data service is offline' 
+      }),
+      { 
+        status: 503, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+});
