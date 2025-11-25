@@ -1,6 +1,4 @@
 
-import { BTCMiningROIWidget } from './BTCMiningROIWidget';
-import { LiveDataPreview } from './LiveDataPreview';
 import { LiveERCOTData } from './LiveERCOTData';
 import { LiveAESOData } from './LiveAESOData';
 import { ScrollReveal } from './ScrollAnimations';
@@ -24,8 +22,6 @@ export const LiveDataSection = () => {
         {/* Live Data Grid */}
         <ScrollReveal delay={200}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <BTCMiningROIWidget />
-            <LiveDataPreview />
             <LiveERCOTData />
             <LiveAESOData />
           </div>
