@@ -24,7 +24,6 @@ const LPPortalSection = lazy(() => import('@/components/landing/LPPortalSection'
 const AlbertaSiteShowcase = lazy(() => import('@/components/landing/AlbertaSiteShowcase').then(module => ({ default: module.AlbertaSiteShowcase })));
 const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
 const SiteSpecifications = lazy(() => import('@/components/landing/SiteSpecifications').then(module => ({ default: module.SiteSpecifications })));
-const OperationalExcellence = lazy(() => import('@/components/landing/OperationalExcellence').then(module => ({ default: module.OperationalExcellence })));
 const AlbertaLocationMap = lazy(() => import('@/components/landing/AlbertaLocationMap').then(module => ({ default: module.AlbertaLocationMap })));
 
 const SectionLoader = () => (
@@ -74,15 +73,6 @@ const Landing: React.FC = () => {
           <section aria-label="Technical Specifications" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <SiteSpecifications />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="purple" />
-          
-          {/* Operational Excellence - NEW */}
-          <section aria-label="Operational Excellence" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <OperationalExcellence />
             </Suspense>
           </section>
           
