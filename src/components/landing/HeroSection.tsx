@@ -44,6 +44,13 @@ export const HeroSection = () => {
             <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2" />
             675MW+ Experience
           </Badge>
+          <Badge 
+            variant="outline" 
+            className="border-primary/50 text-primary bg-primary/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-all duration-300"
+          >
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-2"></div>
+            1 Operational Asset
+          </Badge>
         </div>
         
         {/* Enhanced main heading with text shadow and glow effects */}
@@ -95,9 +102,18 @@ export const HeroSection = () => {
           <Button 
             size="lg" 
             variant="outline" 
-            className="w-full sm:w-auto group border-2 border-slate-300 text-slate-100 hover:bg-slate-800 hover:text-white hover:border-electric-blue px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold bg-slate-900/50 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-lg hover:shadow-electric-blue/20"
+            className="w-full sm:w-auto group border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold bg-slate-900/50 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
+            onClick={() => {
+              const albertaSection = document.getElementById('alberta-facility');
+              if (albertaSection) {
+                albertaSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
           >
-            <span className="group-hover:animate-pulse">View Pipeline</span>
+            <span className="flex items-center">
+              Explore Our Alberta Facility
+              <ArrowRight className="ml-2 w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
+            </span>
           </Button>
         </div>
 
