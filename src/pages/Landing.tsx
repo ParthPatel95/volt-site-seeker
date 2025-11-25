@@ -70,6 +70,24 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="yellow" />
           
+          {/* Site Specifications - NEW */}
+          <section aria-label="Technical Specifications" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <SiteSpecifications />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="purple" />
+          
+          {/* Operational Excellence - NEW */}
+          <section aria-label="Operational Excellence" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <OperationalExcellence />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="blue" />
+          
           {/* Infrastructure Highlights - NEW */}
           <section aria-label="Infrastructure Highlights" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -82,15 +100,6 @@ const Landing: React.FC = () => {
           <LiveDataSection />
           
           <SectionDivider color="blue" />
-          
-          {/* Site Specifications - NEW */}
-          <section aria-label="Technical Specifications" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <SiteSpecifications />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="purple" />
           
           <section aria-label="Problem and Solution" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -127,15 +136,6 @@ const Landing: React.FC = () => {
           <section aria-label="Fund Overview" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <FundOverviewSection />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="blue" />
-          
-          {/* Operational Excellence - NEW */}
-          <section aria-label="Operational Excellence" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <OperationalExcellence />
             </Suspense>
           </section>
           
