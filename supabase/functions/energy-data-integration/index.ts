@@ -841,6 +841,7 @@ async function fetchAESOData() {
   }
 
   // Load (AIL): Actual Forecast Report
+  let tempLoadData: any | undefined;
   try {
     const json: any = loadResp.status === 'fulfilled' ? loadResp.value : null;
     const arr: any[] = json?.return?.['Actual Forecast Report'] || json?.['Actual Forecast Report'] || [];
@@ -862,7 +863,7 @@ async function fetchAESOData() {
         if (lastActual != null && maxForecast != null) break;
       }
       if (lastActual != null) {
-        loadData = {
+        tempLoadData = {
           current_demand_mw: Math.round(lastActual),
           peak_forecast_mw: maxForecast != null ? Math.round(maxForecast) : Math.round(lastActual * 1.15),
           reserve_margin: 12.5,
@@ -940,17 +941,45 @@ async function fetchAESOData() {
     console.error('AESO CSD v2 mix parse error:', e);
   }
 
-  // Note: Interchange, Operating Reserve, and Generation Capacity APIs are not available in AESO APIM
-  // These features would require alternative data sources or different API endpoints
+  // Calculate capacity margin from available data
+  // Since AESO doesn't provide direct capacity data, we calculate it using:
+  // Reserve Margin = (Available Capacity - Peak Demand) / Peak Demand * 100
+  // Available Capacity = Peak Demand * (1 + Reserve Margin/100)
+  // Capacity Margin = (Available Capacity - Current Demand) / Available Capacity * 100
+  if (tempLoadData && generationMix) {
+    const reserveMargin = tempLoadData.reserve_margin;
+    const peakForecast = tempLoadData.peak_forecast_mw;
+    const currentDemand = tempLoadData.current_demand_mw;
+    
+    // Calculate available capacity from reserve margin and peak forecast
+    const availableCapacity = peakForecast * (1 + reserveMargin / 100);
+    
+    // Calculate capacity margin
+    const capacityMargin = ((availableCapacity - currentDemand) / availableCapacity) * 100;
+    
+    loadData = {
+      ...tempLoadData,
+      capacity_margin: Math.round(capacityMargin * 10) / 10 // Round to 1 decimal place
+    };
+    
+    console.log('AESO Capacity Calculation:', {
+      peakForecast,
+      currentDemand,
+      reserveMargin,
+      availableCapacity: Math.round(availableCapacity),
+      capacityMargin: loadData.capacity_margin
+    });
+  } else {
+    loadData = tempLoadData;
+  }
 
   console.log('AESO return summary (APIM)', {
     pricingSource: pricing?.source,
     currentPrice: pricing?.current_price,
     smp: systemMarginalPrice,
     loadSource: loadData?.source,
-    mixSource: generationMix?.source
-    // Note: Wind, solar, load forecasts, interchange, operating reserve, and generation capacity
-    // are not available via public AESO APIM endpoints
+    mixSource: generationMix?.source,
+    capacityMargin: loadData?.capacity_margin
   });
 
   return { 
