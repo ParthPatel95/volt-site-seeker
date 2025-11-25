@@ -5,49 +5,60 @@ import nepalImage from '@/assets/pipeline/nepal-mix.jpg';
 import bhutanImage from '@/assets/pipeline/bhutan-hydro.jpg';
 import indiaImage from '@/assets/pipeline/india-solar-hydro.jpg';
 import newfoundlandImage from '@/assets/pipeline/newfoundland-canada-hybrid.jpg';
-
+import ugandaFlag from '@/assets/pipeline/flags/uganda-ug.svg';
+import unitedStatesFlag from '@/assets/pipeline/flags/united-states-us.svg';
+import nepalFlag from '@/assets/pipeline/flags/nepal-np.svg';
+import bhutanFlag from '@/assets/pipeline/flags/bhutan-bt.svg';
+import indiaFlag from '@/assets/pipeline/flags/india-in.svg';
+import canadaFlag from '@/assets/pipeline/flags/canada-ca.svg';
 const pipeline = [
   {
-    location: '🇺🇬 Jinja, Uganda',
+    location: 'Jinja, Uganda',
     capacity: '400MW',
     type: 'On-Grid Hydro',
     description: 'Hydroelectric power facility leveraging the Nile River with direct grid connection',
-    image: jinjaImage
+    image: jinjaImage,
+    flag: ugandaFlag
   },
   {
-    location: '🇺🇸 Texas, USA',
+    location: 'Texas, USA',
     capacity: '536MW',
     type: 'On-Grid Mix + Self-Gen Natgas',
     description: 'Mixed generation facility with natural gas backup and grid interconnection',
-    image: texasImage
+    image: texasImage,
+    flag: unitedStatesFlag
   },
   {
-    location: '🇳🇵 Nepal',
+    location: 'Nepal',
     capacity: '75MW',
     type: 'On-Grid Mix',
     description: 'Himalayan renewable energy infrastructure with grid-connected mixed generation',
-    image: nepalImage
+    image: nepalImage,
+    flag: nepalFlag
   },
   {
-    location: '🇧🇹 Bhutan',
+    location: 'Bhutan',
     capacity: '175MW',
     type: 'On-Grid Hydro',
     description: 'Large-scale hydroelectric facility utilizing pristine mountain water resources',
-    image: bhutanImage
+    image: bhutanImage,
+    flag: bhutanFlag
   },
   {
-    location: '🇮🇳 India',
+    location: 'India',
     capacity: '45MW',
     type: 'Solar+Hydro BTM',
     description: 'Behind-the-meter hybrid solar and hydroelectric renewable energy system',
-    image: indiaImage
+    image: indiaImage,
+    flag: indiaFlag
   },
   {
-    location: '🇨🇦 Newfoundland, Canada',
+    location: 'Newfoundland, Canada',
     capacity: '198MW',
     type: 'On-Grid Hybrid',
     description: 'Advanced hybrid renewable energy facility combining coastal wind and hydroelectric power',
-    image: newfoundlandImage
+    image: newfoundlandImage,
+    flag: canadaFlag
   }
 ];
 
@@ -81,11 +92,16 @@ export const InfrastructureHighlights = () => {
               </div>
               
               <div className="relative p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  <span className="inline-block mr-2" style={{ fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif' }}>
-                    {project.location.split(' ')[0]}
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center">
+                  <span className="inline-flex items-center justify-center w-7 h-5 mr-2 rounded-sm overflow-hidden ring-1 ring-slate-600/60 bg-slate-900/80">
+                    <img
+                      src={project.flag}
+                      alt={`${project.location} flag`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </span>
-                  {project.location.split(' ').slice(1).join(' ')}
+                  {project.location}
                 </h3>
                 
                 <div className="flex items-center gap-3 mb-3">
