@@ -21,9 +21,8 @@ const VoltScoutSection = lazy(() => import('@/components/landing/VoltScoutSectio
 const LPPortalSection = lazy(() => import('@/components/landing/LPPortalSection').then(module => ({ default: module.LPPortalSection })));
 
 // New Alberta facility sections
-const AlbertaSiteShowcase = lazy(() => import('@/components/landing/AlbertaSiteShowcase').then(module => ({ default: module.AlbertaSiteShowcase })));
+const AlbertaFacilityShowcase = lazy(() => import('@/components/landing/AlbertaFacilityShowcase').then(module => ({ default: module.AlbertaFacilityShowcase })));
 const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
-const SiteSpecifications = lazy(() => import('@/components/landing/SiteSpecifications').then(module => ({ default: module.SiteSpecifications })));
 const AlbertaLocationMap = lazy(() => import('@/components/landing/AlbertaLocationMap').then(module => ({ default: module.AlbertaLocationMap })));
 
 const SectionLoader = () => (
@@ -60,23 +59,14 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
-          {/* Alberta Site Showcase - NEW */}
-          <section id="alberta-facility" aria-label="Alberta Data Center Facility" className="relative">
+          {/* Alberta Facility Showcase - Combined Section */}
+          <section id="alberta-facility" aria-label="Alberta Data Center Facility and Technical Specifications" className="relative">
             <Suspense fallback={<SectionLoader />}>
-              <AlbertaSiteShowcase />
+              <AlbertaFacilityShowcase />
             </Suspense>
           </section>
           
-          <SectionDivider color="yellow" />
-          
-          {/* Site Specifications - NEW */}
-          <section aria-label="Technical Specifications" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <SiteSpecifications />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="blue" />
+          <SectionDivider color="green" />
           
           {/* Infrastructure Highlights - NEW */}
           <section aria-label="Infrastructure Highlights" className="relative">
