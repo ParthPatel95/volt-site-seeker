@@ -33,30 +33,30 @@ export const AlbertaSiteShowcase = () => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   return (
-    <section className="relative py-12 sm:py-16 md:py-24 bg-gradient-to-b from-background via-slate-950 to-background overflow-hidden">
+    <section className="relative py-12 sm:py-16 md:py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
       
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-8 sm:mb-12 md:mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-sm font-medium text-foreground">Operational Asset</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green/10 border border-neon-green/30 backdrop-blur-sm">
+            <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse"></div>
+            <span className="text-sm font-medium text-neon-green">Operational Asset</span>
           </div>
           
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
             Alberta Data Center Facility
           </h2>
           
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Our flagship infrastructure asset powering the future of AI, HPC, and digital mining operations
+          <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
+            Our flagship infrastructure asset powering the future of <span className="text-electric-blue font-semibold">AI</span>, <span className="text-electric-yellow font-semibold">HPC</span>, and <span className="text-neon-green font-semibold">digital mining</span> operations
           </p>
         </div>
 
         {/* Main Image Display */}
         <div className="relative group mb-6 sm:mb-8">
-          <div className="relative aspect-[16/9] sm:aspect-[21/9] rounded-xl sm:rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl">
+          <div className="relative aspect-[16/9] sm:aspect-[21/9] rounded-xl sm:rounded-2xl overflow-hidden border-2 border-electric-blue/30 shadow-2xl hover:border-electric-blue/50 transition-all duration-500">
             <img 
               src={facilityImages[selectedImage].src} 
               alt={facilityImages[selectedImage].label}
@@ -64,7 +64,7 @@ export const AlbertaSiteShowcase = () => {
             />
             
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent"></div>
             
             {/* Image Info Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8">
@@ -80,20 +80,20 @@ export const AlbertaSiteShowcase = () => {
                 
                 {/* Key Stats */}
                 <div className="flex flex-wrap gap-3 sm:gap-4">
-                  <div className="bg-slate-900/80 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-primary/20">
-                    <div className="flex items-center gap-2 text-primary">
+                  <div className="bg-slate-900/80 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-electric-blue/30 hover:border-electric-blue/50 transition-colors">
+                    <div className="flex items-center gap-2 text-electric-blue">
                       <MapPin className="w-4 h-4" />
                       <span className="text-xs sm:text-sm font-medium">Alberta, Canada</span>
                     </div>
                   </div>
-                  <div className="bg-slate-900/80 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-primary/20">
-                    <div className="flex items-center gap-2 text-primary">
+                  <div className="bg-slate-900/80 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-neon-green/30 hover:border-neon-green/50 transition-colors">
+                    <div className="flex items-center gap-2 text-neon-green">
                       <Zap className="w-4 h-4" />
                       <span className="text-xs sm:text-sm font-medium">150 MW</span>
                     </div>
                   </div>
-                  <div className="bg-slate-900/80 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-primary/20">
-                    <div className="flex items-center gap-2 text-primary">
+                  <div className="bg-slate-900/80 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-electric-yellow/30 hover:border-electric-yellow/50 transition-colors">
+                    <div className="flex items-center gap-2 text-electric-yellow">
                       <Calendar className="w-4 h-4" />
                       <span className="text-xs sm:text-sm font-medium">2024</span>
                     </div>
@@ -112,8 +112,8 @@ export const AlbertaSiteShowcase = () => {
               onClick={() => setSelectedImage(index)}
               className={`relative group aspect-video rounded-lg overflow-hidden border-2 transition-all duration-300 ${
                 selectedImage === index 
-                  ? 'border-primary shadow-lg shadow-primary/20 scale-105' 
-                  : 'border-slate-800 hover:border-primary/50'
+                  ? 'border-electric-blue shadow-lg shadow-electric-blue/30 scale-105' 
+                  : 'border-slate-800 hover:border-electric-blue/50'
               }`}
             >
               <img 
@@ -123,7 +123,7 @@ export const AlbertaSiteShowcase = () => {
               />
               <div className={`absolute inset-0 transition-opacity duration-300 ${
                 selectedImage === index 
-                  ? 'bg-primary/20' 
+                  ? 'bg-electric-blue/20' 
                   : 'bg-slate-950/40 group-hover:bg-slate-950/20'
               }`}></div>
               <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-slate-950 to-transparent">
@@ -137,7 +137,7 @@ export const AlbertaSiteShowcase = () => {
         <div className="text-center">
           <Button 
             size="lg" 
-            className="group bg-primary hover:bg-primary/90 text-primary-foreground px-6 sm:px-8"
+            className="group bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-electric-blue text-white px-6 sm:px-8 shadow-xl shadow-electric-blue/25 hover:shadow-electric-blue/40 transition-all duration-500 hover:scale-105 border border-electric-blue/20"
           >
             Request Site Tour
             <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />

@@ -1,22 +1,58 @@
 import React from 'react';
-import { Activity, Award, Leaf, Shield, TrendingUp, Users, Zap, CheckCircle2 } from 'lucide-react';
+import { Activity, Award, Leaf, Shield, TrendingUp, Zap, CheckCircle2, Gauge } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
+import { Badge } from '@/components/ui/badge';
+
+const metrics = [
+  {
+    icon: Zap,
+    label: 'Power Consumption',
+    value: '127 MW',
+    status: 'Live',
+    color: 'bg-neon-green/10 text-neon-green',
+    trend: '85% capacity'
+  },
+  {
+    icon: Gauge,
+    label: 'PUE',
+    value: '1.18',
+    status: 'Optimal',
+    color: 'bg-electric-blue/10 text-electric-blue',
+    trend: 'Industry leading'
+  },
+  {
+    icon: TrendingUp,
+    label: 'Uptime YTD',
+    value: '99.995%',
+    status: 'Excellent',
+    color: 'bg-neon-green/10 text-neon-green',
+    trend: 'Zero outages'
+  },
+  {
+    icon: Activity,
+    label: 'Current AESO Rate',
+    value: 'Live',
+    status: 'Active',
+    color: 'bg-electric-yellow/10 text-electric-yellow',
+    trend: 'Real-time'
+  }
+];
 
 const achievements = [
   {
     icon: Shield,
     title: 'ISO 27001',
-    description: 'Information Security'
+    description: 'Information Security Management'
   },
   {
     icon: Leaf,
     title: 'LEED Gold',
-    description: 'Sustainable Building'
+    description: 'Sustainable Building Design'
   },
   {
     icon: Award,
     title: 'Uptime Institute',
-    description: 'Tier III Certified'
+    description: 'Tier III Certified Facility'
   },
   {
     icon: CheckCircle2,
@@ -25,165 +61,86 @@ const achievements = [
   }
 ];
 
-const timeline = [
-  { date: 'Q2 2023', event: 'Site Acquisition', status: 'completed' },
-  { date: 'Q4 2023', event: 'Construction Start', status: 'completed' },
-  { date: 'Q2 2024', event: 'Phase 1 Operational', status: 'completed' },
-  { date: 'Q4 2024', event: 'Full Capacity', status: 'current' },
-  { date: 'Q2 2025', event: 'Phase 2 Construction', status: 'upcoming' },
-  { date: 'Q4 2026', event: '300 MW Total Capacity', status: 'upcoming' }
-];
-
 export const OperationalExcellence = () => {
   const aesoData = useAESOData();
   const currentPrice = aesoData?.pricing?.current_price || 0;
 
+  // Update metrics with live AESO data
+  const liveMetrics = metrics.map(metric => {
+    if (metric.label === 'Current AESO Rate') {
+      return {
+        ...metric,
+        value: `$${currentPrice.toFixed(2)}`,
+        trend: 'per MWh'
+      };
+    }
+    return metric;
+  });
+
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-background">
+    <section className="relative py-16 sm:py-20 md:py-24 bg-gradient-to-b from-slate-900 to-slate-950">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-8 sm:mb-12 space-y-3 sm:space-y-4">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-            Operational Excellence
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+            Operational <span className="text-neon-green">Excellence</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Real-time metrics demonstrating our commitment to reliability and performance
+          <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
+            Real-time performance metrics from our <span className="text-electric-blue font-semibold">Alberta facility</span>
           </p>
         </div>
 
         {/* Live Metrics Dashboard */}
-        <div className="max-w-5xl mx-auto mb-12 sm:mb-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="bg-gradient-to-br from-card to-slate-950 border border-border rounded-xl p-5 sm:p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-5 h-5 text-yellow-500" />
-                <span className="text-sm text-muted-foreground">Power Load</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {liveMetrics.map((metric, index) => (
+            <div 
+              key={index}
+              className="group relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 hover:border-electric-blue/50 transition-all duration-300 hover:scale-105 hover:bg-slate-800/70"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <metric.icon className="w-8 h-8 text-electric-blue" />
+                  <Badge variant="outline" className={`${metric.color} border-none`}>
+                    {metric.status}
+                  </Badge>
+                </div>
+                
+                <div className="text-3xl font-bold text-white mb-2">
+                  {metric.value}
+                </div>
+                
+                <div className="text-sm text-slate-300 mb-3">
+                  {metric.label}
+                </div>
+                
+                <div className="flex items-center text-xs text-neon-green">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {metric.trend}
+                </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">127 MW</div>
-              <div className="text-xs text-muted-foreground">85% capacity utilization</div>
             </div>
-
-            <div className="bg-gradient-to-br from-card to-slate-950 border border-border rounded-xl p-5 sm:p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Activity className="w-5 h-5 text-green-500" />
-                <span className="text-sm text-muted-foreground">PUE</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">1.18</div>
-              <div className="text-xs text-muted-foreground">Best-in-class efficiency</div>
-            </div>
-
-            <div className="bg-gradient-to-br from-card to-slate-950 border border-border rounded-xl p-5 sm:p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
-                <span className="text-sm text-muted-foreground">Uptime YTD</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">99.995%</div>
-              <div className="text-xs text-muted-foreground">Zero unplanned outages</div>
-            </div>
-
-            <div className="bg-gradient-to-br from-card to-slate-950 border border-border rounded-xl p-5 sm:p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-5 h-5 text-primary" />
-                <span className="text-sm text-muted-foreground">Current AESO Rate</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
-                ${currentPrice.toFixed(2)}
-              </div>
-              <div className="text-xs text-muted-foreground">per MWh live pricing</div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Achievements */}
-        <div className="max-w-4xl mx-auto mb-12 sm:mb-16">
-          <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-6 sm:mb-8 text-center">
-            Certifications & Achievements
-          </h3>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {achievements.map((achievement, index) => {
-              const Icon = achievement.icon;
-              return (
-                <div 
-                  key={index}
-                  className="bg-card border border-border rounded-xl p-4 sm:p-6 text-center hover:border-primary/50 transition-all duration-300 group"
-                >
-                  <div className="inline-flex p-3 rounded-full bg-primary/10 mb-3 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h4 className="text-sm sm:text-base font-semibold text-foreground mb-1">
-                    {achievement.title}
-                  </h4>
-                  <p className="text-xs text-muted-foreground">{achievement.description}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {achievements.map((achievement, index) => (
+            <div 
+              key={index}
+              className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-neon-green/30 transition-all hover:bg-slate-800/70"
+            >
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="p-3 bg-neon-green/10 rounded-lg">
+                  <achievement.icon className="w-6 h-6 text-neon-green" />
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Timeline */}
-        <div className="max-w-4xl mx-auto">
-          <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-6 sm:mb-8 text-center">
-            Facility Development Timeline
-          </h3>
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-4 sm:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-muted"></div>
-            
-            <div className="space-y-6 sm:space-y-8">
-              {timeline.map((item, index) => (
-                <div key={index} className="relative pl-12 sm:pl-20">
-                  {/* Timeline dot */}
-                  <div className={`absolute left-2.5 sm:left-5.5 w-3 h-3 rounded-full border-2 ${
-                    item.status === 'completed' 
-                      ? 'bg-primary border-primary' 
-                      : item.status === 'current'
-                      ? 'bg-primary border-primary animate-pulse'
-                      : 'bg-muted border-muted'
-                  }`}></div>
-                  
-                  <div className="bg-card border border-border rounded-lg p-4 sm:p-5 hover:border-primary/50 transition-all">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                      <h4 className="text-base sm:text-lg font-semibold text-foreground">{item.event}</h4>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                        item.status === 'completed'
-                          ? 'bg-green-500/10 text-green-500'
-                          : item.status === 'current'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-muted/50 text-muted-foreground'
-                      }`}>
-                        {item.status === 'completed' ? '✓ Completed' : item.status === 'current' ? '● In Progress' : '○ Planned'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{item.date}</p>
-                  </div>
+                <div>
+                  <h4 className="font-bold text-white mb-2">{achievement.title}</h4>
+                  <p className="text-sm text-slate-300">{achievement.description}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Environmental Impact */}
-        <div className="mt-12 sm:mt-16 text-center max-w-3xl mx-auto">
-          <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-6 sm:p-8">
-            <Leaf className="w-10 h-10 sm:w-12 sm:h-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-3">
-              Environmental Commitment
-            </h3>
-            <p className="text-sm sm:text-base text-muted-foreground mb-4">
-              Our Alberta facility is powered by 85%+ renewable energy, utilizing Alberta's abundant wind and 
-              hydroelectric resources. The cold climate reduces cooling requirements, achieving a PUE of 1.18—
-              among the most efficient data centers globally.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm">
-              <div>
-                <span className="font-bold text-green-500">42,000 tons</span>
-                <span className="text-muted-foreground"> CO₂ avoided annually</span>
-              </div>
-              <div>
-                <span className="font-bold text-green-500">30%</span>
-                <span className="text-muted-foreground"> less water usage</span>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

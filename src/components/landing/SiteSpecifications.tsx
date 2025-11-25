@@ -1,148 +1,164 @@
 import React from 'react';
-import { Building2, Zap, Thermometer, Clock, Network, Leaf, Shield, MapPin } from 'lucide-react';
+import { Building2, Zap, Thermometer, Clock, Network, Leaf, Shield, MapPin, DollarSign, Snowflake, Cable, Globe } from 'lucide-react';
 
-const specifications = [
+const technicalSpecs = [
   {
     icon: Zap,
     label: 'Total Power Capacity',
-    value: '150 MW',
-    detail: 'With 300 MW expansion capacity'
+    value: '150 MW'
   },
   {
     icon: Building2,
     label: 'Facility Size',
-    value: '500,000 sq ft',
-    detail: 'Multi-phase data center campus'
+    value: '500,000 sq ft'
   },
   {
     icon: Thermometer,
     label: 'Cooling System',
-    value: 'Hybrid',
-    detail: 'Immersion + air-cooled systems'
+    value: 'Hybrid'
   },
   {
     icon: Clock,
     label: 'Uptime SLA',
-    value: '99.99%',
-    detail: 'Tier III+ redundancy'
+    value: '99.99%'
   },
   {
     icon: Network,
     label: 'Grid Connection',
-    value: 'Direct AESO',
-    detail: 'Substation on-site'
+    value: 'Direct AESO'
   },
   {
     icon: Leaf,
     label: 'Renewable Mix',
-    value: '85%+',
-    detail: 'Alberta wind & hydro power'
+    value: '85%+'
   },
   {
     icon: Shield,
     label: 'Security',
-    value: '24/7/365',
-    detail: 'SOC 2 Type II certified'
+    value: '24/7/365'
   },
   {
     icon: MapPin,
     label: 'Location',
-    value: 'Alberta, CA',
-    detail: 'Strategic North American hub'
+    value: 'Alberta, CA'
   }
 ];
 
 const locationBenefits = [
   {
+    icon: DollarSign,
     title: 'Favorable Energy Pricing',
-    description: 'Alberta\'s deregulated energy market provides competitive wholesale rates',
-    progress: 95
+    description: 'Alberta\'s deregulated energy market provides competitive wholesale rates'
   },
   {
+    icon: Snowflake,
     title: 'Cold Climate Advantage',
-    description: 'Natural cooling reduces PUE and operational costs year-round',
-    progress: 90
+    description: 'Natural cooling reduces PUE and operational costs year-round'
   },
   {
+    icon: Cable,
     title: 'Fiber Connectivity',
-    description: 'Proximity to major trans-continental fiber routes',
-    progress: 85
+    description: 'Proximity to major trans-continental fiber routes'
   },
   {
+    icon: Globe,
     title: 'Political Stability',
-    description: 'Canadian jurisdiction with strong property rights and rule of law',
-    progress: 100
+    description: 'Canadian jurisdiction with strong property rights and rule of law'
   }
 ];
 
 export const SiteSpecifications = () => {
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-slate-950 to-background">
+    <section className="relative py-16 sm:py-20 md:py-24 bg-slate-900">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-8 sm:mb-12 space-y-3 sm:space-y-4">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-            Technical Specifications
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+            Technical <span className="text-electric-yellow">Specifications</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Enterprise-grade infrastructure designed for mission-critical operations
+          <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
+            Enterprise-grade infrastructure with <span className="text-neon-green font-semibold">industry-leading</span> performance metrics
           </p>
         </div>
 
-        {/* Specifications Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-16">
-          {specifications.map((spec, index) => {
-            const Icon = spec.icon;
-            return (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Technical Specs Grid */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
+              <Building2 className="w-6 h-6 mr-2 text-electric-blue" />
+              Core Specifications
+            </h3>
+            
+            {technicalSpecs.map((spec, index) => (
               <div 
                 key={index}
-                className="bg-card border border-border rounded-xl p-5 sm:p-6 hover:border-primary/50 transition-all duration-300 group"
+                className="group bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 hover:border-electric-blue/50 transition-all hover:bg-slate-800/70"
               >
-                <Icon className="w-8 h-8 text-primary mb-3 group-hover:scale-110 transition-transform" />
-                <div className="text-sm text-muted-foreground mb-1">{spec.label}</div>
-                <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">{spec.value}</div>
-                <div className="text-xs text-muted-foreground">{spec.detail}</div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <spec.icon className="w-5 h-5 text-electric-blue" />
+                    <span className="text-slate-300 font-medium">{spec.label}</span>
+                  </div>
+                  <span className="text-white font-bold">{spec.value}</span>
+                </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
 
-        {/* Location Benefits */}
-        <div className="max-w-4xl mx-auto">
-          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-6 sm:mb-8 text-center">
-            Strategic Alberta Location Benefits
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {/* Location Benefits */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
+              <MapPin className="w-6 h-6 mr-2 text-neon-green" />
+              Location Advantages
+            </h3>
+            
             {locationBenefits.map((benefit, index) => (
               <div 
                 key={index}
-                className="bg-card border border-border rounded-xl p-5 sm:p-6 hover:border-primary/50 transition-all duration-300"
+                className="group bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 hover:border-neon-green/50 transition-all hover:bg-slate-800/70"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h4 className="text-base sm:text-lg font-semibold text-foreground">{benefit.title}</h4>
-                  <span className="text-sm font-bold text-primary">{benefit.progress}%</span>
-                </div>
-                
-                <p className="text-sm text-muted-foreground mb-3">{benefit.description}</p>
-                
-                {/* Progress bar */}
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-1000 rounded-full"
-                    style={{ width: `${benefit.progress}%` }}
-                  ></div>
+                <div className="flex items-start gap-3">
+                  <benefit.icon className="w-5 h-5 text-neon-green mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-bold text-white mb-1">{benefit.title}</h4>
+                    <p className="text-sm text-slate-300">{benefit.description}</p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Comparison Note */}
-        <div className="mt-8 sm:mt-12 text-center">
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            All specifications exceed industry standards for Tier III data centers. 
-            Facility design follows ASHRAE thermal guidelines and meets SOC 2 Type II compliance requirements.
-          </p>
+        {/* Comparison to Industry */}
+        <div className="bg-gradient-to-r from-electric-blue/10 via-electric-yellow/10 to-neon-green/10 rounded-2xl p-6 sm:p-8 border border-electric-blue/30 backdrop-blur-sm">
+          <h3 className="text-2xl font-bold text-white mb-6 text-center">
+            Industry <span className="text-electric-yellow">Comparison</span>
+          </h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-electric-blue mb-2">PUE &lt; 1.2</div>
+              <div className="text-sm text-slate-300 mb-2">vs Industry Avg 1.5</div>
+              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-electric-blue to-neon-green" style={{ width: '80%' }}></div>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-3xl font-bold text-neon-green mb-2">99.99%</div>
+              <div className="text-sm text-slate-300 mb-2">Uptime SLA</div>
+              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-neon-green to-electric-yellow" style={{ width: '99%' }}></div>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-3xl font-bold text-electric-yellow mb-2">85%+</div>
+              <div className="text-sm text-slate-300 mb-2">Renewable Energy</div>
+              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-electric-yellow to-neon-green" style={{ width: '85%' }}></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

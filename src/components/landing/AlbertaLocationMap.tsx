@@ -1,187 +1,82 @@
-import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { MapPin, Navigation } from 'lucide-react';
-import { useMapboxConfig } from '@/hooks/useMapboxConfig';
+import React from 'react';
+import { MapPin, DollarSign, Snowflake, Cable, Globe } from 'lucide-react';
+
+const locationBenefits = [
+  {
+    icon: DollarSign,
+    title: 'Competitive Energy Pricing',
+    description: 'Alberta\'s deregulated market offers low-cost, market-driven wholesale power rates'
+  },
+  {
+    icon: Snowflake,
+    title: 'Natural Cooling Benefits',
+    description: 'Cold climate reduces cooling costs and improves PUE efficiency year-round'
+  },
+  {
+    icon: Cable,
+    title: 'Fiber Infrastructure',
+    description: 'Direct access to trans-continental fiber routes connecting US and Canadian markets'
+  },
+  {
+    icon: Globe,
+    title: 'Stable Jurisdiction',
+    description: 'Canadian political stability with strong property rights and regulatory clarity'
+  }
+];
 
 export const AlbertaLocationMap = () => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const { accessToken, loading, error } = useMapboxConfig();
-  const [mapLoaded, setMapLoaded] = useState(false);
-
-  // Alberta facility coordinates (approximate central Alberta location)
-  const facilityLocation: [number, number] = [-113.4937, 53.5461]; // Edmonton area
-
-  useEffect(() => {
-    if (!mapContainer.current || !accessToken || map.current) return;
-
-    mapboxgl.accessToken = accessToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: facilityLocation,
-      zoom: 5,
-      pitch: 45,
-    });
-
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
-
-    map.current.on('load', () => {
-      setMapLoaded(true);
-      
-      if (!map.current) return;
-
-      // Add custom marker for facility
-      const el = document.createElement('div');
-      el.className = 'custom-marker';
-      el.style.width = '40px';
-      el.style.height = '40px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = 'hsl(var(--primary))';
-      el.style.border = '3px solid white';
-      el.style.boxShadow = '0 0 20px rgba(247, 175, 20, 0.6)';
-      el.style.cursor = 'pointer';
-
-      // Add popup
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div style="padding: 8px;">
-          <h3 style="margin: 0 0 8px 0; font-weight: bold; color: hsl(var(--primary));">WattByte Alberta Facility</h3>
-          <p style="margin: 0 0 4px 0; font-size: 14px;">150 MW Data Center</p>
-          <p style="margin: 0; font-size: 12px; color: #888;">Edmonton Region, Alberta, Canada</p>
-        </div>
-      `);
-
-      new mapboxgl.Marker(el)
-        .setLngLat(facilityLocation)
-        .setPopup(popup)
-        .addTo(map.current);
-
-      // Add glow effect around facility
-      map.current.addLayer({
-        id: 'facility-glow',
-        type: 'circle',
-        source: {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: facilityLocation
-            },
-            properties: {}
-          }
-        },
-        paint: {
-          'circle-radius': 50,
-          'circle-color': 'hsl(var(--primary))',
-          'circle-opacity': 0.3,
-          'circle-blur': 1
-        }
-      });
-    });
-
-    return () => {
-      map.current?.remove();
-    };
-  }, [accessToken]);
-
-  if (loading) {
-    return (
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background to-slate-950">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center">
-            <div className="animate-pulse text-muted-foreground">Loading map...</div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background to-slate-950">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center text-muted-foreground">
-            Map temporarily unavailable
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background to-slate-950">
+    <section className="relative py-16 sm:py-20 md:py-24 bg-slate-900">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-8 sm:mb-12 space-y-3 sm:space-y-4">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-            Strategic North American Location
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+            Strategic <span className="text-electric-blue">Location</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Positioned in Alberta's energy corridor with access to renewable power and major connectivity routes
+          <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
+            Positioned at the heart of North America's <span className="text-neon-green font-semibold">renewable energy corridor</span>
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto">
-          {/* Map Container */}
-          <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl mb-8">
-            <div ref={mapContainer} className="w-full h-[400px] sm:h-[500px] md:h-[600px]" />
-            {!mapLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-950">
-                <div className="animate-pulse text-muted-foreground">Initializing map...</div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Map Placeholder */}
+          <div className="relative aspect-video lg:aspect-square rounded-2xl overflow-hidden border-2 border-electric-blue/30 shadow-xl hover:border-electric-blue/50 transition-all">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <MapPin className="w-16 h-16 text-electric-blue mx-auto animate-pulse" />
+                <p className="text-slate-300">
+                  Interactive map coming soon
+                </p>
+                <p className="text-sm text-slate-400">
+                  Edmonton Region, Alberta, Canada
+                </p>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Location Benefits Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <MapPin className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">Major Cities Proximity</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Within 200km of Calgary and Edmonton metropolitan areas
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Navigation className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">Fiber Connectivity</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Direct access to trans-continental fiber optic infrastructure
-                  </p>
+          {/* Location Benefits */}
+          <div className="space-y-6">
+            <h3 className="text-2xl font-bold text-white mb-6">
+              Why <span className="text-electric-yellow">Alberta</span>?
+            </h3>
+            
+            {locationBenefits.map((benefit, index) => (
+              <div 
+                key={index}
+                className="group bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50 hover:border-electric-blue/50 transition-all hover:scale-102 hover:bg-slate-800/70"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-electric-blue/10 rounded-lg group-hover:bg-electric-blue/20 transition-colors">
+                    <benefit.icon className="w-5 h-5 text-electric-blue" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white mb-2">{benefit.title}</h4>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      {benefit.description}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5 sm:p-6 sm:col-span-2 lg:col-span-1">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <MapPin className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">Renewable Energy Hub</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Surrounded by wind farms and hydro facilities in Alberta's energy corridor
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
