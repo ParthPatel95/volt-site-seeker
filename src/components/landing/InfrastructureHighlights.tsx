@@ -68,22 +68,24 @@ export const InfrastructureHighlights = () => {
           {pipeline.map((project, index) => (
             <div 
               key={index}
-              className="group relative bg-slate-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700/50 hover:border-electric-blue/50 transition-all duration-300 hover:scale-105 hover:bg-slate-800/70"
+              className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700/50"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src={project.image} 
                   alt={`${project.location} power facility`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
               </div>
               
               <div className="relative p-6">
                 <h3 className="text-xl font-bold text-white mb-2">
-                  {project.location}
+                  <span className="inline-block mr-2" style={{ fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif' }}>
+                    {project.location.split(' ')[0]}
+                  </span>
+                  {project.location.split(' ').slice(1).join(' ')}
                 </h3>
                 
                 <div className="flex items-center gap-3 mb-3">
