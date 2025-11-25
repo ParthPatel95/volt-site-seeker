@@ -5,17 +5,17 @@ const technicalSpecs = [
   {
     icon: Zap,
     label: 'Total Power Capacity',
-    value: '150 MW'
+    value: '135 MW'
   },
   {
     icon: Building2,
     label: 'Facility Size',
-    value: '500,000 sq ft'
+    value: '26 AC / 20,000 sq ft'
   },
   {
     icon: Thermometer,
     label: 'Cooling System',
-    value: 'Hybrid'
+    value: 'Air Cooled'
   },
   {
     icon: Clock,
@@ -30,7 +30,7 @@ const technicalSpecs = [
   {
     icon: Leaf,
     label: 'Renewable Mix',
-    value: '85%+'
+    value: 'AESO Grid Mix'
   },
   {
     icon: Shield,
@@ -152,11 +152,9 @@ export const SiteSpecifications = () => {
             </div>
             
             <div className="text-center">
-              <div className="text-3xl font-bold text-electric-yellow mb-2">85%+</div>
-              <div className="text-sm text-slate-300 mb-2">Renewable Energy</div>
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-electric-yellow to-neon-green" style={{ width: '85%' }}></div>
-              </div>
+              <div className="text-3xl font-bold text-electric-yellow mb-2">AESO Grid</div>
+              <div className="text-sm text-slate-300 mb-2">Renewable Mix (Live)</div>
+              <div className="text-xs text-slate-400 mt-1">Powered by Alberta's grid</div>
             </div>
           </div>
         </div>
