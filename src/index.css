@@ -418,6 +418,16 @@
     }
   }
 
+  /* Hide default page scrollbar while preserving scroll behavior */
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  body {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
+
   /* Thin scrollbar utility */
   .scrollbar-thin::-webkit-scrollbar {
     width: 4px;
