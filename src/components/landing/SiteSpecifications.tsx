@@ -127,37 +127,6 @@ export const SiteSpecifications = () => {
             ))}
           </div>
         </div>
-
-        {/* Comparison to Industry */}
-        <div className="bg-gradient-to-r from-electric-blue/10 via-electric-yellow/10 to-neon-green/10 rounded-2xl p-6 sm:p-8 border border-electric-blue/30 backdrop-blur-sm">
-          <h3 className="text-2xl font-bold text-white mb-6 text-center">
-            Industry <span className="text-electric-yellow">Comparison</span>
-          </h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-electric-blue mb-2">PUE &lt; 1.2</div>
-              <div className="text-sm text-slate-300 mb-2">vs Industry Avg 1.5</div>
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-electric-blue to-neon-green" style={{ width: '80%' }}></div>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-3xl font-bold text-neon-green mb-2">99.99%</div>
-              <div className="text-sm text-slate-300 mb-2">Uptime SLA</div>
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-neon-green to-electric-yellow" style={{ width: '99%' }}></div>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-3xl font-bold text-electric-yellow mb-2">AESO Grid</div>
-              <div className="text-sm text-slate-300 mb-2">Renewable Mix (Live)</div>
-              <div className="text-xs text-slate-400 mt-1">Powered by Alberta's grid</div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
