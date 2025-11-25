@@ -4,42 +4,50 @@ import texasImage from '@/assets/pipeline/texas-natgas.jpg';
 import nepalImage from '@/assets/pipeline/nepal-mix.jpg';
 import bhutanImage from '@/assets/pipeline/bhutan-hydro.jpg';
 import indiaImage from '@/assets/pipeline/india-solar-hydro.jpg';
+import newfoundlandImage from '@/assets/pipeline/newfoundland-canada-hybrid.jpg';
 
 const pipeline = [
   {
-    location: 'Jinja, Uganda',
+    location: '🇺🇬 Jinja, Uganda',
     capacity: '400MW',
     type: 'On-Grid Hydro',
     description: 'Hydroelectric power facility leveraging the Nile River with direct grid connection',
     image: jinjaImage
   },
   {
-    location: 'Texas, USA',
+    location: '🇺🇸 Texas, USA',
     capacity: '536MW',
     type: 'On-Grid Mix + Self-Gen Natgas',
     description: 'Mixed generation facility with natural gas backup and grid interconnection',
     image: texasImage
   },
   {
-    location: 'Nepal',
+    location: '🇳🇵 Nepal',
     capacity: '75MW',
     type: 'On-Grid Mix',
     description: 'Himalayan renewable energy infrastructure with grid-connected mixed generation',
     image: nepalImage
   },
   {
-    location: 'Bhutan',
+    location: '🇧🇹 Bhutan',
     capacity: '175MW',
     type: 'On-Grid Hydro',
     description: 'Large-scale hydroelectric facility utilizing pristine mountain water resources',
     image: bhutanImage
   },
   {
-    location: 'India',
+    location: '🇮🇳 India',
     capacity: '45MW',
     type: 'Solar+Hydro BTM',
     description: 'Behind-the-meter hybrid solar and hydroelectric renewable energy system',
     image: indiaImage
+  },
+  {
+    location: '🇨🇦 Newfoundland, Canada',
+    capacity: '198MW',
+    type: 'On-Grid Hybrid',
+    description: 'Advanced hybrid renewable energy facility combining coastal wind and hydroelectric power',
+    image: newfoundlandImage
   }
 ];
 
@@ -52,7 +60,7 @@ export const InfrastructureHighlights = () => {
             Development <span className="text-electric-blue">Pipeline</span>
           </h2>
           <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
-            Strategic power infrastructure investments across <span className="text-neon-green font-semibold">global markets</span> totaling <span className="text-electric-yellow font-semibold">1,231 MW</span>
+            Strategic power infrastructure investments across <span className="text-neon-green font-semibold">global markets</span> totaling <span className="text-electric-yellow font-semibold">1,429 MW</span>
           </p>
         </div>
 
