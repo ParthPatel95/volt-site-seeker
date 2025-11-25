@@ -20,6 +20,13 @@ const InvestmentThesisSection = lazy(() => import('@/components/landing/Investme
 const VoltScoutSection = lazy(() => import('@/components/landing/VoltScoutSection').then(module => ({ default: module.VoltScoutSection })));
 const LPPortalSection = lazy(() => import('@/components/landing/LPPortalSection').then(module => ({ default: module.LPPortalSection })));
 
+// New Alberta facility sections
+const AlbertaSiteShowcase = lazy(() => import('@/components/landing/AlbertaSiteShowcase').then(module => ({ default: module.AlbertaSiteShowcase })));
+const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
+const SiteSpecifications = lazy(() => import('@/components/landing/SiteSpecifications').then(module => ({ default: module.SiteSpecifications })));
+const OperationalExcellence = lazy(() => import('@/components/landing/OperationalExcellence').then(module => ({ default: module.OperationalExcellence })));
+const AlbertaLocationMap = lazy(() => import('@/components/landing/AlbertaLocationMap').then(module => ({ default: module.AlbertaLocationMap })));
+
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
     <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-electric-blue border-t-transparent rounded-full animate-spin"></div>
@@ -54,9 +61,36 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
-          <LiveDataSection />
+          {/* Alberta Site Showcase - NEW */}
+          <section id="alberta-facility" aria-label="Alberta Data Center Facility" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <AlbertaSiteShowcase />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="yellow" />
+          
+          {/* Infrastructure Highlights - NEW */}
+          <section aria-label="Infrastructure Highlights" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <InfrastructureHighlights />
+            </Suspense>
+          </section>
           
           <SectionDivider color="green" />
+          
+          <LiveDataSection />
+          
+          <SectionDivider color="blue" />
+          
+          {/* Site Specifications - NEW */}
+          <section aria-label="Technical Specifications" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <SiteSpecifications />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="purple" />
           
           <section aria-label="Problem and Solution" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -98,6 +132,15 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
+          {/* Operational Excellence - NEW */}
+          <section aria-label="Operational Excellence" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <OperationalExcellence />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="green" />
+          
           <section aria-label="Investment Thesis" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <InvestmentThesisSection />
@@ -117,6 +160,15 @@ const Landing: React.FC = () => {
           <section aria-label="LP Portal" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <LPPortalSection />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="cyan" />
+          
+          {/* Alberta Location Map - NEW */}
+          <section aria-label="Strategic Location" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <AlbertaLocationMap />
             </Suspense>
           </section>
         </main>
