@@ -35,7 +35,7 @@ const Landing: React.FC = () => {
   const [showSignUpForm, setShowSignUpForm] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-white relative overflow-x-hidden overflow-y-auto">
       {/* Smooth scroll functionality */}
       <SmoothScroll />
       
