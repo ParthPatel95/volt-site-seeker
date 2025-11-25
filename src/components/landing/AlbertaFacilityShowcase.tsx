@@ -98,7 +98,7 @@ export const AlbertaFacilityShowcase = () => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   return (
-    <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
+    <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden scrollbar-hide">
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
       
