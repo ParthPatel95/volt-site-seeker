@@ -6,8 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker - use HTTPS explicitly for iOS compatibility
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -27,7 +27,12 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
+  const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   const { toast } = useToast();
+  
+  // Detect iOS for native PDF viewer
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   // Add annotation layer styles for clickable links (based on official PDF.js styles)
   useEffect(() => {
@@ -204,87 +209,115 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
           ) : documentUrl ? (
             <>
               {isPdf ? (
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b gap-2">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={previousPage}
-                        disabled={pageNumber <= 1}
-                      >
-                        Previous
-                      </Button>
-                      <span className="text-sm">
-                        Page {pageNumber} of {numPages || '...'}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={nextPage}
-                        disabled={pageNumber >= numPages}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={zoomOut}
-                        disabled={scale <= 0.5}
-                      >
-                        <ZoomOut className="w-4 h-4" />
-                      </Button>
-                      <span className="text-sm min-w-[60px] text-center">{Math.round(scale * 100)}%</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={zoomIn}
-                        disabled={scale >= 3}
-                      >
-                        <ZoomIn className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div 
-                    className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/10"
-                    onClick={(e) => {
-                      const target = e.target as HTMLElement;
-                      const link = target.closest('a[href]') as HTMLAnchorElement;
-                      if (link && link.href) {
-                        e.preventDefault();
-                        window.open(link.href, '_blank', 'noopener,noreferrer');
-                      }
-                    }}
-                  >
-                    <Document
-                      file={documentUrl}
-                      onLoadSuccess={onDocumentLoadSuccess}
-                      onLoadError={(error) => {
-                        console.error('Error loading PDF:', error);
-                        toast({
-                          title: 'Error',
-                          description: 'Failed to load PDF document',
-                          variant: 'destructive',
-                        });
-                      }}
-                      loading={
-                        <div className="flex items-center justify-center p-8">
-                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        </div>
-                      }
+                isIOS || useNativePdfViewer ? (
+                  // Native iOS PDF viewer
+                  <div className="w-full h-full">
+                    <object
+                      data={documentUrl}
+                      type="application/pdf"
+                      className="w-full h-full"
                     >
-                      <Page
-                        pageNumber={pageNumber}
-                        scale={scale}
-                        renderTextLayer={false}
-                        renderAnnotationLayer={true}
-                        onContextMenu={(e) => !canDownload && e.preventDefault()}
-                      />
-                    </Document>
+                      <div className="flex flex-col items-center justify-center h-full gap-4">
+                        <p className="text-muted-foreground">Unable to display PDF in browser</p>
+                        {canDownload && (
+                          <button
+                            onClick={handleDownload}
+                            className="text-primary hover:underline inline-flex items-center gap-2"
+                          >
+                            Download to view
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </object>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b gap-2">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={previousPage}
+                          disabled={pageNumber <= 1}
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm">
+                          Page {pageNumber} of {numPages || '...'}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={nextPage}
+                          disabled={pageNumber >= numPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={zoomOut}
+                          disabled={scale <= 0.5}
+                        >
+                          <ZoomOut className="w-4 h-4" />
+                        </Button>
+                        <span className="text-sm min-w-[60px] text-center">{Math.round(scale * 100)}%</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={zoomIn}
+                          disabled={scale >= 3}
+                        >
+                          <ZoomIn className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div 
+                      className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/10"
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        const link = target.closest('a[href]') as HTMLAnchorElement;
+                        if (link && link.href) {
+                          e.preventDefault();
+                          window.open(link.href, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                    >
+                      <Document
+                        file={documentUrl}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        onLoadError={(error) => {
+                          console.error('Error loading PDF:', error);
+                          if (isIOS) {
+                            setUseNativePdfViewer(true);
+                          } else {
+                            toast({
+                              title: 'Error',
+                              description: 'Failed to load PDF document',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                        loading={
+                          <div className="flex items-center justify-center p-8">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          </div>
+                        }
+                      >
+                        <Page
+                          pageNumber={pageNumber}
+                          scale={scale}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={true}
+                          onContextMenu={(e) => !canDownload && e.preventDefault()}
+                        />
+                      </Document>
+                    </div>
+                  </div>
+                )
               ) : isImage ? (
                 <div 
                   className="flex items-center justify-center h-full p-4 bg-black/5"

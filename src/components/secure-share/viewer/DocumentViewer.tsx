@@ -7,8 +7,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker - use HTTPS explicitly for iOS compatibility
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocumentViewerProps {
   documentUrl: string;
@@ -42,6 +42,11 @@ export function DocumentViewer({
   const [pageNumber, setPageNumber] = useState(1);
   const [rotation, setRotation] = useState(0);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
+  
+  // Detect iOS for native PDF viewer fallback
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
@@ -420,53 +425,88 @@ export function DocumentViewer({
             )}
 
             {isPdf ? (
-              <div 
-                onClick={(e) => {
-                  const target = e.target as HTMLElement;
-                  const link = target.closest('a[href]') as HTMLAnchorElement;
-                  if (link && link.href) {
-                    e.preventDefault();
-                    window.open(link.href, '_blank', 'noopener,noreferrer');
-                  }
-                }}
-              >
-                <Document
-                  file={documentUrl}
-                  onLoadSuccess={onDocumentLoadSuccess}
-                  loading={
-                    <div className="flex items-center justify-center p-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  }
-                  error={
-                    <div className="text-center p-8">
-                      <p className="text-sm text-destructive mb-4">
-                        Failed to load PDF document
+              isIOS || useNativePdfViewer ? (
+                // Native iOS PDF viewer using object tag for better compatibility
+                <div className="w-full h-full flex items-center justify-center">
+                  <object
+                    data={documentUrl}
+                    type="application/pdf"
+                    className="w-full h-full min-h-[600px]"
+                  >
+                    <div className="text-center p-8 space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Unable to display PDF in browser
                       </p>
                       {canDownload && (
                         <Button onClick={handleDownload} size="sm">
                           <Download className="w-4 h-4 mr-2" />
-                          Download Instead
+                          Download PDF
                         </Button>
                       )}
                     </div>
-                  }
+                  </object>
+                </div>
+              ) : (
+                <div 
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    const link = target.closest('a[href]') as HTMLAnchorElement;
+                    if (link && link.href) {
+                      e.preventDefault();
+                      window.open(link.href, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
                 >
-                <Page
-                  pageNumber={pageNumber}
-                  scale={zoom}
-                  rotate={rotation}
-                  renderTextLayer={false}
-                  renderAnnotationLayer={true}
-                  className="shadow-lg"
+                  <Document
+                    file={documentUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={(error) => {
+                      console.error('PDF load error:', error);
+                      // Fallback to native viewer on error
+                      if (isIOS) {
+                        setUseNativePdfViewer(true);
+                      }
+                    }}
                     loading={
-                      <div className="flex items-center justify-center p-8 bg-card">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
                     }
-                  />
-                </Document>
-              </div>
+                    error={
+                      <div className="text-center p-8 space-y-4">
+                        <p className="text-sm text-destructive mb-4">
+                          Failed to load PDF document
+                        </p>
+                        {isIOS && (
+                          <Button onClick={() => setUseNativePdfViewer(true)} size="sm" variant="outline" className="mr-2">
+                            Try Native Viewer
+                          </Button>
+                        )}
+                        {canDownload && (
+                          <Button onClick={handleDownload} size="sm">
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Instead
+                          </Button>
+                        )}
+                      </div>
+                    }
+                  >
+                    <Page
+                      pageNumber={pageNumber}
+                      scale={isIOS ? Math.min(zoom, 1.5) : zoom}
+                      rotate={rotation}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={true}
+                      className="shadow-lg"
+                      loading={
+                        <div className="flex items-center justify-center p-8 bg-card">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                      }
+                    />
+                  </Document>
+                </div>
+              )
             ) : (
               <div className="flex items-center justify-center h-full p-6 md:p-12">
                 <div className="text-center">
