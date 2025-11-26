@@ -144,7 +144,7 @@ export const AlbertaFacilityHub = () => {
           </div>
           
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Alberta Facility <span className="text-neon-green">Experience</span>
+            Alberta Heartland <span className="text-neon-green">135</span>
           </h2>
           <p className="text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
             Enterprise-grade infrastructure delivering reliable, efficient power for high-performance computing
