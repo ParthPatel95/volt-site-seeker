@@ -220,6 +220,10 @@ export function DocumentViewer({
   }, [watermarkEnabled, recipientEmail]);
 
   const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
+  const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl);
+  const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
+  const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
+  const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
   
   // Build PDF URL - hide toolbar for view-only
   const pdfUrl = isPdf && !canDownload
@@ -507,6 +511,55 @@ export function DocumentViewer({
                   </Document>
                 </div>
               )
+            ) : isImage ? (
+              <div className="flex items-center justify-center max-w-full max-h-full">
+                <img
+                  src={documentUrl}
+                  alt="Document preview"
+                  className="max-w-full max-h-full object-contain"
+                  style={{ 
+                    transform: `scale(${zoom}) rotate(${rotation}deg)`,
+                    transition: 'transform 0.2s ease'
+                  }}
+                  onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
+                />
+              </div>
+            ) : isVideo ? (
+              <div className="flex items-center justify-center max-w-full">
+                <video
+                  src={documentUrl}
+                  controls
+                  controlsList={!canDownload ? 'nodownload' : undefined}
+                  onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
+                  className="max-w-full max-h-[80vh] rounded-lg shadow-lg"
+                  style={{ transform: `scale(${zoom})` }}
+                >
+                  Your browser does not support video playback.
+                </video>
+              </div>
+            ) : isAudio ? (
+              <div className="flex items-center justify-center w-full p-8">
+                <div className="w-full max-w-2xl">
+                  <audio
+                    src={documentUrl}
+                    controls
+                    controlsList={!canDownload ? 'nodownload' : undefined}
+                    onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
+                    className="w-full"
+                  >
+                    Your browser does not support audio playback.
+                  </audio>
+                </div>
+              </div>
+            ) : isText ? (
+              <div className="w-full max-w-4xl mx-auto p-4">
+                <iframe
+                  src={documentUrl}
+                  className="w-full h-[70vh] bg-card rounded-lg border border-border"
+                  style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
+                  title="Text document preview"
+                />
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full p-6 md:p-12">
                 <div className="text-center">

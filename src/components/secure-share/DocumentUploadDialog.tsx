@@ -41,18 +41,13 @@ export function DocumentUploadDialog({
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length === 0) return;
 
-    const validTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    ];
-
-    const invalidFiles = selectedFiles.filter(f => !validTypes.includes(f.type));
-    if (invalidFiles.length > 0) {
+    // Check for file size limit (50MB per file)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    const oversizedFiles = selectedFiles.filter(f => f.size > maxSize);
+    if (oversizedFiles.length > 0) {
       toast({
-        title: 'Invalid file type',
-        description: 'Please upload PDF, DOCX, XLSX, or PPTX files only',
+        title: 'File too large',
+        description: `Some files exceed 50MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`,
         variant: 'destructive',
       });
       return;
@@ -170,11 +165,14 @@ export function DocumentUploadDialog({
 
             <div>
             <Label>File Upload</Label>
+            <p className="text-xs text-muted-foreground mt-1 mb-2">
+              All file types supported • Max 50MB per file
+            </p>
             <div className="mt-2 flex items-center gap-4">
               <Input
                 type="file"
                 onChange={handleFileChange}
-                accept=".pdf,.docx,.xlsx,.pptx"
+                accept="*/*"
                 className="flex-1"
                 multiple={uploadMode === 'folder'}
                 {...(uploadMode === 'folder' ? { 

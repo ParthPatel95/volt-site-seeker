@@ -136,6 +136,9 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
 
   const isImage = document?.file_type?.startsWith('image/');
   const isPdf = document?.file_type === 'application/pdf';
+  const isVideo = document?.file_type?.startsWith('video/');
+  const isAudio = document?.file_type?.startsWith('audio/');
+  const isText = document?.file_type?.startsWith('text/');
   const canDownload = accessLevel === 'download';
 
   const handleDownload = async () => {
@@ -233,7 +236,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
-                    <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b gap-2">
+                  <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b gap-2">
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
@@ -327,7 +330,43 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     src={documentUrl}
                     alt={document?.name}
                     className="max-w-full max-h-full object-contain"
+                    style={{ transform: `scale(${scale})` }}
                     onContextMenu={(e) => !canDownload && e.preventDefault()}
+                  />
+                </div>
+              ) : isVideo ? (
+                <div className="flex items-center justify-center h-full p-4">
+                  <video
+                    src={documentUrl}
+                    controls
+                    controlsList={!canDownload ? 'nodownload' : undefined}
+                    onContextMenu={(e) => !canDownload && e.preventDefault()}
+                    className="max-w-full max-h-full rounded-lg"
+                    style={{ transform: `scale(${scale})` }}
+                  >
+                    Your browser does not support video playback.
+                  </video>
+                </div>
+              ) : isAudio ? (
+                <div className="flex items-center justify-center h-full p-8">
+                  <div className="w-full max-w-2xl">
+                    <audio
+                      src={documentUrl}
+                      controls
+                      controlsList={!canDownload ? 'nodownload' : undefined}
+                      onContextMenu={(e) => !canDownload && e.preventDefault()}
+                      className="w-full"
+                    >
+                      Your browser does not support audio playback.
+                    </audio>
+                  </div>
+                </div>
+              ) : isText ? (
+                <div className="h-full w-full p-4">
+                  <iframe
+                    src={documentUrl}
+                    className="w-full h-full bg-card rounded-lg border border-border"
+                    title="Text document preview"
                   />
                 </div>
               ) : (
