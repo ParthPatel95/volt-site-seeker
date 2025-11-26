@@ -65,14 +65,6 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="green" />
-          
-          <section aria-label="Investment Thesis" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <InvestmentThesisSection />
-            </Suspense>
-          </section>
-          
           <SectionDivider color="blue" />
           
           {/* Alberta Facility Hub - Operations, Technical, Location */}
@@ -116,6 +108,14 @@ const Landing: React.FC = () => {
           <section aria-label="Fund Growth Plan" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <FundGrowthPlanSection />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="green" />
+          
+          <section aria-label="Investment Thesis" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <InvestmentThesisSection />
             </Suspense>
           </section>
           
