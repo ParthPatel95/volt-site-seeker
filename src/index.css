@@ -396,26 +396,19 @@
     scroll-behavior: smooth;
   }
   
-  /* Better scrollbars on desktop */
-  @media (min-width: 768px) {
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: hsl(var(--muted));
-      border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: hsl(var(--border));
-      border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-      background: hsl(var(--muted-foreground));
-    }
+  /* Hide scrollbars globally but keep scroll functionality */
+  html,
+  body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+    width: 0;
+    height: 0;
   }
 
   /* Hide default page scrollbar while preserving scroll behavior */
