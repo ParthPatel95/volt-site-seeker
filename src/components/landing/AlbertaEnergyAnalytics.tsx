@@ -202,26 +202,23 @@ export const AlbertaEnergyAnalytics = () => {
         />
       </div>
 
-      <Card className="border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm">
-        <CardContent className="py-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-electric-blue/10 rounded-lg flex-shrink-0">
-              <Activity className="w-5 h-5 text-electric-blue" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-white">
-                Live Market Data Integration
-              </p>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Our facility leverages Alberta's deregulated energy market to optimize operations in real-time. 
-                The 95% uptime calculation removes the highest 5% of price spikes, providing a realistic baseline 
-                for operational cost planning. With an average price of ${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh 
-                over the past year, Alberta offers competitive energy rates for high-performance computing workloads.
-              </p>
-            </div>
+      <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-electric-blue/30 transition-all">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-electric-blue/10 rounded-lg flex-shrink-0">
+            <Activity className="w-6 h-6 text-electric-blue" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="space-y-3 flex-1">
+            <h4 className="text-lg font-bold text-white">
+              Live Market Data Integration
+            </h4>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Our facility leverages Alberta's deregulated energy market to optimize operations in real-time. 
+              The 95% uptime calculation removes the highest 5% of price spikes, providing a realistic baseline 
+              for operational cost planning. With an average price of <span className="text-neon-green font-semibold">${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh</span> over the past year, Alberta offers competitive energy rates for high-performance computing workloads.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
