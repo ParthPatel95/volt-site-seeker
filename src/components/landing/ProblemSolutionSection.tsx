@@ -1,133 +1,206 @@
-
-import { AlertTriangle, CheckCircle, Zap, Building, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Zap, ArrowRight, TrendingUp, Building, FileCheck, Globe } from 'lucide-react';
+import { ScrollReveal } from './ScrollAnimations';
 
 export const ProblemSolutionSection = () => {
+  const problems = [
+    {
+      icon: Zap,
+      title: "Power Scarcity",
+      description: "Limited high-capacity sites in competitive markets",
+      gradient: "from-red-500 to-orange-500"
+    },
+    {
+      icon: FileCheck,
+      title: "Regulatory Complexity",
+      description: "Lengthy permitting and entitlement processes",
+      gradient: "from-orange-500 to-red-600"
+    },
+    {
+      icon: TrendingUp,
+      title: "Rising Costs",
+      description: "Increasing acquisition costs in traditional DC markets",
+      gradient: "from-red-600 to-orange-600"
+    }
+  ];
+
+  const solutions = [
+    {
+      icon: Building,
+      title: "Stranded Assets",
+      description: "Identifying underutilized energy infrastructure",
+      gradient: "from-neon-green to-electric-blue"
+    },
+    {
+      icon: Zap,
+      title: "Fast-Track Process",
+      description: "Established relationships and streamlined pathways",
+      gradient: "from-electric-blue to-neon-green"
+    },
+    {
+      icon: Globe,
+      title: "Strategic Markets",
+      description: "Early entry into emerging data center regions",
+      gradient: "from-neon-green to-electric-yellow"
+    }
+  ];
+
   return (
-    <section className="relative z-10 px-4 sm:px-6 pt-20 md:pt-32">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative z-10 px-4 sm:px-6 py-20 md:py-32">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Turning Power Constraints Into 
+        <ScrollReveal direction="fade" className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-electric-blue/10 border border-electric-blue/20 mb-4">
+            <Zap className="w-4 h-4 text-electric-blue" />
+            <span className="text-sm font-medium text-electric-blue">Market Intelligence</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            Turning Power Constraints Into
             <span className="text-electric-yellow"> Profit Opportunities</span>
           </h2>
-          <p className="text-lg md:text-xl text-slate-200 max-w-4xl mx-auto leading-relaxed">
-            The data center industry faces <span className="text-electric-yellow font-semibold">critical bottlenecks</span> in scaling 
-            to meet explosive AI demand. Power constraints are the 
-            <span className="text-neon-green font-semibold"> #1 limiting factor</span> across North America.
+          <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto">
+            Power constraints are the <span className="text-electric-yellow font-semibold">#1 limiting factor</span> for AI infrastructure growth.
+            <br className="hidden sm:block" />
+            WattByte transforms these bottlenecks into <span className="text-neon-green font-semibold">investable assets</span>.
           </p>
-        </div>
-        
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
-          {/* Challenge Side */}
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-2xl p-8 border border-red-500/30">
-              <div className="flex items-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center mr-4">
-                  <AlertTriangle className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white">Industry Challenges</h3>
-                  <p className="text-red-400 font-medium">Data Center Developers Face</p>
-                </div>
-              </div>
+        </ScrollReveal>
 
-              <div className="space-y-4">
-                {[
-                  "Sourcing power-rich, low-cost sites in competitive markets",
-                  "Complex land entitlement & permitting across jurisdictions", 
-                  "Securing favorable power purchase agreements (PPAs)",
-                  "Building critical utility and municipal relationships",
-                  "Rising acquisition costs in traditional DC markets",
-                  "Meeting environmental & sustainability requirements"
-                ].map((challenge, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-red-500/5 transition-colors">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-slate-200 text-sm leading-relaxed">{challenge}</p>
-                  </div>
-                ))}
+        {/* Problem → Solution Flow */}
+        <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-12 mb-16">
+          {/* Problems Column */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-white" />
               </div>
-
-              <div className="mt-6 pt-4 border-t border-red-500/20 flex items-center text-red-400">
-                <Building className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">Critical Infrastructure Bottlenecks</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Solution Side */}
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-neon-green to-electric-blue rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-2xl p-8 border border-neon-green/30">
-              <div className="flex items-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-neon-green to-electric-blue rounded-xl flex items-center justify-center mr-4">
-                  <CheckCircle className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white">WattByte's Solution</h3>
-                  <p className="text-neon-green font-medium">Turning Problems into Profits</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {[
-                  "Identifying stranded/underutilized energy assets across North America",
-                  "Fast-tracking site control through established processes",
-                  "Delivering plug-and-play brownfield assets with clear pathways", 
-                  "Leveraging existing relationships with power providers",
-                  "Strategic land acquisition in emerging DC markets",
-                  "Prioritizing renewable energy sites for ESG compliance"
-                ].map((solution, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-neon-green/5 transition-colors">
-                    <div className="w-2 h-2 bg-neon-green rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-slate-200 text-sm leading-relaxed">{solution}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-neon-green/20 flex items-center text-neon-green">
-                <Zap className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">AI-Powered Infrastructure Intelligence</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Results Section */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-electric-blue/10 via-electric-yellow/20 to-neon-green/10 rounded-2xl blur-xl"></div>
-          <div className="relative bg-slate-900/80 backdrop-blur-sm rounded-2xl p-8 border border-electric-blue/30 text-center">
-            <div className="flex items-center justify-center mb-6">
-              <TrendingUp className="w-8 h-8 text-electric-blue mr-3" />
-              <h3 className="text-3xl font-bold text-white">The Result</h3>
+              <h3 className="text-2xl font-bold text-white">Industry Pain Points</h3>
             </div>
             
-            <p className="text-lg text-slate-200 mb-8 max-w-4xl mx-auto leading-relaxed">
-              By solving these critical industry pain points, WattByte creates{' '}
-              <span className="text-electric-yellow font-bold">significant value</span>{' '}
-              for data center operators and investors seeking exposure to{' '}
-              <span className="text-neon-green font-bold">digital infrastructure growth</span>{' '}
-              without operational complexity.
-            </p>
+            {problems.map((problem, index) => (
+              <ScrollReveal 
+                key={index} 
+                direction="left" 
+                delay={index * 100}
+              >
+                <div className="group relative">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                  <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-xl p-6 border border-red-500/30 hover:border-red-500/50 transition-all duration-300 hover:transform hover:scale-[1.02]">
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 bg-gradient-to-br ${problem.gradient} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                        <problem.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold text-white mb-2">{problem.title}</h4>
+                        <p className="text-slate-300 text-sm leading-relaxed">{problem.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-electric-blue mb-2">675MW+</div>
-                <div className="text-slate-300 font-medium">Deal Experience</div>
+          {/* Center Bridge */}
+          <ScrollReveal direction="fade" delay={200} className="hidden lg:flex flex-col items-center justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-electric-blue via-neon-green to-electric-yellow rounded-full blur-xl opacity-30 animate-pulse"></div>
+              <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-2xl p-8 border border-electric-blue/30">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-2xl flex items-center justify-center">
+                    <Zap className="w-8 h-8 text-white" />
+                  </div>
+                  <ArrowRight className="w-8 h-8 text-electric-blue animate-pulse" />
+                  <div className="text-center">
+                    <div className="text-sm font-bold text-white mb-1">WattByte</div>
+                    <div className="text-xs text-electric-blue font-medium">AI-Powered</div>
+                    <div className="text-xs text-neon-green font-medium">Site Intelligence</div>
+                  </div>
+                  <ArrowRight className="w-8 h-8 text-neon-green animate-pulse" />
+                </div>
               </div>
+            </div>
+          </ScrollReveal>
+
+          {/* Mobile Bridge */}
+          <div className="lg:hidden flex justify-center py-4">
+            <div className="flex items-center gap-3 px-6 py-4 bg-slate-900/90 backdrop-blur-sm rounded-xl border border-electric-blue/30">
+              <Zap className="w-6 h-6 text-electric-blue" />
               <div className="text-center">
-                <div className="text-4xl font-bold text-electric-yellow mb-2">2.0-2.5x</div>
-                <div className="text-slate-300 font-medium">Target MOIC</div>
+                <div className="text-sm font-bold text-white">WattByte Intelligence</div>
+                <div className="text-xs text-neon-green">AI-Powered Solutions</div>
               </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-neon-green mb-2">$25M</div>
-                <div className="text-slate-300 font-medium">Fund I Target</div>
+              <ArrowRight className="w-6 h-6 text-neon-green" />
+            </div>
+          </div>
+
+          {/* Solutions Column */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-gradient-to-br from-neon-green to-electric-blue rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white">Our Solution</h3>
+            </div>
+            
+            {solutions.map((solution, index) => (
+              <ScrollReveal 
+                key={index} 
+                direction="right" 
+                delay={index * 100}
+              >
+                <div className="group relative">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-neon-green to-electric-blue rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                  <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-xl p-6 border border-neon-green/30 hover:border-neon-green/50 transition-all duration-300 hover:transform hover:scale-[1.02]">
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 bg-gradient-to-br ${solution.gradient} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                        <solution.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold text-white mb-2">{solution.title}</h4>
+                        <p className="text-slate-300 text-sm leading-relaxed">{solution.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+
+        {/* Results Banner */}
+        <ScrollReveal direction="up" delay={400}>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-electric-blue/20 via-electric-yellow/20 to-neon-green/20 rounded-2xl blur-xl"></div>
+            <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-2xl p-8 md:p-10 border border-electric-blue/30">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <TrendingUp className="w-7 h-7 text-electric-blue" />
+                <h3 className="text-2xl md:text-3xl font-bold text-white">The Result</h3>
+              </div>
+              
+              <p className="text-base md:text-lg text-slate-200 mb-8 max-w-3xl mx-auto text-center leading-relaxed">
+                By solving critical industry pain points, WattByte creates{' '}
+                <span className="text-electric-yellow font-bold">significant value</span>{' '}
+                for data center operators seeking exposure to{' '}
+                <span className="text-neon-green font-bold">digital infrastructure growth</span>{' '}
+                without operational complexity.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
+                <div className="text-center p-4 rounded-xl bg-slate-800/50 border border-electric-blue/20 hover:border-electric-blue/40 transition-colors">
+                  <div className="text-3xl md:text-4xl font-bold text-electric-blue mb-2">675MW+</div>
+                  <div className="text-sm text-slate-300 font-medium">Deal Experience</div>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-slate-800/50 border border-electric-yellow/20 hover:border-electric-yellow/40 transition-colors">
+                  <div className="text-3xl md:text-4xl font-bold text-electric-yellow mb-2">2.0-2.5x</div>
+                  <div className="text-sm text-slate-300 font-medium">Target MOIC</div>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-slate-800/50 border border-neon-green/20 hover:border-neon-green/40 transition-colors">
+                  <div className="text-3xl md:text-4xl font-bold text-neon-green mb-2">$25M</div>
+                  <div className="text-sm text-slate-300 font-medium">Fund I Target</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );
