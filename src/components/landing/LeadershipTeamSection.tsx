@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Award, Globe, Building } from 'lucide-react';
+import { User, Award, Globe, Building, TrendingUp } from 'lucide-react';
 
 export const LeadershipTeamSection = () => {
   const teamMembers = [
@@ -36,6 +36,17 @@ export const LeadershipTeamSection = () => {
         "Coordinates business relationships, environmental review, and legal frameworks to accelerate site readiness",
         "Proven track record in scaling teams and managing multi-site operations under complex regulatory conditions"
       ]
+    },
+    {
+      name: "Lucas Elliott",
+      role: "CSO",
+      icon: <TrendingUp className="w-6 h-6 text-purple-400" />,
+      achievements: [
+        "Drives strategic expansion across North American and international energy markets, identifying high-growth opportunities in stranded power assets",
+        "Architects partnership frameworks with utilities, independent power producers, and regional grid operators to secure favorable power purchase agreements",
+        "Leads market intelligence and competitive positioning, leveraging AI-driven analytics to optimize site selection and capital deployment timing",
+        "Oversees strategic M&A pipeline development, targeting distressed energy infrastructure and underutilized industrial real estate for value creation"
+      ]
     }
   ];
 
@@ -51,7 +62,7 @@ export const LeadershipTeamSection = () => {
           </p>
         </div>
         
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-4 gap-6">
           {teamMembers.map((member, index) => (
             <Card key={index} className="bg-slate-800/50 border-slate-700 h-full">
               <CardHeader className="pb-4">
