@@ -16,7 +16,7 @@ export const LandingFooter = () => {
           Turning power into profit through intelligent infrastructure investment
         </p>
         <p className="text-slate-400 text-xs">
-          © 2024 WattByte Infrastructure Fund. All rights reserved.
+          © 2024 WattByte Infrastructure Company. All rights reserved.
         </p>
       </div>
     </footer>

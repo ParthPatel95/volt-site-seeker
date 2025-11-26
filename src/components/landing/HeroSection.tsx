@@ -79,7 +79,7 @@ export const HeroSection = () => {
         {/* Enhanced description with better typography */}
         <div className="relative mb-8 sm:mb-10 md:mb-12">
           <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-200 max-w-5xl mx-auto leading-relaxed font-medium px-2 backdrop-blur-sm bg-slate-900/20 rounded-2xl py-6 border border-slate-700/30">
-            Next-generation infrastructure fund acquiring power-rich land across North America 
+            Next-generation infrastructure company acquiring power-rich land across North America 
             for <span className="text-electric-blue font-semibold bg-electric-blue/10 px-2 py-1 rounded">AI</span>, <span className="text-electric-yellow font-semibold bg-electric-yellow/10 px-2 py-1 rounded">HPC</span>, and <span className="text-neon-green font-semibold bg-neon-green/10 px-2 py-1 rounded">crypto data centers</span>, 
             backed by <span className="text-electric-blue font-bold text-2xl md:text-3xl">675MW+</span> of deal experience.
           </p>
