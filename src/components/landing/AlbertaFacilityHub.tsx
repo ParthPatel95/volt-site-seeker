@@ -197,60 +197,68 @@ export const AlbertaFacilityHub = () => {
           </div>
         </div>
 
-        {/* Bento-Style Specifications Grid */}
+        {/* Technical Specifications - Compact Grid */}
         <div className={`mb-20 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h3 className="text-3xl font-bold text-white mb-8 text-center">
             <Building2 className="inline-block w-8 h-8 mr-3 text-electric-blue" />
             Technical Specifications
           </h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {specifications.map((spec, index) => {
-              const isLarge = spec.size === 'large';
-              const isMedium = spec.size === 'medium';
-              
+          {/* Primary specs - larger cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {specifications.slice(0, 4).map((spec, index) => {
               const colorClasses = {
-                'electric-blue': 'text-electric-blue bg-electric-blue/10 border-electric-blue/50',
-                'electric-purple': 'text-electric-purple bg-electric-purple/10 border-electric-purple/50',
-                'neon-green': 'text-neon-green bg-neon-green/10 border-neon-green/50',
-                'electric-yellow': 'text-electric-yellow bg-electric-yellow/10 border-electric-yellow/50',
-                'warm-orange': 'text-warm-orange bg-warm-orange/10 border-warm-orange/50'
+                'electric-blue': 'from-electric-blue/20 to-electric-blue/5 border-electric-blue/30 group-hover:border-electric-blue/60',
+                'electric-purple': 'from-electric-purple/20 to-electric-purple/5 border-electric-purple/30 group-hover:border-electric-purple/60',
+                'neon-green': 'from-neon-green/20 to-neon-green/5 border-neon-green/30 group-hover:border-neon-green/60',
+                'electric-yellow': 'from-electric-yellow/20 to-electric-yellow/5 border-electric-yellow/30 group-hover:border-electric-yellow/60'
               };
               
               return (
                 <div 
                   key={index}
-                  className={`
-                    group relative overflow-hidden rounded-2xl p-6 
-                    bg-gradient-to-br from-slate-800/50 to-slate-900/50 
-                    border border-slate-700/50 
-                    backdrop-blur-sm
-                    transition-all duration-300
-                    hover:scale-105 hover:shadow-xl
-                    ${isLarge ? 'col-span-2 row-span-2' : isMedium ? 'col-span-2' : 'col-span-1'}
-                  `}
-                  style={{ 
-                    animationDelay: `${index * 50}ms`,
-                    ...(colorClasses[spec.color as keyof typeof colorClasses] && {
-                      '--hover-color': `var(--watt-${spec.color === 'electric-blue' ? 'primary' : spec.color === 'neon-green' ? 'success' : spec.color === 'electric-yellow' ? 'accent' : 'warning'})`
-                    })
-                  }}
+                  className={`group relative overflow-hidden rounded-xl p-5 bg-gradient-to-br ${colorClasses[spec.color as keyof typeof colorClasses]} border backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-${spec.color}/20`}
                 >
-                  {/* Background gradient effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-current opacity-0 group-hover:opacity-5 transition-opacity duration-300" style={{ color: `hsl(var(--watt-${spec.color === 'electric-blue' ? 'primary' : spec.color === 'neon-green' ? 'success' : spec.color === 'electric-yellow' ? 'accent' : 'warning'}))` }} />
-                  
-                  <div className="relative z-10">
-                    <div className={`inline-flex items-center justify-center p-3 rounded-xl mb-4 ${colorClasses[spec.color as keyof typeof colorClasses]?.split(' ')[1]}`}>
-                      <spec.icon className={`${colorClasses[spec.color as keyof typeof colorClasses]?.split(' ')[0]} ${isLarge ? 'w-10 h-10' : 'w-6 h-6'}`} />
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-lg bg-slate-950/40`}>
+                      <spec.icon className={`w-5 h-5 text-${spec.color}`} />
                     </div>
-                    
-                    <div className={`${isLarge ? 'text-5xl' : isMedium ? 'text-3xl' : 'text-2xl'} font-bold text-white mb-2`}>
-                      {spec.value}
-                      <span className={`${isLarge ? 'text-2xl' : 'text-xl'} text-slate-400 ml-2`}>{spec.unit}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-slate-400 mb-1">{spec.label}</div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-bold text-white">{spec.value}</span>
+                        <span className="text-base text-slate-400 font-medium">{spec.unit}</span>
+                      </div>
                     </div>
-                    
-                    <div className={`${isMedium || isLarge ? 'text-base' : 'text-sm'} text-slate-300 font-medium`}>
-                      {spec.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Secondary specs - compact row */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {specifications.slice(4).map((spec, index) => {
+              const colorClasses = {
+                'neon-green': 'border-neon-green/30 hover:border-neon-green/60 hover:bg-neon-green/5',
+                'electric-yellow': 'border-electric-yellow/30 hover:border-electric-yellow/60 hover:bg-electric-yellow/5',
+                'warm-orange': 'border-warm-orange/30 hover:border-warm-orange/60 hover:bg-warm-orange/5',
+                'electric-blue': 'border-electric-blue/30 hover:border-electric-blue/60 hover:bg-electric-blue/5'
+              };
+              
+              return (
+                <div 
+                  key={index}
+                  className={`group relative overflow-hidden rounded-lg p-4 bg-slate-900/30 border ${colorClasses[spec.color as keyof typeof colorClasses]} backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5`}
+                >
+                  <div className="flex items-center gap-3">
+                    <spec.icon className={`w-4 h-4 text-${spec.color} flex-shrink-0`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-slate-500 mb-0.5">{spec.label}</div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-white">{spec.value}</span>
+                        <span className="text-xs text-slate-400">{spec.unit}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
