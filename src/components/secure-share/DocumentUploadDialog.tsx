@@ -19,106 +19,105 @@ interface DocumentUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  currentFolderId?: string | null;
 }
 
 export function DocumentUploadDialog({
   open,
   onOpenChange,
   onSuccess,
+  currentFolderId = null,
 }: DocumentUploadDialogProps) {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadMode, setUploadMode] = useState<'single' | 'folder'>('single');
   const [uploading, setUploading] = useState(false);
   const [category, setCategory] = useState('other');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      const validTypes = [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      ];
-      
-      if (!validTypes.includes(selectedFile.type)) {
-        toast({
-          title: 'Invalid file type',
-          description: 'Please upload PDF, DOCX, XLSX, or PPTX files only',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      setFile(selectedFile);
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) return;
+
+    const validTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+
+    const invalidFiles = selectedFiles.filter(f => !validTypes.includes(f.type));
+    if (invalidFiles.length > 0) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload PDF, DOCX, XLSX, or PPTX files only',
+        variant: 'destructive',
+      });
+      return;
     }
+
+    setFiles(selectedFiles);
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
 
     setUploading(true);
+    setUploadProgress({ current: 0, total: files.length });
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      console.log('Starting upload for user:', user.id);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadProgress({ current: i + 1, total: files.length });
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
-      console.log('Uploading to storage:', fileName);
-      const { error: uploadError } = await supabase.storage
-        .from('secure-documents')
-        .upload(fileName, file);
+        const { error: uploadError } = await supabase.storage
+          .from('secure-documents')
+          .upload(fileName, file);
 
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('secure-documents')
+          .getPublicUrl(fileName);
+
+        const insertData: any = {
+          created_by: user.id,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+          file_url: publicUrl,
+          storage_path: fileName,
+          category,
+          description: description || null,
+          tags: tags ? tags.split(',').map(t => t.trim()) : [],
+          folder_id: currentFolderId,
+        };
+
+        const { error: dbError } = await supabase
+          .from('secure_documents')
+          .insert([insertData]);
+
+        if (dbError) throw dbError;
       }
-
-      console.log('Storage upload successful');
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('secure-documents')
-        .getPublicUrl(fileName);
-
-      const insertData: any = {
-        created_by: user.id,
-        file_name: file.name,
-        file_size: file.size,
-        file_type: file.type,
-        file_url: publicUrl,
-        storage_path: fileName,
-        category,
-        description: description || null,
-        tags: tags ? tags.split(',').map(t => t.trim()) : [],
-      };
-
-      console.log('Inserting document record:', insertData);
-      const { data: insertResult, error: dbError } = await supabase
-        .from('secure_documents')
-        .insert([insertData])
-        .select();
-
-      if (dbError) {
-        console.error('Database insert error:', dbError);
-        throw dbError;
-      }
-
-      console.log('Insert successful:', insertResult);
 
       toast({
-        title: 'Document uploaded',
-        description: 'Your document has been uploaded successfully',
+        title: files.length > 1 ? 'Documents uploaded' : 'Document uploaded',
+        description: `Successfully uploaded ${files.length} document${files.length > 1 ? 's' : ''}`,
       });
 
-      setFile(null);
+      setFiles([]);
       setDescription('');
       setTags('');
       setCategory('other');
+      setUploadProgress(null);
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
@@ -129,6 +128,7 @@ export function DocumentUploadDialog({
       });
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -136,10 +136,38 @@ export function DocumentUploadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upload Secure Document</DialogTitle>
+          <DialogTitle>Upload Secure Document{uploadMode === 'folder' ? 's' : ''}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Upload Mode Toggle */}
+          <div className="flex gap-2 p-1 bg-muted rounded-lg">
+            <Button
+              type="button"
+              variant={uploadMode === 'single' ? 'default' : 'ghost'}
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                setUploadMode('single');
+                setFiles([]);
+              }}
+            >
+              Single File
+            </Button>
+            <Button
+              type="button"
+              variant={uploadMode === 'folder' ? 'default' : 'ghost'}
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                setUploadMode('folder');
+                setFiles([]);
+              }}
+            >
+              Upload Folder
+            </Button>
+          </div>
+
           <div>
             <Label>File Upload</Label>
             <div className="mt-2 flex items-center gap-4">
@@ -148,21 +176,45 @@ export function DocumentUploadDialog({
                 onChange={handleFileChange}
                 accept=".pdf,.docx,.xlsx,.pptx"
                 className="flex-1"
+                multiple={uploadMode === 'folder'}
+                {...(uploadMode === 'folder' ? { webkitdirectory: '', directory: '' } : {})}
               />
-              {file && (
+              {files.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setFile(null)}
+                  onClick={() => setFiles([])}
                 >
                   <X className="w-4 h-4" />
                 </Button>
               )}
             </div>
-            {file && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-              </p>
+            {files.length > 0 && (
+              <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                <p className="font-medium">{files.length} file{files.length > 1 ? 's' : ''} selected</p>
+                {files.slice(0, 3).map((f, i) => (
+                  <p key={i} className="text-xs truncate">
+                    • {f.name} ({(f.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                ))}
+                {files.length > 3 && (
+                  <p className="text-xs">...and {files.length - 3} more</p>
+                )}
+              </div>
+            )}
+            {uploadProgress && (
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Uploading...</span>
+                  <span>{uploadProgress.current} / {uploadProgress.total}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-watt-primary transition-all"
+                    style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
             )}
           </div>
 
@@ -215,10 +267,14 @@ export function DocumentUploadDialog({
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={!file || uploading}
+              disabled={files.length === 0 || uploading}
             >
               <Upload className="w-4 h-4 mr-2" />
-              {uploading ? 'Uploading...' : 'Upload Document'}
+              {uploading
+                ? `Uploading... (${uploadProgress?.current}/${uploadProgress?.total})`
+                : files.length > 1
+                ? `Upload ${files.length} Documents`
+                : 'Upload Document'}
             </Button>
           </div>
         </div>

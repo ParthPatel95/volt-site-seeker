@@ -4204,6 +4204,7 @@ export type Database = {
           file_size: number
           file_type: string
           file_url: string
+          folder_id: string | null
           id: string
           is_active: boolean | null
           page_count: number | null
@@ -4223,6 +4224,7 @@ export type Database = {
           file_size: number
           file_type: string
           file_url: string
+          folder_id?: string | null
           id?: string
           is_active?: boolean | null
           page_count?: number | null
@@ -4242,6 +4244,7 @@ export type Database = {
           file_size?: number
           file_type?: string
           file_url?: string
+          folder_id?: string | null
           id?: string
           is_active?: boolean | null
           page_count?: number | null
@@ -4251,7 +4254,59 @@ export type Database = {
           thumbnail_url?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "secure_documents_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "secure_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secure_folders: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_folder_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_folder_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_folder_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secure_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "secure_folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       secure_links: {
         Row: {
