@@ -59,6 +59,14 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
+          <section aria-label="Problem and Solution" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <ProblemSolutionSection />
+            </Suspense>
+          </section>
+          
+          <SectionDivider color="green" />
+          
           {/* Alberta Facility Hub - Operations, Technical, Location */}
           <section aria-label="Facility Overview Hub" className="relative">
             <Suspense fallback={<SectionLoader />}>
@@ -80,14 +88,6 @@ const Landing: React.FC = () => {
           <LiveDataSection />
           
           <SectionDivider color="blue" />
-          
-          <section aria-label="Problem and Solution" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <ProblemSolutionSection />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="green" />
           
           <section aria-label="Market Opportunity" className="relative">
             <Suspense fallback={<SectionLoader />}>
