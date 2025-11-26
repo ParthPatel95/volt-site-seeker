@@ -5,31 +5,100 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import facilityNight from '@/assets/alberta-facility-night.png';
 import facilityAerial1 from '@/assets/alberta-facility-aerial-1.jpg';
 import facilityAerial2 from '@/assets/alberta-facility-aerial-2.jpg';
-
-const facilityImages = [
-  { src: facilityNight, alt: 'Alberta Facility Night View', caption: 'World-Class Infrastructure', description: '135 MW operational facility in Alberta, Canada' },
-  { src: facilityAerial1, alt: 'Alberta Facility Aerial View 1', caption: 'Direct Grid Connection', description: '26 acres with direct AESO grid connectivity' },
-  { src: facilityAerial2, alt: 'Alberta Facility Aerial View 2', caption: 'Enterprise Scale', description: '20,000 sq ft data center with 99.99% uptime' }
-];
-
-const specifications = [
-  { icon: Zap, label: 'Power Capacity', value: '135', unit: 'MW', color: 'electric-blue', size: 'large' },
-  { icon: Building2, label: 'Facility Size', value: '26', unit: 'Acres', color: 'electric-blue', size: 'medium' },
-  { icon: Thermometer, label: 'Warehouse Space', value: '20,000', unit: 'sq ft', color: 'electric-purple', size: 'medium' },
-  { icon: Network, label: 'Grid Connection', value: 'Direct', unit: 'AESO', color: 'neon-green', size: 'medium' },
-  { icon: Clock, label: 'Uptime SLA', value: '99.99', unit: '%', color: 'neon-green', size: 'small' },
-  { icon: Leaf, label: 'Cooling', value: 'Air', unit: 'Cooled', color: 'electric-yellow', size: 'small' },
-  { icon: Shield, label: 'Security', value: '24/7', unit: '365', color: 'warm-orange', size: 'small' },
-  { icon: MapPin, label: 'Location', value: 'Alberta', unit: 'CA', color: 'electric-blue', size: 'small' }
-];
-
-const locationBenefits = [
-  { icon: DollarSign, title: 'Competitive Energy Pricing', description: 'Deregulated market with wholesale rates', color: 'neon-green' },
-  { icon: Snowflake, title: 'Cold Climate Advantage', description: 'Natural cooling reduces operational costs', color: 'electric-blue' },
-  { icon: Cable, title: 'Fiber Connectivity', description: 'Trans-continental fiber route access', color: 'electric-purple' },
-  { icon: Globe, title: 'Political Stability', description: 'Canadian jurisdiction with strong rule of law', color: 'electric-yellow' }
-];
-
+const facilityImages = [{
+  src: facilityNight,
+  alt: 'Alberta Facility Night View',
+  caption: 'World-Class Infrastructure',
+  description: '135 MW operational facility in Alberta, Canada'
+}, {
+  src: facilityAerial1,
+  alt: 'Alberta Facility Aerial View 1',
+  caption: 'Direct Grid Connection',
+  description: '26 acres with direct AESO grid connectivity'
+}, {
+  src: facilityAerial2,
+  alt: 'Alberta Facility Aerial View 2',
+  caption: 'Enterprise Scale',
+  description: '20,000 sq ft data center with 99.99% uptime'
+}];
+const specifications = [{
+  icon: Zap,
+  label: 'Power Capacity',
+  value: '135',
+  unit: 'MW',
+  color: 'electric-blue',
+  size: 'large'
+}, {
+  icon: Building2,
+  label: 'Facility Size',
+  value: '26',
+  unit: 'Acres',
+  color: 'electric-blue',
+  size: 'medium'
+}, {
+  icon: Thermometer,
+  label: 'Warehouse Space',
+  value: '20,000',
+  unit: 'sq ft',
+  color: 'electric-purple',
+  size: 'medium'
+}, {
+  icon: Network,
+  label: 'Grid Connection',
+  value: 'Direct',
+  unit: 'AESO',
+  color: 'neon-green',
+  size: 'medium'
+}, {
+  icon: Clock,
+  label: 'Uptime SLA',
+  value: '99.99',
+  unit: '%',
+  color: 'neon-green',
+  size: 'small'
+}, {
+  icon: Leaf,
+  label: 'Cooling',
+  value: 'Air',
+  unit: 'Cooled',
+  color: 'electric-yellow',
+  size: 'small'
+}, {
+  icon: Shield,
+  label: 'Security',
+  value: '24/7',
+  unit: '365',
+  color: 'warm-orange',
+  size: 'small'
+}, {
+  icon: MapPin,
+  label: 'Location',
+  value: 'Alberta',
+  unit: 'CA',
+  color: 'electric-blue',
+  size: 'small'
+}];
+const locationBenefits = [{
+  icon: DollarSign,
+  title: 'Competitive Energy Pricing',
+  description: 'Deregulated market with wholesale rates',
+  color: 'neon-green'
+}, {
+  icon: Snowflake,
+  title: 'Cold Climate Advantage',
+  description: 'Natural cooling reduces operational costs',
+  color: 'electric-blue'
+}, {
+  icon: Cable,
+  title: 'Fiber Connectivity',
+  description: 'Trans-continental fiber route access',
+  color: 'electric-purple'
+}, {
+  icon: Globe,
+  title: 'Political Stability',
+  description: 'Canadian jurisdiction with strong rule of law',
+  color: 'electric-yellow'
+}];
 export const AlbertaFacilityHub = () => {
   const [currentHeroImage, setCurrentHeroImage] = useState(0);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
@@ -39,35 +108,29 @@ export const AlbertaFacilityHub = () => {
   // Auto-rotate hero images
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentHeroImage((prev) => (prev + 1) % facilityImages.length);
+      setCurrentHeroImage(prev => (prev + 1) % facilityImages.length);
     }, 6000);
     return () => clearInterval(interval);
   }, []);
 
   // Intersection observer for scroll animations
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+      }
+    }, {
+      threshold: 0.1
+    });
     if (sectionRef.current) {
       observer.observe(sectionRef.current);
     }
-
     return () => observer.disconnect();
   }, []);
-
   const handleImageClick = (index: number) => {
     setSelectedImage(index);
   };
-
-  return (
-    <section ref={sectionRef} className="relative pt-20 md:pt-32 pb-8 md:pb-12 overflow-hidden">
+  return <section ref={sectionRef} className="relative pt-20 md:pt-32 pb-8 md:pb-12 overflow-hidden">
       {/* Gradient mesh background */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 opacity-90" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.1),transparent_50%)]" />
@@ -90,81 +153,15 @@ export const AlbertaFacilityHub = () => {
 
         {/* Cinematic Hero Section */}
         <div className={`relative mb-20 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-          <div className="relative aspect-[21/9] rounded-3xl overflow-hidden group">
-            {/* Hero images with crossfade */}
-            {facilityImages.map((image, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 transition-opacity duration-1000 ${
-                  index === currentHeroImage ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                <img 
-                  src={image.src} 
-                  alt={image.alt}
-                  className="w-full h-full object-cover animate-ken-burns"
-                />
-              </div>
-            ))}
-            
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-            
-            {/* Floating key stats */}
-            <div className="absolute bottom-8 left-0 right-0 px-8">
-              <div className="max-w-7xl mx-auto">
-                <div className="flex flex-wrap gap-6 justify-center sm:justify-start mb-6">
-                  <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4">
-                    <div className="text-3xl font-bold text-white mb-1">135 MW</div>
-                    <div className="text-sm text-slate-300">Power Capacity</div>
-                  </div>
-                  <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4">
-                    <div className="text-3xl font-bold text-white mb-1">26 Acres</div>
-                    <div className="text-sm text-slate-300">Facility Size</div>
-                  </div>
-                  <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4">
-                    <div className="text-3xl font-bold text-neon-green mb-1">99.99%</div>
-                    <div className="text-sm text-slate-300">Uptime SLA</div>
-                  </div>
-                  <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4">
-                    <div className="text-3xl font-bold text-electric-blue mb-1">Direct</div>
-                    <div className="text-sm text-slate-300">AESO Grid</div>
-                  </div>
-                </div>
-                
-                {/* Dot indicators */}
-                <div className="flex gap-2 justify-center sm:justify-start">
-                  {facilityImages.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentHeroImage(index)}
-                      className={`h-1 rounded-full transition-all ${
-                        index === currentHeroImage
-                          ? 'bg-electric-blue w-8'
-                          : 'bg-white/30 w-6 hover:bg-white/50'
-                      }`}
-                      aria-label={`View image ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          
         </div>
 
         {/* Interactive Image Gallery */}
         <div className={`mb-20 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Large featured image */}
-            <div 
-              className="md:col-span-2 relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer group"
-              onClick={() => handleImageClick(0)}
-            >
-              <img 
-                src={facilityImages[0].src} 
-                alt={facilityImages[0].alt}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
+            <div className="md:col-span-2 relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer group" onClick={() => handleImageClick(0)}>
+              <img src={facilityImages[0].src} alt={facilityImages[0].alt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                 <h4 className="text-xl font-bold text-white mb-1">{facilityImages[0].caption}</h4>
@@ -175,24 +172,14 @@ export const AlbertaFacilityHub = () => {
 
             {/* Vertical stack of smaller images */}
             <div className="flex flex-col gap-4">
-              {facilityImages.slice(1).map((image, index) => (
-                <div 
-                  key={index + 1}
-                  className="relative aspect-video rounded-2xl overflow-hidden cursor-pointer group"
-                  onClick={() => handleImageClick(index + 1)}
-                >
-                  <img 
-                    src={image.src} 
-                    alt={image.alt}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
+              {facilityImages.slice(1).map((image, index) => <div key={index + 1} className="relative aspect-video rounded-2xl overflow-hidden cursor-pointer group" onClick={() => handleImageClick(index + 1)}>
+                  <img src={image.src} alt={image.alt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                     <h5 className="text-sm font-bold text-white">{image.caption}</h5>
                   </div>
                   <div className="absolute inset-0 border-2 border-transparent group-hover:border-electric-blue/50 rounded-2xl transition-colors duration-300" />
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </div>
@@ -207,18 +194,13 @@ export const AlbertaFacilityHub = () => {
           {/* Primary specs - larger cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {specifications.slice(0, 4).map((spec, index) => {
-              const colorClasses = {
-                'electric-blue': 'from-electric-blue/20 to-electric-blue/5 border-electric-blue/30 group-hover:border-electric-blue/60',
-                'electric-purple': 'from-electric-purple/20 to-electric-purple/5 border-electric-purple/30 group-hover:border-electric-purple/60',
-                'neon-green': 'from-neon-green/20 to-neon-green/5 border-neon-green/30 group-hover:border-neon-green/60',
-                'electric-yellow': 'from-electric-yellow/20 to-electric-yellow/5 border-electric-yellow/30 group-hover:border-electric-yellow/60'
-              };
-              
-              return (
-                <div 
-                  key={index}
-                  className={`group relative overflow-hidden rounded-xl p-5 bg-gradient-to-br ${colorClasses[spec.color as keyof typeof colorClasses]} border backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-${spec.color}/20`}
-                >
+            const colorClasses = {
+              'electric-blue': 'from-electric-blue/20 to-electric-blue/5 border-electric-blue/30 group-hover:border-electric-blue/60',
+              'electric-purple': 'from-electric-purple/20 to-electric-purple/5 border-electric-purple/30 group-hover:border-electric-purple/60',
+              'neon-green': 'from-neon-green/20 to-neon-green/5 border-neon-green/30 group-hover:border-neon-green/60',
+              'electric-yellow': 'from-electric-yellow/20 to-electric-yellow/5 border-electric-yellow/30 group-hover:border-electric-yellow/60'
+            };
+            return <div key={index} className={`group relative overflow-hidden rounded-xl p-5 bg-gradient-to-br ${colorClasses[spec.color as keyof typeof colorClasses]} border backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-${spec.color}/20`}>
                   <div className="flex items-start gap-3">
                     <div className={`p-2.5 rounded-lg bg-slate-950/40`}>
                       <spec.icon className={`w-5 h-5 text-${spec.color}`} />
@@ -231,26 +213,20 @@ export const AlbertaFacilityHub = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </div>
           
           {/* Secondary specs - compact row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {specifications.slice(4).map((spec, index) => {
-              const colorClasses = {
-                'neon-green': 'border-neon-green/30 hover:border-neon-green/60 hover:bg-neon-green/5',
-                'electric-yellow': 'border-electric-yellow/30 hover:border-electric-yellow/60 hover:bg-electric-yellow/5',
-                'warm-orange': 'border-warm-orange/30 hover:border-warm-orange/60 hover:bg-warm-orange/5',
-                'electric-blue': 'border-electric-blue/30 hover:border-electric-blue/60 hover:bg-electric-blue/5'
-              };
-              
-              return (
-                <div 
-                  key={index}
-                  className={`group relative overflow-hidden rounded-lg p-4 bg-slate-900/30 border ${colorClasses[spec.color as keyof typeof colorClasses]} backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5`}
-                >
+            const colorClasses = {
+              'neon-green': 'border-neon-green/30 hover:border-neon-green/60 hover:bg-neon-green/5',
+              'electric-yellow': 'border-electric-yellow/30 hover:border-electric-yellow/60 hover:bg-electric-yellow/5',
+              'warm-orange': 'border-warm-orange/30 hover:border-warm-orange/60 hover:bg-warm-orange/5',
+              'electric-blue': 'border-electric-blue/30 hover:border-electric-blue/60 hover:bg-electric-blue/5'
+            };
+            return <div key={index} className={`group relative overflow-hidden rounded-lg p-4 bg-slate-900/30 border ${colorClasses[spec.color as keyof typeof colorClasses]} backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5`}>
                   <div className="flex items-center gap-3">
                     <spec.icon className={`w-4 h-4 text-${spec.color} flex-shrink-0`} />
                     <div className="flex-1 min-w-0">
@@ -261,9 +237,8 @@ export const AlbertaFacilityHub = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </div>
         </div>
 
@@ -276,17 +251,13 @@ export const AlbertaFacilityHub = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {locationBenefits.map((benefit, index) => {
-              const colorClasses = {
-                'neon-green': 'text-neon-green bg-neon-green/10 hover:border-neon-green/50',
-                'electric-blue': 'text-electric-blue bg-electric-blue/10 hover:border-electric-blue/50',
-                'electric-purple': 'text-electric-purple bg-electric-purple/10 hover:border-electric-purple/50',
-                'electric-yellow': 'text-electric-yellow bg-electric-yellow/10 hover:border-electric-yellow/50'
-              };
-              
-              return (
-                <div 
-                  key={index}
-                  className={`
+            const colorClasses = {
+              'neon-green': 'text-neon-green bg-neon-green/10 hover:border-neon-green/50',
+              'electric-blue': 'text-electric-blue bg-electric-blue/10 hover:border-electric-blue/50',
+              'electric-purple': 'text-electric-purple bg-electric-purple/10 hover:border-electric-purple/50',
+              'electric-yellow': 'text-electric-yellow bg-electric-yellow/10 hover:border-electric-yellow/50'
+            };
+            return <div key={index} className={`
                     group relative p-6 rounded-2xl 
                     bg-gradient-to-br from-slate-800/50 to-slate-900/50
                     border border-slate-700/50
@@ -294,18 +265,17 @@ export const AlbertaFacilityHub = () => {
                     backdrop-blur-sm
                     transition-all duration-300
                     hover:-translate-y-2 hover:shadow-xl
-                  `}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
+                  `} style={{
+              animationDelay: `${index * 100}ms`
+            }}>
                   <div className={`inline-flex items-center justify-center p-3 rounded-xl mb-4 ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[1]}`}>
                     <benefit.icon className={`w-6 h-6 ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[0]}`} />
                   </div>
                   
                   <h4 className="text-lg font-bold text-white mb-2">{benefit.title}</h4>
                   <p className="text-sm text-slate-400 leading-relaxed">{benefit.description}</p>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </div>
         </div>
 
@@ -318,19 +288,11 @@ export const AlbertaFacilityHub = () => {
       {/* Lightbox Modal */}
       <Dialog open={selectedImage !== null} onOpenChange={() => setSelectedImage(null)}>
         <DialogContent className="max-w-6xl p-0 bg-transparent border-none">
-          {selectedImage !== null && (
-            <div className="relative">
-              <button
-                onClick={() => setSelectedImage(null)}
-                className="absolute -top-12 right-0 p-2 rounded-full bg-slate-900/80 backdrop-blur-sm text-white hover:bg-slate-800 transition-colors z-50"
-              >
+          {selectedImage !== null && <div className="relative">
+              <button onClick={() => setSelectedImage(null)} className="absolute -top-12 right-0 p-2 rounded-full bg-slate-900/80 backdrop-blur-sm text-white hover:bg-slate-800 transition-colors z-50">
                 <X className="w-6 h-6" />
               </button>
-              <img 
-                src={facilityImages[selectedImage].src} 
-                alt={facilityImages[selectedImage].alt}
-                className="w-full h-auto rounded-xl"
-              />
+              <img src={facilityImages[selectedImage].src} alt={facilityImages[selectedImage].alt} className="w-full h-auto rounded-xl" />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 to-transparent p-8 rounded-b-xl">
                 <h3 className="text-2xl font-bold text-white mb-2">
                   {facilityImages[selectedImage].caption}
@@ -339,10 +301,8 @@ export const AlbertaFacilityHub = () => {
                   {facilityImages[selectedImage].description}
                 </p>
               </div>
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
-    </section>
-  );
+    </section>;
 };
