@@ -67,7 +67,7 @@ export const AlbertaFacilityHub = () => {
   };
 
   return (
-    <section ref={sectionRef} className="relative py-20 md:py-32 overflow-hidden">
+    <section ref={sectionRef} className="relative pt-20 md:pt-32 pb-8 md:pb-12 overflow-hidden">
       {/* Gradient mesh background */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 opacity-90" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.1),transparent_50%)]" />
