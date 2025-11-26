@@ -18,7 +18,6 @@ const LeadershipTeamSection = lazy(() => import('@/components/landing/Leadership
 const FundGrowthPlanSection = lazy(() => import('@/components/landing/FundGrowthPlanSection').then(module => ({ default: module.FundGrowthPlanSection })));
 const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(module => ({ default: module.InvestmentThesisSection })));
 const VoltScoutSection = lazy(() => import('@/components/landing/VoltScoutSection').then(module => ({ default: module.VoltScoutSection })));
-const LPPortalSection = lazy(() => import('@/components/landing/LPPortalSection').then(module => ({ default: module.LPPortalSection })));
 
 // New Alberta facility sections
 const AlbertaFacilityShowcase = lazy(() => import('@/components/landing/AlbertaFacilityShowcase').then(module => ({ default: module.AlbertaFacilityShowcase })));
@@ -132,14 +131,6 @@ const Landing: React.FC = () => {
           <section aria-label="VoltScout Platform" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <VoltScoutSection />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="yellow" />
-          
-          <section aria-label="LP Portal" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <LPPortalSection />
             </Suspense>
           </section>
           
