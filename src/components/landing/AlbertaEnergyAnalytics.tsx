@@ -107,30 +107,30 @@ export const AlbertaEnergyAnalytics = () => {
     unit: string;
     subtitle?: string;
   }) => (
-    <Card className="border-slate-700/50 bg-slate-800/30 backdrop-blur-sm hover:border-electric-blue/50 transition-all hover:shadow-lg hover:shadow-electric-blue/10">
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm hover:border-electric-blue/50 transition-all hover:shadow-lg hover:shadow-electric-blue/10">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-electric-blue/10 rounded-lg">
             <Icon className="w-4 h-4 text-electric-blue" />
           </div>
-          <CardTitle className="text-sm text-slate-300">{title}</CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         {analytics.loading ? (
-          <div className="h-8 bg-slate-700/30 animate-pulse rounded"></div>
+          <div className="h-8 bg-muted/30 animate-pulse rounded"></div>
         ) : analytics.error ? (
-          <p className="text-sm text-red-400">Error</p>
+          <p className="text-sm text-destructive">Error</p>
         ) : (
           <div className="space-y-1">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-bold text-white">
+              <span className="text-2xl sm:text-3xl font-bold text-foreground">
                 {value !== null ? value.toFixed(2) : '—'}
               </span>
-              <span className="text-sm text-slate-400">{unit}</span>
+              <span className="text-sm text-muted-foreground">{unit}</span>
             </div>
             {subtitle && (
-              <p className="text-xs text-slate-500">{subtitle}</p>
+              <p className="text-xs text-muted-foreground/80">{subtitle}</p>
             )}
           </div>
         )}
@@ -143,7 +143,7 @@ export const AlbertaEnergyAnalytics = () => {
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
           <Activity className="w-5 h-5 text-electric-blue" />
-          <h3 className="text-xl sm:text-2xl font-bold text-white">
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground">
             Alberta Energy Market Analytics
           </h3>
         </div>
@@ -151,19 +151,19 @@ export const AlbertaEnergyAnalytics = () => {
           <Badge variant="outline" className="bg-electric-blue/10 text-electric-blue border-electric-blue/30">
             Past 12 Months
           </Badge>
-          <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
+          <Badge variant="outline" className="bg-neon-green/10 text-neon-green border-neon-green/30">
             95% Uptime Filter
           </Badge>
         </div>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted-foreground">
           Real-time data from Alberta Electric System Operator (AESO)
         </p>
       </div>
 
       {analytics.error && (
-        <Card className="border-red-500/30 bg-red-950/20">
+        <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="py-4">
-            <p className="text-sm text-red-400 text-center">{analytics.error}</p>
+            <p className="text-sm text-destructive text-center">{analytics.error}</p>
           </CardContent>
         </Card>
       )}
@@ -202,17 +202,17 @@ export const AlbertaEnergyAnalytics = () => {
         />
       </div>
 
-      <Card className="border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardContent className="py-4">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-electric-blue/10 rounded-lg flex-shrink-0">
               <Activity className="w-5 h-5 text-electric-blue" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-semibold text-foreground">
                 Live Market Data Integration
               </p>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Our facility leverages Alberta's deregulated energy market to optimize operations in real-time. 
                 The 95% uptime calculation removes the highest 5% of price spikes, providing a realistic baseline 
                 for operational cost planning. With an average price of ${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh 
