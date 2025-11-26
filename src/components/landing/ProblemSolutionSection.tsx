@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle, Zap, ArrowRight, TrendingUp, Building, FileCheck, Globe } from 'lucide-react';
 import { ScrollReveal } from './ScrollAnimations';
+import { EnhancedLogo } from '../EnhancedLogo';
 
 export const ProblemSolutionSection = () => {
   const problems = [
@@ -105,8 +106,8 @@ export const ProblemSolutionSection = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-electric-blue via-neon-green to-electric-yellow rounded-full blur-xl opacity-30 animate-pulse"></div>
               <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-2xl p-8 border border-electric-blue/30">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-2xl flex items-center justify-center">
-                    <Zap className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-electric-blue to-neon-green rounded-2xl flex items-center justify-center p-2">
+                    <EnhancedLogo className="w-full h-full object-contain" />
                   </div>
                   <ArrowRight className="w-8 h-8 text-electric-blue animate-pulse" />
                   <div className="text-center">
