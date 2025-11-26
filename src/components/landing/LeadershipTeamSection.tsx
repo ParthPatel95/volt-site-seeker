@@ -42,10 +42,10 @@ export const LeadershipTeamSection = () => {
       role: "CSO",
       icon: <TrendingUp className="w-6 h-6 text-purple-400" />,
       achievements: [
-        "Drives strategic expansion across North American and international energy markets, identifying high-growth opportunities in stranded power assets",
-        "Architects partnership frameworks with utilities, independent power producers, and regional grid operators to secure favorable power purchase agreements",
-        "Leads market intelligence and competitive positioning, leveraging AI-driven analytics to optimize site selection and capital deployment timing",
-        "Oversees strategic M&A pipeline development, targeting distressed energy infrastructure and underutilized industrial real estate for value creation"
+        "Drives strategic expansion across North American and international energy markets, identifying high-growth opportunities in stranded power",
+        "Architects partnership frameworks with utilities and IPPs to secure favorable power purchase agreements",
+        "Leads market intelligence and competitive positioning using AI-driven analytics for optimal site selection",
+        "Oversees strategic M&A pipeline, targeting distressed energy infrastructure and underutilized industrial real estate"
       ]
     }
   ];
