@@ -17,7 +17,7 @@ export const LandingNavigation = () => {
             <Bitcoin className="inline w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 -mx-0.5 flex-shrink-0" style={{ color: '#f7af14' }} />
             <span className="truncate">yte</span>
           </h1>
-          <p className="text-xs sm:text-sm truncate" style={{ color: '#00ff88' }}>Infrastructure Fund</p>
+          <p className="text-xs sm:text-sm truncate" style={{ color: '#00ff88' }}>Infrastructure Company</p>
         </div>
       </div>
       
