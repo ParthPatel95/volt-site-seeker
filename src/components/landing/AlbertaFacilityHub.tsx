@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Building2, Thermometer, Clock, Network, MapPin, DollarSign, Snowflake, Cable, Globe, Zap, Leaf, Shield, X } from 'lucide-react';
-import { AlbertaEnergyAnalytics } from './AlbertaEnergyAnalytics';
+import { Building2, Thermometer, Clock, Network, Zap, Leaf, Shield, MapPin, X } from 'lucide-react';
+import { StrategicMarketAnalytics } from './StrategicMarketAnalytics';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import facilityNight from '@/assets/alberta-facility-night.png';
 import facilityAerial1 from '@/assets/alberta-facility-aerial-1.jpg';
@@ -77,27 +77,6 @@ const specifications = [{
   unit: 'CA',
   color: 'electric-blue',
   size: 'small'
-}];
-const locationBenefits = [{
-  icon: DollarSign,
-  title: 'Competitive Energy Pricing',
-  description: 'Deregulated market with wholesale rates',
-  color: 'neon-green'
-}, {
-  icon: Snowflake,
-  title: 'Cold Climate Advantage',
-  description: 'Natural cooling reduces operational costs',
-  color: 'electric-blue'
-}, {
-  icon: Cable,
-  title: 'Fiber Connectivity',
-  description: 'Trans-continental fiber route access',
-  color: 'electric-purple'
-}, {
-  icon: Globe,
-  title: 'Political Stability',
-  description: 'Canadian jurisdiction with strong rule of law',
-  color: 'electric-yellow'
 }];
 export const AlbertaFacilityHub = () => {
   const [currentHeroImage, setCurrentHeroImage] = useState(0);
@@ -242,46 +221,9 @@ export const AlbertaFacilityHub = () => {
           </div>
         </div>
 
-        {/* Location Benefits - Horizontal Scroll */}
-        <div className={`mb-20 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <h3 className="text-3xl font-bold text-white mb-8 text-center">
-            <MapPin className="inline-block w-8 h-8 mr-3 text-neon-green" />
-            Strategic Location Advantages
-          </h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {locationBenefits.map((benefit, index) => {
-            const colorClasses = {
-              'neon-green': 'text-neon-green bg-neon-green/10 hover:border-neon-green/50',
-              'electric-blue': 'text-electric-blue bg-electric-blue/10 hover:border-electric-blue/50',
-              'electric-purple': 'text-electric-purple bg-electric-purple/10 hover:border-electric-purple/50',
-              'electric-yellow': 'text-electric-yellow bg-electric-yellow/10 hover:border-electric-yellow/50'
-            };
-            return <div key={index} className={`
-                    group relative p-6 rounded-2xl 
-                    bg-gradient-to-br from-slate-800/50 to-slate-900/50
-                    border border-slate-700/50
-                    ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[2]}
-                    backdrop-blur-sm
-                    transition-all duration-300
-                    hover:-translate-y-2 hover:shadow-xl
-                  `} style={{
-              animationDelay: `${index * 100}ms`
-            }}>
-                  <div className={`inline-flex items-center justify-center p-3 rounded-xl mb-4 ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[1]}`}>
-                    <benefit.icon className={`w-6 h-6 ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[0]}`} />
-                  </div>
-                  
-                  <h4 className="text-lg font-bold text-white mb-2">{benefit.title}</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">{benefit.description}</p>
-                </div>;
-          })}
-          </div>
-        </div>
-
-        {/* Streamlined Energy Analytics */}
-        <div className={`transition-all duration-1000 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <AlbertaEnergyAnalytics />
+        {/* Strategic Market Analytics - Combined Location & Energy Analytics */}
+        <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <StrategicMarketAnalytics />
         </div>
       </div>
 
