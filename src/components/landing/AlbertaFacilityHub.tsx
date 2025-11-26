@@ -140,7 +140,7 @@ export const AlbertaFacilityHub = () => {
         <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-electric-blue/10 border border-electric-blue/30 backdrop-blur-sm mb-6">
             <div className="w-2 h-2 rounded-full bg-electric-blue animate-pulse" />
-            <span className="text-sm font-medium text-electric-blue">Operational Asset</span>
+            <span className="text-sm font-medium text-electric-blue">Under Development</span>
           </div>
           
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
