@@ -143,7 +143,7 @@ export const AlbertaEnergyAnalytics = () => {
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
           <Activity className="w-5 h-5 text-electric-blue" />
-          <h3 className="text-xl sm:text-2xl font-bold text-white">
+          <h3 className="text-3xl font-bold text-white">
             Alberta Energy Market Analytics
           </h3>
         </div>
