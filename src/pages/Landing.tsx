@@ -66,6 +66,15 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
+          <SectionDivider color="blue" />
+          
+          {/* Alberta Location Map */}
+          <section aria-label="Strategic Location" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <AlbertaLocationMap />
+            </Suspense>
+          </section>
+          
           <SectionDivider color="green" />
           
           {/* Infrastructure Highlights - NEW */}
@@ -143,14 +152,6 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="cyan" />
-          
-          {/* Alberta Location Map - NEW */}
-          <section aria-label="Strategic Location" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <AlbertaLocationMap />
-            </Suspense>
-          </section>
         </main>
 
         {/* Sign-Up Section */}
