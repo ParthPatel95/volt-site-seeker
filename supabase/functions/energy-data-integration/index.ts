@@ -521,8 +521,8 @@ async function testERCOTSubscription() {
 }
 
 
-// Retry wrapper for AESO API calls with exponential backoff
-async function fetchAESODataWithRetry(maxRetries = 3) {
+// Retry wrapper for AESO API calls with reduced backoff for faster response
+async function fetchAESODataWithRetry(maxRetries = 2) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`AESO fetch attempt ${attempt}/${maxRetries}...`);
@@ -536,7 +536,7 @@ async function fetchAESODataWithRetry(maxRetries = 3) {
       
       // If no pricing data but no error, this is an API issue
       if (attempt < maxRetries) {
-        const backoffMs = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+        const backoffMs = 1500; // Fixed 1.5s delay instead of exponential
         console.log(`⚠️ AESO returned incomplete data, retrying in ${backoffMs}ms...`);
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         continue;
@@ -558,7 +558,7 @@ async function fetchAESODataWithRetry(maxRetries = 3) {
           generationMix: undefined
         };
       }
-      const backoffMs = Math.pow(2, attempt) * 1000;
+      const backoffMs = 1500; // Fixed 1.5s delay
       await new Promise(resolve => setTimeout(resolve, backoffMs));
     }
   }
@@ -1591,16 +1591,16 @@ Deno.serve(async (req) => {
     };
 
     // Fetch all market data in parallel with individual timeouts
-    // AESO timeout increased to 30s to handle API latency
+    // Reduced timeouts to prevent edge function timeouts
     const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult, iesoResult] = await Promise.allSettled([
-      withTimeout(fetchERCOTData(), 15000, 'ERCOT'),
-      withTimeout(fetchAESODataWithRetry(), 30000, 'AESO'),
-      withTimeout(fetchMISOData(), 10000, 'MISO'),
-      withTimeout(fetchCAISOData(), 10000, 'CAISO'),
-      withTimeout(fetchNYISOData(), 12000, 'NYISO'),
-      withTimeout(fetchPJMData(), 10000, 'PJM'),
-      withTimeout(fetchSPPData(), 8000, 'SPP'),
-      withTimeout(fetchIESOData(), 10000, 'IESO')
+      withTimeout(fetchERCOTData(), 12000, 'ERCOT'),
+      withTimeout(fetchAESODataWithRetry(), 15000, 'AESO'),
+      withTimeout(fetchMISOData(), 8000, 'MISO'),
+      withTimeout(fetchCAISOData(), 8000, 'CAISO'),
+      withTimeout(fetchNYISOData(), 10000, 'NYISO'),
+      withTimeout(fetchPJMData(), 8000, 'PJM'),
+      withTimeout(fetchSPPData(), 6000, 'SPP'),
+      withTimeout(fetchIESOData(), 8000, 'IESO')
     ]);
     
     console.log('Market fetch results:', {
