@@ -68,12 +68,12 @@ export function DocumentsTab() {
         .select('*')
         .eq('is_active', true);
 
+      // When viewing a specific folder, only show documents in that folder
       if (currentFolderId) {
         query = query.eq('folder_id', currentFolderId);
-      } else if (filterCategory !== 'unfiled') {
-        // When viewing root, show both unfiled and documents in folders
-        // unless explicitly filtering for unfiled
       }
+      // When at root level, show all documents (including those in folders)
+      // The filtering will handle separating folders vs unfiled documents
 
       query = query.order('created_at', { ascending: false });
 
@@ -187,13 +187,28 @@ export function DocumentsTab() {
     if (!documents) return [];
 
     let filtered = documents.filter(doc => {
+      // Search filter
       const matchesSearch = doc.file_name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = filterCategory === 'all' || 
-                             filterCategory === 'unfiled' ? !doc.folder_id : 
-                             doc.category === filterCategory;
-      const inCurrentFolder = currentFolderId ? doc.folder_id === currentFolderId : !doc.folder_id;
       
-      return matchesSearch && matchesCategory && (currentFolderId || !doc.folder_id || filterCategory === 'all');
+      // Category filter
+      let matchesCategory = true;
+      if (filterCategory === 'unfiled') {
+        matchesCategory = !doc.folder_id;
+      } else if (filterCategory !== 'all') {
+        matchesCategory = doc.category === filterCategory;
+      }
+      
+      // Folder context filter
+      let inCorrectContext = true;
+      if (currentFolderId) {
+        // When inside a folder, only show documents in that folder
+        inCorrectContext = doc.folder_id === currentFolderId;
+      } else {
+        // When at root level, only show unfiled documents (not in any folder)
+        inCorrectContext = !doc.folder_id;
+      }
+      
+      return matchesSearch && matchesCategory && inCorrectContext;
     });
 
     // Sort documents

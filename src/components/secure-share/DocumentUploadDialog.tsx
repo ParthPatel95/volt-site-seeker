@@ -168,7 +168,7 @@ export function DocumentUploadDialog({
             </Button>
           </div>
 
-          <div>
+            <div>
             <Label>File Upload</Label>
             <div className="mt-2 flex items-center gap-4">
               <Input
@@ -177,7 +177,11 @@ export function DocumentUploadDialog({
                 accept=".pdf,.docx,.xlsx,.pptx"
                 className="flex-1"
                 multiple={uploadMode === 'folder'}
-                {...(uploadMode === 'folder' ? { webkitdirectory: '', directory: '' } : {})}
+                {...(uploadMode === 'folder' ? { 
+                  // @ts-ignore - webkitdirectory is non-standard but supported
+                  webkitdirectory: '', 
+                  directory: '' 
+                } : {})}
               />
               {files.length > 0 && (
                 <Button
