@@ -131,12 +131,12 @@ export const AlbertaFacilityHub = () => {
         </div>
 
         {/* Cinematic Hero Section */}
-        <div className={`relative mb-20 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className={`relative mb-12 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           
         </div>
 
         {/* Interactive Image Gallery */}
-        <div className={`mb-20 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`mb-12 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Large featured image */}
             <div className="md:col-span-2 relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer group" onClick={() => handleImageClick(0)}>
@@ -164,7 +164,7 @@ export const AlbertaFacilityHub = () => {
         </div>
 
         {/* Technical Specifications - Compact Grid */}
-        <div className={`mb-20 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`mb-12 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h3 className="text-3xl font-bold text-white mb-8 text-center">
             <Building2 className="inline-block w-8 h-8 mr-3 text-electric-blue" />
             Technical Specifications
