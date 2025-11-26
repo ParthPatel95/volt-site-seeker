@@ -23,7 +23,7 @@ const LPPortalSection = lazy(() => import('@/components/landing/LPPortalSection'
 // New Alberta facility sections
 const AlbertaFacilityShowcase = lazy(() => import('@/components/landing/AlbertaFacilityShowcase').then(module => ({ default: module.AlbertaFacilityShowcase })));
 const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
-const AlbertaLocationMap = lazy(() => import('@/components/landing/AlbertaLocationMap').then(module => ({ default: module.AlbertaLocationMap })));
+const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(module => ({ default: module.AlbertaFacilityHub })));
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
@@ -59,19 +59,10 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
-          {/* Alberta Facility Showcase - Combined Section */}
-          <section id="alberta-facility" aria-label="Alberta Data Center Facility and Technical Specifications" className="relative">
+          {/* Alberta Facility Hub - Operations, Technical, Location */}
+          <section aria-label="Facility Overview Hub" className="relative">
             <Suspense fallback={<SectionLoader />}>
-              <AlbertaFacilityShowcase />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="blue" />
-          
-          {/* Alberta Location Map */}
-          <section aria-label="Strategic Location" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <AlbertaLocationMap />
+              <AlbertaFacilityHub />
             </Suspense>
           </section>
           
