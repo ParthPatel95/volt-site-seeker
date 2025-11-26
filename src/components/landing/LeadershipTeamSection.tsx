@@ -6,13 +6,24 @@ export const LeadershipTeamSection = () => {
   const teamMembers = [
     {
       name: "Jay Hao",
-      role: "Managing GP",
+      role: "Chairman",
       icon: <User className="w-6 h-6 text-electric-blue" />,
       achievements: [
         "Former CEO of OKX Exchange, one of the world's largest crypto trading platforms with multi-billion dollar transaction volumes",
         "Brings extensive experience leading global fintech, crypto infrastructure, and digital asset strategy",
         "Deep LP relationships across Asia, MENA, and emerging markets, with access to sovereign wealth and private capital networks",
         "Oversees fund governance, investor relations, and capital raising strategy for Wattbyte"
+      ]
+    },
+    {
+      name: "Parth Patel",
+      role: "CEO",
+      icon: <Award className="w-6 h-6 text-neon-green" />,
+      achievements: [
+        "Led the consulting and transaction of over 275MW of power assets across North America",
+        "Building a pipeline of 700MW+ and over 1,000 acres of power-rich real estate for data centers and HPC deployment",
+        "Manages site sourcing, power negotiations, underwriting, and investment strategy",
+        "Hands-on experience in low-cost energy procurement, crypto/AI hosting, and infrastructure buildouts"
       ]
     },
     {
@@ -24,17 +35,6 @@ export const LeadershipTeamSection = () => {
         "Leads execution and compliance across all Wattbyte projects in North America",
         "Coordinates business relationships, environmental review, and legal frameworks to accelerate site readiness",
         "Proven track record in scaling teams and managing multi-site operations under complex regulatory conditions"
-      ]
-    },
-    {
-      name: "Parth Patel",
-      role: "CIO",
-      icon: <Award className="w-6 h-6 text-neon-green" />,
-      achievements: [
-        "Led the consulting and transaction of over 275MW of power assets across North America",
-        "Building a pipeline of 700MW+ and over 1,000 acres of power-rich real estate for data centers and HPC deployment",
-        "Manages site sourcing, power negotiations, underwriting, and investment strategy",
-        "Hands-on experience in low-cost energy procurement, crypto/AI hosting, and infrastructure buildouts"
       ]
     }
   ];
