@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Thermometer, Clock, Network, MapPin, DollarSign, Snowflake, Cable, Globe, Zap, Leaf, Shield } from 'lucide-react';
+import { Building2, Thermometer, Clock, Network, MapPin, DollarSign, Snowflake, Cable, Globe, Zap, Leaf, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AlbertaEnergyAnalytics } from './AlbertaEnergyAnalytics';
-
+import facilityNight from '@/assets/alberta-facility-night.png';
+import facilityAerial1 from '@/assets/alberta-facility-aerial-1.jpg';
+import facilityAerial2 from '@/assets/alberta-facility-aerial-2.jpg';
 
 const technicalSpecs = [
   {
@@ -78,7 +80,22 @@ const locationBenefits = [
   }
 ];
 
+const facilityImages = [
+  { src: facilityNight, alt: 'Alberta Facility Night View', caption: 'World-Class Infrastructure' },
+  { src: facilityAerial1, alt: 'Alberta Facility Aerial View 1', caption: 'Direct Grid Connection' },
+  { src: facilityAerial2, alt: 'Alberta Facility Aerial View 2', caption: '135 MW Capacity' }
+];
+
 export const AlbertaFacilityHub = () => {
+  const [currentImage, setCurrentImage] = useState(0);
+
+  const nextImage = () => {
+    setCurrentImage((prev) => (prev + 1) % facilityImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImage((prev) => (prev - 1 + facilityImages.length) % facilityImages.length);
+  };
 
   return (
     <section className="relative py-16 sm:py-20 md:py-24 bg-gradient-to-b from-slate-900 to-slate-950">
@@ -86,15 +103,76 @@ export const AlbertaFacilityHub = () => {
         <div className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-electric-blue/10 border border-electric-blue/30 backdrop-blur-sm mb-4">
             <div className="w-2 h-2 rounded-full bg-electric-blue animate-pulse"></div>
-            <span className="text-sm font-medium text-electric-blue">Facility Intelligence Hub</span>
+            <span className="text-sm font-medium text-electric-blue">Operational Asset</span>
           </div>
           
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
             Alberta Facility <span className="text-neon-green">Overview</span>
           </h2>
           <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
-            Comprehensive insights into our <span className="text-electric-blue font-semibold">operational asset</span>, technical capabilities, and strategic positioning
+            Enterprise-grade infrastructure delivering <span className="text-electric-blue font-semibold">reliable, efficient power</span> for high-performance computing
           </p>
+        </div>
+
+        {/* Hero Image Carousel */}
+        <div className="relative mb-12 sm:mb-16">
+          <div className="relative aspect-[16/9] sm:aspect-[21/9] rounded-2xl overflow-hidden border border-slate-700/50">
+            {/* Image */}
+            <div className="relative w-full h-full">
+              <img 
+                src={facilityImages[currentImage].src} 
+                alt={facilityImages[currentImage].alt}
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+              
+              {/* Caption */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                <div className="max-w-4xl">
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
+                    {facilityImages[currentImage].caption}
+                  </h3>
+                  <p className="text-slate-200 text-base sm:text-lg">
+                    135 MW facility in Alberta, Canada • 26 acres • Direct AESO grid connection
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Buttons */}
+            <button
+              onClick={prevImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 text-white hover:bg-slate-800 hover:border-electric-blue/50 transition-all flex items-center justify-center"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+            <button
+              onClick={nextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 text-white hover:bg-slate-800 hover:border-electric-blue/50 transition-all flex items-center justify-center"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            {/* Dots Indicator */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {facilityImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImage(index)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    index === currentImage
+                      ? 'bg-electric-blue w-8'
+                      : 'bg-slate-600 hover:bg-slate-500'
+                  }`}
+                  aria-label={`Go to image ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="technical" className="w-full">
