@@ -1,5 +1,6 @@
 import React from 'react';
-import { MapPin, DollarSign, Snowflake, Cable, Globe } from 'lucide-react';
+import { DollarSign, Snowflake, Cable, Globe } from 'lucide-react';
+import { AlbertaEnergyAnalytics } from './AlbertaEnergyAnalytics';
 
 const locationBenefits = [
   {
@@ -38,45 +39,38 @@ export const AlbertaLocationMap = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Map Placeholder */}
-          <div className="relative aspect-video lg:aspect-square rounded-2xl overflow-hidden border-2 border-electric-blue/30 shadow-xl hover:border-electric-blue/50 transition-all">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <MapPin className="w-16 h-16 text-electric-blue mx-auto animate-pulse" />
-                <p className="text-slate-300">
-                  Interactive map coming soon
-                </p>
-                <p className="text-sm text-slate-400">
-                  Edmonton Region, Alberta, Canada
-                </p>
-              </div>
-            </div>
+          {/* Alberta Energy Analytics */}
+          <div className="lg:col-span-2">
+            <AlbertaEnergyAnalytics />
           </div>
 
           {/* Location Benefits */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             <h3 className="text-2xl font-bold text-white mb-6">
               Why <span className="text-electric-yellow">Alberta</span>?
             </h3>
             
-            {locationBenefits.map((benefit, index) => (
-              <div 
-                key={index}
-                className="group bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50 hover:border-electric-blue/50 transition-all hover:scale-102 hover:bg-slate-800/70"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-electric-blue/10 rounded-lg group-hover:bg-electric-blue/20 transition-colors">
-                    <benefit.icon className="w-5 h-5 text-electric-blue" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white mb-2">{benefit.title}</h4>
-                    <p className="text-sm text-slate-300 leading-relaxed">
-                      {benefit.description}
-                    </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+              {locationBenefits.map((benefit, index) => (
+                <div 
+                  key={index}
+                  className="group bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50 hover:border-electric-blue/50 transition-all hover:scale-102 hover:bg-slate-800/70"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-electric-blue/10 rounded-lg group-hover:bg-electric-blue/20 transition-colors">
+                      <benefit.icon className="w-5 h-5 text-electric-blue" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white mb-2">{benefit.title}</h4>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        {benefit.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
