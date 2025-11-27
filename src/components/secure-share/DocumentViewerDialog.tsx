@@ -188,23 +188,23 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg">{document?.name}</DialogTitle>
+      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] sm:h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-3 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <DialogTitle className="text-base sm:text-lg truncate">{document?.name}</DialogTitle>
             {canDownload && documentUrl && (
               <button
                 onClick={handleDownload}
-                className="text-sm text-primary hover:underline inline-flex items-center gap-2"
+                className="text-xs sm:text-sm text-primary hover:underline inline-flex items-center gap-1.5 sm:gap-2 shrink-0 touch-manipulation"
               >
-                <Download className="w-4 h-4" />
-                Download
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Download</span>
               </button>
             )}
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -236,17 +236,18 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b gap-2">
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between px-2 sm:px-4 py-3 bg-muted/20 border-b gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={previousPage}
                           disabled={pageNumber <= 1}
+                          className="h-9 px-3 sm:px-4 text-sm touch-manipulation"
                         >
                           Previous
                         </Button>
-                        <span className="text-sm">
+                        <span className="text-sm font-medium whitespace-nowrap">
                           Page {pageNumber} of {numPages || '...'}
                         </span>
                         <Button
@@ -254,32 +255,36 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                           size="sm"
                           onClick={nextPage}
                           disabled={pageNumber >= numPages}
+                          className="h-9 px-3 sm:px-4 text-sm touch-manipulation"
                         >
                           Next
                         </Button>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={zoomOut}
                           disabled={scale <= 0.5}
+                          className="h-9 px-3 touch-manipulation"
                         >
                           <ZoomOut className="w-4 h-4" />
                         </Button>
-                        <span className="text-sm min-w-[60px] text-center">{Math.round(scale * 100)}%</span>
+                        <span className="text-sm min-w-[60px] text-center font-medium">{Math.round(scale * 100)}%</span>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={zoomIn}
                           disabled={scale >= 3}
+                          className="h-9 px-3 touch-manipulation"
                         >
                           <ZoomIn className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                     <div 
-                      className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/10"
+                      className="flex-1 overflow-auto flex items-start justify-center p-2 sm:p-4 bg-muted/10 overscroll-contain"
+                      style={{ WebkitOverflowScrolling: 'touch' }}
                       onClick={(e) => {
                         const target = e.target as HTMLElement;
                         const link = target.closest('a[href]') as HTMLAnchorElement;
