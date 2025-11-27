@@ -104,18 +104,21 @@ export default function ViewDocument() {
 
       // Handle folder, bundle, or single document
       if (link.folder_id) {
-        // This is a folder - get all documents in folder and subfolders
-        const folderIds = await getAllFolderIds(link.folder_id);
-        
-        const { data: folderDocs, error: docsError } = await supabase
-          .from('secure_documents')
-          .select('*')
-          .in('folder_id', folderIds)
-          .eq('is_active', true);
+        // Load folder contents (including nested subfolders) via Edge Function
+        const { data: folderData, error: folderError } = await supabase.functions.invoke(
+          'get-folder-contents',
+          {
+            body: { token },
+          }
+        );
 
-        if (docsError) {
-          throw docsError;
+        if (folderError) {
+          console.error('[ViewDocument] get-folder-contents error:', folderError);
+          throw new Error('Failed to load folder contents');
         }
+
+        const folderContents: any = folderData;
+        const folderDocs = folderContents?.documents || [];
 
         if (!folderDocs || folderDocs.length === 0) {
           throw new Error('Folder contains no documents');
@@ -149,18 +152,8 @@ export default function ViewDocument() {
           }
         }
 
-        // Structure folder data like a bundle for consistent rendering
-        link.bundle = {
-          id: link.folder_id,
-          name: link.folder.name,
-          description: link.folder.description,
-          created_at: link.folder.created_at,
-          created_by: link.folder.created_by,
-          is_active: link.folder.is_active,
-          updated_at: link.folder.updated_at,
-          folder_structure: {},
-          bundle_documents: folderDocs.map(doc => ({ document: doc }))
-        };
+        // Attach folder contents for rendering
+        (link as any).folder_contents = folderContents;
 
         return link;
       } else if (link.bundle_id) {
