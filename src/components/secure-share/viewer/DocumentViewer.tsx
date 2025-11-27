@@ -152,18 +152,25 @@ export function DocumentViewer({
         ? `Wattbyte Inc. - ${recipientEmail}` 
         : 'Wattbyte Inc. - CONFIDENTIAL';
       styles += `
+        .watermark-overlay {
+          position: relative;
+          overflow: hidden;
+        }
         .watermark-overlay::before {
           content: "${watermarkText}";
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) rotate(-45deg);
-          font-size: 4rem;
-          font-weight: bold;
-          color: rgba(0, 0, 0, 0.05);
+          position: absolute;
+          inset: 8%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: rotate(-35deg);
+          font-size: clamp(1.25rem, 3vw, 2.5rem);
+          font-weight: 700;
+          color: rgba(0, 0, 0, 0.06);
           pointer-events: none;
-          z-index: 9999;
-          white-space: nowrap;
+          z-index: 10;
+          text-align: center;
+          white-space: normal;
           user-select: none;
         }
       `;
