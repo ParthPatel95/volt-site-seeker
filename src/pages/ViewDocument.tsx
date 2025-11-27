@@ -7,6 +7,7 @@ import { Shield, Lock, Eye, Clock, FileText, ArrowLeft } from 'lucide-react';
 import { PasswordProtection } from '@/components/secure-share/viewer/PasswordProtection';
 import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
+import { ViewerInfoCollection } from '@/components/secure-share/viewer/ViewerInfoCollection';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -348,6 +349,17 @@ export default function ViewDocument() {
         onVerified={(data) => {
           setViewerData(data);
           setPasswordVerified(true);
+        }}
+      />
+    );
+  }
+
+  // Always collect viewer information if not already collected
+  if (!viewerData) {
+    return (
+      <ViewerInfoCollection
+        onSubmit={(data) => {
+          setViewerData(data);
         }}
       />
     );
