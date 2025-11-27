@@ -429,7 +429,7 @@ export function DocumentViewer({
 
         {/* Document Display */}
         <ScrollArea className="flex-1 overscroll-contain w-full h-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div ref={containerRef} className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 h-full min-h-full overflow-x-hidden max-w-full">
+          <div ref={containerRef} className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 h-full min-h-full overflow-hidden max-w-full">
             {/* Floating Navigation Arrows */}
             {isPdf && numPages > 1 && (
               <>
@@ -526,21 +526,28 @@ export function DocumentViewer({
                       </div>
                     }
                   >
-                    <Page
-                      pageNumber={pageNumber}
-                      width={pageWidth}
-                      scale={isIOS ? Math.min(zoom, 1.5) : zoom}
-                      rotate={rotation}
-                      renderTextLayer={false}
-                      renderAnnotationLayer={true}
-                      className="shadow-lg"
-                      onLoadSuccess={handlePageLoadSuccess}
-                      loading={
-                        <div className="flex items-center justify-center p-8 bg-card">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                        </div>
-                      }
-                    />
+                    <div 
+                      style={{ 
+                        transform: `scale(${isIOS ? Math.min(zoom, 1.5) : zoom})`,
+                        transformOrigin: 'center center',
+                        transition: 'transform 0.2s ease-out'
+                      }}
+                    >
+                      <Page
+                        pageNumber={pageNumber}
+                        width={pageWidth}
+                        rotate={rotation}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={true}
+                        className="shadow-lg"
+                        onLoadSuccess={handlePageLoadSuccess}
+                        loading={
+                          <div className="flex items-center justify-center p-8 bg-card">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        }
+                      />
+                    </div>
                   </Document>
                 </div>
               )
