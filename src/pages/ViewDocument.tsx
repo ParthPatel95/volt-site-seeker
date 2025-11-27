@@ -552,7 +552,7 @@ export default function ViewDocument() {
 
           {/* Document Viewer */}
           <div className="container mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 md:py-10 max-w-7xl overflow-hidden">
-            <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-120px)] sm:h-[calc(100vh-200px)]">
+            <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-80px)] sm:h-[calc(100vh-140px)]">
               <DocumentViewer
                 documentUrl={selectedDoc.file_url}
                 documentType={selectedDoc.file_type}
@@ -704,7 +704,7 @@ export default function ViewDocument() {
 
       {/* Document Viewer Container */}
       <div className="container mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 md:py-10 max-w-7xl overflow-hidden">
-        <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-120px)] sm:h-[calc(100vh-200px)]">
+        <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-80px)] sm:h-[calc(100vh-140px)]">
           <DocumentViewer
             documentUrl={linkData.document.file_url}
             documentType={linkData.document.file_type}
@@ -1269,7 +1269,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
           {/* Document Viewer */}
           <div className="flex-1">
             {selectedDocument ? (
-              <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-12rem)]">
+              <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-8rem)]">
                 <DocumentViewer
                   documentUrl={selectedDocument.file_url}
                   documentType={selectedDocument.file_type}
@@ -1284,7 +1284,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                 />
               </Card>
             ) : (
-              <Card className="p-8 h-[calc(100vh-12rem)] flex items-center justify-center">
+              <Card className="p-8 h-[calc(100vh-8rem)] flex items-center justify-center">
                 <div className="text-center">
                   <FileText className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
                   <p className="text-muted-foreground">Select a document to preview</p>
