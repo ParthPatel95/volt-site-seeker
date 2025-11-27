@@ -704,7 +704,7 @@ export default function ViewDocument() {
 
       {/* Document Viewer Container */}
       <div className="container mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 md:py-10 max-w-7xl overflow-hidden">
-        <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-80px)] sm:h-[calc(100vh-140px)]">
+        <Card className="overflow-hidden border-2 shadow-xl h-[calc(100dvh-80px)] md:h-[calc(100vh-140px)]">
           <DocumentViewer
             documentUrl={linkData.document.file_url}
             documentType={linkData.document.file_type}
@@ -980,26 +980,57 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
       </div>
 
       {/* Main layout */}
-      <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl flex flex-col lg:flex-row gap-6">
-        {/* Folder tree */}
-        <div className="lg:w-64 lg:flex-shrink-0">
-          <Card className="p-3 md:p-4 h-full">
-            <h2 className="text-sm font-semibold mb-3 md:mb-4 flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Folder Structure
-            </h2>
-            <div className="space-y-1 max-h-[60vh] overflow-auto pr-1">
-              {renderFolderTree(null)}
-            </div>
-          </Card>
-        </div>
+      <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
+        {/* Mobile-first responsive layout */}
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          {/* Folder tree - hidden on mobile, sidebar on desktop */}
+          <div className="lg:w-64 lg:flex-shrink-0 hidden lg:block">
+            <Card className="p-3 md:p-4 sticky top-24 max-h-[calc(100vh-120px)]">
+              <h2 className="text-sm font-semibold mb-3 md:mb-4 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Folder Structure
+              </h2>
+              <ScrollArea className="h-[calc(100vh-200px)]">
+                <div className="space-y-1 pr-2">
+                  {renderFolderTree(null)}
+                </div>
+              </ScrollArea>
+            </Card>
+          </div>
 
-        {/* Documents list & viewer */}
-        <div className="flex-1 flex flex-col gap-4">
-          {/* Documents Grid */}
-          <Card className={`p-3 md:p-4 flex flex-col overflow-hidden transition-all ${
-            isFileListCollapsed ? 'h-auto' : 'max-h-[500px]'
-          }`}>
+          {/* Mobile folder selector */}
+          <div className="lg:hidden">
+            <Select value={currentFolderId} onValueChange={setSelectedFolderId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select folder" />
+              </SelectTrigger>
+              <SelectContent>
+                {allFolders.map((folder) => {
+                  const descendantIds = getDescendantFolderIds(folder.id);
+                  const allFolderIds = [folder.id, ...descendantIds];
+                  const docsInFolderCount = allFolderIds.reduce(
+                    (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
+                    0
+                  );
+                  return (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      {folder.name || 'Untitled folder'} ({docsInFolderCount})
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Documents list & viewer */}
+          <div className="flex-1 flex flex-col gap-4">
+            {/* Document List Section */}
+            <Card className={cn(
+              "p-3 md:p-4 flex flex-col transition-all duration-300",
+              isFileListCollapsed 
+                ? "h-auto" 
+                : "h-auto lg:max-h-[500px]"
+            )}>
             {/* Collapsed Toggle Bar */}
             {isFileListCollapsed && selectedDocument && (
               <button
@@ -1256,20 +1287,25 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
                       >
-                        <ChevronRight className="w-4 h-4" />
+                         <ChevronRight className="w-4 h-4" />
                       </Button>
                     </div>
                   )}
-                  </>
-                )}
+                </>
+              )}
               </div>
             )}
           </Card>
 
           {/* Document Viewer */}
-          <div className="flex-1">
+          <div className={cn(
+            "transition-all duration-300",
+            isFileListCollapsed 
+              ? "h-[calc(100dvh-10rem)] lg:h-[calc(100vh-8rem)]" 
+              : "h-[40dvh] lg:h-[calc(100vh-8rem)]"
+          )}>
             {selectedDocument ? (
-              <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-8rem)]">
+              <Card className="overflow-hidden border-2 shadow-xl h-full">
                 <DocumentViewer
                   documentUrl={selectedDocument.file_url}
                   documentType={selectedDocument.file_type}
@@ -1284,7 +1320,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                 />
               </Card>
             ) : (
-              <Card className="p-8 h-[calc(100vh-8rem)] flex items-center justify-center">
+              <Card className="p-8 h-full flex items-center justify-center">
                 <div className="text-center">
                   <FileText className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
                   <p className="text-muted-foreground">Select a document to preview</p>

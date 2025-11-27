@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Maximize2, Minimize2, MoreVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Configure PDF.js worker - use HTTPS explicitly for iOS compatibility
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -47,10 +48,27 @@ export function DocumentViewer({
   const [containerHeight, setContainerHeight] = useState<number | null>(null);
   const [pdfPageDimensions, setPdfPageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Touch gesture state
+  const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
+  const [touchStartZoom, setTouchStartZoom] = useState<number>(1);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
   
   // Detect iOS for native PDF viewer fallback
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
@@ -256,6 +274,69 @@ export function DocumentViewer({
   const handleRotate = () => {
     setRotation(prev => (prev + 90) % 360);
   };
+  
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  };
+  
+  // Touch gesture handlers
+  const getTouchDistance = (touches: React.TouchList) => {
+    if (touches.length < 2) return null;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+  };
+  
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Pinch to zoom
+      const distance = getTouchDistance(e.touches);
+      setTouchStartDistance(distance);
+      setTouchStartZoom(zoom);
+    } else if (e.touches.length === 1) {
+      // Swipe for page navigation
+      setTouchStartX(e.touches[0].clientX);
+    }
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchStartDistance) {
+      // Pinch zoom
+      const currentDistance = getTouchDistance(e.touches);
+      if (currentDistance) {
+        const scale = currentDistance / touchStartDistance;
+        const newZoom = Math.max(0.5, Math.min(3.0, touchStartZoom * scale));
+        setZoom(newZoom);
+      }
+    }
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX !== null && e.changedTouches.length === 1) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchStartX - touchEndX;
+      
+      // Swipe threshold
+      if (Math.abs(diff) > 50) {
+        if (diff > 0 && pageNumber < numPages) {
+          // Swipe left - next page
+          setPageNumber(prev => prev + 1);
+        } else if (diff < 0 && pageNumber > 1) {
+          // Swipe right - previous page
+          setPageNumber(prev => prev - 1);
+        }
+      }
+    }
+    
+    setTouchStartDistance(null);
+    setTouchStartX(null);
+  };
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -340,9 +421,19 @@ export function DocumentViewer({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
+      {/* Progress bar for mobile */}
+      {isMobile && isPdf && numPages > 0 && (
+        <div className="h-1 bg-muted shrink-0">
+          <div 
+            className="h-full bg-primary transition-all duration-300" 
+            style={{ width: `${(pageNumber / numPages) * 100}%` }}
+          />
+        </div>
+      )}
+      
       <div className={`bg-card flex-1 flex flex-col ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
-        {/* Controls */}
-        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
+        {/* Desktop Controls */}
+        <div className="hidden md:flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2 md:gap-4">
             {isPdf && numPages > 0 && (
               <>
@@ -419,17 +510,78 @@ export function DocumentViewer({
             )}
           </div>
           
-          {canDownload && (
-            <Button onClick={handleDownload} size="sm" className="text-xs md:text-sm">
-              <Download className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Download</span>
+          <div className="flex items-center gap-2">
+            {canDownload && (
+              <Button onClick={handleDownload} size="sm" className="text-xs md:text-sm">
+                <Download className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Download</span>
+              </Button>
+            )}
+            <Button onClick={toggleFullscreen} size="sm" variant="outline">
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
-          )}
+          </div>
+        </div>
+        
+        {/* Mobile Controls */}
+        <div className="flex md:hidden items-center justify-between p-2 border-b border-border shrink-0">
+          <span className="text-sm font-medium">
+            {isPdf && numPages > 0 ? `${pageNumber} / ${numPages}` : 'Document'}
+          </span>
+          <div className="flex items-center gap-1">
+            {isPdf && (
+              <>
+                <Button onClick={handleZoomOut} size="icon" variant="ghost" className="h-8 w-8" disabled={zoom <= 0.5}>
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <Button onClick={handleZoomIn} size="icon" variant="ghost" className="h-8 w-8" disabled={zoom >= 3.0}>
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-8 w-8">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isPdf && (
+                  <>
+                    <DropdownMenuItem onClick={handleRotate}>
+                      <RotateCw className="w-4 h-4 mr-2" />
+                      Rotate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleResetZoom}>
+                      Reset Zoom
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuItem onClick={toggleFullscreen}>
+                  {isFullscreen ? <Minimize2 className="w-4 h-4 mr-2" /> : <Maximize2 className="w-4 h-4 mr-2" />}
+                  {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                </DropdownMenuItem>
+                {canDownload && (
+                  <DropdownMenuItem onClick={handleDownload}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Document Display */}
         <ScrollArea className="flex-1 overscroll-contain w-full h-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div ref={containerRef} className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 h-full min-h-full overflow-hidden max-w-full">
+          <div 
+            ref={containerRef} 
+            className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 h-full min-h-full max-w-full"
+            style={{ overflow: zoom > 1 ? 'auto' : 'hidden' }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             {/* Floating Navigation Arrows */}
             {isPdf && numPages > 1 && (
               <>
