@@ -131,26 +131,31 @@ export default function ViewDocument() {
           expirySeconds = Math.max(60, Math.floor((expiryTime - now) / 1000));
         }
 
-        // Generate signed URLs for all documents in the folder
-        for (const doc of folderDocs) {
-          if (doc.storage_path) {
-            const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
-              'get-signed-url',
-              {
-                body: { 
+        console.log('[ViewDocument] Folder contents loaded, documents count:', folderDocs.length);
+
+        // Generate signed URLs for all documents in the folder in parallel for performance
+        await Promise.all(
+          folderDocs.map(async (doc: any) => {
+            if (!doc.storage_path) return;
+
+            const { data: signedUrlData, error: signedUrlError } =
+              await supabase.functions.invoke('get-signed-url', {
+                body: {
                   storagePath: doc.storage_path,
-                  expiresIn: expirySeconds 
-                }
-              }
-            );
+                  expiresIn: expirySeconds,
+                },
+              });
 
             if (signedUrlError) {
-              console.error('Signed URL error for doc:', doc.file_name, signedUrlError);
-            } else if (signedUrlData?.signedUrl) {
+              console.error('[ViewDocument] Signed URL error for doc:', doc.file_name, signedUrlError);
+              return;
+            }
+
+            if (signedUrlData?.signedUrl) {
               doc.file_url = signedUrlData.signedUrl;
             }
-          }
-        }
+          })
+        );
 
         // Attach folder contents for rendering
         (link as any).folder_contents = folderContents;
@@ -171,27 +176,32 @@ export default function ViewDocument() {
           expirySeconds = Math.max(60, Math.floor((expiryTime - now) / 1000));
         }
 
-        // Generate signed URLs for all documents in the bundle
-        for (const bundleDoc of bundleDocs) {
-          const doc = bundleDoc.document;
-          if (doc && doc.storage_path) {
-            const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
-              'get-signed-url',
-              {
-                body: { 
+        console.log('[ViewDocument] Bundle documents count:', bundleDocs.length);
+
+        // Generate signed URLs for all documents in the bundle in parallel
+        await Promise.all(
+          bundleDocs.map(async (bundleDoc: any) => {
+            const doc = bundleDoc.document;
+            if (!doc || !doc.storage_path) return;
+
+            const { data: signedUrlData, error: signedUrlError } =
+              await supabase.functions.invoke('get-signed-url', {
+                body: {
                   storagePath: doc.storage_path,
-                  expiresIn: expirySeconds 
-                }
-              }
-            );
+                  expiresIn: expirySeconds,
+                },
+              });
 
             if (signedUrlError) {
-              console.error('Signed URL error for doc:', doc.file_name, signedUrlError);
-            } else if (signedUrlData?.signedUrl) {
+              console.error('[ViewDocument] Signed URL error for doc in bundle:', doc.file_name, signedUrlError);
+              return;
+            }
+
+            if (signedUrlData?.signedUrl) {
               doc.file_url = signedUrlData.signedUrl;
             }
-          }
-        }
+          })
+        );
 
         return link;
       } else if (link.document_id) {
