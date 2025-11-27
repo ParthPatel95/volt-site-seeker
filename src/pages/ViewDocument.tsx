@@ -996,8 +996,35 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
 
         {/* Documents list & viewer */}
         <div className="flex-1 flex flex-col lg:flex-row gap-4">
+          {/* Document Viewer */}
+          <div className="flex-1 lg:w-2/3 xl:w-3/5 order-2 lg:order-2">
+            {selectedDocument ? (
+              <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-12rem)]">
+                <DocumentViewer
+                  documentUrl={selectedDocument.file_url}
+                  documentType={selectedDocument.file_type}
+                  accessLevel={linkData.access_level}
+                  watermarkEnabled={linkData.watermark_enabled}
+                  recipientEmail={linkData.recipient_email}
+                  linkId={linkData.id}
+                  documentId={selectedDocument.id}
+                  enableTracking={true}
+                  viewerName={viewerData?.name}
+                  viewerEmail={viewerData?.email}
+                />
+              </Card>
+            ) : (
+              <Card className="p-8 h-[calc(100vh-12rem)] flex items-center justify-center">
+                <div className="text-center">
+                  <FileText className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+                  <p className="text-muted-foreground">Select a document to preview</p>
+                </div>
+              </Card>
+            )}
+          </div>
+
           {/* Documents Grid */}
-          <Card className={`p-3 md:p-4 flex flex-col max-h-[calc(100vh-12rem)] overflow-hidden transition-all ${
+          <Card className={`p-3 md:p-4 flex flex-col max-h-[calc(100vh-12rem)] overflow-hidden transition-all order-1 lg:order-1 ${
             isFileListCollapsed ? 'lg:w-auto' : 'lg:w-1/3 xl:w-2/5'
           }`}>
             {/* Collapsed Toggle Bar */}
@@ -1265,33 +1292,6 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
               </div>
             )}
           </Card>
-
-          {/* Document Viewer */}
-          <div className="flex-1 lg:w-2/3 xl:w-3/5">
-            {selectedDocument ? (
-              <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-12rem)]">
-                <DocumentViewer
-                  documentUrl={selectedDocument.file_url}
-                  documentType={selectedDocument.file_type}
-                  accessLevel={linkData.access_level}
-                  watermarkEnabled={linkData.watermark_enabled}
-                  recipientEmail={linkData.recipient_email}
-                  linkId={linkData.id}
-                  documentId={selectedDocument.id}
-                  enableTracking={true}
-                  viewerName={viewerData?.name}
-                  viewerEmail={viewerData?.email}
-                />
-              </Card>
-            ) : (
-              <Card className="p-8 h-[calc(100vh-12rem)] flex items-center justify-center">
-                <div className="text-center">
-                  <FileText className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
-                  <p className="text-muted-foreground">Select a document to preview</p>
-                </div>
-              </Card>
-            )}
-          </div>
         </div>
       </div>
     </div>
