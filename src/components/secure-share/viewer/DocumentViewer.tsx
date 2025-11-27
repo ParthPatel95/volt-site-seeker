@@ -497,6 +497,7 @@ export function DocumentViewer({
                   >
                     <Page
                       pageNumber={pageNumber}
+                      width={Math.min(window.innerWidth - 100, 900)}
                       scale={isIOS ? Math.min(zoom, 1.5) : zoom}
                       rotate={rotation}
                       renderTextLayer={false}
