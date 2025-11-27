@@ -3,13 +3,15 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Shield, Lock, Eye, Clock, FileText, ArrowLeft } from 'lucide-react';
+import { Shield, Lock, Eye, Clock, FileText, ArrowLeft, Search, Filter, ChevronLeft, ChevronRight, Image, Video, Music, File } from 'lucide-react';
 import { PasswordProtection } from '@/components/secure-share/viewer/PasswordProtection';
 import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
 import { ViewerInfoCollection } from '@/components/secure-share/viewer/ViewerInfoCollection';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function ViewDocument() {
@@ -721,6 +723,53 @@ export default function ViewDocument() {
   );
 }
 
+// Helper functions for file categorization
+const getFileCategory = (fileType: string | null): string => {
+  if (!fileType) return 'other';
+  
+  const type = fileType.toLowerCase();
+  
+  if (type.includes('pdf')) return 'pdf';
+  if (type.startsWith('image/')) return 'image';
+  if (type.startsWith('video/')) return 'video';
+  if (type.startsWith('audio/')) return 'audio';
+  if (type.includes('word') || type.includes('excel') || type.includes('powerpoint') || 
+      type.includes('document') || type.includes('spreadsheet') || type.includes('presentation')) {
+    return 'document';
+  }
+  
+  return 'other';
+};
+
+const getFileIcon = (category: string) => {
+  switch (category) {
+    case 'pdf':
+    case 'document':
+      return FileText;
+    case 'image':
+      return Image;
+    case 'video':
+      return Video;
+    case 'audio':
+      return Music;
+    default:
+      return File;
+  }
+};
+
+const getFileCategoryLabel = (category: string): string => {
+  const labels: Record<string, string> = {
+    all: 'All Files',
+    pdf: 'PDF',
+    image: 'Images',
+    video: 'Videos',
+    audio: 'Audio',
+    document: 'Documents',
+    other: 'Other'
+  };
+  return labels[category] || category;
+};
+
 // Folder viewer for shared folder links
 interface FolderViewerProps {
   token: string;
@@ -736,6 +785,13 @@ interface FolderViewerProps {
 function FolderViewer({ token, linkData, folderContents, viewerData }: FolderViewerProps) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(folderContents?.rootFolder?.id ?? null);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
+  
+  // Search, filter, and pagination state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFileType, setSelectedFileType] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('name-asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12);
 
   if (!folderContents || !folderContents.rootFolder) {
     return (
@@ -790,49 +846,100 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
 
   const currentFolderId = selectedFolderId || rootFolder.id;
   const currentFolderIds = [currentFolderId, ...getDescendantFolderIds(currentFolderId)];
-  const currentDocuments = currentFolderIds.flatMap((id) => documentsByFolder.get(id) || []);
+  const allCurrentDocuments = currentFolderIds.flatMap((id) => documentsByFolder.get(id) || []);
 
-  // Initialize selected document when folder changes
+  // Filter and sort documents
+  const filteredDocuments = allCurrentDocuments
+    .filter((doc) => {
+      // Search filter
+      if (searchQuery && !doc.file_name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      
+      // File type filter
+      if (selectedFileType !== 'all' && getFileCategory(doc.file_type) !== selectedFileType) {
+        return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc':
+          return a.file_name.localeCompare(b.file_name);
+        case 'name-desc':
+          return b.file_name.localeCompare(a.file_name);
+        case 'date-asc':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'date-desc':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'type':
+          return getFileCategory(a.file_type).localeCompare(getFileCategory(b.file_type));
+        default:
+          return 0;
+      }
+    });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedDocuments = filteredDocuments.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when filters change
   useEffect(() => {
-    if (currentDocuments.length > 0) {
+    setCurrentPage(1);
+  }, [searchQuery, selectedFileType, sortBy, currentFolderId]);
+
+  // Initialize selected document when folder or page changes
+  useEffect(() => {
+    if (paginatedDocuments.length > 0) {
       setSelectedDocument((prev) =>
-        prev && currentDocuments.some((d) => d.id === prev.id)
+        prev && paginatedDocuments.some((d) => d.id === prev.id)
           ? prev
-          : currentDocuments[0]
+          : paginatedDocuments[0]
       );
+    } else if (filteredDocuments.length > 0) {
+      setSelectedDocument(filteredDocuments[0]);
     } else {
       setSelectedDocument(null);
     }
-  }, [currentFolderId, currentDocuments.length]);
+  }, [currentFolderId, paginatedDocuments.length, filteredDocuments.length]);
+
+  // Count documents by file type
+  const fileTypeCounts = allCurrentDocuments.reduce((acc, doc) => {
+    const category = getFileCategory(doc.file_type);
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   const renderFolderTree = (folderId: string | null, depth = 0) => {
     const children = foldersByParent.get(folderId) || [];
 
     return children.map((folder) => {
-    const isActive = folder.id === currentFolderId;
-    const descendantIds = getDescendantFolderIds(folder.id);
-    const allFolderIds = [folder.id, ...descendantIds];
-    const docsInFolderCount = allFolderIds.reduce(
-      (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
-      0
-    );
+      const isActive = folder.id === currentFolderId;
+      const descendantIds = getDescendantFolderIds(folder.id);
+      const allFolderIds = [folder.id, ...descendantIds];
+      const docsInFolderCount = allFolderIds.reduce(
+        (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
+        0
+      );
 
-    return (
-      <div key={folder.id} className="mb-1">
-        <button
-          className={
-            `w-full flex items-center justify-between text-left text-sm px-2 py-1.5 rounded-md transition-colors ` +
-            (isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')
-          }
-          style={{ paddingLeft: `${depth * 0.75 + 0.5}rem` }}
-          onClick={() => setSelectedFolderId(folder.id)}
-        >
-          <span className="truncate">{folder.name || 'Untitled folder'}</span>
-          <span className="ml-2 text-xs opacity-80">{docsInFolderCount}</span>
-        </button>
-        {renderFolderTree(folder.id, depth + 1)}
-      </div>
-    );
+      return (
+        <div key={folder.id} className="mb-1">
+          <button
+            className={
+              `w-full flex items-center justify-between text-left text-sm px-2 py-1.5 rounded-md transition-colors ` +
+              (isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')
+            }
+            style={{ paddingLeft: `${depth * 0.75 + 0.5}rem` }}
+            onClick={() => setSelectedFolderId(folder.id)}
+          >
+            <span className="truncate">{folder.name || 'Untitled folder'}</span>
+            <span className="ml-2 text-xs opacity-80">{docsInFolderCount}</span>
+          </button>
+          {renderFolderTree(folder.id, depth + 1)}
+        </div>
+      );
     });
   };
 
@@ -887,58 +994,221 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
         {/* Documents list & viewer */}
         <div className="flex-1 flex flex-col gap-4">
           <Card className="p-3 md:p-4">
-            <div className="flex items-center justify-between mb-3 md:mb-4">
-              <div>
-                <h2 className="text-sm font-semibold">Documents in this folder</h2>
-                <p className="text-xs text-muted-foreground">
-                  {currentDocuments.length} {currentDocuments.length === 1 ? 'document' : 'documents'} in selected folder
-                </p>
+            {/* Search and Filter Controls */}
+            <div className="space-y-3 md:space-y-4 mb-4">
+              <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+                {/* Search Bar */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search files..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                
+                {/* Sort Dropdown */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="date-desc">Newest First</SelectItem>
+                    <SelectItem value="date-asc">Oldest First</SelectItem>
+                    <SelectItem value="type">File Type</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            {currentDocuments.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground mb-2">No documents directly in this folder</p>
-                <p className="text-xs text-muted-foreground">Select a subfolder from the left to view its documents</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-                {currentDocuments.map((doc: any) => {
-                  const isActive = selectedDocument?.id === doc.id;
-                  const isPdf = doc.file_type === 'application/pdf' || doc.file_name?.endsWith('.pdf');
-
+              {/* File Type Filters */}
+              <div className="flex flex-wrap gap-2">
+                {['all', 'pdf', 'image', 'video', 'audio', 'document', 'other'].map((type) => {
+                  const count = type === 'all' ? allCurrentDocuments.length : (fileTypeCounts[type] || 0);
+                  const isActive = selectedFileType === type;
+                  
                   return (
                     <button
-                      key={doc.id}
-                      onClick={() => setSelectedDocument(doc)}
-                      className={
-                        'text-left group rounded-lg border p-3 md:p-4 transition-all ' +
-                        (isActive
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-border hover:border-primary/40 hover:bg-muted/40')
-                      }
+                      key={type}
+                      onClick={() => setSelectedFileType(type)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-md bg-muted/60 flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate" title={doc.file_name}>
-                            {doc.file_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {isPdf ? 'PDF Document' : doc.file_type || 'File'}
-                          </p>
-                        </div>
-                      </div>
+                      {getFileCategoryLabel(type)} ({count})
                     </button>
                   );
                 })}
               </div>
+            </div>
+
+            {/* Document Count and Results Info */}
+            <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b">
+              <div>
+                <h2 className="text-sm font-semibold">Documents</h2>
+                <p className="text-xs text-muted-foreground">
+                  {filteredDocuments.length === allCurrentDocuments.length 
+                    ? `${filteredDocuments.length} ${filteredDocuments.length === 1 ? 'document' : 'documents'}`
+                    : `${filteredDocuments.length} of ${allCurrentDocuments.length} documents`
+                  }
+                </p>
+              </div>
+              
+              {/* Pagination Info */}
+              {totalPages > 1 && (
+                <p className="text-xs text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </p>
+              )}
+            </div>
+
+            {/* Empty State */}
+            {filteredDocuments.length === 0 ? (
+              <div className="text-center py-8 md:py-12">
+                <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  {searchQuery || selectedFileType !== 'all' 
+                    ? 'No documents match your filters'
+                    : 'No documents in this folder'
+                  }
+                </p>
+                {(searchQuery || selectedFileType !== 'all') && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedFileType('all');
+                    }}
+                    className="mt-2"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Document Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                  {paginatedDocuments.map((doc: any) => {
+                    const isActive = selectedDocument?.id === doc.id;
+                    const category = getFileCategory(doc.file_type);
+                    const IconComponent = getFileIcon(category);
+                    const isImage = category === 'image';
+
+                    return (
+                      <button
+                        key={doc.id}
+                        onClick={() => setSelectedDocument(doc)}
+                        className={`text-left group rounded-lg border p-3 transition-all hover:shadow-md ${
+                          isActive
+                            ? 'border-primary bg-primary/5 shadow-sm'
+                            : 'border-border hover:border-primary/40 hover:bg-muted/40'
+                        }`}
+                      >
+                        {/* Thumbnail or Icon */}
+                        <div className="aspect-square rounded-md overflow-hidden bg-muted/60 mb-2 flex items-center justify-center">
+                          {isImage && doc.file_url ? (
+                            <img 
+                              src={doc.file_url} 
+                              alt={doc.file_name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <IconComponent className="w-8 h-8 text-muted-foreground" />
+                          )}
+                        </div>
+                        
+                        {/* File Info */}
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium truncate" title={doc.file_name}>
+                            {doc.file_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {getFileCategoryLabel(category)}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline ml-1">Previous</span>
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum: number;
+                        
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="w-9 h-9 p-0"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                      
+                      {totalPages > 5 && currentPage < totalPages - 2 && (
+                        <>
+                          <span className="text-muted-foreground px-1">...</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(totalPages)}
+                            className="w-9 h-9 p-0"
+                          >
+                            {totalPages}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      <span className="hidden sm:inline mr-1">Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </Card>
 
+          {/* Document Viewer */}
           {selectedDocument && (
             <Card className="overflow-hidden border-2 shadow-xl">
               <DocumentViewer
