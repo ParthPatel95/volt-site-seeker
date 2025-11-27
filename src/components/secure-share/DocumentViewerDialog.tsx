@@ -329,6 +329,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                   <img
                     src={documentUrl}
                     alt={document?.name}
+                    crossOrigin="anonymous"
                     className="max-w-full max-h-full object-contain"
                     style={{ transform: `scale(${scale})` }}
                     onContextMenu={(e) => !canDownload && e.preventDefault()}
@@ -339,6 +340,8 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                   <video
                     src={documentUrl}
                     controls
+                    playsInline
+                    crossOrigin="anonymous"
                     controlsList={!canDownload ? 'nodownload' : undefined}
                     onContextMenu={(e) => !canDownload && e.preventDefault()}
                     className="max-w-full max-h-full rounded-lg"
@@ -353,6 +356,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     <audio
                       src={documentUrl}
                       controls
+                      crossOrigin="anonymous"
                       controlsList={!canDownload ? 'nodownload' : undefined}
                       onContextMenu={(e) => !canDownload && e.preventDefault()}
                       className="w-full"
@@ -365,6 +369,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                 <div className="h-full w-full p-4">
                   <iframe
                     src={documentUrl}
+                    sandbox="allow-same-origin"
                     className="w-full h-full bg-card rounded-lg border border-border"
                     title="Text document preview"
                   />
