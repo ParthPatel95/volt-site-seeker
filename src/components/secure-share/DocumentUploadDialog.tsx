@@ -66,9 +66,84 @@ export function DocumentUploadDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // If uploading a folder, create folder structure first
+      let folderMap = new Map<string, string>(); // path -> folder_id
+      
+      if (uploadMode === 'folder' && files.length > 0) {
+        // Extract unique folder paths from all files
+        const folderPaths = new Set<string>();
+        files.forEach(file => {
+          const webkitPath = (file as any).webkitRelativePath;
+          if (webkitPath) {
+            const pathParts = webkitPath.split('/');
+            // Build all parent folder paths
+            for (let i = 1; i < pathParts.length; i++) {
+              folderPaths.add(pathParts.slice(0, i).join('/'));
+            }
+          }
+        });
+
+        // Sort paths by depth (shortest first) to create parent folders before children
+        const sortedPaths = Array.from(folderPaths).sort((a, b) => {
+          return a.split('/').length - b.split('/').length;
+        });
+
+        // Create folders in order
+        for (const folderPath of sortedPaths) {
+          const pathParts = folderPath.split('/');
+          const folderName = pathParts[pathParts.length - 1];
+          const parentPath = pathParts.slice(0, -1).join('/');
+          const parentFolderId = parentPath ? folderMap.get(parentPath) : currentFolderId;
+
+          // Check if folder already exists with same name and parent
+          const { data: existingFolder } = await supabase
+            .from('secure_folders')
+            .select('id')
+            .eq('name', folderName)
+            .eq('created_by', user.id)
+            .eq('is_active', true)
+            .eq('parent_folder_id', parentFolderId || null)
+            .maybeSingle();
+
+          if (existingFolder) {
+            folderMap.set(folderPath, existingFolder.id);
+          } else {
+            // Create new folder
+            const { data: newFolder, error: folderError } = await supabase
+              .from('secure_folders')
+              .insert([{
+                created_by: user.id,
+                name: folderName,
+                parent_folder_id: parentFolderId || null,
+              }])
+              .select('id')
+              .single();
+
+            if (folderError) throw folderError;
+            if (newFolder) {
+              folderMap.set(folderPath, newFolder.id);
+            }
+          }
+        }
+      }
+
+      // Upload files
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         setUploadProgress({ current: i + 1, total: files.length });
+
+        // Determine folder_id based on file path
+        let fileFolderId = currentFolderId;
+        if (uploadMode === 'folder') {
+          const webkitPath = (file as any).webkitRelativePath;
+          if (webkitPath) {
+            const pathParts = webkitPath.split('/');
+            if (pathParts.length > 1) {
+              const folderPath = pathParts.slice(0, -1).join('/');
+              fileFolderId = folderMap.get(folderPath) || currentFolderId;
+            }
+          }
+        }
 
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
@@ -93,7 +168,7 @@ export function DocumentUploadDialog({
           category,
           description: description || null,
           tags: tags ? tags.split(',').map(t => t.trim()) : [],
-          folder_id: currentFolderId,
+          folder_id: fileFolderId,
         };
 
         const { error: dbError } = await supabase
