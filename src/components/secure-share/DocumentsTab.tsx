@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Upload, Plus, FileText, Download, Link as LinkIcon, Trash2, ExternalLink, Eye, Search, Grid, List, Filter, MoreVertical, Calendar, Tag, FolderPlus, ChevronRight, Home, FolderInput } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Upload, Plus, FileText, Download, Link as LinkIcon, Trash2, ExternalLink, Eye, Search, Grid, List, Filter, MoreVertical, Calendar, Tag, FolderPlus, ChevronRight, Home, FolderInput, X } from 'lucide-react';
 import { DocumentUploadDialog } from './DocumentUploadDialog';
 import { CreateLinkDialog } from './CreateLinkDialog';
 import { DocumentViewerDialog } from './DocumentViewerDialog';
@@ -42,6 +43,7 @@ export function DocumentsTab() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('date');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Fetch folders
@@ -124,6 +126,52 @@ export function DocumentsTab() {
         description: 'Failed to delete document',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedDocumentIds.size === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('secure_documents')
+        .update({ is_active: false })
+        .in('id', Array.from(selectedDocumentIds));
+
+      if (error) throw error;
+
+      toast({
+        title: 'Documents deleted',
+        description: `Successfully deleted ${selectedDocumentIds.size} document${selectedDocumentIds.size > 1 ? 's' : ''}.`,
+      });
+      setSelectedDocumentIds(new Set());
+      refetch();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete documents',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const toggleDocumentSelection = (docId: string) => {
+    setSelectedDocumentIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(docId)) {
+        newSet.delete(docId);
+      } else {
+        newSet.add(docId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedDocumentIds.size === filteredDocuments.length) {
+      setSelectedDocumentIds(new Set());
+    } else {
+      setSelectedDocumentIds(new Set(filteredDocuments.map(doc => doc.id)));
     }
   };
 
@@ -256,6 +304,41 @@ export function DocumentsTab() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedDocumentIds.size > 0 && (
+        <Card className="p-4 border-watt-primary/30 bg-watt-primary/5 shadow-lg">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Checkbox 
+                checked={selectedDocumentIds.size === filteredDocuments.length}
+                onCheckedChange={toggleSelectAll}
+              />
+              <p className="text-sm font-medium">
+                {selectedDocumentIds.size} document{selectedDocumentIds.size > 1 ? 's' : ''} selected
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedDocumentIds(new Set())}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Clear
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete Selected
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Breadcrumb Navigation */}
       {folderPath.length > 1 && (
         <Card className="p-3 border-watt-primary/20">
@@ -294,15 +377,23 @@ export function DocumentsTab() {
       {/* Search and Filters */}
       <Card className="p-4 border-watt-primary/20 shadow-md">
         <div className="flex flex-col md:flex-row gap-3">
-          {/* Search Bar */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search documents..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 focus-visible:ring-watt-primary"
-            />
+          {/* Select All Checkbox + Search Bar */}
+          <div className="relative flex-1 flex items-center gap-3">
+            {filteredDocuments.length > 0 && (
+              <Checkbox 
+                checked={selectedDocumentIds.size === filteredDocuments.length && filteredDocuments.length > 0}
+                onCheckedChange={toggleSelectAll}
+              />
+            )}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search documents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 focus-visible:ring-watt-primary"
+              />
+            </div>
           </div>
 
           {/* Category Filter */}
@@ -408,7 +499,9 @@ export function DocumentsTab() {
                 {filteredDocuments.map((doc) => (
                   <Card 
                     key={doc.id} 
-                    className={`group overflow-hidden border-watt-primary/10 hover:border-watt-primary/30 hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-watt-primary/5 ${viewMode === 'list' ? 'flex flex-row' : 'flex flex-col'}`}
+                    className={`group overflow-hidden border-watt-primary/10 hover:border-watt-primary/30 hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-watt-primary/5 ${
+                      selectedDocumentIds.has(doc.id) ? 'ring-2 ring-watt-primary' : ''
+                    } ${viewMode === 'list' ? 'flex flex-row' : 'flex flex-col'}`}
                   >
                     {viewMode === 'grid' ? (
                       <>
@@ -419,6 +512,15 @@ export function DocumentsTab() {
                             fileType={doc.file_type}
                             storagePath={doc.storage_path}
                           />
+
+                          {/* Checkbox */}
+                          <div className="absolute top-2 right-2 z-10">
+                            <Checkbox
+                              checked={selectedDocumentIds.has(doc.id)}
+                              onCheckedChange={() => toggleDocumentSelection(doc.id)}
+                              className="bg-background/80 backdrop-blur-sm"
+                            />
+                          </div>
 
                           {/* Category Badge */}
                           <div className="absolute top-2 left-2">
@@ -561,6 +663,12 @@ export function DocumentsTab() {
                     ) : (
                       <>
                         {/* List View */}
+                        <div className="flex items-center gap-3 p-3 sm:p-4">
+                          <Checkbox
+                            checked={selectedDocumentIds.has(doc.id)}
+                            onCheckedChange={() => toggleDocumentSelection(doc.id)}
+                          />
+                        </div>
                         <div className="w-20 sm:w-24 h-20 sm:h-24 flex-shrink-0 bg-gradient-to-br from-muted/30 to-muted/50 relative overflow-hidden">
                           <DocumentThumbnail
                             fileUrl={doc.file_url}
