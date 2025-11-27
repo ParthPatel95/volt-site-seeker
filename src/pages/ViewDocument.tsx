@@ -552,7 +552,7 @@ export default function ViewDocument() {
 
           {/* Document Viewer */}
           <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
-            <Card className="overflow-hidden border-2 shadow-xl">
+            <Card className="overflow-hidden border-2 shadow-xl min-h-screen">
               <DocumentViewer
                 documentUrl={selectedDoc.file_url}
                 documentType={selectedDoc.file_type}
@@ -704,7 +704,7 @@ export default function ViewDocument() {
 
       {/* Document Viewer Container */}
       <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
-        <Card className="overflow-hidden border-2 shadow-xl">
+        <Card className="overflow-hidden border-2 shadow-xl min-h-screen">
           <DocumentViewer
             documentUrl={linkData.document.file_url}
             documentType={linkData.document.file_type}
