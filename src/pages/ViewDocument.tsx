@@ -453,15 +453,29 @@ export default function ViewDocument() {
 
   // Check NDA requirement
   if (linkData.nda_required && !ndaSigned && !linkData.nda_signed_at) {
-    const documentName = linkData.document_id 
-      ? linkData.document.file_name 
-      : linkData.bundle.name;
-      
+    const documentName = linkData.document_id
+      ? linkData.document.file_name
+      : linkData.bundle?.name || linkData.folder?.name || 'Shared folder';
+
     return (
       <NDASignature
         linkId={linkData.id}
         documentName={documentName}
         onSigned={() => setNdaSigned(true)}
+      />
+    );
+  }
+
+  // Folder viewer
+  if (linkData.folder_id) {
+    const folderContents = (linkData as any).folder_contents;
+
+    return (
+      <FolderViewer
+        token={token!}
+        linkData={linkData}
+        folderContents={folderContents}
+        viewerData={viewerData}
       />
     );
   }
@@ -696,3 +710,209 @@ export default function ViewDocument() {
     </div>
   );
 }
+
+// Folder viewer for shared folder links
+interface FolderViewerProps {
+  token: string;
+  linkData: any;
+  folderContents: {
+    rootFolder: any;
+    folders: any[];
+    documents: any[];
+  } | null;
+  viewerData: { name: string; email: string } | null;
+}
+
+function FolderViewer({ token, linkData, folderContents, viewerData }: FolderViewerProps) {
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(folderContents?.rootFolder?.id ?? null);
+  const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
+
+  if (!folderContents || !folderContents.rootFolder) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <p className="text-muted-foreground mb-4">Folder contents are not available for this link.</p>
+          <Button onClick={() => window.location.reload()}>Reload</Button>
+        </Card>
+      </div>
+    );
+  }
+
+  const { rootFolder, folders, documents } = folderContents;
+  const allFolders = [rootFolder, ...(folders || [])];
+
+  const foldersByParent = new Map<string | null, any[]>();
+  allFolders.forEach((folder) => {
+    const parentId = folder.parent_folder_id || null;
+    if (!foldersByParent.has(parentId)) {
+      foldersByParent.set(parentId, []);
+    }
+    foldersByParent.get(parentId)!.push(folder);
+  });
+
+  const documentsByFolder = new Map<string, any[]>();
+  (documents || []).forEach((doc) => {
+    if (!doc.folder_id) return;
+    if (!documentsByFolder.has(doc.folder_id)) {
+      documentsByFolder.set(doc.folder_id, []);
+    }
+    documentsByFolder.get(doc.folder_id)!.push(doc);
+  });
+
+  const currentFolderId = selectedFolderId || rootFolder.id;
+  const currentDocuments = documentsByFolder.get(currentFolderId) || [];
+
+  // Initialize selected document when folder changes
+  useEffect(() => {
+    if (currentDocuments.length > 0) {
+      setSelectedDocument((prev) => prev && currentDocuments.some((d) => d.id === prev.id) ? prev : currentDocuments[0]);
+    }
+  }, [currentFolderId, JSON.stringify(currentDocuments)]);
+
+  const renderFolderTree = (folderId: string | null, depth = 0) => {
+    const children = foldersByParent.get(folderId) || [];
+
+    return children.map((folder) => {
+      const isActive = folder.id === currentFolderId;
+      const docsInFolder = documentsByFolder.get(folder.id) || [];
+
+      return (
+        <div key={folder.id} className="mb-1">
+          <button
+            className={
+              `w-full flex items-center justify-between text-left text-sm px-2 py-1.5 rounded-md transition-colors ` +
+              (isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')
+            }
+            style={{ paddingLeft: `${depth * 0.75 + 0.5}rem` }}
+            onClick={() => setSelectedFolderId(folder.id)}
+          >
+            <span className="truncate">{folder.name || 'Untitled folder'}</span>
+            <span className="ml-2 text-xs opacity-80">{docsInFolder.length}</span>
+          </button>
+          {renderFolderTree(folder.id, depth + 1)}
+        </div>
+      );
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Header */}
+      <div className="border-b bg-card/80 backdrop-blur-lg shadow-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
+          <div className="flex items-start gap-3 md:gap-4 flex-1 min-w-0">
+            <div className="p-2 md:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm shrink-0">
+              <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg md:text-2xl font-bold mb-1 md:mb-1.5 truncate">{rootFolder.name || 'Shared Folder'}</h1>
+              <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
+                <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                  <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                  {(documents || []).length} {(documents || []).length === 1 ? 'document' : 'documents'}
+                </span>
+                <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                  <Lock className="w-3 h-3 md:w-4 md:h-4" />
+                  {linkData.access_level === 'download' ? 'Download' : 'View Only'}
+                </span>
+                {linkData.expires_at && (
+                  <span className="flex items-center gap-1 md:gap-1.5 whitespace-nowrap">
+                    <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">Expires </span>
+                    {new Date(linkData.expires_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main layout */}
+      <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl flex flex-col lg:flex-row gap-6">
+        {/* Folder tree */}
+        <div className="lg:w-64 lg:flex-shrink-0">
+          <Card className="p-3 md:p-4 h-full">
+            <h2 className="text-sm font-semibold mb-3 md:mb-4 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Folder Structure
+            </h2>
+            <div className="space-y-1 max-h-[60vh] overflow-auto pr-1">
+              {renderFolderTree(null)}
+            </div>
+          </Card>
+        </div>
+
+        {/* Documents list & viewer */}
+        <div className="flex-1 flex flex-col gap-4">
+          <Card className="p-3 md:p-4">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <div>
+                <h2 className="text-sm font-semibold">Documents in this folder</h2>
+                <p className="text-xs text-muted-foreground">
+                  {currentDocuments.length} {currentDocuments.length === 1 ? 'document' : 'documents'} in selected folder
+                </p>
+              </div>
+            </div>
+
+            {currentDocuments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No documents in this folder.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
+                {currentDocuments.map((doc: any) => {
+                  const isActive = selectedDocument?.id === doc.id;
+                  const isPdf = doc.file_type === 'application/pdf' || doc.file_name?.endsWith('.pdf');
+
+                  return (
+                    <button
+                      key={doc.id}
+                      onClick={() => setSelectedDocument(doc)}
+                      className={
+                        'text-left group rounded-lg border p-3 md:p-4 transition-all ' +
+                        (isActive
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:border-primary/40 hover:bg-muted/40')
+                      }
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-md bg-muted/60 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" title={doc.file_name}>
+                            {doc.file_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {isPdf ? 'PDF Document' : doc.file_type || 'File'}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          {selectedDocument && (
+            <Card className="overflow-hidden border-2 shadow-xl">
+              <DocumentViewer
+                documentUrl={selectedDocument.file_url}
+                documentType={selectedDocument.file_type}
+                accessLevel={linkData.access_level}
+                watermarkEnabled={linkData.watermark_enabled}
+                recipientEmail={linkData.recipient_email}
+                linkId={linkData.id}
+                documentId={selectedDocument.id}
+                enableTracking={true}
+                viewerName={viewerData?.name}
+                viewerEmail={viewerData?.email}
+              />
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
