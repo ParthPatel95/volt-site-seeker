@@ -52,11 +52,18 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    // Return signed URL with enhanced CORS headers for iOS Safari compatibility
     return new Response(
       JSON.stringify({ signedUrl: data.signedUrl }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+          "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition"
+        },
       }
     );
   } catch (error: any) {

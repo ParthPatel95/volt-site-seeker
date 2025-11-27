@@ -517,6 +517,7 @@ export function DocumentViewer({
                 <img
                   src={documentUrl}
                   alt="Document preview"
+                  crossOrigin="anonymous"
                   className="max-w-full max-h-full object-contain"
                   style={{ 
                     transform: `scale(${zoom}) rotate(${rotation}deg)`,
@@ -530,6 +531,8 @@ export function DocumentViewer({
                 <video
                   src={documentUrl}
                   controls
+                  playsInline
+                  crossOrigin="anonymous"
                   controlsList={!canDownload ? 'nodownload' : undefined}
                   onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
                   className="max-w-full max-h-[80vh] rounded-lg shadow-lg"
@@ -544,6 +547,7 @@ export function DocumentViewer({
                   <audio
                     src={documentUrl}
                     controls
+                    crossOrigin="anonymous"
                     controlsList={!canDownload ? 'nodownload' : undefined}
                     onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
                     className="w-full"
@@ -557,6 +561,7 @@ export function DocumentViewer({
                 <iframe
                   src={documentUrl}
                   className="w-full h-[70vh] bg-card rounded-lg border border-border"
+                  sandbox="allow-same-origin"
                   style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
                   title="Text document preview"
                 />
