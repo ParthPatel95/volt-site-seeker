@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Shield, Lock, Eye, Clock, FileText, ArrowLeft, Search, Filter, ChevronLeft, ChevronRight, Image, Video, Music, File } from 'lucide-react';
+import { Shield, Lock, Eye, Clock, FileText, ArrowLeft, Search, Filter, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image, Video, Music, File } from 'lucide-react';
 import { PasswordProtection } from '@/components/secure-share/viewer/PasswordProtection';
 import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
@@ -792,6 +792,9 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   const [sortBy, setSortBy] = useState<string>('name-asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
+  
+  // Collapsible file list state
+  const [isFileListCollapsed, setIsFileListCollapsed] = useState(false);
 
   if (!folderContents || !folderContents.rootFolder) {
     return (
@@ -994,61 +997,108 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
         {/* Documents list & viewer */}
         <div className="flex-1 flex flex-col lg:flex-row gap-4">
           {/* Documents Grid */}
-          <Card className="p-3 md:p-4 lg:w-1/3 xl:w-2/5 flex flex-col max-h-[calc(100vh-12rem)] overflow-hidden">
-            {/* Search and Filter Controls */}
-            <div className="space-y-3 md:space-y-4 mb-4 flex-shrink-0">
-              <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search files..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
+          <Card className={`p-3 md:p-4 flex flex-col max-h-[calc(100vh-12rem)] overflow-hidden transition-all ${
+            isFileListCollapsed ? 'lg:w-auto' : 'lg:w-1/3 xl:w-2/5'
+          }`}>
+            {/* Collapsed Toggle Bar */}
+            {isFileListCollapsed && selectedDocument && (
+              <button
+                onClick={() => setIsFileListCollapsed(false)}
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors mb-4"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    {(() => {
+                      const category = getFileCategory(selectedDocument.file_type);
+                      const IconComponent = getFileIcon(category);
+                      return <IconComponent className="w-4 h-4 text-primary" />;
+                    })()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" title={selectedDocument.file_name}>
+                      {selectedDocument.file_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {filteredDocuments.length} {filteredDocuments.length === 1 ? 'file' : 'files'}
+                    </p>
+                  </div>
                 </div>
-                
-                {/* Sort Dropdown */}
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                    <SelectItem value="date-desc">Newest First</SelectItem>
-                    <SelectItem value="date-asc">Oldest First</SelectItem>
-                    <SelectItem value="type">File Type</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <ChevronDown className="w-5 h-5 text-primary flex-shrink-0" />
+              </button>
+            )}
+            
+            {/* Search and Filter Controls */}
+            {!isFileListCollapsed && (
+              <>
+                <div className="space-y-3 md:space-y-4 mb-4 flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+                    {/* Search Bar */}
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search files..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    
+                    {/* Sort Dropdown */}
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                        <SelectItem value="date-desc">Newest First</SelectItem>
+                        <SelectItem value="date-asc">Oldest First</SelectItem>
+                        <SelectItem value="type">File Type</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* File Type Filters */}
-              <div className="flex flex-wrap gap-2">
-                {['all', 'pdf', 'image', 'video', 'audio', 'document', 'other'].map((type) => {
-                  const count = type === 'all' ? allCurrentDocuments.length : (fileTypeCounts[type] || 0);
-                  const isActive = selectedFileType === type;
-                  
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => setSelectedFileType(type)}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                      }`}
-                    >
-                      {getFileCategoryLabel(type)} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                  {/* File Type Filters */}
+                  <div className="flex flex-wrap gap-2">
+                    {['all', 'pdf', 'image', 'video', 'audio', 'document', 'other'].map((type) => {
+                      const count = type === 'all' ? allCurrentDocuments.length : (fileTypeCounts[type] || 0);
+                      const isActive = selectedFileType === type;
+                      
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => setSelectedFileType(type)}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          }`}
+                        >
+                          {getFileCategoryLabel(type)} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Collapse Button */}
+                <div className="flex justify-end mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsFileListCollapsed(true)}
+                    className="text-xs"
+                  >
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Collapse
+                  </Button>
+                </div>
+              </>
+            )}
 
             {/* Document Count and Results Info */}
-            <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b flex-shrink-0">
+            {!isFileListCollapsed && (
+              <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b flex-shrink-0">
               <div>
                 <h2 className="text-sm font-semibold">Documents</h2>
                 <p className="text-xs text-muted-foreground">
@@ -1064,11 +1114,13 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                 <p className="text-xs text-muted-foreground">
                   Page {currentPage} of {totalPages}
                 </p>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Scrollable Document List */}
-            <div className="flex-1 overflow-y-auto">
+            {!isFileListCollapsed && (
+              <div className="flex-1 overflow-y-auto">
               {/* Empty State */}
               {filteredDocuments.length === 0 ? (
                 <div className="text-center py-8 md:py-12">
@@ -1106,7 +1158,10 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                       return (
                         <button
                           key={doc.id}
-                          onClick={() => setSelectedDocument(doc)}
+                          onClick={() => {
+                            setSelectedDocument(doc);
+                            setIsFileListCollapsed(true);
+                          }}
                           className={`w-full text-left group rounded-lg border p-2.5 transition-all hover:shadow-md flex items-center gap-3 ${
                             isActive
                               ? 'border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20'
@@ -1205,9 +1260,10 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                       </Button>
                     </div>
                   )}
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* Document Viewer */}
