@@ -998,7 +998,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
         <div className="flex-1 flex flex-col gap-4">
           {/* Documents Grid */}
           <Card className={`p-3 md:p-4 flex flex-col overflow-hidden transition-all ${
-            isFileListCollapsed ? 'h-auto' : 'max-h-96'
+            isFileListCollapsed ? 'h-auto' : 'max-h-[500px]'
           }`}>
             {/* Collapsed Toggle Bar */}
             {isFileListCollapsed && selectedDocument && (
