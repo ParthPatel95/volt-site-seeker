@@ -1,4 +1,4 @@
-import { Folder, MoreVertical, Trash2, Edit, FolderOpen } from 'lucide-react';
+import { Folder, MoreVertical, Trash2, Edit, FolderOpen, Link as LinkIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,9 +21,10 @@ interface FolderCardProps {
   onOpen: () => void;
   onDelete: () => void;
   onRename?: () => void;
+  onCreateLink?: () => void;
 }
 
-export function FolderCard({ folder, onOpen, onDelete, onRename }: FolderCardProps) {
+export function FolderCard({ folder, onOpen, onDelete, onRename, onCreateLink }: FolderCardProps) {
   return (
     <Card
       className="group relative overflow-hidden border-watt-primary/10 hover:border-watt-primary/30 hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-watt-primary/5 cursor-pointer"
@@ -61,6 +62,15 @@ export function FolderCard({ folder, onOpen, onDelete, onRename }: FolderCardPro
                 }}>
                   <Edit className="w-4 h-4 mr-2" />
                   Rename
+                </DropdownMenuItem>
+              )}
+              {onCreateLink && (
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateLink();
+                }}>
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Create Link
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem

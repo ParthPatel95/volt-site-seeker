@@ -37,6 +37,7 @@ export function DocumentsTab() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [moveFolderDialogOpen, setMoveFolderDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string; storage_path: string; file_type: string; folder_id?: string | null } | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [folderPath, setFolderPath] = useState<{ id: string | null; name: string }[]>([{ id: null, name: 'All Documents' }]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,15 +97,34 @@ export function DocumentsTab() {
     return folders.filter(f => f.parent_folder_id === currentFolderId);
   }, [folders, currentFolderId]);
 
-  // Get folder with document count
-  const foldersWithCounts = useMemo(() => {
-    if (!currentFolders || !documents) return [];
+  // Helper function to get all descendant folder IDs
+  const getDescendantFolderIds = (folderId: string, allFolders: typeof folders): string[] => {
+    const descendants: string[] = [folderId];
+    const children = allFolders?.filter(f => f.parent_folder_id === folderId) || [];
     
-    return currentFolders.map(folder => ({
-      ...folder,
-      document_count: documents.filter(d => d.folder_id === folder.id).length,
-    }));
-  }, [currentFolders, documents]);
+    for (const child of children) {
+      descendants.push(...getDescendantFolderIds(child.id, allFolders));
+    }
+    
+    return descendants;
+  };
+
+  // Get folder with document count (includes nested subfolders)
+  const foldersWithCounts = useMemo(() => {
+    if (!currentFolders || !documents || !folders) return [];
+    
+    return currentFolders.map(folder => {
+      const folderIds = getDescendantFolderIds(folder.id, folders);
+      const document_count = documents.filter(d => 
+        d.folder_id && folderIds.includes(d.folder_id)
+      ).length;
+      
+      return {
+        ...folder,
+        document_count,
+      };
+    });
+  }, [currentFolders, documents, folders]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -480,6 +500,10 @@ export function DocumentsTab() {
                     folder={folder}
                     onOpen={() => handleOpenFolder(folder.id, folder.name)}
                     onDelete={() => handleDeleteFolder(folder.id)}
+                    onCreateLink={() => {
+                      setSelectedFolder({ id: folder.id, name: folder.name });
+                      setCreateLinkDialogOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -828,7 +852,7 @@ export function DocumentsTab() {
       {selectedDocument && (
         <>
           <CreateLinkDialog
-            open={createLinkDialogOpen}
+            open={createLinkDialogOpen && !selectedFolder}
             onOpenChange={setCreateLinkDialogOpen}
             documentId={selectedDocument.id}
             documentName={selectedDocument.name}
@@ -850,6 +874,19 @@ export function DocumentsTab() {
             currentFolderId={selectedDocument.folder_id}
           />
         </>
+      )}
+
+      {selectedFolder && (
+        <CreateLinkDialog
+          open={createLinkDialogOpen && !!selectedFolder}
+          onOpenChange={(open) => {
+            setCreateLinkDialogOpen(open);
+            if (!open) setSelectedFolder(null);
+          }}
+          folderId={selectedFolder.id}
+          documentName={selectedFolder.name}
+          onSuccess={() => refetch()}
+        />
       )}
     </div>
   );

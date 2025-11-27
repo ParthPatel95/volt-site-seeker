@@ -4320,6 +4320,7 @@ export type Database = {
           custom_branding: Json | null
           document_id: string | null
           expires_at: string | null
+          folder_id: string | null
           id: string
           last_accessed_at: string | null
           link_token: string
@@ -4345,6 +4346,7 @@ export type Database = {
           custom_branding?: Json | null
           document_id?: string | null
           expires_at?: string | null
+          folder_id?: string | null
           id?: string
           last_accessed_at?: string | null
           link_token: string
@@ -4370,6 +4372,7 @@ export type Database = {
           custom_branding?: Json | null
           document_id?: string | null
           expires_at?: string | null
+          folder_id?: string | null
           id?: string
           last_accessed_at?: string | null
           link_token?: string
@@ -4397,6 +4400,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "secure_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secure_links_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "secure_folders"
             referencedColumns: ["id"]
           },
         ]

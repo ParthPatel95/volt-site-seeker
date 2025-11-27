@@ -25,6 +25,7 @@ interface CreateLinkDialogProps {
   onOpenChange: (open: boolean) => void;
   documentId?: string;
   bundleId?: string;
+  folderId?: string;
   documentName: string;
   onSuccess: () => void;
 }
@@ -34,6 +35,7 @@ export function CreateLinkDialog({
   onOpenChange,
   documentId,
   bundleId,
+  folderId,
   documentName,
   onSuccess,
 }: CreateLinkDialogProps) {
@@ -80,6 +82,7 @@ export function CreateLinkDialog({
       const linkData: any = {
         document_id: documentId || null,
         bundle_id: bundleId || null,
+        folder_id: folderId || null,
         link_token: linkToken,
         created_by: user.id,
         recipient_email: recipientEmail || null,
