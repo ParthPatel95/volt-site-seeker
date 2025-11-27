@@ -749,6 +749,15 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   }
 
   const { rootFolder, folders, documents } = folderContents;
+  
+  console.log('[FolderViewer] Folder contents loaded:', {
+    rootFolder: rootFolder.name,
+    rootFolderId: rootFolder.id,
+    totalFolders: folders?.length || 0,
+    totalDocuments: documents?.length || 0,
+    documentFolderIds: documents?.map((d: any) => ({ name: d.file_name, folderId: d.folder_id })) || []
+  });
+  
   const allFolders = [rootFolder, ...(folders || [])];
 
   const foldersByParent = new Map<string | null, any[]>();
@@ -762,15 +771,33 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
 
   const documentsByFolder = new Map<string, any[]>();
   (documents || []).forEach((doc) => {
-    if (!doc.folder_id) return;
+    if (!doc.folder_id) {
+      console.warn('[FolderViewer] Document without folder_id:', doc.file_name);
+      return;
+    }
     if (!documentsByFolder.has(doc.folder_id)) {
       documentsByFolder.set(doc.folder_id, []);
     }
     documentsByFolder.get(doc.folder_id)!.push(doc);
   });
 
+  console.log('[FolderViewer] Documents organized by folder:', 
+    Array.from(documentsByFolder.entries()).map(([folderId, docs]) => ({
+      folderId,
+      folderName: allFolders.find(f => f.id === folderId)?.name || 'Unknown',
+      count: docs.length
+    }))
+  );
+
   const currentFolderId = selectedFolderId || rootFolder.id;
   const currentDocuments = documentsByFolder.get(currentFolderId) || [];
+  
+  console.log('[FolderViewer] Current selection:', {
+    selectedFolderId,
+    currentFolderId,
+    currentDocumentsCount: currentDocuments.length,
+    currentDocuments: currentDocuments.map((d: any) => d.file_name)
+  });
 
   // Initialize selected document when folder changes
   useEffect(() => {
@@ -866,7 +893,11 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
             </div>
 
             {currentDocuments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No documents in this folder.</p>
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground mb-2">No documents directly in this folder</p>
+                <p className="text-xs text-muted-foreground">Select a subfolder from the left to view its documents</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
                 {currentDocuments.map((doc: any) => {
