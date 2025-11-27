@@ -995,10 +995,10 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
         </div>
 
         {/* Documents list & viewer */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 flex flex-col gap-4">
           {/* Documents Grid */}
-          <Card className={`p-3 md:p-4 flex flex-col max-h-[calc(100vh-12rem)] overflow-hidden transition-all ${
-            isFileListCollapsed ? 'lg:w-auto' : 'lg:w-1/3 xl:w-2/5'
+          <Card className={`p-3 md:p-4 flex flex-col overflow-hidden transition-all ${
+            isFileListCollapsed ? 'h-auto' : 'max-h-96'
           }`}>
             {/* Collapsed Toggle Bar */}
             {isFileListCollapsed && selectedDocument && (
@@ -1267,7 +1267,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
           </Card>
 
           {/* Document Viewer */}
-          <div className="flex-1 lg:w-2/3 xl:w-3/5">
+          <div className="flex-1">
             {selectedDocument ? (
               <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-12rem)]">
                 <DocumentViewer
