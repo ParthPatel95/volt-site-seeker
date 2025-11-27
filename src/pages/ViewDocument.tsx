@@ -992,10 +992,11 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
         </div>
 
         {/* Documents list & viewer */}
-        <div className="flex-1 flex flex-col gap-4">
-          <Card className="p-3 md:p-4">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4">
+          {/* Documents Grid */}
+          <Card className="p-3 md:p-4 lg:w-1/3 xl:w-2/5 flex flex-col max-h-[calc(100vh-12rem)] overflow-hidden">
             {/* Search and Filter Controls */}
-            <div className="space-y-3 md:space-y-4 mb-4">
+            <div className="space-y-3 md:space-y-4 mb-4 flex-shrink-0">
               <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                 {/* Search Bar */}
                 <div className="relative flex-1">
@@ -1047,7 +1048,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
             </div>
 
             {/* Document Count and Results Info */}
-            <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b">
+            <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b flex-shrink-0">
               <div>
                 <h2 className="text-sm font-semibold">Documents</h2>
                 <p className="text-xs text-muted-foreground">
@@ -1066,165 +1067,175 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
               )}
             </div>
 
-            {/* Empty State */}
-            {filteredDocuments.length === 0 ? (
-              <div className="text-center py-8 md:py-12">
-                <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  {searchQuery || selectedFileType !== 'all' 
-                    ? 'No documents match your filters'
-                    : 'No documents in this folder'
-                  }
-                </p>
-                {(searchQuery || selectedFileType !== 'all') && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedFileType('all');
-                    }}
-                    className="mt-2"
-                  >
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* Document Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                  {paginatedDocuments.map((doc: any) => {
-                    const isActive = selectedDocument?.id === doc.id;
-                    const category = getFileCategory(doc.file_type);
-                    const IconComponent = getFileIcon(category);
-                    const isImage = category === 'image';
-
-                    return (
-                      <button
-                        key={doc.id}
-                        onClick={() => setSelectedDocument(doc)}
-                        className={`text-left group rounded-lg border p-3 transition-all hover:shadow-md ${
-                          isActive
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-border hover:border-primary/40 hover:bg-muted/40'
-                        }`}
-                      >
-                        {/* Thumbnail or Icon */}
-                        <div className="aspect-square rounded-md overflow-hidden bg-muted/60 mb-2 flex items-center justify-center">
-                          {isImage && doc.file_url ? (
-                            <img 
-                              src={doc.file_url} 
-                              alt={doc.file_name}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <IconComponent className="w-8 h-8 text-muted-foreground" />
-                          )}
-                        </div>
-                        
-                        {/* File Info */}
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium truncate" title={doc.file_name}>
-                            {doc.file_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {getFileCategoryLabel(category)}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
+            {/* Scrollable Document List */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Empty State */}
+              {filteredDocuments.length === 0 ? (
+                <div className="text-center py-8 md:py-12">
+                  <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {searchQuery || selectedFileType !== 'all' 
+                      ? 'No documents match your filters'
+                      : 'No documents in this folder'
+                    }
+                  </p>
+                  {(searchQuery || selectedFileType !== 'all') && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedFileType('all');
+                      }}
+                      className="mt-2"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
+              ) : (
+                <>
+                  {/* Document List - Compact for better viewing */}
+                  <div className="space-y-2 pr-2">
+                    {paginatedDocuments.map((doc: any) => {
+                      const isActive = selectedDocument?.id === doc.id;
+                      const category = getFileCategory(doc.file_type);
+                      const IconComponent = getFileIcon(category);
+                      const isImage = category === 'image';
 
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span className="hidden sm:inline ml-1">Previous</span>
-                    </Button>
-                    
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum: number;
-                        
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNum)}
-                            className="w-9 h-9 p-0"
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                      
-                      {totalPages > 5 && currentPage < totalPages - 2 && (
-                        <>
-                          <span className="text-muted-foreground px-1">...</span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage(totalPages)}
-                            className="w-9 h-9 p-0"
-                          >
-                            {totalPages}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      <span className="hidden sm:inline mr-1">Next</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+                      return (
+                        <button
+                          key={doc.id}
+                          onClick={() => setSelectedDocument(doc)}
+                          className={`w-full text-left group rounded-lg border p-2.5 transition-all hover:shadow-md flex items-center gap-3 ${
+                            isActive
+                              ? 'border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20'
+                              : 'border-border hover:border-primary/40 hover:bg-muted/40'
+                          }`}
+                        >
+                          {/* Thumbnail or Icon */}
+                          <div className="w-12 h-12 rounded overflow-hidden bg-muted/60 flex-shrink-0 flex items-center justify-center">
+                            {isImage && doc.file_url ? (
+                              <img 
+                                src={doc.file_url} 
+                                alt={doc.file_name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <IconComponent className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </div>
+                          
+                          {/* File Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate mb-0.5" title={doc.file_name}>
+                              {doc.file_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {getFileCategoryLabel(category)}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </>
-            )}
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum: number;
+                          
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="w-8 h-8 p-0 text-xs"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                        
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                          <>
+                            <span className="text-muted-foreground px-1 text-xs">...</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(totalPages)}
+                              className="w-8 h-8 p-0 text-xs"
+                            >
+                              {totalPages}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </Card>
 
           {/* Document Viewer */}
-          {selectedDocument && (
-            <Card className="overflow-hidden border-2 shadow-xl">
-              <DocumentViewer
-                documentUrl={selectedDocument.file_url}
-                documentType={selectedDocument.file_type}
-                accessLevel={linkData.access_level}
-                watermarkEnabled={linkData.watermark_enabled}
-                recipientEmail={linkData.recipient_email}
-                linkId={linkData.id}
-                documentId={selectedDocument.id}
-                enableTracking={true}
-                viewerName={viewerData?.name}
-                viewerEmail={viewerData?.email}
-              />
-            </Card>
-          )}
+          <div className="flex-1 lg:w-2/3 xl:w-3/5">
+            {selectedDocument ? (
+              <Card className="overflow-hidden border-2 shadow-xl h-[calc(100vh-12rem)]">
+                <DocumentViewer
+                  documentUrl={selectedDocument.file_url}
+                  documentType={selectedDocument.file_type}
+                  accessLevel={linkData.access_level}
+                  watermarkEnabled={linkData.watermark_enabled}
+                  recipientEmail={linkData.recipient_email}
+                  linkId={linkData.id}
+                  documentId={selectedDocument.id}
+                  enableTracking={true}
+                  viewerName={viewerData?.name}
+                  viewerEmail={viewerData?.email}
+                />
+              </Card>
+            ) : (
+              <Card className="p-8 h-[calc(100vh-12rem)] flex items-center justify-center">
+                <div className="text-center">
+                  <FileText className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+                  <p className="text-muted-foreground">Select a document to preview</p>
+                </div>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>
