@@ -308,7 +308,7 @@ export function DocumentViewer({
   }, [isPdf, numPages, pageNumber]);
 
   return (
-    <div className="w-full min-h-screen flex flex-col">
+    <div className="w-full h-full flex flex-col">
       <div className={`bg-card flex-1 flex flex-col ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
         {/* Controls */}
         <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
@@ -397,8 +397,8 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <ScrollArea className="flex-1 min-h-[800px]" ref={scrollAreaRef}>
-          <div className="relative bg-muted/20 min-h-full flex items-center justify-center p-4">
+        <ScrollArea className="flex-1" ref={scrollAreaRef}>
+          <div className="relative bg-muted/20 flex justify-center items-start pt-4 p-4">
             {/* Floating Navigation Arrows */}
             {isPdf && numPages > 1 && (
               <>
