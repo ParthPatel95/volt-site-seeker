@@ -749,15 +749,6 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   }
 
   const { rootFolder, folders, documents } = folderContents;
-  
-  console.log('[FolderViewer] Folder contents loaded:', {
-    rootFolder: rootFolder.name,
-    rootFolderId: rootFolder.id,
-    totalFolders: folders?.length || 0,
-    totalDocuments: documents?.length || 0,
-    documentFolderIds: documents?.map((d: any) => ({ name: d.file_name, folderId: d.folder_id })) || []
-  });
-  
   const allFolders = [rootFolder, ...(folders || [])];
 
   const foldersByParent = new Map<string | null, any[]>();
@@ -771,64 +762,77 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
 
   const documentsByFolder = new Map<string, any[]>();
   (documents || []).forEach((doc) => {
-    if (!doc.folder_id) {
-      console.warn('[FolderViewer] Document without folder_id:', doc.file_name);
-      return;
-    }
+    if (!doc.folder_id) return;
     if (!documentsByFolder.has(doc.folder_id)) {
       documentsByFolder.set(doc.folder_id, []);
     }
     documentsByFolder.get(doc.folder_id)!.push(doc);
   });
 
-  console.log('[FolderViewer] Documents organized by folder:', 
-    Array.from(documentsByFolder.entries()).map(([folderId, docs]) => ({
-      folderId,
-      folderName: allFolders.find(f => f.id === folderId)?.name || 'Unknown',
-      count: docs.length
-    }))
-  );
+  // Helper to get all descendant folder IDs for a given folder
+  const descendantMap = new Map<string, string[]>();
+  const getDescendantFolderIds = (folderId: string): string[] => {
+    if (descendantMap.has(folderId)) return descendantMap.get(folderId)!;
+
+    const children = foldersByParent.get(folderId) || [];
+    const childIds: string[] = [];
+
+    for (const child of children) {
+      childIds.push(child.id);
+      const childDescendants = getDescendantFolderIds(child.id);
+      childIds.push(...childDescendants);
+    }
+
+    const uniqueIds = Array.from(new Set(childIds));
+    descendantMap.set(folderId, uniqueIds);
+    return uniqueIds;
+  };
 
   const currentFolderId = selectedFolderId || rootFolder.id;
-  const currentDocuments = documentsByFolder.get(currentFolderId) || [];
-  
-  console.log('[FolderViewer] Current selection:', {
-    selectedFolderId,
-    currentFolderId,
-    currentDocumentsCount: currentDocuments.length,
-    currentDocuments: currentDocuments.map((d: any) => d.file_name)
-  });
+  const currentFolderIds = [currentFolderId, ...getDescendantFolderIds(currentFolderId)];
+  const currentDocuments = currentFolderIds.flatMap((id) => documentsByFolder.get(id) || []);
 
   // Initialize selected document when folder changes
   useEffect(() => {
     if (currentDocuments.length > 0) {
-      setSelectedDocument((prev) => prev && currentDocuments.some((d) => d.id === prev.id) ? prev : currentDocuments[0]);
+      setSelectedDocument((prev) =>
+        prev && currentDocuments.some((d) => d.id === prev.id)
+          ? prev
+          : currentDocuments[0]
+      );
+    } else {
+      setSelectedDocument(null);
     }
-  }, [currentFolderId, JSON.stringify(currentDocuments)]);
+  }, [currentFolderId, currentDocuments.length]);
 
   const renderFolderTree = (folderId: string | null, depth = 0) => {
     const children = foldersByParent.get(folderId) || [];
 
     return children.map((folder) => {
-      const isActive = folder.id === currentFolderId;
-      const docsInFolder = documentsByFolder.get(folder.id) || [];
+    const isActive = folder.id === currentFolderId;
+    const descendantIds = getDescendantFolderIds(folder.id);
+    const allFolderIds = [folder.id, ...descendantIds];
+    const docsInFolderCount = allFolderIds.reduce(
+      (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
+      0
+    );
 
-      return (
-        <div key={folder.id} className="mb-1">
-          <button
-            className={
-              `w-full flex items-center justify-between text-left text-sm px-2 py-1.5 rounded-md transition-colors ` +
-              (isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')
-            }
-            style={{ paddingLeft: `${depth * 0.75 + 0.5}rem` }}
-            onClick={() => setSelectedFolderId(folder.id)}
-          >
-            <span className="truncate">{folder.name || 'Untitled folder'}</span>
-            <span className="ml-2 text-xs opacity-80">{docsInFolder.length}</span>
-          </button>
-          {renderFolderTree(folder.id, depth + 1)}
-        </div>
-      );
+    return (
+      <div key={folder.id} className="mb-1">
+        <button
+          className={
+            `w-full flex items-center justify-between text-left text-sm px-2 py-1.5 rounded-md transition-colors ` +
+            (isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')
+          }
+          style={{ paddingLeft: `${depth * 0.75 + 0.5}rem` }}
+          onClick={() => setSelectedFolderId(folder.id)}
+        >
+          <span className="truncate">{folder.name || 'Untitled folder'}</span>
+          <span className="ml-2 text-xs opacity-80">{docsInFolderCount}</span>
+        </button>
+        {renderFolderTree(folder.id, depth + 1)}
+      </div>
+    );
     });
   };
 
