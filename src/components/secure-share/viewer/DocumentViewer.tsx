@@ -42,6 +42,8 @@ export function DocumentViewer({
   const [pageNumber, setPageNumber] = useState(1);
   const [rotation, setRotation] = useState(0);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   
   // Detect iOS for native PDF viewer fallback
@@ -288,31 +290,22 @@ export function DocumentViewer({
     };
   }, [enableTracking, linkId, documentId, trackScrollDepth]);
 
-  // Keyboard navigation for pages
+  // Track container width so PDF fits within the viewer column (not full window)
   useEffect(() => {
-    if (!isPdf || numPages === 0) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle if not typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      if (e.key === 'ArrowLeft' && pageNumber > 1) {
-        e.preventDefault();
-        setPageNumber(prev => Math.max(prev - 1, 1));
-      } else if (e.key === 'ArrowRight' && pageNumber < numPages) {
-        e.preventDefault();
-        setPageNumber(prev => Math.min(prev + 1, numPages));
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isPdf, numPages, pageNumber]);
+  const pageWidth = containerWidth
+    ? Math.min(containerWidth - 32, 1200)
+    : Math.min(window.innerWidth - 120, 1200);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -404,8 +397,8 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <ScrollArea className="flex-1 overscroll-contain" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="relative bg-muted/20 flex justify-center items-start pt-2 sm:pt-4 p-2 sm:p-4 min-h-full overflow-x-hidden max-w-full">
+        <ScrollArea className="flex-1 overscroll-contain w-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div ref={containerRef} className="relative bg-muted/20 flex justify-center items-start pt-2 sm:pt-4 p-2 sm:p-4 min-h-full overflow-x-hidden max-w-full">
             {/* Floating Navigation Arrows */}
             {isPdf && numPages > 1 && (
               <>
@@ -504,7 +497,7 @@ export function DocumentViewer({
                   >
                     <Page
                       pageNumber={pageNumber}
-                      width={Math.min(window.innerWidth - 120, 1200)}
+                      width={pageWidth}
                       scale={isIOS ? Math.min(zoom, 1.5) : zoom}
                       rotate={rotation}
                       renderTextLayer={false}
