@@ -1058,40 +1058,40 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                     </Select>
                   </div>
 
-                  {/* File Type Filters */}
-                  <div className="flex flex-wrap gap-2">
-                    {['all', 'pdf', 'image', 'video', 'audio', 'document', 'other'].map((type) => {
-                      const count = type === 'all' ? allCurrentDocuments.length : (fileTypeCounts[type] || 0);
-                      const isActive = selectedFileType === type;
-                      
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setSelectedFileType(type)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            isActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                          }`}
-                        >
-                          {getFileCategoryLabel(type)} ({count})
-                        </button>
-                      );
-                    })}
+                  {/* File Type Filters & Collapse Button */}
+                  <div className="flex flex-wrap gap-2 items-center justify-between">
+                    <div className="flex flex-wrap gap-2">
+                      {['all', 'pdf', 'image', 'video', 'audio', 'document', 'other'].map((type) => {
+                        const count = type === 'all' ? allCurrentDocuments.length : (fileTypeCounts[type] || 0);
+                        const isActive = selectedFileType === type;
+                        
+                        return (
+                          <button
+                            key={type}
+                            onClick={() => setSelectedFileType(type)}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                              isActive
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            }`}
+                          >
+                            {getFileCategoryLabel(type)} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Collapse Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsFileListCollapsed(true)}
+                      className="text-xs"
+                    >
+                      <ChevronUp className="w-4 h-4 mr-1" />
+                      Collapse
+                    </Button>
                   </div>
-                </div>
-
-                {/* Collapse Button */}
-                <div className="flex justify-end mb-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsFileListCollapsed(true)}
-                    className="text-xs"
-                  >
-                    <ChevronUp className="w-4 h-4 mr-1" />
-                    Collapse
-                  </Button>
                 </div>
               </>
             )}
