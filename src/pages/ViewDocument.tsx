@@ -339,14 +339,23 @@ export default function ViewDocument() {
     );
   }
 
+  console.log('[ViewDocument] Rendering checks:', {
+    hasPassword: !!linkData.password_hash,
+    passwordVerified,
+    viewerData,
+    hasViewerData: !!viewerData
+  });
+
   // Check password protection
   if (linkData.password_hash && !passwordVerified) {
+    console.log('[ViewDocument] Showing password protection');
     return (
       <PasswordProtection
         linkToken={token!}
         linkId={linkData.id}
         expectedHash={linkData.password_hash}
         onVerified={(data) => {
+          console.log('[ViewDocument] Password verified, viewer data:', data);
           setViewerData(data);
           setPasswordVerified(true);
         }}
@@ -356,14 +365,18 @@ export default function ViewDocument() {
 
   // Always collect viewer information if not already collected
   if (!viewerData) {
+    console.log('[ViewDocument] Showing viewer info collection');
     return (
       <ViewerInfoCollection
         onSubmit={(data) => {
+          console.log('[ViewDocument] Viewer info submitted:', data);
           setViewerData(data);
         }}
       />
     );
   }
+
+  console.log('[ViewDocument] All checks passed, showing document');
 
   // Check NDA requirement
   if (linkData.nda_required && !ndaSigned && !linkData.nda_signed_at) {
