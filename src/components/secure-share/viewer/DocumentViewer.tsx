@@ -44,6 +44,8 @@ export function DocumentViewer({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const [containerHeight, setContainerHeight] = useState<number | null>(null);
+  const [pdfPageDimensions, setPdfPageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   
   // Detect iOS for native PDF viewer fallback
@@ -260,6 +262,11 @@ export function DocumentViewer({
     setPageNumber(1);
   }
 
+  const handlePageLoadSuccess = (page: any) => {
+    const { width, height } = page;
+    setPdfPageDimensions({ width, height });
+  };
+
   // Track page changes
   useEffect(() => {
     if (enableTracking && linkId && documentId) {
@@ -290,22 +297,46 @@ export function DocumentViewer({
     };
   }, [enableTracking, linkId, documentId, trackScrollDepth]);
 
-  // Track container width so PDF fits within the viewer column (not full window)
+  // Track container dimensions so PDF fits within the viewer column
   useEffect(() => {
-    const updateWidth = () => {
+    const updateDimensions = () => {
       if (containerRef.current) {
         setContainerWidth(containerRef.current.clientWidth);
+        setContainerHeight(containerRef.current.clientHeight);
       }
     };
 
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    updateDimensions();
+    
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+    
+    return () => resizeObserver.disconnect();
   }, []);
 
-  const pageWidth = containerWidth
-    ? Math.min(containerWidth - 32, 1200)
-    : Math.min(window.innerWidth - 120, 1200);
+  // Calculate optimal page size to fit within container
+  const calculateOptimalPageWidth = () => {
+    const maxWidth = containerWidth ? containerWidth - 80 : window.innerWidth - 120;
+    const maxHeight = containerHeight ? containerHeight - 32 : window.innerHeight - 200;
+    
+    // If we have PDF dimensions, calculate based on aspect ratio
+    if (pdfPageDimensions) {
+      const aspectRatio = pdfPageDimensions.width / pdfPageDimensions.height;
+      
+      // Calculate what width would fit in maxHeight
+      const widthFromHeight = maxHeight * aspectRatio;
+      
+      // Use the smaller of the two to ensure it fits both constraints
+      return Math.min(maxWidth, widthFromHeight, 1200);
+    }
+    
+    // Default fallback
+    return Math.min(maxWidth, 1200);
+  };
+
+  const pageWidth = calculateOptimalPageWidth();
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -397,8 +428,8 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <ScrollArea className="flex-1 overscroll-contain w-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div ref={containerRef} className="relative bg-muted/20 flex justify-center items-start pt-2 sm:pt-4 p-2 sm:p-4 min-h-full overflow-x-hidden max-w-full">
+        <ScrollArea className="flex-1 overscroll-contain w-full h-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div ref={containerRef} className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 h-full min-h-full overflow-x-hidden max-w-full">
             {/* Floating Navigation Arrows */}
             {isPdf && numPages > 1 && (
               <>
@@ -503,6 +534,7 @@ export function DocumentViewer({
                       renderTextLayer={false}
                       renderAnnotationLayer={true}
                       className="shadow-lg"
+                      onLoadSuccess={handlePageLoadSuccess}
                       loading={
                         <div className="flex items-center justify-center p-8 bg-card">
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
