@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export default function ViewDocument() {
   const { token: routeToken } = useParams<{ token: string }>();
@@ -1327,6 +1329,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                 </div>
               </Card>
             )}
+          </div>
           </div>
         </div>
       </div>
