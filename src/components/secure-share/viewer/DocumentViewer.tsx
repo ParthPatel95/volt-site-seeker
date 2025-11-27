@@ -573,10 +573,10 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <ScrollArea className="flex-1 overscroll-contain w-full h-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
+        <ScrollArea className="flex-1 overscroll-contain w-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
           <div 
             ref={containerRef} 
-            className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 h-full min-h-full max-w-full"
+            className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 min-h-[600px] w-full"
             style={{ overflow: zoom > 1 ? 'auto' : 'hidden' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
