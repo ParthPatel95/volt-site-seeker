@@ -105,6 +105,12 @@
     @apply border-border;
   }
 
+  /* Prevent horizontal scroll on mobile */
+  html, body, #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
