@@ -57,7 +57,8 @@ export default function ViewDocument() {
               bundle_documents(
                 document:secure_documents(*)
               )
-            )
+            ),
+            folder:secure_folders(*)
           `)
           .eq('link_token', token)
           .single();
@@ -82,8 +83,87 @@ export default function ViewDocument() {
           throw new Error('This link has reached its maximum views');
         }
 
-      // Handle bundle vs single document
-      if (link.bundle_id) {
+      // Helper function to get all folder IDs including nested subfolders
+      const getAllFolderIds = async (folderId: string): Promise<string[]> => {
+        const folderIds = [folderId];
+        const { data: subfolders } = await supabase
+          .from('secure_folders')
+          .select('id')
+          .eq('parent_folder_id', folderId)
+          .eq('is_active', true);
+        
+        if (subfolders && subfolders.length > 0) {
+          for (const subfolder of subfolders) {
+            const nestedIds = await getAllFolderIds(subfolder.id);
+            folderIds.push(...nestedIds);
+          }
+        }
+        
+        return folderIds;
+      };
+
+      // Handle folder, bundle, or single document
+      if (link.folder_id) {
+        // This is a folder - get all documents in folder and subfolders
+        const folderIds = await getAllFolderIds(link.folder_id);
+        
+        const { data: folderDocs, error: docsError } = await supabase
+          .from('secure_documents')
+          .select('*')
+          .in('folder_id', folderIds)
+          .eq('is_active', true);
+
+        if (docsError) {
+          throw docsError;
+        }
+
+        if (!folderDocs || folderDocs.length === 0) {
+          throw new Error('Folder contains no documents');
+        }
+
+        let expirySeconds = 86400; // Default 24 hours
+        if (link.expires_at) {
+          const expiryTime = new Date(link.expires_at).getTime();
+          const now = Date.now();
+          expirySeconds = Math.max(60, Math.floor((expiryTime - now) / 1000));
+        }
+
+        // Generate signed URLs for all documents in the folder
+        for (const doc of folderDocs) {
+          if (doc.storage_path) {
+            const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
+              'get-signed-url',
+              {
+                body: { 
+                  storagePath: doc.storage_path,
+                  expiresIn: expirySeconds 
+                }
+              }
+            );
+
+            if (signedUrlError) {
+              console.error('Signed URL error for doc:', doc.file_name, signedUrlError);
+            } else if (signedUrlData?.signedUrl) {
+              doc.file_url = signedUrlData.signedUrl;
+            }
+          }
+        }
+
+        // Structure folder data like a bundle for consistent rendering
+        link.bundle = {
+          id: link.folder_id,
+          name: link.folder.name,
+          description: link.folder.description,
+          created_at: link.folder.created_at,
+          created_by: link.folder.created_by,
+          is_active: link.folder.is_active,
+          updated_at: link.folder.updated_at,
+          folder_structure: {},
+          bundle_documents: folderDocs.map(doc => ({ document: doc }))
+        };
+
+        return link;
+      } else if (link.bundle_id) {
         // This is a bundle - get signed URLs for all documents
         const bundleDocs = link.bundle.bundle_documents || [];
         
@@ -165,7 +245,7 @@ export default function ViewDocument() {
 
         return link;
       } else {
-        throw new Error('Invalid link: no document or bundle associated');
+        throw new Error('Invalid link: no document, bundle, or folder associated');
       }
       } catch (queryError: any) {
         console.error('[ViewDocument] Query error:', queryError);
