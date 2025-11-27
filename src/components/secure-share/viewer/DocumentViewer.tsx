@@ -308,7 +308,7 @@ export function DocumentViewer({
   }, [isPdf, numPages, pageNumber]);
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       <div className={`bg-card flex-1 flex flex-col ${watermarkEnabled ? 'watermark-overlay' : ''}`}>
         {/* Controls */}
         <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
@@ -398,7 +398,7 @@ export function DocumentViewer({
 
         {/* Document Display */}
         <ScrollArea className="flex-1 overscroll-contain" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="relative bg-muted/20 flex justify-center items-start pt-2 sm:pt-4 p-2 sm:p-4 min-h-full">
+          <div className="relative bg-muted/20 flex justify-center items-start pt-2 sm:pt-4 p-2 sm:p-4 min-h-full overflow-x-hidden max-w-full">
             {/* Floating Navigation Arrows */}
             {isPdf && numPages > 1 && (
               <>
@@ -408,10 +408,10 @@ export function DocumentViewer({
                   disabled={pageNumber <= 1}
                   variant="secondary"
                   size="icon"
-                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 h-10 w-10 sm:h-12 sm:w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30 touch-manipulation"
+                  className="absolute left-1 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30 touch-manipulation"
                   title="Previous Page (Left Arrow)"
                 >
-                  <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                 </Button>
 
                 {/* Right Arrow */}
@@ -420,10 +420,10 @@ export function DocumentViewer({
                   disabled={pageNumber >= numPages}
                   variant="secondary"
                   size="icon"
-                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 h-10 w-10 sm:h-12 sm:w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30 touch-manipulation"
+                  className="absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30 touch-manipulation"
                   title="Next Page (Right Arrow)"
                 >
-                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                 </Button>
               </>
             )}
@@ -431,11 +431,11 @@ export function DocumentViewer({
             {isPdf ? (
               isIOS || useNativePdfViewer ? (
                 // Native iOS PDF viewer using object tag for better compatibility
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center max-w-full overflow-hidden">
                   <object
                     data={documentUrl}
                     type="application/pdf"
-                    className="w-full h-full min-h-[600px]"
+                    className="w-full h-full min-h-[600px] max-w-full"
                   >
                     <div className="text-center p-8 space-y-4">
                       <p className="text-sm text-muted-foreground">
@@ -497,7 +497,7 @@ export function DocumentViewer({
                   >
                     <Page
                       pageNumber={pageNumber}
-                      width={Math.min(window.innerWidth * 0.9, 1400)}
+                      width={Math.min(window.innerWidth - 120, 1200)}
                       scale={isIOS ? Math.min(zoom, 1.5) : zoom}
                       rotate={rotation}
                       renderTextLayer={false}
@@ -513,13 +513,14 @@ export function DocumentViewer({
                 </div>
               )
             ) : isImage ? (
-              <div className="flex items-center justify-center max-w-full max-h-full">
+              <div className="flex items-center justify-center w-full max-w-full overflow-hidden">
                 <img
                   src={documentUrl}
                   alt="Document preview"
                   crossOrigin="anonymous"
-                  className="max-w-full max-h-full object-contain"
+                  className="max-w-full max-h-full object-contain w-auto h-auto"
                   style={{ 
+                    maxWidth: `min(100%, ${Math.min(window.innerWidth - 40, 1400)}px)`,
                     transform: `scale(${zoom}) rotate(${rotation}deg)`,
                     transition: 'transform 0.2s ease'
                   }}
