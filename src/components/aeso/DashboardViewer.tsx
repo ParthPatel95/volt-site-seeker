@@ -26,6 +26,11 @@ import { EnhancedDurationCurveWidget } from '@/components/aeso/dashboard-widgets
 import { OperatingStrategySimulator } from '@/components/aeso/dashboard-widgets/OperatingStrategySimulator';
 import { RevenueCostAnalysisWidget } from '@/components/aeso/dashboard-widgets/RevenueCostAnalysisWidget';
 import { RiskMetricsWidget } from '@/components/aeso/dashboard-widgets/RiskMetricsWidget';
+import { Interactive3DChart } from '@/components/aeso/dashboard-widgets/Interactive3DChart';
+import { AnimatedTransitionChart } from '@/components/aeso/dashboard-widgets/AnimatedTransitionChart';
+import { InteractiveLegendChart } from '@/components/aeso/dashboard-widgets/InteractiveLegendChart';
+import { ZoomPanChart } from '@/components/aeso/dashboard-widgets/ZoomPanChart';
+import { AnnotatedDataChart } from '@/components/aeso/dashboard-widgets/AnnotatedDataChart';
 import { AlertConfigDialog } from './AlertConfigDialog';
 import { AIAssistantSidebar } from './AIAssistantSidebar';
 import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
@@ -140,6 +145,16 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
           return <RevenueCostAnalysisWidget key={widget.id} />;
         case 'risk_metrics':
           return <RiskMetricsWidget key={widget.id} />;
+        case 'interactive_3d':
+          return <Interactive3DChart config={config} />;
+        case 'animated_transition':
+          return <AnimatedTransitionChart config={config} />;
+        case 'interactive_legend':
+          return <InteractiveLegendChart config={config} />;
+        case 'zoom_pan':
+          return <ZoomPanChart config={config} />;
+        case 'annotated_data':
+          return <AnnotatedDataChart config={config} />;
         default:
           return (
             <Card className="p-6">

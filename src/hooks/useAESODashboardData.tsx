@@ -37,6 +37,11 @@ export const DATA_SOURCES = [
   { value: 'operating_strategy', label: 'Operating Strategy Simulator' },
   { value: 'revenue_cost', label: 'Revenue & Cost Analysis' },
   { value: 'risk_metrics', label: 'Risk Metrics' },
+  { value: 'interactive_3d', label: '3D Market Visualization' },
+  { value: 'animated_transition', label: 'Animated Time-Series' },
+  { value: 'interactive_legend', label: 'Interactive Multi-Series' },
+  { value: 'zoom_pan', label: 'Zoom & Pan Chart' },
+  { value: 'annotated_data', label: 'Annotated Analysis' },
 ] as const;
 
 export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
