@@ -28,15 +28,43 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   
-  // iOS Safari fallback: Extract token directly from URL if useParams fails
+  // Enhanced token extraction with multiple fallback strategies
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const fallbackToken = isIOS && !routeToken ? window.location.pathname.split('/').pop() : null;
-  const token = routeToken || fallbackToken;
+  
+  // Try multiple extraction methods
+  let extractedToken = routeToken;
+  
+  if (!extractedToken) {
+    // Method 1: Extract from pathname segments
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const viewIndex = pathSegments.indexOf('view');
+    if (viewIndex !== -1 && pathSegments[viewIndex + 1]) {
+      extractedToken = pathSegments[viewIndex + 1];
+    }
+  }
+  
+  if (!extractedToken) {
+    // Method 2: Extract last path segment (fallback)
+    const lastSegment = window.location.pathname.split('/').filter(Boolean).pop();
+    if (lastSegment && lastSegment !== 'view') {
+      extractedToken = lastSegment;
+    }
+  }
+  
+  if (!extractedToken && isIOS) {
+    // Method 3: iOS-specific hash extraction (some apps modify URLs)
+    const hashMatch = window.location.hash.match(/[a-f0-9-]{36}/i);
+    if (hashMatch) {
+      extractedToken = hashMatch[0];
+    }
+  }
+  
+  const token = extractedToken;
   
   console.log('[ViewDocument] Token extraction:', {
     isIOS,
     routeToken,
-    fallbackToken,
+    extractedToken,
     finalToken: token,
     pathname: window.location.pathname,
     href: window.location.href

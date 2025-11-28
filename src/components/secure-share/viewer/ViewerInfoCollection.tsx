@@ -79,7 +79,7 @@ export function ViewerInfoCollection({ onSubmit }: ViewerInfoCollectionProps) {
                 setEmail(e.target.value);
                 if (errors.email) setErrors({ ...errors, email: undefined });
               }}
-              onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             />
             {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
           </div>

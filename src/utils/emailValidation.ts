@@ -67,8 +67,9 @@ export function validateName(name: string): { valid: boolean; error?: string } {
     return { valid: false, error: 'Name must be less than 100 characters' };
   }
   
-  // Check for valid name characters (letters, spaces, hyphens, apostrophes)
-  const nameRegex = /^[a-zA-Z\s'-]+$/;
+  // Check for valid name characters (Unicode letters, spaces, hyphens, apostrophes)
+  // Using Unicode property escapes for international character support
+  const nameRegex = /^[\p{L}\s'-]+$/u;
   if (!nameRegex.test(name.trim())) {
     return { valid: false, error: 'Name contains invalid characters' };
   }
