@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { StatCard } from '@/components/aeso/dashboard-widgets/StatCard';
+import { DashboardFilterProvider } from '@/contexts/DashboardFilterContext';
 import { ChartWidget } from '@/components/aeso/dashboard-widgets/ChartWidget';
 import { GaugeWidget } from '@/components/aeso/dashboard-widgets/GaugeWidget';
 import { TableWidget } from '@/components/aeso/dashboard-widgets/TableWidget';
@@ -163,10 +164,11 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Main Dashboard Area */}
-      <div className={`flex-1 overflow-auto transition-all ${aiAssistantOpen ? 'mr-96' : ''}`}>
-        <div className="space-y-6 p-6">
+    <DashboardFilterProvider>
+      <div className="flex h-screen overflow-hidden">
+        {/* Main Dashboard Area */}
+        <div className={`flex-1 overflow-auto transition-all ${aiAssistantOpen ? 'mr-96' : ''}`}>
+          <div className="space-y-6 p-6">
       {/* Header with Filters */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
@@ -408,6 +410,7 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardFilterProvider>
   );
 }
