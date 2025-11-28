@@ -22,6 +22,9 @@ import { CorrelationMatrixWidget } from '@/components/aeso/dashboard-widgets/Cor
 import { PriceDriverWidget } from '@/components/aeso/dashboard-widgets/PriceDriverWidget';
 import { AnomalyDetectionWidget } from '@/components/aeso/dashboard-widgets/AnomalyDetectionWidget';
 import { EnhancedDurationCurveWidget } from '@/components/aeso/dashboard-widgets/EnhancedDurationCurveWidget';
+import { OperatingStrategySimulator } from '@/components/aeso/dashboard-widgets/OperatingStrategySimulator';
+import { RevenueCostAnalysisWidget } from '@/components/aeso/dashboard-widgets/RevenueCostAnalysisWidget';
+import { RiskMetricsWidget } from '@/components/aeso/dashboard-widgets/RiskMetricsWidget';
 import { AlertConfigDialog } from './AlertConfigDialog';
 import { AIAssistantSidebar } from './AIAssistantSidebar';
 import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
@@ -130,6 +133,12 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
           return <AnomalyDetectionWidget config={config} />;
         case 'duration_curve':
           return <EnhancedDurationCurveWidget config={config} />;
+        case 'operating_strategy':
+          return <OperatingStrategySimulator key={widget.id} />;
+        case 'revenue_cost':
+          return <RevenueCostAnalysisWidget key={widget.id} />;
+        case 'risk_metrics':
+          return <RiskMetricsWidget key={widget.id} />;
         default:
           return (
             <Card className="p-6">
