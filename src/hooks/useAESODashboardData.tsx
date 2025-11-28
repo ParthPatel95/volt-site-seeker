@@ -30,6 +30,10 @@ export const DATA_SOURCES = [
   { value: 'enhanced_features', label: 'Enhanced Features' },
   { value: 'prediction_accuracy', label: 'Prediction Accuracy' },
   { value: 'training_data', label: 'Training Data Statistics' },
+  { value: 'correlation_analysis', label: 'Correlation Analysis' },
+  { value: 'price_drivers', label: 'Price Driver Decomposition' },
+  { value: 'anomaly_detection', label: 'Anomaly Detection' },
+  { value: 'duration_curve', label: 'Duration Curve' },
 ] as const;
 
 export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
