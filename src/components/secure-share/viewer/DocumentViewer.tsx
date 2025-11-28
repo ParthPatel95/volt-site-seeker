@@ -8,8 +8,33 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-// Configure PDF.js worker - use HTTPS explicitly for iOS compatibility
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker with multiple fallback CDNs for broader browser support
+const initializePdfWorker = () => {
+  const workerUrls = [
+    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
+    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
+    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+  ];
+  
+  let workerInitialized = false;
+  
+  for (const url of workerUrls) {
+    try {
+      pdfjs.GlobalWorkerOptions.workerSrc = url;
+      workerInitialized = true;
+      console.log(`[PDF.js] Worker initialized with: ${url}`);
+      break;
+    } catch (error) {
+      console.warn(`[PDF.js] Failed to load worker from ${url}:`, error);
+    }
+  }
+  
+  if (!workerInitialized) {
+    console.error('[PDF.js] Failed to initialize worker from all CDNs');
+  }
+};
+
+initializePdfWorker();
 
 interface DocumentViewerProps {
   documentUrl: string;
@@ -94,32 +119,46 @@ export function DocumentViewer({
     setDownloadAttempted(true);
     
     try {
-      const response = await fetch(documentUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      
-      // Create blob with correct MIME type
-      const blob = new Blob([arrayBuffer], { type: documentType });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Extract filename from URL, preserving the full name with extension
+      // Extract filename from URL
       let filename = documentUrl.split('/').pop()?.split('?')[0] || 'document';
-      
-      // Decode URL-encoded filename
       filename = decodeURIComponent(filename);
       
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Browser-specific download handling
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      
+      if (isSafari || isIOS) {
+        // Safari/iOS: Use direct link navigation (more reliable for signed URLs)
+        const link = document.createElement('a');
+        link.href = documentUrl;
+        link.download = filename;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Modern browsers: Fetch and create blob
+        const response = await fetch(documentUrl);
+        if (!response.ok) throw new Error('Download failed');
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: documentType });
+        const url = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
 
       toast({
         title: 'Download Started',
         description: 'Your document is being downloaded'
       });
     } catch (error) {
+      console.error('[Download] Error:', error);
       toast({
         title: 'Download Failed',
         description: 'Failed to download document. Please try again.',
@@ -276,12 +315,43 @@ export function DocumentViewer({
   };
   
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.();
-      setIsFullscreen(true);
+    // Feature detection for Fullscreen API
+    const fullscreenEnabled = document.fullscreenEnabled || 
+      (document as any).webkitFullscreenEnabled || 
+      (document as any).mozFullScreenEnabled || 
+      (document as any).msFullscreenEnabled;
+    
+    if (!fullscreenEnabled) {
+      toast({
+        title: 'Fullscreen Not Supported',
+        description: 'Your browser does not support fullscreen mode',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    const docElement = document.documentElement;
+    
+    if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+      const requestFullscreen = docElement.requestFullscreen || 
+        (docElement as any).webkitRequestFullscreen || 
+        (docElement as any).mozRequestFullScreen || 
+        (docElement as any).msRequestFullscreen;
+      
+      if (requestFullscreen) {
+        requestFullscreen.call(docElement);
+        setIsFullscreen(true);
+      }
     } else {
-      document.exitFullscreen?.();
-      setIsFullscreen(false);
+      const exitFullscreen = document.exitFullscreen || 
+        (document as any).webkitExitFullscreen || 
+        (document as any).mozCancelFullScreen || 
+        (document as any).msExitFullscreen;
+      
+      if (exitFullscreen) {
+        exitFullscreen.call(document);
+        setIsFullscreen(false);
+      }
     }
   };
   
@@ -573,8 +643,8 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <ScrollArea className="flex-1 overscroll-contain w-full" ref={scrollAreaRef} style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div 
+        <ScrollArea className="flex-1 overscroll-contain w-full" ref={scrollAreaRef}>
+          <div
             ref={containerRef} 
             className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 min-h-[600px] w-full"
             style={{ overflow: zoom > 1 ? 'auto' : 'hidden' }}
@@ -613,25 +683,21 @@ export function DocumentViewer({
 
             {isPdf ? (
               isIOS || useNativePdfViewer ? (
-                // Native iOS PDF viewer using object tag for better compatibility
+                // Native iOS PDF viewer using iframe for better iOS compatibility
                 <div className="w-full h-full flex items-center justify-center max-w-full overflow-hidden">
-                  <object
-                    data={documentUrl}
-                    type="application/pdf"
-                    className="w-full h-full min-h-[600px] max-w-full"
-                  >
-                    <div className="text-center p-8 space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Unable to display PDF in browser
-                      </p>
-                      {canDownload && (
-                        <Button onClick={handleDownload} size="sm">
-                          <Download className="w-4 h-4 mr-2" />
-                          Download PDF
-                        </Button>
-                      )}
+                  <iframe
+                    src={`${documentUrl}#toolbar=0`}
+                    className="w-full h-full min-h-[600px] max-w-full border-0"
+                    title="PDF Document"
+                  />
+                  {canDownload && (
+                    <div className="absolute bottom-4 right-4">
+                      <Button onClick={handleDownload} size="sm" variant="secondary">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </Button>
                     </div>
-                  </object>
+                  )}
                 </div>
               ) : (
                 <div 
@@ -708,7 +774,6 @@ export function DocumentViewer({
                 <img
                   src={documentUrl}
                   alt="Document preview"
-                  crossOrigin="anonymous"
                   className="max-w-full max-h-full object-contain w-auto h-auto"
                   style={{ 
                     maxWidth: `min(100%, ${Math.min(window.innerWidth - 40, 1400)}px)`,
@@ -724,7 +789,6 @@ export function DocumentViewer({
                   src={documentUrl}
                   controls
                   playsInline
-                  crossOrigin="anonymous"
                   controlsList={!canDownload ? 'nodownload' : undefined}
                   onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
                   className="max-w-full max-h-[80vh] rounded-lg shadow-lg"
@@ -739,7 +803,6 @@ export function DocumentViewer({
                   <audio
                     src={documentUrl}
                     controls
-                    crossOrigin="anonymous"
                     controlsList={!canDownload ? 'nodownload' : undefined}
                     onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
                     className="w-full"

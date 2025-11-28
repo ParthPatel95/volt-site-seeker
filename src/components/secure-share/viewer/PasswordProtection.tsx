@@ -125,7 +125,7 @@ export function PasswordProtection({ linkId, expectedHash, onVerified }: Passwor
                 setPassword(e.target.value);
                 if (errors.password) setErrors({ ...errors, password: undefined });
               }}
-              onKeyPress={(e) => e.key === 'Enter' && handleVerify()}
+              onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
             />
             {errors.password && <p className="text-sm text-destructive mt-1">{errors.password}</p>}
           </div>
