@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Shield, Lock, Eye, Clock, FileText, ArrowLeft, Search, Filter, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image, Video, Music, File } from 'lucide-react';
+import { Shield, Lock, Eye, Clock, FileText, ArrowLeft, Search, Filter, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image, Video, Music, File, Folder, FolderOpen } from 'lucide-react';
 import { PasswordProtection } from '@/components/secure-share/viewer/PasswordProtection';
 import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
@@ -797,6 +797,11 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   
   // Collapsible file list state
   const [isFileListCollapsed, setIsFileListCollapsed] = useState(false);
+  
+  // Expanded folders state
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set([folderContents?.rootFolder?.id ?? ''])
+  );
 
   if (!folderContents || !folderContents.rootFolder) {
     return (
@@ -848,6 +853,50 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     descendantMap.set(folderId, uniqueIds);
     return uniqueIds;
   };
+  
+  // Helper to get ancestor folder IDs
+  const getAncestorFolderIds = (folderId: string): string[] => {
+    const ancestors: string[] = [];
+    let currentId = folderId;
+    
+    while (currentId) {
+      const folder = allFolders.find(f => f.id === currentId);
+      if (folder?.parent_folder_id) {
+        ancestors.push(folder.parent_folder_id);
+        currentId = folder.parent_folder_id;
+      } else {
+        break;
+      }
+    }
+    
+    return ancestors;
+  };
+  
+  // Toggle folder expand/collapse
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+  
+  // Auto-expand when selected folder changes
+  useEffect(() => {
+    if (selectedFolderId) {
+      const ancestors = getAncestorFolderIds(selectedFolderId);
+      setExpandedFolders(prev => {
+        const next = new Set(prev);
+        ancestors.forEach(id => next.add(id));
+        next.add(selectedFolderId);
+        return next;
+      });
+    }
+  }, [selectedFolderId]);
 
   const currentFolderId = selectedFolderId || rootFolder.id;
   const currentFolderIds = [currentFolderId, ...getDescendantFolderIds(currentFolderId)];
@@ -917,11 +966,15 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     return acc;
   }, {} as Record<string, number>);
 
-  const renderFolderTree = (folderId: string | null, depth = 0) => {
-    const children = foldersByParent.get(folderId) || [];
+  const renderFolderTree = (parentId: string, depth = 0) => {
+    const children = (foldersByParent.get(parentId) || [])
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '')); // Alphabetical sort
 
     return children.map((folder) => {
       const isActive = folder.id === currentFolderId;
+      const hasChildren = (foldersByParent.get(folder.id) || []).length > 0;
+      const isExpanded = expandedFolders.has(folder.id);
+      
       const descendantIds = getDescendantFolderIds(folder.id);
       const allFolderIds = [folder.id, ...descendantIds];
       const docsInFolderCount = allFolderIds.reduce(
@@ -930,21 +983,90 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
       );
 
       return (
-        <div key={folder.id} className="mb-1">
-          <button
-            className={
-              `w-full flex items-center justify-between text-left text-sm px-2 py-1.5 rounded-md transition-colors ` +
-              (isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')
-            }
-            style={{ paddingLeft: `${depth * 0.75 + 0.5}rem` }}
-            onClick={() => setSelectedFolderId(folder.id)}
+        <div key={folder.id} className="relative">
+          {/* Tree line connector */}
+          {depth > 0 && (
+            <div 
+              className="absolute left-2 top-0 bottom-0 w-px bg-border"
+              style={{ left: `${(depth - 1) * 16 + 8}px` }}
+            />
+          )}
+          
+          <div 
+            className={cn(
+              "flex items-center gap-1 py-1.5 px-2 rounded-md transition-colors mb-0.5",
+              isActive 
+                ? "bg-primary text-primary-foreground" 
+                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+            )}
+            style={{ paddingLeft: `${depth * 16 + 8}px` }}
           >
-            <span className="truncate">{folder.name || 'Untitled folder'}</span>
-            <span className="ml-2 text-xs opacity-80">{docsInFolderCount}</span>
-          </button>
-          {renderFolderTree(folder.id, depth + 1)}
+            {/* Expand/Collapse Toggle */}
+            {hasChildren ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleFolder(folder.id); }}
+                className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded flex-shrink-0"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5" />
+                )}
+              </button>
+            ) : (
+              <span className="w-4.5 flex-shrink-0" /> 
+            )}
+            
+            {/* Folder Icon */}
+            {isExpanded && hasChildren ? (
+              <FolderOpen className="w-4 h-4 flex-shrink-0" />
+            ) : (
+              <Folder className="w-4 h-4 flex-shrink-0" />
+            )}
+            
+            {/* Folder Name - Click to Select */}
+            <button
+              onClick={() => setSelectedFolderId(folder.id)}
+              className="flex-1 text-left text-sm truncate"
+            >
+              {folder.name || 'Untitled'}
+            </button>
+            
+            {/* Document Count Badge */}
+            <span className="text-xs opacity-70 ml-auto flex-shrink-0">{docsInFolderCount}</span>
+          </div>
+          
+          {/* Render Children (only if expanded) */}
+          {hasChildren && isExpanded && (
+            <div className="relative">
+              {renderFolderTree(folder.id, depth + 1)}
+            </div>
+          )}
         </div>
       );
+    });
+  };
+  
+  // Render folder select options with hierarchy for mobile
+  const renderFolderSelectOptions = (parentId: string, depth: number): JSX.Element[] => {
+    const children = (foldersByParent.get(parentId) || [])
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    
+    return children.flatMap(folder => {
+      const prefix = depth > 0 ? '—'.repeat(depth) + ' ' : '';
+      const descendantIds = getDescendantFolderIds(folder.id);
+      const allFolderIds = [folder.id, ...descendantIds];
+      const docsCount = allFolderIds.reduce(
+        (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
+        0
+      );
+      
+      return [
+        <SelectItem key={folder.id} value={folder.id}>
+          {prefix}{folder.name || 'Untitled'} ({docsCount})
+        </SelectItem>,
+        ...renderFolderSelectOptions(folder.id, depth + 1)
+      ];
     });
   };
 
@@ -988,13 +1110,35 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
           {/* Folder tree - hidden on mobile, sidebar on desktop */}
           <div className="lg:w-64 lg:flex-shrink-0 hidden lg:block">
             <Card className="p-3 md:p-4 sticky top-24 max-h-[calc(100vh-120px)]">
-              <h2 className="text-sm font-semibold mb-3 md:mb-4 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Folder Structure
-              </h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold flex items-center gap-2">
+                  <Folder className="w-4 h-4" />
+                  Folders
+                </h2>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setExpandedFolders(new Set(allFolders.map(f => f.id)))}
+                    title="Expand All"
+                  >
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setExpandedFolders(new Set([rootFolder.id]))}
+                    title="Collapse All"
+                  >
+                    <ChevronRight className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
               <ScrollArea className="h-[calc(100vh-200px)]">
-                <div className="space-y-1 pr-2">
-                  {renderFolderTree(null)}
+                <div className="space-y-0 pr-2">
+                  {renderFolderTree(rootFolder.id)}
                 </div>
               </ScrollArea>
             </Card>
@@ -1007,19 +1151,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
                 <SelectValue placeholder="Select folder" />
               </SelectTrigger>
               <SelectContent>
-                {allFolders.map((folder) => {
-                  const descendantIds = getDescendantFolderIds(folder.id);
-                  const allFolderIds = [folder.id, ...descendantIds];
-                  const docsInFolderCount = allFolderIds.reduce(
-                    (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
-                    0
-                  );
-                  return (
-                    <SelectItem key={folder.id} value={folder.id}>
-                      {folder.name || 'Untitled folder'} ({docsInFolderCount})
-                    </SelectItem>
-                  );
-                })}
+                {renderFolderSelectOptions(rootFolder.id, 0)}
               </SelectContent>
             </Select>
           </div>
