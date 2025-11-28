@@ -34,6 +34,9 @@ export const DATA_SOURCES = [
   { value: 'price_drivers', label: 'Price Driver Decomposition' },
   { value: 'anomaly_detection', label: 'Anomaly Detection' },
   { value: 'duration_curve', label: 'Duration Curve' },
+  { value: 'operating_strategy', label: 'Operating Strategy Simulator' },
+  { value: 'revenue_cost', label: 'Revenue & Cost Analysis' },
+  { value: 'risk_metrics', label: 'Risk Metrics' },
 ] as const;
 
 export const useAESODashboardData = (widgetConfig: WidgetConfig) => {
