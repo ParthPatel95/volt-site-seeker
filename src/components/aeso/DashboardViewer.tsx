@@ -18,6 +18,10 @@ import { CandlestickWidget } from '@/components/aeso/dashboard-widgets/Candlesti
 import { ScatterPlotWidget } from '@/components/aeso/dashboard-widgets/ScatterPlotWidget';
 import { DistributionWidget } from '@/components/aeso/dashboard-widgets/DistributionWidget';
 import { EnhancedStatCard } from '@/components/aeso/dashboard-widgets/EnhancedStatCard';
+import { CorrelationMatrixWidget } from '@/components/aeso/dashboard-widgets/CorrelationMatrixWidget';
+import { PriceDriverWidget } from '@/components/aeso/dashboard-widgets/PriceDriverWidget';
+import { AnomalyDetectionWidget } from '@/components/aeso/dashboard-widgets/AnomalyDetectionWidget';
+import { EnhancedDurationCurveWidget } from '@/components/aeso/dashboard-widgets/EnhancedDurationCurveWidget';
 import { AlertConfigDialog } from './AlertConfigDialog';
 import { AIAssistantSidebar } from './AIAssistantSidebar';
 import { AutomatedInsightsPanel } from './AutomatedInsightsPanel';
@@ -118,6 +122,14 @@ export function DashboardViewer({ dashboard, widgets, market, isPublicView = fal
           return <PieChartWidget config={config} />;
         case 'table':
           return <TableWidget config={config} />;
+        case 'correlation_matrix':
+          return <CorrelationMatrixWidget config={config} />;
+        case 'price_driver':
+          return <PriceDriverWidget config={config} />;
+        case 'anomaly_detection':
+          return <AnomalyDetectionWidget config={config} />;
+        case 'duration_curve':
+          return <EnhancedDurationCurveWidget config={config} />;
         default:
           return (
             <Card className="p-6">
