@@ -6,8 +6,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 
-// Configure PDF.js worker - use HTTPS explicitly for iOS compatibility
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker with multiple fallbacks for cross-browser compatibility
+const workerUrls = [
+  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
+  `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+];
+
+pdfjs.GlobalWorkerOptions.workerSrc = workerUrls[0];
+
+// Fallback to alternative CDNs if primary fails
+if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+  console.warn('Primary PDF.js worker CDN failed, trying fallback...');
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrls[1];
+}
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -145,22 +157,34 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     if (!canDownload || !documentUrl || !document) return;
     
     try {
-      const response = await fetch(documentUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = window.document.createElement('a');
-      link.href = url;
-      link.download = document.name || 'document';
-      window.document.body.appendChild(link);
-      link.click();
-      window.URL.revokeObjectURL(url);
-      window.document.body.removeChild(link);
+      // iOS/Safari-specific download handling
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      
+      if (isSafari || isIOS) {
+        // Safari/iOS: Use direct navigation
+        console.log('Using Safari/iOS download method');
+        window.location.href = documentUrl;
+      } else {
+        // Modern browsers: Use fetch + blob
+        console.log('Using fetch+blob download method');
+        const response = await fetch(documentUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = window.document.createElement('a');
+        link.href = url;
+        link.download = document.name || 'document';
+        window.document.body.appendChild(link);
+        link.click();
+        window.URL.revokeObjectURL(url);
+        window.document.body.removeChild(link);
+      }
 
       toast({
         title: 'Download Started',
         description: 'Your document is being downloaded',
       });
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: 'Download Failed',
         description: 'Failed to download document',
@@ -213,26 +237,21 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
             <>
               {isPdf ? (
                 isIOS || useNativePdfViewer ? (
-                  // Native iOS PDF viewer
+                  // Native iOS PDF viewer using iframe (better compatibility than object tag)
                   <div className="w-full h-full">
-                    <object
-                      data={documentUrl}
-                      type="application/pdf"
-                      className="w-full h-full"
-                    >
-                      <div className="flex flex-col items-center justify-center h-full gap-4">
-                        <p className="text-muted-foreground">Unable to display PDF in browser</p>
-                        {canDownload && (
-                          <button
-                            onClick={handleDownload}
-                            className="text-primary hover:underline inline-flex items-center gap-2"
-                          >
-                            Download to view
-                            <Download className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </object>
+                    <iframe
+                      src={documentUrl}
+                      className="w-full h-full border-0"
+                      title={document?.name}
+                      onError={(e) => {
+                        console.error('iOS PDF iframe error:', e);
+                        toast({
+                          title: 'PDF Loading Error',
+                          description: 'Unable to display PDF. Please try downloading the file.',
+                          variant: 'destructive',
+                        });
+                      }}
+                    />
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
@@ -284,7 +303,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     </div>
                     <div 
                       className="flex-1 overflow-auto flex items-start justify-center p-2 sm:p-4 bg-muted/10 overscroll-contain"
-                      style={{ WebkitOverflowScrolling: 'touch' }}
+                      style={{ overscrollBehavior: 'contain' }}
                       onClick={(e) => {
                         const target = e.target as HTMLElement;
                         const link = target.closest('a[href]') as HTMLAnchorElement;
@@ -334,7 +353,6 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                   <img
                     src={documentUrl}
                     alt={document?.name}
-                    crossOrigin="anonymous"
                     className="max-w-full max-h-full object-contain"
                     style={{ transform: `scale(${scale})` }}
                     onContextMenu={(e) => !canDownload && e.preventDefault()}
@@ -346,7 +364,6 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     src={documentUrl}
                     controls
                     playsInline
-                    crossOrigin="anonymous"
                     controlsList={!canDownload ? 'nodownload' : undefined}
                     onContextMenu={(e) => !canDownload && e.preventDefault()}
                     className="max-w-full max-h-full rounded-lg"
@@ -361,7 +378,6 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     <audio
                       src={documentUrl}
                       controls
-                      crossOrigin="anonymous"
                       controlsList={!canDownload ? 'nodownload' : undefined}
                       onContextMenu={(e) => !canDownload && e.preventDefault()}
                       className="w-full"
