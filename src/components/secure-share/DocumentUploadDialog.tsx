@@ -14,6 +14,7 @@ import {
 import { Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { uploadFileResumable, formatBytes, formatSpeed, formatTime } from '@/utils/resumableUpload';
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -35,19 +36,20 @@ export function DocumentUploadDialog({
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [uploadStats, setUploadStats] = useState({ speed: 0, estimatedTime: 0, bytesUploaded: 0, bytesTotal: 0 });
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length === 0) return;
 
-    // Check for file size limit (50MB per file)
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    // Check for file size limit (1GB per file)
+    const maxSize = 1024 * 1024 * 1024; // 1GB
     const oversizedFiles = selectedFiles.filter(f => f.size > maxSize);
     if (oversizedFiles.length > 0) {
       toast({
         title: 'File too large',
-        description: `Some files exceed 50MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`,
+        description: `Some files exceed 1GB limit: ${oversizedFiles.map(f => f.name).join(', ')}`,
         variant: 'destructive',
       });
       return;
@@ -148,11 +150,20 @@ export function DocumentUploadDialog({
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('secure-documents')
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
+        // Use resumable upload with progress tracking
+        await uploadFileResumable(
+          file,
+          'secure-documents',
+          fileName,
+          (progress) => {
+            setUploadStats({
+              speed: progress.speed,
+              estimatedTime: progress.estimatedTimeRemaining,
+              bytesUploaded: progress.bytesUploaded,
+              bytesTotal: progress.bytesTotal,
+            });
+          }
+        );
 
         const { data: { publicUrl } } = supabase.storage
           .from('secure-documents')
@@ -188,6 +199,7 @@ export function DocumentUploadDialog({
       setTags('');
       setCategory('other');
       setUploadProgress(null);
+      setUploadStats({ speed: 0, estimatedTime: 0, bytesUploaded: 0, bytesTotal: 0 });
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
@@ -199,6 +211,7 @@ export function DocumentUploadDialog({
     } finally {
       setUploading(false);
       setUploadProgress(null);
+      setUploadStats({ speed: 0, estimatedTime: 0, bytesUploaded: 0, bytesTotal: 0 });
     }
   };
 
@@ -241,7 +254,7 @@ export function DocumentUploadDialog({
             <div>
             <Label>File Upload</Label>
             <p className="text-xs text-muted-foreground mt-1 mb-2">
-              All file types supported • Max 50MB per file
+              All file types supported • Max 1GB per file
             </p>
             <div className="mt-2 flex items-center gap-4">
               <Input
@@ -280,10 +293,12 @@ export function DocumentUploadDialog({
               </div>
             )}
             {uploadProgress && (
-              <div className="mt-2">
+              <div className="mt-2 space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>Uploading...</span>
-                  <span>{uploadProgress.current} / {uploadProgress.total}</span>
+                  <span>Uploading file {uploadProgress.current} of {uploadProgress.total}</span>
+                  {uploadStats.bytesTotal > 0 && (
+                    <span>{formatBytes(uploadStats.bytesUploaded)} / {formatBytes(uploadStats.bytesTotal)}</span>
+                  )}
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
@@ -291,6 +306,14 @@ export function DocumentUploadDialog({
                     style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
                   />
                 </div>
+                {uploadStats.speed > 0 && (
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Speed: {formatSpeed(uploadStats.speed)}</span>
+                    {uploadStats.estimatedTime > 0 && (
+                      <span>Time remaining: ~{formatTime(uploadStats.estimatedTime)}</span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
