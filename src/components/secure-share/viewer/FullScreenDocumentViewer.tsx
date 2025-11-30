@@ -1,0 +1,197 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
+import { DocumentViewer } from './DocumentViewer';
+import { cn } from '@/lib/utils';
+
+interface FullScreenDocumentViewerProps {
+  document: any;
+  allDocuments: any[];
+  linkData: any;
+  viewerData: { name: string; email: string } | null;
+  onBack: () => void;
+  onDocumentChange: (document: any) => void;
+}
+
+export function FullScreenDocumentViewer({
+  document,
+  allDocuments,
+  linkData,
+  viewerData,
+  onBack,
+  onDocumentChange
+}: FullScreenDocumentViewerProps) {
+  const [showSidebar, setShowSidebar] = useState(false);
+  
+  const currentIndex = allDocuments.findIndex(doc => doc.id === document.id);
+  const hasPrevious = currentIndex > 0;
+  const hasNext = currentIndex < allDocuments.length - 1;
+
+  const handlePrevious = useCallback(() => {
+    if (hasPrevious) {
+      onDocumentChange(allDocuments[currentIndex - 1]);
+    }
+  }, [hasPrevious, allDocuments, currentIndex, onDocumentChange]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext) {
+      onDocumentChange(allDocuments[currentIndex + 1]);
+    }
+  }, [hasNext, allDocuments, currentIndex, onDocumentChange]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onBack();
+      } else if (e.key === 'ArrowLeft' && hasPrevious) {
+        handlePrevious();
+      } else if (e.key === 'ArrowRight' && hasNext) {
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onBack, hasPrevious, hasNext, handlePrevious, handleNext]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300">
+      {/* Header Bar */}
+      <div className="absolute top-0 left-0 right-0 z-10 border-b bg-card/95 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          {/* Left: Back Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          {/* Center: Document Name & Position */}
+          <div className="flex-1 min-w-0 text-center">
+            <h2 className="text-sm font-semibold truncate" title={document.file_name}>
+              {document.file_name}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {currentIndex + 1} of {allDocuments.length}
+            </p>
+          </div>
+
+          {/* Right: Navigation & Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePrevious}
+              disabled={!hasPrevious}
+              title="Previous document (←)"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleNext}
+              disabled={!hasNext}
+              title="Next document (→)"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+
+            {linkData.access_level === 'download' && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = document.file_url;
+                  link.download = document.file_name;
+                  link.click();
+                }}
+                title="Download document"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Document Viewer */}
+      <div className="absolute inset-0 pt-[60px]">
+        <DocumentViewer
+          documentUrl={document.file_url}
+          documentType={document.file_type}
+          accessLevel={linkData.access_level}
+          watermarkEnabled={linkData.watermark_enabled}
+          recipientEmail={linkData.recipient_email}
+          linkId={linkData.id}
+          documentId={document.id}
+          enableTracking={true}
+          viewerName={viewerData?.name}
+          viewerEmail={viewerData?.email}
+        />
+      </div>
+
+      {/* Optional Sidebar for Quick Document Switching */}
+      {showSidebar && (
+        <div className="absolute right-0 top-[60px] bottom-0 w-80 bg-card border-l shadow-xl animate-in slide-in-from-right duration-300">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="font-semibold text-sm">Documents</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSidebar(false)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="overflow-y-auto h-[calc(100%-60px)]">
+            {allDocuments.map((doc, index) => {
+              const isActive = doc.id === document.id;
+              return (
+                <button
+                  key={doc.id}
+                  onClick={() => {
+                    onDocumentChange(doc);
+                    setShowSidebar(false);
+                  }}
+                  className={cn(
+                    "w-full text-left p-3 border-b transition-colors",
+                    isActive 
+                      ? "bg-primary/10 border-l-4 border-l-primary" 
+                      : "hover:bg-muted"
+                  )}
+                >
+                  <p className="text-sm font-medium truncate mb-1">
+                    {doc.file_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Document {index + 1}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Toggle Sidebar Button (Optional) */}
+      {!showSidebar && allDocuments.length > 1 && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowSidebar(true)}
+          className="absolute right-4 top-20 z-10 shadow-lg"
+        >
+          All Documents ({allDocuments.length})
+        </Button>
+      )}
+    </div>
+  );
+}
