@@ -385,6 +385,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     src={documentUrl}
                     controls
                     playsInline
+                    preload="metadata"
                     controlsList={!canDownload ? 'nodownload' : undefined}
                     onContextMenu={(e) => !canDownload && e.preventDefault()}
                     className="max-w-full max-h-full rounded-lg"

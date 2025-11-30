@@ -801,6 +801,7 @@ export function DocumentViewer({
                   src={documentUrl}
                   controls
                   playsInline
+                  preload="metadata"
                   controlsList={!canDownload ? 'nodownload' : undefined}
                   onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
                   className="max-w-full max-h-[80vh] rounded-lg shadow-lg"
