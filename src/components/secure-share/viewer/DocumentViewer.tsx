@@ -715,10 +715,12 @@ export function DocumentViewer({
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={(error) => {
                       console.error('PDF load error:', error);
-                      // Fallback to native viewer on error
-                      if (isIOS) {
-                        setUseNativePdfViewer(true);
-                      }
+                      // Fallback to native/browser PDF viewer on any error
+                      setUseNativePdfViewer(true);
+                      toast({
+                        title: 'PDF Loading Issue',
+                        description: 'We had trouble loading the PDF viewer, opening with your browser instead.',
+                      });
                     }}
                     loading={
                       <div className="flex items-center justify-center p-8">
