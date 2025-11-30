@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { text, targetLanguage, documentId, pageNumber } = await req.json();
+    const { text, targetLanguage, documentId, pageNumber, stream = true } = await req.json();
     
     if (!text || !targetLanguage) {
       return new Response(
@@ -97,7 +97,7 @@ Return ONLY the translated text without any explanations or metadata.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: text }
         ],
-        stream: false,
+        stream: stream,
       }),
     });
 
@@ -122,6 +122,82 @@ Return ONLY the translated text without any explanations or metadata.`;
       );
     }
 
+    // Handle streaming response
+    if (stream && response.body) {
+      const reader = response.body.getReader();
+      const textEncoder = new TextEncoder();
+      const textDecoder = new TextDecoder();
+
+      const streamResponse = new ReadableStream({
+        async start(controller) {
+          let fullTranslation = '';
+          
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = textDecoder.decode(value, { stream: true });
+              const lines = chunk.split('\n').filter(line => line.trim());
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  if (data === '[DONE]') continue;
+
+                  try {
+                    const parsed = JSON.parse(data);
+                    const content = parsed.choices?.[0]?.delta?.content || '';
+                    if (content) {
+                      fullTranslation += content;
+                      controller.enqueue(textEncoder.encode(`data: ${JSON.stringify({ delta: content })}\n\n`));
+                    }
+                  } catch (e) {
+                    console.error('Failed to parse streaming chunk:', e);
+                  }
+                }
+              }
+            }
+
+            // Cache the complete translation
+            if (documentId && pageNumber !== undefined && fullTranslation) {
+              try {
+                await supabaseClient
+                  .from('document_translations')
+                  .insert({
+                    document_id: documentId,
+                    page_number: pageNumber,
+                    source_language: 'en',
+                    target_language: targetLanguage,
+                    original_text: text,
+                    translated_text: fullTranslation,
+                    text_hash: textHash
+                  });
+                console.log('[translate-document] Translation cached for document:', documentId, 'page:', pageNumber);
+              } catch (cacheError) {
+                console.error('[translate-document] Failed to cache translation:', cacheError);
+              }
+            }
+
+            controller.enqueue(textEncoder.encode('data: [DONE]\n\n'));
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        }
+      });
+
+      return new Response(streamResponse, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // Non-streaming response
     const aiResponse = await response.json();
     const translatedText = aiResponse.choices?.[0]?.message?.content;
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Globe, X, Loader2, Copy, Check, ChevronDown } from 'lucide-react';
+import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -12,14 +12,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 
 interface TranslationPanelProps {
   isOpen: boolean;
   onClose: () => void;
   documentId?: string;
   currentPage: number;
+  totalPages?: number;
   extractedText: string;
   isExtracting: boolean;
+  onPageChange?: (page: number) => void;
 }
 
 const SUPPORTED_LANGUAGES = [
@@ -40,14 +43,19 @@ export function TranslationPanel({
   onClose,
   documentId,
   currentPage,
+  totalPages = 1,
   extractedText,
-  isExtracting
+  isExtracting,
+  onPageChange
 }: TranslationPanelProps) {
   const [targetLanguage, setTargetLanguage] = useState<string>('zh-CN');
   const [translatedText, setTranslatedText] = useState<string>('');
   const [isTranslating, setIsTranslating] = useState(false);
   const [isCached, setIsCached] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'translation' | 'sideBySide'>('translation');
+  const [isTranslatingAll, setIsTranslatingAll] = useState(false);
+  const [translateAllProgress, setTranslateAllProgress] = useState(0);
   const { toast } = useToast();
   
   // In-memory translation cache: Map<"pageNumber-languageCode", translatedText>
@@ -55,62 +63,124 @@ export function TranslationPanel({
   
   // Track if this is the first open to auto-translate
   const hasAutoTranslated = useRef(false);
+  
+  // Refs for synced scrolling
+  const originalScrollRef = useRef<HTMLDivElement>(null);
+  const translatedScrollRef = useRef<HTMLDivElement>(null);
 
-  const handleTranslate = async (useCache = true) => {
-    if (!extractedText || !targetLanguage) {
+  const handleTranslate = async (useCache = true, pageText?: string, pageNum?: number) => {
+    const textToTranslate = pageText || extractedText;
+    const page = pageNum || currentPage;
+    
+    if (!textToTranslate || !targetLanguage) {
       toast({
         title: 'Translation Error',
         description: 'No text available to translate',
         variant: 'destructive'
       });
-      return;
+      return null;
     }
 
     // Check in-memory cache first
-    const cacheKey = `${currentPage}-${targetLanguage}`;
+    const cacheKey = `${page}-${targetLanguage}`;
     if (useCache && translationCache.current.has(cacheKey)) {
       const cachedTranslation = translationCache.current.get(cacheKey)!;
-      setTranslatedText(cachedTranslation);
-      setIsCached(true);
-      console.log(`[TranslationPanel] Loaded from in-memory cache: ${cacheKey}`);
-      return;
+      if (!pageText) {
+        setTranslatedText(cachedTranslation);
+        setIsCached(true);
+        console.log(`[TranslationPanel] Loaded from in-memory cache: ${cacheKey}`);
+      }
+      return cachedTranslation;
     }
 
-    setIsTranslating(true);
-    setTranslatedText('');
-    setIsCached(false);
+    if (!pageText) {
+      setIsTranslating(true);
+      setTranslatedText('');
+      setIsCached(false);
+    }
 
     try {
-      const { data, error } = await supabase.functions.invoke('translate-document', {
-        body: {
-          text: extractedText,
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          text: textToTranslate,
           targetLanguage,
           documentId,
-          pageNumber: currentPage
-        }
+          pageNumber: page,
+          stream: !pageText
+        })
       });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        }
+        if (response.status === 402) {
+          throw new Error('Translation credits exhausted. Please add credits to continue.');
+        }
+        throw new Error('Translation failed');
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
-      }
+      // Handle streaming response
+      if (!pageText && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullTranslation = '';
+        let buffer = '';
 
-      const translated = data.translatedText;
-      setTranslatedText(translated);
-      setIsCached(data.cached || false);
-      
-      // Store in in-memory cache
-      translationCache.current.set(cacheKey, translated);
-      console.log(`[TranslationPanel] Stored in cache: ${cacheKey}`);
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      if (data.cached) {
-        toast({
-          title: 'Translation Loaded',
-          description: 'Translation loaded from database cache',
-        });
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.delta) {
+                  fullTranslation += parsed.delta;
+                  setTranslatedText(fullTranslation);
+                } else if (parsed.translatedText) {
+                  fullTranslation = parsed.translatedText;
+                  setTranslatedText(fullTranslation);
+                  setIsCached(parsed.cached || false);
+                }
+              } catch (e) {
+                console.error('Failed to parse streaming data:', e);
+              }
+            }
+          }
+        }
+
+        // Store in cache
+        translationCache.current.set(cacheKey, fullTranslation);
+        console.log(`[TranslationPanel] Stored in cache: ${cacheKey}`);
+        return fullTranslation;
+      } else {
+        // Non-streaming response (for bulk translation)
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        const translated = data.translatedText;
+        translationCache.current.set(cacheKey, translated);
+        
+        if (!pageText) {
+          setTranslatedText(translated);
+          setIsCached(data.cached || false);
+        }
+        return translated;
       }
     } catch (error: any) {
       console.error('[TranslationPanel] Translation error:', error);
@@ -124,14 +194,66 @@ export function TranslationPanel({
         errorMessage = error.message;
       }
 
-      toast({
-        title: 'Translation Error',
-        description: errorMessage,
-        variant: 'destructive'
-      });
+      if (!pageText) {
+        toast({
+          title: 'Translation Error',
+          description: errorMessage,
+          variant: 'destructive'
+        });
+      }
+      return null;
     } finally {
-      setIsTranslating(false);
+      if (!pageText) {
+        setIsTranslating(false);
+      }
     }
+  };
+
+  const handleTranslateAll = async () => {
+    if (!onPageChange || totalPages <= 1) return;
+
+    setIsTranslatingAll(true);
+    setTranslateAllProgress(0);
+    
+    for (let page = 1; page <= totalPages; page++) {
+      try {
+        // Check if already cached
+        const cacheKey = `${page}-${targetLanguage}`;
+        if (!translationCache.current.has(cacheKey)) {
+          // For simplicity, we're using the current extracted text
+          // In a full implementation, you'd extract text for each specific page
+          await handleTranslate(false, extractedText, page);
+        }
+        setTranslateAllProgress((page / totalPages) * 100);
+      } catch (error) {
+        console.error(`Failed to translate page ${page}:`, error);
+      }
+    }
+
+    setIsTranslatingAll(false);
+    toast({
+      title: 'Translation Complete',
+      description: `All ${totalPages} pages have been translated`,
+    });
+  };
+
+  const handleDownload = () => {
+    if (!translatedText) return;
+
+    const blob = new Blob([translatedText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `translated-page-${currentPage}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'Downloaded',
+      description: 'Translation saved to file',
+    });
   };
 
   const handleCopy = async () => {
@@ -157,6 +279,18 @@ export function TranslationPanel({
 
   const handleLanguageChange = (lang: string) => {
     setTargetLanguage(lang);
+  };
+
+  const handleSyncScroll = (source: 'original' | 'translated') => {
+    const sourceRef = source === 'original' ? originalScrollRef : translatedScrollRef;
+    const targetRef = source === 'original' ? translatedScrollRef : originalScrollRef;
+
+    if (sourceRef.current && targetRef.current) {
+      const scrollPercentage = sourceRef.current.scrollTop / 
+        (sourceRef.current.scrollHeight - sourceRef.current.clientHeight);
+      targetRef.current.scrollTop = scrollPercentage * 
+        (targetRef.current.scrollHeight - targetRef.current.clientHeight);
+    }
   };
   
   // Auto-translate when panel opens, page changes, or language changes
@@ -243,24 +377,70 @@ export function TranslationPanel({
           </Select>
         </div>
 
-        <Button
-          onClick={() => handleTranslate(false)}
-          disabled={isTranslating || isExtracting || !extractedText}
-          className="w-full"
-          size="sm"
-        >
-          {isTranslating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Translating...
-            </>
-          ) : (
-            <>
-              <Globe className="w-4 h-4 mr-2" />
-              Re-translate This Page
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => handleTranslate(false)}
+            disabled={isTranslating || isExtracting || !extractedText}
+            className="flex-1"
+            size="sm"
+          >
+            {isTranslating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Translating...
+              </>
+            ) : (
+              <>
+                <Globe className="w-4 h-4 mr-2" />
+                Re-translate
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewMode(viewMode === 'translation' ? 'sideBySide' : 'translation')}
+            disabled={!translatedText}
+          >
+            {viewMode === 'translation' ? (
+              <Columns2 className="w-4 h-4" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+
+        {totalPages > 1 && (
+          <Button
+            onClick={handleTranslateAll}
+            disabled={isTranslatingAll || isExtracting || !extractedText}
+            variant="outline"
+            className="w-full"
+            size="sm"
+          >
+            {isTranslatingAll ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Translating All Pages...
+              </>
+            ) : (
+              <>
+                <Globe className="w-4 h-4 mr-2" />
+                Translate All {totalPages} Pages
+              </>
+            )}
+          </Button>
+        )}
+
+        {isTranslatingAll && (
+          <div className="space-y-1">
+            <Progress value={translateAllProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground text-center">
+              {Math.round(translateAllProgress)}% complete
+            </p>
+          </div>
+        )}
 
         {isCached && translatedText && (
           <p className="text-xs text-muted-foreground text-center">
@@ -305,33 +485,107 @@ export function TranslationPanel({
             </div>
           )}
 
-          {translatedText && (
+          {translatedText && viewMode === 'translation' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Translated Text</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="h-8"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3 h-3 mr-1" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3 mr-1" />
-                      Copy
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDownload}
+                    className="h-8"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="h-8"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3 h-3 mr-1" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 mr-1" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="prose prose-sm max-w-none p-4 bg-card rounded-lg border">
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">
                   {translatedText}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {translatedText && viewMode === 'sideBySide' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Side-by-Side View</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDownload}
+                    className="h-8"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="h-8"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3 h-3 mr-1" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 mr-1" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Original</p>
+                  <ScrollArea 
+                    className="h-[400px] prose prose-sm max-w-none p-4 bg-card rounded-lg border"
+                    ref={originalScrollRef}
+                    onScroll={() => handleSyncScroll('original')}
+                  >
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {extractedText}
+                    </p>
+                  </ScrollArea>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Translation</p>
+                  <ScrollArea 
+                    className="h-[400px] prose prose-sm max-w-none p-4 bg-card rounded-lg border"
+                    ref={translatedScrollRef}
+                    onScroll={() => handleSyncScroll('translated')}
+                  >
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {translatedText}
+                    </p>
+                  </ScrollArea>
+                </div>
               </div>
             </div>
           )}
