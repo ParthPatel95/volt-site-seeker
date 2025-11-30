@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Monitor, Smartphone, Globe, Chrome } from 'lucide-react';
+import { Monitor, Smartphone, Globe, Chrome, MapPin } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface GeographicDeviceAnalyticsProps {
   dateRange?: DateRange;
@@ -14,17 +15,26 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accen
 // Cache for geocoding results to avoid repeated API calls
 const geocodeCache = new Map<string, string>();
 
-async function getCityFromCoordinates(coordinates: string): Promise<string> {
-  if (!coordinates || coordinates === 'Unknown') return 'Unknown';
+interface LocationInfo {
+  city: string;
+  country: string;
+}
+
+async function getLocationFromCoordinates(coordinates: string): Promise<LocationInfo> {
+  if (!coordinates || coordinates === 'Unknown') {
+    return { city: 'Unknown', country: 'Unknown' };
+  }
   
   // Check cache first
   if (geocodeCache.has(coordinates)) {
-    return geocodeCache.get(coordinates)!;
+    return JSON.parse(geocodeCache.get(coordinates)!);
   }
   
   // Parse coordinates (format: "lat,lon")
   const [lat, lon] = coordinates.split(',').map(s => s.trim());
-  if (!lat || !lon) return coordinates;
+  if (!lat || !lon) {
+    return { city: coordinates, country: 'Unknown' };
+  }
   
   try {
     // Use Nominatim API for reverse geocoding (free, no API key needed)
@@ -47,12 +57,16 @@ async function getCityFromCoordinates(coordinates: string): Promise<string> {
                  data.address?.state ||
                  'Unknown Location';
     
+    const country = data.address?.country || 'Unknown';
+    
+    const locationInfo = { city, country };
+    
     // Cache the result
-    geocodeCache.set(coordinates, city);
-    return city;
+    geocodeCache.set(coordinates, JSON.stringify(locationInfo));
+    return locationInfo;
   } catch (error) {
     console.error('Error geocoding coordinates:', error);
-    return coordinates; // Fallback to coordinates
+    return { city: coordinates, country: 'Unknown' };
   }
 }
 
@@ -93,7 +107,7 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
         avgTime: stats.count > 0 ? Math.round(stats.time / stats.count) : 0
       }));
 
-      // Location breakdown - convert coordinates to city names
+      // Location breakdown - convert coordinates to city and country
       const locationCounts: Record<string, number> = {};
       
       // Get unique locations and their counts
@@ -102,23 +116,38 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
         locationCounts[loc] = (locationCounts[loc] || 0) + 1;
       });
 
-      // Convert coordinates to city names
+      // Convert coordinates to city and country
       const locationEntries = await Promise.all(
         Object.entries(locationCounts).map(async ([coordinates, count]) => {
-          const cityName = await getCityFromCoordinates(coordinates);
-          return { name: cityName, value: count };
+          const locationInfo = await getLocationFromCoordinates(coordinates);
+          return { 
+            city: locationInfo.city, 
+            country: locationInfo.country, 
+            count 
+          };
         })
       );
 
-      // Merge duplicate city names
-      const mergedLocations: Record<string, number> = {};
-      locationEntries.forEach(({ name, value }) => {
-        mergedLocations[name] = (mergedLocations[name] || 0) + value;
+      // Merge duplicate city/country combinations
+      const mergedLocations: Record<string, { country: string; count: number }> = {};
+      locationEntries.forEach(({ city, country, count }) => {
+        const key = `${city}, ${country}`;
+        if (!mergedLocations[key]) {
+          mergedLocations[key] = { country, count: 0 };
+        }
+        mergedLocations[key].count += count;
       });
 
       const locationData = Object.entries(mergedLocations)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
+        .map(([location, data]) => {
+          const [city] = location.split(', ');
+          return { 
+            city, 
+            country: data.country, 
+            count: data.count 
+          };
+        })
+        .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
       // Browser breakdown
@@ -229,23 +258,40 @@ export function GeographicDeviceAnalytics({ dateRange }: GeographicDeviceAnalyti
       <Card className="border-watt-accent/20 hover:border-watt-accent/40 transition-all shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-watt-accent" />
+            <MapPin className="h-5 w-5 text-watt-accent" />
             <CardTitle className="text-base sm:text-lg">Top Locations</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {data?.locationData && data.locationData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
-              <BarChart data={data.locationData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--watt-accent))" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="overflow-auto max-h-[300px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">#</TableHead>
+                    <TableHead>City</TableHead>
+                    <TableHead>Country</TableHead>
+                    <TableHead className="text-right">Views</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.locationData.map((location, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium text-muted-foreground">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">{location.city}</TableCell>
+                      <TableCell className="text-muted-foreground">{location.country}</TableCell>
+                      <TableCell className="text-right font-semibold text-watt-accent">
+                        {location.count}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="h-[250px] sm:h-[300px] flex items-center justify-center text-muted-foreground text-sm">
+            <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
               No location data available
             </div>
           )}
