@@ -855,11 +855,11 @@ export function TranslationPanel({
                   </Button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2">Original</p>
                   <ScrollArea 
-                    className="h-[400px] prose prose-sm max-w-none p-4 bg-card rounded-lg border"
+                    className="h-[300px] md:h-[400px] prose prose-sm max-w-none p-4 bg-card rounded-lg border"
                     ref={originalScrollRef}
                     onScroll={() => handleSyncScroll('original')}
                   >
@@ -871,7 +871,7 @@ export function TranslationPanel({
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2">Translation</p>
                   <ScrollArea 
-                    className="h-[400px] prose prose-sm max-w-none p-4 bg-card rounded-lg border"
+                    className="h-[300px] md:h-[400px] prose prose-sm max-w-none p-4 bg-card rounded-lg border"
                     ref={translatedScrollRef}
                     onScroll={() => handleSyncScroll('translated')}
                   >

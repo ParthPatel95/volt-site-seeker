@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -810,6 +810,8 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(folderContents?.rootFolder?.id ?? null);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<'gallery' | 'viewer'>('gallery');
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Search, filter, and pagination state - used by filtered documents
   const [searchQuery, setSearchQuery] = useState('');
@@ -933,6 +935,10 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
 
   // Handle document selection - switch to full-screen viewer
   const handleDocumentSelect = (doc: any) => {
+    // Save current scroll position
+    if (scrollContainerRef.current) {
+      setScrollPosition(scrollContainerRef.current.scrollTop);
+    }
     setSelectedDocument(doc);
     setViewMode('viewer');
   };
@@ -940,6 +946,13 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   // Handle back to gallery
   const handleBackToGallery = () => {
     setViewMode('gallery');
+    
+    // Restore scroll position after a brief delay for DOM updates
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollPosition;
+      }
+    }, 50);
   };
 
   // Full-screen document viewer
@@ -991,7 +1004,7 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
       </div>
 
       {/* Main layout */}
-      <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
+      <div ref={scrollContainerRef} className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl overflow-y-auto">
         <FolderGalleryView
           documents={documents || []}
           folders={folders || []}
