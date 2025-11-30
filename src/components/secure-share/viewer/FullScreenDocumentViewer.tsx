@@ -23,6 +23,8 @@ export function FullScreenDocumentViewer({
   onDocumentChange
 }: FullScreenDocumentViewerProps) {
   const [showSidebar, setShowSidebar] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   
   const currentIndex = allDocuments.findIndex(doc => doc.id === document.id);
   const hasPrevious = currentIndex > 0;
@@ -39,6 +41,33 @@ export function FullScreenDocumentViewer({
       onDocumentChange(allDocuments[currentIndex + 1]);
     }
   }, [hasNext, allDocuments, currentIndex, onDocumentChange]);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && hasNext) {
+      handleNext();
+    }
+    if (isRightSwipe && hasPrevious) {
+      handlePrevious();
+    }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -57,7 +86,12 @@ export function FullScreenDocumentViewer({
   }, [onBack, hasPrevious, hasNext, handlePrevious, handleNext]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div 
+      className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Header Bar */}
       <div className="absolute top-0 left-0 right-0 z-10 border-b bg-card/95 backdrop-blur-xl shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -90,6 +124,7 @@ export function FullScreenDocumentViewer({
               onClick={handlePrevious}
               disabled={!hasPrevious}
               title="Previous document (←)"
+              className="touch-manipulation min-h-[44px] min-w-[44px]"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -99,6 +134,7 @@ export function FullScreenDocumentViewer({
               onClick={handleNext}
               disabled={!hasNext}
               title="Next document (→)"
+              className="touch-manipulation min-h-[44px] min-w-[44px]"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

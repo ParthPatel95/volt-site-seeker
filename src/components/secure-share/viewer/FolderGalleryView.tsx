@@ -251,6 +251,38 @@ export function FolderGalleryView({
     });
   };
 
+  // Helper to create mobile folder options with indentation
+  const getMobileFolderOptions = (): Array<{id: string, name: string, depth: number}> => {
+    const options: Array<{id: string, name: string, depth: number}> = [];
+    
+    const traverse = (parentId: string, depth = 0) => {
+      const children = (foldersByParent.get(parentId) || [])
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      
+      for (const folder of children) {
+        const descendantIds = getDescendantFolderIds(folder.id);
+        const allFolderIds = [folder.id, ...descendantIds];
+        const docsCount = allFolderIds.reduce(
+          (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
+          0
+        );
+        
+        options.push({
+          id: folder.id,
+          name: `${'  '.repeat(depth)}${folder.name || 'Untitled'} (${docsCount})`,
+          depth
+        });
+        
+        traverse(folder.id, depth + 1);
+      }
+    };
+    
+    traverse(rootFolder.id);
+    return options;
+  };
+  
+  const mobileFolderOptions = getMobileFolderOptions();
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Left Sidebar - Folder Tree (Desktop) */}
@@ -292,6 +324,24 @@ export function FolderGalleryView({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col gap-4">
+        {/* Mobile Folder Selector */}
+        <div className="lg:hidden">
+          <Select value={selectedFolderId} onValueChange={onFolderSelect}>
+            <SelectTrigger className="w-full">
+              <div className="flex items-center gap-2">
+                <Folder className="w-4 h-4" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {mobileFolderOptions.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground overflow-x-auto">
           {breadcrumbs.map((folder, index) => (
@@ -430,6 +480,7 @@ export function FolderGalleryView({
                 const IconComponent = getFileIcon(category);
                 const isImage = category === 'image';
                 const isPdf = category === 'pdf';
+                const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
                 return (
                   <Card
@@ -445,7 +496,7 @@ export function FolderGalleryView({
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                      ) : isPdf ? (
+                      ) : isPdf && !isMobileDevice ? (
                         <iframe
                           src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
                           className="absolute inset-0 w-full h-full pointer-events-none scale-110"
