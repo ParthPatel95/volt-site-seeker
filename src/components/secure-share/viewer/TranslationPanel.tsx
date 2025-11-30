@@ -26,6 +26,7 @@ interface TranslationPanelProps {
   extractedText: string;
   isExtracting: boolean;
   onPageChange?: (page: number) => void;
+  pdfDocument?: any; // PDFDocumentProxy for multi-page text extraction
 }
 
 const SUPPORTED_LANGUAGES = [
@@ -49,7 +50,8 @@ export function TranslationPanel({
   totalPages = 1,
   extractedText,
   isExtracting,
-  onPageChange
+  onPageChange,
+  pdfDocument
 }: TranslationPanelProps) {
   const [targetLanguage, setTargetLanguage] = useState<string>('zh-CN');
   const [translatedText, setTranslatedText] = useState<string>('');
@@ -59,6 +61,8 @@ export function TranslationPanel({
   const [viewMode, setViewMode] = useState<'translation' | 'sideBySide'>('translation');
   const [isTranslatingAll, setIsTranslatingAll] = useState(false);
   const [translateAllProgress, setTranslateAllProgress] = useState(0);
+  const [isScannedPdf, setIsScannedPdf] = useState(false);
+  const [allTranslations, setAllTranslations] = useState<Map<number, string>>(new Map());
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -79,6 +83,52 @@ export function TranslationPanel({
   };
   
   const selectedLanguage = SUPPORTED_LANGUAGES.find(l => l.code === targetLanguage);
+
+  // Detect if PDF is scanned (image-based with little to no text)
+  useEffect(() => {
+    if (extractedText && !isExtracting) {
+      const textLength = extractedText.trim().length;
+      const avgCharsPerPage = textLength / totalPages;
+      
+      // If less than 50 chars per page on average, likely scanned
+      if (avgCharsPerPage < 50) {
+        setIsScannedPdf(true);
+      } else {
+        setIsScannedPdf(false);
+      }
+    }
+  }, [extractedText, isExtracting, totalPages]);
+
+  // Extract text from a specific page
+  const extractTextFromPage = async (pageNumber: number): Promise<string> => {
+    if (!pdfDocument) return extractedText;
+    
+    try {
+      const page = await pdfDocument.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      
+      let lastY = 0;
+      let text = '';
+      
+      for (const item of textContent.items) {
+        if ('str' in item) {
+          const currentY = item.transform[5];
+          
+          if (lastY !== 0 && Math.abs(currentY - lastY) > 5) {
+            text += '\n';
+          }
+          
+          text += item.str;
+          lastY = currentY;
+        }
+      }
+      
+      return text;
+    } catch (error) {
+      console.error(`Failed to extract text from page ${pageNumber}:`, error);
+      return '';
+    }
+  };
 
   const handleTranslate = async (useCache = true, pageText?: string, pageNum?: number) => {
     const textToTranslate = pageText || extractedText;
@@ -226,26 +276,70 @@ export function TranslationPanel({
 
     setIsTranslatingAll(true);
     setTranslateAllProgress(0);
+    const translations = new Map<number, string>();
     
     for (let page = 1; page <= totalPages; page++) {
       try {
-        // Check if already cached
         const cacheKey = `${page}-${targetLanguage}`;
-        if (!translationCache.current.has(cacheKey)) {
-          // For simplicity, we're using the current extracted text
-          // In a full implementation, you'd extract text for each specific page
-          await handleTranslate(false, extractedText, page);
+        let translation: string | null;
+        
+        if (translationCache.current.has(cacheKey)) {
+          translation = translationCache.current.get(cacheKey)!;
+        } else {
+          // Extract text from specific page
+          const pageText = await extractTextFromPage(page);
+          translation = await handleTranslate(false, pageText, page);
         }
+        
+        if (translation) {
+          translations.set(page, translation);
+        }
+        
         setTranslateAllProgress((page / totalPages) * 100);
       } catch (error) {
         console.error(`Failed to translate page ${page}:`, error);
       }
     }
 
+    setAllTranslations(translations);
     setIsTranslatingAll(false);
     toast({
       title: 'Translation Complete',
       description: `All ${totalPages} pages have been translated`,
+    });
+  };
+
+  const handleDownloadAll = () => {
+    if (allTranslations.size === 0) {
+      toast({
+        title: 'No Translations',
+        description: 'Please translate all pages first',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    let fullText = '';
+    for (let page = 1; page <= totalPages; page++) {
+      const translation = allTranslations.get(page) || translationCache.current.get(`${page}-${targetLanguage}`);
+      if (translation) {
+        fullText += `--- Page ${page} ---\n\n${translation}\n\n`;
+      }
+    }
+
+    const blob = new Blob([fullText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `translated-document-all-pages.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'Downloaded',
+      description: 'All translations saved to file',
     });
   };
 
@@ -431,25 +525,40 @@ export function TranslationPanel({
         </div>
 
         {totalPages > 1 && (
-          <Button
-            onClick={handleTranslateAll}
-            disabled={isTranslatingAll || isExtracting || !extractedText}
-            variant="outline"
-            className="w-full"
-            size="sm"
-          >
-            {isTranslatingAll ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Translating All Pages...
-              </>
-            ) : (
-              <>
-                <Globe className="w-4 h-4 mr-2" />
-                Translate All {totalPages} Pages
-              </>
+          <>
+            <Button
+              onClick={handleTranslateAll}
+              disabled={isTranslatingAll || isExtracting || !extractedText}
+              variant="outline"
+              className="w-full"
+              size="sm"
+            >
+              {isTranslatingAll ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Translating All Pages...
+                </>
+              ) : (
+                <>
+                  <Globe className="w-4 h-4 mr-2" />
+                  Translate All {totalPages} Pages
+                </>
+              )}
+            </Button>
+            
+            {(allTranslations.size > 0 || Array.from({ length: totalPages }, (_, i) => i + 1).some(p => translationCache.current.has(`${p}-${targetLanguage}`))) && (
+              <Button
+                onClick={handleDownloadAll}
+                disabled={isTranslatingAll}
+                variant="outline"
+                className="w-full"
+                size="sm"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download All Translations
+              </Button>
             )}
-          </Button>
+          </>
         )}
 
         {isTranslatingAll && (
@@ -465,6 +574,20 @@ export function TranslationPanel({
           <p className="text-xs text-muted-foreground text-center">
             ✓ Translation loaded from cache
           </p>
+        )}
+
+        {isScannedPdf && (
+          <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+            <div className="w-5 h-5 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-yellow-600 dark:text-yellow-400 text-xs">!</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Scanned Document Detected</p>
+              <p className="text-xs text-yellow-600/80 dark:text-yellow-400/80 mt-1">
+                This appears to be a scanned/image-based PDF with limited text. Translation quality may be reduced. For best results, use a text-based PDF.
+              </p>
+            </div>
+          </div>
         )}
       </div>
 
