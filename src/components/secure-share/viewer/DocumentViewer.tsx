@@ -906,8 +906,10 @@ export function DocumentViewer({
         onClose={() => setTranslationOpen(false)}
         documentId={documentId}
         currentPage={pageNumber}
+        totalPages={numPages || 1}
         extractedText={extractedText}
         isExtracting={isExtracting}
+        onPageChange={(page) => setPageNumber(page)}
       />
     </div>
   );
