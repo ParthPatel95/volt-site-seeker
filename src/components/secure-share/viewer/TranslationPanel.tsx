@@ -339,15 +339,25 @@ export function TranslationPanel({
       }
     }
 
-    const blob = new Blob([fullText], { type: 'text/plain' });
+    const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `translated-document-all-pages.txt`;
+    
+    // iOS Safari compatibility
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
     document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    
+    // Small delay helps iOS Safari handle download
+    setTimeout(() => {
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    }, 0);
 
     toast({
       title: 'Downloaded',
@@ -358,15 +368,24 @@ export function TranslationPanel({
   const handleDownload = () => {
     if (!translatedText) return;
 
-    const blob = new Blob([translatedText], { type: 'text/plain' });
+    const blob = new Blob([translatedText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `translated-page-${currentPage}.txt`;
+    
+    // iOS Safari compatibility
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
     document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    
+    setTimeout(() => {
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    }, 0);
 
     toast({
       title: 'Downloaded',
@@ -399,7 +418,7 @@ export function TranslationPanel({
     setTargetLanguage(lang);
   };
 
-  const handleSyncScroll = (source: 'original' | 'translated') => {
+  const handleSyncScroll = useCallback((source: 'original' | 'translated') => {
     const sourceRef = source === 'original' ? originalScrollRef : translatedScrollRef;
     const targetRef = source === 'original' ? translatedScrollRef : originalScrollRef;
 
@@ -409,7 +428,41 @@ export function TranslationPanel({
       targetRef.current.scrollTop = scrollPercentage * 
         (targetRef.current.scrollHeight - targetRef.current.clientHeight);
     }
-  };
+  }, []);
+  
+  // Sync scrolling in side-by-side mode with iOS compatibility
+  useEffect(() => {
+    if (viewMode !== 'sideBySide') return;
+
+    let isScrollingOriginal = false;
+    let isScrollingTranslated = false;
+
+    const handleOriginalScroll = () => {
+      if (isScrollingTranslated) return;
+      isScrollingOriginal = true;
+      handleSyncScroll('original');
+      setTimeout(() => { isScrollingOriginal = false; }, 100);
+    };
+
+    const handleTranslatedScroll = () => {
+      if (isScrollingOriginal) return;
+      isScrollingTranslated = true;
+      handleSyncScroll('translated');
+      setTimeout(() => { isScrollingTranslated = false; }, 100);
+    };
+
+    const originalEl = originalScrollRef.current;
+    const translatedEl = translatedScrollRef.current;
+
+    // Passive listeners for better iOS performance
+    originalEl?.addEventListener('scroll', handleOriginalScroll, { passive: true });
+    translatedEl?.addEventListener('scroll', handleTranslatedScroll, { passive: true });
+
+    return () => {
+      originalEl?.removeEventListener('scroll', handleOriginalScroll);
+      translatedEl?.removeEventListener('scroll', handleTranslatedScroll);
+    };
+  }, [viewMode, handleSyncScroll]);
   
   // Auto-translate when panel opens, page changes, or language changes
   useEffect(() => {
