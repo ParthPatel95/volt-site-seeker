@@ -319,12 +319,16 @@ export function DocumentViewer({
       extractPageText(documentUrl, pageNumber)
         .then((text) => {
           setExtractedText(text);
+          if (!text || text.trim().length < 10) {
+            console.warn('[DocumentViewer] Very little text extracted - PDF may be scanned/image-based');
+          }
         })
         .catch((error) => {
           console.error('[DocumentViewer] PDF text extraction failed:', error);
+          setExtractedText(''); // Clear any stale text
           toast({
             title: 'Extraction Error',
-            description: 'Failed to extract text from PDF',
+            description: 'Failed to extract text from PDF. The document may be password-protected, scanned, or image-based.',
             variant: 'destructive'
           });
         })
@@ -913,6 +917,7 @@ export function DocumentViewer({
         isExtracting={isExtracting}
         onPageChange={(page) => setPageNumber(page)}
         pdfDocument={pdfDocumentProxy}
+        documentUrl={isPdf ? documentUrl : undefined}
       />
     </div>
   );
