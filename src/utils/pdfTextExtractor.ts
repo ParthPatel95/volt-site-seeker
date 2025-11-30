@@ -50,24 +50,51 @@ export async function extractPdfText(
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         
-        // Combine text items with proper spacing and line breaks
-        const pageText = textContent.items
-          .map((item: any) => {
-            if ('str' in item) {
-              return item.str;
+        // Preserve paragraph structure by detecting line breaks based on y-coordinates
+        interface TextItem {
+          str: string;
+          transform: number[];
+        }
+        
+        const items = textContent.items as TextItem[];
+        const lines: string[] = [];
+        let currentLine: string[] = [];
+        let lastY: number | null = null;
+        
+        items.forEach((item) => {
+          if (!('str' in item)) return;
+          
+          const y = item.transform[5]; // Y-coordinate
+          const text = item.str.trim();
+          
+          if (!text) return;
+          
+          // Detect line break: significant Y-coordinate change
+          if (lastY !== null && Math.abs(y - lastY) > 5) {
+            if (currentLine.length > 0) {
+              lines.push(currentLine.join(' '));
+              currentLine = [];
             }
-            return '';
-          })
-          .join(' ')
-          .replace(/\s+/g, ' ') // Normalize whitespace
-          .trim();
+          }
+          
+          currentLine.push(text);
+          lastY = y;
+        });
+        
+        // Push final line
+        if (currentLine.length > 0) {
+          lines.push(currentLine.join(' '));
+        }
+        
+        // Join lines with double newlines for paragraph separation
+        const pageText = lines.join('\n\n').trim();
 
         pages.push({
           pageNumber: pageNum,
           text: pageText
         });
 
-        console.log(`[pdfTextExtractor] Extracted page ${pageNum}: ${pageText.length} characters`);
+        console.log(`[pdfTextExtractor] Extracted page ${pageNum}: ${pageText.length} characters, ${lines.length} lines`);
       } catch (pageError) {
         console.error(`[pdfTextExtractor] Error extracting page ${pageNum}:`, pageError);
         // Continue with other pages

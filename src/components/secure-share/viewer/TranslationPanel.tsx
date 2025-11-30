@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Globe, X, Loader2, Copy, Check, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,14 +49,30 @@ export function TranslationPanel({
   const [isCached, setIsCached] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  
+  // In-memory translation cache: Map<"pageNumber-languageCode", translatedText>
+  const translationCache = useRef<Map<string, string>>(new Map());
+  
+  // Track if this is the first open to auto-translate
+  const hasAutoTranslated = useRef(false);
 
-  const handleTranslate = async () => {
+  const handleTranslate = async (useCache = true) => {
     if (!extractedText || !targetLanguage) {
       toast({
         title: 'Translation Error',
         description: 'No text available to translate',
         variant: 'destructive'
       });
+      return;
+    }
+
+    // Check in-memory cache first
+    const cacheKey = `${currentPage}-${targetLanguage}`;
+    if (useCache && translationCache.current.has(cacheKey)) {
+      const cachedTranslation = translationCache.current.get(cacheKey)!;
+      setTranslatedText(cachedTranslation);
+      setIsCached(true);
+      console.log(`[TranslationPanel] Loaded from in-memory cache: ${cacheKey}`);
       return;
     }
 
@@ -82,13 +98,18 @@ export function TranslationPanel({
         throw new Error(data.error);
       }
 
-      setTranslatedText(data.translatedText);
+      const translated = data.translatedText;
+      setTranslatedText(translated);
       setIsCached(data.cached || false);
+      
+      // Store in in-memory cache
+      translationCache.current.set(cacheKey, translated);
+      console.log(`[TranslationPanel] Stored in cache: ${cacheKey}`);
 
       if (data.cached) {
         toast({
           title: 'Translation Loaded',
-          description: 'Translation loaded from cache',
+          description: 'Translation loaded from database cache',
         });
       }
     } catch (error: any) {
@@ -134,15 +155,45 @@ export function TranslationPanel({
     }
   };
 
-  // Auto-translate when language changes or text updates
   const handleLanguageChange = (lang: string) => {
     setTargetLanguage(lang);
-    if (extractedText && !isExtracting) {
-      // Reset translation and trigger new translation
-      setTranslatedText('');
-      setTimeout(() => handleTranslate(), 100);
-    }
   };
+  
+  // Auto-translate when panel opens, page changes, or language changes
+  useEffect(() => {
+    if (!isOpen) {
+      hasAutoTranslated.current = false;
+      return;
+    }
+    
+    if (isExtracting || !extractedText) {
+      return;
+    }
+    
+    // Check if we already have translation for this page/language in cache
+    const cacheKey = `${currentPage}-${targetLanguage}`;
+    if (translationCache.current.has(cacheKey)) {
+      const cachedTranslation = translationCache.current.get(cacheKey)!;
+      setTranslatedText(cachedTranslation);
+      setIsCached(true);
+      hasAutoTranslated.current = true;
+      return;
+    }
+    
+    // Auto-translate on first open or when page/language changes
+    if (!hasAutoTranslated.current || translatedText) {
+      handleTranslate(true);
+      hasAutoTranslated.current = true;
+    }
+  }, [isOpen, currentPage, targetLanguage, extractedText, isExtracting]);
+  
+  // Clear cache when panel closes
+  useEffect(() => {
+    if (!isOpen) {
+      setTranslatedText('');
+      setIsCached(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -193,7 +244,7 @@ export function TranslationPanel({
         </div>
 
         <Button
-          onClick={handleTranslate}
+          onClick={() => handleTranslate(false)}
           disabled={isTranslating || isExtracting || !extractedText}
           className="w-full"
           size="sm"
@@ -206,12 +257,12 @@ export function TranslationPanel({
           ) : (
             <>
               <Globe className="w-4 h-4 mr-2" />
-              Translate This Page
+              Re-translate This Page
             </>
           )}
         </Button>
 
-        {isCached && (
+        {isCached && translatedText && (
           <p className="text-xs text-muted-foreground text-center">
             ✓ Translation loaded from cache
           </p>
@@ -239,9 +290,9 @@ export function TranslationPanel({
 
           {!isExtracting && extractedText && !translatedText && !isTranslating && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Globe className="w-12 h-12 text-primary/30 mb-4" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
               <p className="text-sm text-muted-foreground">
-                Click "Translate This Page" to translate
+                Preparing translation...
               </p>
             </div>
           )}
