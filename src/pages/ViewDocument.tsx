@@ -3,17 +3,17 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Shield, Lock, Eye, Clock, FileText, ArrowLeft, Search, Filter, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image, Video, Music, File, Folder, FolderOpen, Globe } from 'lucide-react';
+import { Shield, Lock, Eye, Clock, FileText, ArrowLeft, Image, Video, Music, File, Folder, FolderOpen, ChevronDown, ChevronRight } from 'lucide-react';
 import { PasswordProtection } from '@/components/secure-share/viewer/PasswordProtection';
 import { NDASignature } from '@/components/secure-share/viewer/NDASignature';
 import { DocumentViewer } from '@/components/secure-share/viewer/DocumentViewer';
 import { ViewerInfoCollection } from '@/components/secure-share/viewer/ViewerInfoCollection';
+import { FolderGalleryView } from '@/components/secure-share/viewer/FolderGalleryView';
+import { FullScreenDocumentViewer } from '@/components/secure-share/viewer/FullScreenDocumentViewer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 export default function ViewDocument() {
@@ -809,16 +809,12 @@ interface FolderViewerProps {
 function FolderViewer({ token, linkData, folderContents, viewerData }: FolderViewerProps) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(folderContents?.rootFolder?.id ?? null);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
+  const [viewMode, setViewMode] = useState<'gallery' | 'viewer'>('gallery');
   
-  // Search, filter, and pagination state
+  // Search, filter, and pagination state - used by filtered documents
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFileType, setSelectedFileType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name-asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(12);
-  
-  // Collapsible file list state
-  const [isFileListCollapsed, setIsFileListCollapsed] = useState(false);
   
   // Expanded folders state
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
@@ -875,50 +871,6 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     descendantMap.set(folderId, uniqueIds);
     return uniqueIds;
   };
-  
-  // Helper to get ancestor folder IDs
-  const getAncestorFolderIds = (folderId: string): string[] => {
-    const ancestors: string[] = [];
-    let currentId = folderId;
-    
-    while (currentId) {
-      const folder = allFolders.find(f => f.id === currentId);
-      if (folder?.parent_folder_id) {
-        ancestors.push(folder.parent_folder_id);
-        currentId = folder.parent_folder_id;
-      } else {
-        break;
-      }
-    }
-    
-    return ancestors;
-  };
-  
-  // Toggle folder expand/collapse
-  const toggleFolder = (folderId: string) => {
-    setExpandedFolders(prev => {
-      const next = new Set(prev);
-      if (next.has(folderId)) {
-        next.delete(folderId);
-      } else {
-        next.add(folderId);
-      }
-      return next;
-    });
-  };
-  
-  // Auto-expand when selected folder changes
-  useEffect(() => {
-    if (selectedFolderId) {
-      const ancestors = getAncestorFolderIds(selectedFolderId);
-      setExpandedFolders(prev => {
-        const next = new Set(prev);
-        ancestors.forEach(id => next.add(id));
-        next.add(selectedFolderId);
-        return next;
-      });
-    }
-  }, [selectedFolderId]);
 
   const currentFolderId = selectedFolderId || rootFolder.id;
   const currentFolderIds = [currentFolderId, ...getDescendantFolderIds(currentFolderId)];
@@ -955,119 +907,6 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
           return 0;
       }
     });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedDocuments = filteredDocuments.slice(startIndex, startIndex + itemsPerPage);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedFileType, sortBy, currentFolderId]);
-
-  // Initialize selected document when folder or page changes
-  useEffect(() => {
-    if (paginatedDocuments.length > 0) {
-      setSelectedDocument((prev) =>
-        prev && paginatedDocuments.some((d) => d.id === prev.id)
-          ? prev
-          : paginatedDocuments[0]
-      );
-    } else if (filteredDocuments.length > 0) {
-      setSelectedDocument(filteredDocuments[0]);
-    } else {
-      setSelectedDocument(null);
-    }
-  }, [currentFolderId, paginatedDocuments.length, filteredDocuments.length]);
-
-  // Count documents by file type
-  const fileTypeCounts = allCurrentDocuments.reduce((acc, doc) => {
-    const category = getFileCategory(doc.file_type);
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const renderFolderTree = (parentId: string, depth = 0) => {
-    const children = (foldersByParent.get(parentId) || [])
-      .sort((a, b) => (a.name || '').localeCompare(b.name || '')); // Alphabetical sort
-
-    return children.map((folder) => {
-      const isActive = folder.id === currentFolderId;
-      const hasChildren = (foldersByParent.get(folder.id) || []).length > 0;
-      const isExpanded = expandedFolders.has(folder.id);
-      
-      const descendantIds = getDescendantFolderIds(folder.id);
-      const allFolderIds = [folder.id, ...descendantIds];
-      const docsInFolderCount = allFolderIds.reduce(
-        (sum, id) => sum + (documentsByFolder.get(id)?.length || 0),
-        0
-      );
-
-      return (
-        <div key={folder.id} className="relative">
-          {/* Tree line connector */}
-          {depth > 0 && (
-            <div 
-              className="absolute left-2 top-0 bottom-0 w-px bg-border"
-              style={{ left: `${(depth - 1) * 16 + 8}px` }}
-            />
-          )}
-          
-          <div 
-            className={cn(
-              "flex items-center gap-1 py-1.5 px-2 rounded-md transition-colors mb-0.5",
-              isActive 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted text-muted-foreground hover:text-foreground"
-            )}
-            style={{ paddingLeft: `${depth * 16 + 8}px` }}
-          >
-            {/* Expand/Collapse Toggle */}
-            {hasChildren ? (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleFolder(folder.id); }}
-                className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded flex-shrink-0"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="w-3.5 h-3.5" />
-                ) : (
-                  <ChevronRight className="w-3.5 h-3.5" />
-                )}
-              </button>
-            ) : (
-              <span className="w-4.5 flex-shrink-0" /> 
-            )}
-            
-            {/* Folder Icon */}
-            {isExpanded && hasChildren ? (
-              <FolderOpen className="w-4 h-4 flex-shrink-0" />
-            ) : (
-              <Folder className="w-4 h-4 flex-shrink-0" />
-            )}
-            
-            {/* Folder Name - Click to Select */}
-            <button
-              onClick={() => setSelectedFolderId(folder.id)}
-              className="flex-1 text-left text-sm truncate"
-            >
-              {folder.name || 'Untitled'}
-            </button>
-            
-            {/* Document Count Badge */}
-            <span className="text-xs opacity-70 ml-auto flex-shrink-0">{docsInFolderCount}</span>
-          </div>
-          
-          {/* Render Children (only if expanded) */}
-          {hasChildren && isExpanded && (
-            <div className="relative">
-              {renderFolderTree(folder.id, depth + 1)}
-            </div>
-          )}
-        </div>
-      );
-    });
-  };
   
   // Render folder select options with hierarchy for mobile
   const renderFolderSelectOptions = (parentId: string, depth: number): JSX.Element[] => {
@@ -1092,6 +931,32 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     });
   };
 
+  // Handle document selection - switch to full-screen viewer
+  const handleDocumentSelect = (doc: any) => {
+    setSelectedDocument(doc);
+    setViewMode('viewer');
+  };
+
+  // Handle back to gallery
+  const handleBackToGallery = () => {
+    setViewMode('gallery');
+  };
+
+  // Full-screen document viewer
+  if (viewMode === 'viewer' && selectedDocument) {
+    return (
+      <FullScreenDocumentViewer
+        document={selectedDocument}
+        allDocuments={filteredDocuments}
+        linkData={linkData}
+        viewerData={viewerData}
+        onBack={handleBackToGallery}
+        onDocumentChange={(doc) => setSelectedDocument(doc)}
+      />
+    );
+  }
+
+  // Gallery view
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
@@ -1127,369 +992,16 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
 
       {/* Main layout */}
       <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-7xl">
-        {/* Mobile-first responsive layout */}
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          {/* Folder tree - hidden on mobile, sidebar on desktop */}
-          <div className="lg:w-64 lg:flex-shrink-0 hidden lg:block">
-            <Card className="p-3 md:p-4 sticky top-24 max-h-[calc(100vh-120px)]">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold flex items-center gap-2">
-                  <Folder className="w-4 h-4" />
-                  Folders
-                </h2>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setExpandedFolders(new Set(allFolders.map(f => f.id)))}
-                    title="Expand All"
-                  >
-                    <ChevronDown className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setExpandedFolders(new Set([rootFolder.id]))}
-                    title="Collapse All"
-                  >
-                    <ChevronRight className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-              <ScrollArea className="h-[calc(100vh-200px)]">
-                <div className="space-y-0 pr-2">
-                  {renderFolderTree(rootFolder.id)}
-                </div>
-              </ScrollArea>
-            </Card>
-          </div>
-
-          {/* Mobile folder selector */}
-          <div className="lg:hidden">
-            <Select value={currentFolderId} onValueChange={setSelectedFolderId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select folder" />
-              </SelectTrigger>
-              <SelectContent>
-                {renderFolderSelectOptions(rootFolder.id, 0)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Documents list & viewer */}
-          <div className="flex-1 flex flex-col gap-4">
-            {/* Document List Section */}
-            <Card className={cn(
-              "p-3 md:p-4 flex flex-col transition-all duration-300",
-              isFileListCollapsed 
-                ? "h-auto" 
-                : "h-auto lg:max-h-[500px]"
-            )}>
-            {/* Collapsed Toggle Bar */}
-            {isFileListCollapsed && selectedDocument && (
-              <button
-                onClick={() => setIsFileListCollapsed(false)}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors mb-4"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {(() => {
-                      const category = getFileCategory(selectedDocument.file_type);
-                      const IconComponent = getFileIcon(category);
-                      return <IconComponent className="w-4 h-4 text-primary" />;
-                    })()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" title={selectedDocument.file_name}>
-                      {selectedDocument.file_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {filteredDocuments.length} {filteredDocuments.length === 1 ? 'file' : 'files'}
-                    </p>
-                  </div>
-                </div>
-                <ChevronDown className="w-5 h-5 text-primary flex-shrink-0" />
-              </button>
-            )}
-            
-            {/* Search and Filter Controls */}
-            {!isFileListCollapsed && (
-              <>
-                <div className="space-y-3 md:space-y-4 mb-4 flex-shrink-0">
-                  <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-                    {/* Search Bar */}
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search files..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                    
-                    {/* Sort Dropdown */}
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                        <SelectItem value="date-desc">Newest First</SelectItem>
-                        <SelectItem value="date-asc">Oldest First</SelectItem>
-                        <SelectItem value="type">File Type</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* File Type Filters & Collapse Button */}
-                  <div className="flex flex-wrap gap-2 items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {['all', 'pdf', 'image', 'video', 'audio', 'document', 'other'].map((type) => {
-                        const count = type === 'all' ? allCurrentDocuments.length : (fileTypeCounts[type] || 0);
-                        const isActive = selectedFileType === type;
-                        
-                        return (
-                          <button
-                            key={type}
-                            onClick={() => setSelectedFileType(type)}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                              isActive
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }`}
-                          >
-                            {getFileCategoryLabel(type)} ({count})
-                          </button>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* Collapse Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsFileListCollapsed(true)}
-                      className="text-xs"
-                    >
-                      <ChevronUp className="w-4 h-4 mr-1" />
-                      Collapse
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Document Count and Results Info */}
-            {!isFileListCollapsed && (
-              <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b flex-shrink-0">
-              <div>
-                <h2 className="text-sm font-semibold">Documents</h2>
-                <p className="text-xs text-muted-foreground">
-                  {filteredDocuments.length === allCurrentDocuments.length 
-                    ? `${filteredDocuments.length} ${filteredDocuments.length === 1 ? 'document' : 'documents'}`
-                    : `${filteredDocuments.length} of ${allCurrentDocuments.length} documents`
-                  }
-                </p>
-              </div>
-              
-              {/* Pagination Info */}
-              {totalPages > 1 && (
-                <p className="text-xs text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-                </p>
-                )}
-              </div>
-            )}
-
-            {/* Scrollable Document List */}
-            {!isFileListCollapsed && (
-              <div className="flex-1 overflow-y-auto">
-              {/* Empty State */}
-              {filteredDocuments.length === 0 ? (
-                <div className="text-center py-8 md:py-12">
-                  <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {searchQuery || selectedFileType !== 'all' 
-                      ? 'No documents match your filters'
-                      : 'No documents in this folder'
-                    }
-                  </p>
-                  {(searchQuery || selectedFileType !== 'all') && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedFileType('all');
-                      }}
-                      className="mt-2"
-                    >
-                      Clear Filters
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <>
-                  {/* Document List - Compact for better viewing */}
-                  <div className="space-y-2 pr-2">
-                    {paginatedDocuments.map((doc: any) => {
-                      const isActive = selectedDocument?.id === doc.id;
-                      const category = getFileCategory(doc.file_type);
-                      const IconComponent = getFileIcon(category);
-                      const isImage = category === 'image';
-
-                      return (
-                        <button
-                          key={doc.id}
-                          onClick={() => {
-                            setSelectedDocument(doc);
-                            setIsFileListCollapsed(true);
-                          }}
-                          className={`w-full text-left group rounded-lg border p-2.5 transition-all hover:shadow-md flex items-center gap-3 ${
-                            isActive
-                              ? 'border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20'
-                              : 'border-border hover:border-primary/40 hover:bg-muted/40'
-                          }`}
-                        >
-                          {/* Thumbnail or Icon */}
-                          <div className="w-12 h-12 rounded overflow-hidden bg-muted/60 flex-shrink-0 flex items-center justify-center">
-                            {isImage && doc.file_url ? (
-                              <img 
-                                src={doc.file_url} 
-                                alt={doc.file_name}
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <IconComponent className="w-6 h-6 text-muted-foreground" />
-                            )}
-                          </div>
-                          
-                          {/* File Info */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate mb-0.5" title={doc.file_name}>
-                              {doc.file_name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {getFileCategoryLabel(category)}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum: number;
-                          
-                          if (totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i;
-                          } else {
-                            pageNum = currentPage - 2 + i;
-                          }
-                          
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={currentPage === pageNum ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setCurrentPage(pageNum)}
-                              className="w-8 h-8 p-0 text-xs"
-                            >
-                              {pageNum}
-                            </Button>
-                          );
-                        })}
-                        
-                        {totalPages > 5 && currentPage < totalPages - 2 && (
-                          <>
-                            <span className="text-muted-foreground px-1 text-xs">...</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCurrentPage(totalPages)}
-                              className="w-8 h-8 p-0 text-xs"
-                            >
-                              {totalPages}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                      >
-                         <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-              </div>
-            )}
-          </Card>
-
-          {/* Document Viewer */}
-          <div className={cn(
-            "transition-all duration-300",
-            isFileListCollapsed 
-              ? "h-[calc(100dvh-10rem)] lg:h-[calc(100dvh-8rem)]" 
-              : "h-[40dvh] lg:h-[calc(100dvh-8rem)]"
-          )} style={{ 
-            height: isFileListCollapsed 
-              ? 'calc(100vh - 10rem)' 
-              : 'calc(40vh)'
-          }}>
-            {selectedDocument ? (
-              <Card className="overflow-hidden border-2 shadow-xl h-full">
-                <DocumentViewer
-                  documentUrl={selectedDocument.file_url}
-                  documentType={selectedDocument.file_type}
-                  accessLevel={linkData.access_level}
-                  watermarkEnabled={linkData.watermark_enabled}
-                  recipientEmail={linkData.recipient_email}
-                  linkId={linkData.id}
-                  documentId={selectedDocument.id}
-                  enableTracking={true}
-                  viewerName={viewerData?.name}
-                  viewerEmail={viewerData?.email}
-                />
-              </Card>
-            ) : (
-              <Card className="p-8 h-full flex items-center justify-center">
-                <div className="text-center">
-                  <FileText className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
-                  <p className="text-muted-foreground">Select a document to preview</p>
-                </div>
-              </Card>
-            )}
-          </div>
-          </div>
-        </div>
+        <FolderGalleryView
+          documents={documents || []}
+          folders={folders || []}
+          rootFolder={rootFolder}
+          foldersByParent={foldersByParent}
+          documentsByFolder={documentsByFolder}
+          selectedFolderId={selectedFolderId || rootFolder.id}
+          onFolderSelect={setSelectedFolderId}
+          onDocumentSelect={handleDocumentSelect}
+        />
       </div>
     </div>
   );
