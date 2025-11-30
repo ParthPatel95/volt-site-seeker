@@ -83,6 +83,7 @@ export function DocumentViewer({
   const [translationOpen, setTranslationOpen] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
   const [isExtracting, setIsExtracting] = useState(false);
+  const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
   
   // Touch gesture state
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
@@ -448,9 +449,10 @@ export function DocumentViewer({
     setTouchStartX(null);
   };
 
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages);
+  function onDocumentLoadSuccess(pdf: any) {
+    setNumPages(pdf.numPages);
     setPageNumber(1);
+    setPdfDocumentProxy(pdf);
   }
 
   const handlePageLoadSuccess = (page: any) => {
@@ -910,6 +912,7 @@ export function DocumentViewer({
         extractedText={extractedText}
         isExtracting={isExtracting}
         onPageChange={(page) => setPageNumber(page)}
+        pdfDocument={pdfDocumentProxy}
       />
     </div>
   );
