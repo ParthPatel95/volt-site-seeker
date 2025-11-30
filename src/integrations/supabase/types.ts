@@ -2661,6 +2661,50 @@ export type Database = {
           },
         ]
       }
+      document_translations: {
+        Row: {
+          created_at: string | null
+          document_id: string | null
+          id: string
+          original_text: string | null
+          page_number: number
+          source_language: string
+          target_language: string
+          text_hash: string
+          translated_text: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          original_text?: string | null
+          page_number: number
+          source_language?: string
+          target_language: string
+          text_hash: string
+          translated_text: string
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          original_text?: string | null
+          page_number?: number
+          source_language?: string
+          target_language?: string
+          text_hash?: string
+          translated_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_translations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: Database["public"]["Enums"]["document_category"] | null
