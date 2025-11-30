@@ -5,6 +5,7 @@ import { Loader2, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
+import { VideoPlayer } from './viewer/VideoPlayer';
 
 // Configure PDF.js worker with multiple fallbacks for cross-browser compatibility
 const workerUrls = [
@@ -381,18 +382,19 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                 </div>
               ) : isVideo ? (
                 <div className="flex items-center justify-center h-full p-4">
-                  <video
+                  <VideoPlayer
                     src={documentUrl}
-                    controls
-                    playsInline
-                    preload="metadata"
-                    controlsList={!canDownload ? 'nodownload' : undefined}
-                    onContextMenu={(e) => !canDownload && e.preventDefault()}
-                    className="max-w-full max-h-full rounded-lg"
-                    style={{ transform: `scale(${scale})` }}
-                  >
-                    Your browser does not support video playback.
-                  </video>
+                    canDownload={canDownload}
+                    className="max-w-full max-h-full"
+                    onError={(error) => {
+                      console.error('[DocumentDialog] Video error:', error);
+                      toast({
+                        title: 'Video Error',
+                        description: 'Failed to load video. Please try again or download the file.',
+                        variant: 'destructive'
+                      });
+                    }}
+                  />
                 </div>
               ) : isAudio ? (
                 <div className="flex items-center justify-center h-full p-8">
