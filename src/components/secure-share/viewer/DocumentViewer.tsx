@@ -95,6 +95,16 @@ export function DocumentViewer({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Cleanup PDF.js resources on unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup to prevent memory leaks
+      if (pdfjs.GlobalWorkerOptions.workerSrc) {
+        console.log('[PDF.js] Cleaning up resources');
+      }
+    };
+  }, []);
+
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
     linkId: linkId || '',

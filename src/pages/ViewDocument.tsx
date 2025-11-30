@@ -28,6 +28,33 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   
+  // Helper function to fetch signed URL with retry logic
+  const fetchSignedUrlWithRetry = async (storagePath: string, expiresIn: number, retries = 3): Promise<string | null> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-signed-url', {
+          body: { storagePath, expiresIn }
+        });
+
+        if (error) {
+          console.error(`[ViewDocument] Signed URL error (attempt ${attempt}):`, error);
+          if (attempt === retries) return null;
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+
+        if (data?.signedUrl) {
+          return data.signedUrl;
+        }
+      } catch (err) {
+        console.error(`[ViewDocument] Exception fetching signed URL (attempt ${attempt}):`, err);
+        if (attempt === retries) return null;
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    return null;
+  };
+  
   // Enhanced token extraction with multiple fallback strategies
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   
@@ -170,21 +197,11 @@ export default function ViewDocument() {
           folderDocs.map(async (doc: any) => {
             if (!doc.storage_path) return;
 
-            const { data: signedUrlData, error: signedUrlError } =
-              await supabase.functions.invoke('get-signed-url', {
-                body: {
-                  storagePath: doc.storage_path,
-                  expiresIn: expirySeconds,
-                },
-              });
-
-            if (signedUrlError) {
-              console.error('[ViewDocument] Signed URL error for doc:', doc.file_name, signedUrlError);
-              return;
-            }
-
-            if (signedUrlData?.signedUrl) {
-              doc.file_url = signedUrlData.signedUrl;
+            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, expirySeconds);
+            if (signedUrl) {
+              doc.file_url = signedUrl;
+            } else {
+              console.error('[ViewDocument] Failed to get signed URL for:', doc.file_name);
             }
           })
         );
@@ -216,21 +233,11 @@ export default function ViewDocument() {
             const doc = bundleDoc.document;
             if (!doc || !doc.storage_path) return;
 
-            const { data: signedUrlData, error: signedUrlError } =
-              await supabase.functions.invoke('get-signed-url', {
-                body: {
-                  storagePath: doc.storage_path,
-                  expiresIn: expirySeconds,
-                },
-              });
-
-            if (signedUrlError) {
-              console.error('[ViewDocument] Signed URL error for doc in bundle:', doc.file_name, signedUrlError);
-              return;
-            }
-
-            if (signedUrlData?.signedUrl) {
-              doc.file_url = signedUrlData.signedUrl;
+            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, expirySeconds);
+            if (signedUrl) {
+              doc.file_url = signedUrl;
+            } else {
+              console.error('[ViewDocument] Failed to get signed URL for bundle doc:', doc.file_name);
             }
           })
         );
@@ -255,26 +262,13 @@ export default function ViewDocument() {
 
         console.log('Creating signed URL for:', storagePath, 'expiry:', expirySeconds);
         
-        const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
-          'get-signed-url',
-          {
-            body: { 
-              storagePath,
-              expiresIn: expirySeconds 
-            }
-          }
-        );
+        const signedUrl = await fetchSignedUrlWithRetry(storagePath, expirySeconds);
 
-        if (signedUrlError) {
-          console.error('Signed URL error:', signedUrlError);
-          throw new Error(`Failed to generate access URL: ${signedUrlError.message}`);
-        }
-
-        if (signedUrlData?.signedUrl) {
+        if (signedUrl) {
           console.log('Signed URL created successfully');
-          link.document.file_url = signedUrlData.signedUrl;
+          link.document.file_url = signedUrl;
         } else {
-          console.error('No signed URL returned');
+          console.error('Failed to generate signed URL after retries');
           throw new Error('Failed to generate document access URL');
         }
 
@@ -734,7 +728,7 @@ export default function ViewDocument() {
 
       {/* Document Viewer Container */}
       <div className="container mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 md:py-10 max-w-7xl overflow-hidden">
-        <Card className="overflow-hidden border-2 shadow-xl h-[calc(100dvh-80px)] md:h-[calc(100vh-140px)]">
+        <Card className="overflow-hidden border-2 shadow-xl h-[calc(100dvh-80px)] md:h-[calc(100dvh-140px)]" style={{ height: 'calc(100vh - 140px)' }}>
           <DocumentViewer
             documentUrl={linkData.document.file_url}
             documentType={linkData.document.file_type}
@@ -1463,9 +1457,13 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
           <div className={cn(
             "transition-all duration-300",
             isFileListCollapsed 
-              ? "h-[calc(100dvh-10rem)] lg:h-[calc(100vh-8rem)]" 
-              : "h-[40dvh] lg:h-[calc(100vh-8rem)]"
-          )}>
+              ? "h-[calc(100dvh-10rem)] lg:h-[calc(100dvh-8rem)]" 
+              : "h-[40dvh] lg:h-[calc(100dvh-8rem)]"
+          )} style={{ 
+            height: isFileListCollapsed 
+              ? 'calc(100vh - 10rem)' 
+              : 'calc(40vh)'
+          }}>
             {selectedDocument ? (
               <Card className="overflow-hidden border-2 shadow-xl h-full">
                 <DocumentViewer

@@ -14,8 +14,10 @@ export function ViewerInfoCollection({ onSubmit }: ViewerInfoCollectionProps) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = () => {
+    if (isSubmitting) return;
     // Validate all fields
     const nameValidation = validateName(fullName);
     const emailValidation = validateEmail(email);
@@ -35,6 +37,7 @@ export function ViewerInfoCollection({ onSubmit }: ViewerInfoCollectionProps) {
     }
 
     setErrors({});
+    setIsSubmitting(true);
     onSubmit({ name: fullName, email });
   };
 
@@ -87,8 +90,9 @@ export function ViewerInfoCollection({ onSubmit }: ViewerInfoCollectionProps) {
           <Button 
             onClick={handleSubmit} 
             className="w-full"
+            disabled={isSubmitting}
           >
-            Continue to Document
+            {isSubmitting ? 'Submitting...' : 'Continue to Document'}
           </Button>
         </div>
       </Card>
