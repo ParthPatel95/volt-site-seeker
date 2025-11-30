@@ -1,7 +1,23 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Configure PDF.js worker with multiple fallback CDNs for broader browser support
+const initializePdfWorker = () => {
+  if (pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    return; // Already initialized
+  }
+  
+  const workerUrls = [
+    `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
+    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
+    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+  ];
+  
+  // Use first available CDN
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
+  console.log(`[pdfTextExtractor] Worker initialized with: ${workerUrls[0]}`);
+};
+
+initializePdfWorker();
 
 export interface ExtractedPage {
   pageNumber: number;
@@ -26,7 +42,15 @@ export async function extractPdfText(
   try {
     console.log('[pdfTextExtractor] Loading PDF from:', pdfUrl);
     
-    const loadingTask = pdfjsLib.getDocument(pdfUrl);
+    // Ensure worker is initialized
+    initializePdfWorker();
+    
+    const loadingTask = pdfjsLib.getDocument({
+      url: pdfUrl,
+      withCredentials: false,
+      isEvalSupported: false
+    });
+    
     const pdf = await loadingTask.promise;
     const totalPages = pdf.numPages;
     
@@ -100,6 +124,9 @@ export async function extractPdfText(
         // Continue with other pages
       }
     }
+    
+    // Clean up PDF document
+    await pdf.destroy();
 
     return {
       pages,
@@ -107,7 +134,7 @@ export async function extractPdfText(
     };
   } catch (error) {
     console.error('[pdfTextExtractor] Error loading or extracting PDF:', error);
-    throw new Error('Failed to extract text from PDF');
+    throw new Error('Failed to extract text from PDF. The file may be password-protected, corrupted, or image-based.');
   }
 }
 

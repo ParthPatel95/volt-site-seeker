@@ -27,6 +27,7 @@ interface TranslationPanelProps {
   isExtracting: boolean;
   onPageChange?: (page: number) => void;
   pdfDocument?: any; // PDFDocumentProxy for multi-page text extraction
+  documentUrl?: string; // URL to fetch PDF if pdfDocument is not available
 }
 
 const SUPPORTED_LANGUAGES = [
@@ -51,7 +52,8 @@ export function TranslationPanel({
   extractedText,
   isExtracting,
   onPageChange,
-  pdfDocument
+  pdfDocument,
+  documentUrl
 }: TranslationPanelProps) {
   const [targetLanguage, setTargetLanguage] = useState<string>('zh-CN');
   const [translatedText, setTranslatedText] = useState<string>('');
@@ -101,42 +103,99 @@ export function TranslationPanel({
 
   // Extract text from a specific page
   const extractTextFromPage = useCallback(async (pageNumber: number): Promise<string> => {
-    if (!pdfDocument) {
-      console.warn('[TranslationPanel] No PDF document available for text extraction');
-      return extractedText;
+    // If we have a PDF document proxy, use it
+    if (pdfDocument) {
+      try {
+        const page = await pdfDocument.getPage(pageNumber);
+        const textContent = await page.getTextContent();
+        
+        let lastY = 0;
+        let text = '';
+        
+        for (const item of textContent.items) {
+          if ('str' in item) {
+            const currentY = item.transform[5];
+            
+            if (lastY !== 0 && Math.abs(currentY - lastY) > 5) {
+              text += '\n';
+            }
+            
+            text += item.str;
+            lastY = currentY;
+          }
+        }
+        
+        return text;
+      } catch (error) {
+        console.error(`[TranslationPanel] Failed to extract text from page ${pageNumber}:`, error);
+        toast({
+          title: 'Extraction Warning',
+          description: `Could not extract text from page ${pageNumber}`,
+          variant: 'default'
+        });
+        return '';
+      }
     }
     
-    try {
-      const page = await pdfDocument.getPage(pageNumber);
-      const textContent = await page.getTextContent();
-      
-      let lastY = 0;
-      let text = '';
-      
-      for (const item of textContent.items) {
-        if ('str' in item) {
-          const currentY = item.transform[5];
-          
-          if (lastY !== 0 && Math.abs(currentY - lastY) > 5) {
-            text += '\n';
-          }
-          
-          text += item.str;
-          lastY = currentY;
+    // If no PDF document proxy but we have a URL, load and extract
+    if (documentUrl) {
+      console.log(`[TranslationPanel] Loading PDF from URL to extract page ${pageNumber}`);
+      try {
+        // Dynamically import PDF.js to extract text
+        const pdfjsLib = await import('pdfjs-dist');
+        
+        // Configure worker with fallback CDNs
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+          pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+          console.log(`[TranslationPanel] Configured PDF.js worker: ${workerUrl}`);
         }
+        
+        const loadingTask = pdfjsLib.getDocument({
+          url: documentUrl,
+          withCredentials: false,
+          isEvalSupported: false
+        });
+        
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(pageNumber);
+        const textContent = await page.getTextContent();
+        
+        let lastY = 0;
+        let text = '';
+        
+        for (const item of textContent.items) {
+          if ('str' in item) {
+            const currentY = item.transform[5];
+            
+            if (lastY !== 0 && Math.abs(currentY - lastY) > 5) {
+              text += '\n';
+            }
+            
+            text += item.str;
+            lastY = currentY;
+          }
+        }
+        
+        // Clean up
+        await pdf.destroy();
+        
+        return text;
+      } catch (error) {
+        console.error(`[TranslationPanel] Failed to load and extract text from page ${pageNumber}:`, error);
+        toast({
+          title: 'Extraction Error',
+          description: `Failed to extract text from page ${pageNumber}. The PDF may be scanned or image-based.`,
+          variant: 'destructive'
+        });
+        return '';
       }
-      
-      return text;
-    } catch (error) {
-      console.error(`[TranslationPanel] Failed to extract text from page ${pageNumber}:`, error);
-      toast({
-        title: 'Extraction Warning',
-        description: `Could not extract text from page ${pageNumber}`,
-        variant: 'default'
-      });
-      return '';
     }
-  }, [pdfDocument, extractedText, toast]);
+    
+    // Fallback to current page's extracted text
+    console.warn('[TranslationPanel] No PDF document or URL available, using current extracted text');
+    return pageNumber === currentPage ? extractedText : '';
+  }, [pdfDocument, documentUrl, extractedText, currentPage, toast]);
 
   const handleTranslate = useCallback(async (useCache = true, pageText?: string, pageNum?: number) => {
     const textToTranslate = pageText || extractedText;
@@ -675,11 +734,19 @@ export function TranslationPanel({
           )}
 
           {!isExtracting && !extractedText && !translatedText && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
               <Globe className="w-12 h-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm text-muted-foreground">
-                Select a language and click translate to see the translation
+                {isScannedPdf 
+                  ? 'Unable to extract text from this PDF'
+                  : 'Select a language and click translate to see the translation'
+                }
               </p>
+              {isScannedPdf && (
+                <p className="text-xs text-muted-foreground max-w-sm">
+                  This document appears to be scanned or image-based. Text extraction requires text-based PDFs.
+                </p>
+              )}
             </div>
           )}
 
