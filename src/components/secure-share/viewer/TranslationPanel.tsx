@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText } from 'lucide-react';
+import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -57,6 +60,7 @@ export function TranslationPanel({
   const [isTranslatingAll, setIsTranslatingAll] = useState(false);
   const [translateAllProgress, setTranslateAllProgress] = useState(0);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // In-memory translation cache: Map<"pageNumber-languageCode", translatedText>
   const translationCache = useRef<Map<string, string>>(new Map());
@@ -67,6 +71,14 @@ export function TranslationPanel({
   // Refs for synced scrolling
   const originalScrollRef = useRef<HTMLDivElement>(null);
   const translatedScrollRef = useRef<HTMLDivElement>(null);
+  
+  // Check if current page is translated
+  const isPageTranslated = (page: number) => {
+    const cacheKey = `${page}-${targetLanguage}`;
+    return translationCache.current.has(cacheKey);
+  };
+  
+  const selectedLanguage = SUPPORTED_LANGUAGES.find(l => l.code === targetLanguage);
 
   const handleTranslate = async (useCache = true, pageText?: string, pageNum?: number) => {
     const textToTranslate = pageText || extractedText;
@@ -331,28 +343,30 @@ export function TranslationPanel({
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      className={cn(
-        "fixed right-0 top-0 h-full w-full md:w-[400px] lg:w-[480px] bg-background border-l shadow-2xl z-50",
-        "transform transition-transform duration-300 ease-in-out",
-        isOpen ? "translate-x-0" : "translate-x-full"
-      )}
-    >
+  const renderContent = () => (
+    <>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center gap-2">
           <Globe className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold">Translation</h2>
+          {isPageTranslated(currentPage) && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+              <CheckCircle2 className="w-3 h-3" />
+              <span className="text-xs font-medium">Page {currentPage} translated</span>
+            </div>
+          )}
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="h-8 w-8"
-        >
-          <X className="w-4 h-4" />
-        </Button>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* Controls */}
@@ -362,7 +376,12 @@ export function TranslationPanel({
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
           <Select value={targetLanguage} onValueChange={handleLanguageChange}>
             <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Select language" />
+              <SelectValue>
+                <span className="flex items-center gap-2">
+                  <span>{selectedLanguage?.flag}</span>
+                  <span>{selectedLanguage?.name}</span>
+                </span>
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {SUPPORTED_LANGUAGES.map((lang) => (
@@ -453,9 +472,14 @@ export function TranslationPanel({
       <ScrollArea className="h-[calc(100%-180px)]">
         <div className="p-4">
           {isExtracting && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
               <p className="text-sm text-muted-foreground">Extracting text from PDF...</p>
+              <div className="w-full max-w-sm space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/6" />
+              </div>
             </div>
           )}
 
@@ -469,19 +493,31 @@ export function TranslationPanel({
           )}
 
           {!isExtracting && extractedText && !translatedText && !isTranslating && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
               <p className="text-sm text-muted-foreground">
                 Preparing translation...
               </p>
+              <div className="w-full max-w-sm space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/6" />
+              </div>
             </div>
           )}
 
           {isTranslating && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
               <p className="text-sm text-muted-foreground">Translating document...</p>
               <p className="text-xs text-muted-foreground mt-2">This may take a moment</p>
+              <div className="w-full max-w-sm space-y-2 mt-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/6" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
             </div>
           )}
 
@@ -591,6 +627,28 @@ export function TranslationPanel({
           )}
         </div>
       </ScrollArea>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DrawerContent className="h-[85vh] max-h-[85vh]">
+          {renderContent()}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "fixed right-0 top-0 h-full w-full md:w-[400px] lg:w-[480px] bg-background border-l shadow-2xl z-50",
+        "transform transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "translate-x-full"
+      )}
+    >
+      {renderContent()}
     </div>
   );
 }
