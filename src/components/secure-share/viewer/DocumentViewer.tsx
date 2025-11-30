@@ -7,6 +7,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { VideoPlayer } from './VideoPlayer';
 
 // Configure PDF.js worker with multiple fallback CDNs for broader browser support
 const initializePdfWorker = () => {
@@ -796,19 +797,20 @@ export function DocumentViewer({
                 />
               </div>
             ) : isVideo ? (
-              <div className="flex items-center justify-center max-w-full">
-                <video
+              <div className="flex items-center justify-center w-full max-w-full">
+                <VideoPlayer
                   src={documentUrl}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  controlsList={!canDownload ? 'nodownload' : undefined}
-                  onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
-                  className="max-w-full max-h-[80vh] rounded-lg shadow-lg"
-                  style={{ transform: `scale(${zoom})` }}
-                >
-                  Your browser does not support video playback.
-                </video>
+                  canDownload={canDownload}
+                  className="max-w-full max-h-[80vh] shadow-lg"
+                  onError={(error) => {
+                    console.error('[DocumentViewer] Video error:', error);
+                    toast({
+                      title: 'Video Error',
+                      description: 'Failed to load video. Please try again or download the file.',
+                      variant: 'destructive'
+                    });
+                  }}
+                />
               </div>
             ) : isAudio ? (
               <div className="flex items-center justify-center w-full p-8">
