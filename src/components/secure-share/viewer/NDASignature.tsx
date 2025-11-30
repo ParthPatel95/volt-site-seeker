@@ -80,6 +80,7 @@ export function NDASignature({ linkId, documentName, onSigned }: NDASignaturePro
             placeholder="Enter your full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && agreed && name && handleSign()}
           />
           
           <div className="flex items-center space-x-2">

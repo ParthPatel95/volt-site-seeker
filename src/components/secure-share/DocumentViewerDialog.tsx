@@ -13,12 +13,21 @@ const workerUrls = [
   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
 ];
 
-pdfjs.GlobalWorkerOptions.workerSrc = workerUrls[0];
+// Try each worker URL with proper async error handling
+let workerInitialized = false;
+for (const url of workerUrls) {
+  try {
+    pdfjs.GlobalWorkerOptions.workerSrc = url;
+    workerInitialized = true;
+    console.log(`[PDF.js Dialog] Worker initialized: ${url}`);
+    break;
+  } catch (error) {
+    console.warn(`[PDF.js Dialog] Failed: ${url}`, error);
+  }
+}
 
-// Fallback to alternative CDNs if primary fails
-if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-  console.warn('Primary PDF.js worker CDN failed, trying fallback...');
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrls[1];
+if (!workerInitialized) {
+  console.error('[PDF.js Dialog] All PDF.js worker CDNs failed');
 }
 
 interface DocumentViewerDialogProps {
@@ -110,40 +119,55 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     if (!document) return;
 
     setLoading(true);
-    try {
-      console.log('Loading document:', document.storage_path);
-      
-      const { data, error } = await supabase.functions.invoke('get-signed-url', {
-        body: {
-          bucket: 'secure-documents',
-          path: document.storage_path,
-          expiresIn: 3600,
-        },
-      });
+    let lastError: any;
+    
+    // Retry logic with exponential backoff
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`[DocumentDialog] Loading document (attempt ${attempt}):`, document.storage_path);
+        
+        const { data, error } = await supabase.functions.invoke('get-signed-url', {
+          body: {
+            bucket: 'secure-documents',
+            path: document.storage_path,
+            expiresIn: 3600,
+          },
+        });
 
-      console.log('Edge function response:', { data, error });
+        if (error) {
+          console.error('[DocumentDialog] Edge function error:', error);
+          lastError = error;
+          if (attempt < 3) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            continue;
+          }
+          throw error;
+        }
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
+        if (data?.signedUrl) {
+          console.log('[DocumentDialog] Got signed URL');
+          setDocumentUrl(data.signedUrl);
+          return; // Success!
+        } else {
+          throw new Error('No signed URL returned');
+        }
+      } catch (error: any) {
+        lastError = error;
+        if (attempt < 3) {
+          console.log(`[DocumentDialog] Retry ${attempt}/3 after error:`, error);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
-
-      if (data?.signedUrl) {
-        console.log('Got signed URL:', data.signedUrl);
-        setDocumentUrl(data.signedUrl);
-      } else {
-        throw new Error('No signed URL returned');
-      }
-    } catch (error: any) {
-      console.error('Error loading document:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to load document preview',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
     }
+    
+    // All retries failed
+    console.error('[DocumentDialog] All attempts failed:', lastError);
+    toast({
+      title: 'Error',
+      description: lastError?.message || 'Failed to load document. Please try again.',
+      variant: 'destructive',
+    });
+    setLoading(false);
   };
 
   const isImage = document?.file_type?.startsWith('image/');
@@ -317,16 +341,13 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                         file={documentUrl}
                         onLoadSuccess={onDocumentLoadSuccess}
                         onLoadError={(error) => {
-                          console.error('Error loading PDF:', error);
-                          if (isIOS) {
-                            setUseNativePdfViewer(true);
-                          } else {
-                            toast({
-                              title: 'Error',
-                              description: 'Failed to load PDF document',
-                              variant: 'destructive',
-                            });
-                          }
+                          console.error('[DocumentDialog] PDF load error:', error);
+                          // Fallback to native/browser PDF viewer on ANY error
+                          setUseNativePdfViewer(true);
+                          toast({
+                            title: 'PDF Loading Issue',
+                            description: 'Switching to browser PDF viewer for better compatibility.',
+                          });
                         }}
                         loading={
                           <div className="flex items-center justify-center p-8">
