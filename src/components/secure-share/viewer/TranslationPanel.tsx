@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
@@ -100,8 +100,11 @@ export function TranslationPanel({
   }, [extractedText, isExtracting, totalPages]);
 
   // Extract text from a specific page
-  const extractTextFromPage = async (pageNumber: number): Promise<string> => {
-    if (!pdfDocument) return extractedText;
+  const extractTextFromPage = useCallback(async (pageNumber: number): Promise<string> => {
+    if (!pdfDocument) {
+      console.warn('[TranslationPanel] No PDF document available for text extraction');
+      return extractedText;
+    }
     
     try {
       const page = await pdfDocument.getPage(pageNumber);
@@ -125,12 +128,17 @@ export function TranslationPanel({
       
       return text;
     } catch (error) {
-      console.error(`Failed to extract text from page ${pageNumber}:`, error);
+      console.error(`[TranslationPanel] Failed to extract text from page ${pageNumber}:`, error);
+      toast({
+        title: 'Extraction Warning',
+        description: `Could not extract text from page ${pageNumber}`,
+        variant: 'default'
+      });
       return '';
     }
-  };
+  }, [pdfDocument, extractedText, toast]);
 
-  const handleTranslate = async (useCache = true, pageText?: string, pageNum?: number) => {
+  const handleTranslate = useCallback(async (useCache = true, pageText?: string, pageNum?: number) => {
     const textToTranslate = pageText || extractedText;
     const page = pageNum || currentPage;
     
@@ -269,9 +277,9 @@ export function TranslationPanel({
         setIsTranslating(false);
       }
     }
-  };
+  }, [targetLanguage, documentId, currentPage, extractedText, toast]);
 
-  const handleTranslateAll = async () => {
+  const handleTranslateAll = useCallback(async () => {
     if (!onPageChange || totalPages <= 1) return;
 
     setIsTranslatingAll(true);
@@ -288,6 +296,10 @@ export function TranslationPanel({
         } else {
           // Extract text from specific page
           const pageText = await extractTextFromPage(page);
+          if (!pageText.trim()) {
+            console.warn(`[TranslationPanel] Page ${page} has no text to translate`);
+            continue;
+          }
           translation = await handleTranslate(false, pageText, page);
         }
         
@@ -297,7 +309,7 @@ export function TranslationPanel({
         
         setTranslateAllProgress((page / totalPages) * 100);
       } catch (error) {
-        console.error(`Failed to translate page ${page}:`, error);
+        console.error(`[TranslationPanel] Failed to translate page ${page}:`, error);
       }
     }
 
@@ -305,9 +317,9 @@ export function TranslationPanel({
     setIsTranslatingAll(false);
     toast({
       title: 'Translation Complete',
-      description: `All ${totalPages} pages have been translated`,
+      description: `Translated ${translations.size} of ${totalPages} pages`,
     });
-  };
+  }, [onPageChange, totalPages, targetLanguage, extractTextFromPage, handleTranslate, toast]);
 
   const handleDownloadAll = () => {
     if (allTranslations.size === 0) {
@@ -421,11 +433,11 @@ export function TranslationPanel({
     }
     
     // Auto-translate on first open or when page/language changes
-    if (!hasAutoTranslated.current || translatedText) {
+    if (!hasAutoTranslated.current) {
       handleTranslate(true);
       hasAutoTranslated.current = true;
     }
-  }, [isOpen, currentPage, targetLanguage, extractedText, isExtracting]);
+  }, [isOpen, currentPage, targetLanguage, extractedText, isExtracting, handleTranslate]);
   
   // Clear cache when panel closes
   useEffect(() => {
@@ -546,7 +558,10 @@ export function TranslationPanel({
               )}
             </Button>
             
-            {(allTranslations.size > 0 || Array.from({ length: totalPages }, (_, i) => i + 1).some(p => translationCache.current.has(`${p}-${targetLanguage}`))) && (
+            {(allTranslations.size > 0 || 
+              (totalPages > 1 && Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => translationCache.current.has(`${p}-${targetLanguage}`)).length >= totalPages)
+            ) && (
               <Button
                 onClick={handleDownloadAll}
                 disabled={isTranslatingAll}
@@ -555,7 +570,7 @@ export function TranslationPanel({
                 size="sm"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download All Translations
+                Download All Pages ({allTranslations.size || totalPages} pages)
               </Button>
             )}
           </>
