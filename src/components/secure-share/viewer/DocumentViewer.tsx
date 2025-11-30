@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Maximize2, Minimize2, MoreVertical } from 'lucide-react';
+import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Maximize2, Minimize2, MoreVertical, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -8,6 +8,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { VideoPlayer } from './VideoPlayer';
+import { TranslationPanel } from './TranslationPanel';
+import { extractPageText } from '@/utils/pdfTextExtractor';
 
 // Configure PDF.js worker with multiple fallback CDNs for broader browser support
 const initializePdfWorker = () => {
@@ -76,6 +78,11 @@ export function DocumentViewer({
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Translation state
+  const [translationOpen, setTranslationOpen] = useState(false);
+  const [extractedText, setExtractedText] = useState<string>('');
+  const [isExtracting, setIsExtracting] = useState(false);
   
   // Touch gesture state
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
@@ -303,6 +310,28 @@ export function DocumentViewer({
   const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
   const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
   const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
+  
+  // Extract PDF text when page changes or translation is opened
+  useEffect(() => {
+    if (translationOpen && isPdf && documentUrl) {
+      setIsExtracting(true);
+      extractPageText(documentUrl, pageNumber)
+        .then((text) => {
+          setExtractedText(text);
+        })
+        .catch((error) => {
+          console.error('[DocumentViewer] PDF text extraction failed:', error);
+          toast({
+            title: 'Extraction Error',
+            description: 'Failed to extract text from PDF',
+            variant: 'destructive'
+          });
+        })
+        .finally(() => {
+          setIsExtracting(false);
+        });
+    }
+  }, [translationOpen, pageNumber, documentUrl, isPdf, toast]);
   
   // Build PDF URL - hide toolbar for view-only
   const pdfUrl = isPdf && !canDownload
@@ -592,6 +621,18 @@ export function DocumentViewer({
           </div>
           
           <div className="flex items-center gap-2">
+            {isPdf && (
+              <Button 
+                onClick={() => setTranslationOpen(!translationOpen)} 
+                size="sm" 
+                variant="outline"
+                className="text-xs md:text-sm"
+                title="Translate Document"
+              >
+                <Globe className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Translate</span>
+              </Button>
+            )}
             {canDownload && (
               <Button onClick={handleDownload} size="sm" className="text-xs md:text-sm">
                 <Download className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
@@ -629,6 +670,10 @@ export function DocumentViewer({
               <DropdownMenuContent align="end">
                 {isPdf && (
                   <>
+                    <DropdownMenuItem onClick={() => setTranslationOpen(!translationOpen)}>
+                      <Globe className="w-4 h-4 mr-2" />
+                      Translate
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleRotate}>
                       <RotateCw className="w-4 h-4 mr-2" />
                       Rotate
@@ -854,6 +899,16 @@ export function DocumentViewer({
           </div>
         </ScrollArea>
       </div>
+      
+      {/* Translation Panel */}
+      <TranslationPanel
+        isOpen={translationOpen}
+        onClose={() => setTranslationOpen(false)}
+        documentId={documentId}
+        currentPage={pageNumber}
+        extractedText={extractedText}
+        isExtracting={isExtracting}
+      />
     </div>
   );
 }
