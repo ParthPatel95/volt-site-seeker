@@ -637,6 +637,7 @@ export default function ViewDocument() {
             {documents.map((bundleDoc: any, index: number) => {
               const doc = bundleDoc.document;
               const isPdf = doc.file_type === 'application/pdf' || doc.file_name?.endsWith('.pdf');
+              const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
               
               return (
                 <Card 
@@ -646,7 +647,7 @@ export default function ViewDocument() {
                 >
                   {/* Document Preview */}
                   <div className="relative aspect-[3/4] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden">
-                    {isPdf ? (
+                    {isPdf && !isMobileDevice ? (
                       <iframe
                         src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
                         className="absolute inset-0 w-full h-full pointer-events-none scale-110"

@@ -496,7 +496,7 @@ export function FolderGalleryView({
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                      ) : isPdf && !isMobileDevice ? (
+                      ) : isPdf && !isMobileDevice && doc.file_url ? (
                         <iframe
                           src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
                           className="absolute inset-0 w-full h-full pointer-events-none scale-110"

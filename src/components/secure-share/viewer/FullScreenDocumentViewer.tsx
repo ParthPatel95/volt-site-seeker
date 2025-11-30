@@ -42,8 +42,8 @@ export function FullScreenDocumentViewer({
     }
   }, [hasNext, allDocuments, currentIndex, onDocumentChange]);
 
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
+  // Minimum swipe distance (in px) - increased to reduce accidental triggers
+  const minSwipeDistance = 100;
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -60,11 +60,14 @@ export function FullScreenDocumentViewer({
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
+    
+    // Only trigger swipe if it's primarily horizontal (not vertical scrolling)
+    const isHorizontalSwipe = Math.abs(distance) > minSwipeDistance;
 
-    if (isLeftSwipe && hasNext) {
+    if (isLeftSwipe && hasNext && isHorizontalSwipe) {
       handleNext();
     }
-    if (isRightSwipe && hasPrevious) {
+    if (isRightSwipe && hasPrevious && isHorizontalSwipe) {
       handlePrevious();
     }
   };
@@ -100,7 +103,7 @@ export function FullScreenDocumentViewer({
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="shrink-0"
+            className="shrink-0 touch-manipulation min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -144,12 +147,13 @@ export function FullScreenDocumentViewer({
                 variant="outline"
                 size="icon"
                 onClick={() => {
-                  const link = document.createElement('a');
+                  const link = window.document.createElement('a');
                   link.href = document.file_url;
                   link.download = document.file_name;
                   link.click();
                 }}
                 title="Download document"
+                className="touch-manipulation min-h-[44px] min-w-[44px]"
               >
                 <Download className="w-4 h-4" />
               </Button>
