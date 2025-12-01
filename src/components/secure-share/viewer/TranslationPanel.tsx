@@ -108,6 +108,19 @@ export function TranslationPanel({
 
   // Detect if PDF is scanned (image-based with little to no text)
   useEffect(() => {
+    // Check if this is an Office document first
+    const isOffice = documentType?.includes('word') || documentType?.includes('document') || 
+                    documentType?.includes('sheet') || documentType?.includes('presentation') ||
+                    /\.(docx?|xlsx?|pptx?)$/i.test(documentUrl || '');
+    
+    // Don't run scanned PDF detection for Office documents
+    if (isOffice) {
+      setIsScannedPdf(false);
+      setOcrStatus('text-layer');
+      setError(null); // Clear any existing errors
+      return;
+    }
+    
     if (currentText && !isExtracting) {
       const textLength = currentText.trim().length;
       const avgCharsPerPage = textLength / totalPages;
@@ -121,7 +134,7 @@ export function TranslationPanel({
         setOcrStatus(ocrEnabled ? (ocrMethod === 'ai' ? 'ai-ocr' : 'browser-ocr') : 'text-layer');
       }
     }
-  }, [currentText, isExtracting, totalPages, ocrEnabled, ocrMethod]);
+  }, [currentText, isExtracting, totalPages, ocrEnabled, ocrMethod, documentType, documentUrl]);
 
   // Extract text from a specific page
   const extractTextFromPage = useCallback(async (pageNumber: number): Promise<string> => {
@@ -406,10 +419,16 @@ export function TranslationPanel({
     } catch (error: any) {
       console.error('[TranslationPanel] Translation error:', error);
       
+      // Check if this is an Office document
+      const isOffice = documentType?.includes('word') || documentType?.includes('document') || 
+                      documentType?.includes('sheet') || documentType?.includes('presentation') ||
+                      /\.(docx?|xlsx?|pptx?)$/i.test(documentUrl || '');
+      
       // Provide specific error messages based on error type
       let errorMessage = 'Translation failed';
       if (error.message) {
-        if (error.message.includes('scanned PDF')) {
+        // Don't show scanned PDF errors for Office documents
+        if (error.message.includes('scanned PDF') && !isOffice) {
           errorMessage = 'This appears to be a scanned PDF. Text extraction is limited for image-based documents.';
         } else if (error.message.includes('CORS')) {
           errorMessage = 'Unable to access PDF. Please try downloading and re-uploading the document.';
@@ -419,12 +438,14 @@ export function TranslationPanel({
           errorMessage = 'Translation rate limit exceeded. Please try again later.';
         } else if (error.message.includes('credits')) {
           errorMessage = 'Translation credits exhausted. Please add credits to continue.';
-        } else {
+        } else if (!isOffice) {
+          // Only set generic error messages for non-Office documents
           errorMessage = error.message;
         }
       }
 
-      if (!pageText) {
+      if (!pageText && !isOffice) {
+        // Only show error toasts for non-Office documents
         setError(errorMessage);
         setTranslatedText('');
         toast({
@@ -1240,33 +1261,43 @@ export function TranslationPanel({
         )}
 
         {/* Error Message with Retry Button */}
-        {error && !isOcrProcessing && !isTranslating && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
-            <div className="flex items-start gap-3">
-              <X className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="text-sm font-medium text-destructive">
-                  Translation Error
+        {(() => {
+          // Don't show error box for Office documents (they have their own UI)
+          const isOffice = documentType?.includes('word') || documentType?.includes('document') || 
+                          documentType?.includes('sheet') || documentType?.includes('presentation') ||
+                          /\.(docx?|xlsx?|pptx?)$/i.test(documentUrl || '');
+          
+          if (error && !isOcrProcessing && !isTranslating && !isOffice) {
+            return (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
+                <div className="flex items-start gap-3">
+                  <X className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="text-sm font-medium text-destructive">
+                      Translation Error
+                    </div>
+                    <p className="text-xs text-destructive/80">
+                      {error}
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setError(null);
+                        handleTranslate(false);
+                      }}
+                      size="sm"
+                      variant="outline"
+                      className="mt-2"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Retry
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-destructive/80">
-                  {error}
-                </p>
-                <Button
-                  onClick={() => {
-                    setError(null);
-                    handleTranslate(false);
-                  }}
-                  size="sm"
-                  variant="outline"
-                  className="mt-2"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Retry
-                </Button>
               </div>
-            </div>
-          </div>
-        )}
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {/* Content */}
