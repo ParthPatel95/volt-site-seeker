@@ -20,9 +20,9 @@ import {
 
 export const VoltScoutSection = () => {
   return (
-    <section className="relative z-10 py-16 md:py-20 px-6 bg-white">
+    <section className="relative z-10 py-12 md:py-16 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 md:mb-10">
           <div className="flex items-center justify-center mb-6">
             <div className="w-16 h-16 bg-watt-trust rounded-xl flex items-center justify-center mr-4">
               <Brain className="w-10 h-10 text-white" />

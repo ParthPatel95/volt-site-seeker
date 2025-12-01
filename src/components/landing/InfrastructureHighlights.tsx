@@ -64,9 +64,9 @@ const pipeline = [
 
 export const InfrastructureHighlights = () => {
   return (
-    <section className="relative py-16 sm:py-20 md:py-24 bg-white">
+    <section className="relative py-12 md:py-16 bg-white">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-12 sm:mb-16">
+        <div className="text-center mb-8 md:mb-10">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
             <span className="text-watt-navy">Development </span>
             <span className="text-watt-trust">Pipeline</span>

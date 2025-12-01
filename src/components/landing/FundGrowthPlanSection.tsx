@@ -60,7 +60,7 @@ export const FundGrowthPlanSection = () => {
   return (
     <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-white">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-4 sm:mb-6">
+        <div className="text-center mb-8 md:mb-10">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
             WattByte Energy Fund Growth Plan
           </h2>

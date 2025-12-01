@@ -6,7 +6,7 @@ export const FundOverviewSection = () => {
   return (
     <section className="relative z-10 py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-6 sm:mb-8 md:mb-10">
+        <div className="text-center mb-8 md:mb-10">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
             Fund I Overview
           </h2>

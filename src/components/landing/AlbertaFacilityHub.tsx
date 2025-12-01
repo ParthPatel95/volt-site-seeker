@@ -109,10 +109,10 @@ export const AlbertaFacilityHub = () => {
   const handleImageClick = (index: number) => {
     setSelectedImage(index);
   };
-  return <section ref={sectionRef} className="relative py-16 md:py-20 overflow-hidden bg-white">
+  return <section ref={sectionRef} className="relative py-12 md:py-16 overflow-hidden bg-white">
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
-        <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`text-center mb-8 md:mb-10 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-trust/10 border border-watt-trust/30 backdrop-blur-sm mb-6">
             <div className="w-2 h-2 rounded-full bg-watt-trust animate-pulse" />
             <span className="text-sm font-medium text-watt-trust">Under Development</span>
@@ -127,7 +127,7 @@ export const AlbertaFacilityHub = () => {
         </div>
 
         {/* Interactive Image Gallery */}
-        <div className={`mb-12 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`mb-8 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Large featured image */}
             <div className="md:col-span-2 relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer group shadow-institutional" onClick={() => handleImageClick(0)}>
@@ -155,7 +155,7 @@ export const AlbertaFacilityHub = () => {
         </div>
 
         {/* Technical Specifications - Compact Grid */}
-        <div className={`mb-12 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`mb-8 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h3 className="text-2xl sm:text-3xl font-semibold text-watt-navy mb-7 text-center">
             <Building2 className="inline-block w-7 h-7 mr-3 text-watt-trust" />
             Technical Specifications
