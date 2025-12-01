@@ -51,41 +51,53 @@ export const LeadershipTeamSection = () => {
   ];
 
   return (
-    <section className="relative z-10 py-12 px-6 bg-slate-900/30">
+    <section className="relative z-10 py-24 px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-3 text-white">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-watt-navy">
             Leadership Team
           </h2>
-          <p className="text-slate-200 text-lg max-w-2xl mx-auto">
+          <p className="text-watt-navy/70 text-xl max-w-2xl mx-auto">
             Proven operators with 675MW+ of power infrastructure experience
           </p>
         </div>
         
         <div className="grid lg:grid-cols-4 gap-6">
-          {teamMembers.map((member, index) => (
-            <Card key={index} className="bg-slate-800/50 border-slate-700 h-full">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3 mb-2">
-                  {member.icon}
-                  <div>
-                    <CardTitle className="text-white text-xl">{member.name}</CardTitle>
-                    <p className="text-electric-blue font-semibold">{member.role}</p>
+          {teamMembers.map((member, index) => {
+            const roleColors = {
+              'Chairman': 'text-watt-trust',
+              'CEO': 'text-watt-success',
+              'COO': 'text-watt-bitcoin',
+              'CSO': 'text-watt-trust'
+            };
+            const roleColor = roleColors[member.role as keyof typeof roleColors] || 'text-watt-trust';
+            
+            return (
+              <Card key={index} className="bg-white border-gray-200 shadow-institutional hover:shadow-lg transition-shadow duration-300 h-full">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={roleColor}>
+                      {member.icon}
+                    </div>
+                    <div>
+                      <CardTitle className="text-watt-navy text-xl">{member.name}</CardTitle>
+                      <p className={`${roleColor} font-semibold`}>{member.role}</p>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ul className="space-y-3">
-                  {member.achievements.map((achievement, achievementIndex) => (
-                    <li key={achievementIndex} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-electric-blue rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-slate-300 text-sm leading-relaxed">{achievement}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ul className="space-y-3">
+                    {member.achievements.map((achievement, achievementIndex) => (
+                      <li key={achievementIndex} className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-watt-trust rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="text-watt-navy/70 text-sm leading-relaxed">{achievement}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </section>
