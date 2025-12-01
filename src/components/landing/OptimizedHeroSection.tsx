@@ -9,8 +9,8 @@ import './landing-animations.css';
 
 export const OptimizedHeroSection = () => {
   return (
-    <section className="relative z-10 pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24 px-4 sm:px-6 bg-watt-navy">
-      <div className="max-w-7xl mx-auto text-center relative z-10">
+    <section className="relative z-10 pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 md:pb-24 px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto text-center relative z-10">
         {/* Fund badges with clean styling */}
         <ScrollReveal delay={100}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-8">
@@ -38,21 +38,18 @@ export const OptimizedHeroSection = () => {
           </div>
         </ScrollReveal>
         
-        {/* Main heading with clean typography */}
+        {/* Main heading with clean typography on light background */}
         <ScrollReveal delay={200}>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 leading-tight">
-            <span className="text-white">Turning </span>
-            <span className="text-watt-trust">Power</span>
-            <br />
-            <span className="text-white">into </span>
-            <span className="text-watt-bitcoin">Profit</span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-semibold mb-6 sm:mb-8 leading-tight text-watt-navy">
+            <span className="block">Turning <span className="text-watt-trust">Power</span></span>
+            <span className="block">into <span className="text-watt-bitcoin">Profit</span></span>
           </h1>
         </ScrollReveal>
         
-        {/* Description with clean styling */}
+        {/* Description with clean institutional styling */}
         <ScrollReveal delay={300}>
-          <div className="relative mb-8 sm:mb-10 md:mb-12 max-w-5xl mx-auto">
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed font-normal px-2">
+          <div className="relative mb-8 sm:mb-10 md:mb-12 max-w-4xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-watt-navy/80 leading-relaxed font-normal px-2">
               Next-generation infrastructure company acquiring power-rich land across North America 
               for <span className="text-watt-trust font-semibold">AI</span>, <span className="text-watt-bitcoin font-semibold">HPC</span>, and <span className="text-watt-success font-semibold">crypto data centers</span>, 
               backed by <span className="text-watt-bitcoin font-bold">675MW+</span> of deal experience.
@@ -60,7 +57,7 @@ export const OptimizedHeroSection = () => {
           </div>
         </ScrollReveal>
         
-        {/* CTA buttons with solid colors */}
+        {/* CTA buttons with solid colors on light background */}
         <ScrollReveal delay={400}>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
             <Link to="/voltscout" className="w-full sm:w-auto group">
@@ -79,7 +76,7 @@ export const OptimizedHeroSection = () => {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50 px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold backdrop-blur-sm transition-all duration-200 hover:scale-[1.02]"
+                className="w-full sm:w-auto border border-watt-navy/20 bg-white text-watt-navy hover:bg-watt-light hover:border-watt-navy/40 px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold shadow-institutional transition-all duration-200 hover:scale-[1.02]"
               >
                 View Available Sites
               </Button>
