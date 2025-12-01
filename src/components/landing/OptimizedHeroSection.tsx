@@ -40,7 +40,7 @@ export const OptimizedHeroSection = () => {
         
         {/* Main heading with clean typography on light background */}
         <ScrollReveal delay={200}>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-semibold mb-6 sm:mb-8 leading-tight text-watt-navy">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-semibold mb-5 sm:mb-7 leading-tight text-watt-navy">
             <span className="block">Turning <span className="text-watt-trust">Power</span></span>
             <span className="block">into <span className="text-watt-bitcoin">Profit</span></span>
           </h1>
@@ -48,8 +48,8 @@ export const OptimizedHeroSection = () => {
         
         {/* Description with clean institutional styling */}
         <ScrollReveal delay={300}>
-          <div className="relative mb-8 sm:mb-10 md:mb-12 max-w-4xl mx-auto">
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-watt-navy/80 leading-relaxed font-normal px-2">
+          <div className="relative mb-7 sm:mb-9 md:mb-11 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-watt-navy/80 leading-relaxed font-normal px-2">
               Next-generation infrastructure company acquiring power-rich land across North America 
               for <span className="text-watt-trust font-semibold">AI</span>, <span className="text-watt-bitcoin font-semibold">HPC</span>, and <span className="text-watt-success font-semibold">crypto data centers</span>, 
               backed by <span className="text-watt-bitcoin font-bold">675MW+</span> of deal experience.
