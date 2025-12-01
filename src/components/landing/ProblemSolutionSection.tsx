@@ -175,20 +175,6 @@ export const ProblemSolutionSection = () => {
                 without operational complexity.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
-                <div className="text-center p-4 rounded-xl bg-white border border-gray-200 hover:border-watt-trust/30 hover:shadow-institutional transition-all duration-200">
-                  <div className="text-3xl md:text-4xl font-bold text-watt-trust mb-2">675MW+</div>
-                  <div className="text-sm text-watt-navy/60 font-medium">Deal Experience</div>
-                </div>
-                <div className="text-center p-4 rounded-xl bg-white border border-gray-200 hover:border-watt-bitcoin/30 hover:shadow-institutional transition-all duration-200">
-                  <div className="text-3xl md:text-4xl font-bold text-watt-bitcoin mb-2">2.0-2.5x</div>
-                  <div className="text-sm text-watt-navy/60 font-medium">Target MOIC</div>
-                </div>
-                <div className="text-center p-4 rounded-xl bg-white border border-gray-200 hover:border-watt-success/30 hover:shadow-institutional transition-all duration-200">
-                  <div className="text-3xl md:text-4xl font-bold text-watt-success mb-2">$25M</div>
-                  <div className="text-sm text-watt-navy/60 font-medium">Fund I Target</div>
-                </div>
-              </div>
             </div>
           </div>
         </ScrollReveal>
