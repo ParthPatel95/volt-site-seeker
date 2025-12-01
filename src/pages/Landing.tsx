@@ -12,10 +12,7 @@ import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 
 // Lazy load sections for better performance
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
-const MarketOpportunitySection = lazy(() => import('@/components/landing/MarketOpportunitySection').then(module => ({ default: module.MarketOpportunitySection })));
-const FundOverviewSection = lazy(() => import('@/components/landing/FundOverviewSection').then(module => ({ default: module.FundOverviewSection })));
 const LeadershipTeamSection = lazy(() => import('@/components/landing/LeadershipTeamSection').then(module => ({ default: module.LeadershipTeamSection })));
-const FundGrowthPlanSection = lazy(() => import('@/components/landing/FundGrowthPlanSection').then(module => ({ default: module.FundGrowthPlanSection })));
 const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(module => ({ default: module.InvestmentThesisSection })));
 const VoltScoutSection = lazy(() => import('@/components/landing/VoltScoutSection').then(module => ({ default: module.VoltScoutSection })));
 
@@ -82,17 +79,9 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="green" />
-          
-          <LiveDataSection />
-          
           <SectionDivider color="blue" />
           
-          <section aria-label="Market Opportunity" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <MarketOpportunitySection />
-            </Suspense>
-          </section>
+          <LiveDataSection />
           
           <SectionDivider color="yellow" />
           
@@ -104,25 +93,9 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="purple" />
           
-          <section aria-label="Fund Growth Plan" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <FundGrowthPlanSection />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="green" />
-          
           <section aria-label="Investment Thesis" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <InvestmentThesisSection />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="cyan" />
-          
-          <section aria-label="Fund Overview" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <FundOverviewSection />
             </Suspense>
           </section>
           

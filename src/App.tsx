@@ -11,6 +11,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
+import WattFund from "./pages/WattFund";
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 import ViewDocument from "./pages/ViewDocument";
@@ -28,6 +29,7 @@ const App = () => (
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/wattfund" element={<WattFund />} />
             {navItems.map(({ to, page }) => (
               <Route key={to} path={to} element={page} />
             ))}
