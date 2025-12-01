@@ -4,13 +4,13 @@ import { TrendingUp, MapPin, Shield } from 'lucide-react';
 
 export const FundOverviewSection = () => {
   return (
-    <section className="relative z-10 py-8 sm:py-10 md:py-12 px-4 sm:px-6 bg-watt-light">
+    <section className="relative z-10 py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-6 sm:mb-8 md:mb-10">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
             Fund I Overview
           </h2>
-          <p className="text-watt-navy/70 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
+          <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
             Strategic acquisition and development of undervalued power assets for premium digital infrastructure
           </p>
         </div>

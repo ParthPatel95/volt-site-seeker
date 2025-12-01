@@ -109,7 +109,7 @@ export const AlbertaFacilityHub = () => {
   const handleImageClick = (index: number) => {
     setSelectedImage(index);
   };
-  return <section ref={sectionRef} className="relative pt-20 md:pt-32 pb-8 md:pb-12 overflow-hidden bg-white">
+  return <section ref={sectionRef} className="relative py-16 md:py-20 overflow-hidden bg-white">
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
         <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -118,10 +118,10 @@ export const AlbertaFacilityHub = () => {
             <span className="text-sm font-medium text-watt-trust">Under Development</span>
           </div>
           
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-watt-navy mb-5">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-watt-navy mb-5">
             Alberta Heartland <span className="text-watt-success">135</span>
           </h2>
-          <p className="text-base sm:text-lg text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
             Enterprise-grade infrastructure delivering reliable, efficient power for high-performance computing
           </p>
         </div>

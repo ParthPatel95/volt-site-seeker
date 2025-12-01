@@ -51,13 +51,13 @@ export const LeadershipTeamSection = () => {
   ];
  
   return (
-    <section className="relative z-10 py-24 px-6 bg-watt-light">
+    <section className="relative z-10 py-16 md:py-20 px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-watt-navy">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-watt-navy">
             Leadership Team
           </h2>
-          <p className="text-watt-navy/70 text-xl max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto">
             Proven operators with 675MW+ of power infrastructure experience
           </p>
         </div>

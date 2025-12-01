@@ -5,7 +5,7 @@ import { ScrollReveal } from './ScrollAnimations';
 
 export const LiveDataSection = () => {
   return (
-    <section className="relative z-10 py-8 sm:py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-white">
+    <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <ScrollReveal delay={100}>
