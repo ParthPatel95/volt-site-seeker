@@ -1,4 +1,4 @@
-// Energy Data Integration Edge Function
+// Energy Data Integration Edge Function - Updated
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
