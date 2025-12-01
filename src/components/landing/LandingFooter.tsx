@@ -36,7 +36,7 @@ export const LandingFooter = () => {
             <h3 className="text-sm font-semibold text-watt-navy mb-3">Company</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#about" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                <a href="/about" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   About Us
                 </a>
               </li>
