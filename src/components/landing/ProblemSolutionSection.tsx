@@ -40,7 +40,7 @@ export const ProblemSolutionSection = () => {
   ];
 
   return (
-    <section className="relative z-10 px-4 sm:px-6 py-20 md:py-32 bg-white">
+    <section className="relative z-10 px-4 sm:px-6 py-16 md:py-20 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <ScrollReveal direction="fade" className="text-center mb-16">
@@ -48,11 +48,11 @@ export const ProblemSolutionSection = () => {
             <Zap className="w-4 h-4 text-watt-trust" />
             <span className="text-sm font-medium text-watt-trust">Market Intelligence</span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-watt-navy mb-4">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-watt-navy mb-4">
             Turning Power Constraints Into
             <span className="text-watt-bitcoin"> Profit Opportunities</span>
           </h2>
-          <p className="text-lg md:text-xl text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg text-watt-navy/70 max-w-3xl mx-auto">
             Power constraints are the <span className="text-watt-bitcoin font-semibold">#1 limiting factor</span> for AI infrastructure growth.
             <br className="hidden sm:block" />
             WattByte transforms these bottlenecks into <span className="text-watt-success font-semibold">investable assets</span>.

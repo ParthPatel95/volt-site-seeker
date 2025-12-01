@@ -67,11 +67,11 @@ export const InfrastructureHighlights = () => {
     <section className="relative py-16 sm:py-20 md:py-24 bg-white">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
             <span className="text-watt-navy">Development </span>
             <span className="text-watt-trust">Pipeline</span>
           </h2>
-          <p className="text-lg sm:text-xl text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
             Strategic power infrastructure investments across global markets totaling <span className="text-watt-bitcoin font-bold">1,429 MW</span>
           </p>
         </div>

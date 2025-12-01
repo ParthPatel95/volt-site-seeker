@@ -3,13 +3,13 @@ import { ArrowRight, Cpu, Zap, Building, TrendingUp, DollarSign } from 'lucide-r
 
 export const InvestmentThesisSection = () => {
   return (
-    <section className="relative z-10 py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 bg-watt-light">
+    <section className="relative z-10 py-16 md:py-20 px-4 sm:px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 sm:mb-12 md:mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-watt-navy">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 text-watt-navy">
             Our <span className="text-watt-trust">Thesis</span>
           </h2>
-          <p className="text-xl sm:text-2xl md:text-3xl text-watt-bitcoin font-bold">
+          <p className="text-base md:text-lg text-watt-bitcoin font-bold">
             Power Arbitrage → Data Center Gold
           </p>
         </div>

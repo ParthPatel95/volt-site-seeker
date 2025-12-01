@@ -289,16 +289,16 @@ export const StrategicMarketAnalytics = () => {
           />
         </div>
 
-        <div className="relative bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-watt-trust/30 transition-all">
+        <div className="relative bg-watt-light backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:border-watt-trust/30 transition-all">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-watt-trust/10 rounded-lg flex-shrink-0">
               <Activity className="w-6 h-6 text-watt-trust" />
             </div>
             <div className="space-y-3 flex-1">
-              <h4 className="text-lg font-bold text-white">
+              <h4 className="text-lg font-bold text-watt-navy">
                 Live Market Data Integration
               </h4>
-              <p className="text-sm text-white/70 leading-relaxed">
+              <p className="text-sm text-watt-navy/70 leading-relaxed">
                 Our facility leverages Alberta's deregulated energy market to optimize operations in real-time. 
                 The 95% uptime calculation removes the highest 5% of price spikes, providing a realistic baseline 
                 for operational cost planning. With an average price of <span className="text-watt-success font-semibold">${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh</span> over the past year, Alberta offers competitive energy rates for high-performance computing workloads.

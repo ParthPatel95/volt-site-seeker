@@ -20,7 +20,7 @@ import {
 
 export const VoltScoutSection = () => {
   return (
-    <section className="relative z-10 py-12 px-6 bg-white">
+    <section className="relative z-10 py-16 md:py-20 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mb-6">
@@ -28,13 +28,13 @@ export const VoltScoutSection = () => {
               <Brain className="w-10 h-10 text-white" />
             </div>
             <div className="text-left">
-              <h2 className="text-4xl font-bold text-watt-navy mb-1">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-watt-navy mb-1">
                 VoltScout
               </h2>
-              <p className="text-lg text-watt-navy/70 text-left">AI-Powered Energy Discovery Platform</p>
+              <p className="text-base md:text-lg text-watt-navy/70 text-left">AI-Powered Energy Discovery Platform</p>
             </div>
           </div>
-          <p className="text-lg text-watt-navy/70 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-watt-navy/70 max-w-4xl mx-auto leading-relaxed">
             Our proprietary AI-powered energy scouting platform that autonomously discovers, analyzes, and ranks power-rich opportunities across North America in real-time
           </p>
         </div>

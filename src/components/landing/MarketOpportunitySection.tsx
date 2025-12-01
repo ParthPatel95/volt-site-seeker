@@ -53,13 +53,13 @@ export const MarketOpportunitySection = () => {
   };
 
   return (
-    <section className="relative z-10 py-6 sm:py-8 md:py-12 px-3 sm:px-4 md:px-6 bg-watt-light">
+    <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-4 sm:mb-6 md:mb-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
             Explosive Market Opportunity
           </h2>
-          <p className="text-watt-navy/70 text-xs sm:text-sm md:text-base lg:text-lg max-w-2xl mx-auto px-2">
+          <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
             AI revolution and Bitcoin adoption creating unprecedented demand for power infrastructure
           </p>
         </div>
