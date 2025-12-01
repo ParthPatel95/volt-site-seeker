@@ -3544,6 +3544,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ocr_extractions: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          document_id: string
+          extracted_text: string
+          id: string
+          ocr_method: string
+          page_number: number
+          processing_time_ms: number | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          document_id: string
+          extracted_text: string
+          id?: string
+          ocr_method: string
+          page_number: number
+          processing_time_ms?: number | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          document_id?: string
+          extracted_text?: string
+          id?: string
+          ocr_method?: string
+          page_number?: number
+          processing_time_ms?: number | null
+        }
+        Relationships: []
+      }
       portfolio_recommendations: {
         Row: {
           created_at: string
