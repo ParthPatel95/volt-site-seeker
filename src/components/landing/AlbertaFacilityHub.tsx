@@ -118,10 +118,10 @@ export const AlbertaFacilityHub = () => {
             <span className="text-sm font-medium text-watt-trust">Under Development</span>
           </div>
           
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-watt-navy mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-watt-navy mb-5">
             Alberta Heartland <span className="text-watt-success">135</span>
           </h2>
-          <p className="text-lg sm:text-xl text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
             Enterprise-grade infrastructure delivering reliable, efficient power for high-performance computing
           </p>
         </div>
@@ -156,8 +156,8 @@ export const AlbertaFacilityHub = () => {
 
         {/* Technical Specifications - Compact Grid */}
         <div className={`mb-12 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <h3 className="text-3xl font-bold text-watt-navy mb-8 text-center">
-            <Building2 className="inline-block w-8 h-8 mr-3 text-watt-trust" />
+          <h3 className="text-2xl sm:text-3xl font-semibold text-watt-navy mb-7 text-center">
+            <Building2 className="inline-block w-7 h-7 mr-3 text-watt-trust" />
             Technical Specifications
           </h3>
           
@@ -175,10 +175,10 @@ export const AlbertaFacilityHub = () => {
                       <spec.icon className={`w-5 h-5 text-${spec.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-watt-navy/60 mb-1">{spec.label}</div>
+                      <div className="text-xs sm:text-sm font-medium text-watt-navy/60 mb-1">{spec.label}</div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-3xl font-bold text-watt-navy">{spec.value}</span>
-                        <span className="text-base text-watt-navy/60 font-medium">{spec.unit}</span>
+                        <span className="text-2xl sm:text-3xl font-semibold text-watt-navy">{spec.value}</span>
+                        <span className="text-xs sm:text-sm text-watt-navy/60 font-medium">{spec.unit}</span>
                       </div>
                     </div>
                   </div>
@@ -198,10 +198,10 @@ export const AlbertaFacilityHub = () => {
                   <div className="flex items-center gap-3">
                     <spec.icon className={`w-4 h-4 text-${spec.color} flex-shrink-0`} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs text-watt-navy/60 mb-0.5">{spec.label}</div>
+                      <div className="text-[11px] sm:text-xs text-watt-navy/60 mb-0.5">{spec.label}</div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-watt-navy">{spec.value}</span>
-                        <span className="text-xs text-watt-navy/60">{spec.unit}</span>
+                        <span className="text-base sm:text-lg font-semibold text-watt-navy">{spec.value}</span>
+                        <span className="text-[11px] sm:text-xs text-watt-navy/60">{spec.unit}</span>
                       </div>
                     </div>
                   </div>
