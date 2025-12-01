@@ -3,9 +3,9 @@ import './landing-animations.css';
 
 export const FacilityShowcase = () => {
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-institutional-lg">
-      {/* Base Photo Layer with Cinematic Ken Burns Effect */}
-      <div className="absolute inset-0 animate-ken-burns-slow">
+    <div className="relative w-full h-full">
+      {/* Base Photo Layer with Slower Cinematic Ken Burns Effect */}
+      <div className="absolute inset-0 animate-ken-burns-ultra-slow">
         <img 
           src={facilityImage} 
           alt="Alberta Heartland 135 Facility - Strategic Power Infrastructure"
@@ -29,9 +29,6 @@ export const FacilityShowcase = () => {
             boxShadow: 'inset 0 0 120px rgba(0, 0, 0, 0.12)',
           }}
         />
-        
-        {/* Bottom Fade for Seamless Integration */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-watt-light/30 to-transparent" />
       </div>
       
       {/* Optional: Ultra-Subtle Floating Particles */}
@@ -43,9 +40,9 @@ export const FacilityShowcase = () => {
             style={{
               left: `${15 + i * 15}%`,
               top: `${20 + (i % 3) * 25}%`,
-              opacity: 0.2,
-              animationDelay: `${i * 3}s`,
-              animationDuration: `${25 + i * 3}s`,
+              opacity: 0.15,
+              animationDelay: `${i * 4}s`,
+              animationDuration: `${30 + i * 5}s`,
             }}
           />
         ))}
