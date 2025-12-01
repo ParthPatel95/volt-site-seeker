@@ -7,11 +7,14 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { VideoPlayer } from './viewer/VideoPlayer';
 
-// Configure PDF.js worker with multiple fallbacks for cross-browser compatibility
+// Configure PDF.js worker with multiple fallbacks for pdfjs-dist 5.x compatibility
 const workerUrls = [
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
-  `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
+  `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
+  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`,
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.mjs`,
+  // Legacy fallbacks for older environments
+  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 ];
 
 // Try each worker URL with proper async error handling
