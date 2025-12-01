@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { VideoPlayer } from './VideoPlayer';
 import { TranslationPanel } from './TranslationPanel';
 import { extractPageText } from '@/utils/pdfTextExtractor';
+import { OfficeDocumentViewer } from './OfficeDocumentViewer';
 
 // Configure PDF.js worker with multiple fallback CDNs for pdfjs-dist 5.x compatibility
 const initializePdfWorker = () => {
@@ -119,8 +120,8 @@ export function DocumentViewer({
   const isOfficePresentation = documentType?.includes('presentation') || /\.pptx?$/i.test(documentUrl);
   const isOffice = isOfficeDoc || isOfficeSheet || isOfficePresentation;
   
-  // PDFs, images, and Office documents support translation
-  const supportsTranslation = isPdf || isImage || isOffice;
+  // PDFs, images, Office documents, and text files support translation
+  const supportsTranslation = isPdf || isImage || isOffice || isText;
 
   // Cleanup PDF.js resources on unmount
   useEffect(() => {
@@ -391,9 +392,35 @@ export function DocumentViewer({
         setExtractedText('');
         setIsExtracting(false);
         console.log('[DocumentViewer] Image document - OCR will be used for translation');
+      } else if (isText) {
+        // For text files, fetch the content directly
+        setIsExtracting(true);
+        fetch(documentUrl)
+          .then(response => response.text())
+          .then(text => {
+            setExtractedText(text);
+            console.log('[DocumentViewer] Text file content loaded', { length: text.length });
+          })
+          .catch((error) => {
+            console.error('[DocumentViewer] Text file loading failed:', error);
+            setExtractedText('');
+            toast({
+              title: 'Loading Error',
+              description: 'Failed to load text file content.',
+              variant: 'destructive'
+            });
+          })
+          .finally(() => {
+            setIsExtracting(false);
+          });
+      } else if (isOffice) {
+        // Office documents - no pre-extraction, will use parser on demand
+        setExtractedText('');
+        setIsExtracting(false);
+        console.log('[DocumentViewer] Office document - parser will be used for translation');
       }
     }
-  }, [translationOpen, pageNumber, documentUrl, isPdf, isImage, toast]);
+  }, [translationOpen, pageNumber, documentUrl, isPdf, isImage, isText, isOffice, toast]);
   
   // Build PDF URL - hide toolbar for view-only
   const pdfUrl = isPdf && !canDownload
@@ -953,37 +980,13 @@ export function DocumentViewer({
                 />
               </div>
             ) : isOffice ? (
-              <div className="flex flex-col items-center justify-center h-full p-6 md:p-12 space-y-4">
-                <div className="text-center space-y-4">
-                  <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                    <Languages className="w-8 h-8 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-base md:text-lg font-semibold mb-2">
-                      {isOfficeDoc && 'Word Document'}
-                      {isOfficeSheet && 'Excel Spreadsheet'}
-                      {isOfficePresentation && 'PowerPoint Presentation'}
-                    </p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Click "Translate" to extract and translate text from this document
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <Button onClick={() => setTranslationOpen(true)} variant="default">
-                      <Globe className="w-4 h-4 mr-2" />
-                      Translate Document
-                    </Button>
-                    {canDownload && (
-                      <Button onClick={handleDownload} variant="outline">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Supports: .docx, .xlsx, .pptx, .doc, .xls, .ppt
-                  </p>
-                </div>
+              <div className="w-full h-full">
+                <OfficeDocumentViewer
+                  documentUrl={documentUrl}
+                  documentType={documentType}
+                  onDownload={canDownload ? handleDownload : undefined}
+                  canDownload={canDownload}
+                />
               </div>
             ) : (
               <div className="flex items-center justify-center h-full p-6 md:p-12">

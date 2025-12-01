@@ -134,34 +134,48 @@ Deno.serve(async (req) => {
 
 async function parseDocx(data: Uint8Array): Promise<string> {
   try {
-    // DOCX files are ZIP archives containing XML files
-    // We'll extract text from document.xml using basic pattern matching
-    const decoder = new TextDecoder('utf-8', { fatal: false });
-    const content = decoder.decode(data);
+    console.log('[DOCX Parser] Using AI vision to extract text from Office document');
     
-    // Look for XML text content between <w:t> tags (Word text elements)
-    const textMatches = content.matchAll(/<w:t[^>]*>([^<]+)<\/w:t>/g);
-    const paragraphs: string[] = [];
+    // Use AI vision to extract text (more reliable than XML parsing)
+    const base64Data = btoa(String.fromCharCode(...data));
     
-    for (const match of textMatches) {
-      if (match[1]) {
-        paragraphs.push(match[1].trim());
-      }
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Extract all text content from this document. Return only the extracted text without any commentary or formatting.'
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`
+              }
+            }
+          ]
+        }]
+      })
+    });
+
+    if (!aiResponse.ok) {
+      throw new Error(`AI extraction failed: ${aiResponse.status}`);
     }
-    
-    // Also try to extract any readable text
-    let fallbackText = content
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    const extractedText = paragraphs.length > 0 ? paragraphs.join('\n\n') : fallbackText;
-    
+
+    const aiData = await aiResponse.json();
+    const extractedText = aiData.choices?.[0]?.message?.content || '';
+
     if (extractedText.length < 10) {
       throw new Error('No readable text found in DOCX');
     }
-    
+
     return extractedText;
   } catch (error) {
     console.error('[DOCX Parser] Error:', error);
@@ -171,26 +185,47 @@ async function parseDocx(data: Uint8Array): Promise<string> {
 
 async function parseXlsx(data: Uint8Array): Promise<string> {
   try {
-    // XLSX files are also ZIP archives with XML worksheets
-    const decoder = new TextDecoder('utf-8', { fatal: false });
-    const content = decoder.decode(data);
+    console.log('[XLSX Parser] Using AI vision to extract text from spreadsheet');
     
-    // Extract cell values from <v> or <t> tags (value/text elements)
-    const cellMatches = content.matchAll(/<(?:v|t)[^>]*>([^<]+)<\/(?:v|t)>/g);
-    const cells: string[] = [];
+    const base64Data = btoa(String.fromCharCode(...data));
     
-    for (const match of cellMatches) {
-      if (match[1] && match[1].trim()) {
-        cells.push(match[1].trim());
-      }
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Extract all text and data from this spreadsheet. Return the data in a readable format, preserving rows and columns.'
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`
+              }
+            }
+          ]
+        }]
+      })
+    });
+
+    if (!aiResponse.ok) {
+      throw new Error(`AI extraction failed: ${aiResponse.status}`);
     }
-    
-    const extractedText = cells.join('\n');
-    
+
+    const aiData = await aiResponse.json();
+    const extractedText = aiData.choices?.[0]?.message?.content || '';
+
     if (extractedText.length < 5) {
       throw new Error('No readable data found in XLSX');
     }
-    
+
     return extractedText;
   } catch (error) {
     console.error('[XLSX Parser] Error:', error);
@@ -200,26 +235,47 @@ async function parseXlsx(data: Uint8Array): Promise<string> {
 
 async function parsePptx(data: Uint8Array): Promise<string> {
   try {
-    // PPTX files contain slides as XML files
-    const decoder = new TextDecoder('utf-8', { fatal: false });
-    const content = decoder.decode(data);
+    console.log('[PPTX Parser] Using AI vision to extract text from presentation');
     
-    // Extract text from <a:t> tags (text elements in slides)
-    const textMatches = content.matchAll(/<a:t[^>]*>([^<]+)<\/a:t>/g);
-    const slides: string[] = [];
+    const base64Data = btoa(String.fromCharCode(...data));
     
-    for (const match of textMatches) {
-      if (match[1] && match[1].trim()) {
-        slides.push(match[1].trim());
-      }
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Extract all text content from this presentation. Include slide titles and body text. Return only the extracted text.'
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${base64Data}`
+              }
+            }
+          ]
+        }]
+      })
+    });
+
+    if (!aiResponse.ok) {
+      throw new Error(`AI extraction failed: ${aiResponse.status}`);
     }
-    
-    const extractedText = slides.join('\n\n');
-    
+
+    const aiData = await aiResponse.json();
+    const extractedText = aiData.choices?.[0]?.message?.content || '';
+
     if (extractedText.length < 10) {
       throw new Error('No readable text found in PPTX');
     }
-    
+
     return extractedText;
   } catch (error) {
     console.error('[PPTX Parser] Error:', error);
