@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Maximize2, Minimize2, MoreVertical, Globe, Languages, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +44,18 @@ const initializePdfWorker = () => {
 
 initializePdfWorker();
 
+// Debounce utility
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
 interface DocumentViewerProps {
   documentUrl: string;
   documentType: string;
@@ -83,6 +95,8 @@ export function DocumentViewer({
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isUserZooming, setIsUserZooming] = useState(false);
+  const initialDimensionsSet = useRef(false);
   
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
@@ -428,15 +442,21 @@ export function DocumentViewer({
     : documentUrl;
 
   const handleZoomIn = () => {
+    setIsUserZooming(true);
     setZoom(prev => Math.min(prev + 0.25, 3.0));
+    setTimeout(() => setIsUserZooming(false), 300);
   };
   
   const handleZoomOut = () => {
+    setIsUserZooming(true);
     setZoom(prev => Math.max(prev - 0.25, 0.5));
+    setTimeout(() => setIsUserZooming(false), 300);
   };
   
   const handleResetZoom = () => {
+    setIsUserZooming(true);
     setZoom(1.0);
+    setTimeout(() => setIsUserZooming(false), 300);
   };
 
   const handleRotate = () => {
@@ -543,10 +563,14 @@ export function DocumentViewer({
     setPdfDocumentProxy(pdf);
   }
 
-  const handlePageLoadSuccess = (page: any) => {
+  const handlePageLoadSuccess = useCallback((page: any) => {
+    // Only set dimensions once per document to prevent render loops
+    if (initialDimensionsSet.current) return;
+    
     const { width, height } = page;
     setPdfPageDimensions({ width, height });
-  };
+    initialDimensionsSet.current = true;
+  }, []);
 
   // Track page changes
   useEffect(() => {
@@ -578,18 +602,30 @@ export function DocumentViewer({
     };
   }, [enableTracking, linkId, documentId, trackScrollDepth]);
 
+  // Reset initial dimensions flag when document changes
+  useEffect(() => {
+    initialDimensionsSet.current = false;
+  }, [documentUrl]);
+
   // Track container dimensions so PDF fits within the viewer column
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.clientWidth);
-        setContainerHeight(containerRef.current.clientHeight);
+        const newWidth = containerRef.current.clientWidth;
+        const newHeight = containerRef.current.clientHeight;
+        
+        // Only update if significantly different (>5px threshold to prevent tiny flickers)
+        setContainerWidth(prev => Math.abs((prev || 0) - newWidth) > 5 ? newWidth : prev);
+        setContainerHeight(prev => Math.abs((prev || 0) - newHeight) > 5 ? newHeight : prev);
       }
     };
 
-    updateDimensions();
+    // Debounced version for ResizeObserver
+    const debouncedUpdate = debounce(updateDimensions, 100);
+
+    updateDimensions(); // Initial measurement
     
-    const resizeObserver = new ResizeObserver(updateDimensions);
+    const resizeObserver = new ResizeObserver(debouncedUpdate);
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
@@ -597,8 +633,8 @@ export function DocumentViewer({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Calculate optimal page size to fit within container
-  const calculateOptimalPageWidth = () => {
+  // Memoize page width calculation to prevent unnecessary recalculations
+  const pageWidth = useMemo(() => {
     const maxWidth = containerWidth ? containerWidth - 80 : window.innerWidth - 120;
     const maxHeight = containerHeight ? containerHeight - 32 : window.innerHeight - 200;
     
@@ -615,9 +651,7 @@ export function DocumentViewer({
     
     // Default fallback
     return Math.min(maxWidth, 1200);
-  };
-
-  const pageWidth = calculateOptimalPageWidth();
+  }, [containerWidth, containerHeight, pdfPageDimensions]);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -909,7 +943,7 @@ export function DocumentViewer({
                       style={{ 
                         transform: `scale(${isIOS ? Math.min(zoom, 1.5) : zoom})`,
                         transformOrigin: 'center center',
-                        transition: 'transform 0.2s ease-out'
+                        transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
                       }}
                     >
                       <Page
