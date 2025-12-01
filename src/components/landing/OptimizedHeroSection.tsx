@@ -88,7 +88,7 @@ export const OptimizedHeroSection = () => {
 
           {/* Right Visual Showcase (45%) */}
           <div className="w-full lg:w-[45%] h-[400px] lg:h-[600px]">
-            <ScrollReveal delay={200}>
+            <ScrollReveal delay={200} className="h-full">
               <FacilityShowcase />
             </ScrollReveal>
           </div>
