@@ -78,14 +78,14 @@ export const OperationalExcellence = () => {
   });
 
   return (
-    <section className="relative py-16 sm:py-20 md:py-24 bg-gradient-to-b from-slate-900 to-slate-950">
+    <section className="relative py-16 sm:py-20 md:py-24 bg-watt-light">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-            Operational <span className="text-neon-green">Excellence</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-watt-navy mb-4">
+            Operational <span className="text-watt-success">Excellence</span>
           </h2>
-          <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
-            Real-time performance metrics from our <span className="text-electric-blue font-semibold">Alberta facility</span>
+          <p className="text-lg sm:text-xl text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
+            Real-time performance metrics from our <span className="text-watt-trust font-semibold">Alberta facility</span>
           </p>
         </div>
 
@@ -94,27 +94,27 @@ export const OperationalExcellence = () => {
           {liveMetrics.map((metric, index) => (
             <div 
               key={index}
-              className="group relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 hover:border-electric-blue/50 transition-all duration-300 hover:scale-105 hover:bg-slate-800/70"
+              className="group relative bg-white backdrop-blur-sm rounded-2xl p-6 border border-gray-200 hover:border-watt-trust/50 transition-all duration-300 hover:scale-105 shadow-institutional hover:shadow-institutional-lg"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-electric-blue/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-watt-trust/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
               
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
-                  <metric.icon className="w-8 h-8 text-electric-blue" />
+                  <metric.icon className="w-8 h-8 text-watt-trust" />
                   <Badge variant="outline" className={`${metric.color} border-none`}>
                     {metric.status}
                   </Badge>
                 </div>
                 
-                <div className="text-3xl font-bold text-white mb-2">
+                <div className="text-3xl font-bold text-watt-navy mb-2">
                   {metric.value}
                 </div>
                 
-                <div className="text-sm text-slate-300 mb-3">
+                <div className="text-sm text-watt-navy/70 mb-3">
                   {metric.label}
                 </div>
                 
-                <div className="flex items-center text-xs text-neon-green">
+                <div className="flex items-center text-xs text-watt-success">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   {metric.trend}
                 </div>
@@ -128,15 +128,15 @@ export const OperationalExcellence = () => {
           {achievements.map((achievement, index) => (
             <div 
               key={index}
-              className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-neon-green/30 transition-all hover:bg-slate-800/70"
+              className="bg-white backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:border-watt-success/30 transition-all shadow-institutional hover:shadow-institutional-lg"
             >
               <div className="flex flex-col items-center text-center gap-4">
-                <div className="p-3 bg-neon-green/10 rounded-lg">
-                  <achievement.icon className="w-6 h-6 text-neon-green" />
+                <div className="p-3 bg-watt-success/10 rounded-lg">
+                  <achievement.icon className="w-6 h-6 text-watt-success" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white mb-2">{achievement.title}</h4>
-                  <p className="text-sm text-slate-300">{achievement.description}</p>
+                  <h4 className="font-bold text-watt-navy mb-2">{achievement.title}</h4>
+                  <p className="text-sm text-watt-navy/70">{achievement.description}</p>
                 </div>
               </div>
             </div>

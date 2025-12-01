@@ -13,9 +13,9 @@ interface BTCData {
 export const BTCMiningROIWidget = () => {
   const [btcData, setBtcData] = useState<BTCData>({ price: 0, difficulty: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [hashrate, setHashrate] = useState<string>('200'); // TH/s
-  const [energyRate, setEnergyRate] = useState<string>('0.08'); // USD per kWh
-  const [powerDraw, setPowerDraw] = useState<string>('3400'); // Watts
+  const [hashrate, setHashrate] = useState<string>('200');
+  const [energyRate, setEnergyRate] = useState<string>('0.08');
+  const [powerDraw, setPowerDraw] = useState<string>('3400');
   const [profitability, setProfitability] = useState<{
     dailyRevenue: number;
     dailyPowerCost: number;
@@ -24,34 +24,27 @@ export const BTCMiningROIWidget = () => {
     yearlyROI: number;
   } | null>(null);
 
-  // Fetch live BTC data
   useEffect(() => {
     const fetchBTCData = async () => {
       try {
-        // Fetch BTC price from Coinbase
         const priceResponse = await fetch('https://api.coinbase.com/v2/prices/spot?currency=USD');
         const priceData = await priceResponse.json();
         const btcPrice = parseFloat(priceData.data.amount);
-
-        // Mock difficulty data (in production, use real API)
-        const difficulty = 68.5e12; // Current approximate difficulty
-
+        const difficulty = 68.5e12;
         setBtcData({ price: btcPrice, difficulty });
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching BTC data:', error);
-        // Fallback data
         setBtcData({ price: 45000, difficulty: 68.5e12 });
         setIsLoading(false);
       }
     };
 
     fetchBTCData();
-    const interval = setInterval(fetchBTCData, 60000); // Update every minute
+    const interval = setInterval(fetchBTCData, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate profitability automatically when BTC data loads or inputs change
   useEffect(() => {
     if (!isLoading && btcData.price > 0) {
       calculateProfitability();
@@ -65,13 +58,11 @@ export const BTCMiningROIWidget = () => {
 
     if (!hashrateValue || !energyRateValue || !powerDrawValue || !btcData.price) return;
 
-    // Constants
-    const networkHashrate = 450e18; // ~450 EH/s
-    const blockReward = 6.25; // BTC
-    const blocksPerDay = 144; // 10 min average
+    const networkHashrate = 450e18;
+    const blockReward = 6.25;
+    const blocksPerDay = 144;
     
-    // Calculations
-    const hashrateInHs = hashrateValue * 1e12; // Convert TH/s to H/s
+    const hashrateInHs = hashrateValue * 1e12;
     const dailyBTC = (hashrateInHs / networkHashrate) * blocksPerDay * blockReward;
     const dailyRevenue = dailyBTC * btcData.price;
     
@@ -81,7 +72,6 @@ export const BTCMiningROIWidget = () => {
     const dailyProfit = dailyRevenue - dailyPowerCost;
     const monthlyProfit = dailyProfit * 30;
     
-    // Assuming $10k hardware cost for ROI calculation
     const hardwareCost = 10000;
     const yearlyProfit = dailyProfit * 365;
     const yearlyROI = (yearlyProfit / hardwareCost) * 100;
@@ -96,110 +86,108 @@ export const BTCMiningROIWidget = () => {
   };
 
   return (
-    <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-neon-green/30 transition-all duration-300 group">
+    <Card className="bg-white backdrop-blur-sm border border-gray-200 hover:border-watt-success/30 transition-all duration-300 group shadow-institutional">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Bitcoin className="w-6 h-6 text-neon-green group-hover:scale-110 transition-transform duration-300" />
-            <CardTitle className="text-white text-xl">BTC Mining ROI Lab</CardTitle>
+            <Bitcoin className="w-6 h-6 text-watt-success group-hover:scale-110 transition-transform duration-300" />
+            <CardTitle className="text-watt-navy text-xl">BTC Mining ROI Lab</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-            <Badge className="bg-neon-green/20 text-neon-green text-xs border-neon-green/30">Live</Badge>
+            <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
+            <Badge className="bg-watt-success/20 text-watt-success text-xs border-watt-success/30">Live</Badge>
           </div>
         </div>
-        <p className="text-slate-300 text-sm">Calculate mining profitability with real-time data</p>
+        <p className="text-watt-navy/70 text-sm">Calculate mining profitability with real-time data</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Live Bitcoin Data - 2x2 Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-blue/30">
+          <div className="bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30">
             <div className="flex items-center space-x-2 mb-2">
-              <Bitcoin className="w-4 h-4 text-electric-blue flex-shrink-0" />
-              <span className="text-xs text-slate-400">BTC Price</span>
+              <Bitcoin className="w-4 h-4 text-watt-trust flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">BTC Price</span>
             </div>
-            <div className="text-lg font-bold text-electric-blue break-words">
+            <div className="text-lg font-bold text-watt-trust break-words">
               {isLoading ? (
-                <div className="animate-pulse bg-electric-blue/20 h-6 w-20 rounded"></div>
+                <div className="animate-pulse bg-watt-trust/20 h-6 w-20 rounded"></div>
               ) : (
                 `$${btcData.price.toLocaleString()}`
               )}
             </div>
           </div>
           
-          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-electric-yellow/30">
+          <div className="bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30">
             <div className="flex items-center space-x-2 mb-2">
-              <Hash className="w-4 h-4 text-electric-yellow flex-shrink-0" />
-              <span className="text-xs text-slate-400">Difficulty</span>
+              <Hash className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">Difficulty</span>
             </div>
-            <div className="text-lg font-bold text-electric-yellow break-words">
+            <div className="text-lg font-bold text-watt-bitcoin break-words">
               {isLoading ? (
-                <div className="animate-pulse bg-electric-yellow/20 h-6 w-16 rounded"></div>
+                <div className="animate-pulse bg-watt-bitcoin/20 h-6 w-16 rounded"></div>
               ) : (
                 `${(btcData.difficulty / 1e12).toFixed(1)}T`
               )}
             </div>
           </div>
           
-          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-neon-green/30">
+          <div className="bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/30">
             <div className="flex items-center space-x-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-neon-green flex-shrink-0" />
-              <span className="text-xs text-slate-400">Daily Profit</span>
+              <TrendingUp className="w-4 h-4 text-watt-success flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">Daily Profit</span>
             </div>
-            <div className="text-lg font-bold text-neon-green break-words">
+            <div className="text-lg font-bold text-watt-success break-words">
               {profitability ? `$${profitability.dailyProfit.toFixed(2)}` : '$0.00'}
             </div>
           </div>
           
-          <div className="bg-slate-800/30 rounded-lg p-4 transition-all duration-500 border border-slate-700/30 hover:border-warm-orange/30">
+          <div className="bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-warning/30">
             <div className="flex items-center space-x-2 mb-2">
-              <Zap className="w-4 h-4 text-warm-orange flex-shrink-0" />
-              <span className="text-xs text-slate-400">Monthly</span>
+              <Zap className="w-4 h-4 text-watt-warning flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">Monthly</span>
             </div>
-            <div className="text-lg font-bold text-warm-orange break-words">
+            <div className="text-lg font-bold text-watt-warning break-words">
               {profitability ? `$${profitability.monthlyProfit.toFixed(0)}` : '$0'}
             </div>
           </div>
         </div>
 
-        {/* Mining Setup Configuration */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-slate-200">Your Mining Setup</h4>
-            <Badge className="bg-electric-blue/20 text-electric-blue text-xs border-electric-blue/30">Configure</Badge>
+            <h4 className="text-sm font-semibold text-watt-navy">Your Mining Setup</h4>
+            <Badge className="bg-watt-trust/20 text-watt-trust text-xs border-watt-trust/30">Configure</Badge>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Hashrate (TH/s)</label>
+              <label className="block text-xs text-watt-navy/60 mb-1">Hashrate (TH/s)</label>
               <Input
                 type="number"
                 value={hashrate}
                 onChange={(e) => setHashrate(e.target.value)}
-                className="bg-slate-800/20 border-slate-700/30 text-white text-sm focus:border-electric-blue/50 focus:ring-electric-blue/20"
+                className="bg-watt-light border-gray-300 text-watt-navy text-sm focus:border-watt-trust/50 focus:ring-watt-trust/20"
                 placeholder="200"
               />
             </div>
             
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Energy ($/kWh)</label>
+              <label className="block text-xs text-watt-navy/60 mb-1">Energy ($/kWh)</label>
               <Input
                 type="number"
                 step="0.001"
                 value={energyRate}
                 onChange={(e) => setEnergyRate(e.target.value)}
-                className="bg-slate-800/20 border-slate-700/30 text-white text-sm focus:border-electric-blue/50 focus:ring-electric-blue/20"
+                className="bg-watt-light border-gray-300 text-watt-navy text-sm focus:border-watt-trust/50 focus:ring-watt-trust/20"
                 placeholder="0.08"
               />
             </div>
             
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Power (W)</label>
+              <label className="block text-xs text-watt-navy/60 mb-1">Power (W)</label>
               <Input
                 type="number"
                 value={powerDraw}
                 onChange={(e) => setPowerDraw(e.target.value)}
-                className="bg-slate-800/20 border-slate-700/30 text-white text-sm focus:border-electric-blue/50 focus:ring-electric-blue/20"
+                className="bg-watt-light border-gray-300 text-watt-navy text-sm focus:border-watt-trust/50 focus:ring-watt-trust/20"
                 placeholder="3400"
               />
             </div>
@@ -207,7 +195,7 @@ export const BTCMiningROIWidget = () => {
           
           <Button 
             onClick={calculateProfitability}
-            className="w-full bg-neon-green/20 hover:bg-neon-green/30 text-neon-green border border-neon-green/30 transition-colors"
+            className="w-full bg-watt-success/20 hover:bg-watt-success/30 text-watt-success border border-watt-success/30 transition-colors"
             variant="outline"
             disabled={isLoading}
           >
@@ -216,7 +204,7 @@ export const BTCMiningROIWidget = () => {
           </Button>
         </div>
 
-        <div className="text-xs text-slate-300 pt-3 border-t border-slate-700/30">
+        <div className="text-xs text-watt-navy/60 pt-3 border-t border-gray-200">
           * Calculations based on current network conditions. Results may vary with difficulty changes.
         </div>
       </CardContent>
