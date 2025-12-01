@@ -94,9 +94,9 @@ export function FullScreenDocumentViewer({
     <div 
       className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
-      {/* Header Bar - Fixed 64px height */}
+      {/* Header Bar - Fixed 64px height with safe area support */}
       <div 
-        className="absolute top-0 left-0 right-0 z-20 border-b bg-card/95 backdrop-blur-xl shadow-sm h-16"
+        className="absolute top-0 left-0 right-0 z-20 border-b bg-card/95 backdrop-blur-xl shadow-sm h-16 safe-area-pt safe-area-pl safe-area-pr"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -182,8 +182,8 @@ export function FullScreenDocumentViewer({
         </div>
       </div>
 
-      {/* Document Viewer */}
-      <div className="absolute inset-0 pt-16">
+      {/* Document Viewer with safe area support */}
+      <div className="absolute inset-0 pt-16 safe-area-pb">
         <DocumentViewer
           documentUrl={document.file_url}
           documentType={document.file_type}
@@ -198,20 +198,24 @@ export function FullScreenDocumentViewer({
         />
       </div>
 
-      {/* Optional Sidebar for Quick Document Switching */}
+      {/* Optional Sidebar for Quick Document Switching - Responsive width */}
       {showSidebar && (
-        <div className="absolute right-0 top-16 bottom-0 w-80 bg-card border-l shadow-xl animate-in slide-in-from-right duration-300 z-30">
-          <div className="flex items-center justify-between p-4 border-b">
+        <div className={cn(
+          "absolute right-0 top-16 bottom-0 bg-card border-l shadow-xl animate-in slide-in-from-right duration-300 z-30",
+          isMobile ? "w-full sm:w-80" : "w-80"
+        )}>
+          <div className="flex items-center justify-between p-4 border-b safe-area-pt safe-area-pr">
             <h3 className="font-semibold text-sm">Documents</h3>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowSidebar(false)}
+              className="touch-manipulation min-h-[44px] min-w-[44px]"
             >
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <div className="overflow-y-auto h-[calc(100%-60px)]">
+          <div className="overflow-y-auto h-[calc(100%-60px)] safe-area-pb safe-area-pr">
             {allDocuments.map((doc, index) => {
               const isActive = doc.id === document.id;
               return (
@@ -222,7 +226,7 @@ export function FullScreenDocumentViewer({
                     setShowSidebar(false);
                   }}
                   className={cn(
-                    "w-full text-left p-3 border-b transition-colors",
+                    "w-full text-left p-3 border-b transition-colors touch-manipulation min-h-[60px]",
                     isActive 
                       ? "bg-primary/10 border-l-4 border-l-primary" 
                       : "hover:bg-muted"
