@@ -72,6 +72,8 @@ export function TranslationPanel({
   const [isOcrProcessing, setIsOcrProcessing] = useState(false);
   const [ocrEnabled, setOcrEnabled] = useState(false);
   const [ocrExtractedText, setOcrExtractedText] = useState<string>(''); // OCR-extracted text overrides prop
+  const [ocrMethod, setOcrMethod] = useState<'ai' | 'browser'>('ai'); // OCR method preference
+  const [browserOcrProgress, setBrowserOcrProgress] = useState(0);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -408,106 +410,196 @@ export function TranslationPanel({
     }
   }, [targetLanguage, documentId, currentPage, extractedText, pdfDocument, extractTextFromPage, toast]);
 
-  const handleEnableOcr = useCallback(async () => {
+  const handleEnableOcr = useCallback(async (method: 'ai' | 'browser' = ocrMethod) => {
     setIsOcrProcessing(true);
     setExtractionStatus('Preparing for OCR...');
     setError(null);
+    setBrowserOcrProgress(0);
 
     try {
       const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentUrl || '');
       const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
 
-      let imageBase64: string;
+      if (method === 'browser') {
+        // Browser-based OCR using Tesseract.js
+        console.log('[OCR] Using browser-based OCR');
+        setExtractionStatus('Loading OCR engine...');
 
-      if (isImage && documentUrl) {
-        // For images, convert image URL directly to base64
-        console.log('[OCR] Processing image document');
-        setExtractionStatus('Loading image...');
-        
-        const { imageUrlToBase64 } = await import('@/utils/pdfToImage');
-        imageBase64 = await imageUrlToBase64(documentUrl);
-      } else if (isPdf) {
-        // For PDFs, render page to image first
-        console.log('[OCR] Processing PDF document');
-        setExtractionStatus('Preparing page for OCR...');
-        
-        const { renderPdfPageToImage } = await import('@/utils/pdfToImage');
-        
-        // Get PDF document proxy
-        let pdfDoc = pdfDocument;
-        if (!pdfDoc && documentUrl) {
-          console.log('[OCR] Loading PDF document for OCR');
-          const pdfjsLib = await import('pdfjs-dist');
-          const loadingTask = pdfjsLib.getDocument({
-            url: documentUrl,
-            withCredentials: false,
-            isEvalSupported: false
+        const { performBrowserOcr } = await import('@/utils/tesseractOcr');
+
+        let imageSource: HTMLImageElement | HTMLCanvasElement;
+
+        if (isImage && documentUrl) {
+          // For images, load as HTMLImageElement
+          console.log('[OCR] Loading image for browser OCR');
+          setExtractionStatus('Loading image...');
+          
+          imageSource = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = documentUrl;
           });
-          pdfDoc = await loadingTask.promise;
+        } else if (isPdf) {
+          // For PDFs, render page to canvas
+          console.log('[OCR] Rendering PDF page to canvas for browser OCR');
+          setExtractionStatus('Preparing page...');
+
+          const { renderPdfPageToImage } = await import('@/utils/pdfToImage');
+          
+          let pdfDoc = pdfDocument;
+          if (!pdfDoc && documentUrl) {
+            const pdfjsLib = await import('pdfjs-dist');
+            const loadingTask = pdfjsLib.getDocument({
+              url: documentUrl,
+              withCredentials: false,
+              isEvalSupported: false
+            });
+            pdfDoc = await loadingTask.promise;
+          }
+
+          if (!pdfDoc) {
+            throw new Error('Unable to load PDF for OCR');
+          }
+
+          // Render to canvas for Tesseract
+          const page = await pdfDoc.getPage(currentPage);
+          const viewport = page.getViewport({ scale: 2.0 });
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Failed to get canvas context');
+          
+          await page.render({ canvasContext: context, viewport, canvas }).promise;
+          imageSource = canvas;
+        } else {
+          throw new Error('Document type not supported for browser OCR');
         }
 
-        if (!pdfDoc) {
-          throw new Error('Unable to load PDF for OCR');
+        setExtractionStatus('Extracting text with browser OCR...');
+        
+        const result = await performBrowserOcr(imageSource, {
+          language: 'eng', // TODO: Auto-detect based on target language
+          onProgress: (progress) => {
+            setBrowserOcrProgress(progress);
+            setExtractionStatus(`Processing: ${Math.round(progress)}%`);
+          },
+        });
+
+        if (!result.text || result.text.trim().length === 0) {
+          throw new Error('No text could be extracted from this page');
         }
 
-        setExtractionStatus(`Rendering page ${currentPage} as image...`);
-        imageBase64 = await renderPdfPageToImage(pdfDoc, currentPage, { scale: 2.5 });
+        console.log('[OCR] Browser OCR complete', { 
+          textLength: result.text.length, 
+          confidence: result.confidence 
+        });
+
+        setOcrExtractedText(result.text);
+        setOcrEnabled(true);
+        setExtractionStatus('');
+        setBrowserOcrProgress(0);
+        
+        toast({
+          title: 'OCR Complete',
+          description: `Extracted ${result.text.length} characters (${result.confidence.toFixed(0)}% confidence)`,
+        });
+
+        await handleTranslate(false, result.text);
       } else {
-        throw new Error('Document type not supported for OCR');
-      }
+        // AI-based OCR using Lovable AI
+        console.log('[OCR] Using AI-based OCR');
+        
+        let imageBase64: string;
 
-      setExtractionStatus('Extracting text with AI OCR...');
+        if (isImage && documentUrl) {
+          console.log('[OCR] Processing image document');
+          setExtractionStatus('Loading image...');
+          
+          const { imageUrlToBase64 } = await import('@/utils/pdfToImage');
+          imageBase64 = await imageUrlToBase64(documentUrl);
+        } else if (isPdf) {
+          console.log('[OCR] Processing PDF document');
+          setExtractionStatus('Preparing page for OCR...');
+          
+          const { renderPdfPageToImage } = await import('@/utils/pdfToImage');
+          
+          let pdfDoc = pdfDocument;
+          if (!pdfDoc && documentUrl) {
+            const pdfjsLib = await import('pdfjs-dist');
+            const loadingTask = pdfjsLib.getDocument({
+              url: documentUrl,
+              withCredentials: false,
+              isEvalSupported: false
+            });
+            pdfDoc = await loadingTask.promise;
+          }
 
-      // Call OCR edge function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-extract-text`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
-          imageBase64,
-          documentId,
-          pageNumber: currentPage
-        })
-      });
+          if (!pdfDoc) {
+            throw new Error('Unable to load PDF for OCR');
+          }
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error('OCR rate limit exceeded. Please try again later.');
+          setExtractionStatus(`Rendering page ${currentPage} as image...`);
+          imageBase64 = await renderPdfPageToImage(pdfDoc, currentPage, { scale: 2.5 });
+        } else {
+          throw new Error('Document type not supported for OCR');
         }
-        if (response.status === 402) {
-          throw new Error('OCR credits exhausted. Please add credits to continue.');
+
+        setExtractionStatus('Extracting text with AI OCR...');
+
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-extract-text`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            imageBase64,
+            documentId,
+            pageNumber: currentPage
+          })
+        });
+
+        if (!response.ok) {
+          if (response.status === 429) {
+            throw new Error('OCR rate limit exceeded. Please try again later.');
+          }
+          if (response.status === 402) {
+            throw new Error('OCR credits exhausted. Please add credits to continue.');
+          }
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'OCR failed');
         }
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'OCR failed');
+
+        const data = await response.json();
+        const ocrText = data.text;
+
+        if (!ocrText || ocrText.trim().length === 0) {
+          throw new Error('No text could be extracted from this page');
+        }
+
+        console.log('[OCR] AI OCR complete', { textLength: ocrText.length });
+        
+        setOcrExtractedText(ocrText);
+        setOcrEnabled(true);
+        setExtractionStatus('');
+        
+        toast({
+          title: 'OCR Complete',
+          description: `Extracted ${ocrText.length} characters`,
+        });
+
+        await handleTranslate(false, ocrText);
       }
-
-      const data = await response.json();
-      const ocrText = data.text;
-
-      if (!ocrText || ocrText.trim().length === 0) {
-        throw new Error('No text could be extracted from this page');
-      }
-
-      console.log('[OCR] Text extracted successfully', { textLength: ocrText.length });
-      
-      // Update extracted text and enable OCR mode
-      setOcrExtractedText(ocrText);
-      setOcrEnabled(true);
-      setExtractionStatus('');
-      
-      toast({
-        title: 'OCR Complete',
-        description: `Extracted ${ocrText.length} characters`,
-      });
-
-      // Automatically translate the OCR text
-      await handleTranslate(false, ocrText);
     } catch (error: any) {
       console.error('[OCR] Error:', error);
       setError(error.message || 'OCR processing failed');
       setExtractionStatus('');
+      setBrowserOcrProgress(0);
       toast({
         title: 'OCR Failed',
         description: error.message || 'Failed to extract text using OCR',
@@ -516,7 +608,7 @@ export function TranslationPanel({
     } finally {
       setIsOcrProcessing(false);
     }
-  }, [pdfDocument, documentUrl, documentType, currentPage, documentId, handleTranslate, toast]);
+  }, [pdfDocument, documentUrl, documentType, currentPage, documentId, ocrMethod, handleTranslate, toast]);
 
   const handleTranslateAll = useCallback(async () => {
     if (!onPageChange || totalPages <= 1) return;
@@ -878,49 +970,68 @@ export function TranslationPanel({
           </p>
         )}
 
-        {/* Scanned PDF Warning with OCR Button */}
+        {/* Scanned PDF Warning with OCR Options */}
         {isScannedPdf && !ocrEnabled && !isTranslating && !isOcrProcessing && (
           <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3">
             <div className="flex items-start gap-3">
               <Scan className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                  Scanned Document Detected
+              <div className="flex-1 space-y-3">
+                <div>
+                  <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                    Scanned Document Detected
+                  </div>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    This appears to be a scanned or image-based document with minimal text layer. 
+                    Choose an OCR method to extract and translate text.
+                  </p>
                 </div>
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  This appears to be a scanned or image-based PDF with minimal text layer. 
-                  Enable OCR to extract and translate text using AI vision.
-                </p>
-                <Button
-                  onClick={handleEnableOcr}
-                  disabled={isOcrProcessing}
-                  size="sm"
-                  className="mt-2"
-                >
-                  {isOcrProcessing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing OCR...
-                    </>
-                  ) : (
-                    <>
-                      <Scan className="w-4 h-4 mr-2" />
-                      Enable OCR
-                    </>
-                  )}
-                </Button>
+                
+                {/* OCR Method Selection */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    onClick={() => handleEnableOcr('ai')}
+                    disabled={isOcrProcessing}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Scan className="w-4 h-4 mr-2" />
+                    AI OCR (Better Quality)
+                  </Button>
+                  <Button
+                    onClick={() => handleEnableOcr('browser')}
+                    disabled={isOcrProcessing}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Scan className="w-4 h-4 mr-2" />
+                    Browser OCR (Free)
+                  </Button>
+                </div>
+                
+                <div className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                  💡 AI OCR uses credits but provides better accuracy. Browser OCR is free and works offline.
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* OCR Processing Status */}
+        {/* OCR Processing Status with Progress */}
         {isOcrProcessing && (
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>{extractionStatus || 'Processing with OCR...'}</span>
             </div>
+            {browserOcrProgress > 0 && browserOcrProgress < 100 && (
+              <div className="space-y-1">
+                <Progress value={browserOcrProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground text-center">
+                  {Math.round(browserOcrProgress)}% complete
+                </p>
+              </div>
+            )}
           </div>
         )}
 
