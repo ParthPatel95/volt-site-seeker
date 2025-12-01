@@ -9,94 +9,95 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Institutional Light Mode - Apple × Coinbase Aesthetic */
+    --background: 0 0% 100%;              /* Pure white #FFFFFF */
+    --foreground: 0 0% 11%;               /* Near black #1D1D1F */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 11%;
+    --card-hover: 0 0% 98%;               /* Light gray hover #FAFAFA */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 11%;
 
-    --primary: 184 82% 45%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 220 80% 10%;               /* Deep navy #0A1628 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;             /* Light gray #F5F5F7 */
+    --secondary-foreground: 0 0% 11%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 45 93% 58%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 100% 50%;               /* Coinbase blue #0052FF */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 184 82% 45%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 100% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-foreground: 0 0% 11%;
+    --sidebar-primary: 220 80% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 0 0% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 220 100% 50%;
 
-    /* Wattbytes brand colors */
-    --watt-primary: 220 100% 50%;        /* Electric Blue #0066FF */
-    --watt-secondary: 280 100% 60%;      /* Electric Purple #9933FF */
-    --watt-accent: 45 100% 50%;          /* Energy Yellow #FFCC00 */
-    --watt-success: 140 100% 40%;        /* Green #00CC66 */
-    --watt-warning: 30 100% 60%;         /* Warm Orange #FF9933 */
-    --watt-dark: 220 30% 10%;            /* Dark Navy #1A1F2E */
-    --watt-light: 220 50% 95%;           /* Light Blue #F0F4FF */
-    --watt-gradient: linear-gradient(135deg, hsl(var(--watt-primary)), hsl(var(--watt-secondary)));
-    --watt-glow: 0 0 20px hsl(var(--watt-primary) / 0.3);
+    /* WattByte Institutional Brand Colors */
+    --watt-navy: 220 60% 10%;             /* Deep navy for dark sections #0D1B2A */
+    --watt-bitcoin: 36 94% 53%;           /* Bitcoin orange #F7931A */
+    --watt-trust: 220 100% 50%;           /* Coinbase blue #0052FF */
+    --watt-success: 162 100% 42%;         /* Clean green #00D395 */
+    --watt-warning: 30 100% 60%;          /* Warm orange #FF9933 */
+    --watt-light: 220 14% 96%;            /* Surface gray #F5F5F7 */
+    --watt-surface: 220 14% 98%;          /* Elevated surface #FAFBFC */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark mode with deep navy sections */
+    --background: 220 60% 10%;            /* Deep navy */
+    --foreground: 0 0% 100%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 50% 12%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 50% 12%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 184 82% 45%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 220 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 40% 15%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 40% 15%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 45 93% 58%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 36 94% 53%;
+    --accent-foreground: 0 0% 11%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 184 82% 45%;
+    --border: 220 40% 20%;
+    --input: 220 40% 20%;
+    --ring: 220 100% 50%;
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 184 82% 45%;
+    --sidebar-background: 220 50% 12%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 220 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 184 82% 45%;
+    --sidebar-accent: 220 40% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 40% 20%;
+    --sidebar-ring: 220 100% 50%;
   }
 }
 
@@ -116,18 +117,18 @@
   }
 }
 
-/* Wattbytes brand utility classes */
+/* WattByte Institutional brand utility classes */
 @layer utilities {
-  .text-watt-primary {
-    color: hsl(var(--watt-primary));
+  .text-watt-navy {
+    color: hsl(var(--watt-navy));
   }
   
-  .text-watt-secondary {
-    color: hsl(var(--watt-secondary));
+  .text-watt-bitcoin {
+    color: hsl(var(--watt-bitcoin));
   }
   
-  .text-watt-accent {
-    color: hsl(var(--watt-accent));
+  .text-watt-trust {
+    color: hsl(var(--watt-trust));
   }
   
   .text-watt-success {
@@ -138,16 +139,16 @@
     color: hsl(var(--watt-warning));
   }
   
-  .bg-watt-primary {
-    background-color: hsl(var(--watt-primary));
+  .bg-watt-navy {
+    background-color: hsl(var(--watt-navy));
   }
   
-  .bg-watt-secondary {
-    background-color: hsl(var(--watt-secondary));
+  .bg-watt-bitcoin {
+    background-color: hsl(var(--watt-bitcoin));
   }
   
-  .bg-watt-accent {
-    background-color: hsl(var(--watt-accent));
+  .bg-watt-trust {
+    background-color: hsl(var(--watt-trust));
   }
   
   .bg-watt-success {
@@ -158,20 +159,32 @@
     background-color: hsl(var(--watt-warning));
   }
   
-  .bg-watt-gradient {
-    background: var(--watt-gradient);
+  .bg-watt-light {
+    background-color: hsl(var(--watt-light));
   }
   
-  .border-watt-primary {
-    border-color: hsl(var(--watt-primary));
+  .bg-watt-surface {
+    background-color: hsl(var(--watt-surface));
   }
   
-  .border-watt-warning {
-    border-color: hsl(var(--watt-warning));
+  .border-watt-navy {
+    border-color: hsl(var(--watt-navy));
   }
   
-  .shadow-watt-glow {
-    box-shadow: var(--watt-glow);
+  .border-watt-bitcoin {
+    border-color: hsl(var(--watt-bitcoin));
+  }
+  
+  .border-watt-trust {
+    border-color: hsl(var(--watt-trust));
+  }
+  
+  .shadow-institutional {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  }
+  
+  .shadow-institutional-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
   }
 
   /* Enhanced animations for modern UX */
