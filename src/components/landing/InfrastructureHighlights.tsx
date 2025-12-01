@@ -64,14 +64,15 @@ const pipeline = [
 
 export const InfrastructureHighlights = () => {
   return (
-    <section className="relative py-16 sm:py-20 md:py-24 bg-gradient-to-b from-slate-950 to-slate-900">
+    <section className="relative py-16 sm:py-20 md:py-24 bg-white">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-            Development <span className="text-electric-blue">Pipeline</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <span className="text-watt-navy">Development </span>
+            <span className="text-watt-trust">Pipeline</span>
           </h2>
-          <p className="text-lg sm:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
-            Strategic power infrastructure investments across <span className="text-neon-green font-semibold">global markets</span> totaling <span className="text-electric-yellow font-semibold">1,429 MW</span>
+          <p className="text-lg sm:text-xl text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
+            Strategic power infrastructure investments across global markets totaling <span className="text-watt-bitcoin font-bold">1,429 MW</span>
           </p>
         </div>
 
@@ -79,21 +80,21 @@ export const InfrastructureHighlights = () => {
           {pipeline.map((project, index) => (
             <div 
               key={index}
-              className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700/50"
+              className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-institutional hover:shadow-lg transition-all duration-300"
             >
               
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src={project.image} 
                   alt={`${project.location} power facility`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
               
               <div className="relative p-6">
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center">
-                  <span className="inline-flex items-center justify-center w-7 h-5 mr-2 rounded-sm overflow-hidden ring-1 ring-slate-600/60 bg-slate-900/80">
+                <h3 className="text-xl font-bold text-watt-navy mb-2 flex items-center">
+                  <span className="inline-flex items-center justify-center w-7 h-5 mr-2 rounded-sm overflow-hidden ring-1 ring-gray-300 bg-white">
                     <img
                       src={project.flag}
                       alt={`${project.location} flag`}
@@ -105,15 +106,15 @@ export const InfrastructureHighlights = () => {
                 </h3>
                 
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="text-2xl font-bold text-neon-green">
+                  <div className="text-2xl font-bold text-watt-success">
                     {project.capacity}
                   </div>
-                  <div className="text-sm text-electric-blue font-semibold">
+                  <div className="text-sm text-watt-trust font-semibold">
                     {project.type}
                   </div>
                 </div>
                 
-                <p className="text-slate-300 text-sm leading-relaxed">
+                <p className="text-watt-navy/70 text-sm leading-relaxed">
                   {project.description}
                 </p>
               </div>
