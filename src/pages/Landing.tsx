@@ -12,7 +12,6 @@ import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 
 // Lazy load sections for better performance
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
-const LeadershipTeamSection = lazy(() => import('@/components/landing/LeadershipTeamSection').then(module => ({ default: module.LeadershipTeamSection })));
 const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(module => ({ default: module.InvestmentThesisSection })));
 const VoltScoutSection = lazy(() => import('@/components/landing/VoltScoutSection').then(module => ({ default: module.VoltScoutSection })));
 
@@ -84,14 +83,6 @@ const Landing: React.FC = () => {
           <LiveDataSection />
           
           <SectionDivider color="yellow" />
-          
-          <section aria-label="Leadership Team" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <LeadershipTeamSection />
-            </Suspense>
-          </section>
-          
-          <SectionDivider color="purple" />
           
           <section aria-label="Investment Thesis" className="relative">
             <Suspense fallback={<SectionLoader />}>
