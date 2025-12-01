@@ -189,6 +189,20 @@
   animation: ken-burns-slow 30s ease-in-out infinite alternate;
 }
 
+/* Ken Burns Ultra Slow - For Full-Width Hero Background */
+@keyframes ken-burns-ultra-slow {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-ken-burns-ultra-slow {
+  animation: ken-burns-ultra-slow 45s ease-in-out infinite alternate;
+}
+
 /* Ambient Light Shift - Subtle cinematic effect */
 @keyframes ambient-light {
   0%, 100% {
