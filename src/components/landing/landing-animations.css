@@ -175,18 +175,62 @@
   animation: progress-bar 2.5s ease-in-out infinite;
 }
 
-/* Ken Burns slow zoom effect */
-@keyframes ken-burns {
+/* Ken Burns slow zoom effect - Professional version */
+@keyframes ken-burns-slow {
   0% {
     transform: scale(1);
   }
   100% {
-    transform: scale(1.08);
+    transform: scale(1.03);
   }
 }
 
-.animate-ken-burns {
-  animation: ken-burns 20s ease-in-out infinite alternate;
+.animate-ken-burns-slow {
+  animation: ken-burns-slow 30s ease-in-out infinite alternate;
+}
+
+/* Ambient Light Shift - Subtle cinematic effect */
+@keyframes ambient-light {
+  0%, 100% {
+    opacity: 0.03;
+    transform: translateX(0) translateY(0);
+  }
+  33% {
+    opacity: 0.05;
+    transform: translateX(2%) translateY(1%);
+  }
+  66% {
+    opacity: 0.04;
+    transform: translateX(-1%) translateY(2%);
+  }
+}
+
+.animate-ambient-light {
+  animation: ambient-light 18s ease-in-out infinite;
+}
+
+/* Floating Particle Effect - Ultra subtle */
+@keyframes float-particle {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0.15;
+  }
+  25% {
+    transform: translate(10px, -15px);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(-5px, -30px);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(-15px, -20px);
+    opacity: 0.2;
+  }
+}
+
+.animate-float-particle {
+  animation: float-particle 25s ease-in-out infinite;
 }
 
 /* Hotspot pulse effect */
