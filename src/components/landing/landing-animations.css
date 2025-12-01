@@ -126,11 +126,63 @@
   animation: hash-pulse 1.5s ease-in-out infinite;
 }
 
+/* Data flow particles */
+@keyframes data-flow {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(20px) scale(0.5);
+  }
+}
+
+.animate-data-flow {
+  animation: data-flow 2s ease-in-out infinite;
+}
+
+/* Fan rotation */
+@keyframes fan-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fan-rotate {
+  transform-origin: center;
+  animation: fan-rotate 3s linear infinite;
+}
+
+/* Progress bar animation */
+@keyframes progress-bar {
+  0%, 100% {
+    width: 85%;
+  }
+  50% {
+    width: 92%;
+  }
+}
+
+.animate-progress-bar {
+  animation: progress-bar 2.5s ease-in-out infinite;
+}
+
 /* Reduced motion fallbacks */
 @media (prefers-reduced-motion: reduce) {
   .animate-server-blink,
   .animate-power-flow,
-  .animate-hash-pulse {
+  .animate-hash-pulse,
+  .animate-data-flow,
+  .animate-fan-rotate,
+  .animate-progress-bar {
     animation: none;
     opacity: 0.6;
   }
