@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2, RefreshCw, Scan } from 'lucide-react';
+import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2, RefreshCw, Scan, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OcrStatusBadge } from './OcrStatusBadge';
+import { EditTextDialog } from './EditTextDialog';
 import {
   Select,
   SelectContent,
@@ -74,6 +76,10 @@ export function TranslationPanel({
   const [ocrExtractedText, setOcrExtractedText] = useState<string>(''); // OCR-extracted text overrides prop
   const [ocrMethod, setOcrMethod] = useState<'ai' | 'browser'>('ai'); // OCR method preference
   const [browserOcrProgress, setBrowserOcrProgress] = useState(0);
+  const [ocrConfidence, setOcrConfidence] = useState<number | undefined>();
+  const [ocrStatus, setOcrStatus] = useState<'text-layer' | 'ai-ocr' | 'browser-ocr' | 'scanned-warning'>('text-layer');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editableText, setEditableText] = useState<string>('');
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -107,11 +113,13 @@ export function TranslationPanel({
       // If less than 50 chars per page on average, likely scanned
       if (avgCharsPerPage < 50) {
         setIsScannedPdf(true);
+        setOcrStatus('scanned-warning');
       } else {
         setIsScannedPdf(false);
+        setOcrStatus(ocrEnabled ? (ocrMethod === 'ai' ? 'ai-ocr' : 'browser-ocr') : 'text-layer');
       }
     }
-  }, [currentText, isExtracting, totalPages]);
+  }, [currentText, isExtracting, totalPages, ocrEnabled, ocrMethod]);
 
   // Extract text from a specific page
   const extractTextFromPage = useCallback(async (pageNumber: number): Promise<string> => {
@@ -410,6 +418,21 @@ export function TranslationPanel({
     }
   }, [targetLanguage, documentId, currentPage, extractedText, pdfDocument, extractTextFromPage, toast]);
 
+  const handleEditText = useCallback(() => {
+    setEditableText(currentText);
+    setIsEditDialogOpen(true);
+  }, [currentText]);
+
+  const handleSaveEditedText = useCallback((editedText: string) => {
+    setOcrExtractedText(editedText);
+    setOcrEnabled(true);
+    setOcrStatus('text-layer'); // User-edited text
+    toast({
+      title: 'Text Updated',
+      description: 'Manual corrections applied',
+    });
+  }, [toast]);
+
   const handleEnableOcr = useCallback(async (method: 'ai' | 'browser' = ocrMethod) => {
     setIsOcrProcessing(true);
     setExtractionStatus('Preparing for OCR...');
@@ -501,11 +524,13 @@ export function TranslationPanel({
 
         setOcrExtractedText(result.text);
         setOcrEnabled(true);
+        setOcrConfidence(result.confidence);
+        setOcrStatus('browser-ocr');
         setExtractionStatus('');
         setBrowserOcrProgress(0);
         
         toast({
-          title: 'OCR Complete',
+          title: 'Browser OCR Complete',
           description: `Extracted ${result.text.length} characters (${result.confidence.toFixed(0)}% confidence)`,
         });
 
@@ -560,7 +585,8 @@ export function TranslationPanel({
           body: JSON.stringify({
             imageBase64,
             documentId,
-            pageNumber: currentPage
+            pageNumber: currentPage,
+            ocrMethod: 'ai_vision'
           })
         });
 
@@ -582,15 +608,17 @@ export function TranslationPanel({
           throw new Error('No text could be extracted from this page');
         }
 
-        console.log('[OCR] AI OCR complete', { textLength: ocrText.length });
+        console.log('[OCR] AI OCR complete', { textLength: ocrText.length, confidence: data.confidence, cached: data.cached });
         
         setOcrExtractedText(ocrText);
         setOcrEnabled(true);
+        setOcrConfidence(data.confidence);
+        setOcrStatus('ai-ocr');
         setExtractionStatus('');
         
         toast({
-          title: 'OCR Complete',
-          description: `Extracted ${ocrText.length} characters`,
+          title: data.cached ? 'OCR Retrieved (Cached)' : 'AI OCR Complete',
+          description: `Extracted ${ocrText.length} characters${data.confidence ? ` (${(data.confidence * 100).toFixed(0)}% confidence)` : ''}`,
         });
 
         await handleTranslate(false, ocrText);
@@ -879,6 +907,27 @@ export function TranslationPanel({
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* OCR Status & Text Edit Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <OcrStatusBadge 
+            status={ocrStatus} 
+            confidence={ocrConfidence}
+            className="flex-shrink-0"
+          />
+          
+          {currentText && !isTranslating && !isOcrProcessing && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEditText}
+              className="gap-1.5"
+            >
+              <Edit className="w-3 h-3" />
+              Edit Text
+            </Button>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -1263,6 +1312,13 @@ export function TranslationPanel({
       )}
     >
       {renderContent()}
+      
+      <EditTextDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        initialText={editableText}
+        onSave={handleSaveEditedText}
+      />
     </div>
   );
 }

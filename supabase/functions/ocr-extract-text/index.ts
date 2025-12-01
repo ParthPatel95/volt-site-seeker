@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
@@ -8,7 +9,37 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { imageBase64, documentId, pageNumber } = await req.json();
+    const { imageBase64, documentId, pageNumber, ocrMethod = 'ai_vision' } = await req.json();
+    
+    // Initialize Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Check cache first
+    if (documentId && pageNumber !== undefined) {
+      const { data: cached, error: cacheError } = await supabase
+        .from('ocr_extractions')
+        .select('extracted_text, confidence_score, ocr_method')
+        .eq('document_id', documentId)
+        .eq('page_number', pageNumber)
+        .eq('ocr_method', ocrMethod)
+        .maybeSingle();
+      
+      if (cached && !cacheError) {
+        console.log(`[OCR] Cache hit for ${documentId} page ${pageNumber}`);
+        return new Response(
+          JSON.stringify({ 
+            text: cached.extracted_text, 
+            method: cached.ocr_method,
+            confidence: cached.confidence_score,
+            cached: true,
+            success: true
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     if (!imageBase64) {
       return new Response(
@@ -26,6 +57,7 @@ Deno.serve(async (req) => {
     }
 
     console.log('[OCR] Processing image', { documentId, pageNumber, imageSize: imageBase64.length });
+    const startTime = Date.now();
 
     // Use Lovable AI (Gemini 2.5 Flash) with vision capability to extract text
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -77,17 +109,46 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
     const extractedText = data.choices?.[0]?.message?.content || '';
+    
+    // Estimate confidence (AI models don't provide confidence, so use heuristic)
+    const confidence = extractedText.length > 50 ? 0.95 : 0.75;
+    const processingTime = Date.now() - startTime;
 
     console.log('[OCR] Text extracted successfully', {
       documentId,
       pageNumber,
-      textLength: extractedText.length
+      textLength: extractedText.length,
+      confidence,
+      processingTime
     });
+    
+    // Cache the result
+    if (documentId && pageNumber !== undefined) {
+      const { error: insertError } = await supabase
+        .from('ocr_extractions')
+        .insert({
+          document_id: documentId,
+          page_number: pageNumber,
+          extracted_text: extractedText,
+          ocr_method: ocrMethod,
+          confidence_score: confidence,
+          processing_time_ms: processingTime
+        });
+      
+      if (insertError) {
+        console.error('[OCR] Failed to cache result:', insertError);
+      } else {
+        console.log(`[OCR] Cached result for ${documentId} page ${pageNumber}`);
+      }
+    }
 
     return new Response(
       JSON.stringify({
         text: extractedText,
-        method: 'ai_vision',
+        method: ocrMethod,
+        confidence,
+        processingTime,
+        cached: false,
         success: true
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
