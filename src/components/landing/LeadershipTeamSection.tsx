@@ -51,9 +51,9 @@ export const LeadershipTeamSection = () => {
   ];
  
   return (
-    <section className="relative z-10 py-16 md:py-20 px-6 bg-watt-light">
+    <section className="relative z-10 py-12 md:py-16 px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 md:mb-10">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-watt-navy">
             Leadership Team
           </h2>

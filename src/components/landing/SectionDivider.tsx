@@ -13,7 +13,7 @@ export const SectionDivider = ({ color = 'blue' }: SectionDividerProps) => {
   };
 
   return (
-    <div className="relative my-12">
+    <div className="relative my-4">
       <div className={`absolute inset-0 bg-gradient-to-r ${colorClasses[color]} h-px`} />
     </div>
   );

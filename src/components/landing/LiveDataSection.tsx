@@ -9,7 +9,7 @@ export const LiveDataSection = () => {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <ScrollReveal delay={100}>
-          <div className="text-center mb-6 sm:mb-8 md:mb-12">
+          <div className="text-center mb-8 md:mb-10">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-3 sm:mb-4 leading-tight">
               Live Market Intelligence
             </h2>
