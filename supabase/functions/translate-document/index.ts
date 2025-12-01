@@ -131,18 +131,26 @@ Return ONLY the translated text without any explanations or metadata.`;
       const streamResponse = new ReadableStream({
         async start(controller) {
           let fullTranslation = '';
+          let buffer = ''; // Buffer for incomplete lines
           
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
 
-              const chunk = textDecoder.decode(value, { stream: true });
-              const lines = chunk.split('\n').filter(line => line.trim());
-
-              for (const line of lines) {
+              // Append to buffer
+              buffer += textDecoder.decode(value, { stream: true });
+              
+              // Process complete lines
+              let newlineIndex: number;
+              while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+                const line = buffer.slice(0, newlineIndex).trim();
+                buffer = buffer.slice(newlineIndex + 1);
+                
+                if (!line || line.startsWith(':')) continue; // Skip empty lines and comments
+                
                 if (line.startsWith('data: ')) {
-                  const data = line.slice(6);
+                  const data = line.slice(6).trim();
                   if (data === '[DONE]') continue;
 
                   try {
@@ -153,7 +161,8 @@ Return ONLY the translated text without any explanations or metadata.`;
                       controller.enqueue(textEncoder.encode(`data: ${JSON.stringify({ delta: content })}\n\n`));
                     }
                   } catch (e) {
-                    console.error('Failed to parse streaming chunk:', e);
+                    // Silently skip malformed JSON chunks
+                    console.warn('[translate-document] Skipping malformed chunk:', data.substring(0, 50));
                   }
                 }
               }
