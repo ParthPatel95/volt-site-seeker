@@ -751,6 +751,17 @@ export function DocumentViewer({
                 </Button>
               </>
             )}
+            {supportsTranslation && (
+              <Button 
+                onClick={() => setTranslationOpen(!translationOpen)} 
+                size="icon" 
+                variant="ghost" 
+                className="h-8 w-8"
+                title="Translate"
+              >
+                <Globe className="w-4 h-4" />
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="icon" variant="ghost" className="h-8 w-8">
@@ -758,12 +769,6 @@ export function DocumentViewer({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {supportsTranslation && (
-                  <DropdownMenuItem onClick={() => setTranslationOpen(!translationOpen)}>
-                    <Globe className="w-4 h-4 mr-2" />
-                    Translate
-                  </DropdownMenuItem>
-                )}
                 {isPdf && (
                   <>
                     <DropdownMenuItem onClick={handleRotate}>
