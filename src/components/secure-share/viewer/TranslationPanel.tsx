@@ -44,6 +44,8 @@ const SUPPORTED_LANGUAGES = [
   { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
   { code: 'ru', name: 'Russian', flag: '🇷🇺' },
   { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+  { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
+  { code: 'gu', name: 'Gujarati', flag: '🇮🇳' },
 ];
 
 export function TranslationPanel({
