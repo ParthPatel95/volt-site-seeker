@@ -11,12 +11,16 @@ import { VideoPlayer } from './VideoPlayer';
 import { TranslationPanel } from './TranslationPanel';
 import { extractPageText } from '@/utils/pdfTextExtractor';
 
-// Configure PDF.js worker with multiple fallback CDNs for broader browser support
+// Configure PDF.js worker with multiple fallback CDNs for pdfjs-dist 5.x compatibility
 const initializePdfWorker = () => {
+  // For pdfjs-dist 5.x, use .mjs extension
   const workerUrls = [
-    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`,
-    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
+    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
+    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`,
+    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.mjs`,
+    // Legacy fallbacks for older environments
+    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
   ];
   
   let workerInitialized = false;
@@ -311,6 +315,33 @@ export function DocumentViewer({
   const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
   const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
   const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
+  
+  // Load PDF.js for text extraction even when using native iOS viewer
+  useEffect(() => {
+    if (translationOpen && isPdf && documentUrl && (isIOS || useNativePdfViewer) && !pdfDocumentProxy) {
+      console.log('[DocumentViewer] Loading PDF.js for text extraction on iOS/native viewer');
+      import('pdfjs-dist').then(async (pdfjsLib) => {
+        try {
+          // Configure worker
+          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
+            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+            console.log(`[DocumentViewer] Configured PDF.js worker: ${workerUrl}`);
+          }
+          // Load PDF for text extraction only (not rendering)
+          const pdf = await pdfjsLib.getDocument({
+            url: documentUrl,
+            withCredentials: false,
+            isEvalSupported: false
+          }).promise;
+          setPdfDocumentProxy(pdf);
+          console.log('[DocumentViewer] PDF loaded for text extraction');
+        } catch (error) {
+          console.error('[DocumentViewer] Failed to load PDF for text extraction:', error);
+        }
+      });
+    }
+  }, [translationOpen, isPdf, documentUrl, isIOS, useNativePdfViewer, pdfDocumentProxy]);
   
   // Extract PDF text when page changes or translation is opened
   useEffect(() => {
