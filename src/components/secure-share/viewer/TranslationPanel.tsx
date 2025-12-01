@@ -318,8 +318,11 @@ export function TranslationPanel({
         throw new Error('Translation failed');
       }
 
-      // Handle streaming response
-      if (!pageText && response.body) {
+      const contentType = response.headers.get('Content-Type') || '';
+      const isJsonResponse = contentType.includes('application/json');
+
+      // Handle streaming response when using SSE
+      if (!pageText && response.body && !isJsonResponse) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullTranslation = '';
@@ -381,7 +384,7 @@ export function TranslationPanel({
         }
         return fullTranslation;
       } else {
-        // Non-streaming response (for bulk translation)
+        // Non-streaming JSON response (for bulk translation or cache hits)
         const data = await response.json();
         if (data.error) {
           throw new Error(data.error);
