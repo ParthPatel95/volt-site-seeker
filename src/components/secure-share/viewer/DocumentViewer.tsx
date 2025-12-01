@@ -980,7 +980,7 @@ export function DocumentViewer({
                 />
               </div>
             ) : isOffice ? (
-              <div className="w-full h-full">
+              <div className="w-full h-[calc(100vh-180px)] md:h-[calc(100vh-120px)] min-h-[600px]">
                 <OfficeDocumentViewer
                   documentUrl={documentUrl}
                   documentType={documentType}

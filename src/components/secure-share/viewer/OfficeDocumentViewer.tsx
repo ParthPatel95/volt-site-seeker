@@ -91,7 +91,7 @@ export function OfficeDocumentViewer({
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full min-h-[600px]">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
           <div className="flex flex-col items-center space-y-4">
