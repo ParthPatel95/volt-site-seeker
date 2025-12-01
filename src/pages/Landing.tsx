@@ -26,7 +26,7 @@ const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacili
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
-    <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-electric-blue border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-watt-trust border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
@@ -140,12 +140,12 @@ const Landing: React.FC = () => {
         {showSignUpForm && (
           <section className="relative z-20 py-8 sm:py-12 md:py-16 px-3 sm:px-4 md:px-6" aria-label="Investment Access Form">
             <div className="max-w-4xl mx-auto">
-              <div className="relative bg-slate-800/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-slate-700/50 shadow-2xl">
+              <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-gray-200 shadow-institutional">
                 <div className="text-center mb-6 sm:mb-8 md:mb-10">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-white">
-                    Get <span className="bg-gradient-to-r from-electric-blue to-neon-green bg-clip-text text-transparent">Access</span>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-watt-navy">
+                    Request <span className="text-watt-bitcoin">Investment Access</span>
                   </h2>
-                  <p className="text-slate-200 text-base sm:text-lg md:text-xl">
+                  <p className="text-watt-navy/70 text-base sm:text-lg md:text-xl">
                     Join accredited investors backing the future of digital infrastructure
                   </p>
                 </div>
@@ -156,7 +156,7 @@ const Landing: React.FC = () => {
                   <Button 
                     variant="ghost" 
                     onClick={() => setShowSignUpForm(false)}
-                    className="text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all duration-200 text-sm sm:text-base"
+                    className="text-watt-navy/60 hover:text-watt-navy hover:bg-watt-light transition-all duration-200 text-sm sm:text-base"
                   >
                     Close Form
                   </Button>

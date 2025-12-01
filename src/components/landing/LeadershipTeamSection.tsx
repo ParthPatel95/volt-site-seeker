@@ -7,7 +7,7 @@ export const LeadershipTeamSection = () => {
     {
       name: "Jay Hao",
       role: "Chairman",
-      icon: <User className="w-6 h-6 text-electric-blue" />,
+      icon: <User className="w-6 h-6" />,
       achievements: [
         "Former CEO of OKX Exchange, one of the world's largest crypto trading platforms with multi-billion dollar transaction volumes",
         "Brings extensive experience leading global fintech, crypto infrastructure, and digital asset strategy",
@@ -18,7 +18,7 @@ export const LeadershipTeamSection = () => {
     {
       name: "Parth Patel",
       role: "CEO",
-      icon: <Award className="w-6 h-6 text-neon-green" />,
+      icon: <Award className="w-6 h-6" />,
       achievements: [
         "Led the consulting and transaction of over 275MW of power assets across North America",
         "Building a pipeline of 700MW+ and over 1,000 acres of power-rich real estate for data centers and HPC deployment",
@@ -29,7 +29,7 @@ export const LeadershipTeamSection = () => {
     {
       name: "Vivek Patel",
       role: "COO",
-      icon: <Building className="w-6 h-6 text-electric-yellow" />,
+      icon: <Building className="w-6 h-6" />,
       achievements: [
         "Experienced infrastructure operator, responsible for due diligence, permitting, entitlements, and construction oversight",
         "Leads execution and compliance across all Wattbyte projects in North America",
@@ -40,7 +40,7 @@ export const LeadershipTeamSection = () => {
     {
       name: "Lucas Elliott",
       role: "CSO",
-      icon: <TrendingUp className="w-6 h-6 text-purple-400" />,
+      icon: <TrendingUp className="w-6 h-6" />,
       achievements: [
         "Drives strategic expansion across North American and international energy markets, identifying high-growth opportunities in stranded power",
         "Architects partnership frameworks with utilities and IPPs to secure favorable power purchase agreements",
@@ -49,7 +49,7 @@ export const LeadershipTeamSection = () => {
       ]
     }
   ];
-
+ 
   return (
     <section className="relative z-10 py-24 px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
