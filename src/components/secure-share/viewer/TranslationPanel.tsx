@@ -442,9 +442,33 @@ export function TranslationPanel({
     try {
       const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentUrl || '');
       const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
+      const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl || '');
       const isOffice = documentType?.includes('word') || documentType?.includes('document') || 
                       documentType?.includes('sheet') || documentType?.includes('presentation') ||
                       /\.(docx?|xlsx?|pptx?)$/i.test(documentUrl || '');
+
+      // Text files: fetch content directly
+      if (isText && documentUrl) {
+        console.log('[Text] Fetching text file content');
+        setExtractionStatus('Loading text file...');
+        
+        const textResponse = await fetch(documentUrl);
+        if (!textResponse.ok) {
+          throw new Error('Failed to fetch text file');
+        }
+        
+        const textContent = await textResponse.text();
+        setOcrExtractedText(textContent);
+        setOcrEnabled(true);
+        setOcrStatus('text-layer');
+        setOcrConfidence(100);
+        
+        toast({
+          title: 'Text Loaded',
+          description: 'Text file content loaded successfully',
+        });
+        return;
+      }
 
       // Office documents use their own parser (not OCR)
       if (isOffice) {
