@@ -746,14 +746,20 @@ export function DocumentViewer({
             {isPdf ? (
               isIOS || useNativePdfViewer ? (
                 // Native iOS PDF viewer using iframe for better iOS compatibility
-                <div className="w-full h-full flex items-center justify-center max-w-full overflow-hidden">
+                <div 
+                  className="w-full h-full flex items-center justify-center max-w-full overflow-auto"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
                   <iframe
                     src={`${documentUrl}#toolbar=0`}
-                    className="w-full h-full min-h-[600px] max-w-full border-0"
+                    className={cn(
+                      "w-full max-w-full border-0",
+                      isMobile ? "h-[calc(100vh-180px)]" : "h-[calc(100vh-120px)] min-h-[600px]"
+                    )}
                     title="PDF Document"
                   />
                   {canDownload && (
-                    <div className="absolute bottom-4 right-4">
+                    <div className="absolute bottom-4 right-4 z-10">
                       <Button onClick={handleDownload} size="sm" variant="secondary">
                         <Download className="w-4 h-4 mr-2" />
                         Download PDF
