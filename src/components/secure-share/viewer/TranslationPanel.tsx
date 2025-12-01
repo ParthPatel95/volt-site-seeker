@@ -324,42 +324,61 @@ export function TranslationPanel({
         const decoder = new TextDecoder();
         let fullTranslation = '';
         let buffer = '';
+        let hasReceivedContent = false;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
+            buffer += decoder.decode(value, { stream: true });
+            
+            // Process complete lines
+            let newlineIndex: number;
+            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+              const line = buffer.slice(0, newlineIndex).trim();
+              buffer = buffer.slice(newlineIndex + 1);
               
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.delta) {
-                  fullTranslation += parsed.delta;
-                  setTranslatedText(fullTranslation);
-                } else if (parsed.translatedText) {
-                  fullTranslation = parsed.translatedText;
-                  setTranslatedText(fullTranslation);
-                  setIsCached(parsed.cached || false);
+              if (!line || line.startsWith(':')) continue; // Skip empty and comment lines
+              
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6).trim();
+                if (data === '[DONE]') continue;
+                
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.delta) {
+                    fullTranslation += parsed.delta;
+                    setTranslatedText(fullTranslation);
+                    hasReceivedContent = true;
+                  } else if (parsed.translatedText) {
+                    fullTranslation = parsed.translatedText;
+                    setTranslatedText(fullTranslation);
+                    setIsCached(parsed.cached || false);
+                    hasReceivedContent = true;
+                  }
+                } catch (e) {
+                  // Silently skip parsing errors for incomplete JSON
+                  console.debug('[TranslationPanel] Skipping malformed chunk');
                 }
-              } catch (e) {
-                console.error('Failed to parse streaming data:', e);
               }
             }
           }
+        } catch (streamError) {
+          console.error('[TranslationPanel] Streaming error:', streamError);
+          // If we got some content before error, that's OK
+          if (!hasReceivedContent) {
+            throw streamError;
+          }
         }
 
-        // Store in cache
-        translationCache.current.set(cacheKey, fullTranslation);
-        lastTranslatedRef.current = { page, language: targetLanguage };
-        console.log(`[TranslationPanel] Stored in cache: ${cacheKey}`);
-        setViewMode('sideBySide');
+        // Store in cache only if we got content
+        if (fullTranslation) {
+          translationCache.current.set(cacheKey, fullTranslation);
+          lastTranslatedRef.current = { page, language: targetLanguage };
+          console.log(`[TranslationPanel] Stored in cache: ${cacheKey}`);
+          setViewMode('sideBySide');
+        }
         return fullTranslation;
       } else {
         // Non-streaming response (for bulk translation)
