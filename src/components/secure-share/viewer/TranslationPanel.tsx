@@ -65,14 +65,16 @@ export function TranslationPanel({
   const [translateAllProgress, setTranslateAllProgress] = useState(0);
   const [isScannedPdf, setIsScannedPdf] = useState(false);
   const [allTranslations, setAllTranslations] = useState<Map<number, string>>(new Map());
+  const [extractionStatus, setExtractionStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
   // In-memory translation cache: Map<"pageNumber-languageCode", translatedText>
   const translationCache = useRef<Map<string, string>>(new Map());
   
-  // Track if this is the first open to auto-translate
-  const hasAutoTranslated = useRef(false);
+  // Track last translated page/language to avoid duplicate translations
+  const lastTranslatedRef = useRef<{ page: number; language: string } | null>(null);
   
   // Refs for synced scrolling
   const originalScrollRef = useRef<HTMLDivElement>(null);
@@ -203,25 +205,17 @@ export function TranslationPanel({
   }, [pdfDocument, documentUrl, extractedText, currentPage, toast]);
 
   const handleTranslate = useCallback(async (useCache = true, pageText?: string, pageNum?: number) => {
-    const textToTranslate = pageText || extractedText;
     const page = pageNum || currentPage;
-    
-    if (!textToTranslate || !targetLanguage) {
-      toast({
-        title: 'Translation Error',
-        description: 'No text available to translate',
-        variant: 'destructive'
-      });
-      return null;
-    }
-
-    // Check in-memory cache first
     const cacheKey = `${page}-${targetLanguage}`;
+    
+    // Check in-memory cache first
     if (useCache && translationCache.current.has(cacheKey)) {
       const cachedTranslation = translationCache.current.get(cacheKey)!;
       if (!pageText) {
         setTranslatedText(cachedTranslation);
         setIsCached(true);
+        setViewMode('sideBySide');
+        lastTranslatedRef.current = { page, language: targetLanguage };
         console.log(`[TranslationPanel] Loaded from in-memory cache: ${cacheKey}`);
       }
       return cachedTranslation;
@@ -231,9 +225,56 @@ export function TranslationPanel({
       setIsTranslating(true);
       setTranslatedText('');
       setIsCached(false);
+      setError(null);
+      setExtractionStatus('Loading PDF...');
     }
 
     try {
+      // Extract text if not provided
+      let textToTranslate = pageText;
+      if (!textToTranslate) {
+        console.log('[TranslationPanel] Starting text extraction', { page, documentUrl });
+        
+        // Try multiple extraction strategies
+        let extractionMethod = '';
+        
+        // Strategy 1: Use provided pdfDocument proxy if available
+        if (pdfDocument) {
+          console.log('[TranslationPanel] Attempting extraction with provided pdfDocument proxy');
+          setExtractionStatus('Extracting text from PDF...');
+          try {
+            textToTranslate = await extractTextFromPage(page);
+            extractionMethod = 'pdfDocument proxy';
+            console.log('[TranslationPanel] Extraction successful via pdfDocument proxy', { textLength: textToTranslate.length });
+          } catch (proxyError) {
+            console.warn('[TranslationPanel] pdfDocument proxy extraction failed', proxyError);
+          }
+        }
+        
+        // Strategy 2: Use current page extracted text if available
+        if (!textToTranslate && page === currentPage && extractedText) {
+          textToTranslate = extractedText;
+          extractionMethod = 'current page extractedText';
+          console.log('[TranslationPanel] Using current page extracted text', { textLength: textToTranslate.length });
+        }
+        
+        if (!textToTranslate || textToTranslate.trim().length === 0) {
+          console.warn('[TranslationPanel] No text extracted from page', { page });
+          throw new Error('No text found on this page. This might be a scanned PDF or image-based document.');
+        }
+
+        console.log('[TranslationPanel] Text extraction complete', { 
+          method: extractionMethod, 
+          textLength: textToTranslate.length,
+          preview: textToTranslate.substring(0, 100) 
+        });
+        setExtractionStatus('');
+      }
+      
+      if (!textToTranslate || !targetLanguage) {
+        throw new Error('No text available to translate');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-document`, {
         method: 'POST',
         headers: {
@@ -298,7 +339,9 @@ export function TranslationPanel({
 
         // Store in cache
         translationCache.current.set(cacheKey, fullTranslation);
+        lastTranslatedRef.current = { page, language: targetLanguage };
         console.log(`[TranslationPanel] Stored in cache: ${cacheKey}`);
+        setViewMode('sideBySide');
         return fullTranslation;
       } else {
         // Non-streaming response (for bulk translation)
@@ -309,26 +352,39 @@ export function TranslationPanel({
 
         const translated = data.translatedText;
         translationCache.current.set(cacheKey, translated);
+        lastTranslatedRef.current = { page, language: targetLanguage };
         
         if (!pageText) {
           setTranslatedText(translated);
           setIsCached(data.cached || false);
+          setViewMode('sideBySide');
         }
         return translated;
       }
     } catch (error: any) {
       console.error('[TranslationPanel] Translation error:', error);
       
-      let errorMessage = 'Failed to translate document';
-      if (error.message?.includes('Rate limit')) {
-        errorMessage = 'Translation rate limit exceeded. Please try again later.';
-      } else if (error.message?.includes('credits')) {
-        errorMessage = 'Translation credits exhausted. Please add credits to continue.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      // Provide specific error messages based on error type
+      let errorMessage = 'Translation failed';
+      if (error.message) {
+        if (error.message.includes('scanned PDF')) {
+          errorMessage = 'This appears to be a scanned PDF. Text extraction is limited for image-based documents.';
+        } else if (error.message.includes('CORS')) {
+          errorMessage = 'Unable to access PDF. Please try downloading and re-uploading the document.';
+        } else if (error.message.includes('worker')) {
+          errorMessage = 'PDF processing failed. Please refresh the page and try again.';
+        } else if (error.message.includes('Rate limit')) {
+          errorMessage = 'Translation rate limit exceeded. Please try again later.';
+        } else if (error.message.includes('credits')) {
+          errorMessage = 'Translation credits exhausted. Please add credits to continue.';
+        } else {
+          errorMessage = error.message;
+        }
       }
 
       if (!pageText) {
+        setError(errorMessage);
+        setTranslatedText('');
         toast({
           title: 'Translation Error',
           description: errorMessage,
@@ -339,9 +395,10 @@ export function TranslationPanel({
     } finally {
       if (!pageText) {
         setIsTranslating(false);
+        setExtractionStatus('');
       }
     }
-  }, [targetLanguage, documentId, currentPage, extractedText, toast]);
+  }, [targetLanguage, documentId, currentPage, extractedText, pdfDocument, extractTextFromPage, toast]);
 
   const handleTranslateAll = useCallback(async () => {
     if (!onPageChange || totalPages <= 1) return;
@@ -530,30 +587,25 @@ export function TranslationPanel({
   
   // Auto-translate when panel opens, page changes, or language changes
   useEffect(() => {
-    if (!isOpen) {
-      hasAutoTranslated.current = false;
-      return;
-    }
+    if (!isOpen || isExtracting || !extractedText) return;
     
-    if (isExtracting || !extractedText) {
-      return;
-    }
-    
-    // Check if we already have translation for this page/language in cache
+    // Check if we need to translate
     const cacheKey = `${currentPage}-${targetLanguage}`;
-    if (translationCache.current.has(cacheKey)) {
+    
+    // Skip if we already translated this exact page/language combo
+    if (lastTranslatedRef.current?.page === currentPage && 
+        lastTranslatedRef.current?.language === targetLanguage &&
+        translationCache.current.has(cacheKey)) {
       const cachedTranslation = translationCache.current.get(cacheKey)!;
       setTranslatedText(cachedTranslation);
       setIsCached(true);
-      hasAutoTranslated.current = true;
+      console.log('[TranslationPanel] Auto-translate skipped - already translated', { currentPage, targetLanguage });
       return;
     }
     
-    // Auto-translate on first open or when page/language changes
-    if (!hasAutoTranslated.current) {
-      handleTranslate(true);
-      hasAutoTranslated.current = true;
-    }
+    // Auto-translate
+    console.log('[TranslationPanel] Auto-translating', { currentPage, targetLanguage });
+    handleTranslate(true);
   }, [isOpen, currentPage, targetLanguage, extractedText, isExtracting, handleTranslate]);
   
   // Clear cache when panel closes
@@ -719,6 +771,30 @@ export function TranslationPanel({
                 This appears to be a scanned/image-based PDF with limited text. Translation quality may be reduced. For best results, use a text-based PDF.
               </p>
             </div>
+          </div>
+        )}
+
+        {extractionStatus && (
+          <div className="p-4 bg-muted border border-border rounded-lg">
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {extractionStatus}
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-2">
+            <p className="text-sm text-destructive">{error}</p>
+            <Button
+              onClick={() => handleTranslate(false)}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              <Globe className="h-4 w-4 mr-2" />
+              Retry Translation
+            </Button>
           </div>
         )}
       </div>

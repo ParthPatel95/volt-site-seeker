@@ -43,12 +43,13 @@ export async function extractPdfText(
   pdfUrl: string,
   specificPage?: number
 ): Promise<ExtractionResult> {
+  console.log('[pdfTextExtractor] Starting extraction', { pdfUrl, specificPage });
+  
   try {
-    console.log('[pdfTextExtractor] Loading PDF from:', pdfUrl);
-    
     // Ensure worker is initialized
     initializePdfWorker();
     
+    console.log('[pdfTextExtractor] Loading PDF document...');
     const loadingTask = pdfjsLib.getDocument({
       url: pdfUrl,
       withCredentials: false,
@@ -58,7 +59,11 @@ export async function extractPdfText(
     const pdf = await loadingTask.promise;
     const totalPages = pdf.numPages;
     
-    console.log('[pdfTextExtractor] PDF loaded, total pages:', totalPages);
+    console.log('[pdfTextExtractor] PDF loaded successfully', { 
+      totalPages, 
+      specificPage,
+      workerSrc: pdfjsLib.GlobalWorkerOptions.workerSrc 
+    });
 
     const pages: ExtractedPage[] = [];
 
@@ -132,13 +137,33 @@ export async function extractPdfText(
     // Clean up PDF document
     await pdf.destroy();
 
+    console.log('[pdfTextExtractor] Extraction complete', { 
+      pagesExtracted: pages.length, 
+      totalPages 
+    });
+    
     return {
       pages,
       totalPages
     };
   } catch (error) {
     console.error('[pdfTextExtractor] Error loading or extracting PDF:', error);
-    throw new Error('Failed to extract text from PDF. The file may be password-protected, corrupted, or image-based.');
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to extract text from PDF.';
+    if (error instanceof Error) {
+      if (error.message.includes('CORS')) {
+        errorMessage = 'CORS error - unable to access PDF from this URL.';
+      } else if (error.message.includes('password')) {
+        errorMessage = 'This PDF is password-protected.';
+      } else if (error.message.includes('worker')) {
+        errorMessage = 'PDF worker failed to load. Please refresh and try again.';
+      } else {
+        errorMessage += ` ${error.message}`;
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 }
 
