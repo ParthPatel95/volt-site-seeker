@@ -1,5 +1,6 @@
 import { corsHeaders } from '../_shared/cors.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+import JSZip from 'npm:jszip@3.10.1';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -134,49 +135,40 @@ Deno.serve(async (req) => {
 
 async function parseDocx(data: Uint8Array): Promise<string> {
   try {
-    console.log('[DOCX Parser] Using AI vision to extract text from Office document');
-    
-    // Use AI vision to extract text (more reliable than XML parsing)
-    const base64Data = btoa(String.fromCharCode(...data));
-    
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Extract all text content from this document. Return only the extracted text without any commentary or formatting.'
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`
-              }
-            }
-          ]
-        }]
-      })
-    });
+    console.log('[DOCX Parser] Extracting text from DOCX using JSZip');
 
-    if (!aiResponse.ok) {
-      throw new Error(`AI extraction failed: ${aiResponse.status}`);
+    // Load DOCX (ZIP) structure
+    const zip = await JSZip.loadAsync(data);
+    const docFile = zip.file('word/document.xml');
+
+    if (!docFile) {
+      throw new Error('Main DOCX document part (word/document.xml) not found');
     }
 
-    const aiData = await aiResponse.json();
-    const extractedText = aiData.choices?.[0]?.message?.content || '';
+    const xmlContent = await docFile.async('string');
 
-    if (extractedText.length < 10) {
+    // Convert DOCX XML into readable plain text
+    let text = xmlContent
+      // New paragraph
+      .replace(/<w:p[^>]*>/g, '\n')
+      // Line breaks and tabs
+      .replace(/<w:tab[^>]*\/>/g, '\t')
+      .replace(/<w:br[^>]*\/>/g, '\n')
+      // Strip all remaining tags
+      .replace(/<[^>]+>/g, ' ')
+      // Decode common entities
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      // Normalize whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (text.length < 10) {
       throw new Error('No readable text found in DOCX');
     }
 
-    return extractedText;
+    return text;
   } catch (error) {
     console.error('[DOCX Parser] Error:', error);
     throw new Error('Failed to parse DOCX document. The file may be corrupted or password-protected.');
