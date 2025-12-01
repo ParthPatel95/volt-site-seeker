@@ -175,6 +175,74 @@
   animation: progress-bar 2.5s ease-in-out infinite;
 }
 
+/* Ken Burns slow zoom effect */
+@keyframes ken-burns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 20s ease-in-out infinite alternate;
+}
+
+/* Hotspot pulse effect */
+@keyframes hotspot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.animate-hotspot-pulse {
+  animation: hotspot-pulse 3s ease-in-out infinite;
+}
+
+/* Scanline effect */
+@keyframes scanline {
+  0% {
+    top: -5%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+/* Label fade-in appear */
+@keyframes label-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-label-appear {
+  animation: label-appear 0.6s ease-out;
+}
+
 /* Reduced motion fallbacks */
 @media (prefers-reduced-motion: reduce) {
   .animate-server-blink,
@@ -182,7 +250,11 @@
   .animate-hash-pulse,
   .animate-data-flow,
   .animate-fan-rotate,
-  .animate-progress-bar {
+  .animate-progress-bar,
+  .animate-ken-burns,
+  .animate-hotspot-pulse,
+  .animate-scanline,
+  .animate-label-appear {
     animation: none;
     opacity: 0.6;
   }
