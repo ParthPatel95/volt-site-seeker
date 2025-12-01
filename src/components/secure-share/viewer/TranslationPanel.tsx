@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2, RefreshCw, Scan } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -28,6 +28,7 @@ interface TranslationPanelProps {
   onPageChange?: (page: number) => void;
   pdfDocument?: any; // PDFDocumentProxy for multi-page text extraction
   documentUrl?: string; // URL to fetch PDF if pdfDocument is not available
+  documentType?: string; // MIME type to detect images
 }
 
 const SUPPORTED_LANGUAGES = [
@@ -53,7 +54,8 @@ export function TranslationPanel({
   isExtracting,
   onPageChange,
   pdfDocument,
-  documentUrl
+  documentUrl,
+  documentType
 }: TranslationPanelProps) {
   const [targetLanguage, setTargetLanguage] = useState<string>('zh-CN');
   const [translatedText, setTranslatedText] = useState<string>('');
@@ -67,6 +69,9 @@ export function TranslationPanel({
   const [allTranslations, setAllTranslations] = useState<Map<number, string>>(new Map());
   const [extractionStatus, setExtractionStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [isOcrProcessing, setIsOcrProcessing] = useState(false);
+  const [ocrEnabled, setOcrEnabled] = useState(false);
+  const [ocrExtractedText, setOcrExtractedText] = useState<string>(''); // OCR-extracted text overrides prop
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -87,11 +92,14 @@ export function TranslationPanel({
   };
   
   const selectedLanguage = SUPPORTED_LANGUAGES.find(l => l.code === targetLanguage);
+  
+  // Use OCR text if available, otherwise use prop text
+  const currentText = ocrExtractedText || extractedText;
 
   // Detect if PDF is scanned (image-based with little to no text)
   useEffect(() => {
-    if (extractedText && !isExtracting) {
-      const textLength = extractedText.trim().length;
+    if (currentText && !isExtracting) {
+      const textLength = currentText.trim().length;
       const avgCharsPerPage = textLength / totalPages;
       
       // If less than 50 chars per page on average, likely scanned
@@ -101,7 +109,7 @@ export function TranslationPanel({
         setIsScannedPdf(false);
       }
     }
-  }, [extractedText, isExtracting, totalPages]);
+  }, [currentText, isExtracting, totalPages]);
 
   // Extract text from a specific page
   const extractTextFromPage = useCallback(async (pageNumber: number): Promise<string> => {
@@ -252,8 +260,8 @@ export function TranslationPanel({
         }
         
         // Strategy 2: Use current page extracted text if available
-        if (!textToTranslate && page === currentPage && extractedText) {
-          textToTranslate = extractedText;
+        if (!textToTranslate && page === currentPage && currentText) {
+          textToTranslate = currentText;
           extractionMethod = 'current page extractedText';
           console.log('[TranslationPanel] Using current page extracted text', { textLength: textToTranslate.length });
         }
@@ -399,6 +407,116 @@ export function TranslationPanel({
       }
     }
   }, [targetLanguage, documentId, currentPage, extractedText, pdfDocument, extractTextFromPage, toast]);
+
+  const handleEnableOcr = useCallback(async () => {
+    setIsOcrProcessing(true);
+    setExtractionStatus('Preparing for OCR...');
+    setError(null);
+
+    try {
+      const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentUrl || '');
+      const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
+
+      let imageBase64: string;
+
+      if (isImage && documentUrl) {
+        // For images, convert image URL directly to base64
+        console.log('[OCR] Processing image document');
+        setExtractionStatus('Loading image...');
+        
+        const { imageUrlToBase64 } = await import('@/utils/pdfToImage');
+        imageBase64 = await imageUrlToBase64(documentUrl);
+      } else if (isPdf) {
+        // For PDFs, render page to image first
+        console.log('[OCR] Processing PDF document');
+        setExtractionStatus('Preparing page for OCR...');
+        
+        const { renderPdfPageToImage } = await import('@/utils/pdfToImage');
+        
+        // Get PDF document proxy
+        let pdfDoc = pdfDocument;
+        if (!pdfDoc && documentUrl) {
+          console.log('[OCR] Loading PDF document for OCR');
+          const pdfjsLib = await import('pdfjs-dist');
+          const loadingTask = pdfjsLib.getDocument({
+            url: documentUrl,
+            withCredentials: false,
+            isEvalSupported: false
+          });
+          pdfDoc = await loadingTask.promise;
+        }
+
+        if (!pdfDoc) {
+          throw new Error('Unable to load PDF for OCR');
+        }
+
+        setExtractionStatus(`Rendering page ${currentPage} as image...`);
+        imageBase64 = await renderPdfPageToImage(pdfDoc, currentPage, { scale: 2.5 });
+      } else {
+        throw new Error('Document type not supported for OCR');
+      }
+
+      setExtractionStatus('Extracting text with AI OCR...');
+
+      // Call OCR edge function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-extract-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          imageBase64,
+          documentId,
+          pageNumber: currentPage
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('OCR rate limit exceeded. Please try again later.');
+        }
+        if (response.status === 402) {
+          throw new Error('OCR credits exhausted. Please add credits to continue.');
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'OCR failed');
+      }
+
+      const data = await response.json();
+      const ocrText = data.text;
+
+      if (!ocrText || ocrText.trim().length === 0) {
+        throw new Error('No text could be extracted from this page');
+      }
+
+      console.log('[OCR] Text extracted successfully', { textLength: ocrText.length });
+      
+      // Update extracted text and enable OCR mode
+      setOcrExtractedText(ocrText);
+      setOcrEnabled(true);
+      setExtractionStatus('');
+      
+      toast({
+        title: 'OCR Complete',
+        description: `Extracted ${ocrText.length} characters`,
+      });
+
+      // Automatically translate the OCR text
+      await handleTranslate(false, ocrText);
+    } catch (error: any) {
+      console.error('[OCR] Error:', error);
+      setError(error.message || 'OCR processing failed');
+      setExtractionStatus('');
+      toast({
+        title: 'OCR Failed',
+        description: error.message || 'Failed to extract text using OCR',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsOcrProcessing(false);
+    }
+  }, [pdfDocument, documentUrl, documentType, currentPage, documentId, handleTranslate, toast]);
 
   const handleTranslateAll = useCallback(async () => {
     if (!onPageChange || totalPages <= 1) return;
@@ -760,16 +878,48 @@ export function TranslationPanel({
           </p>
         )}
 
-        {isScannedPdf && (
-          <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-            <div className="w-5 h-5 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-yellow-600 dark:text-yellow-400 text-xs">!</span>
+        {/* Scanned PDF Warning with OCR Button */}
+        {isScannedPdf && !ocrEnabled && !isTranslating && !isOcrProcessing && (
+          <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3">
+            <div className="flex items-start gap-3">
+              <Scan className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                  Scanned Document Detected
+                </div>
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  This appears to be a scanned or image-based PDF with minimal text layer. 
+                  Enable OCR to extract and translate text using AI vision.
+                </p>
+                <Button
+                  onClick={handleEnableOcr}
+                  disabled={isOcrProcessing}
+                  size="sm"
+                  className="mt-2"
+                >
+                  {isOcrProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing OCR...
+                    </>
+                  ) : (
+                    <>
+                      <Scan className="w-4 h-4 mr-2" />
+                      Enable OCR
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Scanned Document Detected</p>
-              <p className="text-xs text-yellow-600/80 dark:text-yellow-400/80 mt-1">
-                This appears to be a scanned/image-based PDF with limited text. Translation quality may be reduced. For best results, use a text-based PDF.
-              </p>
+          </div>
+        )}
+
+        {/* OCR Processing Status */}
+        {isOcrProcessing && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{extractionStatus || 'Processing with OCR...'}</span>
             </div>
           </div>
         )}
@@ -783,18 +933,32 @@ export function TranslationPanel({
           </div>
         )}
 
-        {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-2">
-            <p className="text-sm text-destructive">{error}</p>
-            <Button
-              onClick={() => handleTranslate(false)}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              <Globe className="h-4 w-4 mr-2" />
-              Retry Translation
-            </Button>
+        {/* Error Message with Retry Button */}
+        {error && !isOcrProcessing && !isTranslating && (
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
+            <div className="flex items-start gap-3">
+              <X className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="text-sm font-medium text-destructive">
+                  Translation Error
+                </div>
+                <p className="text-xs text-destructive/80">
+                  {error}
+                </p>
+                <Button
+                  onClick={() => {
+                    setError(null);
+                    handleTranslate(false);
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>

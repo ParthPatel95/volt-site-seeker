@@ -114,6 +114,9 @@ export function DocumentViewer({
   const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
   const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
   const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
+  
+  // Images support translation via OCR
+  const supportsTranslation = isPdf || isImage;
 
   // Cleanup PDF.js resources on unmount
   useEffect(() => {
@@ -354,33 +357,39 @@ export function DocumentViewer({
     };
   }, [watermarkEnabled, recipientEmail]);
 
-  // Extract PDF text when page changes or translation is opened
-  
-  // Extract PDF text when page changes or translation is opened
+  // Extract text when translation is opened
   useEffect(() => {
-    if (translationOpen && isPdf && documentUrl) {
-      setIsExtracting(true);
-      extractPageText(documentUrl, pageNumber)
-        .then((text) => {
-          setExtractedText(text);
-          if (!text || text.trim().length < 10) {
-            console.warn('[DocumentViewer] Very little text extracted - PDF may be scanned/image-based');
-          }
-        })
-        .catch((error) => {
-          console.error('[DocumentViewer] PDF text extraction failed:', error);
-          setExtractedText(''); // Clear any stale text
-          toast({
-            title: 'Extraction Error',
-            description: 'Failed to extract text from PDF. The document may be password-protected, scanned, or image-based.',
-            variant: 'destructive'
+    if (translationOpen && documentUrl) {
+      if (isPdf) {
+        // PDF text extraction
+        setIsExtracting(true);
+        extractPageText(documentUrl, pageNumber)
+          .then((text) => {
+            setExtractedText(text);
+            if (!text || text.trim().length < 10) {
+              console.warn('[DocumentViewer] Very little text extracted - PDF may be scanned/image-based');
+            }
+          })
+          .catch((error) => {
+            console.error('[DocumentViewer] PDF text extraction failed:', error);
+            setExtractedText('');
+            toast({
+              title: 'Extraction Error',
+              description: 'Failed to extract text from PDF. The document may be password-protected, scanned, or image-based.',
+              variant: 'destructive'
+            });
+          })
+          .finally(() => {
+            setIsExtracting(false);
           });
-        })
-        .finally(() => {
-          setIsExtracting(false);
-        });
+      } else if (isImage) {
+        // For images, we'll use OCR directly - no text to extract
+        setExtractedText('');
+        setIsExtracting(false);
+        console.log('[DocumentViewer] Image document - OCR will be used for translation');
+      }
     }
-  }, [translationOpen, pageNumber, documentUrl, isPdf, toast]);
+  }, [translationOpen, pageNumber, documentUrl, isPdf, isImage, toast]);
   
   // Build PDF URL - hide toolbar for view-only
   const pdfUrl = isPdf && !canDownload
@@ -967,7 +976,8 @@ export function DocumentViewer({
         isExtracting={isExtracting}
         onPageChange={(page) => setPageNumber(page)}
         pdfDocument={pdfDocumentProxy}
-        documentUrl={isPdf ? documentUrl : undefined}
+        documentUrl={documentUrl}
+        documentType={documentType}
       />
     </div>
   );

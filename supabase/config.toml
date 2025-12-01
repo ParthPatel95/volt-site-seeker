@@ -172,8 +172,11 @@ verify_jwt = true
 [functions.dashboard-insights]
 verify_jwt = true
 
-# Translation endpoint - public access for shared link viewers
+# Translation and OCR endpoints - public access for shared link viewers
 [functions.translate-document]
+verify_jwt = false
+
+[functions.ocr-extract-text]
 verify_jwt = false
 
 # Authentication required endpoints
