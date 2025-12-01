@@ -98,30 +98,30 @@ export const AlbertaFacilityShowcase = () => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   return (
-    <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden scrollbar-hide">
+    <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 bg-watt-navy overflow-hidden scrollbar-hide">
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
       
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16 space-y-3 sm:space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-neon-green/10 border border-neon-green/30 backdrop-blur-sm">
-            <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse"></div>
-            <span className="text-xs sm:text-sm font-medium text-neon-green">Operational Asset</span>
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-watt-success/10 border border-watt-success/30 backdrop-blur-sm">
+            <div className="w-2 h-2 rounded-full bg-watt-success animate-pulse"></div>
+            <span className="text-xs sm:text-sm font-medium text-watt-success">Operational Asset</span>
           </div>
           
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white px-4">
             Alberta Data Center Facility
           </h2>
           
-          <p className="text-base sm:text-lg md:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed px-4">
-            Our flagship infrastructure asset powering the future of <span className="text-electric-blue font-semibold">AI</span>, <span className="text-electric-yellow font-semibold">HPC</span>, and <span className="text-neon-green font-semibold">digital mining</span> operations
+          <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed px-4">
+            Our flagship infrastructure asset powering the future of <span className="text-watt-trust font-semibold">AI</span>, <span className="text-watt-bitcoin font-semibold">HPC</span>, and <span className="text-watt-success font-semibold">digital mining</span> operations
           </p>
         </div>
 
         {/* Main Image Display */}
         <div className="relative group mb-4 sm:mb-6 lg:mb-8">
-          <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[21/9] rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden border-2 border-electric-blue/30 shadow-2xl hover:border-electric-blue/50 transition-all duration-500">
+          <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[21/9] rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden border-2 border-watt-trust/30 shadow-2xl hover:border-watt-trust/50 transition-all duration-500">
             <img 
               src={facilityImages[selectedImage].src} 
               alt={facilityImages[selectedImage].label} 
@@ -129,7 +129,7 @@ export const AlbertaFacilityShowcase = () => {
             />
             
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-watt-navy/90 via-watt-navy/30 to-transparent"></div>
             
             {/* Image Info Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 lg:p-8">
@@ -138,27 +138,27 @@ export const AlbertaFacilityShowcase = () => {
                   <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 truncate">
                     {facilityImages[selectedImage].label}
                   </h3>
-                  <p className="text-xs sm:text-sm md:text-base text-slate-300 line-clamp-2">
+                  <p className="text-xs sm:text-sm md:text-base text-white/70 line-clamp-2">
                     {facilityImages[selectedImage].description}
                   </p>
                 </div>
                 
                 {/* Key Stats */}
                 <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <div className="bg-slate-900/80 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-electric-blue/30 hover:border-electric-blue/50 transition-colors">
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-electric-blue">
+                  <div className="bg-white/5 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-watt-trust/30 hover:border-watt-trust/50 transition-colors">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-watt-trust">
                       <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                       <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Alberta, CA</span>
                     </div>
                   </div>
-                  <div className="bg-slate-900/80 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-neon-green/30 hover:border-neon-green/50 transition-colors">
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-neon-green">
+                  <div className="bg-white/5 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-watt-success/30 hover:border-watt-success/50 transition-colors">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-watt-success">
                       <Zap className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                       <span className="text-xs sm:text-sm font-medium whitespace-nowrap">135 MW</span>
                     </div>
                   </div>
-                  <div className="bg-slate-900/80 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-electric-yellow/30 hover:border-electric-yellow/50 transition-colors">
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-electric-yellow">
+                  <div className="bg-white/5 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-watt-bitcoin/30 hover:border-watt-bitcoin/50 transition-colors">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-watt-bitcoin">
                       <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                       <span className="text-xs sm:text-sm font-medium whitespace-nowrap">2024</span>
                     </div>
@@ -177,8 +177,8 @@ export const AlbertaFacilityShowcase = () => {
               onClick={() => setSelectedImage(index)}
               className={`relative group aspect-video rounded-md sm:rounded-lg overflow-hidden border-2 transition-all duration-300 ${
                 selectedImage === index 
-                  ? 'border-electric-blue shadow-lg shadow-electric-blue/30 scale-105' 
-                  : 'border-slate-800 hover:border-electric-blue/50'
+                  ? 'border-watt-trust shadow-lg shadow-watt-trust/30 scale-105' 
+                  : 'border-white/10 hover:border-watt-trust/50'
               }`}
             >
               <img 
@@ -188,10 +188,10 @@ export const AlbertaFacilityShowcase = () => {
               />
               <div className={`absolute inset-0 transition-opacity duration-300 ${
                 selectedImage === index 
-                  ? 'bg-electric-blue/20' 
-                  : 'bg-slate-950/40 group-hover:bg-slate-950/20'
+                  ? 'bg-watt-trust/20' 
+                  : 'bg-watt-navy/40 group-hover:bg-watt-navy/20'
               }`}></div>
-              <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-2 bg-gradient-to-t from-slate-950 to-transparent">
+              <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-2 bg-gradient-to-t from-watt-navy to-transparent">
                 <p className="text-xs font-medium text-white truncate">{image.label}</p>
               </div>
             </button>
@@ -202,10 +202,10 @@ export const AlbertaFacilityShowcase = () => {
         <div className="mt-8 sm:mt-12 lg:mt-16">
           <div className="text-center mb-6 sm:mb-8 lg:mb-12">
             <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4">
-              Technical <span className="text-electric-yellow">Specifications</span>
+              Technical <span className="text-watt-bitcoin">Specifications</span>
             </h3>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed px-4">
-              Enterprise-grade infrastructure with <span className="text-neon-green font-semibold">industry-leading</span> performance metrics
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed px-4">
+              Enterprise-grade infrastructure with <span className="text-watt-success font-semibold">industry-leading</span> performance metrics
             </p>
           </div>
 
@@ -213,19 +213,19 @@ export const AlbertaFacilityShowcase = () => {
             {/* Technical Specs Grid */}
             <div className="space-y-3 sm:space-y-4">
               <h4 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center">
-                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-electric-blue flex-shrink-0" />
+                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-watt-trust flex-shrink-0" />
                 <span>Core Specifications</span>
               </h4>
               
               {technicalSpecs.map((spec, index) => (
                 <div 
                   key={index}
-                  className="group bg-slate-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 hover:border-electric-blue/50 transition-all hover:bg-slate-800/70"
+                  className="group bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/10 hover:border-watt-trust/50 transition-all hover:bg-white/10"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <spec.icon className="w-4 h-4 sm:w-5 sm:h-5 text-electric-blue flex-shrink-0" />
-                      <span className="text-sm sm:text-base text-slate-300 font-medium truncate">{spec.label}</span>
+                      <spec.icon className="w-4 h-4 sm:w-5 sm:h-5 text-watt-trust flex-shrink-0" />
+                      <span className="text-sm sm:text-base text-white/70 font-medium truncate">{spec.label}</span>
                     </div>
                     <span className="text-sm sm:text-base text-white font-bold whitespace-nowrap">{spec.value}</span>
                   </div>
@@ -236,20 +236,20 @@ export const AlbertaFacilityShowcase = () => {
             {/* Location Benefits */}
             <div className="space-y-3 sm:space-y-4">
               <h4 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center">
-                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-neon-green flex-shrink-0" />
+                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-watt-success flex-shrink-0" />
                 <span>Location Advantages</span>
               </h4>
               
               {locationBenefits.map((benefit, index) => (
                 <div 
                   key={index}
-                  className="group bg-slate-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 hover:border-neon-green/50 transition-all hover:bg-slate-800/70"
+                  className="group bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/10 hover:border-watt-success/50 transition-all hover:bg-white/10"
                 >
                   <div className="flex items-start gap-2 sm:gap-3">
-                    <benefit.icon className="w-4 h-4 sm:w-5 sm:h-5 text-neon-green mt-0.5 flex-shrink-0" />
+                    <benefit.icon className="w-4 h-4 sm:w-5 sm:h-5 text-watt-success mt-0.5 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <h5 className="text-sm sm:text-base font-bold text-white mb-1">{benefit.title}</h5>
-                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{benefit.description}</p>
+                      <p className="text-xs sm:text-sm text-white/70 leading-relaxed">{benefit.description}</p>
                     </div>
                   </div>
                 </div>

@@ -78,9 +78,9 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-700 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] bg-white border-gray-200 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-white text-center">
+          <DialogTitle className="text-2xl font-bold text-watt-navy text-center">
             Request Platform Access
           </DialogTitle>
         </DialogHeader>
@@ -88,26 +88,26 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-slate-200">Full Name *</Label>
+              <Label htmlFor="fullName" className="text-watt-navy">Full Name *</Label>
               <Input
                 id="fullName"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 required
-                className="bg-slate-800 border-slate-600 text-white"
+                className="bg-watt-light border-gray-300 text-watt-navy"
                 placeholder="John Doe"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-200">Email Address *</Label>
+              <Label htmlFor="email" className="text-watt-navy">Email Address *</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
-                className="bg-slate-800 border-slate-600 text-white"
+                className="bg-watt-light border-gray-300 text-watt-navy"
                 placeholder="john@company.com"
               />
             </div>
@@ -115,26 +115,26 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-slate-200">Phone Number *</Label>
+              <Label htmlFor="phone" className="text-watt-navy">Phone Number *</Label>
               <Input
                 id="phone"
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 required
-                className="bg-slate-800 border-slate-600 text-white"
+                className="bg-watt-light border-gray-300 text-watt-navy"
                 placeholder="+1 (555) 123-4567"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company" className="text-slate-200">Company Name *</Label>
+              <Label htmlFor="company" className="text-watt-navy">Company Name *</Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 required
-                className="bg-slate-800 border-slate-600 text-white"
+                className="bg-watt-light border-gray-300 text-watt-navy"
                 placeholder="Investment Firm LLC"
               />
             </div>
@@ -142,41 +142,41 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="role" className="text-slate-200">Your Role *</Label>
+              <Label htmlFor="role" className="text-watt-navy">Your Role *</Label>
               <Input
                 id="role"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 required
-                className="bg-slate-800 border-slate-600 text-white"
+                className="bg-watt-light border-gray-300 text-watt-navy"
                 placeholder="Managing Partner, CTO, etc."
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="platformUse" className="text-slate-200">Platform Use Case *</Label>
+              <Label htmlFor="platformUse" className="text-watt-navy">Platform Use Case *</Label>
               <Select value={formData.platformUse} onValueChange={(value) => setFormData({ ...formData, platformUse: value })}>
-                <SelectTrigger className="bg-slate-800 border-slate-600 text-white">
+                <SelectTrigger className="bg-watt-light border-gray-300 text-watt-navy">
                   <SelectValue placeholder="Select your use case" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="investor" className="text-white hover:bg-slate-700">Investor - Fund LP/Co-Investment</SelectItem>
-                  <SelectItem value="energy-broker" className="text-white hover:bg-slate-700">Energy Broker - Site Sourcing</SelectItem>
-                  <SelectItem value="middleman" className="text-white hover:bg-slate-700">Middleman - Deal Flow</SelectItem>
-                  <SelectItem value="data-center-operator" className="text-white hover:bg-slate-700">Data Center Operator - Site Selection</SelectItem>
-                  <SelectItem value="other" className="text-white hover:bg-slate-700">Other - Please specify below</SelectItem>
+                <SelectContent>
+                  <SelectItem value="investor">Investor - Fund LP/Co-Investment</SelectItem>
+                  <SelectItem value="energy-broker">Energy Broker - Site Sourcing</SelectItem>
+                  <SelectItem value="middleman">Middleman - Deal Flow</SelectItem>
+                  <SelectItem value="data-center-operator">Data Center Operator - Site Selection</SelectItem>
+                  <SelectItem value="other">Other - Please specify below</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="additionalInfo" className="text-slate-200">Additional Information</Label>
+            <Label htmlFor="additionalInfo" className="text-watt-navy">Additional Information</Label>
             <Textarea
               id="additionalInfo"
               value={formData.additionalInfo}
               onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
-              className="bg-slate-800 border-slate-600 text-white"
+              className="bg-watt-light border-gray-300 text-watt-navy"
               placeholder="Tell us about your investment goals, AUM, or specific platform needs..."
               rows={3}
             />
@@ -186,7 +186,7 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-electric-blue to-neon-green hover:from-bright-cyan hover:to-electric-blue text-white font-semibold py-3"
+              className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white font-semibold py-3"
             >
               {isSubmitting ? (
                 <>
@@ -202,7 +202,7 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
             </Button>
           </div>
 
-          <p className="text-xs text-slate-400 text-center">
+          <p className="text-xs text-watt-navy/60 text-center">
             * Required fields. All information is confidential and used solely for platform access verification.
           </p>
         </form>
