@@ -88,6 +88,7 @@ export function DocumentViewer({
   const [extractedText, setExtractedText] = useState<string>('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
+  const [isLoadingPdfProxy, setIsLoadingPdfProxy] = useState(false);
   
   // Touch gesture state
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
@@ -108,15 +109,58 @@ export function DocumentViewer({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
+  const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl);
+  const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
+  const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
+  const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
+
   // Cleanup PDF.js resources on unmount
   useEffect(() => {
     return () => {
-      // Cleanup to prevent memory leaks
       if (pdfjs.GlobalWorkerOptions.workerSrc) {
         console.log('[PDF.js] Cleaning up resources');
       }
     };
   }, []);
+
+  // Pre-load PDF proxy for text extraction (especially important for iOS)
+  useEffect(() => {
+    if (isPdf && documentUrl) {
+      const loadPdfProxy = async () => {
+        setIsLoadingPdfProxy(true);
+        console.log('[DocumentViewer] Pre-loading PDF proxy for text extraction');
+        try {
+          const pdfjsLib = await import('pdfjs-dist');
+          
+          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            const workerUrls = [
+              `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
+              `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
+            ];
+            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
+            console.log('[DocumentViewer] PDF.js worker configured:', workerUrls[0]);
+          }
+          
+          const loadingTask = pdfjsLib.getDocument({
+            url: documentUrl,
+            withCredentials: false,
+            isEvalSupported: false
+          });
+          
+          const proxy = await loadingTask.promise;
+          setPdfDocumentProxy(proxy);
+          console.log('[DocumentViewer] PDF proxy loaded successfully', { numPages: proxy.numPages });
+        } catch (error) {
+          console.error('[DocumentViewer] Failed to load PDF proxy:', error);
+        } finally {
+          setIsLoadingPdfProxy(false);
+        }
+      };
+      
+      loadPdfProxy();
+    }
+  }, [isPdf, documentUrl]);
 
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
@@ -310,38 +354,7 @@ export function DocumentViewer({
     };
   }, [watermarkEnabled, recipientEmail]);
 
-  const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
-  const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl);
-  const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
-  const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
-  const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
-  
-  // Load PDF.js for text extraction even when using native iOS viewer
-  useEffect(() => {
-    if (translationOpen && isPdf && documentUrl && (isIOS || useNativePdfViewer) && !pdfDocumentProxy) {
-      console.log('[DocumentViewer] Loading PDF.js for text extraction on iOS/native viewer');
-      import('pdfjs-dist').then(async (pdfjsLib) => {
-        try {
-          // Configure worker
-          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
-            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-            console.log(`[DocumentViewer] Configured PDF.js worker: ${workerUrl}`);
-          }
-          // Load PDF for text extraction only (not rendering)
-          const pdf = await pdfjsLib.getDocument({
-            url: documentUrl,
-            withCredentials: false,
-            isEvalSupported: false
-          }).promise;
-          setPdfDocumentProxy(pdf);
-          console.log('[DocumentViewer] PDF loaded for text extraction');
-        } catch (error) {
-          console.error('[DocumentViewer] Failed to load PDF for text extraction:', error);
-        }
-      });
-    }
-  }, [translationOpen, isPdf, documentUrl, isIOS, useNativePdfViewer, pdfDocumentProxy]);
+  // Extract PDF text when page changes or translation is opened
   
   // Extract PDF text when page changes or translation is opened
   useEffect(() => {
