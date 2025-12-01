@@ -918,7 +918,7 @@ export function TranslationPanel({
   
   // Auto-translate when panel opens, page changes, or language changes
   useEffect(() => {
-    if (!isOpen || isExtracting || !extractedText) return;
+    if (!isOpen || isExtracting || !currentText) return;
     
     // Check if we need to translate
     const cacheKey = `${currentPage}-${targetLanguage}`;
@@ -937,7 +937,7 @@ export function TranslationPanel({
     // Auto-translate
     console.log('[TranslationPanel] Auto-translating', { currentPage, targetLanguage });
     handleTranslate(true);
-  }, [isOpen, currentPage, targetLanguage, extractedText, isExtracting, handleTranslate]);
+  }, [isOpen, currentPage, targetLanguage, extractedText, ocrExtractedText, isExtracting, handleTranslate]);
   
   // Clear cache when panel closes
   useEffect(() => {
@@ -1026,7 +1026,7 @@ export function TranslationPanel({
         <div className="flex gap-2">
           <Button
             onClick={() => handleTranslate(false)}
-            disabled={isTranslating || isExtracting || !extractedText}
+            disabled={isTranslating || isExtracting || !currentText}
             className="flex-1"
             size="sm"
           >
@@ -1061,7 +1061,7 @@ export function TranslationPanel({
           <>
             <Button
               onClick={handleTranslateAll}
-              disabled={isTranslatingAll || isExtracting || !extractedText}
+              disabled={isTranslatingAll || isExtracting || !currentText}
               variant="outline"
               className="w-full"
               size="sm"
@@ -1279,7 +1279,7 @@ export function TranslationPanel({
             </div>
           )}
 
-          {!isExtracting && !extractedText && !translatedText && (
+          {!isExtracting && !currentText && !translatedText && !isTranslating && (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
               <Globe className="w-12 h-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm text-muted-foreground">
@@ -1295,8 +1295,8 @@ export function TranslationPanel({
               )}
             </div>
           )}
-
-          {!isExtracting && extractedText && !translatedText && !isTranslating && (
+ 
+          {!isExtracting && currentText && !translatedText && !isTranslating && (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
               <p className="text-sm text-muted-foreground">
@@ -1309,7 +1309,7 @@ export function TranslationPanel({
               </div>
             </div>
           )}
-
+ 
           {isTranslating && (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
