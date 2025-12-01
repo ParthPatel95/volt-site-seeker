@@ -165,70 +165,16 @@ export const StrategicMarketAnalytics = () => {
   );
 
   return (
-    <div className="space-y-12">
-      {/* Section Header */}
-      <div className="text-center space-y-2">
-        <div className="flex items-center justify-center gap-3">
-          <MapPin className="w-7 h-7 text-watt-success" />
-          <h3 className="text-2xl sm:text-3xl font-semibold text-watt-navy">
-            Strategic Market Analytics
-          </h3>
-        </div>
-        <p className="text-xs sm:text-sm text-watt-navy/70 max-w-2xl mx-auto">
-          Alberta's competitive advantages combined with real-time energy market intelligence
-        </p>
-      </div>
-
-      {/* Location Benefits */}
-      <div>
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <Badge
-            variant="outline"
-            className="bg-watt-success/10 text-watt-success border-watt-success/30 text-[11px] sm:text-xs font-medium px-3 sm:px-4 py-1 rounded-full"
-          >
-            Location Advantages
-          </Badge>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {locationBenefits.map((benefit, index) => {
-            const colorClasses = {
-              'watt-success': 'text-watt-success bg-watt-success/10 hover:border-watt-success/60',
-              'watt-trust': 'text-watt-trust bg-watt-trust/10 hover:border-watt-trust/60',
-              'watt-bitcoin': 'text-watt-bitcoin bg-watt-bitcoin/10 hover:border-watt-bitcoin/60'
-            };
-            
-            return (
-              <div 
-                key={index} 
-                className={`
-                  group relative p-5 rounded-2xl 
-                  bg-white
-                  border border-gray-200
-                  ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[2]}
-                  backdrop-blur-sm
-                  transition-all duration-300
-                  hover:-translate-y-1 hover:shadow-institutional-lg
-                `}
-                style={{
-                  animationDelay: `${index * 100}ms`
-                }}
-              >
-                <div className={`inline-flex items-center justify-center p-3 rounded-xl mb-3 ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[1]}`}>
-                  <benefit.icon className={`w-5 h-5 ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[0]}`} />
-                </div>
-                
-                <h4 className="text-base sm:text-lg font-semibold text-watt-navy mb-1.5">{benefit.title}</h4>
-                <p className="text-xs sm:text-sm text-watt-navy/70 leading-relaxed">{benefit.description}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {/* Energy Market Analytics */}
       <div>
-        <div className="flex items-center justify-center gap-2 mb-5">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-watt-trust/30 to-transparent" />
+          <span className="text-xs font-semibold text-watt-trust uppercase tracking-wider">Energy Market Data</span>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-watt-trust/30 to-transparent" />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
           <Badge
             variant="outline"
             className="bg-watt-trust/10 text-watt-trust border-watt-trust/30 text-[11px] sm:text-xs font-medium px-3 sm:px-4 py-1 rounded-full"
@@ -243,7 +189,7 @@ export const StrategicMarketAnalytics = () => {
           </Badge>
         </div>
         
-        <p className="text-[11px] sm:text-xs text-watt-navy/70 text-center mb-7">
+        <p className="text-[11px] sm:text-xs text-watt-navy/70 text-center mb-6">
           Real-time data from Alberta Electric System Operator (AESO)
         </p>
 
@@ -255,13 +201,13 @@ export const StrategicMarketAnalytics = () => {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
             icon={DollarSign}
             title="Average Pool Price"
             value={analytics.averagePrice}
             unit="CAD/MWh"
-            subtitle={analytics.totalHours > 0 ? `${analytics.totalHours.toLocaleString()} hours analyzed` : undefined}
+            subtitle={analytics.totalHours > 0 ? `${analytics.totalHours.toLocaleString()} hours` : undefined}
           />
           
           <StatCard
@@ -269,7 +215,7 @@ export const StrategicMarketAnalytics = () => {
             title="Median Price"
             value={analytics.medianPrice}
             unit="CAD/MWh"
-            subtitle="Middle value of dataset"
+            subtitle="Middle value"
           />
           
           <StatCard
@@ -277,7 +223,7 @@ export const StrategicMarketAnalytics = () => {
             title="Peak Price"
             value={analytics.maxPrice}
             unit="CAD/MWh"
-            subtitle="Highest recorded price"
+            subtitle="Highest recorded"
           />
           
           <StatCard
@@ -285,23 +231,21 @@ export const StrategicMarketAnalytics = () => {
             title="Base Price"
             value={analytics.minPrice}
             unit="CAD/MWh"
-            subtitle="Lowest recorded price"
+            subtitle="Lowest recorded"
           />
         </div>
 
-        <div className="relative bg-watt-light backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:border-watt-trust/30 transition-all">
+        <div className="relative bg-gradient-to-br from-watt-trust/5 to-watt-success/5 backdrop-blur-sm rounded-xl p-5 border border-watt-trust/20 hover:border-watt-trust/40 transition-all">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-watt-trust/10 rounded-lg flex-shrink-0">
-              <Activity className="w-6 h-6 text-watt-trust" />
+            <div className="p-3 bg-white rounded-lg flex-shrink-0 shadow-sm">
+              <Activity className="w-5 h-5 text-watt-trust" />
             </div>
-            <div className="space-y-3 flex-1">
-              <h4 className="text-lg font-bold text-watt-navy">
-                Live Market Data Integration
+            <div className="space-y-2 flex-1">
+              <h4 className="text-base font-bold text-watt-navy">
+                Live Market Integration
               </h4>
-              <p className="text-sm text-watt-navy/70 leading-relaxed">
-                Our facility leverages Alberta's deregulated energy market to optimize operations in real-time. 
-                The 95% uptime calculation removes the highest 5% of price spikes, providing a realistic baseline 
-                for operational cost planning. With an average price of <span className="text-watt-success font-semibold">${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh</span> over the past year, Alberta offers competitive energy rates for high-performance computing workloads.
+              <p className="text-xs sm:text-sm text-watt-navy/70 leading-relaxed">
+                Leveraging Alberta's deregulated market for real-time optimization. The 95% uptime filter removes extreme price spikes, providing realistic operational baselines. Average price: <span className="text-watt-success font-semibold">${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh</span>
               </p>
             </div>
           </div>

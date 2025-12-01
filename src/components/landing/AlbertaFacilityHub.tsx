@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Building2, Thermometer, Clock, Network, Zap, Leaf, Shield, MapPin, X } from 'lucide-react';
+import { Building2, Thermometer, Clock, Network, Zap, Leaf, Shield, MapPin, X, DollarSign, Snowflake, Cable, Globe } from 'lucide-react';
 import { StrategicMarketAnalytics } from './StrategicMarketAnalytics';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import facilityNight from '@/assets/alberta-facility-night.png';
@@ -154,64 +154,129 @@ export const AlbertaFacilityHub = () => {
           </div>
         </div>
 
-        {/* Technical Specifications - Compact Grid */}
-        <div className={`mb-8 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <h3 className="text-2xl sm:text-3xl font-semibold text-watt-navy mb-7 text-center">
-            <Building2 className="inline-block w-7 h-7 mr-3 text-watt-trust" />
-            Technical Specifications
-          </h3>
-          
-          {/* Primary specs - larger cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {specifications.slice(0, 4).map((spec, index) => {
-            const colorClasses = {
-              'watt-trust': 'from-watt-trust/10 to-watt-trust/5 border-watt-trust/30 group-hover:border-watt-trust/60',
-              'watt-bitcoin': 'from-watt-bitcoin/10 to-watt-bitcoin/5 border-watt-bitcoin/30 group-hover:border-watt-bitcoin/60',
-              'watt-success': 'from-watt-success/10 to-watt-success/5 border-watt-success/30 group-hover:border-watt-success/60'
-            };
-            return <div key={index} className={`group relative overflow-hidden rounded-xl p-5 bg-gradient-to-br ${colorClasses[spec.color as keyof typeof colorClasses]} border backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 shadow-institutional-lg`}>
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2.5 rounded-lg bg-white/80`}>
-                      <spec.icon className={`w-5 h-5 text-${spec.color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm font-medium text-watt-navy/60 mb-1">{spec.label}</div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl sm:text-3xl font-semibold text-watt-navy">{spec.value}</span>
-                        <span className="text-xs sm:text-sm text-watt-navy/60 font-medium">{spec.unit}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>;
-          })}
+        {/* Combined Facility Intelligence Section */}
+        <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="text-center mb-10">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <Building2 className="w-7 h-7 text-watt-trust" />
+              <h3 className="text-2xl sm:text-3xl font-semibold text-watt-navy">
+                Facility Intelligence
+              </h3>
+            </div>
+            <p className="text-sm text-watt-navy/70 max-w-2xl mx-auto">
+              Technical specifications and market analytics powering strategic decisions
+            </p>
           </div>
-          
-          {/* Secondary specs - compact row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {specifications.slice(4).map((spec, index) => {
-            const colorClasses = {
-              'watt-success': 'border-watt-success/30 hover:border-watt-success/60 hover:bg-watt-success/5',
-              'watt-bitcoin': 'border-watt-bitcoin/30 hover:border-watt-bitcoin/60 hover:bg-watt-bitcoin/5',
-              'watt-trust': 'border-watt-trust/30 hover:border-watt-trust/60 hover:bg-watt-trust/5'
-            };
-            return <div key={index} className={`group relative overflow-hidden rounded-lg p-4 bg-white border ${colorClasses[spec.color as keyof typeof colorClasses]} backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 shadow-institutional`}>
-                  <div className="flex items-center gap-3">
-                    <spec.icon className={`w-4 h-4 text-${spec.color} flex-shrink-0`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] sm:text-xs text-watt-navy/60 mb-0.5">{spec.label}</div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-base sm:text-lg font-semibold text-watt-navy">{spec.value}</span>
-                        <span className="text-[11px] sm:text-xs text-watt-navy/60">{spec.unit}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>;
-          })}
-          </div>
-        </div>
 
-        {/* Strategic Market Analytics - Combined Location & Energy Analytics */}
-        <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          {/* Key Metrics - Hero Style */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Power Capacity - Featured */}
+            <div className="md:col-span-1 bg-gradient-to-br from-watt-trust/10 to-watt-trust/5 rounded-2xl p-6 border border-watt-trust/30 hover:border-watt-trust/60 transition-all hover:shadow-institutional-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-white rounded-xl">
+                  <Zap className="w-6 h-6 text-watt-trust" />
+                </div>
+                <div>
+                  <div className="text-xs text-watt-navy/60 font-medium">Total Capacity</div>
+                  <div className="text-3xl font-bold text-watt-navy">135 MW</div>
+                </div>
+              </div>
+              <p className="text-xs text-watt-navy/70">Enterprise-grade power infrastructure</p>
+            </div>
+
+            {/* Facility Size */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-watt-success/60 hover:bg-watt-success/5 transition-all hover:shadow-institutional-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-watt-success/10 rounded-xl">
+                  <Building2 className="w-6 h-6 text-watt-success" />
+                </div>
+                <div>
+                  <div className="text-xs text-watt-navy/60 font-medium">Land & Facility</div>
+                  <div className="text-3xl font-bold text-watt-navy">26 Acres</div>
+                </div>
+              </div>
+              <p className="text-xs text-watt-navy/70">20,000 sq ft data center space</p>
+            </div>
+
+            {/* Grid Connection */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-watt-bitcoin/60 hover:bg-watt-bitcoin/5 transition-all hover:shadow-institutional-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-watt-bitcoin/10 rounded-xl">
+                  <Network className="w-6 h-6 text-watt-bitcoin" />
+                </div>
+                <div>
+                  <div className="text-xs text-watt-navy/60 font-medium">Grid Status</div>
+                  <div className="text-2xl font-bold text-watt-navy">Direct AESO</div>
+                </div>
+              </div>
+              <p className="text-xs text-watt-navy/70">99.99% uptime reliability</p>
+            </div>
+          </div>
+
+          {/* Technical Details & Location Benefits - Two Column */}
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            {/* Technical Details */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-watt-trust/30 to-transparent" />
+                <span className="text-xs font-semibold text-watt-trust uppercase tracking-wider">Technical Details</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-watt-trust/30 to-transparent" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {specifications.slice(2).map((spec, index) => {
+                  const colorClasses = {
+                    'watt-success': 'border-watt-success/30 hover:border-watt-success/60 hover:bg-watt-success/5',
+                    'watt-bitcoin': 'border-watt-bitcoin/30 hover:border-watt-bitcoin/60 hover:bg-watt-bitcoin/5',
+                    'watt-trust': 'border-watt-trust/30 hover:border-watt-trust/60 hover:bg-watt-trust/5'
+                  };
+                  
+                  return (
+                    <div key={index} className={`p-4 rounded-xl bg-white border ${colorClasses[spec.color as keyof typeof colorClasses]} transition-all hover:shadow-institutional`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <spec.icon className={`w-4 h-4 text-${spec.color}`} />
+                        <div className="text-xs text-watt-navy/60">{spec.label}</div>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-watt-navy">{spec.value}</span>
+                        <span className="text-xs text-watt-navy/60">{spec.unit}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Location Advantages */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-watt-success/30 to-transparent" />
+                <span className="text-xs font-semibold text-watt-success uppercase tracking-wider">Location Advantages</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-watt-success/30 to-transparent" />
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { icon: DollarSign, title: 'Competitive Pricing', desc: 'Deregulated wholesale rates', color: 'watt-success' },
+                  { icon: Snowflake, title: 'Cold Climate', desc: 'Natural cooling advantage', color: 'watt-trust' },
+                  { icon: Cable, title: 'Fiber Access', desc: 'Trans-continental connectivity', color: 'watt-bitcoin' },
+                  { icon: Globe, title: 'Stable Jurisdiction', desc: 'Canadian rule of law', color: 'watt-trust' }
+                ].map((benefit, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-watt-success/60 hover:shadow-institutional transition-all">
+                    <div className={`p-2 rounded-lg bg-${benefit.color}/10`}>
+                      <benefit.icon className={`w-4 h-4 text-${benefit.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-watt-navy">{benefit.title}</div>
+                      <div className="text-xs text-watt-navy/70">{benefit.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Energy Market Analytics - Embedded */}
           <StrategicMarketAnalytics />
         </div>
       </div>
