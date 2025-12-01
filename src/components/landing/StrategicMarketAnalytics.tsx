@@ -20,25 +20,25 @@ const locationBenefits = [
     icon: DollarSign,
     title: 'Competitive Energy Pricing',
     description: 'Deregulated market with wholesale rates',
-    color: 'neon-green'
+    color: 'watt-success'
   },
   {
     icon: Snowflake,
     title: 'Cold Climate Advantage',
     description: 'Natural cooling reduces operational costs',
-    color: 'electric-blue'
+    color: 'watt-trust'
   },
   {
     icon: Cable,
     title: 'Fiber Connectivity',
     description: 'Trans-continental fiber route access',
-    color: 'electric-purple'
+    color: 'watt-bitcoin'
   },
   {
     icon: Globe,
     title: 'Political Stability',
     description: 'Canadian jurisdiction with strong rule of law',
-    color: 'electric-yellow'
+    color: 'watt-trust'
   }
 ];
 
@@ -63,7 +63,7 @@ export const StrategicMarketAnalytics = () => {
     try {
       const endDate = new Date();
       const startDate = new Date();
-      startDate.setFullYear(endDate.getFullYear() - 1); // Past 1 year
+      startDate.setFullYear(endDate.getFullYear() - 1);
 
       console.log(`Fetching Alberta energy data for past year (${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]})`);
 
@@ -89,7 +89,6 @@ export const StrategicMarketAnalytics = () => {
         price: item.price
       }));
 
-      // Apply 95% uptime filter
       const filtered = applyMonthlyUptimeFilter(formattedData, 95);
       
       const prices = filtered.filteredData.map(d => d.price);
@@ -134,18 +133,18 @@ export const StrategicMarketAnalytics = () => {
     unit: string;
     subtitle?: string;
   }) => (
-    <Card className="border-slate-700/50 bg-slate-800/30 backdrop-blur-sm hover:border-electric-blue/50 transition-all hover:shadow-lg hover:shadow-electric-blue/10">
+    <Card className="border-white/10 bg-white/5 backdrop-blur-sm hover:border-watt-trust/50 transition-all hover:shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-electric-blue/10 rounded-lg">
-            <Icon className="w-4 h-4 text-electric-blue" />
+          <div className="p-2 bg-watt-trust/10 rounded-lg">
+            <Icon className="w-4 h-4 text-watt-trust" />
           </div>
-          <CardTitle className="text-sm text-slate-300">{title}</CardTitle>
+          <CardTitle className="text-sm text-white/70">{title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         {analytics.loading ? (
-          <div className="h-8 bg-slate-700/30 animate-pulse rounded"></div>
+          <div className="h-8 bg-white/10 animate-pulse rounded"></div>
         ) : analytics.error ? (
           <p className="text-sm text-red-400">Error</p>
         ) : (
@@ -154,10 +153,10 @@ export const StrategicMarketAnalytics = () => {
               <span className="text-2xl sm:text-3xl font-bold text-white">
                 {value !== null ? value.toFixed(2) : '—'}
               </span>
-              <span className="text-sm text-slate-400">{unit}</span>
+              <span className="text-sm text-white/60">{unit}</span>
             </div>
             {subtitle && (
-              <p className="text-xs text-slate-500">{subtitle}</p>
+              <p className="text-xs text-white/50">{subtitle}</p>
             )}
           </div>
         )}
@@ -170,12 +169,12 @@ export const StrategicMarketAnalytics = () => {
       {/* Section Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3">
-          <MapPin className="w-8 h-8 text-neon-green" />
+          <MapPin className="w-8 h-8 text-watt-success" />
           <h3 className="text-3xl font-bold text-white">
             Strategic Market Analytics
           </h3>
         </div>
-        <p className="text-sm text-slate-400 max-w-2xl mx-auto">
+        <p className="text-sm text-white/70 max-w-2xl mx-auto">
           Alberta's competitive advantages combined with real-time energy market intelligence
         </p>
       </div>
@@ -183,7 +182,7 @@ export const StrategicMarketAnalytics = () => {
       {/* Location Benefits */}
       <div>
         <div className="flex items-center justify-center gap-2 mb-6">
-          <Badge variant="outline" className="bg-neon-green/10 text-neon-green border-neon-green/30">
+          <Badge variant="outline" className="bg-watt-success/10 text-watt-success border-watt-success/30">
             Location Advantages
           </Badge>
         </div>
@@ -191,10 +190,9 @@ export const StrategicMarketAnalytics = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {locationBenefits.map((benefit, index) => {
             const colorClasses = {
-              'neon-green': 'text-neon-green bg-neon-green/10 hover:border-neon-green/50',
-              'electric-blue': 'text-electric-blue bg-electric-blue/10 hover:border-electric-blue/50',
-              'electric-purple': 'text-electric-purple bg-electric-purple/10 hover:border-electric-purple/50',
-              'electric-yellow': 'text-electric-yellow bg-electric-yellow/10 hover:border-electric-yellow/50'
+              'watt-success': 'text-watt-success bg-watt-success/10 hover:border-watt-success/50',
+              'watt-trust': 'text-watt-trust bg-watt-trust/10 hover:border-watt-trust/50',
+              'watt-bitcoin': 'text-watt-bitcoin bg-watt-bitcoin/10 hover:border-watt-bitcoin/50'
             };
             
             return (
@@ -202,8 +200,8 @@ export const StrategicMarketAnalytics = () => {
                 key={index} 
                 className={`
                   group relative p-6 rounded-2xl 
-                  bg-gradient-to-br from-slate-800/50 to-slate-900/50
-                  border border-slate-700/50
+                  bg-white/5
+                  border border-white/10
                   ${colorClasses[benefit.color as keyof typeof colorClasses]?.split(' ')[2]}
                   backdrop-blur-sm
                   transition-all duration-300
@@ -218,7 +216,7 @@ export const StrategicMarketAnalytics = () => {
                 </div>
                 
                 <h4 className="text-lg font-bold text-white mb-2">{benefit.title}</h4>
-                <p className="text-sm text-slate-400 leading-relaxed">{benefit.description}</p>
+                <p className="text-sm text-white/70 leading-relaxed">{benefit.description}</p>
               </div>
             );
           })}
@@ -228,15 +226,15 @@ export const StrategicMarketAnalytics = () => {
       {/* Energy Market Analytics */}
       <div>
         <div className="flex items-center justify-center gap-2 mb-6">
-          <Badge variant="outline" className="bg-electric-blue/10 text-electric-blue border-electric-blue/30">
+          <Badge variant="outline" className="bg-watt-trust/10 text-watt-trust border-watt-trust/30">
             Past 12 Months
           </Badge>
-          <Badge variant="outline" className="bg-neon-green/10 text-neon-green border-neon-green/30">
+          <Badge variant="outline" className="bg-watt-success/10 text-watt-success border-watt-success/30">
             95% Uptime Filter
           </Badge>
         </div>
         
-        <p className="text-sm text-slate-400 text-center mb-8">
+        <p className="text-sm text-white/70 text-center mb-8">
           Real-time data from Alberta Electric System Operator (AESO)
         </p>
 
@@ -282,19 +280,19 @@ export const StrategicMarketAnalytics = () => {
           />
         </div>
 
-        <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 hover:border-electric-blue/30 transition-all">
+        <div className="relative bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-watt-trust/30 transition-all">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-electric-blue/10 rounded-lg flex-shrink-0">
-              <Activity className="w-6 h-6 text-electric-blue" />
+            <div className="p-3 bg-watt-trust/10 rounded-lg flex-shrink-0">
+              <Activity className="w-6 h-6 text-watt-trust" />
             </div>
             <div className="space-y-3 flex-1">
               <h4 className="text-lg font-bold text-white">
                 Live Market Data Integration
               </h4>
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-sm text-white/70 leading-relaxed">
                 Our facility leverages Alberta's deregulated energy market to optimize operations in real-time. 
                 The 95% uptime calculation removes the highest 5% of price spikes, providing a realistic baseline 
-                for operational cost planning. With an average price of <span className="text-neon-green font-semibold">${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh</span> over the past year, Alberta offers competitive energy rates for high-performance computing workloads.
+                for operational cost planning. With an average price of <span className="text-watt-success font-semibold">${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh</span> over the past year, Alberta offers competitive energy rates for high-performance computing workloads.
               </p>
             </div>
           </div>
