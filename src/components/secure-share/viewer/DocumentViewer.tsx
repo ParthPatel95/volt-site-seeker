@@ -114,9 +114,13 @@ export function DocumentViewer({
   const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
   const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
   const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
+  const isOfficeDoc = documentType?.includes('word') || documentType?.includes('document') || /\.docx?$/i.test(documentUrl);
+  const isOfficeSheet = documentType?.includes('sheet') || /\.xlsx?$/i.test(documentUrl);
+  const isOfficePresentation = documentType?.includes('presentation') || /\.pptx?$/i.test(documentUrl);
+  const isOffice = isOfficeDoc || isOfficeSheet || isOfficePresentation;
   
-  // Images support translation via OCR
-  const supportsTranslation = isPdf || isImage;
+  // PDFs, images, and Office documents support translation
+  const supportsTranslation = isPdf || isImage || isOffice;
 
   // Cleanup PDF.js resources on unmount
   useEffect(() => {
@@ -680,7 +684,7 @@ export function DocumentViewer({
           </div>
           
           <div className="flex items-center gap-2">
-            {isPdf && (
+            {supportsTranslation && (
               <Button 
                 onClick={() => setTranslationOpen(!translationOpen)} 
                 size="sm" 
@@ -727,12 +731,14 @@ export function DocumentViewer({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {supportsTranslation && (
+                  <DropdownMenuItem onClick={() => setTranslationOpen(!translationOpen)}>
+                    <Globe className="w-4 h-4 mr-2" />
+                    Translate
+                  </DropdownMenuItem>
+                )}
                 {isPdf && (
                   <>
-                    <DropdownMenuItem onClick={() => setTranslationOpen(!translationOpen)}>
-                      <Globe className="w-4 h-4 mr-2" />
-                      Translate
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleRotate}>
                       <RotateCw className="w-4 h-4 mr-2" />
                       Rotate
@@ -945,6 +951,39 @@ export function DocumentViewer({
                   style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
                   title="Text document preview"
                 />
+              </div>
+            ) : isOffice ? (
+              <div className="flex flex-col items-center justify-center h-full p-6 md:p-12 space-y-4">
+                <div className="text-center space-y-4">
+                  <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                    <Languages className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-base md:text-lg font-semibold mb-2">
+                      {isOfficeDoc && 'Word Document'}
+                      {isOfficeSheet && 'Excel Spreadsheet'}
+                      {isOfficePresentation && 'PowerPoint Presentation'}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Click "Translate" to extract and translate text from this document
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <Button onClick={() => setTranslationOpen(true)} variant="default">
+                      <Globe className="w-4 h-4 mr-2" />
+                      Translate Document
+                    </Button>
+                    {canDownload && (
+                      <Button onClick={handleDownload} variant="outline">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Supports: .docx, .xlsx, .pptx, .doc, .xls, .ppt
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full p-6 md:p-12">

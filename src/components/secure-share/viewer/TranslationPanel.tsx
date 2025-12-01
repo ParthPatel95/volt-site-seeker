@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2, RefreshCw, Scan, Edit } from 'lucide-react';
+import { Globe, X, Loader2, Copy, Check, ChevronDown, Download, Columns2, FileText, CheckCircle2, RefreshCw, Scan, Edit, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -442,6 +442,56 @@ export function TranslationPanel({
     try {
       const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentUrl || '');
       const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
+      const isOffice = documentType?.includes('word') || documentType?.includes('document') || 
+                      documentType?.includes('sheet') || documentType?.includes('presentation') ||
+                      /\.(docx?|xlsx?|pptx?)$/i.test(documentUrl || '');
+
+      // Office documents use their own parser (not OCR)
+      if (isOffice) {
+        console.log('[Office] Parsing Office document');
+        setExtractionStatus('Parsing document...');
+
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-office-document`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            documentUrl,
+            documentType,
+            documentId
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to parse Office document');
+        }
+
+        const data = await response.json();
+        const officeText = data.text;
+
+        if (!officeText || officeText.trim().length === 0) {
+          throw new Error('No text could be extracted from this document');
+        }
+
+        console.log('[Office] Parsing complete', { textLength: officeText.length, cached: data.cached });
+        
+        setOcrExtractedText(officeText);
+        setOcrEnabled(true);
+        setOcrStatus('text-layer');
+        setExtractionStatus('');
+        
+        toast({
+          title: data.cached ? 'Document Text Retrieved (Cached)' : 'Document Parsed',
+          description: `Extracted ${officeText.length} characters from document`,
+        });
+
+        await handleTranslate(false, officeText);
+        setIsOcrProcessing(false);
+        return;
+      }
 
       if (method === 'browser') {
         // Browser-based OCR using Tesseract.js
@@ -1019,52 +1069,100 @@ export function TranslationPanel({
           </p>
         )}
 
-        {/* Scanned PDF Warning with OCR Options */}
-        {isScannedPdf && !ocrEnabled && !isTranslating && !isOcrProcessing && (
-          <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3">
-            <div className="flex items-start gap-3">
-              <Scan className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-              <div className="flex-1 space-y-3">
-                <div>
-                  <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                    Scanned Document Detected
+        {/* Office Document / Scanned PDF Warning with OCR Options */}
+        {(() => {
+          const isOffice = documentType?.includes('word') || documentType?.includes('document') || 
+                          documentType?.includes('sheet') || documentType?.includes('presentation') ||
+                          /\.(docx?|xlsx?|pptx?)$/i.test(documentUrl || '');
+          
+          if (isOffice && !ocrEnabled && !isTranslating && !isOcrProcessing) {
+            return (
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-3">
+                <div className="flex items-start gap-3">
+                  <Languages className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        Office Document Detected
+                      </div>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        Click "Parse Document" below to extract text from this {
+                          documentType?.includes('word') || documentType?.includes('document') ? 'Word document' :
+                          documentType?.includes('sheet') ? 'Excel spreadsheet' :
+                          'PowerPoint presentation'
+                        }.
+                      </p>
+                    </div>
+                    
+                    <Button
+                      onClick={() => handleEnableOcr('ai')}
+                      disabled={isOcrProcessing}
+                      size="sm"
+                      className="w-full"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Parse Document
+                    </Button>
+                    
+                    <div className="text-xs text-blue-600/80 dark:text-blue-400/80">
+                      💡 Supports .docx, .xlsx, .pptx formats
+                    </div>
                   </div>
-                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                    This appears to be a scanned or image-based document with minimal text layer. 
-                    Choose an OCR method to extract and translate text.
-                  </p>
-                </div>
-                
-                {/* OCR Method Selection */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    onClick={() => handleEnableOcr('ai')}
-                    disabled={isOcrProcessing}
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <Scan className="w-4 h-4 mr-2" />
-                    AI OCR (Better Quality)
-                  </Button>
-                  <Button
-                    onClick={() => handleEnableOcr('browser')}
-                    disabled={isOcrProcessing}
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Scan className="w-4 h-4 mr-2" />
-                    Browser OCR (Free)
-                  </Button>
-                </div>
-                
-                <div className="text-xs text-amber-600/80 dark:text-amber-400/80">
-                  💡 AI OCR uses credits but provides better accuracy. Browser OCR is free and works offline.
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            );
+          }
+          
+          if (isScannedPdf && !ocrEnabled && !isTranslating && !isOcrProcessing) {
+            return (
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3">
+                <div className="flex items-start gap-3">
+                  <Scan className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                        Scanned Document Detected
+                      </div>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        This appears to be a scanned or image-based document with minimal text layer. 
+                        Choose an OCR method to extract and translate text.
+                      </p>
+                    </div>
+                    
+                    {/* OCR Method Selection */}
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        onClick={() => handleEnableOcr('ai')}
+                        disabled={isOcrProcessing}
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Scan className="w-4 h-4 mr-2" />
+                        AI OCR (Better Quality)
+                      </Button>
+                      <Button
+                        onClick={() => handleEnableOcr('browser')}
+                        disabled={isOcrProcessing}
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <Scan className="w-4 h-4 mr-2" />
+                        Browser OCR (Free)
+                      </Button>
+                    </div>
+                    
+                    <div className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                      💡 AI OCR uses credits but provides better accuracy. Browser OCR is free and works offline.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          return null;
+        })()}
 
         {/* OCR Processing Status with Progress */}
         {isOcrProcessing && (
