@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { SiteAccessRequestModal } from './SiteAccessRequestModal';
 import { ScrollReveal } from './ScrollAnimations';
-import { DatacenterAnimation } from './DatacenterAnimation';
+import { Datacenter3DScene } from './Datacenter3DScene';
 import './landing-animations.css';
 
 export const OptimizedHeroSection = () => {
@@ -87,9 +87,9 @@ export const OptimizedHeroSection = () => {
           </div>
 
           {/* Right Visual Showcase (45%) */}
-          <div className="w-full lg:w-[45%]">
+          <div className="w-full lg:w-[45%] h-[400px] lg:h-[500px]">
             <ScrollReveal delay={200}>
-              <DatacenterAnimation />
+              <Datacenter3DScene />
             </ScrollReveal>
           </div>
 
