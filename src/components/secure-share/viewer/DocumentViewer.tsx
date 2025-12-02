@@ -114,10 +114,13 @@ export function DocumentViewer({
   
   // Calculate safe PDF width to prevent canvas overflow on mobile devices
   const [pdfRenderWidth, setPdfRenderWidth] = useState(() => {
-    if (typeof window === 'undefined') return 400;
+    if (typeof window === 'undefined') return 350;
     const width = window.innerWidth;
-    // Mobile: max 400px, Desktop: max 700px - lower values prevent canvas overflow
-    if (width < 768) {
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // iOS has stricter canvas memory limits (384MB) - use smaller size
+    if (iOS) {
+      return Math.min(width - 32, 350);
+    } else if (width < 768) {
       return Math.min(width - 32, 400);
     }
     return Math.min(width - 100, 700);
@@ -128,9 +131,12 @@ export function DocumentViewer({
     const checkMobile = () => {
       const width = window.innerWidth;
       const mobile = width < 768;
+      const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       setIsMobile(mobile);
-      // Update render width when viewport changes - keeps canvas small to prevent overflow
-      if (mobile) {
+      // Update render width when viewport changes - iOS gets smaller size due to stricter memory limits
+      if (iOS) {
+        setPdfRenderWidth(Math.min(width - 32, 350));
+      } else if (mobile) {
         setPdfRenderWidth(Math.min(width - 32, 400));
       } else {
         setPdfRenderWidth(Math.min(width - 100, 700));
@@ -559,6 +565,21 @@ export function DocumentViewer({
     // Debounce: minimum 150ms between navigations
     if (now - lastNavigationTime.current < 150) return;
     if (newPage < 1 || newPage > numPages || newPage === pageNumber) return;
+    
+    // CRITICAL: Synchronous canvas cleanup BEFORE page change (iOS memory fix)
+    // This clears the old canvas memory before React renders the new page
+    if (canvasContainerRef.current) {
+      const canvases = canvasContainerRef.current.querySelectorAll('canvas');
+      canvases.forEach(canvas => {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        canvas.width = 1;
+        canvas.height = 1;
+      });
+      console.log('[DocumentViewer] Canvas cleaned before page change');
+    }
     
     lastNavigationTime.current = now;
     setPageNumber(newPage);
@@ -1030,6 +1051,7 @@ export function DocumentViewer({
                   }}
                 >
                   <Page
+                    key={pageNumber}
                     pageNumber={pageNumber}
                     width={pdfRenderWidth}
                     rotate={rotation}
