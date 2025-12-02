@@ -17,7 +17,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { bucket, path, storagePath, expiresIn } = await req.json();
+    const { bucket, path, storagePath, expiresIn, isVideo } = await req.json();
 
     // Support both 'path' and 'storagePath' for backwards compatibility
     const filePath = path || storagePath;
@@ -39,10 +39,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Video-optimized expiry time (6 hours default for videos, 1 hour for others)
+    const defaultExpiry = isVideo ? 21600 : 3600;
+    const expirySeconds = expiresIn || defaultExpiry;
+
+    console.log(`[get-signed-url] Creating signed URL: ${filePath}, isVideo: ${isVideo}, expiry: ${expirySeconds}s`);
+
     // Create signed URL with service role permissions
     const { data, error } = await supabaseAdmin.storage
       .from(bucketName)
-      .createSignedUrl(filePath, expiresIn || 3600);
+      .createSignedUrl(filePath, expirySeconds);
 
     if (error) {
       console.error("Signed URL error:", error);
@@ -55,17 +61,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Return signed URL with enhanced CORS headers for iOS Safari compatibility
+    // Return signed URL with enhanced CORS and caching headers
     return new Response(
-      JSON.stringify({ signedUrl: data.signedUrl }),
+      JSON.stringify({ 
+        signedUrl: data.signedUrl,
+        expiresIn: expirySeconds,
+        isVideo: isVideo || false
+      }),
       {
         status: 200,
         headers: { 
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-          "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition"
+          "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
+          "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition, Accept-Ranges, Content-Range",
+          "Cache-Control": "public, max-age=300" // 5 min cache for repeated requests
         },
       }
     );

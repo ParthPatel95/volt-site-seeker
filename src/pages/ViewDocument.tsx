@@ -28,18 +28,18 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   
-  // Helper function to fetch signed URL with retry logic
-  const fetchSignedUrlWithRetry = async (storagePath: string, expiresIn: number, retries = 3): Promise<string | null> => {
+  // Helper function to fetch signed URL with retry logic and video optimization
+  const fetchSignedUrlWithRetry = async (storagePath: string, expiresIn: number, isVideo = false, retries = 3): Promise<string | null> => {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const { data, error } = await supabase.functions.invoke('get-signed-url', {
-          body: { storagePath, expiresIn }
+          body: { storagePath, expiresIn, isVideo }
         });
 
         if (error) {
           console.error(`[ViewDocument] Signed URL error (attempt ${attempt}):`, error);
           if (attempt === retries) return null;
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
           continue;
         }
 
@@ -197,7 +197,12 @@ export default function ViewDocument() {
           folderDocs.map(async (doc: any) => {
             if (!doc.storage_path) return;
 
-            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, expirySeconds);
+            // Detect video files for optimized expiry
+            const isVideoFile = doc.file_type?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(doc.file_name);
+            // Videos get 6 hours expiry, other files use folder expiry
+            const videoExpiry = isVideoFile ? 21600 : expirySeconds;
+
+            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, videoExpiry, isVideoFile);
             if (signedUrl) {
               doc.file_url = signedUrl;
             } else {
@@ -233,7 +238,12 @@ export default function ViewDocument() {
             const doc = bundleDoc.document;
             if (!doc || !doc.storage_path) return;
 
-            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, expirySeconds);
+            // Detect video files for optimized expiry
+            const isVideoFile = doc.file_type?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(doc.file_name);
+            // Videos get 6 hours expiry, other files use bundle expiry
+            const videoExpiry = isVideoFile ? 21600 : expirySeconds;
+
+            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, videoExpiry, isVideoFile);
             if (signedUrl) {
               doc.file_url = signedUrl;
             } else {
@@ -252,17 +262,24 @@ export default function ViewDocument() {
           throw new Error('Document storage path not found');
         }
 
-        let expirySeconds = 86400; // Default 24 hours
+        // Detect video files for optimized expiry
+        const isVideoFile = link.document.file_type?.startsWith('video/') || 
+          /\.(mp4|mov|avi|mkv|webm)$/i.test(link.document.file_name);
+        
+        // Videos get 6 hours expiry by default, others get 24 hours
+        let expirySeconds = isVideoFile ? 21600 : 86400;
         
         if (link.expires_at) {
           const expiryTime = new Date(link.expires_at).getTime();
           const now = Date.now();
-          expirySeconds = Math.max(60, Math.floor((expiryTime - now) / 1000));
+          const linkExpiry = Math.max(60, Math.floor((expiryTime - now) / 1000));
+          // Use shorter of link expiry or default video/doc expiry
+          expirySeconds = Math.min(expirySeconds, linkExpiry);
         }
 
-        console.log('Creating signed URL for:', storagePath, 'expiry:', expirySeconds);
+        console.log('Creating signed URL for:', storagePath, 'isVideo:', isVideoFile, 'expiry:', expirySeconds);
         
-        const signedUrl = await fetchSignedUrlWithRetry(storagePath, expirySeconds);
+        const signedUrl = await fetchSignedUrlWithRetry(storagePath, expirySeconds, isVideoFile);
 
         if (signedUrl) {
           console.log('Signed URL created successfully');
