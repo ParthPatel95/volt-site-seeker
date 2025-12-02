@@ -41,18 +41,8 @@ export const LandingFooter = () => {
                 </a>
               </li>
               <li>
-                <a href="#facilities" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Facilities
-                </a>
-              </li>
-              <li>
-                <a href="#pipeline" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Pipeline
-                </a>
-              </li>
-              <li>
-                <a href="#team" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Leadership
+                <a href="/wattfund" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  WattFund
                 </a>
               </li>
             </ul>
@@ -63,23 +53,8 @@ export const LandingFooter = () => {
             <h3 className="text-sm font-semibold text-watt-navy mb-3">Resources</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/wattfund" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  WattFund
-                </a>
-              </li>
-              <li>
-                <a href="#market-data" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Market Data
-                </a>
-              </li>
-              <li>
-                <a href="#analytics" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Analytics
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Contact
+                <a href="/app" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  VoltScout Platform
                 </a>
               </li>
             </ul>
@@ -89,7 +64,7 @@ export const LandingFooter = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-watt-navy/10 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-xs text-watt-navy/50">
-            © 2024 WattByte Infrastructure Company. All rights reserved.
+            © 2025 WattByte Infrastructure Company. All rights reserved.
           </p>
           <div className="flex items-center space-x-6">
             <a href="#privacy" className="text-xs text-watt-navy/50 hover:text-watt-trust transition-colors">

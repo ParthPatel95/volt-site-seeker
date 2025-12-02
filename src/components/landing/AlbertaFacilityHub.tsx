@@ -231,10 +231,16 @@ export const AlbertaFacilityHub = () => {
                     'watt-trust': 'border-watt-trust/30 hover:border-watt-trust/60 hover:bg-watt-trust/5'
                   };
                   
+                  const iconColorClasses = {
+                    'watt-success': 'text-watt-success',
+                    'watt-bitcoin': 'text-watt-bitcoin',
+                    'watt-trust': 'text-watt-trust'
+                  };
+                  
                   return (
                     <div key={index} className={`p-4 rounded-xl bg-white border ${colorClasses[spec.color as keyof typeof colorClasses]} transition-all hover:shadow-institutional`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <spec.icon className={`w-4 h-4 text-${spec.color}`} />
+                        <spec.icon className={`w-4 h-4 ${iconColorClasses[spec.color as keyof typeof iconColorClasses]}`} />
                         <div className="text-xs text-watt-navy/60">{spec.label}</div>
                       </div>
                       <div className="flex items-baseline gap-1">
@@ -261,17 +267,31 @@ export const AlbertaFacilityHub = () => {
                   { icon: Snowflake, title: 'Cold Climate', desc: 'Natural cooling advantage', color: 'watt-trust' },
                   { icon: Cable, title: 'Fiber Access', desc: 'Trans-continental connectivity', color: 'watt-bitcoin' },
                   { icon: Globe, title: 'Stable Jurisdiction', desc: 'Canadian rule of law', color: 'watt-trust' }
-                ].map((benefit, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-watt-success/60 hover:shadow-institutional transition-all">
-                    <div className={`p-2 rounded-lg bg-${benefit.color}/10`}>
-                      <benefit.icon className={`w-4 h-4 text-${benefit.color}`} />
+                ].map((benefit, index) => {
+                  const bgColorClasses = {
+                    'watt-success': 'bg-watt-success/10',
+                    'watt-bitcoin': 'bg-watt-bitcoin/10',
+                    'watt-trust': 'bg-watt-trust/10'
+                  };
+                  
+                  const iconColorClasses = {
+                    'watt-success': 'text-watt-success',
+                    'watt-bitcoin': 'text-watt-bitcoin',
+                    'watt-trust': 'text-watt-trust'
+                  };
+                  
+                  return (
+                    <div key={index} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-watt-success/60 hover:shadow-institutional transition-all">
+                      <div className={`p-2 rounded-lg ${bgColorClasses[benefit.color as keyof typeof bgColorClasses]}`}>
+                        <benefit.icon className={`w-4 h-4 ${iconColorClasses[benefit.color as keyof typeof iconColorClasses]}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-watt-navy">{benefit.title}</div>
+                        <div className="text-xs text-watt-navy/70">{benefit.desc}</div>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-watt-navy">{benefit.title}</div>
-                      <div className="text-xs text-watt-navy/70">{benefit.desc}</div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
