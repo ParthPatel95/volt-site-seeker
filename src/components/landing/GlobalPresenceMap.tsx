@@ -35,17 +35,17 @@ const GlobalPresenceMap: React.FC = () => {
   const totalCapacity = countries.reduce((sum, country) => sum + country.capacity, 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-      {/* Map Container */}
-      <div className="lg:col-span-2 relative">
-        <Card className="p-0 bg-watt-navy border-gray-700 shadow-institutional overflow-hidden">
-          <div className="relative w-full" style={{ minHeight: '400px' }}>
-            {/* World Map Background Image */}
+    <div className="relative">
+      {/* Full Width Map Container with Integrated Legend */}
+      <Card className="p-0 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-navy/95 border-watt-navy/50 shadow-institutional overflow-hidden">
+        <div className="relative">
+          {/* World Map */}
+          <div className="relative w-full" style={{ minHeight: '500px' }}>
             <img 
               src={worldMapImage} 
               alt="World Map" 
-              className="w-full h-auto object-contain"
-              style={{ minHeight: '400px' }}
+              className="w-full h-auto object-contain opacity-90"
+              style={{ minHeight: '500px' }}
             />
             
             {/* Interactive Markers Overlay */}
@@ -53,7 +53,7 @@ const GlobalPresenceMap: React.FC = () => {
               {countries.map((country) => {
                 const isHovered = hoveredCountry === country.name;
                 const isSelected = selectedCountry === country.name;
-                const markerSize = Math.max(12, Math.min(24, country.capacity / 25));
+                const markerSize = Math.max(14, Math.min(26, country.capacity / 22));
                 
                 return (
                   <div
@@ -68,15 +68,30 @@ const GlobalPresenceMap: React.FC = () => {
                     onMouseLeave={() => setHoveredCountry(null)}
                     onClick={() => setSelectedCountry(country.name === selectedCountry ? null : country.name)}
                   >
+                    {/* Pulse Ring Animation */}
+                    <div
+                      className={`absolute inset-0 rounded-full transition-all duration-500 ${
+                        isHovered || isSelected ? 'animate-ping' : ''
+                      }`}
+                      style={{
+                        width: `${markerSize * 2}px`,
+                        height: `${markerSize * 2}px`,
+                        background: 'rgba(247, 147, 26, 0.3)',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    />
+                    
                     {/* Glow Effect */}
                     <div
                       className={`absolute inset-0 rounded-full transition-all duration-300 ${
-                        isHovered || isSelected ? 'animate-pulse' : ''
+                        isHovered || isSelected ? 'opacity-100' : 'opacity-60'
                       }`}
                       style={{
-                        width: `${markerSize * 2.5}px`,
-                        height: `${markerSize * 2.5}px`,
-                        background: `radial-gradient(circle, #F7931A40 0%, transparent 70%)`,
+                        width: `${markerSize * 3}px`,
+                        height: `${markerSize * 3}px`,
+                        background: `radial-gradient(circle, rgba(247, 147, 26, 0.4) 0%, transparent 70%)`,
                         left: '50%',
                         top: '50%',
                         transform: 'translate(-50%, -50%)',
@@ -85,15 +100,16 @@ const GlobalPresenceMap: React.FC = () => {
                     
                     {/* Marker Dot */}
                     <div
-                      className="relative rounded-full transition-all duration-300 shadow-lg"
+                      className="relative rounded-full transition-all duration-300"
                       style={{
                         width: `${markerSize}px`,
                         height: `${markerSize}px`,
                         backgroundColor: '#F7931A',
                         boxShadow: isHovered || isSelected 
-                          ? '0 0 20px #F7931A, 0 0 40px rgba(247, 147, 26, 0.5)'
-                          : '0 0 10px rgba(247, 147, 26, 0.5)',
-                        transform: isHovered || isSelected ? 'scale(1.4)' : 'scale(1)',
+                          ? '0 0 24px #F7931A, 0 0 48px rgba(247, 147, 26, 0.6), 0 0 8px rgba(0,0,0,0.3)'
+                          : '0 0 12px rgba(247, 147, 26, 0.6), 0 0 4px rgba(0,0,0,0.2)',
+                        transform: isHovered || isSelected ? 'scale(1.5)' : 'scale(1)',
+                        border: '2px solid rgba(255, 255, 255, 0.9)',
                       }}
                     />
 
@@ -101,28 +117,28 @@ const GlobalPresenceMap: React.FC = () => {
                     {isHovered && (
                       <div
                         className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-                        style={{ top: `-${markerSize + 80}px` }}
+                        style={{ top: `-${markerSize + 85}px` }}
                       >
-                        <div className="bg-white rounded-lg shadow-2xl p-3 min-w-[180px] border border-gray-200 animate-fade-in">
-                          <div className="flex items-center gap-2 mb-1">
+                        <div className="bg-white rounded-xl shadow-2xl p-4 min-w-[200px] border-2 border-bitcoin/20 animate-fade-in">
+                          <div className="flex items-center gap-3 mb-2">
                             <img 
                               src={country.flag} 
                               alt={country.name}
-                              className="w-5 h-4 object-cover rounded"
+                              className="w-6 h-5 object-cover rounded shadow-sm"
                             />
-                            <span className="font-semibold text-watt-navy text-sm">
+                            <span className="font-bold text-watt-navy">
                               {country.name}
                             </span>
                           </div>
-                          <div className="text-xs text-watt-navy/70">
-                            <div className="font-medium text-bitcoin">{country.capacity}MW</div>
-                            <div>{country.type}</div>
+                          <div className="space-y-1">
+                            <div className="font-bold text-lg text-bitcoin">{country.capacity}MW</div>
+                            <div className="text-sm text-watt-navy/70">{country.type}</div>
                           </div>
                         </div>
                         {/* Arrow */}
                         <div 
-                          className="absolute left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-white"
-                          style={{ top: '100%' }}
+                          className="absolute left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[10px] border-transparent border-t-white"
+                          style={{ top: '100%', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.1))' }}
                         />
                       </div>
                     )}
@@ -131,89 +147,82 @@ const GlobalPresenceMap: React.FC = () => {
               })}
             </div>
           </div>
-        </Card>
-      </div>
 
-      {/* Legend Panel */}
-      <div className="space-y-4">
-        <Card className="p-6 bg-white border-gray-200 shadow-institutional">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-              <h3 className="font-bold text-watt-navy text-lg">Global Pipeline</h3>
-              <Badge variant="secondary" className="bg-bitcoin/10 text-bitcoin border-bitcoin/20 font-bold">
-                {totalCapacity.toLocaleString()}MW
-              </Badge>
-            </div>
-            
-            <div className="space-y-3">
-              {countries
-                .sort((a, b) => b.capacity - a.capacity)
-                .map((country) => {
-                  const isActive = selectedCountry === country.name || hoveredCountry === country.name;
-                  
-                  return (
-                    <div
-                      key={country.name}
-                      className={`
-                        p-3 rounded-lg cursor-pointer transition-all duration-300
-                        ${isActive 
-                          ? 'bg-bitcoin/10 border-2 border-bitcoin/30' 
-                          : 'bg-gray-50 border-2 border-transparent hover:border-gray-200'
-                        }
-                      `}
-                      onMouseEnter={() => setHoveredCountry(country.name)}
-                      onMouseLeave={() => setHoveredCountry(null)}
-                      onClick={() => setSelectedCountry(country.name === selectedCountry ? null : country.name)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {country.flag && (
-                            <img 
-                              src={country.flag} 
-                              alt={country.name}
-                              className="w-5 h-4 object-cover rounded"
-                            />
-                          )}
-                          <span className="font-semibold text-watt-navy text-sm">
-                            {country.name}
-                          </span>
+          {/* Integrated Bottom Legend Bar */}
+          <div className="border-t border-white/10 bg-gradient-to-b from-watt-navy/95 to-watt-navy backdrop-blur-sm">
+            <div className="px-6 py-6">
+              {/* Header with Total */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Global Development Pipeline</h3>
+                  <p className="text-sm text-white/60">Six strategic locations across continents</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-bitcoin">{totalCapacity.toLocaleString()}MW</div>
+                  <div className="text-xs text-white/60 uppercase tracking-wide">Total Capacity</div>
+                </div>
+              </div>
+
+              {/* Country Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {countries
+                  .sort((a, b) => b.capacity - a.capacity)
+                  .map((country) => {
+                    const isActive = selectedCountry === country.name || hoveredCountry === country.name;
+                    
+                    return (
+                      <div
+                        key={country.name}
+                        className={`
+                          group relative p-4 rounded-lg cursor-pointer transition-all duration-300
+                          ${isActive 
+                            ? 'bg-bitcoin/20 border-2 border-bitcoin shadow-lg scale-105' 
+                            : 'bg-white/5 border-2 border-white/10 hover:bg-white/10 hover:border-white/20'
+                          }
+                        `}
+                        onMouseEnter={() => setHoveredCountry(country.name)}
+                        onMouseLeave={() => setHoveredCountry(null)}
+                        onClick={() => setSelectedCountry(country.name === selectedCountry ? null : country.name)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <img 
+                            src={country.flag} 
+                            alt={country.name}
+                            className="w-8 h-6 object-cover rounded shadow-sm flex-shrink-0 mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-white mb-1 truncate">
+                              {country.name}
+                            </div>
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <span className="text-xl font-bold text-bitcoin">
+                                {country.capacity}
+                              </span>
+                              <span className="text-sm text-white/60">MW</span>
+                            </div>
+                            <div className="text-xs text-white/50">
+                              {country.type}
+                            </div>
+                          </div>
                         </div>
-                        <span className="font-bold text-bitcoin text-sm">
-                          {country.capacity}MW
-                        </span>
+                        
+                        {/* Capacity Bar */}
+                        <div className="mt-3 h-1 bg-white/10 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-700 ${
+                              isActive ? 'bg-bitcoin' : 'bg-bitcoin/60'
+                            }`}
+                            style={{ width: `${(country.capacity / totalCapacity) * 100}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="text-xs text-watt-navy/60">
-                        {country.type}
-                      </div>
-                      
-                      {/* Capacity Bar */}
-                      <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-bitcoin transition-all duration-500"
-                          style={{ width: `${(country.capacity / totalCapacity) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+              </div>
             </div>
           </div>
-        </Card>
-
-        {/* Summary Stats */}
-        <Card className="p-4 bg-gradient-to-br from-bitcoin/5 to-trust/5 border-bitcoin/20">
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-watt-navy">{countries.length}</div>
-              <div className="text-xs text-watt-navy/60">Countries</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-watt-navy">{totalCapacity}MW</div>
-              <div className="text-xs text-watt-navy/60">Total Capacity</div>
-            </div>
-          </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
     </div>
   );
 };
