@@ -5,7 +5,7 @@ import { Zap, TrendingUp, Activity, DollarSign } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
 
 export const LiveERCOTData = () => {
-  const { pricing, loadData } = useERCOTData();
+  const { pricing, loadData, loading } = useERCOTData();
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -33,6 +33,12 @@ export const LiveERCOTData = () => {
         <p className="text-watt-navy/70 text-sm">Electric Reliability Council of Texas</p>
       </CardHeader>
       <CardContent className="space-y-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-2 border-watt-trust border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <>
         {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30 ${isAnimating ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
@@ -103,6 +109,8 @@ export const LiveERCOTData = () => {
               </div>
             </div>
           </div>
+        )}
+        </>
         )}
       </CardContent>
     </Card>
