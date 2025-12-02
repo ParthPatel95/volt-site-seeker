@@ -109,12 +109,6 @@ export function DocumentViewer({
   const [dimensionsReady, setDimensionsReady] = useState(false);
   const pageLoadStartTime = useRef<number | null>(null);
   
-  // Retry mechanism for page load failures
-  const pageRetryCount = useRef(0);
-  const maxRetries = 2;
-  const [pageRetryTrigger, setPageRetryTrigger] = useState(0);
-  const failedPageRef = useRef<number | null>(null);
-  
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
@@ -279,30 +273,6 @@ export function DocumentViewer({
     setPageLoadFailed(false);
     setIsPageLoading(true);
     pageLoadStartTime.current = Date.now();
-    pageRetryCount.current = 0; // Reset retry count for new page
-    failedPageRef.current = null; // Clear failed page reference
-  }, [pageNumber]);
-
-  // Unified error handler for render errors
-  const handleRenderError = useCallback((error: Error, errorType: string) => {
-    console.error(`[DocumentViewer] ${errorType}:`, error);
-    failedPageRef.current = pageNumber;
-    
-    if (pageRetryCount.current < maxRetries) {
-      pageRetryCount.current++;
-      console.log(`[DocumentViewer] Retrying page ${pageNumber} due to ${errorType} (attempt ${pageRetryCount.current}/${maxRetries})`);
-      setPageLoadFailed(false);
-      setIsPageLoading(true);
-      setPageRetryTrigger(prev => prev + 1);
-    } else {
-      console.warn(`[DocumentViewer] Page ${pageNumber} failed after ${maxRetries} retries`);
-      setTimeout(() => {
-        if (failedPageRef.current === pageNumber) {
-          setPageLoadFailed(true);
-        }
-      }, 100);
-      setIsPageLoading(false);
-    }
   }, [pageNumber]);
 
   // Activity tracking
@@ -1146,9 +1116,7 @@ export function DocumentViewer({
                           <Button 
                             onClick={() => {
                               setPageLoadFailed(false);
-                              pageRetryCount.current = 0; // Reset retry count
-                              failedPageRef.current = null;
-                              setPageRetryTrigger(prev => prev + 1); // Force Page remount
+                              setIsPageLoading(true);
                             }} 
                             variant="outline"
                             size="sm"
@@ -1183,12 +1151,11 @@ export function DocumentViewer({
                       >
                       {/* Page Component wrapped in error boundary for render-phase errors */}
                       <PdfErrorBoundary 
-                        key={`boundary-${pageNumber}-${pageRetryTrigger}`}
                         onError={() => setUseNativePdfViewer(true)}
                         maxRetries={2}
+                        resetKey={pageNumber}
                       >
                       <Page
-                        key={`${pageNumber}-${pageRetryTrigger}`}
                         pageNumber={pageNumber}
                         width={pageWidth}
                         rotate={rotation}
@@ -1207,18 +1174,6 @@ export function DocumentViewer({
                           setPageLoadFailed(false);
                           initialLoadRef.current = false;
                           pageLoadStartTime.current = null;
-                          pageRetryCount.current = 0;
-                          failedPageRef.current = null;
-                        }}
-                        onLoadError={(error) => {
-                          handleRenderError(error, 'Page load error');
-                          setIsPageLoading(false);
-                          initialLoadRef.current = false;
-                          pageLoadStartTime.current = null;
-                        }}
-                        onRenderError={(error) => {
-                          console.error('[DocumentViewer] Canvas render error:', error);
-                          handleRenderError(error, 'Canvas render error');
                         }}
                         onRenderAnnotationLayerError={(error) => {
                           console.warn('[DocumentViewer] Annotation layer render error:', error);
