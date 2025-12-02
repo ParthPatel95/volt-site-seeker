@@ -78,10 +78,6 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
           
-          <SectionDivider color="blue" />
-          
-          <LiveDataSection />
-          
           <SectionDivider color="yellow" />
           
           <section aria-label="Investment Thesis" className="relative">
@@ -89,6 +85,10 @@ const Landing: React.FC = () => {
               <InvestmentThesisSection />
             </Suspense>
           </section>
+          
+          <SectionDivider color="blue" />
+          
+          <LiveDataSection />
           
           <SectionDivider color="green" />
           
