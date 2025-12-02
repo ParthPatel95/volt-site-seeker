@@ -155,11 +155,11 @@ const GlobalPresenceMap: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-bold text-white mb-1">Global Development Pipeline</h3>
-                  <p className="text-sm text-white/60">Six strategic locations across continents</p>
+                  <p className="text-sm text-white/90">Six strategic locations across continents</p>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-bitcoin">{totalCapacity.toLocaleString()}MW</div>
-                  <div className="text-xs text-white/60 uppercase tracking-wide">Total Capacity</div>
+                  <div className="text-xs text-white/90 uppercase tracking-wide">Total Capacity</div>
                 </div>
               </div>
 
@@ -198,9 +198,9 @@ const GlobalPresenceMap: React.FC = () => {
                               <span className="text-xl font-bold text-bitcoin">
                                 {country.capacity}
                               </span>
-                              <span className="text-sm text-white/60">MW</span>
+                              <span className="text-sm text-white/90">MW</span>
                             </div>
-                            <div className="text-xs text-white/50">
+                            <div className="text-xs text-white/80">
                               {country.type}
                             </div>
                           </div>
