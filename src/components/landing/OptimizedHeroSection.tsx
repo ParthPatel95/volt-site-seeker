@@ -9,7 +9,7 @@ import './landing-animations.css';
 
 export const OptimizedHeroSection = () => {
   return (
-    <section className="relative z-10 w-full min-h-[90vh] overflow-hidden">
+    <section className="relative z-10 w-full min-h-[70vh] overflow-hidden">
       {/* Full-Width Background Photo Layer */}
       <div className="absolute inset-0 w-full h-full">
         <FacilityShowcase />
@@ -24,7 +24,7 @@ export const OptimizedHeroSection = () => {
       />
       
       {/* Floating Content Layer */}
-      <div className="relative z-10 flex items-center min-h-[90vh] pt-24 sm:pt-32 md:pt-36 pb-20 sm:pb-24 md:pb-28">
+      <div className="relative z-10 flex items-center min-h-[70vh] pt-24 sm:pt-28 md:pt-32 pb-16 sm:pb-20 md:pb-24">
         <div className="w-full px-6 sm:px-8 lg:px-16 max-w-2xl">
           {/* Main heading */}
           <ScrollReveal delay={100}>
