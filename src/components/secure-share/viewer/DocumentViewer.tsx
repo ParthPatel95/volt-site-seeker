@@ -120,6 +120,7 @@ export function DocumentViewer({
   
   // Safety timeout refs
   const pageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedAt = useRef<number>(Date.now());
   
   // Detect iOS for native PDF viewer fallback
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
@@ -165,9 +166,19 @@ export function DocumentViewer({
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
     if (isPdf && documentUrl) {
-      // Reset width lock when document changes
+      // Reset ALL state when document changes for clean initialization
       widthLocked.current = false;
       lockedPageWidth.current = null;
+      initialLoadRef.current = true;
+      initialDimensionsSet.current = false;
+      mountedAt.current = Date.now();
+      setNumPages(0);
+      setPageNumber(1);
+      setPageLoadFailed(false);
+      setIsPageLoading(false);
+      setUseNativePdfViewer(false);
+      setPdfDocumentProxy(null);
+      setPdfPageDimensions(null);
       
       const loadPdfProxy = async () => {
         setIsLoadingPdfProxy(true);
@@ -210,11 +221,8 @@ export function DocumentViewer({
           console.log('[DocumentViewer] PDF proxy loaded successfully', { numPages: proxy.numPages });
         } catch (error) {
           console.error('[DocumentViewer] Failed to load PDF proxy:', error);
-          // On pre-load failure, fallback to native viewer for reliability
-          if (!isIOS) {
-            console.warn('[DocumentViewer] Pre-load failed - switching to native viewer');
-            setUseNativePdfViewer(true);
-          }
+          // Don't fallback immediately - let react-pdf try to load the document
+          // Only fallback if react-pdf also fails
         } finally {
           setIsLoadingPdfProxy(false);
         }
@@ -243,7 +251,13 @@ export function DocumentViewer({
   
   // Safety timeout: Only on initial document load (not page navigation)
   useEffect(() => {
-    if (isPageLoading && initialLoadRef.current) {
+    const timeSinceMounted = Date.now() - mountedAt.current;
+    
+    // Only start safety timeout if:
+    // 1. Page is loading
+    // 2. This is the initial load
+    // 3. Component has been mounted for at least 1 second (allows pre-load effect to complete)
+    if (isPageLoading && initialLoadRef.current && timeSinceMounted > 1000) {
       console.log('[DocumentViewer] Starting 8-second safety timeout for initial load');
       pageLoadingTimeoutRef.current = setTimeout(() => {
         console.log('[DocumentViewer] Safety timeout triggered - switching to native viewer');
@@ -268,14 +282,9 @@ export function DocumentViewer({
     };
   }, [isPageLoading, toast]);
 
-  // Cleanup resources when page changes
+  // Reset page load failed state when page changes
   useEffect(() => {
     setPageLoadFailed(false);
-    setIsPageLoading(true);
-    
-    return () => {
-      setIsPageLoading(false);
-    };
   }, [pageNumber]);
 
   // Activity tracking

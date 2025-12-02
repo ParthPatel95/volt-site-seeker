@@ -187,6 +187,7 @@ export function FullScreenDocumentViewer({
       <div className="absolute inset-0 pt-16 safe-area-pb">
         <PdfErrorBoundary onError={() => {}}>
           <DocumentViewer
+            key={document.id}
             documentUrl={document.file_url}
             documentType={document.file_type}
             accessLevel={linkData.access_level}
