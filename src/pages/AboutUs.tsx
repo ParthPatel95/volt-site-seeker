@@ -4,7 +4,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LeadershipTeamSection } from '@/components/landing/LeadershipTeamSection';
-import { InteractiveGlobe } from '@/components/landing/InteractiveGlobe';
+import GlobalPresenceMap from '@/components/landing/GlobalPresenceMap';
 import { InteractiveStats } from '@/components/landing/InteractiveStats';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -412,7 +412,7 @@ const AboutUs: React.FC = () => {
                 </p>
               </div>
 
-              <InteractiveGlobe />
+              <GlobalPresenceMap />
             </div>
           </section>
         </ScrollReveal>
