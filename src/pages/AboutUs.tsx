@@ -4,6 +4,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LeadershipTeamSection } from '@/components/landing/LeadershipTeamSection';
+import { InteractiveGlobe } from '@/components/landing/InteractiveGlobe';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
@@ -426,33 +427,11 @@ const AboutUs: React.FC = () => {
                   Global Presence
                 </h2>
                 <p className="text-lg text-watt-navy/70">
-                  6 countries, 1,429MW pipeline
+                  Interactive view of our 1,429MW global pipeline across 6 countries
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {globalPresence.map((region, index) => (
-                  <Card 
-                    key={index} 
-                    className="p-6 bg-white border-gray-200 shadow-institutional hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="text-3xl mb-3">{region.country.split(' ')[0]}</div>
-                    <h3 className="text-xl font-bold text-watt-navy mb-3">
-                      {region.country.split(' ').slice(1).join(' ')}
-                    </h3>
-                    <div className="text-2xl font-bold text-watt-bitcoin mb-3">{region.total}</div>
-                    <ul className="space-y-2">
-                      {region.projects.map((project, i) => (
-                        <li key={i} className="flex items-start text-sm text-watt-navy/70">
-                          <div className="w-1.5 h-1.5 bg-watt-trust rounded-full mr-2 mt-1.5"></div>
-                          {project}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                ))}
-              </div>
+              <InteractiveGlobe />
             </div>
           </section>
         </ScrollReveal>
