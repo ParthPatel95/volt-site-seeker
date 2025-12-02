@@ -19,12 +19,15 @@ export const AnimatedCounter = ({ end, duration = 2000, suffix = '', prefix = ''
           setHasAnimated(true);
           const startTime = Date.now();
           const endTime = startTime + duration;
+          const hasDecimal = end % 1 !== 0;
 
           const updateCount = () => {
             const now = Date.now();
             const progress = Math.min((now - startTime) / duration, 1);
             const easeOutQuad = 1 - Math.pow(1 - progress, 3);
-            const currentCount = Math.floor(easeOutQuad * end);
+            const currentCount = hasDecimal 
+              ? parseFloat((easeOutQuad * end).toFixed(1))
+              : Math.floor(easeOutQuad * end);
             
             setCount(currentCount);
 
