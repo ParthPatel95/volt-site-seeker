@@ -1,4 +1,4 @@
-import { Bitcoin, Mail, Linkedin, Twitter } from 'lucide-react';
+import { Bitcoin, Mail, Linkedin, Instagram } from 'lucide-react';
 import { EnhancedLogo } from '../EnhancedLogo';
 
 export const LandingFooter = () => {
@@ -19,10 +19,10 @@ export const LandingFooter = () => {
               Turning power into profit through intelligent infrastructure investment
             </p>
             <div className="flex items-center space-x-4">
-              <a href="#" className="text-watt-navy/60 hover:text-watt-trust transition-colors">
-                <Twitter className="w-5 h-5" />
+              <a href="https://www.instagram.com/wattbyte/" target="_blank" rel="noopener noreferrer" className="text-watt-navy/60 hover:text-watt-trust transition-colors">
+                <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="text-watt-navy/60 hover:text-watt-trust transition-colors">
+              <a href="https://www.linkedin.com/company/wattbyte" target="_blank" rel="noopener noreferrer" className="text-watt-navy/60 hover:text-watt-trust transition-colors">
                 <Linkedin className="w-5 h-5" />
               </a>
               <a href="mailto:contact@wattbyte.com" className="text-watt-navy/60 hover:text-watt-trust transition-colors">
