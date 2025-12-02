@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, X, FileText } from 'lucide-react';
-import { PdfErrorBoundary } from './PdfErrorBoundary';
 import { DocumentViewer } from './DocumentViewer';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -183,23 +182,21 @@ export function FullScreenDocumentViewer({
         </div>
       </div>
 
-      {/* Document Viewer with safe area support */}
+      {/* Document Viewer with safe area support - Error boundary now internal */}
       <div className="absolute inset-0 pt-16 safe-area-pb">
-        <PdfErrorBoundary onError={() => {}}>
-          <DocumentViewer
-            key={document.id}
-            documentUrl={document.file_url}
-            documentType={document.file_type}
-            accessLevel={linkData.access_level}
-            watermarkEnabled={linkData.watermark_enabled}
-            recipientEmail={linkData.recipient_email}
-            linkId={linkData.id}
-            documentId={document.id}
-            enableTracking={true}
-            viewerName={viewerData?.name}
-            viewerEmail={viewerData?.email}
-          />
-        </PdfErrorBoundary>
+        <DocumentViewer
+          key={document.id}
+          documentUrl={document.file_url}
+          documentType={document.file_type}
+          accessLevel={linkData.access_level}
+          watermarkEnabled={linkData.watermark_enabled}
+          recipientEmail={linkData.recipient_email}
+          linkId={linkData.id}
+          documentId={document.id}
+          enableTracking={true}
+          viewerName={viewerData?.name}
+          viewerEmail={viewerData?.email}
+        />
       </div>
 
       {/* Optional Sidebar for Quick Document Switching - Responsive width */}

@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { VideoPlayer } from './VideoPlayer';
+import { PdfErrorBoundary } from './PdfErrorBoundary';
 import { TranslationPanel } from './TranslationPanel';
 import { extractPageText } from '@/utils/pdfTextExtractor';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
@@ -1180,6 +1181,12 @@ export function DocumentViewer({
                           transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
                         }}
                       >
+                      {/* Page Component wrapped in error boundary for render-phase errors */}
+                      <PdfErrorBoundary 
+                        key={`boundary-${pageNumber}-${pageRetryTrigger}`}
+                        onError={() => setUseNativePdfViewer(true)}
+                        maxRetries={2}
+                      >
                       <Page
                         key={`${pageNumber}-${pageRetryTrigger}`}
                         pageNumber={pageNumber}
@@ -1227,6 +1234,7 @@ export function DocumentViewer({
                           </div>
                         }
                       />
+                      </PdfErrorBoundary>
                       </div>
                     )}
                   </Document>

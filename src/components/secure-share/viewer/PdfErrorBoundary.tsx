@@ -5,26 +5,38 @@ import { Button } from '@/components/ui/button';
 interface Props {
   children: ReactNode;
   onError?: () => void;
+  maxRetries?: number;
 }
 
 interface State {
   hasError: boolean;
   error?: Error;
+  errorCount: number;
 }
 
 export class PdfErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, errorCount: 0 };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('PDF Viewer Error:', error, errorInfo);
-    this.props.onError?.();
+    
+    const maxRetries = this.props.maxRetries ?? 2;
+    const newErrorCount = this.state.errorCount + 1;
+    
+    this.setState({ errorCount: newErrorCount });
+    
+    // Auto-fallback to native viewer after max retries
+    if (newErrorCount >= maxRetries) {
+      console.log(`[PdfErrorBoundary] Max retries (${maxRetries}) reached, triggering native viewer fallback`);
+      this.props.onError?.();
+    }
   }
 
   handleRetry = () => {
@@ -33,17 +45,24 @@ export class PdfErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const maxRetries = this.props.maxRetries ?? 2;
+      const canRetry = this.state.errorCount < maxRetries;
+      
       return (
         <div className="flex flex-col items-center justify-center h-full p-8 text-center">
           <AlertCircle className="w-16 h-16 text-destructive mb-4" />
           <h3 className="text-lg font-semibold mb-2">PDF Viewer Error</h3>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            The PDF viewer encountered an error. You can try again or use your browser's native viewer.
+            {canRetry 
+              ? `The PDF viewer encountered an error. (Attempt ${this.state.errorCount}/${maxRetries})`
+              : 'The PDF viewer encountered repeated errors. Please use the native viewer.'}
           </p>
           <div className="flex gap-2">
-            <Button onClick={this.handleRetry} variant="outline">
-              Try Again
-            </Button>
+            {canRetry && (
+              <Button onClick={this.handleRetry} variant="outline">
+                Try Again
+              </Button>
+            )}
             <Button onClick={this.props.onError} variant="default">
               Use Native Viewer
             </Button>
