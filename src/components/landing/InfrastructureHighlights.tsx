@@ -13,7 +13,7 @@ import indiaFlag from '@/assets/pipeline/flags/india-in.svg';
 import canadaFlag from '@/assets/pipeline/flags/canada-ca.svg';
 const pipeline = [
   {
-    location: 'Jinja, Uganda',
+    location: 'Uganda',
     capacity: '400MW',
     type: 'On-Grid Hydro',
     description: 'Hydroelectric power facility leveraging the Nile River with direct grid connection',
@@ -21,7 +21,7 @@ const pipeline = [
     flag: ugandaFlag
   },
   {
-    location: 'Texas, USA',
+    location: 'USA',
     capacity: '536MW',
     type: 'On-Grid Mix + Self-Gen Natgas',
     description: 'Mixed generation facility with natural gas backup and grid interconnection',
@@ -53,7 +53,7 @@ const pipeline = [
     flag: indiaFlag
   },
   {
-    location: 'Newfoundland, Canada',
+    location: 'Canada',
     capacity: '198MW',
     type: 'On-Grid Hybrid',
     description: 'Advanced hybrid renewable energy facility combining coastal wind and hydroelectric power',
