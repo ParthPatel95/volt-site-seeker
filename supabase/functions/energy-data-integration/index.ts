@@ -521,28 +521,60 @@ async function testERCOTSubscription() {
 }
 
 
-// Retry wrapper for AESO API calls with reduced backoff for faster response
+// Enhanced retry wrapper for AESO API calls with better validation
 async function fetchAESODataWithRetry(maxRetries = 2) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`AESO fetch attempt ${attempt}/${maxRetries}...`);
+      console.log(`🔄 AESO fetch attempt ${attempt}/${maxRetries}...`);
+      const startTime = Date.now();
       const result = await fetchAESOData();
+      const fetchDuration = Date.now() - startTime;
       
-      // Check if we got valid data
-      if (result && result.pricing && result.pricing.current_price !== undefined) {
+      console.log(`⏱️ AESO fetch completed in ${fetchDuration}ms`);
+      
+      // Validate we have critical data (pricing + load + mix)
+      const hasPricing = result?.pricing && result.pricing.current_price !== undefined && result.pricing.current_price > 0;
+      const hasLoad = result?.loadData && result.loadData.current_demand_mw !== undefined && result.loadData.current_demand_mw > 0;
+      const hasMix = result?.generationMix && result.generationMix.total_generation_mw !== undefined && result.generationMix.total_generation_mw > 0;
+      
+      console.log(`📊 AESO data validation:`, {
+        hasPricing,
+        hasLoad,
+        hasMix,
+        pricingValue: result?.pricing?.current_price,
+        loadValue: result?.loadData?.current_demand_mw,
+        mixValue: result?.generationMix?.total_generation_mw
+      });
+      
+      // Success if we have at least pricing and either load or mix
+      if (hasPricing && (hasLoad || hasMix)) {
         console.log(`✅ AESO data fetched successfully on attempt ${attempt}`);
         return result;
       }
       
-      // If no pricing data but no error, this is an API issue
+      // Partial success - have some data but not all critical components
+      if (hasPricing || hasLoad || hasMix) {
+        console.warn(`⚠️ AESO returned partial data (pricing: ${hasPricing}, load: ${hasLoad}, mix: ${hasMix})`);
+        if (attempt < maxRetries) {
+          const backoffMs = 2000; // Increased delay for API to stabilize
+          console.log(`⏳ Retrying in ${backoffMs}ms to get complete data...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        // On last attempt, return what we have
+        console.log(`⚠️ AESO final attempt - returning partial data`);
+        return result;
+      }
+      
+      // No valid data at all
       if (attempt < maxRetries) {
-        const backoffMs = 1500; // Fixed 1.5s delay instead of exponential
-        console.log(`⚠️ AESO returned incomplete data, retrying in ${backoffMs}ms...`);
+        const backoffMs = 2000;
+        console.log(`❌ AESO returned no valid data, retrying in ${backoffMs}ms...`);
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         continue;
       }
       
-      console.error('❌ AESO API failed - no valid pricing data after all retries');
+      console.error('❌ AESO API failed - no valid data after all retries');
       return { 
         pricing: undefined, 
         loadData: result?.loadData, 
@@ -550,7 +582,7 @@ async function fetchAESODataWithRetry(maxRetries = 2) {
       };
       
     } catch (error) {
-      console.error(`AESO fetch attempt ${attempt} error:`, error);
+      console.error(`❌ AESO fetch attempt ${attempt} error:`, error);
       if (attempt === maxRetries) {
         return { 
           pricing: undefined, 
@@ -558,7 +590,8 @@ async function fetchAESODataWithRetry(maxRetries = 2) {
           generationMix: undefined
         };
       }
-      const backoffMs = 1500; // Fixed 1.5s delay
+      const backoffMs = 2000;
+      console.log(`⏳ Retrying after error in ${backoffMs}ms...`);
       await new Promise(resolve => setTimeout(resolve, backoffMs));
     }
   }
@@ -602,9 +635,9 @@ async function fetchAESOData() {
     'User-Agent': 'LovableEnergy/1.0'
   };
 
-  async function getJson(url: string, isOptional = false) {
+  async function getJson(url: string, isOptional = false, timeoutMs = 18000) {
     const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort('timeout'), 15000);
+    const timeout = setTimeout(() => ctrl.abort('timeout'), timeoutMs);
     try {
       const res = await fetch(url, { headers, signal: ctrl.signal });
       const text = await res.text();
@@ -629,20 +662,19 @@ async function fetchAESOData() {
     }
   }
 
-  // Fetch all AESO market data in parallel
-  // Note: interchangecapability-api and operatingreserve-api do not exist in AESO APIM
-  // Available APIs: poolprice, systemmarginalprice, actualforecast, aiesgencapacity, operatingreserveoffercontrol
-  const [
-    poolResp, 
-    smpResp, 
-    loadResp
-  ] = await Promise.allSettled([
-    getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`), false),
-    getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`), false),
-    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`), false)
-    // Note: AESO does not provide public wind/solar/load forecast endpoints via APIM
-    // interchangecapability-api, operatingreserve-api, and aiescapacity-api are not available
-  ]);
+  // Fetch critical endpoints (pricing, load) sequentially first for reliability
+  // Then fetch generation mix in parallel
+  console.log('📊 Fetching AESO critical data (poolprice + load) sequentially...');
+  
+  const poolResp = await getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`), false);
+  const smpResp = await getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`), false);
+  const loadResp = await getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`), false);
+  
+  console.log('✅ AESO sequential fetch complete:', {
+    hasPoolPrice: !!poolResp,
+    hasSMP: !!smpResp,
+    hasLoad: !!loadResp
+  });
 
   let pricing: any | undefined;
   let loadData: any | undefined;
@@ -652,8 +684,8 @@ async function fetchAESOData() {
 
   // Pricing: prefer Pool Price; also extract SMP separately for spread calculation
   try {
-    const poolJson: any = poolResp.status === 'fulfilled' ? poolResp.value : null;
-    const smpJson: any = smpResp.status === 'fulfilled' ? smpResp.value : null;
+    const poolJson: any = poolResp;
+    const smpJson: any = smpResp;
 
     const poolArr: any[] = poolJson?.return?.['Pool Price Report'] || poolJson?.['Pool Price Report'] || [];
     const smpArr: any[] = smpJson?.return?.['System Marginal Price Report'] || smpJson?.['System Marginal Price Report'] || [];
@@ -727,7 +759,7 @@ async function fetchAESOData() {
   // Load (AIL): Actual Forecast Report
   let tempLoadData: any | undefined;
   try {
-    const json: any = loadResp.status === 'fulfilled' ? loadResp.value : null;
+    const json: any = loadResp;
     const arr: any[] = json?.return?.['Actual Forecast Report'] || json?.['Actual Forecast Report'] || [];
     if (Array.isArray(arr) && arr.length) {
       // last non-null actual and forecast
@@ -1591,10 +1623,10 @@ Deno.serve(async (req) => {
     };
 
     // Fetch all market data in parallel with individual timeouts
-    // Reduced timeouts to prevent edge function timeouts
+    // AESO uses sequential fetching for reliability, so it needs more time
     const [ercotResult, aesoResult, misoResult, caisoResult, nyisoResult, pjmResult, sppResult, iesoResult] = await Promise.allSettled([
       withTimeout(fetchERCOTData(), 12000, 'ERCOT'),
-      withTimeout(fetchAESODataWithRetry(), 15000, 'AESO'),
+      withTimeout(fetchAESODataWithRetry(), 25000, 'AESO'), // Increased for sequential + retry
       withTimeout(fetchMISOData(), 8000, 'MISO'),
       withTimeout(fetchCAISOData(), 8000, 'CAISO'),
       withTimeout(fetchNYISOData(), 10000, 'NYISO'),
