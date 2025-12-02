@@ -118,9 +118,9 @@ export function DocumentViewer({
   const [touchStartZoom, setTouchStartZoom] = useState<number>(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   
-  // Safety timeout refs
-  const pageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const mountedAt = useRef<number>(Date.now());
+  // Navigation debouncing
+  const isNavigating = useRef(false);
+  const lastNavigationTime = useRef(0);
   
   // Detect iOS for native PDF viewer fallback
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
@@ -171,7 +171,6 @@ export function DocumentViewer({
       lockedPageWidth.current = null;
       initialLoadRef.current = true;
       initialDimensionsSet.current = false;
-      mountedAt.current = Date.now();
       setNumPages(0);
       setPageNumber(1);
       setPageLoadFailed(false);
@@ -232,55 +231,23 @@ export function DocumentViewer({
     }
   }, [isPdf, documentUrl]);
   
-  // Loading timeout fallback - only on initial load (not page changes)
+  // Safety timeout: Only on TRUE initial document load (not page navigation)
   useEffect(() => {
-    if (isPdf && !useNativePdfViewer && !isIOS && numPages === 0) {
+    if (isPdf && !useNativePdfViewer && !isIOS && numPages === 0 && initialLoadRef.current) {
       const timeout = setTimeout(() => {
         console.warn('[DocumentViewer] Initial load timeout - falling back to native viewer');
         setPageLoadTimeout(true);
         setUseNativePdfViewer(true);
+        initialLoadRef.current = false;
         toast({
           title: 'Loading Timeout',
           description: 'Switched to browser PDF viewer for better performance.',
         });
-      }, 15000); // 15 second timeout
+      }, 12000); // 12 second timeout for initial load only
       
       return () => clearTimeout(timeout);
     }
   }, [isPdf, useNativePdfViewer, isIOS, numPages, toast]);
-  
-  // Safety timeout: Only on initial document load (not page navigation)
-  useEffect(() => {
-    const timeSinceMounted = Date.now() - mountedAt.current;
-    
-    // Only start safety timeout if:
-    // 1. Page is loading
-    // 2. This is the initial load
-    // 3. Component has been mounted for at least 1 second (allows pre-load effect to complete)
-    if (isPageLoading && initialLoadRef.current && timeSinceMounted > 1000) {
-      console.log('[DocumentViewer] Starting 8-second safety timeout for initial load');
-      pageLoadingTimeoutRef.current = setTimeout(() => {
-        console.log('[DocumentViewer] Safety timeout triggered - switching to native viewer');
-        setIsPageLoading(false);
-        initialLoadRef.current = false;
-        setUseNativePdfViewer(true);
-        toast({
-          title: "Loading Taking Too Long",
-          description: "Switching to native PDF viewer for better performance.",
-        });
-      }, 8000);
-    } else if (!isPageLoading) {
-      if (pageLoadingTimeoutRef.current) {
-        clearTimeout(pageLoadingTimeoutRef.current);
-      }
-    }
-
-    return () => {
-      if (pageLoadingTimeoutRef.current) {
-        clearTimeout(pageLoadingTimeoutRef.current);
-      }
-    };
-  }, [isPageLoading, toast]);
 
   // Reset page load failed state when page changes
   useEffect(() => {
@@ -565,6 +532,17 @@ export function DocumentViewer({
   const handleRotate = () => {
     setRotation(prev => (prev + 90) % 360);
   };
+
+  // Debounced page change handler to prevent rapid fire navigation
+  const handlePageChange = useCallback((newPage: number) => {
+    const now = Date.now();
+    // Debounce: minimum 150ms between navigations
+    if (now - lastNavigationTime.current < 150) return;
+    if (newPage < 1 || newPage > numPages || newPage === pageNumber) return;
+    
+    lastNavigationTime.current = now;
+    setPageNumber(newPage);
+  }, [numPages, pageNumber]);
   
   const toggleFullscreen = () => {
     // Feature detection for Fullscreen API
@@ -819,10 +797,7 @@ export function DocumentViewer({
                 {/* Page Navigation */}
                 <div className="flex items-center gap-1">
                   <Button 
-                    onClick={() => {
-                      setIsPageLoading(true);
-                      setPageNumber(prev => Math.max(prev - 1, 1));
-                    }} 
+                    onClick={() => handlePageChange(pageNumber - 1)} 
                     size="sm" 
                     variant="ghost"
                     className="h-7 md:h-8 px-2"
@@ -836,10 +811,7 @@ export function DocumentViewer({
                     {pageNumber} / {numPages}
                   </span>
                   <Button 
-                    onClick={() => {
-                      setIsPageLoading(true);
-                      setPageNumber(prev => Math.min(prev + 1, numPages));
-                    }} 
+                    onClick={() => handlePageChange(pageNumber + 1)} 
                     size="sm" 
                     variant="ghost"
                     className="h-7 md:h-8 px-2"
@@ -997,10 +969,7 @@ export function DocumentViewer({
               <>
                 {/* Left Arrow */}
                 <Button
-                  onClick={() => {
-                    setIsPageLoading(true);
-                    setPageNumber(prev => Math.max(prev - 1, 1));
-                  }}
+                  onClick={() => handlePageChange(pageNumber - 1)}
                   disabled={pageNumber <= 1}
                   variant="secondary"
                   size="icon"
@@ -1013,10 +982,7 @@ export function DocumentViewer({
 
                 {/* Right Arrow */}
                 <Button
-                  onClick={() => {
-                    setIsPageLoading(true);
-                    setPageNumber(prev => Math.min(prev + 1, numPages));
-                  }}
+                  onClick={() => handlePageChange(pageNumber + 1)}
                   disabled={pageNumber >= numPages}
                   variant="secondary"
                   size="icon"
@@ -1141,18 +1107,15 @@ export function DocumentViewer({
                           setIsPageLoading(false);
                           setPageLoadFailed(false);
                           initialLoadRef.current = false;
-                          if (pageLoadingTimeoutRef.current) {
-                            clearTimeout(pageLoadingTimeoutRef.current);
-                          }
                         }}
                         onLoadError={(error) => {
                           console.error('[DocumentViewer] Page render error:', error);
+                          // Add brief delay before showing error to handle transient failures
+                          setTimeout(() => {
+                            setPageLoadFailed(true);
+                          }, 100);
                           setIsPageLoading(false);
-                          setPageLoadFailed(true);
                           initialLoadRef.current = false;
-                          if (pageLoadingTimeoutRef.current) {
-                            clearTimeout(pageLoadingTimeoutRef.current);
-                          }
                         }}
                         loading={
                           <div className="flex items-center justify-center p-8 bg-card">
@@ -1170,11 +1133,9 @@ export function DocumentViewer({
                               <Button 
                                 onClick={() => {
                                   setPageLoadFailed(false);
-                                  setIsPageLoading(true);
-                                  // Force re-render
-                                  const current = pageNumber;
-                                  setPageNumber(0);
-                                  setTimeout(() => setPageNumber(current), 0);
+                                  // Force re-render by resetting width lock
+                                  widthLocked.current = false;
+                                  lockedPageWidth.current = null;
                                 }} 
                                 variant="outline"
                                 size="sm"
