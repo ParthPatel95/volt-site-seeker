@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="p-1.5 sm:p-2 h-7 w-7 sm:h-8 sm:w-8 text-white hover:bg-slate-800 flex-shrink-0"
+              className="p-1.5 sm:p-2 h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted flex-shrink-0"
             >
               <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
@@ -162,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg transition-colors group ${
                 isActive 
                   ? 'bg-accent text-accent-foreground ring-1 ring-primary/20' 
-                  : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'
               } ${!hasAccess ? 'opacity-60' : ''} ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
               title={isCollapsed && !isMobile ? item.label : ''}
             >
@@ -179,11 +179,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Footer */}
-      <div className={`p-1 sm:p-2 border-t border-slate-700 space-y-0.5 sm:space-y-1 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
+      <div className={`p-1 sm:p-2 border-t border-border space-y-0.5 sm:space-y-1 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
         <Button
           variant="ghost"
           onClick={handleSignOut}
-          className={`w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent p-2 sm:p-3 h-auto ${
+          className={`w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted p-2 sm:p-3 h-auto ${
             isCollapsed && !isMobile ? 'px-2' : ''
           } ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
           title={isCollapsed && !isMobile ? 'Sign Out' : ''}

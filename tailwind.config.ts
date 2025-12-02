@@ -89,7 +89,11 @@ export default {
 				'electric-yellow': 'hsl(var(--watt-bitcoin))',
 				'neon-green': 'hsl(var(--watt-success))',
 				'warm-orange': 'hsl(var(--watt-warning))',
-				'bright-cyan': 'hsl(var(--watt-trust))'
+				'bright-cyan': 'hsl(var(--watt-trust))',
+				// VoltScout App Colors
+				'watt-primary': 'hsl(var(--watt-primary))',
+				'watt-secondary': 'hsl(var(--watt-secondary))',
+				'watt-accent': 'hsl(var(--watt-accent))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
