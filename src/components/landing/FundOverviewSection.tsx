@@ -1,71 +1,152 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Target, TrendingUp, DollarSign, Zap, Building2, Clock } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, MapPin, Shield } from 'lucide-react';
+// Animated Counter Component
+const AnimatedCounter = ({ end, duration = 2000, suffix = '' }: { end: number; duration?: number; suffix?: string }) => {
+  const [count, setCount] = useState(0);
+  const countRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          let startTime: number | null = null;
+          const startValue = 0;
+
+          const animate = (currentTime: number) => {
+            if (!startTime) startTime = currentTime;
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            setCount(Math.floor(easeOutQuart * (end - startValue) + startValue));
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (countRef.current) {
+      observer.observe(countRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [end, duration, hasAnimated]);
+
+  return (
+    <div ref={countRef}>
+      {count}{suffix}
+    </div>
+  );
+};
 
 export const FundOverviewSection = () => {
   return (
-    <section className="relative z-10 py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
-            Fund I Overview
-          </h2>
-          <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
-            Strategic acquisition and development of undervalued power assets for premium digital infrastructure
-          </p>
-        </div>
+    <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <ScrollReveal direction="up">
+          <div className="text-center mb-8 md:mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-trust/10 border border-watt-trust/30 mb-4">
+              <span className="text-sm font-medium text-watt-trust">Fund I Details</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
+              Fund Overview
+            </h2>
+            <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
+              Strategic infrastructure investments with institutional-grade returns
+            </p>
+          </div>
+        </ScrollReveal>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <Card className="bg-white border-gray-200 hover:border-watt-trust/50 transition-all group shadow-institutional">
-            <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-              <div className="w-8 sm:w-10 h-8 sm:h-10 bg-watt-trust/10 rounded-lg flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform">
-                <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-watt-trust" />
-              </div>
-              <CardTitle className="text-watt-navy text-sm sm:text-base md:text-lg">Target Returns</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="space-y-1">
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-watt-trust">2.0-2.5x</div>
-                <div className="text-watt-navy/60 text-xs sm:text-sm">MOIC</div>
-                <div className="text-base sm:text-lg md:text-xl font-bold text-watt-bitcoin">30-40%</div>
-                <div className="text-watt-navy/60 text-xs sm:text-sm">Net IRR</div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white border-gray-200 hover:border-watt-success/50 transition-all group shadow-institutional">
-            <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-              <div className="w-8 sm:w-10 h-8 sm:h-10 bg-watt-success/10 rounded-lg flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform">
-                <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-watt-success" />
-              </div>
-              <CardTitle className="text-watt-navy text-sm sm:text-base md:text-lg">Current Pipeline</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="space-y-1">
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-watt-success">700MW+</div>
-                <div className="text-watt-navy/60 text-xs sm:text-sm">Power Capacity</div>
-                <div className="text-base sm:text-lg md:text-xl font-bold text-watt-trust">1,000+</div>
-                <div className="text-watt-navy/60 text-xs sm:text-sm">Acres</div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white border-gray-200 hover:border-watt-bitcoin/50 transition-all group sm:col-span-2 lg:col-span-1 shadow-institutional">
-            <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-              <div className="w-8 sm:w-10 h-8 sm:h-10 bg-watt-bitcoin/10 rounded-lg flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform">
-                <Shield className="w-4 sm:w-5 h-4 sm:h-5 text-watt-bitcoin" />
-              </div>
-              <CardTitle className="text-watt-navy text-sm sm:text-base md:text-lg">Exit Strategy</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="space-y-1">
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-watt-bitcoin">~2 Year</div>
-                <div className="text-watt-navy/60 text-xs sm:text-sm">Hold Period</div>
-                <div className="text-sm sm:text-base md:text-lg font-semibold text-watt-trust">Data Center Premium</div>
-                <div className="text-watt-navy/60 text-xs sm:text-sm">Exit Value</div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          {/* Target Returns Card */}
+          <ScrollReveal delay={100} direction="up">
+            <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+              <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-4 md:px-6">
+                <div className="flex items-center justify-between">
+                  <Target className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-watt-trust" />
+                </div>
+                <CardTitle className="text-lg sm:text-xl md:text-2xl text-watt-navy">Target Returns</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-watt-navy/60">Fund I performance targets</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-6 pb-4 sm:pb-5 md:pb-6">
+                <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
+                  <span className="text-xs sm:text-sm text-watt-navy/70">MOIC</span>
+                  <span className="text-base sm:text-lg md:text-xl font-bold text-watt-trust">
+                    <AnimatedCounter end={2} suffix=".0-" />
+                    <AnimatedCounter end={2} suffix=".5x" />
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
+                  <span className="text-xs sm:text-sm text-watt-navy/70">Net IRR</span>
+                  <span className="text-base sm:text-lg md:text-xl font-bold text-watt-success">
+                    <AnimatedCounter end={30} suffix="-" />
+                    <AnimatedCounter end={40} suffix="%" />
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
+
+          {/* Current Pipeline Card */}
+          <ScrollReveal delay={200} direction="up">
+            <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+              <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-4 md:px-6">
+                <div className="flex items-center justify-between">
+                  <Zap className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-watt-bitcoin" />
+                </div>
+                <CardTitle className="text-lg sm:text-xl md:text-2xl text-watt-navy">Current Pipeline</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-watt-navy/60">Active deal flow and capacity</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-6 pb-4 sm:pb-5 md:pb-6">
+                <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
+                  <span className="text-xs sm:text-sm text-watt-navy/70">Power Capacity</span>
+                  <span className="text-base sm:text-lg md:text-xl font-bold text-watt-bitcoin">
+                    <AnimatedCounter end={700} suffix="+ MW" />
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
+                  <span className="text-xs sm:text-sm text-watt-navy/70">Acres</span>
+                  <span className="text-base sm:text-lg md:text-xl font-bold text-watt-trust">
+                    <AnimatedCounter end={150} suffix="+" />
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
+
+          {/* Exit Strategy Card */}
+          <ScrollReveal delay={300} direction="up">
+            <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+              <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-4 md:px-6">
+                <div className="flex items-center justify-between">
+                  <DollarSign className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-watt-success" />
+                </div>
+                <CardTitle className="text-lg sm:text-xl md:text-2xl text-watt-navy">Exit Strategy</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-watt-navy/60">Value realization approach</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-6 pb-4 sm:pb-5 md:pb-6">
+                <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
+                  <span className="text-xs sm:text-sm text-watt-navy/70">Hold Period</span>
+                  <span className="text-base sm:text-lg md:text-xl font-bold text-watt-bitcoin">
+                    <AnimatedCounter end={2} suffix=" Years" />
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
+                  <span className="text-xs sm:text-sm text-watt-navy/70">Exit Value</span>
+                  <span className="text-base sm:text-lg md:text-xl font-bold text-watt-success">$10-15M/MW</span>
+                </div>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
         </div>
       </div>
     </section>
