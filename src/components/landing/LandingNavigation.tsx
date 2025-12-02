@@ -22,6 +22,18 @@ export const LandingNavigation = () => {
       </Link>
       
       <div className="flex items-center space-x-2 flex-shrink-0">
+        <Link 
+          to="/hosting"
+          className="text-watt-navy hover:text-watt-bitcoin transition-colors text-sm font-medium hidden sm:block"
+        >
+          Hosting
+        </Link>
+        <Link 
+          to="/wattfund"
+          className="text-watt-navy hover:text-watt-bitcoin transition-colors text-sm font-medium hidden sm:block"
+        >
+          WattFund
+        </Link>
         <Button 
           variant="outline" 
           size="sm"

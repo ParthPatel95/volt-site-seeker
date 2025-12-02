@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
 import AboutUs from "./pages/AboutUs";
+import Hosting from "./pages/Hosting";
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 import ViewDocument from "./pages/ViewDocument";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/wattfund" element={<WattFund />} />
             <Route path="/about" element={<AboutUs />} />
+            <Route path="/hosting" element={<Hosting />} />
             {navItems.map(({ to, page }) => (
               <Route key={to} path={to} element={page} />
             ))}

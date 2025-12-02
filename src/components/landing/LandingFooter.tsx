@@ -46,6 +46,11 @@ export const LandingFooter = () => {
                   WattFund
                 </Link>
               </li>
+              <li>
+                <Link to="/hosting" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Mining Hosting
+                </Link>
+              </li>
             </ul>
           </div>
 
