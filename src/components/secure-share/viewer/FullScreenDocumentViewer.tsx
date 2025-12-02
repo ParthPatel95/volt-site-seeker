@@ -185,7 +185,6 @@ export function FullScreenDocumentViewer({
       {/* Document Viewer with safe area support - Error boundary now internal */}
       <div className="absolute inset-0 pt-16 safe-area-pb">
         <DocumentViewer
-          key={document.id}
           documentUrl={document.file_url}
           documentType={document.file_type}
           accessLevel={linkData.access_level}
