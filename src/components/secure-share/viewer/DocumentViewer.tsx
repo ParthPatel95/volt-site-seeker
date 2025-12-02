@@ -134,6 +134,11 @@ export function DocumentViewer({
   const isOfficePresentation = documentType?.includes('presentation') || /\.pptx?$/i.test(documentUrl);
   const isOffice = isOfficeDoc || isOfficeSheet || isOfficePresentation;
   
+  // Extract file size from URL query params if available (added by ViewDocument)
+  const urlParams = new URLSearchParams(documentUrl.split('?')[1] || '');
+  const fileSizeParam = urlParams.get('fileSize');
+  const fileSize = fileSizeParam ? parseInt(fileSizeParam, 10) : undefined;
+  
   // PDFs, images, Office documents, and text files support translation
   const supportsTranslation = isPdf || isImage || isOffice || isText;
 
@@ -984,6 +989,8 @@ export function DocumentViewer({
                   src={documentUrl}
                   canDownload={canDownload}
                   className="max-w-full max-h-[80vh] shadow-lg"
+                  fileSize={fileSize}
+                  fileName={documentUrl.split('/').pop()?.split('?')[0] || 'video'}
                   onError={(error) => {
                     console.error('[DocumentViewer] Video error:', error);
                     toast({
