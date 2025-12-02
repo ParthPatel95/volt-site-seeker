@@ -202,7 +202,7 @@ const AboutUs: React.FC = () => {
 
               <div className="grid md:grid-cols-3 gap-8 mb-12">
                 <Card className="p-8 bg-white border-gray-200 shadow-institutional">
-                  <div className="text-watt-bitcoin text-5xl font-bold mb-4">2023</div>
+                  <div className="text-watt-bitcoin text-5xl font-bold mb-4">Jan 2023</div>
                   <h3 className="text-xl font-bold text-watt-navy mb-3">Founded on Opportunity</h3>
                   <p className="text-watt-navy/70">
                     Identified the massive power-to-data center arbitrage opportunity, combining stranded energy assets with digital infrastructure demand.
