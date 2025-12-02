@@ -1,6 +1,8 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Award, Globe, Building, TrendingUp } from 'lucide-react';
+import React from 'react';
+import { User, Award, Building, TrendingUp } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollReveal } from './ScrollAnimations';
 
 export const LeadershipTeamSection = () => {
   const teamMembers = [
@@ -51,55 +53,66 @@ export const LeadershipTeamSection = () => {
   ];
  
   return (
-    <section className="relative z-10 py-12 md:py-16 px-6 bg-watt-light">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-watt-navy">
-            Leadership Team
-          </h2>
-          <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto">
-            Proven operators with 675MW+ of power infrastructure experience
-          </p>
-        </div>
-        
-        <div className="grid lg:grid-cols-4 gap-6">
-          {teamMembers.map((member, index) => {
-            const roleColors = {
-              'Chairman': 'text-watt-trust',
-              'CEO': 'text-watt-success',
-              'COO': 'text-watt-bitcoin',
-              'CSO': 'text-watt-trust'
-            };
-            const roleColor = roleColors[member.role as keyof typeof roleColors] || 'text-watt-trust';
-            
-            return (
-              <Card key={index} className="bg-white border-gray-200 shadow-institutional hover:shadow-lg transition-shadow duration-300 h-full">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={roleColor}>
-                      {member.icon}
-                    </div>
-                    <div>
-                      <CardTitle className="text-watt-navy text-xl">{member.name}</CardTitle>
-                      <p className={`${roleColor} font-semibold`}>{member.role}</p>
+    <ScrollReveal>
+      <section className="relative py-16 md:py-20 px-6 bg-watt-light">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-watt-navy">
+              Leadership Team
+            </h2>
+            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+              Experienced operators with proven track records in power infrastructure and digital asset operations
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {teamMembers.map((member, index) => {
+              const roleColors = {
+                'Chairman': { text: 'text-watt-trust', bg: 'bg-watt-trust/10' },
+                'CEO': { text: 'text-watt-success', bg: 'bg-watt-success/10' },
+                'COO': { text: 'text-watt-bitcoin', bg: 'bg-watt-bitcoin/10' },
+                'CSO': { text: 'text-watt-trust', bg: 'bg-watt-trust/10' }
+              };
+              const colors = roleColors[member.role as keyof typeof roleColors] || { text: 'text-watt-trust', bg: 'bg-watt-trust/10' };
+              
+              // Get initials for avatar
+              const initials = member.name.split(' ').map(n => n[0]).join('');
+              
+              return (
+                <Card 
+                  key={index} 
+                  className="p-8 bg-white border-gray-200 shadow-institutional hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="flex items-start gap-4 mb-6">
+                    <Avatar className="h-16 w-16 border-2 border-watt-navy/10 flex-shrink-0">
+                      <AvatarFallback className="bg-gradient-to-br from-watt-trust to-watt-bitcoin text-white text-xl font-bold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-watt-navy mb-1">{member.name}</h3>
+                      <p className={`${colors.text} font-medium mb-3`}>{member.role}</p>
+                      <div className={`inline-flex items-center p-2 ${colors.bg} ${colors.text} rounded-lg`}>
+                        {member.icon}
+                      </div>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0">
+                  
                   <ul className="space-y-3">
-                    {member.achievements.map((achievement, achievementIndex) => (
-                      <li key={achievementIndex} className="flex items-start gap-2">
-                        <div className="w-1.5 h-1.5 bg-watt-trust rounded-full mt-2 flex-shrink-0"></div>
-                        <span className="text-watt-navy/70 text-sm leading-relaxed">{achievement}</span>
+                    {member.achievements.map((achievement, i) => (
+                      <li key={i} className="flex items-start text-watt-navy/70">
+                        <div className="w-1.5 h-1.5 bg-watt-trust rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                        <span className="text-sm leading-relaxed">{achievement}</span>
                       </li>
                     ))}
                   </ul>
-                </CardContent>
-              </Card>
-            );
-          })}
+                </Card>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </ScrollReveal>
   );
 };
