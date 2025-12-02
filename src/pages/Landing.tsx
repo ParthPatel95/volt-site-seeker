@@ -88,15 +88,15 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
-          <LiveDataSection />
-          
-          <SectionDivider color="green" />
-          
           <section aria-label="VoltScout Platform" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <VoltScoutSection />
             </Suspense>
           </section>
+          
+          <SectionDivider color="green" />
+          
+          <LiveDataSection />
           
         </main>
 
