@@ -93,10 +93,9 @@ const HeroStatCard: React.FC<{
   value: number;
   suffix: string;
   label: string;
-  percentage: number;
   description: string;
   color: string;
-}> = ({ icon, value, suffix, label, percentage, description, color }) => {
+}> = ({ icon, value, suffix, label, description, color }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const colorClasses: Record<string, { bg: string; text: string; hover: string }> = {
@@ -118,19 +117,11 @@ const HeroStatCard: React.FC<{
           {icon}
         </div>
         
-        <div className="relative mb-6">
-          <CircularProgress percentage={percentage} size={140} strokeWidth={10} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-4xl font-bold text-watt-navy">
-              <AnimatedCounter end={value} suffix={suffix} />
-            </div>
-            <div className={`text-sm font-semibold ${colors.text} mt-1`}>
-              {percentage}%
-            </div>
-          </div>
+        <div className="text-5xl font-bold text-watt-navy mb-2">
+          <AnimatedCounter end={value} suffix={suffix} />
         </div>
 
-        <h3 className="text-xl font-bold text-watt-navy mb-2">{label}</h3>
+        <h3 className="text-xl font-bold text-watt-navy mb-4">{label}</h3>
         
         <div 
           className={`overflow-hidden transition-all duration-500 ${isExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
@@ -252,10 +243,10 @@ const ProgressBar: React.FC<{ label: string; percentage: number; color: string }
 // Growth Timeline Component
 const GrowthTimeline: React.FC = () => {
   const milestones = [
-    { year: '2023', title: 'Founded', description: '675MW+ team experience', color: 'trust' },
-    { year: 'Q1 2024', title: 'First Assets', description: '135MW Alberta secured', color: 'bitcoin' },
-    { year: 'Q3 2024', title: 'Global Expansion', description: '6 countries, 1,429MW', color: 'success' },
-    { year: '2025', title: 'Scale Phase', description: 'Multi-GW development', color: 'trust' },
+    { year: 'Jan 2024', title: 'Company Founded', description: 'WattByte established', color: 'trust' },
+    { year: 'Sept 2024', title: 'First Exit', description: 'Developed & sold 36MW datacenter', color: 'bitcoin' },
+    { year: '2025', title: 'Alberta Development', description: '135MW facility under development', color: 'success' },
+    { year: '2026', title: 'Scale Phase', description: 'Multi-GW development pipeline', color: 'trust' },
   ];
 
   return (
@@ -300,7 +291,6 @@ export const InteractiveStats: React.FC = () => {
             value={1429}
             suffix="MW"
             label="Global Pipeline"
-            percentage={95}
             description="Across 6 countries with diverse energy sources including hydro, solar, wind, and natural gas"
             color="bitcoin"
           />
@@ -309,7 +299,6 @@ export const InteractiveStats: React.FC = () => {
             value={135}
             suffix="MW"
             label="Under Development"
-            percentage={45}
             description="Alberta Heartland 135 facility currently under development with 26 acres and 20,000 sqft capacity"
             color="trust"
           />
@@ -318,7 +307,6 @@ export const InteractiveStats: React.FC = () => {
             value={6}
             suffix=" Countries"
             label="Global Presence"
-            percentage={75}
             description="Strategic presence across North America, Asia, and Africa for optimal power arbitrage"
             color="success"
           />
@@ -366,18 +354,6 @@ export const InteractiveStats: React.FC = () => {
             ]}
           />
         </div>
-      </div>
-
-      {/* Progress Bars */}
-      <div>
-        <h3 className="text-2xl font-bold text-watt-navy mb-8 text-center">Development Progress</h3>
-        <Card className="p-8 bg-white border-gray-200 shadow-institutional">
-          <div className="space-y-6">
-            <ProgressBar label="Pipeline Development" percentage={95} color="bitcoin" />
-            <ProgressBar label="Active Construction" percentage={45} color="trust" />
-            <ProgressBar label="Regulatory Approvals" percentage={80} color="success" />
-          </div>
-        </Card>
       </div>
 
       {/* Growth Timeline */}

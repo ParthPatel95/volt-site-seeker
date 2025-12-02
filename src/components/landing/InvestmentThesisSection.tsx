@@ -169,11 +169,6 @@ export const InvestmentThesisSection = () => {
             </div>
           </ScrollReveal>
         </div>
-        
-        {/* Value Multiplier Summary */}
-        <ScrollReveal delay={0.5}>
-          
-        </ScrollReveal>
       </div>
     </section>;
 };
