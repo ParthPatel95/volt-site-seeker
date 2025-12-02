@@ -20,12 +20,12 @@ interface CountryData {
 }
 
 const countries: CountryData[] = [
-  { name: 'Canada', flag: canadaFlag, capacity: 333, type: 'Hybrid', x: 18, y: 28, color: '#F7931A' },
-  { name: 'United States', flag: usFlag, capacity: 536, type: 'Mix + Natgas', x: 20, y: 40, color: '#F7931A' },
-  { name: 'Uganda', flag: ugandaFlag, capacity: 400, type: 'Hydro', x: 55, y: 54, color: '#F7931A' },
-  { name: 'Nepal', flag: nepalFlag, capacity: 75, type: 'Mix', x: 70, y: 42, color: '#F7931A' },
-  { name: 'Bhutan', flag: bhutanFlag, capacity: 175, type: 'Hydro', x: 72, y: 43, color: '#F7931A' },
-  { name: 'India', flag: indiaFlag, capacity: 45, type: 'Solar + Hydro', x: 68, y: 48, color: '#F7931A' },
+  { name: 'Canada', flag: canadaFlag, capacity: 333, type: 'Hybrid', x: 17, y: 25, color: '#F7931A' },
+  { name: 'United States', flag: usFlag, capacity: 536, type: 'Mix + Natgas', x: 19, y: 38, color: '#F7931A' },
+  { name: 'Uganda', flag: ugandaFlag, capacity: 400, type: 'Hydro', x: 54, y: 56, color: '#F7931A' },
+  { name: 'Nepal', flag: nepalFlag, capacity: 75, type: 'Mix', x: 71, y: 40, color: '#F7931A' },
+  { name: 'Bhutan', flag: bhutanFlag, capacity: 175, type: 'Hydro', x: 73, y: 41, color: '#F7931A' },
+  { name: 'India', flag: indiaFlag, capacity: 45, type: 'Solar + Hydro', x: 69, y: 44, color: '#F7931A' },
 ];
 
 const GlobalPresenceMap: React.FC = () => {
@@ -149,17 +149,17 @@ const GlobalPresenceMap: React.FC = () => {
           </div>
 
           {/* Integrated Bottom Legend Bar */}
-          <div className="border-t border-white/10 bg-gradient-to-b from-watt-navy/95 to-watt-navy backdrop-blur-sm">
+          <div className="border-t border-white/20 bg-gradient-to-b from-watt-navy via-watt-navy to-[#0d1f3a] backdrop-blur-sm">
             <div className="px-6 py-6">
               {/* Header with Total */}
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Global Development Pipeline</h3>
-                  <p className="text-sm text-white/90">Six strategic locations across continents</p>
+                  <h3 className="text-2xl font-bold text-white mb-1">Global Development Pipeline</h3>
+                  <p className="text-sm text-white">Six strategic locations across continents</p>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-bitcoin">{totalCapacity.toLocaleString()}MW</div>
-                  <div className="text-xs text-white/90 uppercase tracking-wide">Total Capacity</div>
+                  <div className="text-xs text-white uppercase tracking-wide">Total Capacity</div>
                 </div>
               </div>
 
@@ -191,16 +191,16 @@ const GlobalPresenceMap: React.FC = () => {
                             className="w-8 h-6 object-cover rounded shadow-sm flex-shrink-0 mt-1"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-white mb-1 truncate">
+                            <div className="font-bold text-white mb-1 truncate text-base">
                               {country.name}
                             </div>
                             <div className="flex items-baseline gap-2 mb-1">
                               <span className="text-xl font-bold text-bitcoin">
                                 {country.capacity}
                               </span>
-                              <span className="text-sm text-white/90">MW</span>
+                              <span className="text-sm font-semibold text-white">MW</span>
                             </div>
-                            <div className="text-xs text-white/80">
+                            <div className="text-xs text-white font-medium">
                               {country.type}
                             </div>
                           </div>
