@@ -6,6 +6,7 @@ interface Props {
   children: ReactNode;
   onError?: () => void;
   maxRetries?: number;
+  resetKey?: string | number; // Triggers reset when changed
 }
 
 interface State {
@@ -22,6 +23,14 @@ export class PdfErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    // Reset error state when resetKey changes (e.g., page changes after error)
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      console.log('[PdfErrorBoundary] Resetting error state due to resetKey change');
+      this.setState({ hasError: false, error: undefined, errorCount: 0 });
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
