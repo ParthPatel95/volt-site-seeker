@@ -4,16 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { TrendingUp, Mail } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { InvestmentInquiryForm } from './InvestmentInquiryForm';
-
 export const InvestorCTASection = () => {
   const [showInquiryForm, setShowInquiryForm] = useState(false);
-
   const handleFormSuccess = () => {
     setShowInquiryForm(false);
   };
-
-  return (
-    <>
+  return <>
       <Dialog open={showInquiryForm} onOpenChange={setShowInquiryForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -40,29 +36,15 @@ export const InvestorCTASection = () => {
           </p>
 
           <div className="flex justify-center mb-12">
-            <Button 
-              size="lg"
-              onClick={() => setShowInquiryForm(true)}
-              className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-10 py-7 text-xl font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
+            <Button size="lg" onClick={() => setShowInquiryForm(true)} className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-10 py-7 text-xl font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <TrendingUp className="w-6 h-6 mr-3" />
               Start Investing
             </Button>
           </div>
 
-          <div className="border-t border-white/20 pt-8">
-            <p className="text-white/70 mb-3">For investor inquiries:</p>
-            <a 
-              href="mailto:investors@wattbyte.com" 
-              className="inline-flex items-center gap-2 text-white hover:text-watt-bitcoin transition-colors text-lg font-medium"
-            >
-              <Mail className="w-5 h-5" />
-              investors@wattbyte.com
-            </a>
-          </div>
+          
         </ScrollReveal>
       </div>
       </section>
-    </>
-  );
+    </>;
 };
