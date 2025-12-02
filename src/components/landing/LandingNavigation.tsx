@@ -22,18 +22,22 @@ export const LandingNavigation = () => {
       </Link>
       
       <div className="flex items-center space-x-2 flex-shrink-0">
-        <Link 
-          to="/hosting"
-          className="text-watt-navy hover:text-watt-bitcoin transition-colors text-sm font-medium hidden sm:block"
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate('/hosting')}
+          className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden sm:flex"
         >
           Hosting
-        </Link>
-        <Link 
-          to="/wattfund"
-          className="text-watt-navy hover:text-watt-bitcoin transition-colors text-sm font-medium hidden sm:block"
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate('/wattfund')}
+          className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden sm:flex"
         >
           WattFund
-        </Link>
+        </Button>
         <Button 
           variant="outline" 
           size="sm"
