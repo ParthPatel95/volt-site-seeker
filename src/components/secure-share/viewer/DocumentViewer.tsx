@@ -108,6 +108,12 @@ export function DocumentViewer({
   const [dimensionsReady, setDimensionsReady] = useState(false);
   const pageLoadStartTime = useRef<number | null>(null);
   
+  // Retry mechanism for page load failures
+  const pageRetryCount = useRef(0);
+  const maxRetries = 2;
+  const [pageRetryTrigger, setPageRetryTrigger] = useState(0);
+  const failedPageRef = useRef<number | null>(null);
+  
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
@@ -272,6 +278,8 @@ export function DocumentViewer({
     setPageLoadFailed(false);
     setIsPageLoading(true);
     pageLoadStartTime.current = Date.now();
+    pageRetryCount.current = 0; // Reset retry count for new page
+    failedPageRef.current = null; // Clear failed page reference
   }, [pageNumber]);
 
   // Activity tracking
@@ -1102,9 +1110,9 @@ export function DocumentViewer({
                           <Button 
                             onClick={() => {
                               setPageLoadFailed(false);
-                              // Force re-render by resetting width lock
-                              widthLocked.current = false;
-                              lockedPageWidth.current = null;
+                              pageRetryCount.current = 0; // Reset retry count
+                              failedPageRef.current = null;
+                              setPageRetryTrigger(prev => prev + 1); // Force Page remount
                             }} 
                             variant="outline"
                             size="sm"
@@ -1138,6 +1146,7 @@ export function DocumentViewer({
                         }}
                       >
                         <Page
+                          key={`${pageNumber}-${pageRetryTrigger}`}
                           pageNumber={pageNumber}
                           width={pageWidth}
                           rotate={rotation}
@@ -1150,13 +1159,32 @@ export function DocumentViewer({
                             setPageLoadFailed(false);
                             initialLoadRef.current = false;
                             pageLoadStartTime.current = null;
+                            pageRetryCount.current = 0; // Reset on successful load
+                            failedPageRef.current = null;
                           }}
                           onLoadError={(error) => {
+                            const errorPage = pageNumber; // Capture current page
+                            failedPageRef.current = errorPage;
                             console.error('[DocumentViewer] Page render error:', error);
-                            // Add brief delay before showing error to handle transient failures
-                            setTimeout(() => {
-                              setPageLoadFailed(true);
-                            }, 100);
+                            
+                            // Automatic retry logic
+                            if (pageRetryCount.current < maxRetries) {
+                              pageRetryCount.current++;
+                              console.log(`[DocumentViewer] Retrying page ${pageNumber} (attempt ${pageRetryCount.current}/${maxRetries})`);
+                              setPageLoadFailed(false);
+                              setIsPageLoading(true);
+                              // Force Page component remount by incrementing trigger
+                              setPageRetryTrigger(prev => prev + 1);
+                            } else {
+                              // Max retries reached, show error
+                              console.warn(`[DocumentViewer] Page ${pageNumber} failed after ${maxRetries} retries`);
+                              setTimeout(() => {
+                                // Only show error if still on the same page
+                                if (failedPageRef.current === pageNumber) {
+                                  setPageLoadFailed(true);
+                                }
+                              }, 100);
+                            }
                             setIsPageLoading(false);
                             initialLoadRef.current = false;
                             pageLoadStartTime.current = null;
