@@ -158,26 +158,6 @@ export const ProblemSolutionSection = () => {
           </div>
         </div>
 
-        {/* Results Banner */}
-        <ScrollReveal direction="up" delay={400}>
-          <div className="relative">
-            <div className="bg-watt-light rounded-2xl p-8 md:p-10 border border-gray-200 shadow-institutional-lg">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <TrendingUp className="w-7 h-7 text-watt-trust" />
-                <h3 className="text-2xl md:text-3xl font-bold text-watt-navy">The Result</h3>
-              </div>
-              
-              <p className="text-base md:text-lg text-watt-navy/70 mb-8 max-w-3xl mx-auto text-center leading-relaxed">
-                By solving critical industry pain points, WattByte creates{' '}
-                <span className="text-watt-bitcoin font-semibold">significant value</span>{' '}
-                for data center operators seeking exposure to{' '}
-                <span className="text-watt-success font-semibold">digital infrastructure growth</span>{' '}
-                without operational complexity.
-              </p>
-
-            </div>
-          </div>
-        </ScrollReveal>
       </div>
     </section>
   );

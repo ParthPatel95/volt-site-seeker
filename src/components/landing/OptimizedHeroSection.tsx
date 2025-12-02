@@ -67,33 +67,6 @@ export const OptimizedHeroSection = () => {
               </div>
             </div>
           </ScrollReveal>
-          
-          {/* CTA buttons */}
-          <ScrollReveal delay={400}>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
-              <Link to="/app" className="w-full sm:w-auto group">
-                <Button 
-                  size="lg" 
-                  className="w-full sm:w-auto bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-8 sm:px-10 md:px-12 py-5 sm:py-6 md:py-7 text-base sm:text-lg font-semibold shadow-institutional-lg transition-all duration-200"
-                >
-                  <span className="flex items-center">
-                    Request Platform Access
-                    <ArrowRight className="ml-2 sm:ml-3 w-5 sm:w-6 h-5 sm:h-6 group-hover:translate-x-1 transition-transform duration-200" />
-                  </span>
-                </Button>
-              </Link>
-              
-              <SiteAccessRequestModal>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="w-full sm:w-auto border-2 border-watt-navy/20 bg-white text-watt-navy hover:bg-watt-light hover:border-watt-navy/30 px-8 sm:px-10 md:px-12 py-5 sm:py-6 md:py-7 text-base sm:text-lg font-semibold shadow-institutional transition-all duration-200"
-                >
-                  View Available Sites
-                </Button>
-              </SiteAccessRequestModal>
-            </div>
-          </ScrollReveal>
         </div>
       </div>
     </section>
