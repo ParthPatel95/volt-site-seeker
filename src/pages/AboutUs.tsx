@@ -5,6 +5,7 @@ import { LandingBackground } from '@/components/landing/LandingBackground';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LeadershipTeamSection } from '@/components/landing/LeadershipTeamSection';
 import { InteractiveGlobe } from '@/components/landing/InteractiveGlobe';
+import { InteractiveStats } from '@/components/landing/InteractiveStats';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
@@ -389,31 +390,11 @@ const AboutUs: React.FC = () => {
                   By the Numbers
                 </h2>
                 <p className="text-lg text-watt-navy/70">
-                  Real infrastructure, real scale
+                  Real infrastructure, real scale, real progress
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                {stats.map((stat, index) => (
-                  <Card 
-                    key={index} 
-                    className="p-6 bg-white border-gray-200 shadow-institutional text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <div className="flex justify-center mb-3">
-                      <div className="p-2 bg-watt-trust/10 rounded-lg text-watt-trust">
-                        {stat.icon}
-                      </div>
-                    </div>
-                    <div className="text-3xl md:text-4xl font-bold text-watt-navy mb-2">
-                      <AnimatedCounter end={stat.value} suffix={stat.suffix} />
-                    </div>
-                    <div className="text-sm text-watt-navy/70">
-                      {stat.label}
-                    </div>
-                  </Card>
-                ))}
-              </div>
+              <InteractiveStats />
             </div>
           </section>
         </ScrollReveal>
