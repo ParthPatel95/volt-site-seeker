@@ -8,7 +8,9 @@ import GlobalPresenceMap from '@/components/landing/GlobalPresenceMap';
 import { InteractiveStats } from '@/components/landing/InteractiveStats';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { ContactFormDialog } from '@/components/contact/ContactFormDialog';
 
 // Animated Counter Component
 const AnimatedCounter: React.FC<{ end: number; duration?: number; suffix?: string }> = ({ end, duration = 2000, suffix = '' }) => {
@@ -48,6 +50,8 @@ const AnimatedCounter: React.FC<{ end: number; duration?: number; suffix?: strin
 };
 
 const AboutUs: React.FC = () => {
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
+  
   const stats = [
     { label: 'Global Pipeline', value: 1429, suffix: 'MW', icon: <Zap className="w-5 h-5" /> },
     { label: 'Under Development', value: 135, suffix: 'MW', icon: <Building2 className="w-5 h-5" /> },
@@ -430,21 +434,14 @@ const AboutUs: React.FC = () => {
               <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
                 Partner with WattByte to build the digital infrastructure powering tomorrow's AI, HPC, and Bitcoin mining operations.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a 
-                  href="/app" 
-                  className="inline-flex items-center justify-center px-8 py-4 bg-watt-bitcoin text-white font-semibold rounded-lg hover:bg-watt-bitcoin/90 transition-all hover:-translate-y-1 shadow-lg"
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setIsContactDialogOpen(true)}
+                  className="inline-flex items-center justify-center px-8 py-4 bg-watt-bitcoin text-white font-semibold rounded-lg hover:bg-watt-bitcoin/90 transition-all hover:-translate-y-1 shadow-lg text-lg h-auto"
                 >
-                  Partner with WattByte
+                  Get in Touch
                   <ArrowRight className="ml-2 w-5 h-5" />
-                </a>
-                <a 
-                  href="/app" 
-                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-watt-navy font-semibold rounded-lg hover:bg-white/90 transition-all hover:-translate-y-1 shadow-lg"
-                >
-                  List Your Site
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </a>
+                </Button>
               </div>
             </div>
           </section>
@@ -452,6 +449,12 @@ const AboutUs: React.FC = () => {
 
         <LandingFooter />
       </div>
+
+      {/* Contact Form Dialog */}
+      <ContactFormDialog 
+        open={isContactDialogOpen} 
+        onOpenChange={setIsContactDialogOpen}
+      />
     </div>
   );
 };
