@@ -904,7 +904,7 @@ export function DocumentViewer({
             )}
 
             {isPdf ? (
-              isIOS || useNativePdfViewer ? (
+              useNativePdfViewer ? (
                 // iOS Native PDF viewer with navigation info
                 <div 
                   className="w-full h-full flex items-center justify-center max-w-full overflow-auto relative"
@@ -968,16 +968,11 @@ export function DocumentViewer({
                   });
                 }}
                 error={
-                  <div className="flex flex-col items-center justify-center p-8 text-center">
-                    <AlertCircle className="w-16 h-16 text-destructive mb-4" />
-                    <p className="text-lg font-semibold mb-2">Failed to load PDF document</p>
-                    <p className="text-sm text-muted-foreground mb-4">The document could not be rendered</p>
-                    <Button 
-                      onClick={() => setUseNativePdfViewer(true)}
-                      variant="outline"
-                    >
-                      Use Native Viewer
-                    </Button>
+                  <div className="flex items-center justify-center p-8 bg-card min-h-[400px]">
+                    <div className="text-center">
+                      <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">Loading document...</p>
+                    </div>
                   </div>
                 }
                 loading={
