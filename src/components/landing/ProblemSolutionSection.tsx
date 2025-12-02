@@ -40,10 +40,10 @@ export const ProblemSolutionSection = () => {
   ];
 
   return (
-    <section className="relative z-10 px-4 sm:px-6 py-12 md:py-16 bg-white">
+    <section className="relative z-10 px-4 sm:px-6 py-10 md:py-12 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <ScrollReveal direction="fade" className="text-center mb-8 md:mb-10">
+        <ScrollReveal direction="fade" className="text-center mb-6 md:mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-trust/10 border border-watt-trust/20 mb-4">
             <Zap className="w-4 h-4 text-watt-trust" />
             <span className="text-sm font-medium text-watt-trust">Market Intelligence</span>
@@ -60,7 +60,7 @@ export const ProblemSolutionSection = () => {
         </ScrollReveal>
 
         {/* Problem → Solution Flow */}
-        <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-12 mb-10">
+        <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-12">
           {/* Problems Column */}
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-8">
