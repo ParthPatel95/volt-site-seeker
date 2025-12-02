@@ -98,6 +98,12 @@ export function DocumentViewer({
   const [isUserZooming, setIsUserZooming] = useState(false);
   const initialDimensionsSet = useRef(false);
   
+  // Width locking mechanism to prevent re-render loops
+  const widthLocked = useRef(false);
+  const lockedPageWidth = useRef<number | null>(null);
+  const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
@@ -182,6 +188,16 @@ export function DocumentViewer({
           setPdfDocumentProxy(proxy);
           // Set numPages immediately (critical for iOS to show navigation controls)
           setNumPages(proxy.numPages);
+          
+          // Get PDF dimensions immediately for stable page width calculation
+          if (!widthLocked.current) {
+            proxy.getPage(1).then((page: any) => {
+              const viewport = page.getViewport({ scale: 1 });
+              setPdfPageDimensions({ width: viewport.width, height: viewport.height });
+              console.log('[DocumentViewer] PDF page dimensions loaded', viewport.width, viewport.height);
+            });
+          }
+          
           console.log('[DocumentViewer] PDF proxy loaded successfully', { numPages: proxy.numPages });
         } catch (error) {
           console.error('[DocumentViewer] Failed to load PDF proxy:', error);
@@ -193,6 +209,23 @@ export function DocumentViewer({
       loadPdfProxy();
     }
   }, [isPdf, documentUrl]);
+  
+  // Loading timeout fallback - switch to native viewer after 15 seconds
+  useEffect(() => {
+    if (isPdf && !useNativePdfViewer && !isIOS) {
+      const timeout = setTimeout(() => {
+        console.warn('[DocumentViewer] Page load timeout - falling back to native viewer');
+        setPageLoadTimeout(true);
+        setUseNativePdfViewer(true);
+        toast({
+          title: 'Loading Timeout',
+          description: 'Switched to browser PDF viewer for better performance.',
+        });
+      }, 15000); // 15 second timeout
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isPdf, pageNumber, useNativePdfViewer, isIOS, toast]);
 
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
@@ -568,9 +601,22 @@ export function DocumentViewer({
   };
 
   function onDocumentLoadSuccess(pdf: any) {
-    setNumPages(pdf.numPages);
-    setPageNumber(1);
-    setPdfDocumentProxy(pdf);
+    console.log('[DocumentViewer] PDF loaded successfully', { numPages: pdf.numPages });
+    
+    // Prevent race condition - only set if not already set by pre-load effect
+    if (numPages === 0) {
+      setNumPages(pdf.numPages);
+    }
+    // Don't reset pageNumber if already navigating
+    if (pageNumber === 0 || pageNumber === 1) {
+      setPageNumber(1);
+    }
+    // Only set proxy if not already loaded
+    if (!pdfDocumentProxy) {
+      setPdfDocumentProxy(pdf);
+    }
+    
+    setIsPageLoading(false);
   }
 
   const handlePageLoadSuccess = useCallback((page: any) => {
@@ -620,18 +666,22 @@ export function DocumentViewer({
   // Track container dimensions so PDF fits within the viewer column
   useEffect(() => {
     const updateDimensions = () => {
+      // Don't update dimensions while page is loading to prevent re-render loops
+      if (isPageLoading) return;
+      
       if (containerRef.current) {
         const newWidth = containerRef.current.clientWidth;
         const newHeight = containerRef.current.clientHeight;
         
-        // Only update if significantly different (>5px threshold to prevent tiny flickers)
-        setContainerWidth(prev => Math.abs((prev || 0) - newWidth) > 5 ? newWidth : prev);
-        setContainerHeight(prev => Math.abs((prev || 0) - newHeight) > 5 ? newHeight : prev);
+        // Increased threshold from 5px to 20px for more stability
+        setContainerWidth(prev => Math.abs((prev || 0) - newWidth) > 20 ? newWidth : prev);
+        setContainerHeight(prev => Math.abs((prev || 0) - newHeight) > 20 ? newHeight : prev);
       }
     };
 
     // Debounced version for ResizeObserver
-    const debouncedUpdate = debounce(updateDimensions, 100);
+      // Increased debounce from 100ms to 250ms for better stability
+      const debouncedUpdate = debounce(updateDimensions, 250);
 
     updateDimensions(); // Initial measurement
     
@@ -643,12 +693,18 @@ export function DocumentViewer({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Memoize page width calculation to prevent unnecessary recalculations
+  // Memoize page width calculation to prevent unnecessary recalculations with locking
   const pageWidth = useMemo(() => {
+    // Return locked width if already calculated
+    if (lockedPageWidth.current && widthLocked.current) {
+      return lockedPageWidth.current;
+    }
+    
     const maxWidth = containerWidth ? containerWidth - 80 : window.innerWidth - 120;
     const maxHeight = containerHeight ? containerHeight - 32 : window.innerHeight - 200;
     
     // If we have PDF dimensions, calculate based on aspect ratio
+    let calculatedWidth = maxWidth;
     if (pdfPageDimensions) {
       const aspectRatio = pdfPageDimensions.width / pdfPageDimensions.height;
       
@@ -656,11 +712,18 @@ export function DocumentViewer({
       const widthFromHeight = maxHeight * aspectRatio;
       
       // Use the smaller of the two to ensure it fits both constraints
-      return Math.min(maxWidth, widthFromHeight, 1200);
+      calculatedWidth = Math.min(maxWidth, widthFromHeight, 1200);
+      
+      // Lock width once dimensions are stable
+      if (!widthLocked.current && containerWidth && containerHeight) {
+        widthLocked.current = true;
+        lockedPageWidth.current = calculatedWidth;
+        console.log('[DocumentViewer] Page width locked at', calculatedWidth);
+      }
     }
     
     // Default fallback
-    return Math.min(maxWidth, 1200);
+    return calculatedWidth || Math.min(maxWidth, 1200);
   }, [containerWidth, containerHeight, pdfPageDimensions]);
 
   return (
@@ -989,6 +1052,18 @@ export function DocumentViewer({
                         loading={
                           <div className="flex items-center justify-center p-8 bg-card">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        }
+                        error={
+                          <div className="text-center p-8 bg-destructive/10 rounded-lg">
+                            <p className="text-destructive mb-4">Failed to load page {pageNumber}</p>
+                            <Button 
+                              onClick={() => setUseNativePdfViewer(true)} 
+                              size="sm"
+                              variant="outline"
+                            >
+                              Switch to Browser Viewer
+                            </Button>
                           </div>
                         }
                       />
