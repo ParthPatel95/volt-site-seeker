@@ -197,30 +197,34 @@ export function TranslationPanel({
           isEvalSupported: false
         });
         
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(pageNumber);
-        const textContent = await page.getTextContent();
+          const pdf = await loadingTask.promise;
         
-        let lastY = 0;
-        let text = '';
-        
-        for (const item of textContent.items) {
-          if ('str' in item) {
-            const currentY = item.transform[5];
-            
-            if (lastY !== 0 && Math.abs(currentY - lastY) > 5) {
-              text += '\n';
+        try {
+          const page = await pdf.getPage(pageNumber);
+          const textContent = await page.getTextContent();
+          
+          let lastY = 0;
+          let text = '';
+          
+          for (const item of textContent.items) {
+            if ('str' in item) {
+              const currentY = item.transform[5];
+              
+              if (lastY !== 0 && Math.abs(currentY - lastY) > 5) {
+                text += '\n';
+              }
+              
+              text += item.str;
+              lastY = currentY;
             }
-            
-            text += item.str;
-            lastY = currentY;
           }
+          
+          return text;
+        } finally {
+          // Always clean up to prevent memory leaks
+          await pdf.destroy();
+          console.log('[TranslationPanel] PDF document destroyed after extraction');
         }
-        
-        // Clean up
-        await pdf.destroy();
-        
-        return text;
       } catch (error) {
         console.error(`[TranslationPanel] Failed to load and extract text from page ${pageNumber}:`, error);
         toast({
@@ -343,6 +347,15 @@ export function TranslationPanel({
         let fullTranslation = '';
         let buffer = '';
         let hasReceivedContent = false;
+        
+        // Add 60-second timeout for streaming translations
+        const streamTimeout = setTimeout(() => {
+          reader.cancel();
+          console.error('[TranslationPanel] Streaming timeout after 60 seconds');
+          if (!hasReceivedContent) {
+            throw new Error('Translation timeout - stream took too long to complete');
+          }
+        }, 60000);
 
         try {
           while (true) {
@@ -388,6 +401,8 @@ export function TranslationPanel({
           if (!hasReceivedContent) {
             throw streamError;
           }
+        } finally {
+          clearTimeout(streamTimeout);
         }
 
         // Store in cache only if we got content

@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -149,13 +149,23 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     }
   }, [open, document, isPdf, documentUrl]);
 
+  // Width locking mechanism refs
+  const widthLocked = useRef(false);
+  const lockedPageWidth = useRef<number | null>(null);
+
   useEffect(() => {
     if (open && document) {
+      // Reset width lock when document changes
+      widthLocked.current = false;
+      lockedPageWidth.current = null;
       loadDocument();
     } else {
       setDocumentUrl(null);
       setNumPages(0);
       setPageNumber(1);
+      // Reset state when dialog closes
+      widthLocked.current = false;
+      lockedPageWidth.current = null;
     }
   }, [open, document]);
 
@@ -267,11 +277,11 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     }
   };
   
-  // Loading timeout fallback
+  // Loading timeout fallback - only on initial load (not page changes)
   useEffect(() => {
-    if (open && isPdf && !useNativePdfViewer && !isIOS) {
+    if (open && isPdf && !useNativePdfViewer && !isIOS && numPages === 0) {
       const timeout = setTimeout(() => {
-        console.warn('[DocumentDialog] Page load timeout - falling back to native viewer');
+        console.warn('[DocumentDialog] Initial load timeout - falling back to native viewer');
         setPageLoadTimeout(true);
         setUseNativePdfViewer(true);
         toast({
@@ -282,7 +292,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
       
       return () => clearTimeout(timeout);
     }
-  }, [open, isPdf, useNativePdfViewer, isIOS, toast]);
+  }, [open, isPdf, useNativePdfViewer, isIOS, numPages, toast]);
 
   const changePage = (offset: number) => {
     setPageNumber(prevPageNumber => {
@@ -359,6 +369,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                           onClick={previousPage}
                           disabled={pageNumber <= 1}
                           className="h-9 px-3 sm:px-4 text-sm touch-manipulation"
+                          aria-label="Previous page"
                         >
                           Previous
                         </Button>
@@ -371,6 +382,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                           onClick={nextPage}
                           disabled={pageNumber >= numPages}
                           className="h-9 px-3 sm:px-4 text-sm touch-manipulation"
+                          aria-label="Next page"
                         >
                           Next
                         </Button>

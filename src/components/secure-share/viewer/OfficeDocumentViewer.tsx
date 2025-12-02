@@ -52,6 +52,17 @@ export function OfficeDocumentViewer({
   useEffect(() => {
     setIsLoading(true);
     setError(null);
+    
+    // Add 10-second timeout for iframe loading
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('[OfficeViewer] Loading timeout - document took too long to load');
+        setIsLoading(false);
+        handleIframeError();
+      }
+    }, 10000);
+    
+    return () => clearTimeout(timeout);
   }, [documentUrl, viewerType]);
 
   const handleIframeLoad = () => {
