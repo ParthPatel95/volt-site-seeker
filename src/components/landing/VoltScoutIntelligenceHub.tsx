@@ -179,7 +179,7 @@ export const VoltScoutIntelligenceHub = () => {
                       </div>
                       <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur border border-white/10">
                         <div className="text-3xl sm:text-4xl font-bold mb-1">
-                          <AnimatedCounter end={50} suffix="K+" />
+                          <AnimatedCounter end={3.9} suffix="k+" />
                         </div>
                         <div className="text-xs sm:text-sm text-white/70">Sites Analyzed</div>
                       </div>
