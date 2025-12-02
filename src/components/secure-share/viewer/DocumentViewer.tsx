@@ -160,6 +160,10 @@ export function DocumentViewer({
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
     if (isPdf && documentUrl) {
+      // Reset width lock when document changes
+      widthLocked.current = false;
+      lockedPageWidth.current = null;
+      
       const loadPdfProxy = async () => {
         setIsLoadingPdfProxy(true);
         console.log('[DocumentViewer] Pre-loading PDF proxy for text extraction and page count');
@@ -210,11 +214,11 @@ export function DocumentViewer({
     }
   }, [isPdf, documentUrl]);
   
-  // Loading timeout fallback - switch to native viewer after 15 seconds
+  // Loading timeout fallback - only on initial load (not page changes)
   useEffect(() => {
-    if (isPdf && !useNativePdfViewer && !isIOS) {
+    if (isPdf && !useNativePdfViewer && !isIOS && numPages === 0) {
       const timeout = setTimeout(() => {
-        console.warn('[DocumentViewer] Page load timeout - falling back to native viewer');
+        console.warn('[DocumentViewer] Initial load timeout - falling back to native viewer');
         setPageLoadTimeout(true);
         setUseNativePdfViewer(true);
         toast({
@@ -225,7 +229,7 @@ export function DocumentViewer({
       
       return () => clearTimeout(timeout);
     }
-  }, [isPdf, pageNumber, useNativePdfViewer, isIOS, toast]);
+  }, [isPdf, useNativePdfViewer, isIOS, numPages, toast]);
 
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
@@ -700,30 +704,31 @@ export function DocumentViewer({
       return lockedPageWidth.current;
     }
     
-    const maxWidth = containerWidth ? containerWidth - 80 : window.innerWidth - 120;
-    const maxHeight = containerHeight ? containerHeight - 32 : window.innerHeight - 200;
-    
-    // If we have PDF dimensions, calculate based on aspect ratio
-    let calculatedWidth = maxWidth;
-    if (pdfPageDimensions) {
-      const aspectRatio = pdfPageDimensions.width / pdfPageDimensions.height;
-      
-      // Calculate what width would fit in maxHeight
-      const widthFromHeight = maxHeight * aspectRatio;
-      
-      // Use the smaller of the two to ensure it fits both constraints
-      calculatedWidth = Math.min(maxWidth, widthFromHeight, 1200);
-      
-      // Lock width once dimensions are stable
-      if (!widthLocked.current && containerWidth && containerHeight) {
-        widthLocked.current = true;
-        lockedPageWidth.current = calculatedWidth;
-        console.log('[DocumentViewer] Page width locked at', calculatedWidth);
-      }
+    // Wait for container to be stable (minimum size threshold)
+    if (!containerWidth || containerWidth < 100 || !pdfPageDimensions) {
+      return containerWidth || 800;
     }
     
-    // Default fallback
-    return calculatedWidth || Math.min(maxWidth, 1200);
+    const maxWidth = containerWidth - 80;
+    const maxHeight = containerHeight ? containerHeight - 32 : window.innerHeight - 200;
+    
+    // Calculate based on PDF aspect ratio
+    const aspectRatio = pdfPageDimensions.width / pdfPageDimensions.height;
+    
+    // Calculate what width would fit in maxHeight
+    const widthFromHeight = maxHeight * aspectRatio;
+    
+    // Use the smaller of the two to ensure it fits both constraints
+    const calculatedWidth = Math.min(maxWidth, widthFromHeight, 1200);
+    
+    // Lock width once dimensions are stable
+    if (!widthLocked.current && containerWidth > 100 && containerHeight && containerHeight > 100) {
+      widthLocked.current = true;
+      lockedPageWidth.current = calculatedWidth;
+      console.log('[DocumentViewer] Page width locked at', calculatedWidth);
+    }
+    
+    return calculatedWidth;
   }, [containerWidth, containerHeight, pdfPageDimensions]);
 
   return (
@@ -747,12 +752,16 @@ export function DocumentViewer({
                 {/* Page Navigation */}
                 <div className="flex items-center gap-1">
                   <Button 
-                    onClick={() => setPageNumber(prev => Math.max(prev - 1, 1))} 
+                    onClick={() => {
+                      setIsPageLoading(true);
+                      setPageNumber(prev => Math.max(prev - 1, 1));
+                    }} 
                     size="sm" 
                     variant="ghost"
                     className="h-7 md:h-8 px-2"
                     disabled={pageNumber <= 1}
                     title="Previous Page"
+                    aria-label="Previous page"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
@@ -760,12 +769,16 @@ export function DocumentViewer({
                     {pageNumber} / {numPages}
                   </span>
                   <Button 
-                    onClick={() => setPageNumber(prev => Math.min(prev + 1, numPages))} 
+                    onClick={() => {
+                      setIsPageLoading(true);
+                      setPageNumber(prev => Math.min(prev + 1, numPages));
+                    }} 
                     size="sm" 
                     variant="ghost"
                     className="h-7 md:h-8 px-2"
                     disabled={pageNumber >= numPages}
                     title="Next Page"
+                    aria-label="Next page"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>
@@ -917,24 +930,32 @@ export function DocumentViewer({
               <>
                 {/* Left Arrow */}
                 <Button
-                  onClick={() => setPageNumber(prev => Math.max(prev - 1, 1))}
+                  onClick={() => {
+                    setIsPageLoading(true);
+                    setPageNumber(prev => Math.max(prev - 1, 1));
+                  }}
                   disabled={pageNumber <= 1}
                   variant="secondary"
                   size="icon"
                   className="absolute left-1 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30 touch-manipulation"
                   title="Previous Page (Left Arrow)"
+                  aria-label="Previous page"
                 >
                   <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                 </Button>
 
                 {/* Right Arrow */}
                 <Button
-                  onClick={() => setPageNumber(prev => Math.min(prev + 1, numPages))}
+                  onClick={() => {
+                    setIsPageLoading(true);
+                    setPageNumber(prev => Math.min(prev + 1, numPages));
+                  }}
                   disabled={pageNumber >= numPages}
                   variant="secondary"
                   size="icon"
                   className="absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full shadow-lg hover:scale-110 transition-transform disabled:opacity-30 touch-manipulation"
                   title="Next Page (Right Arrow)"
+                  aria-label="Next page"
                 >
                   <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                 </Button>
@@ -1048,7 +1069,14 @@ export function DocumentViewer({
                         renderTextLayer={false}
                         renderAnnotationLayer={true}
                         className="shadow-lg"
-                        onLoadSuccess={handlePageLoadSuccess}
+                        onLoadSuccess={(page) => {
+                          handlePageLoadSuccess(page);
+                          setIsPageLoading(false);
+                        }}
+                        onLoadError={(error) => {
+                          console.error('[DocumentViewer] Page render error:', error);
+                          setIsPageLoading(false);
+                        }}
                         loading={
                           <div className="flex items-center justify-center p-8 bg-card">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
