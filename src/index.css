@@ -58,12 +58,22 @@
     --watt-warning: 30 100% 60%;          /* Warm orange #FF9933 */
     --watt-light: 220 14% 96%;            /* Surface gray #F5F5F7 */
     --watt-surface: 220 14% 98%;          /* Elevated surface #FAFBFC */
+    
+    /* VoltScout App Colors (separate from landing page branding) */
+    --watt-primary: 217 91% 60%;          /* Electric Blue #3B82F6 */
+    --watt-secondary: 263 70% 50%;        /* Purple #7C3AED */
+    --watt-accent: 45 93% 47%;            /* Yellow/Orange #F59E0B */
   }
 
   .dark {
     /* Dark mode with deep navy sections */
     --background: 220 60% 10%;            /* Deep navy */
     --foreground: 0 0% 100%;
+    
+    /* VoltScout App Colors (same in dark mode) */
+    --watt-primary: 217 91% 60%;          /* Electric Blue #3B82F6 */
+    --watt-secondary: 263 70% 50%;        /* Purple #7C3AED */
+    --watt-accent: 45 93% 47%;            /* Yellow/Orange #F59E0B */
 
     --card: 220 50% 12%;
     --card-foreground: 0 0% 100%;
@@ -185,6 +195,27 @@
   
   .shadow-institutional-lg {
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  }
+  
+  /* VoltScout App Utilities */
+  .bg-watt-gradient {
+    background: linear-gradient(135deg, hsl(var(--watt-primary)), hsl(var(--watt-secondary)));
+  }
+  
+  .shadow-watt-glow {
+    box-shadow: 0 0 20px -5px hsl(var(--watt-primary) / 0.5);
+  }
+  
+  .text-watt-primary {
+    color: hsl(var(--watt-primary));
+  }
+  
+  .text-watt-secondary {
+    color: hsl(var(--watt-secondary));
+  }
+  
+  .text-watt-accent {
+    color: hsl(var(--watt-accent));
   }
 
   /* Enhanced animations for modern UX */
