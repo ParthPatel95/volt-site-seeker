@@ -55,6 +55,8 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
   const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(false);
+  const pageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   
   // Detect iOS for native PDF viewer
@@ -142,6 +144,11 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
           console.log('[DocumentDialog] PDF metadata loaded', { numPages: proxy.numPages });
         } catch (error) {
           console.error('[DocumentDialog] Failed to load PDF metadata:', error);
+          // On pre-load failure, fallback to native viewer
+          if (!isIOS) {
+            console.warn('[DocumentDialog] Pre-load failed - switching to native viewer');
+            setUseNativePdfViewer(true);
+          }
         }
       };
       
@@ -293,6 +300,27 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
       return () => clearTimeout(timeout);
     }
   }, [open, isPdf, useNativePdfViewer, isIOS, numPages, toast]);
+  
+  // Safety timeout: Reset isPageLoading if stuck for more than 8 seconds
+  useEffect(() => {
+    if (isPageLoading) {
+      pageLoadingTimeoutRef.current = setTimeout(() => {
+        console.warn('[DocumentDialog] Page loading stuck - resetting state and switching to native viewer');
+        setIsPageLoading(false);
+        setUseNativePdfViewer(true);
+        toast({
+          title: 'Loading Taking Too Long',
+          description: 'Switched to browser PDF viewer for better performance.',
+        });
+      }, 8000);
+      
+      return () => {
+        if (pageLoadingTimeoutRef.current) {
+          clearTimeout(pageLoadingTimeoutRef.current);
+        }
+      };
+    }
+  }, [isPageLoading, toast]);
 
   const changePage = (offset: number) => {
     setPageNumber(prevPageNumber => {
