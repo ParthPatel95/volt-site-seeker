@@ -4,7 +4,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LeadershipTeamSection } from '@/components/landing/LeadershipTeamSection';
-import GlobalPresenceMap from '@/components/landing/GlobalPresenceMap';
+import GlobalPresenceSection from '@/components/landing/GlobalPresenceSection';
 import { InteractiveStats } from '@/components/landing/InteractiveStats';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -404,22 +404,7 @@ const AboutUs: React.FC = () => {
         </ScrollReveal>
 
         {/* Global Presence */}
-        <ScrollReveal>
-          <section className="relative py-16 md:py-20 px-6 bg-watt-light">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-watt-navy">
-                  Global Presence
-                </h2>
-                <p className="text-lg text-watt-navy/70">
-                  Interactive view of our 1,429MW global pipeline across 6 countries
-                </p>
-              </div>
-
-              <GlobalPresenceMap />
-            </div>
-          </section>
-        </ScrollReveal>
+        <GlobalPresenceSection />
 
         {/* Leadership Team Section */}
         <LeadershipTeamSection />
