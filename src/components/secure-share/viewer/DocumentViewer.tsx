@@ -90,11 +90,18 @@ export function DocumentViewer({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [pdfPageDimensions, setPdfPageDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => 
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
+  // Use native PDF viewer by default for ALL mobile devices (more reliable)
+  const [useNativePdfViewer, setUseNativePdfViewer] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const mobile = window.innerWidth < 768;
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    return mobile || iOS;
+  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isUserZooming, setIsUserZooming] = useState(false);
   const initialDimensionsSet = useRef(false);
   const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
@@ -131,7 +138,7 @@ export function DocumentViewer({
     return Math.min(width - 100, 700);
   });
 
-  // Detect mobile and update render width
+  // Detect mobile and update render width - also switch to native viewer on mobile
   useEffect(() => {
     const checkMobile = () => {
       const width = window.innerWidth;
@@ -140,6 +147,8 @@ export function DocumentViewer({
       // Update render width when viewport changes
       if (mobile) {
         setPdfRenderWidth(Math.min(width - 32, 400));
+        // Force native viewer on mobile for reliability
+        setUseNativePdfViewer(true);
       } else {
         setPdfRenderWidth(Math.min(width - 100, 700));
       }
@@ -181,13 +190,14 @@ export function DocumentViewer({
     console.log('[DocumentViewer] Document URL changed, resetting state');
     setNumPages(0);
     setPageNumber(1);
-    setUseNativePdfViewer(false);
+    // Use native viewer on mobile/iOS for reliability
+    setUseNativePdfViewer(isMobile || isIOS);
     setPageLoadTimeout(false);
     setPdfDocumentProxy(null);
     setPdfPageDimensions(null);
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
-  }, [documentUrl]);
+  }, [documentUrl, isMobile, isIOS]);
 
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
@@ -245,7 +255,7 @@ export function DocumentViewer({
   
   // Safety timeout: Only on TRUE initial document load (not page navigation)
   useEffect(() => {
-    if (isPdf && !useNativePdfViewer && !isIOS && numPages === 0 && initialLoadRef.current) {
+    if (isPdf && !useNativePdfViewer && numPages === 0 && initialLoadRef.current) {
       const timeout = setTimeout(() => {
         console.warn('[DocumentViewer] Initial load timeout - falling back to native viewer');
         setPageLoadTimeout(true);
