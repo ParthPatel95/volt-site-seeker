@@ -12,33 +12,19 @@ import { TranslationPanel } from './TranslationPanel';
 import { extractPageText } from '@/utils/pdfTextExtractor';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
 
-// Configure PDF.js worker with multiple fallback CDNs for pdfjs-dist 5.x compatibility
+// Configure PDF.js worker - use import.meta.url for Vite bundling (most reliable)
 const initializePdfWorker = () => {
-  // For pdfjs-dist 5.x, use .mjs extension
-  const workerUrls = [
-    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
-    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`,
-    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.mjs`,
-    // Legacy fallbacks for older environments
-    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
-  ];
-  
-  let workerInitialized = false;
-  
-  for (const url of workerUrls) {
-    try {
-      pdfjs.GlobalWorkerOptions.workerSrc = url;
-      workerInitialized = true;
-      console.log(`[PDF.js] Worker initialized with: ${url}`);
-      break;
-    } catch (error) {
-      console.warn(`[PDF.js] Failed to load worker from ${url}:`, error);
-    }
-  }
-  
-  if (!workerInitialized) {
-    console.error('[PDF.js] Failed to initialize worker from all CDNs');
+  try {
+    // Primary: Use import.meta.url for Vite bundling - this bundles the worker locally
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.mjs',
+      import.meta.url
+    ).toString();
+    console.log('[PDF.js] Worker initialized via import.meta.url');
+  } catch (e) {
+    // Fallback: CDN for environments where import.meta.url doesn't work
+    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    console.log('[PDF.js] Worker initialized via CDN fallback');
   }
 };
 
@@ -94,13 +80,17 @@ export function DocumentViewer({
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
   // Start with react-pdf viewer - fall back to native only on errors
-  // Canvas overflow is prevented by pdfRenderWidth (400px mobile) and zoom limits (1.25x)
+  // Canvas overflow prevented by: pdfRenderWidth (400px mobile), devicePixelRatio=1, zoom 1.25x max
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isUserZooming, setIsUserZooming] = useState(false);
   const initialDimensionsSet = useRef(false);
   const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
   const initialLoadRef = useRef(true);
+  const [documentLoaded, setDocumentLoaded] = useState(false);
+  
+  // Ref for canvas cleanup on page change (prevents iOS memory accumulation)
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
@@ -186,11 +176,31 @@ export function DocumentViewer({
     // Start with react-pdf - fall back to native only on actual errors
     setUseNativePdfViewer(false);
     setPageLoadTimeout(false);
+    setDocumentLoaded(false);
     setPdfDocumentProxy(null);
     setPdfPageDimensions(null);
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
   }, [documentUrl]);
+  
+  // Canvas cleanup on page change - prevents iOS Safari memory accumulation
+  useEffect(() => {
+    return () => {
+      // Clean up canvas memory when changing pages
+      if (canvasContainerRef.current) {
+        const canvases = canvasContainerRef.current.querySelectorAll('canvas');
+        canvases.forEach(canvas => {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+          canvas.width = 1;
+          canvas.height = 1;
+        });
+        console.log('[DocumentViewer] Canvas memory cleaned up');
+      }
+    };
+  }, [pageNumber]);
 
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
@@ -246,9 +256,9 @@ export function DocumentViewer({
     }
   }, [isPdf, documentUrl]);
   
-  // Safety timeout: Only on TRUE initial document load (not page navigation)
+  // Safety timeout: Uses documentLoaded state to fix race condition (not numPages)
   useEffect(() => {
-    if (isPdf && !useNativePdfViewer && numPages === 0 && initialLoadRef.current) {
+    if (isPdf && !useNativePdfViewer && !documentLoaded && initialLoadRef.current) {
       const timeout = setTimeout(() => {
         console.warn('[DocumentViewer] Initial load timeout - falling back to native viewer');
         setPageLoadTimeout(true);
@@ -262,7 +272,7 @@ export function DocumentViewer({
       
       return () => clearTimeout(timeout);
     }
-  }, [isPdf, useNativePdfViewer, isIOS, numPages, toast]);
+  }, [isPdf, useNativePdfViewer, documentLoaded, toast]);
 
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
@@ -652,6 +662,9 @@ export function DocumentViewer({
   function onDocumentLoadSuccess(pdf: any) {
     console.log('[DocumentViewer] PDF loaded successfully', { numPages: pdf.numPages });
     
+    // Mark document as loaded - fixes timeout race condition
+    setDocumentLoaded(true);
+    
     // Prevent race condition - only set if not already set by pre-load effect
     if (numPages === 0) {
       setNumPages(pdf.numPages);
@@ -664,8 +677,6 @@ export function DocumentViewer({
     if (!pdfDocumentProxy) {
       setPdfDocumentProxy(pdf);
     }
-    
-    // No longer need to track loading state
   }
 
   const handlePageLoadSuccess = useCallback((page: any) => {
@@ -1011,6 +1022,7 @@ export function DocumentViewer({
                 }
               >
                 <div 
+                  ref={canvasContainerRef}
                   style={{ 
                     transform: `scale(${isMobile ? Math.min(zoom, 1.25) : zoom})`,
                     transformOrigin: 'center center',
@@ -1024,14 +1036,17 @@ export function DocumentViewer({
                     renderTextLayer={false}
                     renderAnnotationLayer={true}
                     className="shadow-lg"
-              error={
-                <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
-                  <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Loading page...</p>
-                  </div>
-                </div>
-              }
+                    // CRITICAL: Reduce devicePixelRatio on mobile to prevent canvas memory overflow
+                    // iOS Safari has 384MB canvas limit - devicePixelRatio=2-3 causes 4-9x memory usage
+                    devicePixelRatio={isMobile ? 1 : window.devicePixelRatio}
+                    error={
+                      <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
+                        <div className="text-center">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                          <p className="text-sm text-muted-foreground">Loading page...</p>
+                        </div>
+                      </div>
+                    }
                     onLoadSuccess={(page) => {
                       handlePageLoadSuccess(page);
                       initialLoadRef.current = false;
