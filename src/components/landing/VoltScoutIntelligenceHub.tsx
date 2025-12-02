@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { 
   Target, 
@@ -9,53 +10,96 @@ import {
   TrendingUp, 
   Bell, 
   Database,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { ScrollReveal } from './ScrollAnimations';
 import { LiveERCOTData } from './LiveERCOTData';
 import { LiveAESOData } from './LiveAESOData';
 import { VoltScoutHeroStats } from './VoltScoutHeroStats';
 import { VoltScoutHowItWorks } from './VoltScoutHowItWorks';
+import { AnimatedCounter } from '@/components/AnimatedCounter';
 
 const platformFeatures = [
-  {
-    icon: Target,
-    title: 'VoltScore™ Intelligence',
-    description: 'AI-powered scoring system analyzes 50,000+ substations to identify the highest-value energy opportunities with 97% predictive accuracy.',
-    metrics: '97% Accuracy',
-    featured: true,
-  },
   {
     icon: MapPin,
     title: 'Infrastructure Mapping',
     description: 'Real-time visualization of power infrastructure, transmission capacity, and available grid connections.',
     metrics: '50,000+ Sites',
+    color: 'trust', // Blue
   },
   {
     icon: Satellite,
     title: 'Satellite Intelligence',
     description: 'Advanced satellite imagery analysis to evaluate land characteristics, proximity to infrastructure, and development potential.',
     metrics: 'Weekly Updates',
+    color: 'purple', // Purple
   },
   {
     icon: TrendingUp,
     title: 'Price Forecasting',
     description: 'Machine learning models predict energy prices with high accuracy to optimize operational decisions.',
     metrics: '2 Live Markets',
+    color: 'success', // Green
   },
   {
     icon: Bell,
     title: 'Broker Network Alerts',
     description: 'Automated notifications from our exclusive broker network for off-market opportunities and new listings.',
     metrics: 'Real-Time',
+    color: 'bitcoin', // Orange
   },
   {
     icon: Database,
     title: 'Data Center Intel',
     description: 'Comprehensive database of existing and planned data centers with power consumption analytics.',
     metrics: '1,000+ Facilities',
+    color: 'navy', // Navy
   },
 ];
+
+const colorConfig = {
+  trust: {
+    border: 'border-l-watt-trust',
+    iconBg: 'bg-gradient-to-br from-watt-trust/20 to-watt-trust/5',
+    iconColor: 'text-watt-trust',
+    badgeBg: 'bg-watt-trust/10',
+    badgeText: 'text-watt-trust',
+    hoverBorder: 'hover:border-watt-trust/30',
+  },
+  purple: {
+    border: 'border-l-purple-500',
+    iconBg: 'bg-gradient-to-br from-purple-500/20 to-purple-500/5',
+    iconColor: 'text-purple-500',
+    badgeBg: 'bg-purple-500/10',
+    badgeText: 'text-purple-500',
+    hoverBorder: 'hover:border-purple-500/30',
+  },
+  success: {
+    border: 'border-l-watt-success',
+    iconBg: 'bg-gradient-to-br from-watt-success/20 to-watt-success/5',
+    iconColor: 'text-watt-success',
+    badgeBg: 'bg-watt-success/10',
+    badgeText: 'text-watt-success',
+    hoverBorder: 'hover:border-watt-success/30',
+  },
+  bitcoin: {
+    border: 'border-l-watt-bitcoin',
+    iconBg: 'bg-gradient-to-br from-watt-bitcoin/20 to-watt-bitcoin/5',
+    iconColor: 'text-watt-bitcoin',
+    badgeBg: 'bg-watt-bitcoin/10',
+    badgeText: 'text-watt-bitcoin',
+    hoverBorder: 'hover:border-watt-bitcoin/30',
+  },
+  navy: {
+    border: 'border-l-watt-navy',
+    iconBg: 'bg-gradient-to-br from-watt-navy/20 to-watt-navy/5',
+    iconColor: 'text-watt-navy',
+    badgeBg: 'bg-watt-navy/10',
+    badgeText: 'text-watt-navy',
+    hoverBorder: 'hover:border-watt-navy/30',
+  },
+};
 
 export const VoltScoutIntelligenceHub = () => {
   const [activeTab, setActiveTab] = useState('features');
@@ -109,43 +153,98 @@ export const VoltScoutIntelligenceHub = () => {
 
             {/* Platform Features Tab */}
             <TabsContent value="features" className="mt-0 animate-fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                {/* VoltScore Hero Card */}
+                <div className="lg:col-span-2 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-bitcoin/80 rounded-2xl p-6 sm:p-8 text-white shadow-xl overflow-hidden relative group">
+                  {/* Background pattern */}
+                  <div className="absolute inset-0 opacity-5">
+                    <div className="absolute inset-0" style={{
+                      backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                      backgroundSize: '32px 32px'
+                    }}></div>
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className="p-4 bg-white/10 rounded-xl backdrop-blur border border-white/20 group-hover:scale-105 transition-transform duration-300">
+                          <Target className="w-10 h-10 text-watt-bitcoin" />
+                        </div>
+                        <div>
+                          <Badge className="bg-watt-bitcoin text-white border-0 mb-2 gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            AI-Powered
+                          </Badge>
+                          <h3 className="text-2xl sm:text-3xl font-bold">VoltScore™ Intelligence</h3>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-white/90 text-base sm:text-lg mb-8 leading-relaxed max-w-3xl">
+                      AI-powered scoring system analyzes 50,000+ substations to identify the highest-value energy opportunities with 97% predictive accuracy.
+                    </p>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                      <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur border border-white/10">
+                        <div className="text-3xl sm:text-4xl font-bold text-watt-bitcoin mb-1">
+                          <AnimatedCounter end={97} suffix="%" />
+                        </div>
+                        <div className="text-xs sm:text-sm text-white/70">Accuracy</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur border border-white/10">
+                        <div className="text-3xl sm:text-4xl font-bold mb-1">
+                          <AnimatedCounter end={50} suffix="K+" />
+                        </div>
+                        <div className="text-xs sm:text-sm text-white/70">Sites Analyzed</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur border border-white/10">
+                        <div className="text-3xl sm:text-4xl font-bold text-watt-success mb-1">
+                          <AnimatedCounter end={2} />
+                        </div>
+                        <div className="text-xs sm:text-sm text-white/70">Live Markets</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur border border-white/10">
+                        <div className="text-3xl sm:text-4xl font-bold mb-1">24/7</div>
+                        <div className="text-xs sm:text-sm text-white/70">Real-Time</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Regular Feature Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {platformFeatures.map((feature, index) => {
                   const Icon = feature.icon;
-                  const isFeatured = feature.featured;
+                  const colors = colorConfig[feature.color as keyof typeof colorConfig];
                   
                   return (
                     <div
                       key={index}
-                      className={`group relative bg-white rounded-xl border border-gray-200 hover:border-watt-trust/50 transition-all duration-300 hover:shadow-lg overflow-hidden ${
-                        isFeatured ? 'md:col-span-2 lg:col-span-1 lg:row-span-2' : ''
-                      }`}
+                      className={`group relative bg-white rounded-xl border-l-4 ${colors.border} border-t border-r border-b border-gray-200 ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden`}
                       style={{
-                        animationDelay: `${index * 100}ms`,
+                        animationDelay: `${(index + 1) * 100}ms`,
                       }}
                     >
-                      <div className={`p-6 ${isFeatured ? 'lg:p-8' : ''}`}>
+                      <div className="p-6">
                         <div className="flex items-start justify-between mb-4">
-                          <div className={`p-3 rounded-lg bg-watt-trust/10 group-hover:bg-watt-trust/20 transition-colors duration-300 ${isFeatured ? 'p-4' : ''}`}>
-                            <Icon className={`text-watt-trust group-hover:scale-110 transition-transform duration-300 ${isFeatured ? 'w-8 h-8' : 'w-6 h-6'}`} />
+                          <div className={`w-12 h-12 rounded-xl ${colors.iconBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                            <Icon className={`w-6 h-6 ${colors.iconColor}`} />
                           </div>
                           {feature.metrics && (
-                            <span className="text-xs font-semibold text-watt-trust bg-watt-trust/10 px-3 py-1 rounded-full">
+                            <span className={`text-xs font-semibold ${colors.badgeText} ${colors.badgeBg} px-3 py-1 rounded-full`}>
                               {feature.metrics}
                             </span>
                           )}
                         </div>
                         
-                        <h3 className={`font-bold text-watt-navy mb-2 group-hover:text-watt-trust transition-colors duration-300 ${isFeatured ? 'text-xl sm:text-2xl' : 'text-lg'}`}>
+                        <h3 className="text-lg font-bold text-watt-navy mb-2 group-hover:text-watt-trust transition-colors duration-300">
                           {feature.title}
                         </h3>
-                        <p className={`text-watt-navy/70 leading-relaxed ${isFeatured ? 'text-base sm:text-lg' : 'text-sm'}`}>
+                        <p className="text-sm text-watt-navy/70 leading-relaxed">
                           {feature.description}
                         </p>
                       </div>
-                      
-                      {/* Hover effect border */}
-                      <div className="absolute inset-0 border-2 border-transparent group-hover:border-watt-trust/20 rounded-xl pointer-events-none transition-colors duration-300"></div>
                     </div>
                   );
                 })}
