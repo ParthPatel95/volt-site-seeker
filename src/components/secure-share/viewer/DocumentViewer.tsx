@@ -1005,12 +1005,14 @@ export function DocumentViewer({
                     renderTextLayer={false}
                     renderAnnotationLayer={true}
                     className="shadow-lg"
-                    error={
-                      <div className="flex flex-col items-center justify-center p-8 text-center">
-                        <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-                        <p className="text-sm text-muted-foreground">Page could not be rendered</p>
-                      </div>
-                    }
+              error={
+                <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
+                  <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Loading page...</p>
+                  </div>
+                </div>
+              }
                     onLoadSuccess={(page) => {
                       handlePageLoadSuccess(page);
                       initialLoadRef.current = false;
