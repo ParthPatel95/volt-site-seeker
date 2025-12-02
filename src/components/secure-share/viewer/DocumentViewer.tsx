@@ -102,7 +102,7 @@ export function DocumentViewer({
   const widthLocked = useRef(false);
   const lockedPageWidth = useRef<number | null>(null);
   const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(false);
   
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
@@ -670,16 +670,16 @@ export function DocumentViewer({
   // Track container dimensions so PDF fits within the viewer column
   useEffect(() => {
     const updateDimensions = () => {
-      // Don't update dimensions while page is loading to prevent re-render loops
-      if (isPageLoading) return;
-      
+      // Always update dimensions to prevent circular dependency
       if (containerRef.current) {
         const newWidth = containerRef.current.clientWidth;
         const newHeight = containerRef.current.clientHeight;
         
-        // Increased threshold from 5px to 20px for more stability
-        setContainerWidth(prev => Math.abs((prev || 0) - newWidth) > 20 ? newWidth : prev);
-        setContainerHeight(prev => Math.abs((prev || 0) - newHeight) > 20 ? newHeight : prev);
+        // Only update if dimensions are valid (> 100px) and changed significantly
+        if (newWidth > 100 && newHeight > 100) {
+          setContainerWidth(prev => Math.abs((prev || 0) - newWidth) > 20 ? newWidth : prev);
+          setContainerHeight(prev => Math.abs((prev || 0) - newHeight) > 20 ? newHeight : prev);
+        }
       }
     };
 
@@ -925,8 +925,8 @@ export function DocumentViewer({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Floating Navigation Arrows */}
-            {isPdf && numPages > 1 && (
+            {/* Floating Navigation Arrows - Only show for react-pdf, not native iOS viewer */}
+            {isPdf && numPages > 1 && !isIOS && !useNativePdfViewer && (
               <>
                 {/* Left Arrow */}
                 <Button
