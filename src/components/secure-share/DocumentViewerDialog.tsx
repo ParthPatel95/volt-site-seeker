@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { Loader2, Download, ZoomIn, ZoomOut, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,9 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
   const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(false);
+  const [pageLoadFailed, setPageLoadFailed] = useState(false);
   const pageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadRef = useRef(true);
   const { toast } = useToast();
   
   // Detect iOS for native PDF viewer
@@ -301,26 +303,41 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     }
   }, [open, isPdf, useNativePdfViewer, isIOS, numPages, toast]);
   
-  // Safety timeout: Reset isPageLoading if stuck for more than 8 seconds
+  // Safety timeout: Only on initial document load
   useEffect(() => {
-    if (isPageLoading) {
+    if (isPageLoading && initialLoadRef.current) {
       pageLoadingTimeoutRef.current = setTimeout(() => {
-        console.warn('[DocumentDialog] Page loading stuck - resetting state and switching to native viewer');
+        console.log('[DocumentViewerDialog] Safety timeout triggered');
         setIsPageLoading(false);
+        initialLoadRef.current = false;
         setUseNativePdfViewer(true);
         toast({
           title: 'Loading Taking Too Long',
           description: 'Switched to browser PDF viewer for better performance.',
         });
       }, 8000);
-      
-      return () => {
-        if (pageLoadingTimeoutRef.current) {
-          clearTimeout(pageLoadingTimeoutRef.current);
-        }
-      };
+    } else if (!isPageLoading) {
+      if (pageLoadingTimeoutRef.current) {
+        clearTimeout(pageLoadingTimeoutRef.current);
+      }
     }
+
+    return () => {
+      if (pageLoadingTimeoutRef.current) {
+        clearTimeout(pageLoadingTimeoutRef.current);
+      }
+    };
   }, [isPageLoading, toast]);
+
+  // Cleanup resources when page changes
+  useEffect(() => {
+    setPageLoadFailed(false);
+    setIsPageLoading(true);
+    
+    return () => {
+      setIsPageLoading(false);
+    };
+  }, [pageNumber]);
 
   const changePage = (offset: number) => {
     setPageNumber(prevPageNumber => {
