@@ -3,6 +3,53 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { TrendingUp, Zap, Bitcoin, Cpu } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts';
+import { useState, useEffect, useRef } from 'react';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+
+// Animated Counter Component
+const AnimatedCounter = ({ end, duration = 2000, suffix = '', prefix = '' }: { end: number; duration?: number; suffix?: string; prefix?: string }) => {
+  const [count, setCount] = useState(0);
+  const countRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          let startTime: number | null = null;
+          const startValue = 0;
+
+          const animate = (currentTime: number) => {
+            if (!startTime) startTime = currentTime;
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            setCount(Math.floor(easeOutQuart * (end - startValue) + startValue));
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (countRef.current) {
+      observer.observe(countRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [end, duration, hasAnimated]);
+
+  return (
+    <div ref={countRef}>
+      {prefix}{count}{suffix}
+    </div>
+  );
+};
 
 export const MarketOpportunitySection = () => {
   const aiGrowthData = [
@@ -55,19 +102,25 @@ export const MarketOpportunitySection = () => {
   return (
     <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
-            Explosive Market Opportunity
-          </h2>
-          <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
-            AI revolution and Bitcoin adoption creating unprecedented demand for power infrastructure
-          </p>
-        </div>
+        <ScrollReveal direction="up">
+          <div className="text-center mb-8 md:mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-success/10 border border-watt-success/30 mb-4">
+              <span className="text-sm font-medium text-watt-success">Market Analysis</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
+              Explosive Market Opportunity
+            </h2>
+            <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
+              AI revolution and Bitcoin adoption creating unprecedented demand for power infrastructure
+            </p>
+          </div>
+        </ScrollReveal>
         
         {/* Primary Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           {/* AI & Bitcoin Power Demand Growth */}
-          <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional">
+          <ScrollReveal delay={100} direction="up">
+            <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
               <CardTitle className="text-watt-navy flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
                 <TrendingUp className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-watt-trust flex-shrink-0" />
@@ -127,9 +180,11 @@ export const MarketOpportunitySection = () => {
               </div>
             </CardContent>
           </Card>
+          </ScrollReveal>
 
           {/* Power Cost Arbitrage */}
-          <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional">
+          <ScrollReveal delay={200} direction="up">
+            <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
               <CardTitle className="text-watt-navy flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
                 <Zap className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-watt-bitcoin flex-shrink-0" />
@@ -184,12 +239,14 @@ export const MarketOpportunitySection = () => {
               </div>
             </CardContent>
           </Card>
+          </ScrollReveal>
         </div>
 
         {/* Secondary Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           {/* Bitcoin Mining Economics */}
-          <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional">
+          <ScrollReveal delay={100} direction="up">
+            <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
               <CardTitle className="text-watt-navy flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
                 <Bitcoin className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-watt-bitcoin flex-shrink-0" />
@@ -240,9 +297,11 @@ export const MarketOpportunitySection = () => {
               </div>
             </CardContent>
           </Card>
+          </ScrollReveal>
 
           {/* AI/HPC Compute Demand */}
-          <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional">
+          <ScrollReveal delay={200} direction="up">
+            <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
               <CardTitle className="text-watt-navy flex items-center gap-1 sm:gap-2 text-sm sm:text-base md:text-lg">
                 <Cpu className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-watt-trust flex-shrink-0" />
@@ -308,26 +367,43 @@ export const MarketOpportunitySection = () => {
               </div>
             </CardContent>
           </Card>
+          </ScrollReveal>
         </div>
 
         {/* Market Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-          <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-trust mb-1 truncate">$127B</div>
-            <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Total Addressable Market</div>
-          </div>
-          <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-bitcoin mb-1 truncate">6.5x</div>
-            <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Demand vs Supply Gap</div>
-          </div>
-          <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-success mb-1 truncate">45%</div>
-            <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Market Share - AI/ML</div>
-          </div>
-          <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0">
-            <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-bitcoin mb-1 truncate">25%</div>
-            <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Market Share - Crypto</div>
-          </div>
+          <ScrollReveal delay={100} direction="up">
+            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-trust mb-1 truncate">
+                <AnimatedCounter end={127} prefix="$" suffix="B" />
+              </div>
+              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Total Addressable Market</div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={200} direction="up">
+            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-bitcoin mb-1 truncate">
+                <AnimatedCounter end={6.5} suffix="x" />
+              </div>
+              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Demand vs Supply Gap</div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={300} direction="up">
+            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-success mb-1 truncate">
+                <AnimatedCounter end={45} suffix="%" />
+              </div>
+              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Market Share - AI/ML</div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={400} direction="up">
+            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-bitcoin mb-1 truncate">
+                <AnimatedCounter end={25} suffix="%" />
+              </div>
+              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Market Share - Crypto</div>
+            </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>
