@@ -53,6 +53,8 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
+  const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
+  const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
   const { toast } = useToast();
   
   // Detect iOS for native PDF viewer
@@ -252,10 +254,35 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     }
   };
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    setPageNumber(1);
+  const onDocumentLoadSuccess = (pdf: any) => {
+    // Prevent race condition - only set if not already set by pre-load effect
+    if (numPages === 0) {
+      setNumPages(pdf.numPages);
+    }
+    if (pageNumber === 0 || pageNumber === 1) {
+      setPageNumber(1);
+    }
+    if (!pdfDocumentProxy) {
+      setPdfDocumentProxy(pdf);
+    }
   };
+  
+  // Loading timeout fallback
+  useEffect(() => {
+    if (open && isPdf && !useNativePdfViewer && !isIOS) {
+      const timeout = setTimeout(() => {
+        console.warn('[DocumentDialog] Page load timeout - falling back to native viewer');
+        setPageLoadTimeout(true);
+        setUseNativePdfViewer(true);
+        toast({
+          title: 'Loading Timeout',
+          description: 'Switched to browser PDF viewer for better performance.',
+        });
+      }, 15000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [open, isPdf, useNativePdfViewer, isIOS, toast]);
 
   const changePage = (offset: number) => {
     setPageNumber(prevPageNumber => {
@@ -418,6 +445,18 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                           renderTextLayer={false}
                           renderAnnotationLayer={true}
                           onContextMenu={(e) => !canDownload && e.preventDefault()}
+                          error={
+                            <div className="text-center p-8 bg-destructive/10 rounded-lg">
+                              <p className="text-destructive mb-4">Failed to load page {pageNumber}</p>
+                              <Button 
+                                onClick={() => setUseNativePdfViewer(true)} 
+                                size="sm"
+                                variant="outline"
+                              >
+                                Switch to Browser Viewer
+                              </Button>
+                            </div>
+                          }
                         />
                       </Document>
                     </div>
