@@ -42,20 +42,6 @@ const platformFeatures = [
     metrics: '2 Live Markets',
     color: 'success', // Green
   },
-  {
-    icon: Bell,
-    title: 'Broker Network Alerts',
-    description: 'Automated notifications from our exclusive broker network for off-market opportunities and new listings.',
-    metrics: 'Real-Time',
-    color: 'bitcoin', // Orange
-  },
-  {
-    icon: Database,
-    title: 'Data Center Intel',
-    description: 'Comprehensive database of existing and planned data centers with power consumption analytics.',
-    metrics: '1,000+ Facilities',
-    color: 'navy', // Navy
-  },
 ];
 
 const colorConfig = {
