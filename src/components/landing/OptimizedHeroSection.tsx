@@ -71,7 +71,7 @@ export const OptimizedHeroSection = () => {
           {/* CTA buttons */}
           <ScrollReveal delay={400}>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
-              <Link to="/voltscout" className="w-full sm:w-auto group">
+              <Link to="/app" className="w-full sm:w-auto group">
                 <Button 
                   size="lg" 
                   className="w-full sm:w-auto bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-8 sm:px-10 md:px-12 py-5 sm:py-6 md:py-7 text-base sm:text-lg font-semibold shadow-institutional-lg transition-all duration-200"
