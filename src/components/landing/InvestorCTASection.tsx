@@ -1,9 +1,33 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, Phone, Mail } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { TrendingUp, Mail } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { InvestmentInquiryForm } from './InvestmentInquiryForm';
 
 export const InvestorCTASection = () => {
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
+
+  const handleFormSuccess = () => {
+    setShowInquiryForm(false);
+  };
+
   return (
+    <>
+      <Dialog open={showInquiryForm} onOpenChange={setShowInquiryForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-watt-navy">
+              Start Your Investment Journey
+            </DialogTitle>
+            <DialogDescription className="text-watt-navy/70">
+              Fill out the form below and our investment team will contact you to discuss opportunities in WattFund.
+            </DialogDescription>
+          </DialogHeader>
+          <InvestmentInquiryForm onSuccess={handleFormSuccess} />
+        </DialogContent>
+      </Dialog>
+    
     <section className="relative z-10 py-20 md:py-24 px-4 sm:px-6 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-trust/20">
       <div className="max-w-5xl mx-auto text-center">
         <ScrollReveal direction="up">
@@ -15,21 +39,14 @@ export const InvestorCTASection = () => {
             Access exclusive investment materials and speak with our fund managers.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          <div className="flex justify-center mb-12">
             <Button 
               size="lg"
-              className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-8 py-6 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto"
+              onClick={() => setShowInquiryForm(true)}
+              className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-10 py-7 text-xl font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
-              <FileText className="w-5 h-5 mr-2" />
-              Request Investment Materials
-            </Button>
-            <Button 
-              size="lg"
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/30 px-8 py-6 text-lg font-semibold rounded-lg backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto"
-            >
-              <Phone className="w-5 h-5 mr-2" />
-              Schedule a Call
+              <TrendingUp className="w-6 h-6 mr-3" />
+              Start Investing
             </Button>
           </div>
 
@@ -45,6 +62,7 @@ export const InvestorCTASection = () => {
           </div>
         </ScrollReveal>
       </div>
-    </section>
+      </section>
+    </>
   );
 };
