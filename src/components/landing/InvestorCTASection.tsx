@@ -25,24 +25,22 @@ export const InvestorCTASection = () => {
       </Dialog>
     
     <section className="relative z-10 py-20 md:py-24 px-4 sm:px-6 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-trust/20">
-      <div className="max-w-5xl mx-auto text-center">
+      <div className="max-w-5xl mx-auto">
         <ScrollReveal direction="up">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
-            Ready to Invest in Digital Infrastructure?
-          </h2>
-          <p className="text-xl text-white/80 max-w-3xl mx-auto mb-10">
-            Join institutional investors capitalizing on the power-to-data arbitrage opportunity. 
-            Access exclusive investment materials and speak with our fund managers.
-          </p>
+          <div className="flex flex-col items-center text-center">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white max-w-4xl">
+              Ready to Invest in Digital Infrastructure?
+            </h2>
+            <p className="text-xl text-white/80 max-w-3xl mb-10">
+              Join institutional investors capitalizing on the power-to-data arbitrage opportunity. 
+              Access exclusive investment materials and speak with our fund managers.
+            </p>
 
-          <div className="flex justify-center mb-12">
             <Button size="lg" onClick={() => setShowInquiryForm(true)} className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-10 py-7 text-xl font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <TrendingUp className="w-6 h-6 mr-3" />
               Start Investing
             </Button>
           </div>
-
-          
         </ScrollReveal>
       </div>
       </section>
