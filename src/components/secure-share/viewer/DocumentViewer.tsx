@@ -151,12 +151,12 @@ export function DocumentViewer({
     };
   }, []);
 
-  // Pre-load PDF proxy for text extraction (especially important for iOS)
+  // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
     if (isPdf && documentUrl) {
       const loadPdfProxy = async () => {
         setIsLoadingPdfProxy(true);
-        console.log('[DocumentViewer] Pre-loading PDF proxy for text extraction');
+        console.log('[DocumentViewer] Pre-loading PDF proxy for text extraction and page count');
         try {
           const pdfjsLib = await import('pdfjs-dist');
           
@@ -172,11 +172,16 @@ export function DocumentViewer({
           const loadingTask = pdfjsLib.getDocument({
             url: documentUrl,
             withCredentials: false,
-            isEvalSupported: false
+            isEvalSupported: false,
+            // Enable progressive loading for faster first page
+            disableRange: false,
+            disableStream: false,
           });
           
           const proxy = await loadingTask.promise;
           setPdfDocumentProxy(proxy);
+          // Set numPages immediately (critical for iOS to show navigation controls)
+          setNumPages(proxy.numPages);
           console.log('[DocumentViewer] PDF proxy loaded successfully', { numPages: proxy.numPages });
         } catch (error) {
           console.error('[DocumentViewer] Failed to load PDF proxy:', error);
@@ -875,11 +880,21 @@ export function DocumentViewer({
 
             {isPdf ? (
               isIOS || useNativePdfViewer ? (
-                // Native iOS PDF viewer using iframe for better iOS compatibility
+                // iOS Native PDF viewer with navigation info
                 <div 
-                  className="w-full h-full flex items-center justify-center max-w-full overflow-auto"
+                  className="w-full h-full flex items-center justify-center max-w-full overflow-auto relative"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
+                  {/* iOS Navigation Info Bar */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-background/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border flex items-center gap-3">
+                    <span className="text-sm font-medium">
+                      {numPages > 0 ? `${numPages} pages` : 'Loading...'}
+                    </span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                      Scroll to navigate
+                    </span>
+                  </div>
+                  
                   <iframe
                     src={`${documentUrl}#toolbar=0`}
                     className={cn(
@@ -910,6 +925,13 @@ export function DocumentViewer({
                 >
                   <Document
                     file={documentUrl}
+                    options={{
+                      // Enable progressive loading for faster first page render
+                      disableRange: false,
+                      disableStream: false,
+                      cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                      cMapPacked: true,
+                    }}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={(error) => {
                       console.error('PDF load error:', error);
@@ -921,8 +943,13 @@ export function DocumentViewer({
                       });
                     }}
                     loading={
-                      <div className="flex items-center justify-center p-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <div className="w-full max-w-[800px] mx-auto p-4 animate-pulse">
+                        <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
+                          <div className="text-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">Loading document...</p>
+                          </div>
+                        </div>
                       </div>
                     }
                     error={

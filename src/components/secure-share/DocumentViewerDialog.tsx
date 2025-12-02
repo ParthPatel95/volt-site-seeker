@@ -109,6 +109,44 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     };
   }, []);
 
+  const isImage = document?.file_type?.startsWith('image/');
+  const isPdf = document?.file_type === 'application/pdf';
+  const isVideo = document?.file_type?.startsWith('video/');
+  const isAudio = document?.file_type?.startsWith('audio/');
+  const isText = document?.file_type?.startsWith('text/');
+  const canDownload = accessLevel === 'download';
+
+  // Pre-fetch PDF page count for iOS navigation
+  useEffect(() => {
+    if (open && document && isPdf && documentUrl) {
+      const loadPdfMetadata = async () => {
+        try {
+          const pdfjsLib = await import('pdfjs-dist');
+          
+          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
+          }
+          
+          const loadingTask = pdfjsLib.getDocument({
+            url: documentUrl,
+            withCredentials: false,
+            isEvalSupported: false,
+            disableRange: false,
+            disableStream: false,
+          });
+          
+          const proxy = await loadingTask.promise;
+          setNumPages(proxy.numPages);
+          console.log('[DocumentDialog] PDF metadata loaded', { numPages: proxy.numPages });
+        } catch (error) {
+          console.error('[DocumentDialog] Failed to load PDF metadata:', error);
+        }
+      };
+      
+      loadPdfMetadata();
+    }
+  }, [open, document, isPdf, documentUrl]);
+
   useEffect(() => {
     if (open && document) {
       loadDocument();
@@ -173,13 +211,6 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     });
     setLoading(false);
   };
-
-  const isImage = document?.file_type?.startsWith('image/');
-  const isPdf = document?.file_type === 'application/pdf';
-  const isVideo = document?.file_type?.startsWith('video/');
-  const isAudio = document?.file_type?.startsWith('audio/');
-  const isText = document?.file_type?.startsWith('text/');
-  const canDownload = accessLevel === 'download';
 
   const handleDownload = async () => {
     if (!canDownload || !documentUrl || !document) return;
@@ -265,8 +296,18 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
             <>
               {isPdf ? (
                 isIOS || useNativePdfViewer ? (
-                  // Native iOS PDF viewer using iframe (better compatibility than object tag)
-                  <div className="w-full h-full">
+                  // Native iOS PDF viewer with navigation info
+                  <div className="w-full h-full relative">
+                    {/* iOS Navigation Info Bar */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-background/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border flex items-center gap-3">
+                      <span className="text-sm font-medium">
+                        {numPages > 0 ? `${numPages} pages` : 'Loading...'}
+                      </span>
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
+                        Scroll to navigate
+                      </span>
+                    </div>
+                    
                     <iframe
                       src={documentUrl}
                       className="w-full h-full border-0"
@@ -343,6 +384,13 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     >
                       <Document
                         file={documentUrl}
+                        options={{
+                          // Enable progressive loading for faster first page render
+                          disableRange: false,
+                          disableStream: false,
+                          cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                          cMapPacked: true,
+                        }}
                         onLoadSuccess={onDocumentLoadSuccess}
                         onLoadError={(error) => {
                           console.error('[DocumentDialog] PDF load error:', error);
@@ -354,8 +402,13 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                           });
                         }}
                         loading={
-                          <div className="flex items-center justify-center p-8">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <div className="w-full max-w-[800px] mx-auto p-4 animate-pulse">
+                            <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
+                              <div className="text-center">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                                <p className="text-sm text-muted-foreground">Loading document...</p>
+                              </div>
+                            </div>
                           </div>
                         }
                       >
