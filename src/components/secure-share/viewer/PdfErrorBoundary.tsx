@@ -13,24 +13,35 @@ interface State {
   hasError: boolean;
   error?: Error;
   errorCount: number;
+  prevResetKey?: string | number;
 }
 
 export class PdfErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, errorCount: 0 };
+    this.state = { hasError: false, errorCount: 0, prevResetKey: props.resetKey };
+  }
+
+  static getDerivedStateFromProps(nextProps: Props, prevState: State): Partial<State> | null {
+    // If resetKey changed, check if we need to reset error state
+    if (nextProps.resetKey !== prevState.prevResetKey) {
+      if (prevState.hasError) {
+        console.log('[PdfErrorBoundary] Resetting error state due to resetKey change');
+        return { 
+          hasError: false, 
+          error: undefined, 
+          errorCount: 0,
+          prevResetKey: nextProps.resetKey 
+        };
+      }
+      // Just update the prevResetKey for next comparison
+      return { prevResetKey: nextProps.resetKey };
+    }
+    return null;
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    // Reset error state when resetKey changes (e.g., page changes after error)
-    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
-      console.log('[PdfErrorBoundary] Resetting error state due to resetKey change');
-      this.setState({ hasError: false, error: undefined, errorCount: 0 });
-    }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
