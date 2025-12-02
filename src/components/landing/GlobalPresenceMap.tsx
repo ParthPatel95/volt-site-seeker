@@ -7,6 +7,7 @@ import ugandaFlag from '@/assets/pipeline/flags/uganda-ug.svg';
 import nepalFlag from '@/assets/pipeline/flags/nepal-np.svg';
 import bhutanFlag from '@/assets/pipeline/flags/bhutan-bt.svg';
 import indiaFlag from '@/assets/pipeline/flags/india-in.svg';
+import worldMapImage from '@/assets/world-map.png';
 
 interface CountryData {
   name: string;
@@ -37,131 +38,99 @@ const GlobalPresenceMap: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
       {/* Map Container */}
       <div className="lg:col-span-2 relative">
-        <Card className="p-0 bg-gradient-to-br from-watt-navy to-watt-navy/90 border-gray-700 shadow-institutional overflow-hidden">
-          <svg
-            viewBox="0 0 1000 500"
-            className="w-full h-auto"
-            style={{ minHeight: '400px' }}
-          >
-            {/* Background */}
-            <rect width="1000" height="500" fill="hsl(var(--watt-navy))" />
+        <Card className="p-0 bg-watt-navy border-gray-700 shadow-institutional overflow-hidden">
+          <div className="relative w-full" style={{ minHeight: '400px' }}>
+            {/* World Map Background Image */}
+            <img 
+              src={worldMapImage} 
+              alt="World Map" 
+              className="w-full h-auto object-contain"
+              style={{ minHeight: '400px' }}
+            />
             
-            {/* Subtle Grid Lines */}
-            <g opacity="0.1" stroke="white" strokeWidth="0.5">
-              {[...Array(10)].map((_, i) => (
-                <line key={`h-${i}`} x1="0" y1={i * 50} x2="1000" y2={i * 50} />
-              ))}
-              {[...Array(20)].map((_, i) => (
-                <line key={`v-${i}`} x1={i * 50} y1="0" x2={i * 50} y2="500" />
-              ))}
-            </g>
-
-            {/* Simplified World Map Continents */}
-            <g opacity="0.15" fill="white" stroke="white" strokeWidth="0.5">
-              {/* North America */}
-              <path d="M 120 100 Q 150 80 180 90 L 220 120 Q 240 140 250 180 L 240 220 Q 220 240 200 250 L 160 240 Q 130 220 120 180 Z" />
-              <path d="M 160 140 Q 180 130 200 140 L 220 160 Q 230 180 220 200 L 200 210 Q 180 200 170 180 Z" />
-              
-              {/* South America */}
-              <path d="M 240 280 Q 260 270 280 280 L 290 320 Q 285 360 270 390 L 250 400 Q 230 390 225 360 L 230 320 Z" />
-              
-              {/* Europe */}
-              <path d="M 480 120 Q 510 110 540 120 L 560 140 Q 565 160 555 180 L 530 190 Q 500 185 485 165 Z" />
-              
-              {/* Africa */}
-              <path d="M 500 240 Q 530 230 560 240 L 580 280 Q 585 320 575 360 L 560 390 Q 540 400 520 395 L 495 360 Q 490 310 495 270 Z" />
-              
-              {/* Asia */}
-              <path d="M 600 140 Q 650 120 700 130 L 750 160 Q 780 190 770 230 L 740 260 Q 700 270 660 260 L 620 230 Q 600 200 605 170 Z" />
-              
-              {/* Australia */}
-              <path d="M 750 340 Q 780 330 810 340 L 830 370 Q 835 395 820 410 L 790 415 Q 760 410 750 385 Z" />
-            </g>
-
-            {/* Country Markers */}
-            {countries.map((country) => {
-              const isHovered = hoveredCountry === country.name;
-              const isSelected = selectedCountry === country.name;
-              const markerSize = Math.max(8, Math.min(20, country.capacity / 30));
-              
-              return (
-                <g
-                  key={country.name}
-                  transform={`translate(${country.x * 10}, ${country.y * 5})`}
-                  onMouseEnter={() => setHoveredCountry(country.name)}
-                  onMouseLeave={() => setHoveredCountry(null)}
-                  onClick={() => setSelectedCountry(country.name === selectedCountry ? null : country.name)}
-                  className="cursor-pointer transition-all duration-300"
-                  style={{ transformOrigin: 'center' }}
-                >
-                  {/* Glow Effect */}
-                  {(isHovered || isSelected) && (
-                    <circle
-                      r={markerSize + 8}
-                      fill="#F7931A"
-                      opacity="0.3"
-                      className="animate-pulse"
-                    />
-                  )}
-                  
-                  {/* Marker */}
-                  <circle
-                    r={markerSize}
-                    fill="#F7931A"
-                    opacity={isHovered || isSelected ? 1 : 0.85}
-                    className="transition-all duration-300"
+            {/* Interactive Markers Overlay */}
+            <div className="absolute inset-0">
+              {countries.map((country) => {
+                const isHovered = hoveredCountry === country.name;
+                const isSelected = selectedCountry === country.name;
+                const markerSize = Math.max(12, Math.min(24, country.capacity / 25));
+                
+                return (
+                  <div
+                    key={country.name}
+                    className="absolute cursor-pointer group"
                     style={{
-                      filter: isHovered || isSelected ? 'drop-shadow(0 0 8px #F7931A)' : 'none'
+                      left: `${country.x}%`,
+                      top: `${country.y}%`,
+                      transform: 'translate(-50%, -50%)',
                     }}
-                  />
-                  
-                  {/* Pulse Ring */}
-                  <circle
-                    r={markerSize}
-                    fill="none"
-                    stroke="#F7931A"
-                    strokeWidth="2"
-                    opacity="0.6"
-                    className="animate-ping"
-                    style={{ animationDuration: '3s' }}
-                  />
+                    onMouseEnter={() => setHoveredCountry(country.name)}
+                    onMouseLeave={() => setHoveredCountry(null)}
+                    onClick={() => setSelectedCountry(country.name === selectedCountry ? null : country.name)}
+                  >
+                    {/* Glow Effect */}
+                    <div
+                      className={`absolute inset-0 rounded-full transition-all duration-300 ${
+                        isHovered || isSelected ? 'animate-pulse' : ''
+                      }`}
+                      style={{
+                        width: `${markerSize * 2.5}px`,
+                        height: `${markerSize * 2.5}px`,
+                        background: `radial-gradient(circle, #F7931A40 0%, transparent 70%)`,
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    />
+                    
+                    {/* Marker Dot */}
+                    <div
+                      className="relative rounded-full transition-all duration-300 shadow-lg"
+                      style={{
+                        width: `${markerSize}px`,
+                        height: `${markerSize}px`,
+                        backgroundColor: '#F7931A',
+                        boxShadow: isHovered || isSelected 
+                          ? '0 0 20px #F7931A, 0 0 40px rgba(247, 147, 26, 0.5)'
+                          : '0 0 10px rgba(247, 147, 26, 0.5)',
+                        transform: isHovered || isSelected ? 'scale(1.4)' : 'scale(1)',
+                      }}
+                    />
 
-                  {/* Tooltip on Hover */}
-                  {isHovered && (
-                    <g transform={`translate(${markerSize + 10}, -${markerSize})`}>
-                      <rect
-                        x="0"
-                        y="-20"
-                        width="160"
-                        height="60"
-                        fill="white"
-                        rx="8"
-                        className="shadow-lg"
-                      />
-                      <text
-                        x="10"
-                        y="-2"
-                        fill="hsl(var(--watt-navy))"
-                        fontSize="14"
-                        fontWeight="bold"
+                    {/* Hover Tooltip */}
+                    {isHovered && (
+                      <div
+                        className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+                        style={{ top: `-${markerSize + 80}px` }}
                       >
-                        {country.name}
-                      </text>
-                      <text
-                        x="10"
-                        y="15"
-                        fill="hsl(var(--watt-navy))"
-                        fontSize="12"
-                        opacity="0.7"
-                      >
-                        {country.capacity}MW {country.type}
-                      </text>
-                    </g>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
+                        <div className="bg-white rounded-lg shadow-2xl p-3 min-w-[180px] border border-gray-200 animate-fade-in">
+                          <div className="flex items-center gap-2 mb-1">
+                            <img 
+                              src={country.flag} 
+                              alt={country.name}
+                              className="w-5 h-4 object-cover rounded"
+                            />
+                            <span className="font-semibold text-watt-navy text-sm">
+                              {country.name}
+                            </span>
+                          </div>
+                          <div className="text-xs text-watt-navy/70">
+                            <div className="font-medium text-bitcoin">{country.capacity}MW</div>
+                            <div>{country.type}</div>
+                          </div>
+                        </div>
+                        {/* Arrow */}
+                        <div 
+                          className="absolute left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-white"
+                          style={{ top: '100%' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </Card>
       </div>
 
