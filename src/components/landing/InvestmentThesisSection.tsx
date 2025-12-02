@@ -1,9 +1,7 @@
 import { ArrowRight, Target, Bitcoin, Cpu, DollarSign, Zap, TrendingUp } from 'lucide-react';
 import { ScrollReveal } from './ScrollAnimations';
-
 export const InvestmentThesisSection = () => {
-  return (
-    <section className="relative z-10 py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
+  return <section className="relative z-10 py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 md:mb-10">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 text-watt-navy">
@@ -69,7 +67,9 @@ export const InvestmentThesisSection = () => {
             {/* Arrow Down */}
             <div className="flex justify-center">
               <div className="flex flex-col items-center">
-                <ArrowRight className="w-6 h-6 text-watt-bitcoin rotate-90 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <ArrowRight className="w-6 h-6 text-watt-bitcoin rotate-90 animate-bounce" style={{
+                animationDelay: '0.2s'
+              }} />
                 <div className="w-0.5 h-8 bg-gradient-to-b from-watt-bitcoin to-watt-trust"></div>
               </div>
             </div>
@@ -98,9 +98,7 @@ export const InvestmentThesisSection = () => {
           <ScrollReveal delay={0.4}>
             <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-institutional-lg hover:shadow-xl transition-shadow duration-300 h-full">
               <div className="text-center mb-6 sm:mb-8">
-                <div className="w-12 sm:w-14 md:w-16 h-12 sm:h-14 md:h-16 bg-watt-trust rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-institutional">
-                  <Zap className="w-6 sm:w-7 md:w-8 h-6 sm:h-7 md:h-8 text-white" />
-                </div>
+                
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-watt-navy mb-2">Our Proprietary Edge</h3>
                 <p className="text-sm text-watt-navy/60">Cost advantage through modular infrastructure</p>
               </div>
@@ -174,43 +172,8 @@ export const InvestmentThesisSection = () => {
         
         {/* Value Multiplier Summary */}
         <ScrollReveal delay={0.5}>
-          <div className="mt-8 md:mt-12 bg-gradient-to-r from-watt-trust/5 via-white to-watt-success/5 rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-watt-trust/20 shadow-institutional">
-            <div className="text-center mb-6">
-              <h3 className="text-xl sm:text-2xl font-bold text-watt-navy mb-2">Complete Value Creation Path</h3>
-              <p className="text-sm text-watt-navy/60">From acquisition to premium exit</p>
-            </div>
-            
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-white rounded-xl border border-gray-200">
-                <div className="text-sm text-watt-navy/60 mb-1">Land Acquisition</div>
-                <div className="text-2xl font-bold text-watt-navy">~$50k/acre</div>
-              </div>
-              
-              <div className="text-center p-4 bg-watt-bitcoin/5 rounded-xl border border-watt-bitcoin/20">
-                <div className="text-sm text-watt-navy/60 mb-1">+ Bitcoin Revenue</div>
-                <div className="text-2xl font-bold text-watt-bitcoin">Cash Flow+</div>
-              </div>
-              
-              <div className="text-center p-4 bg-watt-trust/5 rounded-xl border border-watt-trust/20">
-                <div className="text-sm text-watt-navy/60 mb-1">+ AI/HPC Transition</div>
-                <div className="text-2xl font-bold text-watt-trust">$500k+/acre</div>
-              </div>
-              
-              <div className="text-center p-4 bg-watt-success/10 rounded-xl border border-watt-success/30">
-                <div className="text-sm text-watt-navy/60 mb-1">Result</div>
-                <div className="text-2xl font-bold text-watt-success">10x+ Value</div>
-              </div>
-            </div>
-            
-            <div className="mt-4 text-center">
-              <div className="inline-flex items-center gap-2 bg-watt-success/10 px-4 py-2 rounded-full border border-watt-success/30">
-                <DollarSign className="w-4 h-4 text-watt-success" />
-                <span className="text-sm font-semibold text-watt-navy">Revenue generation at every stage</span>
-              </div>
-            </div>
-          </div>
+          
         </ScrollReveal>
       </div>
-    </section>
-  );
+    </section>;
 };
