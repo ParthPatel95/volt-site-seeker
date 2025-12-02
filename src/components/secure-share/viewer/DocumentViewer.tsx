@@ -105,6 +105,8 @@ export function DocumentViewer({
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [pageLoadFailed, setPageLoadFailed] = useState(false);
   const initialLoadRef = useRef(true);
+  const [dimensionsReady, setDimensionsReady] = useState(false);
+  const pageLoadStartTime = useRef<number | null>(null);
   
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
@@ -171,6 +173,8 @@ export function DocumentViewer({
       lockedPageWidth.current = null;
       initialLoadRef.current = true;
       initialDimensionsSet.current = false;
+      pageLoadStartTime.current = null;
+      setDimensionsReady(false);
       setNumPages(0);
       setPageNumber(1);
       setPageLoadFailed(false);
@@ -249,9 +253,25 @@ export function DocumentViewer({
     }
   }, [isPdf, useNativePdfViewer, isIOS, numPages, toast]);
 
+  // Page-specific loading timeout
+  useEffect(() => {
+    if (isPageLoading && pageLoadStartTime.current) {
+      const timeout = setTimeout(() => {
+        // If page has been loading for > 8 seconds, fallback
+        if (Date.now() - pageLoadStartTime.current! > 8000) {
+          console.warn('[DocumentViewer] Page load timeout');
+          setUseNativePdfViewer(true);
+        }
+      }, 8000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isPageLoading]);
+
   // Reset page load failed state when page changes
   useEffect(() => {
     setPageLoadFailed(false);
+    setIsPageLoading(true);
+    pageLoadStartTime.current = Date.now();
   }, [pageNumber]);
 
   // Activity tracking
@@ -704,32 +724,38 @@ export function DocumentViewer({
 
   // Track container dimensions so PDF fits within the viewer column
   useEffect(() => {
-    const updateDimensions = () => {
-      // Always update dimensions to prevent circular dependency
+    const checkDimensions = () => {
       if (containerRef.current) {
-        const newWidth = containerRef.current.clientWidth;
-        const newHeight = containerRef.current.clientHeight;
+        const width = containerRef.current.clientWidth;
+        const height = containerRef.current.clientHeight;
         
-        // Only update if dimensions are valid (> 100px) and changed significantly
-        if (newWidth > 100 && newHeight > 100) {
-          setContainerWidth(prev => Math.abs((prev || 0) - newWidth) > 20 ? newWidth : prev);
-          setContainerHeight(prev => Math.abs((prev || 0) - newHeight) > 20 ? newHeight : prev);
+        if (width > 100 && height > 100) {
+          setContainerWidth(width);
+          setContainerHeight(height);
+          setDimensionsReady(true);
         }
       }
     };
 
-    // Debounced version for ResizeObserver
-      // Increased debounce from 100ms to 250ms for better stability
-      const debouncedUpdate = debounce(updateDimensions, 250);
-
-    updateDimensions(); // Initial measurement
+    // Immediate check on mount
+    checkDimensions();
     
+    // Delayed checks for DOM readiness
+    const t1 = setTimeout(checkDimensions, 50);
+    const t2 = setTimeout(checkDimensions, 200);
+    
+    // Debounced ResizeObserver for subsequent changes
+    const debouncedUpdate = debounce(checkDimensions, 250);
     const resizeObserver = new ResizeObserver(debouncedUpdate);
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
     
-    return () => resizeObserver.disconnect();
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      resizeObserver.disconnect();
+    };
   }, []);
 
   // Memoize page width calculation to prevent unnecessary recalculations with locking
@@ -739,41 +765,27 @@ export function DocumentViewer({
       return lockedPageWidth.current;
     }
     
-    // If we have PDF dimensions, use them for accurate calculation
-    if (containerWidth && containerHeight && pdfPageDimensions) {
-      const maxWidth = containerWidth - 80;
-      const maxHeight = containerHeight - 32;
-      
-      // Calculate based on PDF aspect ratio
-      const aspectRatio = pdfPageDimensions.width / pdfPageDimensions.height;
-      
-      // Calculate what width would fit in maxHeight
-      const widthFromHeight = maxHeight * aspectRatio;
-      
-      // Use the smaller of the two to ensure it fits both constraints
-      const calculatedWidth = Math.min(maxWidth, widthFromHeight, 1200);
-      
-      // Lock width once dimensions are stable
-      if (!widthLocked.current && containerWidth > 100 && containerHeight > 100) {
-        widthLocked.current = true;
-        lockedPageWidth.current = calculatedWidth;
-        console.log('[DocumentViewer] Page width locked at', calculatedWidth);
-      }
-      
-      return calculatedWidth;
+    // Need minimum valid dimensions before rendering
+    if (!containerWidth || !containerHeight || containerWidth < 100 || containerHeight < 100) {
+      return null; // Don't render Page yet
     }
     
-    // Fallback: Use standard PDF aspect ratio (8.5/11 = 0.773) if dimensions not yet available
-    if (containerWidth && containerHeight) {
-      const standardPdfAspect = 8.5 / 11;
-      const maxWidth = containerWidth - 80;
-      const maxHeight = containerHeight - 32;
-      const widthFromHeight = maxHeight * standardPdfAspect;
-      return Math.min(maxWidth, widthFromHeight, 1200);
-    }
+    // Calculate using PDF dimensions if available, otherwise use standard aspect ratio
+    const aspectRatio = pdfPageDimensions 
+      ? (pdfPageDimensions.width / pdfPageDimensions.height)
+      : (8.5 / 11); // Standard PDF aspect ratio
     
-    // Ultimate fallback: Use container width or default
-    return containerWidth || 800;
+    const maxWidth = containerWidth - 80;
+    const maxHeight = containerHeight - 32;
+    const widthFromHeight = maxHeight * aspectRatio;
+    const calculatedWidth = Math.min(maxWidth, widthFromHeight, 1200);
+    
+    // LOCK IMMEDIATELY - don't wait for PDF dimensions
+    widthLocked.current = true;
+    lockedPageWidth.current = calculatedWidth;
+    console.log('[DocumentViewer] Page width locked at', calculatedWidth);
+    
+    return calculatedWidth;
   }, [containerWidth, containerHeight, pdfPageDimensions]);
 
   return (
@@ -1069,100 +1081,94 @@ export function DocumentViewer({
                         </div>
                       </div>
                     }
-                    error={
-                      <div className="text-center p-8 space-y-4">
-                        <p className="text-sm text-destructive mb-4">
-                          Failed to load PDF document
-                        </p>
-                        {isIOS && (
-                          <Button onClick={() => setUseNativePdfViewer(true)} size="sm" variant="outline" className="mr-2">
-                            Try Native Viewer
-                          </Button>
-                        )}
-                        {canDownload && (
-                          <Button onClick={handleDownload} size="sm">
-                            <Download className="w-4 h-4 mr-2" />
-                            Download Instead
-                          </Button>
-                        )}
-                      </div>
-                    }
                   >
-                    <div 
-                      style={{ 
-                        transform: `scale(${isIOS ? Math.min(zoom, 1.5) : zoom})`,
-                        transformOrigin: 'center center',
-                        transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
-                      }}
-                    >
-                      <Page
-                        pageNumber={pageNumber}
-                        width={pageWidth}
-                        rotate={rotation}
-                        renderTextLayer={false}
-                        renderAnnotationLayer={true}
-                        className="shadow-lg"
-                        onLoadSuccess={(page) => {
-                          handlePageLoadSuccess(page);
-                          setIsPageLoading(false);
-                          setPageLoadFailed(false);
-                          initialLoadRef.current = false;
-                        }}
-                        onLoadError={(error) => {
-                          console.error('[DocumentViewer] Page render error:', error);
-                          // Add brief delay before showing error to handle transient failures
-                          setTimeout(() => {
-                            setPageLoadFailed(true);
-                          }, 100);
-                          setIsPageLoading(false);
-                          initialLoadRef.current = false;
-                        }}
-                        loading={
-                          <div className="flex items-center justify-center p-8 bg-card">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    {!dimensionsReady || pageWidth === null ? (
+                      <div className="w-full max-w-[800px] mx-auto p-4">
+                        <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
+                          <div className="text-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">Preparing viewer...</p>
                           </div>
-                        }
-                        error={
-                          <div className="flex flex-col items-center justify-center p-8 text-center bg-destructive/10 rounded-lg">
-                            <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-                            <h3 className="text-lg font-semibold mb-2">Page Failed to Load</h3>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Page {pageNumber} of {numPages} couldn't be displayed.
-                            </p>
-                            <div className="flex gap-2">
-                              <Button 
-                                onClick={() => {
-                                  setPageLoadFailed(false);
-                                  // Force re-render by resetting width lock
-                                  widthLocked.current = false;
-                                  lockedPageWidth.current = null;
-                                }} 
-                                variant="outline"
-                                size="sm"
-                              >
-                                Retry Page
-                              </Button>
-                              {pageNumber < numPages && (
-                                <Button 
-                                  onClick={() => setPageNumber(prev => prev + 1)} 
-                                  variant="default"
-                                  size="sm"
-                                >
-                                  Skip to Next
-                                </Button>
-                              )}
-                              <Button 
-                                onClick={() => setUseNativePdfViewer(true)} 
-                                variant="secondary"
-                                size="sm"
-                              >
-                                Use Native Viewer
-                              </Button>
+                        </div>
+                      </div>
+                    ) : pageLoadFailed ? (
+                      <div className="flex flex-col items-center justify-center p-8 text-center bg-destructive/10 rounded-lg max-w-[800px] mx-auto">
+                        <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Page Failed to Load</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Page {pageNumber} of {numPages} couldn't be displayed.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => {
+                              setPageLoadFailed(false);
+                              // Force re-render by resetting width lock
+                              widthLocked.current = false;
+                              lockedPageWidth.current = null;
+                            }} 
+                            variant="outline"
+                            size="sm"
+                          >
+                            Retry Page
+                          </Button>
+                          {pageNumber < numPages && (
+                            <Button 
+                              onClick={() => setPageNumber(prev => prev + 1)} 
+                              variant="default"
+                              size="sm"
+                            >
+                              Skip to Next
+                            </Button>
+                          )}
+                          <Button 
+                            onClick={() => setUseNativePdfViewer(true)} 
+                            variant="secondary"
+                            size="sm"
+                          >
+                            Use Native Viewer
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        style={{ 
+                          transform: `scale(${isIOS ? Math.min(zoom, 1.5) : zoom})`,
+                          transformOrigin: 'center center',
+                          transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
+                        }}
+                      >
+                        <Page
+                          pageNumber={pageNumber}
+                          width={pageWidth}
+                          rotate={rotation}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={true}
+                          className="shadow-lg"
+                          onLoadSuccess={(page) => {
+                            handlePageLoadSuccess(page);
+                            setIsPageLoading(false);
+                            setPageLoadFailed(false);
+                            initialLoadRef.current = false;
+                            pageLoadStartTime.current = null;
+                          }}
+                          onLoadError={(error) => {
+                            console.error('[DocumentViewer] Page render error:', error);
+                            // Add brief delay before showing error to handle transient failures
+                            setTimeout(() => {
+                              setPageLoadFailed(true);
+                            }, 100);
+                            setIsPageLoading(false);
+                            initialLoadRef.current = false;
+                            pageLoadStartTime.current = null;
+                          }}
+                          loading={
+                            <div className="flex items-center justify-center p-8 bg-card">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                             </div>
-                          </div>
-                        }
-                      />
-                    </div>
+                          }
+                        />
+                      </div>
+                    )}
                   </Document>
                 </div>
               )
