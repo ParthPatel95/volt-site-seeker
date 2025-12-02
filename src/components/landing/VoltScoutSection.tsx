@@ -156,40 +156,6 @@ export const VoltScoutSection = () => {
           </Card>
         </div>
 
-        {/* Advanced Analytics Section */}
-        <div className="bg-watt-light rounded-3xl p-6 border border-gray-200 mb-8 shadow-institutional">
-          <div className="text-center mb-6">
-            <h3 className="text-2xl font-bold text-watt-navy mb-2">Advanced Analytics Dashboard</h3>
-            <p className="text-watt-navy/70">Real-time market intelligence powered by machine learning</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <Eye className="w-6 h-6 text-watt-trust mb-2" />
-              <div className="text-xl font-bold text-watt-navy mb-1">24/7</div>
-              <div className="text-watt-navy/70 text-xs">Market Surveillance</div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <Database className="w-6 h-6 text-watt-success mb-2" />
-              <div className="text-xl font-bold text-watt-navy mb-1">50TB+</div>
-              <div className="text-watt-navy/70 text-xs">Data Processed Daily</div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <Bot className="w-6 h-6 text-watt-bitcoin mb-2" />
-              <div className="text-xl font-bold text-watt-navy mb-1">AI Scout</div>
-              <div className="text-watt-navy/70 text-xs">Autonomous Discovery</div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <Zap className="w-6 h-6 text-watt-trust mb-2" />
-              <div className="text-xl font-bold text-watt-navy mb-1">&lt; 1s</div>
-              <div className="text-watt-navy/70 text-xs">Alert Response Time</div>
-            </div>
-          </div>
-        </div>
-        
         <div className="text-center">
           <Link to="/app">
             <Button size="lg" className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white px-8 py-4 text-lg shadow-institutional-lg">
