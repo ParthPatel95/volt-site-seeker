@@ -92,7 +92,9 @@ export function DocumentViewer({
   const [pdfPageDimensions, setPdfPageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
   const [isUserZooming, setIsUserZooming] = useState(false);
   const initialDimensionsSet = useRef(false);
   const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
@@ -118,25 +120,34 @@ export function DocumentViewer({
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   
-  // Detect mobile
+  // Calculate safe PDF width to prevent canvas overflow on mobile devices
+  const [pdfRenderWidth, setPdfRenderWidth] = useState(() => {
+    if (typeof window === 'undefined') return 400;
+    const width = window.innerWidth;
+    // Mobile: max 400px, Desktop: max 700px - lower values prevent canvas overflow
+    if (width < 768) {
+      return Math.min(width - 32, 400);
+    }
+    return Math.min(width - 100, 700);
+  });
+
+  // Detect mobile and update render width
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const width = window.innerWidth;
+      const mobile = width < 768;
+      setIsMobile(mobile);
+      // Update render width when viewport changes
+      if (mobile) {
+        setPdfRenderWidth(Math.min(width - 32, 400));
+      } else {
+        setPdfRenderWidth(Math.min(width - 100, 700));
+      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  // Calculate safe PDF width to prevent canvas overflow on mobile devices
-  const pdfRenderWidth = useMemo(() => {
-    if (isMobile) {
-      // Constrain to viewport width minus padding, max 600px to prevent canvas overflow
-      return Math.min(window.innerWidth - 32, 600);
-    }
-    // Desktop: use reasonable default width
-    return Math.min(window.innerWidth - 100, 900);
-  }, [isMobile]);
 
   const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
   const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl);
@@ -998,7 +1009,7 @@ export function DocumentViewer({
               >
                 <div 
                   style={{ 
-                    transform: `scale(${isIOS ? Math.min(zoom, 1.5) : zoom})`,
+                    transform: `scale(${isMobile ? Math.min(zoom, 1.25) : zoom})`,
                     transformOrigin: 'center center',
                     transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
                   }}
