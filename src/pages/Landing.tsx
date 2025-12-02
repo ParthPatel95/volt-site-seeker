@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
-import { LiveDataSection } from '@/components/landing/LiveDataSection';
+import { VoltScoutIntelligenceHub } from '@/components/landing/VoltScoutIntelligenceHub';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -13,7 +13,6 @@ import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 // Lazy load sections for better performance
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
 const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(module => ({ default: module.InvestmentThesisSection })));
-const VoltScoutSection = lazy(() => import('@/components/landing/VoltScoutSection').then(module => ({ default: module.VoltScoutSection })));
 
 // New Alberta facility sections
 const AlbertaFacilityShowcase = lazy(() => import('@/components/landing/AlbertaFacilityShowcase').then(module => ({ default: module.AlbertaFacilityShowcase })));
@@ -88,15 +87,9 @@ const Landing: React.FC = () => {
           
           <SectionDivider color="blue" />
           
-          <section aria-label="VoltScout Platform" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <VoltScoutSection />
-            </Suspense>
+          <section aria-label="VoltScout Intelligence Hub" className="relative">
+            <VoltScoutIntelligenceHub />
           </section>
-          
-          <SectionDivider color="green" />
-          
-          <LiveDataSection />
           
         </main>
 
