@@ -1,4 +1,5 @@
 import { Bitcoin, Mail, Linkedin, Instagram } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { EnhancedLogo } from '../EnhancedLogo';
 
 export const LandingFooter = () => {
@@ -36,14 +37,14 @@ export const LandingFooter = () => {
             <h3 className="text-sm font-semibold text-watt-navy mb-3">Company</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/about" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                <Link to="/about" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/wattfund" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                <Link to="/wattfund" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   WattFund
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -53,9 +54,9 @@ export const LandingFooter = () => {
             <h3 className="text-sm font-semibold text-watt-navy mb-3">Resources</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/app" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                <Link to="/app" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   VoltScout Platform
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
