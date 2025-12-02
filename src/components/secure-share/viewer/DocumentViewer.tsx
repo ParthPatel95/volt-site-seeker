@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Maximize2, Minimize2, MoreVertical, Globe, Languages, Loader2 } from 'lucide-react';
+import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Maximize2, Minimize2, MoreVertical, Globe, Languages, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -103,6 +103,8 @@ export function DocumentViewer({
   const lockedPageWidth = useRef<number | null>(null);
   const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(false);
+  const [pageLoadFailed, setPageLoadFailed] = useState(false);
+  const initialLoadRef = useRef(true);
   
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
@@ -239,30 +241,42 @@ export function DocumentViewer({
     }
   }, [isPdf, useNativePdfViewer, isIOS, numPages, toast]);
   
-  // Safety timeout: Reset isPageLoading if stuck for more than 8 seconds
+  // Safety timeout: Only on initial document load (not page navigation)
   useEffect(() => {
-    if (isPageLoading) {
+    if (isPageLoading && initialLoadRef.current) {
+      console.log('[DocumentViewer] Starting 8-second safety timeout for initial load');
       pageLoadingTimeoutRef.current = setTimeout(() => {
-        console.warn('[DocumentViewer] Page loading stuck - resetting state');
+        console.log('[DocumentViewer] Safety timeout triggered - switching to native viewer');
         setIsPageLoading(false);
-        // If still no content after 8 seconds, switch to native viewer
-        if (!widthLocked.current) {
-          console.warn('[DocumentViewer] Switching to native viewer after page load timeout');
-          setUseNativePdfViewer(true);
-          toast({
-            title: 'Loading Taking Too Long',
-            description: 'Switched to browser PDF viewer for better performance.',
-          });
-        }
+        initialLoadRef.current = false;
+        setUseNativePdfViewer(true);
+        toast({
+          title: "Loading Taking Too Long",
+          description: "Switching to native PDF viewer for better performance.",
+        });
       }, 8000);
-      
-      return () => {
-        if (pageLoadingTimeoutRef.current) {
-          clearTimeout(pageLoadingTimeoutRef.current);
-        }
-      };
+    } else if (!isPageLoading) {
+      if (pageLoadingTimeoutRef.current) {
+        clearTimeout(pageLoadingTimeoutRef.current);
+      }
     }
+
+    return () => {
+      if (pageLoadingTimeoutRef.current) {
+        clearTimeout(pageLoadingTimeoutRef.current);
+      }
+    };
   }, [isPageLoading, toast]);
+
+  // Cleanup resources when page changes
+  useEffect(() => {
+    setPageLoadFailed(false);
+    setIsPageLoading(true);
+    
+    return () => {
+      setIsPageLoading(false);
+    };
+  }, [pageNumber]);
 
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
@@ -1116,10 +1130,20 @@ export function DocumentViewer({
                         onLoadSuccess={(page) => {
                           handlePageLoadSuccess(page);
                           setIsPageLoading(false);
+                          setPageLoadFailed(false);
+                          initialLoadRef.current = false;
+                          if (pageLoadingTimeoutRef.current) {
+                            clearTimeout(pageLoadingTimeoutRef.current);
+                          }
                         }}
                         onLoadError={(error) => {
                           console.error('[DocumentViewer] Page render error:', error);
                           setIsPageLoading(false);
+                          setPageLoadFailed(true);
+                          initialLoadRef.current = false;
+                          if (pageLoadingTimeoutRef.current) {
+                            clearTimeout(pageLoadingTimeoutRef.current);
+                          }
                         }}
                         loading={
                           <div className="flex items-center justify-center p-8 bg-card">
@@ -1127,15 +1151,44 @@ export function DocumentViewer({
                           </div>
                         }
                         error={
-                          <div className="text-center p-8 bg-destructive/10 rounded-lg">
-                            <p className="text-destructive mb-4">Failed to load page {pageNumber}</p>
-                            <Button 
-                              onClick={() => setUseNativePdfViewer(true)} 
-                              size="sm"
-                              variant="outline"
-                            >
-                              Switch to Browser Viewer
-                            </Button>
+                          <div className="flex flex-col items-center justify-center p-8 text-center bg-destructive/10 rounded-lg">
+                            <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">Page Failed to Load</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Page {pageNumber} of {numPages} couldn't be displayed.
+                            </p>
+                            <div className="flex gap-2">
+                              <Button 
+                                onClick={() => {
+                                  setPageLoadFailed(false);
+                                  setIsPageLoading(true);
+                                  // Force re-render
+                                  const current = pageNumber;
+                                  setPageNumber(0);
+                                  setTimeout(() => setPageNumber(current), 0);
+                                }} 
+                                variant="outline"
+                                size="sm"
+                              >
+                                Retry Page
+                              </Button>
+                              {pageNumber < numPages && (
+                                <Button 
+                                  onClick={() => setPageNumber(prev => prev + 1)} 
+                                  variant="default"
+                                  size="sm"
+                                >
+                                  Skip to Next
+                                </Button>
+                              )}
+                              <Button 
+                                onClick={() => setUseNativePdfViewer(true)} 
+                                variant="secondary"
+                                size="sm"
+                              >
+                                Use Native Viewer
+                              </Button>
+                            </div>
                           </div>
                         }
                       />
