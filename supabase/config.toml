@@ -182,6 +182,9 @@ verify_jwt = false
 [functions.parse-office-document]
 verify_jwt = false
 
+[functions.secure-share-meta-proxy]
+verify_jwt = false
+
 # Authentication required endpoints
 [functions.api-key-management]
 verify_jwt = true
