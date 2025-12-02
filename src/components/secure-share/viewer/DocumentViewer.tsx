@@ -282,6 +282,28 @@ export function DocumentViewer({
     failedPageRef.current = null; // Clear failed page reference
   }, [pageNumber]);
 
+  // Unified error handler for render errors
+  const handleRenderError = useCallback((error: Error, errorType: string) => {
+    console.error(`[DocumentViewer] ${errorType}:`, error);
+    failedPageRef.current = pageNumber;
+    
+    if (pageRetryCount.current < maxRetries) {
+      pageRetryCount.current++;
+      console.log(`[DocumentViewer] Retrying page ${pageNumber} due to ${errorType} (attempt ${pageRetryCount.current}/${maxRetries})`);
+      setPageLoadFailed(false);
+      setIsPageLoading(true);
+      setPageRetryTrigger(prev => prev + 1);
+    } else {
+      console.warn(`[DocumentViewer] Page ${pageNumber} failed after ${maxRetries} retries`);
+      setTimeout(() => {
+        if (failedPageRef.current === pageNumber) {
+          setPageLoadFailed(true);
+        }
+      }, 100);
+      setIsPageLoading(false);
+    }
+  }, [pageNumber]);
+
   // Activity tracking
   const { trackPageChange, trackScrollDepth } = useDocumentActivityTracking({
     linkId: linkId || '',
@@ -1060,36 +1082,49 @@ export function DocumentViewer({
                     }
                   }}
                 >
-                  <Document
-                    file={documentUrl}
-                    options={{
-                      // Enable progressive loading for faster first page render
-                      disableRange: false,
-                      disableStream: false,
-                      cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-                      cMapPacked: true,
-                    }}
-                    onLoadSuccess={onDocumentLoadSuccess}
-                    onLoadError={(error) => {
-                      console.error('PDF load error:', error);
-                      // Fallback to native/browser PDF viewer on any error
-                      setUseNativePdfViewer(true);
-                      toast({
-                        title: 'PDF Loading Issue',
-                        description: 'We had trouble loading the PDF viewer, opening with your browser instead.',
-                      });
-                    }}
-                    loading={
-                      <div className="w-full max-w-[800px] mx-auto p-4 animate-pulse">
-                        <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
-                          <div className="text-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                            <p className="text-sm text-muted-foreground">Loading document...</p>
-                          </div>
-                        </div>
+              <Document
+                file={documentUrl}
+                options={{
+                  // Enable progressive loading for faster first page render
+                  disableRange: false,
+                  disableStream: false,
+                  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                  cMapPacked: true,
+                }}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={(error) => {
+                  console.error('PDF load error:', error);
+                  // Fallback to native/browser PDF viewer on any error
+                  setUseNativePdfViewer(true);
+                  toast({
+                    title: 'PDF Loading Issue',
+                    description: 'We had trouble loading the PDF viewer, opening with your browser instead.',
+                  });
+                }}
+                error={
+                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                    <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+                    <p className="text-lg font-semibold mb-2">Failed to load PDF document</p>
+                    <p className="text-sm text-muted-foreground mb-4">The document could not be rendered</p>
+                    <Button 
+                      onClick={() => setUseNativePdfViewer(true)}
+                      variant="outline"
+                    >
+                      Use Native Viewer
+                    </Button>
+                  </div>
+                }
+                loading={
+                  <div className="w-full max-w-[800px] mx-auto p-4 animate-pulse">
+                    <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
+                      <div className="text-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Loading document...</p>
                       </div>
-                    }
-                  >
+                    </div>
+                  </div>
+                }
+              >
                     {!dimensionsReady || pageWidth === null ? (
                       <div className="w-full max-w-[800px] mx-auto p-4">
                         <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
@@ -1145,56 +1180,53 @@ export function DocumentViewer({
                           transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
                         }}
                       >
-                        <Page
-                          key={`${pageNumber}-${pageRetryTrigger}`}
-                          pageNumber={pageNumber}
-                          width={pageWidth}
-                          rotate={rotation}
-                          renderTextLayer={false}
-                          renderAnnotationLayer={true}
-                          className="shadow-lg"
-                          onLoadSuccess={(page) => {
-                            handlePageLoadSuccess(page);
-                            setIsPageLoading(false);
-                            setPageLoadFailed(false);
-                            initialLoadRef.current = false;
-                            pageLoadStartTime.current = null;
-                            pageRetryCount.current = 0; // Reset on successful load
-                            failedPageRef.current = null;
-                          }}
-                          onLoadError={(error) => {
-                            const errorPage = pageNumber; // Capture current page
-                            failedPageRef.current = errorPage;
-                            console.error('[DocumentViewer] Page render error:', error);
-                            
-                            // Automatic retry logic
-                            if (pageRetryCount.current < maxRetries) {
-                              pageRetryCount.current++;
-                              console.log(`[DocumentViewer] Retrying page ${pageNumber} (attempt ${pageRetryCount.current}/${maxRetries})`);
-                              setPageLoadFailed(false);
-                              setIsPageLoading(true);
-                              // Force Page component remount by incrementing trigger
-                              setPageRetryTrigger(prev => prev + 1);
-                            } else {
-                              // Max retries reached, show error
-                              console.warn(`[DocumentViewer] Page ${pageNumber} failed after ${maxRetries} retries`);
-                              setTimeout(() => {
-                                // Only show error if still on the same page
-                                if (failedPageRef.current === pageNumber) {
-                                  setPageLoadFailed(true);
-                                }
-                              }, 100);
-                            }
-                            setIsPageLoading(false);
-                            initialLoadRef.current = false;
-                            pageLoadStartTime.current = null;
-                          }}
-                          loading={
-                            <div className="flex items-center justify-center p-8 bg-card">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                            </div>
-                          }
-                        />
+                      <Page
+                        key={`${pageNumber}-${pageRetryTrigger}`}
+                        pageNumber={pageNumber}
+                        width={pageWidth}
+                        rotate={rotation}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={true}
+                        className="shadow-lg"
+                        error={
+                          <div className="flex flex-col items-center justify-center p-8 text-center">
+                            <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+                            <p className="text-sm text-muted-foreground">Page could not be rendered</p>
+                          </div>
+                        }
+                        onLoadSuccess={(page) => {
+                          handlePageLoadSuccess(page);
+                          setIsPageLoading(false);
+                          setPageLoadFailed(false);
+                          initialLoadRef.current = false;
+                          pageLoadStartTime.current = null;
+                          pageRetryCount.current = 0;
+                          failedPageRef.current = null;
+                        }}
+                        onLoadError={(error) => {
+                          handleRenderError(error, 'Page load error');
+                          setIsPageLoading(false);
+                          initialLoadRef.current = false;
+                          pageLoadStartTime.current = null;
+                        }}
+                        onRenderError={(error) => {
+                          console.error('[DocumentViewer] Canvas render error:', error);
+                          handleRenderError(error, 'Canvas render error');
+                        }}
+                        onRenderAnnotationLayerError={(error) => {
+                          console.warn('[DocumentViewer] Annotation layer render error:', error);
+                          // Non-critical - don't fail the page, just log
+                        }}
+                        onGetAnnotationsError={(error) => {
+                          console.warn('[DocumentViewer] Error getting annotations:', error);
+                          // Non-critical - page can still render without annotations
+                        }}
+                        loading={
+                          <div className="flex items-center justify-center p-8 bg-card">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        }
+                      />
                       </div>
                     )}
                   </Document>
