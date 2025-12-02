@@ -20,12 +20,12 @@ interface CountryData {
 }
 
 const countries: CountryData[] = [
-  { name: 'Canada', flag: canadaFlag, capacity: 333, type: 'Hybrid', x: 22, y: 30, color: '#F7931A' },
-  { name: 'United States', flag: usFlag, capacity: 536, type: 'Mix + Natgas', x: 20, y: 40, color: '#F7931A' },
-  { name: 'Uganda', flag: ugandaFlag, capacity: 400, type: 'Hydro', x: 54, y: 55, color: '#F7931A' },
-  { name: 'Nepal', flag: nepalFlag, capacity: 75, type: 'Mix', x: 62, y: 38, color: '#F7931A' },
-  { name: 'Bhutan', flag: bhutanFlag, capacity: 175, type: 'Hydro', x: 63, y: 37, color: '#F7931A' },
-  { name: 'India', flag: indiaFlag, capacity: 45, type: 'Solar + Hydro', x: 60, y: 42, color: '#F7931A' },
+  { name: 'Canada', flag: canadaFlag, capacity: 333, type: 'Hybrid', x: 34, y: 23, color: '#F7931A' },
+  { name: 'United States', flag: usFlag, capacity: 536, type: 'Mix + Natgas', x: 22, y: 33, color: '#F7931A' },
+  { name: 'Uganda', flag: ugandaFlag, capacity: 400, type: 'Hydro', x: 59, y: 49, color: '#F7931A' },
+  { name: 'Nepal', flag: nepalFlag, capacity: 75, type: 'Mix', x: 74, y: 35, color: '#F7931A' },
+  { name: 'Bhutan', flag: bhutanFlag, capacity: 175, type: 'Hydro', x: 75, y: 35, color: '#F7931A' },
+  { name: 'India', flag: indiaFlag, capacity: 45, type: 'Solar + Hydro', x: 72, y: 38, color: '#F7931A' },
 ];
 
 const GlobalPresenceMap: React.FC = () => {
