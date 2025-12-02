@@ -128,6 +128,16 @@ export function DocumentViewer({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Calculate safe PDF width to prevent canvas overflow on mobile devices
+  const pdfRenderWidth = useMemo(() => {
+    if (isMobile) {
+      // Constrain to viewport width minus padding, max 600px to prevent canvas overflow
+      return Math.min(window.innerWidth - 32, 600);
+    }
+    // Desktop: use reasonable default width
+    return Math.min(window.innerWidth - 100, 900);
+  }, [isMobile]);
+
   const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
   const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl);
   const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
@@ -995,7 +1005,7 @@ export function DocumentViewer({
                 >
                   <Page
                     pageNumber={pageNumber}
-                    scale={1.0}
+                    width={pdfRenderWidth}
                     rotate={rotation}
                     renderTextLayer={false}
                     renderAnnotationLayer={true}
