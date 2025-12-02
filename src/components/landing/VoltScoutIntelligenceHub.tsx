@@ -3,47 +3,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { 
-  Target, 
-  MapPin, 
-  Satellite, 
-  TrendingUp, 
-  Bell, 
-  Database,
-  ArrowRight,
-  Sparkles
-} from 'lucide-react';
+import { Target, MapPin, Satellite, TrendingUp, Bell, Database, ArrowRight, Sparkles } from 'lucide-react';
 import { ScrollReveal } from './ScrollAnimations';
 import { LiveERCOTData } from './LiveERCOTData';
 import { LiveAESOData } from './LiveAESOData';
 import { VoltScoutHeroStats } from './VoltScoutHeroStats';
 import { VoltScoutHowItWorks } from './VoltScoutHowItWorks';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
-
-const platformFeatures = [
-  {
-    icon: MapPin,
-    title: 'Infrastructure Mapping',
-    description: 'Real-time visualization of power infrastructure, transmission capacity, and available grid connections.',
-    metrics: '50,000+ Sites',
-    color: 'trust', // Blue
-  },
-  {
-    icon: Satellite,
-    title: 'Satellite Intelligence',
-    description: 'Advanced satellite imagery analysis to evaluate land characteristics, proximity to infrastructure, and development potential.',
-    metrics: 'Weekly Updates',
-    color: 'purple', // Purple
-  },
-  {
-    icon: TrendingUp,
-    title: 'Price Forecasting',
-    description: 'Machine learning models predict energy prices with high accuracy to optimize operational decisions.',
-    metrics: '2 Live Markets',
-    color: 'success', // Green
-  },
-];
-
+const platformFeatures = [{
+  icon: MapPin,
+  title: 'Infrastructure Mapping',
+  description: 'Real-time visualization of power infrastructure, transmission capacity, and available grid connections.',
+  metrics: '50,000+ Sites',
+  color: 'trust' // Blue
+}, {
+  icon: Satellite,
+  title: 'Satellite Intelligence',
+  description: 'Advanced satellite imagery analysis to evaluate land characteristics, proximity to infrastructure, and development potential.',
+  metrics: 'Weekly Updates',
+  color: 'purple' // Purple
+}, {
+  icon: TrendingUp,
+  title: 'Price Forecasting',
+  description: 'Machine learning models predict energy prices with high accuracy to optimize operational decisions.',
+  metrics: '2 Live Markets',
+  color: 'success' // Green
+}];
 const colorConfig = {
   trust: {
     border: 'border-l-watt-trust',
@@ -51,7 +36,7 @@ const colorConfig = {
     iconColor: 'text-watt-trust',
     badgeBg: 'bg-watt-trust/10',
     badgeText: 'text-watt-trust',
-    hoverBorder: 'hover:border-watt-trust/30',
+    hoverBorder: 'hover:border-watt-trust/30'
   },
   purple: {
     border: 'border-l-purple-500',
@@ -59,7 +44,7 @@ const colorConfig = {
     iconColor: 'text-purple-500',
     badgeBg: 'bg-purple-500/10',
     badgeText: 'text-purple-500',
-    hoverBorder: 'hover:border-purple-500/30',
+    hoverBorder: 'hover:border-purple-500/30'
   },
   success: {
     border: 'border-l-watt-success',
@@ -67,7 +52,7 @@ const colorConfig = {
     iconColor: 'text-watt-success',
     badgeBg: 'bg-watt-success/10',
     badgeText: 'text-watt-success',
-    hoverBorder: 'hover:border-watt-success/30',
+    hoverBorder: 'hover:border-watt-success/30'
   },
   bitcoin: {
     border: 'border-l-watt-bitcoin',
@@ -75,7 +60,7 @@ const colorConfig = {
     iconColor: 'text-watt-bitcoin',
     badgeBg: 'bg-watt-bitcoin/10',
     badgeText: 'text-watt-bitcoin',
-    hoverBorder: 'hover:border-watt-bitcoin/30',
+    hoverBorder: 'hover:border-watt-bitcoin/30'
   },
   navy: {
     border: 'border-l-watt-navy',
@@ -83,15 +68,12 @@ const colorConfig = {
     iconColor: 'text-watt-navy',
     badgeBg: 'bg-watt-navy/10',
     badgeText: 'text-watt-navy',
-    hoverBorder: 'hover:border-watt-navy/30',
-  },
+    hoverBorder: 'hover:border-watt-navy/30'
+  }
 };
-
 export const VoltScoutIntelligenceHub = () => {
   const [activeTab, setActiveTab] = useState('features');
-
-  return (
-    <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-gradient-to-b from-white to-watt-light">
+  return <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-gradient-to-b from-white to-watt-light">
       <div className="max-w-7xl mx-auto">
         
         {/* Hero Banner */}
@@ -109,7 +91,7 @@ export const VoltScoutIntelligenceHub = () => {
               AI-powered energy discovery platform with live market intelligence
             </p>
             
-            <VoltScoutHeroStats />
+            
           </div>
         </ScrollReveal>
 
@@ -117,22 +99,13 @@ export const VoltScoutIntelligenceHub = () => {
         <ScrollReveal delay={200}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-8 bg-white border border-gray-200 p-1 rounded-lg h-auto">
-              <TabsTrigger 
-                value="features" 
-                className="data-[state=active]:bg-watt-trust data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base"
-              >
+              <TabsTrigger value="features" className="data-[state=active]:bg-watt-trust data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
                 Platform Features
               </TabsTrigger>
-              <TabsTrigger 
-                value="markets" 
-                className="data-[state=active]:bg-watt-success data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base"
-              >
+              <TabsTrigger value="markets" className="data-[state=active]:bg-watt-success data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
                 Live Markets
               </TabsTrigger>
-              <TabsTrigger 
-                value="howto" 
-                className="data-[state=active]:bg-watt-bitcoin data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base"
-              >
+              <TabsTrigger value="howto" className="data-[state=active]:bg-watt-bitcoin data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
                 How It Works
               </TabsTrigger>
             </TabsList>
@@ -145,9 +118,9 @@ export const VoltScoutIntelligenceHub = () => {
                   {/* Background pattern */}
                   <div className="absolute inset-0 opacity-5">
                     <div className="absolute inset-0" style={{
-                      backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                      backgroundSize: '32px 32px'
-                    }}></div>
+                    backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                    backgroundSize: '32px 32px'
+                  }}></div>
                   </div>
                   
                   <div className="relative z-10">
@@ -201,27 +174,19 @@ export const VoltScoutIntelligenceHub = () => {
               {/* Regular Feature Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {platformFeatures.map((feature, index) => {
-                  const Icon = feature.icon;
-                  const colors = colorConfig[feature.color as keyof typeof colorConfig];
-                  
-                  return (
-                    <div
-                      key={index}
-                      className={`group relative bg-white rounded-xl border-l-4 ${colors.border} border-t border-r border-b border-gray-200 ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden`}
-                      style={{
-                        animationDelay: `${(index + 1) * 100}ms`,
-                      }}
-                    >
+                const Icon = feature.icon;
+                const colors = colorConfig[feature.color as keyof typeof colorConfig];
+                return <div key={index} className={`group relative bg-white rounded-xl border-l-4 ${colors.border} border-t border-r border-b border-gray-200 ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden`} style={{
+                  animationDelay: `${(index + 1) * 100}ms`
+                }}>
                       <div className="p-6">
                         <div className="flex items-start justify-between mb-4">
                           <div className={`w-12 h-12 rounded-xl ${colors.iconBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                             <Icon className={`w-6 h-6 ${colors.iconColor}`} />
                           </div>
-                          {feature.metrics && (
-                            <span className={`text-xs font-semibold ${colors.badgeText} ${colors.badgeBg} px-3 py-1 rounded-full`}>
+                          {feature.metrics && <span className={`text-xs font-semibold ${colors.badgeText} ${colors.badgeBg} px-3 py-1 rounded-full`}>
                               {feature.metrics}
-                            </span>
-                          )}
+                            </span>}
                         </div>
                         
                         <h3 className="text-lg font-bold text-watt-navy mb-2 group-hover:text-watt-trust transition-colors duration-300">
@@ -231,9 +196,8 @@ export const VoltScoutIntelligenceHub = () => {
                           {feature.description}
                         </p>
                       </div>
-                    </div>
-                  );
-                })}
+                    </div>;
+              })}
               </div>
             </TabsContent>
 
@@ -264,10 +228,7 @@ export const VoltScoutIntelligenceHub = () => {
         <ScrollReveal delay={300}>
           <div className="mt-10 md:mt-12 text-center">
             <Link to="/app">
-              <Button 
-                size="lg" 
-                className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 group px-8 py-6 text-base sm:text-lg"
-              >
+              <Button size="lg" className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 group px-8 py-6 text-base sm:text-lg">
                 Access VoltScout Platform
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
@@ -278,6 +239,5 @@ export const VoltScoutIntelligenceHub = () => {
           </div>
         </ScrollReveal>
       </div>
-    </section>
-  );
+    </section>;
 };
