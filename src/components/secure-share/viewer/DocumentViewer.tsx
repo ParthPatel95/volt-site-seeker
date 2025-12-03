@@ -79,9 +79,16 @@ export function DocumentViewer({
   const [isMobile, setIsMobile] = useState(() => 
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
-  // Start with react-pdf viewer - fall back to native only on errors
-  // Canvas overflow prevented by: pdfRenderWidth (400px mobile), devicePixelRatio=1, zoom 1.25x max
-  const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
+  // CRITICAL FIX: Use native PDF viewer by default on mobile to prevent canvas crashes
+  // react-pdf causes memory overflow on iOS Safari (384MB canvas limit) even with optimizations
+  // Native viewer is battle-tested and reliable - users can scroll through PDF naturally
+  const [useNativePdfViewer, setUseNativePdfViewer] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const mobile = window.innerWidth < 768;
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // Use native viewer on ALL mobile devices for reliability
+    return mobile || iOS;
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isUserZooming, setIsUserZooming] = useState(false);
   const initialDimensionsSet = useRef(false);
@@ -126,13 +133,17 @@ export function DocumentViewer({
     return Math.min(width - 100, 700);
   });
 
-  // Detect mobile and update render width
+  // Detect mobile and update render width + viewer type
   useEffect(() => {
     const checkMobile = () => {
       const width = window.innerWidth;
       const mobile = width < 768;
       const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       setIsMobile(mobile);
+      // Use native viewer on mobile/iOS for reliability
+      if (mobile || iOS) {
+        setUseNativePdfViewer(true);
+      }
       // Update render width when viewport changes - iOS gets smaller size due to stricter memory limits
       if (iOS) {
         setPdfRenderWidth(Math.min(width - 32, 350));
@@ -176,11 +187,13 @@ export function DocumentViewer({
 
   // Reset state when document URL changes
   useEffect(() => {
-    console.log('[DocumentViewer] Document URL changed, resetting state');
+    const mobile = window.innerWidth < 768;
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    console.log('[DocumentViewer] Document URL changed, resetting state, mobile:', mobile, 'iOS:', iOS);
     setNumPages(0);
     setPageNumber(1);
-    // Start with react-pdf - fall back to native only on actual errors
-    setUseNativePdfViewer(false);
+    // Keep native viewer on mobile/iOS for reliability - only use react-pdf on desktop
+    setUseNativePdfViewer(mobile || iOS);
     setPageLoadTimeout(false);
     setDocumentLoaded(false);
     setPdfDocumentProxy(null);
@@ -1051,7 +1064,6 @@ export function DocumentViewer({
                   }}
                 >
                   <Page
-                    key={pageNumber}
                     pageNumber={pageNumber}
                     width={pdfRenderWidth}
                     rotate={rotation}
