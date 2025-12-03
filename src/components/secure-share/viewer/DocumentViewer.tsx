@@ -68,21 +68,6 @@ export function DocumentViewer({
   viewerEmail
 }: DocumentViewerProps) {
   const { toast } = useToast();
-  
-  // Early return for missing documentUrl - prevents crashes from undefined string operations
-  if (!documentUrl) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-background">
-        <div className="text-center p-8">
-          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Document Unavailable</h3>
-          <p className="text-sm text-muted-foreground">
-            This document could not be loaded. The file may be temporarily unavailable.
-          </p>
-        </div>
-      </div>
-    );
-  }
   const [downloadAttempted, setDownloadAttempted] = useState(false);
   const [zoom, setZoom] = useState(1.0);
   const [numPages, setNumPages] = useState<number>(0);
@@ -694,6 +679,20 @@ export function DocumentViewer({
     };
   }, [enableTracking, linkId, documentId, trackScrollDepth]);
 
+  // Early return for missing documentUrl - MUST be after all hooks to avoid React hooks rule violation
+  if (!documentUrl) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-background">
+        <div className="text-center p-8">
+          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Document Unavailable</h3>
+          <p className="text-sm text-muted-foreground">
+            This document could not be loaded. The file may be temporarily unavailable.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
