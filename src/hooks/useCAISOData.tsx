@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { UNIFIED_ENERGY_QUERY_KEY, fetchUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
 
 export interface CAISOPricing {
   current_price: number;
@@ -34,26 +34,24 @@ export interface CAISOGenerationMix {
 }
 
 export const useCAISOData = () => {
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['caiso-data'],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('energy-data-integration');
-      
-      if (error) {
-        console.error('Error fetching CAISO data:', error);
-        throw error;
-      }
-      
-      return data?.caiso || null;
-    },
-    refetchInterval: 10 * 60 * 1000,
+  const { data, isLoading, refetch: queryRefetch } = useQuery({
+    queryKey: UNIFIED_ENERGY_QUERY_KEY,
+    queryFn: fetchUnifiedEnergyData,
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 
+  const caisoData = data?.caiso;
+
+  const refetch = async () => {
+    await queryRefetch();
+  };
+
   return {
-    pricing: data?.pricing as CAISOPricing | undefined,
-    loadData: data?.loadData as CAISOLoadData | undefined,
-    generationMix: data?.generationMix as CAISOGenerationMix | undefined,
+    pricing: caisoData?.pricing as CAISOPricing | undefined,
+    loadData: caisoData?.loadData as CAISOLoadData | undefined,
+    generationMix: caisoData?.generationMix as CAISOGenerationMix | undefined,
     loading: isLoading,
     refetch
   };

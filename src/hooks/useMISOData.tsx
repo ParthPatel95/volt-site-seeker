@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { UNIFIED_ENERGY_QUERY_KEY, fetchUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
 
 export interface MISOPricing {
   current_price: number;
@@ -34,26 +34,24 @@ export interface MISOGenerationMix {
 }
 
 export const useMISOData = () => {
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['miso-data'],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('energy-data-integration');
-      
-      if (error) {
-        console.error('Error fetching MISO data:', error);
-        throw error;
-      }
-      
-      return data?.miso || null;
-    },
-    refetchInterval: 10 * 60 * 1000, // Refresh every 10 minutes
-    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
+  const { data, isLoading, refetch: queryRefetch } = useQuery({
+    queryKey: UNIFIED_ENERGY_QUERY_KEY,
+    queryFn: fetchUnifiedEnergyData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 
+  const misoData = data?.miso;
+
+  const refetch = async () => {
+    await queryRefetch();
+  };
+
   return {
-    pricing: data?.pricing as MISOPricing | undefined,
-    loadData: data?.loadData as MISOLoadData | undefined,
-    generationMix: data?.generationMix as MISOGenerationMix | undefined,
+    pricing: misoData?.pricing as MISOPricing | undefined,
+    loadData: misoData?.loadData as MISOLoadData | undefined,
+    generationMix: misoData?.generationMix as MISOGenerationMix | undefined,
     loading: isLoading,
     refetch
   };

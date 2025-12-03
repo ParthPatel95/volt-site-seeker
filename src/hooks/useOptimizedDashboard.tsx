@@ -1,77 +1,75 @@
 import { useMemo } from 'react';
-import { useERCOTData } from '@/hooks/useERCOTData';
-import { useAESOData } from '@/hooks/useAESOData';
-import { useMISOData } from '@/hooks/useMISOData';
-import { useCAISOData } from '@/hooks/useCAISOData';
-import { useNYISOData } from '@/hooks/useNYISOData';
-import { usePJMData } from '@/hooks/usePJMData';
-import { useSPPData } from '@/hooks/useSPPData';
-import { useIESOData } from '@/hooks/useIESOData';
+import { useUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
+
+// Helper to synthesize AESO pricing from load/generation data if missing
+const synthesizeAESOPricing = (aesoData: any) => {
+  if (aesoData?.pricing) return aesoData.pricing;
+  
+  const ld = aesoData?.loadData || {};
+  const gm = aesoData?.generationMix || {};
+  const reserve = typeof ld.reserve_margin === 'number' ? ld.reserve_margin : 12.5;
+  const renewPct = typeof gm.renewable_percentage === 'number' ? gm.renewable_percentage : 20;
+  const base = 55;
+  let estimate = base + (12.5 - reserve) * 2 - (renewPct - 25) * 0.3;
+  if (!Number.isFinite(estimate)) estimate = base;
+  estimate = Math.max(5, Math.min(250, Math.round(estimate * 100) / 100));
+  
+  return {
+    current_price: estimate,
+    average_price: Math.round((estimate * 0.95) * 100) / 100,
+    peak_price: Math.round((estimate * 1.8) * 100) / 100,
+    off_peak_price: Math.round((estimate * 0.6) * 100) / 100,
+    market_conditions: 'estimated',
+    timestamp: new Date().toISOString(),
+    source: 'aeso_estimated'
+  };
+};
 
 export const useOptimizedDashboard = () => {
-  const { 
-    pricing: ercotPricing, 
-    loadData: ercotLoad, 
-    generationMix: ercotGeneration,
-    loading: ercotLoading,
-    refetch: refetchERCOT
-  } = useERCOTData();
+  const { data, isLoading, refetch } = useUnifiedEnergyData();
 
-  const { 
-    pricing: aesoPricing, 
-    loadData: aesoLoad, 
-    generationMix: aesoGeneration,
-    loading: aesoLoading,
-    refetch: refetchAESO
-  } = useAESOData();
+  // Extract market-specific data from unified response
+  const ercotData = data?.ercot;
+  const aesoData = data?.aeso;
+  const misoData = data?.miso;
+  const caisoData = data?.caiso;
+  const nyisoData = data?.nyiso;
+  const pjmData = data?.pjm;
+  const sppData = data?.spp;
+  const iesoData = data?.ieso;
 
-  const { 
-    pricing: misoPricing, 
-    loadData: misoLoad, 
-    generationMix: misoGeneration,
-    loading: misoLoading,
-    refetch: refetchMISO
-  } = useMISOData();
+  // Extract pricing, load, and generation for each market
+  const ercotPricing = ercotData?.pricing;
+  const ercotLoad = ercotData?.loadData;
+  const ercotGeneration = ercotData?.generationMix;
 
-  const { 
-    pricing: caisoPricing, 
-    loadData: caisoLoad, 
-    generationMix: caisoGeneration,
-    loading: caisoLoading,
-    refetch: refetchCAISO
-  } = useCAISOData();
+  const aesoPricing = synthesizeAESOPricing(aesoData);
+  const aesoLoad = aesoData?.loadData;
+  const aesoGeneration = aesoData?.generationMix;
 
-  const { 
-    pricing: nyisoPricing, 
-    loadData: nyisoLoad, 
-    generationMix: nyisoGeneration,
-    loading: nyisoLoading,
-    refetch: refetchNYISO
-  } = useNYISOData();
+  const misoPricing = misoData?.pricing;
+  const misoLoad = misoData?.loadData;
+  const misoGeneration = misoData?.generationMix;
 
-  const { 
-    pricing: pjmPricing, 
-    loadData: pjmLoad, 
-    generationMix: pjmGeneration,
-    loading: pjmLoading,
-    refetch: refetchPJM
-  } = usePJMData();
+  const caisoPricing = caisoData?.pricing;
+  const caisoLoad = caisoData?.loadData;
+  const caisoGeneration = caisoData?.generationMix;
 
-  const { 
-    pricing: sppPricing, 
-    loadData: sppLoad, 
-    generationMix: sppGeneration,
-    loading: sppLoading,
-    refetch: refetchSPP
-  } = useSPPData();
+  const nyisoPricing = nyisoData?.pricing;
+  const nyisoLoad = nyisoData?.loadData;
+  const nyisoGeneration = nyisoData?.generationMix;
 
-  const { 
-    pricing: iesoPricing, 
-    loadData: iesoLoad, 
-    generationMix: iesoGeneration,
-    loading: iesoLoading,
-    refetch: refetchIESO
-  } = useIESOData();
+  const pjmPricing = pjmData?.pricing;
+  const pjmLoad = pjmData?.loadData;
+  const pjmGeneration = pjmData?.generationMix;
+
+  const sppPricing = sppData?.pricing;
+  const sppLoad = sppData?.loadData;
+  const sppGeneration = sppData?.generationMix;
+
+  const iesoPricing = iesoData?.pricing;
+  const iesoLoad = iesoData?.loadData;
+  const iesoGeneration = iesoData?.generationMix;
 
   // Memoize expensive calculations
   const marketMetrics = useMemo(() => {
@@ -97,16 +95,7 @@ export const useOptimizedDashboard = () => {
   }, [ercotPricing, aesoPricing, misoPricing, caisoPricing, nyisoPricing, pjmPricing, sppPricing, iesoPricing]);
 
   const refreshData = async () => {
-    await Promise.all([
-      refetchERCOT(), 
-      refetchAESO(), 
-      refetchMISO(), 
-      refetchCAISO(), 
-      refetchNYISO(), 
-      refetchPJM(), 
-      refetchSPP(),
-      refetchIESO()
-    ]);
+    await refetch();
   };
 
   return {
@@ -134,7 +123,7 @@ export const useOptimizedDashboard = () => {
     iesoPricing,
     iesoLoad,
     iesoGeneration,
-    isLoading: ercotLoading || aesoLoading || misoLoading || caisoLoading || nyisoLoading || pjmLoading || sppLoading || iesoLoading,
+    isLoading,
     marketMetrics,
     refreshData
   };
