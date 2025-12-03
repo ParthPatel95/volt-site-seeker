@@ -152,19 +152,27 @@ export function DocumentViewer({
 
   // Canvas memory cleanup function - CRITICAL for iOS Safari memory limit (384MB)
   const cleanupCanvasMemory = useCallback(() => {
-    if (!canvasContainerRef.current) return;
-    
-    const canvases = canvasContainerRef.current.querySelectorAll('canvas');
-    canvases.forEach(canvas => {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      // CRITICAL for iOS: Setting to 1x1 releases the bitmap memory
-      canvas.width = 1;
-      canvas.height = 1;
-    });
-    console.log('[DocumentViewer] Canvas memory released for iOS');
+    try {
+      if (!canvasContainerRef.current) return;
+      
+      const canvases = canvasContainerRef.current.querySelectorAll('canvas');
+      canvases.forEach(canvas => {
+        try {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+          // CRITICAL for iOS: Setting to 1x1 releases the bitmap memory
+          canvas.width = 1;
+          canvas.height = 1;
+        } catch (e) {
+          // Ignore individual canvas errors
+        }
+      });
+      console.log('[DocumentViewer] Canvas memory released for iOS');
+    } catch (e) {
+      console.warn('[DocumentViewer] Canvas cleanup error:', e);
+    }
   }, []);
 
   // Reset state when document URL changes
@@ -542,11 +550,13 @@ export function DocumentViewer({
     if (now - lastNavigationTime.current < 150) return;
     if (newPage < 1 || newPage > numPages || newPage === pageNumber) return;
     
-    // CRITICAL: Clean up canvas memory BEFORE changing page (iOS fix)
-    cleanupCanvasMemory();
-    
     lastNavigationTime.current = now;
     setPageNumber(newPage);
+    
+    // Clean up old canvas memory AFTER React commits the new page
+    requestAnimationFrame(() => {
+      cleanupCanvasMemory();
+    });
   }, [numPages, pageNumber, cleanupCanvasMemory]);
   
   const toggleFullscreen = () => {
@@ -631,15 +641,15 @@ export function DocumentViewer({
       // Swipe threshold
       if (Math.abs(diff) > 50) {
         if (diff > 0 && pageNumber < numPages) {
-          // CRITICAL: Clean up canvas memory BEFORE changing page (iOS fix)
-          cleanupCanvasMemory();
           // Swipe left - next page
           setPageNumber(prev => prev + 1);
+          // Clean up old canvas memory AFTER React commits
+          requestAnimationFrame(() => cleanupCanvasMemory());
         } else if (diff < 0 && pageNumber > 1) {
-          // CRITICAL: Clean up canvas memory BEFORE changing page (iOS fix)
-          cleanupCanvasMemory();
           // Swipe right - previous page
           setPageNumber(prev => prev - 1);
+          // Clean up old canvas memory AFTER React commits
+          requestAnimationFrame(() => cleanupCanvasMemory());
         }
       }
     }
@@ -1019,7 +1029,6 @@ export function DocumentViewer({
                   }}
                 >
                   <Page
-                    key={pageNumber}
                     pageNumber={pageNumber}
                     scale={isMobile ? 0.8 : 1.0}
                     rotate={rotation}
