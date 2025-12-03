@@ -89,9 +89,6 @@ export function DocumentViewer({
   const initialLoadRef = useRef(true);
   const [documentLoaded, setDocumentLoaded] = useState(false);
   
-  // Ref for canvas container - needed for iOS memory cleanup
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
-  
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
@@ -150,36 +147,9 @@ export function DocumentViewer({
     };
   }, []);
 
-  // Canvas memory cleanup function - CRITICAL for iOS Safari memory limit (384MB)
-  const cleanupCanvasMemory = useCallback(() => {
-    try {
-      if (!canvasContainerRef.current) return;
-      
-      const canvases = canvasContainerRef.current.querySelectorAll('canvas');
-      canvases.forEach(canvas => {
-        try {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          }
-          // CRITICAL for iOS: Setting to 1x1 releases the bitmap memory
-          canvas.width = 1;
-          canvas.height = 1;
-        } catch (e) {
-          // Ignore individual canvas errors
-        }
-      });
-      console.log('[DocumentViewer] Canvas memory released for iOS');
-    } catch (e) {
-      console.warn('[DocumentViewer] Canvas cleanup error:', e);
-    }
-  }, []);
-
   // Reset state when document URL changes
   useEffect(() => {
     console.log('[DocumentViewer] Document URL changed, resetting state');
-    // Clean up canvas memory before switching documents
-    cleanupCanvasMemory();
     setNumPages(0);
     setPageNumber(1);
     // Start with react-pdf - fall back to native only on actual errors
@@ -190,7 +160,7 @@ export function DocumentViewer({
     setPdfPageDimensions(null);
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
-  }, [documentUrl, cleanupCanvasMemory]);
+  }, [documentUrl]);
 
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
@@ -552,12 +522,7 @@ export function DocumentViewer({
     
     lastNavigationTime.current = now;
     setPageNumber(newPage);
-    
-    // Clean up old canvas memory AFTER React commits the new page
-    requestAnimationFrame(() => {
-      cleanupCanvasMemory();
-    });
-  }, [numPages, pageNumber, cleanupCanvasMemory]);
+  }, [numPages, pageNumber]);
   
   const toggleFullscreen = () => {
     // Feature detection for Fullscreen API
@@ -643,13 +608,9 @@ export function DocumentViewer({
         if (diff > 0 && pageNumber < numPages) {
           // Swipe left - next page
           setPageNumber(prev => prev + 1);
-          // Clean up old canvas memory AFTER React commits
-          requestAnimationFrame(() => cleanupCanvasMemory());
         } else if (diff < 0 && pageNumber > 1) {
           // Swipe right - previous page
           setPageNumber(prev => prev - 1);
-          // Clean up old canvas memory AFTER React commits
-          requestAnimationFrame(() => cleanupCanvasMemory());
         }
       }
     }
@@ -1021,7 +982,6 @@ export function DocumentViewer({
                 }
               >
                 <div 
-                  ref={canvasContainerRef}
                   style={{ 
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center center',
