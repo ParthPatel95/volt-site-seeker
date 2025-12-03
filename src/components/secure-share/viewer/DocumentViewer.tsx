@@ -79,16 +79,9 @@ export function DocumentViewer({
   const [isMobile, setIsMobile] = useState(() => 
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
-  // CRITICAL FIX: Use native PDF viewer by default on mobile to prevent canvas crashes
-  // react-pdf causes memory overflow on iOS Safari (384MB canvas limit) even with optimizations
-  // Native viewer is battle-tested and reliable - users can scroll through PDF naturally
-  const [useNativePdfViewer, setUseNativePdfViewer] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const mobile = window.innerWidth < 768;
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    // Use native viewer on ALL mobile devices for reliability
-    return mobile || iOS;
-  });
+  // Start with react-pdf viewer on ALL devices - fall back to native only on actual errors
+  // This allows translation feature to work (requires react-pdf for text extraction)
+  const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isUserZooming, setIsUserZooming] = useState(false);
   const initialDimensionsSet = useRef(false);
@@ -96,8 +89,7 @@ export function DocumentViewer({
   const initialLoadRef = useRef(true);
   const [documentLoaded, setDocumentLoaded] = useState(false);
   
-  // Ref for canvas cleanup on page change (prevents iOS memory accumulation)
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  // Ref for container (simplified - no manual canvas cleanup needed with scale-based rendering)
   
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
@@ -119,39 +111,11 @@ export function DocumentViewer({
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   
-  // Calculate safe PDF width to prevent canvas overflow on mobile devices
-  const [pdfRenderWidth, setPdfRenderWidth] = useState(() => {
-    if (typeof window === 'undefined') return 350;
-    const width = window.innerWidth;
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    // iOS has stricter canvas memory limits (384MB) - use smaller size
-    if (iOS) {
-      return Math.min(width - 32, 350);
-    } else if (width < 768) {
-      return Math.min(width - 32, 400);
-    }
-    return Math.min(width - 100, 700);
-  });
-
-  // Detect mobile and update render width + viewer type
+  // Detect mobile on resize
   useEffect(() => {
     const checkMobile = () => {
-      const width = window.innerWidth;
-      const mobile = width < 768;
-      const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Use native viewer on mobile/iOS for reliability
-      if (mobile || iOS) {
-        setUseNativePdfViewer(true);
-      }
-      // Update render width when viewport changes - iOS gets smaller size due to stricter memory limits
-      if (iOS) {
-        setPdfRenderWidth(Math.min(width - 32, 350));
-      } else if (mobile) {
-        setPdfRenderWidth(Math.min(width - 32, 400));
-      } else {
-        setPdfRenderWidth(Math.min(width - 100, 700));
-      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -187,13 +151,11 @@ export function DocumentViewer({
 
   // Reset state when document URL changes
   useEffect(() => {
-    const mobile = window.innerWidth < 768;
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    console.log('[DocumentViewer] Document URL changed, resetting state, mobile:', mobile, 'iOS:', iOS);
+    console.log('[DocumentViewer] Document URL changed, resetting state');
     setNumPages(0);
     setPageNumber(1);
-    // Keep native viewer on mobile/iOS for reliability - only use react-pdf on desktop
-    setUseNativePdfViewer(mobile || iOS);
+    // Start with react-pdf - fall back to native only on actual errors
+    setUseNativePdfViewer(false);
     setPageLoadTimeout(false);
     setDocumentLoaded(false);
     setPdfDocumentProxy(null);
@@ -201,25 +163,6 @@ export function DocumentViewer({
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
   }, [documentUrl]);
-  
-  // Canvas cleanup on page change - prevents iOS Safari memory accumulation
-  useEffect(() => {
-    return () => {
-      // Clean up canvas memory when changing pages
-      if (canvasContainerRef.current) {
-        const canvases = canvasContainerRef.current.querySelectorAll('canvas');
-        canvases.forEach(canvas => {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          }
-          canvas.width = 1;
-          canvas.height = 1;
-        });
-        console.log('[DocumentViewer] Canvas memory cleaned up');
-      }
-    };
-  }, [pageNumber]);
 
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
@@ -578,21 +521,6 @@ export function DocumentViewer({
     // Debounce: minimum 150ms between navigations
     if (now - lastNavigationTime.current < 150) return;
     if (newPage < 1 || newPage > numPages || newPage === pageNumber) return;
-    
-    // CRITICAL: Synchronous canvas cleanup BEFORE page change (iOS memory fix)
-    // This clears the old canvas memory before React renders the new page
-    if (canvasContainerRef.current) {
-      const canvases = canvasContainerRef.current.querySelectorAll('canvas');
-      canvases.forEach(canvas => {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        canvas.width = 1;
-        canvas.height = 1;
-      });
-      console.log('[DocumentViewer] Canvas cleaned before page change');
-    }
     
     lastNavigationTime.current = now;
     setPageNumber(newPage);
@@ -1056,23 +984,19 @@ export function DocumentViewer({
                 }
               >
                 <div 
-                  ref={canvasContainerRef}
                   style={{ 
-                    transform: `scale(${isMobile ? Math.min(zoom, 1.25) : zoom})`,
+                    transform: `scale(${zoom})`,
                     transformOrigin: 'center center',
                     transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
                   }}
                 >
                   <Page
                     pageNumber={pageNumber}
-                    width={pdfRenderWidth}
+                    scale={1.0}
                     rotate={rotation}
                     renderTextLayer={false}
                     renderAnnotationLayer={true}
                     className="shadow-lg"
-                    // CRITICAL: Reduce devicePixelRatio on mobile to prevent canvas memory overflow
-                    // iOS Safari has 384MB canvas limit - devicePixelRatio=2-3 causes 4-9x memory usage
-                    devicePixelRatio={isMobile ? 1 : window.devicePixelRatio}
                     error={
                       <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
                         <div className="text-center">
