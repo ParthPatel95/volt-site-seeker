@@ -184,6 +184,25 @@ export function DocumentViewer({
     return () => clearTimeout(transitionTimer);
   }, [documentUrl]);
 
+  // Manual canvas cleanup on page change (helps iOS memory management)
+  useEffect(() => {
+    return () => {
+      // On page change cleanup, find and clear any orphaned canvas elements
+      if (isMobile && containerRef.current) {
+        const canvases = containerRef.current.querySelectorAll('canvas');
+        canvases.forEach((canvas) => {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+          // Reset canvas dimensions to release memory
+          canvas.width = 1;
+          canvas.height = 1;
+        });
+      }
+    };
+  }, [pageNumber, isMobile]);
+
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
     let isCancelled = false;
@@ -562,15 +581,24 @@ export function DocumentViewer({
   };
 
   // Debounced page change handler to prevent rapid fire navigation
+  // On mobile, add extra delay to allow canvas garbage collection
   const handlePageChange = useCallback((newPage: number) => {
     const now = Date.now();
-    // Debounce: minimum 150ms between navigations
-    if (now - lastNavigationTime.current < 150) return;
+    // Debounce: minimum 200ms on mobile, 150ms on desktop
+    const minDelay = isMobile ? 200 : 150;
+    if (now - lastNavigationTime.current < minDelay) return;
     if (newPage < 1 || newPage > numPages || newPage === pageNumber) return;
+    if (isNavigating.current) return;
     
+    isNavigating.current = true;
     lastNavigationTime.current = now;
     setPageNumber(newPage);
-  }, [numPages, pageNumber]);
+    
+    // On mobile, add brief delay to allow garbage collection before unlocking
+    setTimeout(() => {
+      isNavigating.current = false;
+    }, isMobile ? 150 : 50);
+  }, [numPages, pageNumber, isMobile]);
   
   const toggleFullscreen = () => {
     // Feature detection for Fullscreen API
@@ -651,14 +679,14 @@ export function DocumentViewer({
       const touchEndX = e.changedTouches[0].clientX;
       const diff = touchStartX - touchEndX;
       
-      // Swipe threshold
+      // Swipe threshold - use handlePageChange for consistent debouncing
       if (Math.abs(diff) > 50) {
         if (diff > 0 && pageNumber < numPages) {
           // Swipe left - next page
-          setPageNumber(prev => prev + 1);
+          handlePageChange(pageNumber + 1);
         } else if (diff < 0 && pageNumber > 1) {
           // Swipe right - previous page
-          setPageNumber(prev => prev - 1);
+          handlePageChange(pageNumber - 1);
         }
       }
     }
@@ -1074,8 +1102,9 @@ export function DocumentViewer({
                           }}
                         >
                           <Page
+                            key={`page-${pageNumber}`}
                             pageNumber={pageNumber}
-                            scale={isMobile ? 0.8 : 1.0}
+                            scale={isMobile ? (isIOS ? 0.6 : 0.75) : 1.0}
                             rotate={rotation}
                             renderTextLayer={false}
                             renderAnnotationLayer={true}
