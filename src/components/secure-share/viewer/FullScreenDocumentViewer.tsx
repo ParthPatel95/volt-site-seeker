@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, X, FileText } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, X, FileText, AlertCircle } from 'lucide-react';
 import { DocumentViewer } from './DocumentViewer';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -28,18 +28,25 @@ export function FullScreenDocumentViewer({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   
-  const currentIndex = allDocuments.findIndex(doc => doc.id === document.id);
+  // Safe access to document properties (computed before hooks that depend on them)
+  const documentId = document?.id || null;
+  const fileName = document?.file_name || 'Unknown Document';
+  const fileUrl = document?.file_url || '';
+  const fileType = document?.file_type || '';
+  
+  // Calculate index safely - returns -1 if document is invalid
+  const currentIndex = documentId ? allDocuments.findIndex(doc => doc.id === documentId) : -1;
   const hasPrevious = currentIndex > 0;
-  const hasNext = currentIndex < allDocuments.length - 1;
+  const hasNext = currentIndex >= 0 && currentIndex < allDocuments.length - 1;
 
   const handlePrevious = useCallback(() => {
-    if (hasPrevious) {
+    if (hasPrevious && currentIndex > 0) {
       onDocumentChange(allDocuments[currentIndex - 1]);
     }
   }, [hasPrevious, allDocuments, currentIndex, onDocumentChange]);
 
   const handleNext = useCallback(() => {
-    if (hasNext) {
+    if (hasNext && currentIndex >= 0) {
       onDocumentChange(allDocuments[currentIndex + 1]);
     }
   }, [hasNext, allDocuments, currentIndex, onDocumentChange]);
@@ -90,6 +97,22 @@ export function FullScreenDocumentViewer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onBack, hasPrevious, hasNext, handlePrevious, handleNext]);
 
+  // CRITICAL: Safety check for invalid document - AFTER all hooks to follow React rules
+  if (!document || !documentId) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+        <div className="text-center p-8">
+          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Document Unavailable</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            This document could not be loaded.
+          </p>
+          <Button onClick={onBack}>Go Back</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300"
@@ -118,8 +141,8 @@ export function FullScreenDocumentViewer({
             <h2 className={cn(
               "font-semibold truncate",
               isMobile ? "text-xs" : "text-sm"
-            )} title={document.file_name}>
-              {document.file_name}
+            )} title={fileName}>
+              {fileName}
             </h2>
             <p className="text-xs text-muted-foreground">
               {currentIndex + 1} of {allDocuments.length}
@@ -149,14 +172,14 @@ export function FullScreenDocumentViewer({
               <ChevronRight className="w-4 h-4" />
             </Button>
 
-            {linkData.access_level === 'download' && (
+            {linkData.access_level === 'download' && fileUrl && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => {
                   const link = window.document.createElement('a');
-                  link.href = document.file_url;
-                  link.download = document.file_name;
+                  link.href = fileUrl;
+                  link.download = fileName;
                   link.click();
                 }}
                 title="Download document"
@@ -182,16 +205,16 @@ export function FullScreenDocumentViewer({
         </div>
       </div>
 
-      {/* Document Viewer with safe area support - Error boundary now internal */}
+      {/* Document Viewer with safe area support */}
       <div className="absolute inset-0 pt-16 safe-area-pb">
         <DocumentViewer
-          documentUrl={document.file_url}
-          documentType={document.file_type}
+          documentUrl={fileUrl}
+          documentType={fileType}
           accessLevel={linkData.access_level}
           watermarkEnabled={linkData.watermark_enabled}
           recipientEmail={linkData.recipient_email}
           linkId={linkData.id}
-          documentId={document.id}
+          documentId={documentId}
           enableTracking={true}
           viewerName={viewerData?.name}
           viewerEmail={viewerData?.email}
@@ -217,7 +240,7 @@ export function FullScreenDocumentViewer({
           </div>
           <div className="overflow-y-auto h-[calc(100%-60px)] safe-area-pb safe-area-pr">
             {allDocuments.map((doc, index) => {
-              const isActive = doc.id === document.id;
+              const isActive = doc.id === documentId;
               return (
                 <button
                   key={doc.id}
@@ -233,7 +256,7 @@ export function FullScreenDocumentViewer({
                   )}
                 >
                   <p className="text-sm font-medium truncate mb-1">
-                    {doc.file_name}
+                    {doc.file_name || 'Unknown'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Document {index + 1}
