@@ -211,6 +211,14 @@ export default function ViewDocument() {
           })
         );
 
+        // Filter out documents that failed to get signed URLs
+        const validFolderDocs = folderDocs.filter((doc: any) => doc.file_url);
+        if (validFolderDocs.length === 0) {
+          throw new Error('No documents could be loaded - all signed URL requests failed');
+        }
+        folderContents.documents = validFolderDocs;
+        console.log('[ViewDocument] Valid documents after filtering:', validFolderDocs.length, '/', folderDocs.length);
+
         // Attach folder contents for rendering
         (link as any).folder_contents = folderContents;
 

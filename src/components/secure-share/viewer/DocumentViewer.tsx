@@ -68,6 +68,21 @@ export function DocumentViewer({
   viewerEmail
 }: DocumentViewerProps) {
   const { toast } = useToast();
+  
+  // Early return for missing documentUrl - prevents crashes from undefined string operations
+  if (!documentUrl) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-background">
+        <div className="text-center p-8">
+          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Document Unavailable</h3>
+          <p className="text-sm text-muted-foreground">
+            This document could not be loaded. The file may be temporarily unavailable.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const [downloadAttempted, setDownloadAttempted] = useState(false);
   const [zoom, setZoom] = useState(1.0);
   const [numPages, setNumPages] = useState<number>(0);
@@ -120,18 +135,19 @@ export function DocumentViewer({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const isPdf = documentType === 'application/pdf' || documentUrl.endsWith('.pdf');
-  const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl);
-  const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl);
-  const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl);
-  const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl);
-  const isOfficeDoc = documentType?.includes('word') || documentType?.includes('document') || /\.docx?$/i.test(documentUrl);
-  const isOfficeSheet = documentType?.includes('sheet') || /\.xlsx?$/i.test(documentUrl);
-  const isOfficePresentation = documentType?.includes('presentation') || /\.pptx?$/i.test(documentUrl);
+  // Null-safe file type detection
+  const isPdf = documentType === 'application/pdf' || (documentUrl?.endsWith('.pdf') ?? false);
+  const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl || '');
+  const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl || '');
+  const isAudio = documentType?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(documentUrl || '');
+  const isText = documentType?.startsWith('text/') || /\.(txt|md|csv|log)$/i.test(documentUrl || '');
+  const isOfficeDoc = documentType?.includes('word') || documentType?.includes('document') || /\.docx?$/i.test(documentUrl || '');
+  const isOfficeSheet = documentType?.includes('sheet') || /\.xlsx?$/i.test(documentUrl || '');
+  const isOfficePresentation = documentType?.includes('presentation') || /\.pptx?$/i.test(documentUrl || '');
   const isOffice = isOfficeDoc || isOfficeSheet || isOfficePresentation;
   
   // Extract file size from URL query params if available (added by ViewDocument)
-  const urlParams = new URLSearchParams(documentUrl.split('?')[1] || '');
+  const urlParams = new URLSearchParams((documentUrl || '').split('?')[1] || '');
   const fileSizeParam = urlParams.get('fileSize');
   const fileSize = fileSizeParam ? parseInt(fileSizeParam, 10) : undefined;
   
