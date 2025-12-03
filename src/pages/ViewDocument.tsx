@@ -913,7 +913,13 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
         linkData={linkData}
         viewerData={viewerData}
         onBack={handleBackToGallery}
-        onDocumentChange={(doc) => setSelectedDocument(doc)}
+        onDocumentChange={(doc) => {
+          if (!doc || !doc.id) {
+            console.error('[ViewDocument] Invalid document passed to onDocumentChange:', doc);
+            return;
+          }
+          setSelectedDocument(doc);
+        }}
       />
     );
   }
