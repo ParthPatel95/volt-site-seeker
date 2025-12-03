@@ -11,6 +11,7 @@ import { VideoPlayer } from './VideoPlayer';
 import { TranslationPanel } from './TranslationPanel';
 import { extractPageText } from '@/utils/pdfTextExtractor';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
+import { PdfErrorBoundary } from './PdfErrorBoundary';
 
 // Configure PDF.js worker - use import.meta.url for Vite bundling (most reliable)
 const initializePdfWorker = () => {
@@ -977,77 +978,85 @@ export function DocumentViewer({
                   )}
                 </div>
               ) : (
-                <div 
-                  onClick={(e) => {
-                    const target = e.target as HTMLElement;
-                    const link = target.closest('a[href]') as HTMLAnchorElement;
-                    if (link && link.href) {
-                      e.preventDefault();
-                      window.open(link.href, '_blank', 'noopener,noreferrer');
-                    }
+                <PdfErrorBoundary 
+                  onError={() => {
+                    console.log('[DocumentViewer] PdfErrorBoundary caught error, falling back to native viewer');
+                    setUseNativePdfViewer(true);
                   }}
+                  resetKey={documentUrl}
+                  maxRetries={1}
                 >
-              <Document
-                file={documentUrl}
-                options={{
-                  // Enable progressive loading for faster first page render
-                  disableRange: false,
-                  disableStream: false,
-                  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-                  cMapPacked: true,
-                }}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={(error) => {
-                  console.error('PDF load error:', error);
-                  // Fallback to native/browser PDF viewer on any error
-                  setUseNativePdfViewer(true);
-                  toast({
-                    title: 'PDF Loading Issue',
-                    description: 'We had trouble loading the PDF viewer, opening with your browser instead.',
-                  });
-                }}
-                error={
-                  <div className="flex items-center justify-center p-8 bg-card min-h-[400px]">
-                    <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">Loading document...</p>
-                    </div>
-                  </div>
-                }
-                loading={
-                  <div className="w-full max-w-[800px] mx-auto p-4 animate-pulse">
-                    <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
-                      <div className="text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">Loading document...</p>
-                      </div>
-                    </div>
-                  </div>
-                }
-              >
-                <div 
-                  style={{ 
-                    transform: `scale(${zoom})`,
-                    transformOrigin: 'center center',
-                    transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
-                  }}
-                >
-                  <Page
-                    pageNumber={pageNumber}
-                    scale={isMobile ? 0.8 : 1.0}
-                    rotate={rotation}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={true}
-                    className="shadow-lg"
-                    devicePixelRatio={isMobile ? 1 : window.devicePixelRatio}
-                    error={
-                      <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
-                        <div className="text-center">
-                          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">Loading page...</p>
+                  <div 
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      const link = target.closest('a[href]') as HTMLAnchorElement;
+                      if (link && link.href) {
+                        e.preventDefault();
+                        window.open(link.href, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                  >
+                    <Document
+                      key={documentUrl}
+                      file={documentUrl}
+                      options={{
+                        disableRange: false,
+                        disableStream: false,
+                        cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                        cMapPacked: true,
+                      }}
+                      onLoadSuccess={onDocumentLoadSuccess}
+                      onLoadError={(error) => {
+                        console.error('PDF load error:', error);
+                        setUseNativePdfViewer(true);
+                        toast({
+                          title: 'PDF Loading Issue',
+                          description: 'We had trouble loading the PDF viewer, opening with your browser instead.',
+                        });
+                      }}
+                      error={
+                        <div className="flex items-center justify-center p-8 bg-card min-h-[400px]">
+                          <div className="text-center">
+                            <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">Loading document...</p>
+                          </div>
                         </div>
-                      </div>
-                    }
+                      }
+                      loading={
+                        <div className="w-full max-w-[800px] mx-auto p-4 animate-pulse">
+                          <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
+                            <div className="text-center">
+                              <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                              <p className="text-sm text-muted-foreground">Loading document...</p>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    >
+                      {numPages > 0 && pageNumber >= 1 && pageNumber <= numPages && (
+                        <div 
+                          style={{ 
+                            transform: `scale(${zoom})`,
+                            transformOrigin: 'center center',
+                            transition: isUserZooming ? 'transform 0.2s ease-out' : 'none'
+                          }}
+                        >
+                          <Page
+                            pageNumber={pageNumber}
+                            scale={isMobile ? 0.8 : 1.0}
+                            rotate={rotation}
+                            renderTextLayer={false}
+                            renderAnnotationLayer={true}
+                            className="shadow-lg"
+                            devicePixelRatio={isMobile ? 1 : window.devicePixelRatio}
+                            error={
+                              <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
+                                <div className="text-center">
+                                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                                  <p className="text-sm text-muted-foreground">Loading page...</p>
+                                </div>
+                              </div>
+                            }
                     onLoadSuccess={(page) => {
                       handlePageLoadSuccess(page);
                       initialLoadRef.current = false;
@@ -1063,10 +1072,12 @@ export function DocumentViewer({
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
                     }
-                  />
-                </div>
-              </Document>
-                </div>
+                          />
+                        </div>
+                      )}
+                    </Document>
+                  </div>
+                </PdfErrorBoundary>
               )
             ) : isImage ? (
               <div className="flex items-center justify-center w-full max-w-full overflow-hidden">
