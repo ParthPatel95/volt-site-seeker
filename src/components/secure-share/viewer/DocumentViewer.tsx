@@ -89,7 +89,8 @@ export function DocumentViewer({
   const initialLoadRef = useRef(true);
   const [documentLoaded, setDocumentLoaded] = useState(false);
   
-  // Ref for container (simplified - no manual canvas cleanup needed with scale-based rendering)
+  // Ref for canvas container - needed for iOS memory cleanup
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
@@ -149,9 +150,28 @@ export function DocumentViewer({
     };
   }, []);
 
+  // Canvas memory cleanup function - CRITICAL for iOS Safari memory limit (384MB)
+  const cleanupCanvasMemory = useCallback(() => {
+    if (!canvasContainerRef.current) return;
+    
+    const canvases = canvasContainerRef.current.querySelectorAll('canvas');
+    canvases.forEach(canvas => {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      // CRITICAL for iOS: Setting to 1x1 releases the bitmap memory
+      canvas.width = 1;
+      canvas.height = 1;
+    });
+    console.log('[DocumentViewer] Canvas memory released for iOS');
+  }, []);
+
   // Reset state when document URL changes
   useEffect(() => {
     console.log('[DocumentViewer] Document URL changed, resetting state');
+    // Clean up canvas memory before switching documents
+    cleanupCanvasMemory();
     setNumPages(0);
     setPageNumber(1);
     // Start with react-pdf - fall back to native only on actual errors
@@ -162,7 +182,7 @@ export function DocumentViewer({
     setPdfPageDimensions(null);
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
-  }, [documentUrl]);
+  }, [documentUrl, cleanupCanvasMemory]);
 
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
@@ -522,9 +542,12 @@ export function DocumentViewer({
     if (now - lastNavigationTime.current < 150) return;
     if (newPage < 1 || newPage > numPages || newPage === pageNumber) return;
     
+    // CRITICAL: Clean up canvas memory BEFORE changing page (iOS fix)
+    cleanupCanvasMemory();
+    
     lastNavigationTime.current = now;
     setPageNumber(newPage);
-  }, [numPages, pageNumber]);
+  }, [numPages, pageNumber, cleanupCanvasMemory]);
   
   const toggleFullscreen = () => {
     // Feature detection for Fullscreen API
@@ -608,9 +631,13 @@ export function DocumentViewer({
       // Swipe threshold
       if (Math.abs(diff) > 50) {
         if (diff > 0 && pageNumber < numPages) {
+          // CRITICAL: Clean up canvas memory BEFORE changing page (iOS fix)
+          cleanupCanvasMemory();
           // Swipe left - next page
           setPageNumber(prev => prev + 1);
         } else if (diff < 0 && pageNumber > 1) {
+          // CRITICAL: Clean up canvas memory BEFORE changing page (iOS fix)
+          cleanupCanvasMemory();
           // Swipe right - previous page
           setPageNumber(prev => prev - 1);
         }
@@ -984,6 +1011,7 @@ export function DocumentViewer({
                 }
               >
                 <div 
+                  ref={canvasContainerRef}
                   style={{ 
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center center',
@@ -991,12 +1019,14 @@ export function DocumentViewer({
                   }}
                 >
                   <Page
+                    key={pageNumber}
                     pageNumber={pageNumber}
-                    scale={1.0}
+                    scale={isMobile ? 0.8 : 1.0}
                     rotate={rotation}
                     renderTextLayer={false}
                     renderAnnotationLayer={true}
                     className="shadow-lg"
+                    devicePixelRatio={isMobile ? 1 : window.devicePixelRatio}
                     error={
                       <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
                         <div className="text-center">
