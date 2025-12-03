@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { UNIFIED_ENERGY_QUERY_KEY, fetchUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
 
 export interface PJMPricing {
   current_price: number;
@@ -34,26 +34,24 @@ export interface PJMGenerationMix {
 }
 
 export const usePJMData = () => {
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['pjm-data'],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('energy-data-integration');
-      
-      if (error) {
-        console.error('Error fetching PJM data:', error);
-        throw error;
-      }
-      
-      return data?.pjm || null;
-    },
-    refetchInterval: 10 * 60 * 1000,
+  const { data, isLoading, refetch: queryRefetch } = useQuery({
+    queryKey: UNIFIED_ENERGY_QUERY_KEY,
+    queryFn: fetchUnifiedEnergyData,
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 
+  const pjmData = data?.pjm;
+
+  const refetch = async () => {
+    await queryRefetch();
+  };
+
   return {
-    pricing: data?.pricing as PJMPricing | undefined,
-    loadData: data?.loadData as PJMLoadData | undefined,
-    generationMix: data?.generationMix as PJMGenerationMix | undefined,
+    pricing: pjmData?.pricing as PJMPricing | undefined,
+    loadData: pjmData?.loadData as PJMLoadData | undefined,
+    generationMix: pjmData?.generationMix as PJMGenerationMix | undefined,
     loading: isLoading,
     refetch
   };

@@ -1,6 +1,5 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { UNIFIED_ENERGY_QUERY_KEY, fetchUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
 
 interface AESOPricing {
   current_price: number;
@@ -35,179 +34,70 @@ interface AESOGenerationMix {
   source?: string;
 }
 
+// Helper to synthesize pricing if missing
+const synthesizePricing = (aesoData: any): AESOPricing | null => {
+  if (!aesoData) return null;
+  
+  const p = aesoData.pricing;
+  if (p) {
+    return {
+      current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
+      average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
+      peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
+      off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+      market_conditions: p.market_conditions || 'normal',
+      timestamp: p.timestamp || new Date().toISOString(),
+      qa_metadata: p.qa_metadata,
+      source: p?.source || 'aeso_api'
+    };
+  }
+  
+  // Synthesize estimated pricing from load/generation data
+  const ld = aesoData.loadData || {};
+  const gm = aesoData.generationMix || {};
+  const reserve = typeof ld.reserve_margin === 'number' ? ld.reserve_margin : 12.5;
+  const renewPct = typeof gm.renewable_percentage === 'number' ? gm.renewable_percentage : 20;
+  const base = 55;
+  let estimate = base + (12.5 - reserve) * 2 - (renewPct - 25) * 0.3;
+  if (!Number.isFinite(estimate)) estimate = base;
+  estimate = Math.max(5, Math.min(250, Math.round(estimate * 100) / 100));
+  
+  return {
+    current_price: estimate,
+    average_price: Math.round((estimate * 0.95) * 100) / 100,
+    peak_price: Math.round((estimate * 1.8) * 100) / 100,
+    off_peak_price: Math.round((estimate * 0.6) * 100) / 100,
+    market_conditions: 'estimated',
+    timestamp: new Date().toISOString(),
+    qa_metadata: { note: 'estimated_from_csd', reserve, renewable_percentage: renewPct },
+    source: 'aeso_estimated'
+  };
+};
+
 export const useAESOData = () => {
-  const [pricing, setPricing] = useState<AESOPricing | null>(null);
-  const [loadData, setLoadData] = useState<AESOLoadData | null>(null);
-  const [generationMix, setGenerationMix] = useState<AESOGenerationMix | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'fallback'>('connected');
-  const [error, setError] = useState<string | null>(null);
-  const intervalRef = useRef<number | null>(null);
-  const isFetchingRef = useRef(false);
-  const lastFetchAtRef = useRef(0);
+  const { data, isLoading, error, refetch: queryRefetch } = useQuery({
+    queryKey: UNIFIED_ENERGY_QUERY_KEY,
+    queryFn: fetchUnifiedEnergyData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+    retry: 2,
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const now = Date.now();
-      if (isFetchingRef.current || now - lastFetchAtRef.current < 1500) return;
-      isFetchingRef.current = true;
-      lastFetchAtRef.current = now;
-      try {
-        setError(null);
-        const { data, error } = await supabase.functions.invoke('energy-data-integration');
-        
-        if (error) {
-          console.error('Energy data fetch error:', error);
-          setError('Failed to fetch AESO data');
-          setConnectionStatus('fallback');
-          return;
-        }
+  const aesoData = data?.aeso;
 
-        if (data?.success && data?.aeso) {
-          const p: any = data.aeso.pricing;
-          if (p) {
-            setPricing({
-              current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
-              average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
-              peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
-              off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
-              market_conditions: p.market_conditions || 'normal',
-              timestamp: p.timestamp || new Date().toISOString(),
-              qa_metadata: p.qa_metadata,
-              source: p?.source || 'aeso_api'
-            });
-            setConnectionStatus('connected');
-          } else {
-            console.warn('AESO pricing missing; synthesizing estimated pricing from load/mix to avoid UI fallback.', data?.aeso);
-            const ld: any = data.aeso.loadData || {};
-            const gm: any = data.aeso.generationMix || {};
-            const reserve = typeof ld.reserve_margin === 'number' ? ld.reserve_margin : 12.5;
-            const renewPct = typeof gm.renewable_percentage === 'number' ? gm.renewable_percentage : 20;
-            const base = 55;
-            let estimate = base + (12.5 - reserve) * 2 - (renewPct - 25) * 0.3;
-            if (!Number.isFinite(estimate)) estimate = base;
-            estimate = Math.max(5, Math.min(250, Math.round(estimate * 100) / 100));
-            const avg = Math.round((estimate * 0.95) * 100) / 100;
-            const peak = Math.round((estimate * 1.8) * 100) / 100;
-            const off = Math.round((estimate * 0.6) * 100) / 100;
-            setPricing({
-              current_price: estimate,
-              average_price: avg,
-              peak_price: peak,
-              off_peak_price: off,
-              market_conditions: 'estimated',
-              timestamp: new Date().toISOString(),
-              qa_metadata: { note: 'estimated_from_csd', reserve, renewable_percentage: renewPct },
-              source: 'aeso_estimated'
-            });
-            setConnectionStatus('connected');
-          }
-          setLoadData(data.aeso.loadData);
-          setGenerationMix(data.aeso.generationMix);
-        } else {
-          console.error('AESO data fetch failed:', data?.error);
-          setError(data?.error || 'Unknown error fetching AESO data');
-          setConnectionStatus('fallback');
-        }
-      } catch (error) {
-        console.error('Error fetching AESO data:', error);
-        setError('Network error fetching AESO data');
-        setConnectionStatus('fallback');
-      } finally {
-        setLoading(false);
-        isFetchingRef.current = false;
-      }
-    };
-
-    fetchData();
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = window.setInterval(fetchData, 600000); // 10 minutes
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, []);
-
+  // Wrap refetch to match expected signature
   const refetch = async () => {
-    if (isFetchingRef.current) return;
-    setLoading(true);
-    setError(null);
-    try {
-      isFetchingRef.current = true;
-      lastFetchAtRef.current = Date.now();
-      const { data, error } = await supabase.functions.invoke('energy-data-integration');
-      
-      if (error) {
-        console.error('Energy data fetch error:', error);
-        setError('Failed to fetch AESO data');
-        setConnectionStatus('fallback');
-        return;
-      }
-
-      if (data?.success && data?.aeso) {
-        const p: any = data.aeso.pricing;
-        if (p) {
-          setPricing({
-            current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
-            average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
-            peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
-            off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
-            market_conditions: p.market_conditions || 'normal',
-            timestamp: p.timestamp || new Date().toISOString(),
-            qa_metadata: p.qa_metadata,
-            source: p?.source || 'aeso_api'
-          });
-          setConnectionStatus('connected');
-        } else {
-          console.warn('AESO pricing missing (refetch); synthesizing estimated pricing from load/mix.', data?.aeso);
-          const ld: any = data.aeso.loadData || {};
-          const gm: any = data.aeso.generationMix || {};
-          const reserve = typeof ld.reserve_margin === 'number' ? ld.reserve_margin : 12.5;
-          const renewPct = typeof gm.renewable_percentage === 'number' ? gm.renewable_percentage : 20;
-          const base = 55;
-          let estimate = base + (12.5 - reserve) * 2 - (renewPct - 25) * 0.3;
-          if (!Number.isFinite(estimate)) estimate = base;
-          estimate = Math.max(5, Math.min(250, Math.round(estimate * 100) / 100));
-          const avg = Math.round((estimate * 0.95) * 100) / 100;
-          const peak = Math.round((estimate * 1.8) * 100) / 100;
-          const off = Math.round((estimate * 0.6) * 100) / 100;
-          setPricing({
-            current_price: estimate,
-            average_price: avg,
-            peak_price: peak,
-            off_peak_price: off,
-            market_conditions: 'estimated',
-            timestamp: new Date().toISOString(),
-            qa_metadata: { note: 'estimated_from_csd', reserve, renewable_percentage: renewPct },
-            source: 'aeso_estimated'
-          });
-          setConnectionStatus('connected');
-        }
-        setLoadData(data.aeso.loadData);
-        setGenerationMix(data.aeso.generationMix);
-      } else {
-        setError(data?.error || 'Unknown error fetching AESO data');
-        setConnectionStatus('fallback');
-      }
-    } catch (error) {
-      console.error('Error refetching AESO data:', error);
-      setError('Network error fetching AESO data');
-      setConnectionStatus('fallback');
-    } finally {
-      setLoading(false);
-      isFetchingRef.current = false;
-    }
+    await queryRefetch();
   };
 
   return {
-    pricing,
-    loadData,
-    generationMix,
-    loading,
-    connectionStatus,
-    error,
+    pricing: synthesizePricing(aesoData),
+    loadData: aesoData?.loadData as AESOLoadData | null,
+    generationMix: aesoData?.generationMix as AESOGenerationMix | null,
+    loading: isLoading,
+    connectionStatus: aesoData ? 'connected' : (error ? 'fallback' : 'connected') as 'connected' | 'fallback',
+    error: error?.message || null,
     refetch
   };
 };
