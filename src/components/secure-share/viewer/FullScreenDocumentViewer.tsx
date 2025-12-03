@@ -41,13 +41,29 @@ export function FullScreenDocumentViewer({
 
   const handlePrevious = useCallback(() => {
     if (hasPrevious && currentIndex > 0) {
-      onDocumentChange(allDocuments[currentIndex - 1]);
+      const prevIndex = currentIndex - 1;
+      const prevDoc = allDocuments[prevIndex];
+      
+      if (!prevDoc || !prevDoc.id) {
+        console.error('[FullScreenViewer] Previous document is invalid:', { prevIndex, prevDoc });
+        return;
+      }
+      
+      onDocumentChange(prevDoc);
     }
   }, [hasPrevious, allDocuments, currentIndex, onDocumentChange]);
 
   const handleNext = useCallback(() => {
     if (hasNext && currentIndex >= 0) {
-      onDocumentChange(allDocuments[currentIndex + 1]);
+      const nextIndex = currentIndex + 1;
+      const nextDoc = allDocuments[nextIndex];
+      
+      if (!nextDoc || !nextDoc.id) {
+        console.error('[FullScreenViewer] Next document is invalid:', { nextIndex, nextDoc });
+        return;
+      }
+      
+      onDocumentChange(nextDoc);
     }
   }, [hasNext, allDocuments, currentIndex, onDocumentChange]);
 
