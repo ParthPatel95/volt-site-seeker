@@ -96,6 +96,9 @@ export function DocumentViewer({
   const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
   const [isLoadingPdfProxy, setIsLoadingPdfProxy] = useState(false);
   
+  // Ref to track current PDF proxy for cleanup (prevents race conditions)
+  const pdfProxyRef = useRef<any>(null);
+  
   // Touch gesture state
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
   const [touchStartZoom, setTouchStartZoom] = useState<number>(1);
@@ -165,8 +168,9 @@ export function DocumentViewer({
 
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
   useEffect(() => {
+    let isCancelled = false;
+    
     if (isPdf && documentUrl) {
-      
       const loadPdfProxy = async () => {
         setIsLoadingPdfProxy(true);
         console.log('[DocumentViewer] Pre-loading PDF proxy for text extraction and page count');
@@ -186,35 +190,60 @@ export function DocumentViewer({
             url: documentUrl,
             withCredentials: false,
             isEvalSupported: false,
-            // Enable progressive loading for faster first page
             disableRange: false,
             disableStream: false,
           });
           
           const proxy = await loadingTask.promise;
+          
+          // CRITICAL: Check if effect was cancelled before updating state
+          if (isCancelled) {
+            console.log('[DocumentViewer] Effect cancelled, destroying proxy');
+            proxy.destroy();
+            return;
+          }
+          
+          // Store in both state and ref
+          pdfProxyRef.current = proxy;
           setPdfDocumentProxy(proxy);
-          // Set numPages immediately (critical for iOS to show navigation controls)
           setNumPages(proxy.numPages);
           
           // Get PDF dimensions for initial page load
-          proxy.getPage(1).then((page: any) => {
+          const page = await proxy.getPage(1);
+          if (!isCancelled) {
             const viewport = page.getViewport({ scale: 1 });
             setPdfPageDimensions({ width: viewport.width, height: viewport.height });
             console.log('[DocumentViewer] PDF page dimensions loaded', viewport.width, viewport.height);
-          });
+          }
           
           console.log('[DocumentViewer] PDF proxy loaded successfully', { numPages: proxy.numPages });
         } catch (error) {
-          console.error('[DocumentViewer] Failed to load PDF proxy:', error);
-          // Don't fallback immediately - let react-pdf try to load the document
-          // Only fallback if react-pdf also fails
+          if (!isCancelled) {
+            console.error('[DocumentViewer] Failed to load PDF proxy:', error);
+          }
         } finally {
-          setIsLoadingPdfProxy(false);
+          if (!isCancelled) {
+            setIsLoadingPdfProxy(false);
+          }
         }
       };
       
       loadPdfProxy();
     }
+    
+    // CRITICAL: Cleanup function to prevent race conditions
+    return () => {
+      isCancelled = true;
+      if (pdfProxyRef.current) {
+        console.log('[DocumentViewer] Cleaning up PDF proxy on effect cleanup');
+        try {
+          pdfProxyRef.current.destroy();
+          pdfProxyRef.current = null;
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+    };
   }, [isPdf, documentUrl]);
   
   // Safety timeout: Uses documentLoaded state to fix race condition (not numPages)
