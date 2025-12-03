@@ -45,14 +45,14 @@ export class PdfErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('PDF Viewer Error:', error, errorInfo);
+    console.error('[PdfErrorBoundary] Error caught:', error.message);
     
-    const maxRetries = this.props.maxRetries ?? 2;
+    const maxRetries = this.props.maxRetries ?? 3;
     const newErrorCount = this.state.errorCount + 1;
     
     this.setState({ errorCount: newErrorCount });
     
-    // Auto-fallback to native viewer after max retries
+    // Only trigger native fallback after ALL retries exhausted
     if (newErrorCount >= maxRetries) {
       console.log(`[PdfErrorBoundary] Max retries (${maxRetries}) reached, triggering native viewer fallback`);
       this.props.onError?.();

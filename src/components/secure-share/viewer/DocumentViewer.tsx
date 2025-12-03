@@ -90,6 +90,10 @@ export function DocumentViewer({
   const initialLoadRef = useRef(true);
   const [documentLoaded, setDocumentLoaded] = useState(false);
   
+  // Document transition state - prevents rendering during cleanup
+  const [isDocumentTransitioning, setIsDocumentTransitioning] = useState(false);
+  const loadErrorCountRef = useRef(0);
+  
   // Translation state
   const [translationOpen, setTranslationOpen] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
@@ -152,12 +156,17 @@ export function DocumentViewer({
     };
   }, []);
 
-  // Reset state when document URL changes
+  // Reset state when document URL changes - with transition buffer
   useEffect(() => {
-    console.log('[DocumentViewer] Document URL changed, resetting state');
+    console.log('[DocumentViewer] Document URL changed, starting transition');
+    
+    // Set transitioning state to prevent render during cleanup
+    setIsDocumentTransitioning(true);
+    loadErrorCountRef.current = 0; // Reset error count for new document
+    
+    // Reset all state
     setNumPages(0);
     setPageNumber(1);
-    // Start with react-pdf - fall back to native only on actual errors
     setUseNativePdfViewer(false);
     setPageLoadTimeout(false);
     setDocumentLoaded(false);
@@ -165,6 +174,14 @@ export function DocumentViewer({
     setPdfPageDimensions(null);
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
+    
+    // Give pdf.js time to clean up before rendering new document
+    const transitionTimer = setTimeout(() => {
+      console.log('[DocumentViewer] Transition complete, ready to render');
+      setIsDocumentTransitioning(false);
+    }, 300); // 300ms buffer for cleanup
+    
+    return () => clearTimeout(transitionTimer);
   }, [documentUrl]);
 
   // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
@@ -978,13 +995,22 @@ export function DocumentViewer({
                   )}
                 </div>
               ) : (
+                isDocumentTransitioning ? (
+                  // Show loading during document transition
+                  <div className="flex items-center justify-center p-8 bg-card min-h-[400px]">
+                    <div className="text-center">
+                      <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">Switching document...</p>
+                    </div>
+                  </div>
+                ) : (
                 <PdfErrorBoundary 
                   onError={() => {
-                    console.log('[DocumentViewer] PdfErrorBoundary caught error, falling back to native viewer');
+                    console.log('[DocumentViewer] PdfErrorBoundary exhausted retries, falling back to native viewer');
                     setUseNativePdfViewer(true);
                   }}
                   resetKey={documentUrl}
-                  maxRetries={1}
+                  maxRetries={3}
                 >
                   <div 
                     onClick={(e) => {
@@ -1007,12 +1033,18 @@ export function DocumentViewer({
                       }}
                       onLoadSuccess={onDocumentLoadSuccess}
                       onLoadError={(error) => {
-                        console.error('PDF load error:', error);
-                        setUseNativePdfViewer(true);
-                        toast({
-                          title: 'PDF Loading Issue',
-                          description: 'We had trouble loading the PDF viewer, opening with your browser instead.',
-                        });
+                        loadErrorCountRef.current += 1;
+                        console.error('[DocumentViewer] PDF load error (attempt ' + loadErrorCountRef.current + '):', error);
+                        
+                        // Only fall back to native after 3 consecutive load failures
+                        if (loadErrorCountRef.current >= 3) {
+                          console.log('[DocumentViewer] Max load retries reached, falling back to native viewer');
+                          setUseNativePdfViewer(true);
+                          toast({
+                            title: 'PDF Loading Issue',
+                            description: 'Switched to browser PDF viewer for better compatibility.',
+                          });
+                        }
                       }}
                       error={
                         <div className="flex items-center justify-center p-8 bg-card min-h-[400px]">
@@ -1078,6 +1110,7 @@ export function DocumentViewer({
                     </Document>
                   </div>
                 </PdfErrorBoundary>
+                )
               )
             ) : isImage ? (
               <div className="flex items-center justify-center w-full max-w-full overflow-hidden">
