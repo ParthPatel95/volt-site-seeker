@@ -1851,6 +1851,63 @@ export type Database = {
         }
         Relationships: []
       }
+      asic_miners: {
+        Row: {
+          algorithm: string
+          cooling_type: string
+          created_at: string
+          efficiency_jth: number
+          generation: string
+          hashrate_th: number
+          id: string
+          is_available: boolean
+          manufacturer: string
+          market_price_usd: number | null
+          model: string
+          msrp_usd: number | null
+          notes: string | null
+          power_watts: number
+          release_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          algorithm?: string
+          cooling_type?: string
+          created_at?: string
+          efficiency_jth: number
+          generation?: string
+          hashrate_th: number
+          id?: string
+          is_available?: boolean
+          manufacturer: string
+          market_price_usd?: number | null
+          model: string
+          msrp_usd?: number | null
+          notes?: string | null
+          power_watts: number
+          release_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          algorithm?: string
+          cooling_type?: string
+          created_at?: string
+          efficiency_jth?: number
+          generation?: string
+          hashrate_th?: number
+          id?: string
+          is_available?: boolean
+          manufacturer?: string
+          market_price_usd?: number | null
+          model?: string
+          msrp_usd?: number | null
+          notes?: string | null
+          power_watts?: number
+          release_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       automated_due_diligence: {
         Row: {
           created_at: string

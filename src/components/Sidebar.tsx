@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     
     { path: '/app/intelligence-hub', icon: Brain, label: 'Intelligence Hub', permission: 'feature.intelligence-hub' },
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure', permission: 'feature.power-infrastructure' },
-    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab', permission: 'feature.btc-roi-lab' },
+    { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'Profitability Calculator', permission: 'feature.btc-roi-lab' },
     { path: '/app/secure-share', icon: Lock, label: 'Secure Share', permission: 'feature.secure-share' },
     { path: '/app/users', icon: Users, label: 'User Management', permission: 'feature.user-management' }
   ];
