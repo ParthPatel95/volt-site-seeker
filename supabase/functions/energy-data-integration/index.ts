@@ -1,8 +1,13 @@
-// Energy Data Integration Edge Function - Updated
+// Energy Data Integration Edge Function - Optimized with Caching
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// ========== SERVER-SIDE RESPONSE CACHE ==========
+// Cache responses for 90 seconds to reduce API calls and improve response times
+let cachedResponse: { data: EnergyDataResponse; timestamp: number } | null = null;
+const CACHE_TTL_MS = 90 * 1000; // 90 seconds - market data updates every 5-15 min
 
 interface EnergyDataResponse {
   success: boolean;
@@ -100,41 +105,43 @@ async function getERCOTAuthToken(): Promise<string | null> {
 }
 
 async function fetchERCOTData() {
-  console.log('🔄 Fetching ERCOT data from ERCOT EMIL API (with HTML fallback)...');
+  console.log('🔄 Fetching ERCOT data (HTML-first for reliability)...');
 
   let pricing: any | undefined;
   let loadData: any | undefined;
   let generationMix: any | undefined;
 
-  const apiKey = (
-    Deno.env.get('ERCOT_API_KEY') ||
-    Deno.env.get('ERCOT_API_KEY_SECONDARY') ||
-    ''
-  ).trim();
-
-  // --- Primary: EMIL JSON API ---
-  if (apiKey) {
-    try {
-      const apiPricing = await fetchERCOTPricingFromEmil(apiKey);
-      if (apiPricing) {
-        pricing = apiPricing;
-      }
-    } catch (error) {
-      console.error('❌ ERCOT EMIL pricing API error:', error);
+  // --- Primary: HTML scrape (more reliable than EMIL API which returns 404) ---
+  try {
+    console.log('📄 Fetching ERCOT pricing from DAM SPP HTML (primary source)...');
+    const htmlPricing = await fetchERCOTPricingFromHtml();
+    if (htmlPricing) {
+      pricing = htmlPricing;
+      console.log('✅ ERCOT pricing obtained from HTML source');
     }
-  } else {
-    console.warn('⚠️ ERCOT API key not configured; skipping EMIL pricing fetch');
+  } catch (error) {
+    console.error('❌ ERCOT HTML pricing error:', error);
   }
 
-  // --- Fallback: HTML scrape from ERCOT public website ---
+  // --- Fallback: EMIL JSON API (often returns 404, but try if HTML fails) ---
   if (!pricing) {
-    try {
-      const htmlPricing = await fetchERCOTPricingFromHtml();
-      if (htmlPricing) {
-        pricing = htmlPricing;
+    const apiKey = (
+      Deno.env.get('ERCOT_API_KEY') ||
+      Deno.env.get('ERCOT_API_KEY_SECONDARY') ||
+      ''
+    ).trim();
+
+    if (apiKey) {
+      try {
+        console.log('📡 Trying ERCOT EMIL API as fallback...');
+        const apiPricing = await fetchERCOTPricingFromEmil(apiKey);
+        if (apiPricing) {
+          pricing = apiPricing;
+          console.log('✅ ERCOT pricing obtained from EMIL API fallback');
+        }
+      } catch (error) {
+        console.error('❌ ERCOT EMIL pricing API error:', error);
       }
-    } catch (error) {
-      console.error('❌ ERCOT HTML pricing fallback error:', error);
     }
   }
 
@@ -143,8 +150,6 @@ async function fetchERCOTData() {
     return { pricing: undefined, loadData: undefined, generationMix: undefined };
   }
 
-  // For now we do not have reliable public APIs for actual real‑time load & fuel mix via EMIL.
-  // Frontend already handles missing loadData / generationMix gracefully.
   console.log('ERCOT pricing obtained from source:', pricing.source);
 
   return { pricing, loadData, generationMix };
@@ -662,18 +667,23 @@ async function fetchAESOData() {
     }
   }
 
-  // Fetch critical endpoints (pricing, load) sequentially first for reliability
-  // Then fetch generation mix in parallel
-  console.log('📊 Fetching AESO critical data (poolprice + load) sequentially...');
+  // Fetch ALL critical endpoints in PARALLEL for speed (reduced from sequential)
+  console.log('📊 Fetching AESO data in parallel (poolprice + smp + load + csd)...');
   
-  const poolResp = await getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`), false);
-  const smpResp = await getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`), false);
-  const loadResp = await getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`), false);
+  const csdUrl = `${host}/public/currentsupplydemand-api/v2/csd/summary/current`;
   
-  console.log('✅ AESO sequential fetch complete:', {
+  const [poolResp, smpResp, loadResp, csdResp] = await Promise.all([
+    getJson(withQuery(`${host}/public/poolprice-api/v1.1/price/poolPrice`), false, 12000),
+    getJson(withQuery(`${host}/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice`), true, 10000),
+    getJson(withQuery(`${host}/public/actualforecast-api/v1/load/albertaInternalLoad`), false, 12000),
+    getJson(csdUrl, true, 10000)
+  ]);
+  
+  console.log('✅ AESO parallel fetch complete:', {
     hasPoolPrice: !!poolResp,
     hasSMP: !!smpResp,
-    hasLoad: !!loadResp
+    hasLoad: !!loadResp,
+    hasCSD: !!csdResp
   });
 
   let pricing: any | undefined;
@@ -793,13 +803,11 @@ async function fetchAESOData() {
   }
 
   // No synthetic fallbacks. If data is unavailable, fields remain undefined to avoid "estimated" labels.
-  // Fetch AESO generation mix using Current Supply Demand v2 (aggregated by fuel type)
+  // Use the already-fetched CSD response for generation mix (instead of separate fetch)
   try {
     // Per AESO docs: https://developer-apim.aeso.ca/api-details#api=currentsupplydemand-api-v2
     // Endpoint returns CSDSummaryDataVOv2 with generation_data_list: CSDGenerationFuelTypeVO[]
-    const csdUrl = `${host}/public/currentsupplydemand-api/v2/csd/summary/current`;
-    const csdJson: any = await getJson(csdUrl);
-    const root: any = csdJson?.return ?? csdJson ?? {};
+    const root: any = csdResp?.return ?? csdResp ?? {};
 
     // Primary schema key
     const list: any[] = Array.isArray(root?.generation_data_list)
@@ -1610,7 +1618,16 @@ Deno.serve(async (req) => {
       return await testERCOTSubscription();
     }
 
-    console.log('Fetching unified energy data from 8 markets (ERCOT, AESO, MISO, CAISO, NYISO, PJM, SPP, IESO)...');
+    // ========== CHECK CACHE FIRST ==========
+    if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_TTL_MS) {
+      const cacheAge = Math.round((Date.now() - cachedResponse.timestamp) / 1000);
+      console.log(`✅ Returning cached response (age: ${cacheAge}s)`);
+      return new Response(JSON.stringify(cachedResponse.data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'HIT', 'X-Cache-Age': String(cacheAge) }
+      });
+    }
+
+    console.log('🔄 Cache miss - fetching fresh data from 8 markets...');
 
     // Helper to add timeout to each market fetch (15 seconds max per market)
     const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, marketName: string): Promise<T> => {
@@ -1668,11 +1685,15 @@ Deno.serve(async (req) => {
       sppSuccess: sppResult.status === 'fulfilled'
     });
 
+    // ========== UPDATE CACHE ==========
+    cachedResponse = { data: response, timestamp: Date.now() };
+    console.log('✅ Response cached for 90 seconds');
+
     // Ensure response serialization doesn't fail
     try {
       const responseBody = JSON.stringify(response);
       return new Response(responseBody, { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'MISS' },
         status: 200
       });
     } catch (serializationError) {
