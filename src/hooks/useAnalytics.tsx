@@ -11,11 +11,12 @@ export function useAnalytics() {
   const location = useLocation();
   const previousPath = useRef<string>('');
 
-  // Start session on mount
+  // Start session on mount - NON-BLOCKING
   useEffect(() => {
     if (!user?.id) return;
 
-    const startSession = async () => {
+    // Fire-and-forget session start
+    queueMicrotask(async () => {
       try {
         const { data, error } = await supabase
           .from('user_sessions')
@@ -32,37 +33,40 @@ export function useAnalytics() {
       } catch (error) {
         console.error('Error starting session:', error);
       }
-    };
-
-    startSession();
+    });
 
     // End session on unmount or page close
-    const endSession = async () => {
+    const endSession = () => {
       if (!currentSessionId) return;
       
-      try {
-        const sessionStart = await supabase
-          .from('user_sessions')
-          .select('session_start')
-          .eq('id', currentSessionId)
-          .single();
-
-        if (sessionStart.data) {
-          const durationSeconds = Math.floor(
-            (Date.now() - new Date(sessionStart.data.session_start).getTime()) / 1000
-          );
-
-          await supabase
+      const sessionId = currentSessionId;
+      
+      // Use sendBeacon for reliability on page unload, fire-and-forget otherwise
+      queueMicrotask(async () => {
+        try {
+          const sessionStart = await supabase
             .from('user_sessions')
-            .update({
-              session_end: new Date().toISOString(),
-              duration_seconds: durationSeconds
-            })
-            .eq('id', currentSessionId);
+            .select('session_start')
+            .eq('id', sessionId)
+            .single();
+
+          if (sessionStart.data) {
+            const durationSeconds = Math.floor(
+              (Date.now() - new Date(sessionStart.data.session_start).getTime()) / 1000
+            );
+
+            await supabase
+              .from('user_sessions')
+              .update({
+                session_end: new Date().toISOString(),
+                duration_seconds: durationSeconds
+              })
+              .eq('id', sessionId);
+          }
+        } catch (error) {
+          console.error('Error ending session:', error);
         }
-      } catch (error) {
-        console.error('Error ending session:', error);
-      }
+      });
     };
 
     window.addEventListener('beforeunload', endSession);
@@ -73,11 +77,21 @@ export function useAnalytics() {
     };
   }, [user?.id]);
 
-  // Track page visits
+  // Track page visits - NON-BLOCKING
   useEffect(() => {
-    if (!user?.id || !currentSessionId) return;
+    if (!user?.id) return;
 
-    const trackPageVisit = async () => {
+    // Fire-and-forget page tracking
+    queueMicrotask(async () => {
+      // Wait for session to be available (with timeout)
+      let attempts = 0;
+      while (!currentSessionId && attempts < 10) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      if (!currentSessionId) return;
+
       const currentPath = location.pathname;
       
       // Calculate time spent on previous page
@@ -85,7 +99,6 @@ export function useAnalytics() {
         const timeSpent = Math.floor((Date.now() - pageStartTime) / 1000);
         
         try {
-          // Update the previous page visit with time spent
           await supabase
             .from('user_page_visits')
             .update({ time_spent_seconds: timeSpent })
@@ -116,33 +129,34 @@ export function useAnalytics() {
       } catch (error) {
         console.error('Error tracking page visit:', error);
       }
-    };
-
-    trackPageVisit();
+    });
   }, [location.pathname, user?.id]);
 
-  // Track feature usage
-  const trackFeature = useCallback(async (
+  // Track feature usage - NON-BLOCKING
+  const trackFeature = useCallback((
     featureName: string, 
     actionType: string, 
     metadata?: Record<string, any>
   ) => {
     if (!user?.id || !currentSessionId) return;
 
-    try {
-      await supabase
-        .from('user_feature_usage')
-        .insert({
-          user_id: user.id,
-          session_id: currentSessionId,
-          feature_name: featureName,
-          action_type: actionType,
-          metadata: metadata || null,
-          timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-      console.error('Error tracking feature usage:', error);
-    }
+    // Fire-and-forget feature tracking
+    queueMicrotask(async () => {
+      try {
+        await supabase
+          .from('user_feature_usage')
+          .insert({
+            user_id: user.id,
+            session_id: currentSessionId,
+            feature_name: featureName,
+            action_type: actionType,
+            metadata: metadata || null,
+            timestamp: new Date().toISOString()
+          });
+      } catch (error) {
+        console.error('Error tracking feature usage:', error);
+      }
+    });
   }, [user?.id]);
 
   return { trackFeature };
