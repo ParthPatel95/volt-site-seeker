@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 import { 
   Bitcoin, 
   Calculator, 
@@ -23,7 +24,9 @@ import {
   BarChart3,
   Settings,
   Save,
-  RefreshCw
+  RefreshCw,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { useBTCROICalculator } from './hooks/useBTCROICalculator';
 import { cn } from '@/lib/utils';
@@ -42,7 +45,14 @@ const ASIC_PRESETS = [
 type MiningMode = 'self' | 'hosting';
 
 export const BTCROICalculatorV2: React.FC = () => {
-  const { networkData, isLoading: networkLoading } = useBTCROICalculator();
+  const { 
+    networkData, 
+    isLoading: networkLoading, 
+    formData, 
+    setFormData,
+    saveCurrentCalculation,
+    roiResults 
+  } = useBTCROICalculator();
   
   // Local state for immediate UI updates
   const [mode, setMode] = useState<MiningMode>('self');
@@ -55,6 +65,45 @@ export const BTCROICalculatorV2: React.FC = () => {
   const [hostingRate, setHostingRate] = useState(0.08);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string | null>('S21');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Refresh network data
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    // Trigger a re-fetch by reloading the page data
+    window.location.reload();
+  }, []);
+
+  // Save calculation
+  const handleSave = useCallback(async () => {
+    if (!networkData) {
+      toast.error('No network data available');
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      // Update form data with current values before saving
+      setFormData(prev => ({
+        ...prev,
+        hashrate,
+        powerDraw,
+        units,
+        powerRate: electricityRate,
+        hostingRate,
+        hardwareCost,
+        poolFee
+      }));
+      
+      await saveCurrentCalculation(mode, `ROI Calculation ${new Date().toLocaleDateString()}`);
+      toast.success('Calculation saved successfully!');
+    } catch (error) {
+      toast.error('Failed to save calculation');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [networkData, hashrate, powerDraw, units, electricityRate, hostingRate, hardwareCost, poolFee, mode, setFormData, saveCurrentCalculation]);
 
   // Calculate results in real-time
   const results = useMemo(() => {
@@ -131,6 +180,37 @@ export const BTCROICalculatorV2: React.FC = () => {
     return `${(value * 100000000).toFixed(0)} sats`;
   };
 
+  // Loading state
+  if (networkLoading && !networkData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-orange-500 animate-spin mx-auto" />
+          <p className="text-slate-400">Loading network data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (!networkData && !networkLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <Card className="bg-slate-800/50 border-slate-700/50 max-w-md w-full">
+          <CardContent className="p-6 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+            <h2 className="text-xl font-semibold text-white">Failed to Load Data</h2>
+            <p className="text-slate-400 text-sm">Unable to fetch network data. Please try again.</p>
+            <Button onClick={handleRefresh} className="bg-orange-500 hover:bg-orange-600">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-3 sm:p-4 lg:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -145,12 +225,24 @@ export const BTCROICalculatorV2: React.FC = () => {
               <p className="text-sm text-slate-400">Real-time profitability calculator</p>
             </div>
           </div>
-          {networkData && (
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-              <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
-              Live Data
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700"
+            >
+              <RefreshCw className={cn("w-4 h-4 mr-2", isRefreshing && "animate-spin")} />
+              Refresh
+            </Button>
+            {networkData && (
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
+                Live Data
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Live Stats Bar */}
@@ -247,7 +339,7 @@ export const BTCROICalculatorV2: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className={cn(
-                        "h-auto py-2 flex flex-col items-start text-left transition-all",
+                        "h-auto py-2 flex flex-col items-start text-left transition-all min-h-[44px]",
                         selectedPreset === preset.name
                           ? "bg-orange-500/20 border-orange-500/50 text-orange-400"
                           : "bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-700"
@@ -357,6 +449,20 @@ export const BTCROICalculatorV2: React.FC = () => {
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
+
+                {/* Save Button */}
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving || !results}
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save Calculation
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -387,8 +493,8 @@ export const BTCROICalculatorV2: React.FC = () => {
               <ResultCard
                 label="Break-Even"
                 value={results ? (results.breakEvenDays === Infinity ? 'Never' : `${Math.ceil(results.breakEvenDays)}d`) : '—'}
-                subValue={results ? `${(results.breakEvenDays / 30).toFixed(1)} months` : ''}
-                positive={results ? results.breakEvenDays < 365 : true}
+                subValue={results ? (results.breakEvenDays === Infinity ? 'N/A' : `${(results.breakEvenDays / 30).toFixed(1)} months`) : ''}
+                positive={results ? results.breakEvenDays < 365 && results.breakEvenDays !== Infinity : true}
               />
             </div>
 
@@ -402,10 +508,10 @@ export const BTCROICalculatorV2: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="breakdown" className="space-y-4">
-                  <TabsList className="bg-slate-700/50 p-1">
-                    <TabsTrigger value="breakdown" className="text-xs data-[state=active]:bg-slate-600">Breakdown</TabsTrigger>
-                    <TabsTrigger value="projections" className="text-xs data-[state=active]:bg-slate-600">Projections</TabsTrigger>
-                    <TabsTrigger value="scenarios" className="text-xs data-[state=active]:bg-slate-600">Scenarios</TabsTrigger>
+                  <TabsList className="bg-slate-700/50 p-1 w-full sm:w-auto">
+                    <TabsTrigger value="breakdown" className="text-xs data-[state=active]:bg-slate-600 flex-1 sm:flex-none">Breakdown</TabsTrigger>
+                    <TabsTrigger value="projections" className="text-xs data-[state=active]:bg-slate-600 flex-1 sm:flex-none">Projections</TabsTrigger>
+                    <TabsTrigger value="scenarios" className="text-xs data-[state=active]:bg-slate-600 flex-1 sm:flex-none">Scenarios</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="breakdown" className="space-y-4">
@@ -509,10 +615,12 @@ export const BTCROICalculatorV2: React.FC = () => {
                   <TabsContent value="scenarios" className="space-y-4">
                     <div className="text-sm text-slate-400 mb-3">What if BTC price changes?</div>
                     <div className="space-y-2">
-                      {networkData && [0.5, 0.75, 1, 1.25, 1.5, 2].map((multiplier) => {
+                      {networkData && results && [0.5, 0.75, 1, 1.25, 1.5, 2].map((multiplier) => {
                         const scenarioPrice = networkData.price * multiplier;
-                        const scenarioDailyRevenue = results ? (results.dailyBTC * scenarioPrice) : 0;
-                        const scenarioDailyProfit = scenarioDailyRevenue - (results?.dailyPowerCost || 0) - (results?.dailyPoolFees || 0);
+                        const scenarioDailyRevenue = results.dailyBTC * scenarioPrice;
+                        // Fix: Recalculate pool fees based on scenario revenue
+                        const scenarioPoolFees = scenarioDailyRevenue * (poolFee / 100);
+                        const scenarioDailyProfit = scenarioDailyRevenue - results.dailyPowerCost - scenarioPoolFees;
                         
                         return (
                           <div key={multiplier} className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between">
