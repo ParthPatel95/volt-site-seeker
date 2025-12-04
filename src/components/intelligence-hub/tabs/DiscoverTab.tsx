@@ -193,7 +193,6 @@ export function DiscoverTab() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
       />
-      )}
 
       {/* Empty State */}
       {!isScanning && opportunities.length === 0 && (
