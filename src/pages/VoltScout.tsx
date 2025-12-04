@@ -14,9 +14,7 @@ import VoiceSearch from './VoiceSearch';
 import RiskManagement from './RiskManagement';
 import AdvancedFeatures from './AdvancedFeatures';
 
-import { IndustryIntelligence } from '@/components/industry_intel/IndustryIntelligence';
-import { CorporateIntelligence } from '@/components/CorporateIntelligence';
-import { IdleIndustryScanner } from '@/components/power/IdleIndustryScanner';
+import { IntelligenceHub } from '@/components/intelligence-hub/IntelligenceHub';
 import { PowerInfrastructure } from '@/components/PowerInfrastructure';
 import { BTCROIMainPage } from '@/components/btc_roi/BTCROIMainPage';
 import { DataManagement } from '@/components/DataManagement';
@@ -96,9 +94,7 @@ const VoltScout = () => {
                <Route path="aeso-market-hub" element={<AESOMarketComprehensive />} />
                <Route path="ercot-market-hub" element={<ERCOTMarketComprehensive />} />
                <Route path="energy-rates" element={<EnergyRates />} />
-               <Route path="industry-intelligence" element={<IndustryIntelligence />} />
-               <Route path="corporate-intelligence" element={<CorporateIntelligence />} />
-               <Route path="idle-industry-scanner" element={<IdleIndustryScanner />} />
+               <Route path="intelligence-hub" element={<IntelligenceHub />} />
               <Route path="power-infrastructure" element={<PowerInfrastructure />} />
               <Route path="btc-roi-lab" element={<BTCROIMainPage />} />
               <Route path="data-management" element={<DataManagement />} />
