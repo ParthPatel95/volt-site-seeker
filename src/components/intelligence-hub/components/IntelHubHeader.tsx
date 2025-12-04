@@ -4,13 +4,77 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Brain, Download, Activity, Zap, Building2, Bell } from 'lucide-react';
 import { useIntelligenceHub } from '../hooks/useIntelligenceHub';
+import { useToast } from '@/hooks/use-toast';
 
 export function IntelHubHeader() {
   const { state } = useIntelligenceHub();
+  const { toast } = useToast();
   const { opportunities, alerts, scanStats, isScanning } = state;
 
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
   const totalMW = scanStats?.totalMW || opportunities.reduce((sum, o) => sum + (o.metrics.powerCapacityMW || 0), 0);
+
+  const handleExport = () => {
+    if (opportunities.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "Run a scan first to generate exportable data",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const csvHeaders = [
+        'Name', 'Type', 'City', 'State', 'Address', 'Power (MW)', 
+        'Confidence (%)', 'Distress Score', 'Idle Score', 'Industry',
+        'Sources', 'AI Insights', 'Created At'
+      ];
+
+      const csvRows = opportunities.map(o => [
+        o.name,
+        o.type.replace('_', ' '),
+        o.location.city || '',
+        o.location.state || '',
+        o.location.address || '',
+        o.metrics.powerCapacityMW?.toFixed(2) || '',
+        (o.metrics.confidenceLevel * 100).toFixed(0),
+        o.metrics.distressScore?.toFixed(0) || '',
+        o.metrics.idleScore?.toFixed(0) || '',
+        o.industryType || '',
+        o.sources.join('; '),
+        o.aiInsights?.replace(/,/g, ';') || '',
+        new Date(o.createdAt).toLocaleDateString()
+      ]);
+
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `intelligence-hub-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: `Exported ${opportunities.length} opportunities to CSV`,
+      });
+    } catch (err) {
+      console.error('Export error:', err);
+      toast({
+        title: "Export Failed",
+        description: "Could not generate export file",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6">
@@ -34,7 +98,13 @@ export function IntelHubHeader() {
             <Activity className="w-3 h-3 mr-1" />
             {isScanning ? 'Scanning...' : 'Ready'}
           </Badge>
-          <Button variant="outline" size="sm" className="hidden sm:flex">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hidden sm:flex"
+            onClick={handleExport}
+            disabled={opportunities.length === 0}
+          >
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>

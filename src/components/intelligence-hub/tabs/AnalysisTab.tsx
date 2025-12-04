@@ -6,21 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Brain, 
-  Search, 
-  Building2, 
-  TrendingDown, 
-  FileText, 
-  Newspaper, 
-  Leaf,
-  Loader2,
-  AlertCircle,
-  CheckCircle2
-} from 'lucide-react';
+import { Brain, Search, TrendingDown, Loader2 } from 'lucide-react';
 import { useIntelligenceHub } from '../hooks/useIntelligenceHub';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { FinancialAnalysisPanel } from '../components/FinancialAnalysisPanel';
+import { NewsAnalysisPanel } from '../components/NewsAnalysisPanel';
+import { ESGAnalysisPanel } from '../components/ESGAnalysisPanel';
+import { DueDiligencePanel } from '../components/DueDiligencePanel';
 
 export function AnalysisTab() {
   const { state } = useIntelligenceHub();
@@ -50,7 +43,11 @@ export function AnalysisTab() {
         body: {
           action: 'analyze_company',
           companyName: companyName.trim(),
-          ticker: ticker.trim() || undefined
+          ticker: ticker.trim() || undefined,
+          includeFinancials: true,
+          includeNews: true,
+          includeESG: true,
+          includeDueDiligence: true
         }
       });
 
@@ -161,9 +158,14 @@ export function AnalysisTab() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">{analysisResult.companyName || companyName}</CardTitle>
-              <Badge variant={analysisResult.distressScore > 70 ? "destructive" : "secondary"}>
-                Distress Score: {analysisResult.distressScore || 'N/A'}
-              </Badge>
+              <div className="flex items-center gap-2">
+                {analysisResult.ticker && (
+                  <Badge variant="secondary">{analysisResult.ticker}</Badge>
+                )}
+                <Badge variant={analysisResult.distressScore > 70 ? "destructive" : "secondary"}>
+                  Distress Score: {analysisResult.distressScore || 'N/A'}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -177,31 +179,30 @@ export function AnalysisTab() {
               </TabsList>
 
               <TabsContent value="overview" className="mt-4">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                   <MetricCard 
                     label="Financial Health" 
                     value={analysisResult.financialHealth || 'Analyzing...'} 
-                    icon={TrendingDown}
                     status={analysisResult.financialHealth === 'Stable' ? 'success' : 'warning'}
                   />
                   <MetricCard 
                     label="Industry" 
                     value={analysisResult.industry || 'N/A'} 
-                    icon={Building2}
                   />
                   <MetricCard 
                     label="Market Cap" 
-                    value={analysisResult.marketCap || 'N/A'} 
-                    icon={FileText}
+                    value={analysisResult.marketCap ? 
+                      `$${(analysisResult.marketCap / 1e9).toFixed(2)}B` : 
+                      'N/A'
+                    } 
                   />
                   <MetricCard 
                     label="ESG Rating" 
                     value={analysisResult.esgRating || 'N/A'} 
-                    icon={Leaf}
                   />
                 </div>
                 {analysisResult.summary && (
-                  <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="p-4 bg-muted/50 rounded-lg">
                     <h4 className="text-sm font-medium mb-2">AI Summary</h4>
                     <p className="text-sm text-muted-foreground">{analysisResult.summary}</p>
                   </div>
@@ -209,31 +210,19 @@ export function AnalysisTab() {
               </TabsContent>
 
               <TabsContent value="financial" className="mt-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Financial analysis details would appear here</p>
-                </div>
+                <FinancialAnalysisPanel analysisResult={analysisResult} />
               </TabsContent>
 
               <TabsContent value="news" className="mt-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <Newspaper className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Recent news and sentiment analysis would appear here</p>
-                </div>
+                <NewsAnalysisPanel analysisResult={analysisResult} />
               </TabsContent>
 
               <TabsContent value="esg" className="mt-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <Leaf className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>ESG metrics and sustainability data would appear here</p>
-                </div>
+                <ESGAnalysisPanel analysisResult={analysisResult} />
               </TabsContent>
 
               <TabsContent value="due" className="mt-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Due diligence checklist and findings would appear here</p>
-                </div>
+                <DueDiligencePanel analysisResult={analysisResult} />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -259,11 +248,10 @@ export function AnalysisTab() {
 interface MetricCardProps {
   label: string;
   value: string;
-  icon: React.ElementType;
   status?: 'success' | 'warning' | 'error';
 }
 
-function MetricCard({ label, value, icon: Icon, status }: MetricCardProps) {
+function MetricCard({ label, value, status }: MetricCardProps) {
   const statusColors = {
     success: 'text-green-600',
     warning: 'text-yellow-600',
@@ -272,10 +260,7 @@ function MetricCard({ label, value, icon: Icon, status }: MetricCardProps) {
 
   return (
     <div className="bg-muted/50 rounded-lg p-3">
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className="w-4 h-4 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">{label}</span>
-      </div>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <p className={`text-sm font-semibold ${status ? statusColors[status] : 'text-foreground'}`}>
         {value}
       </p>

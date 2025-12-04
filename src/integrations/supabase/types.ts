@@ -3309,6 +3309,162 @@ export type Database = {
         }
         Relationships: []
       }
+      intelligence_hub_alert_preferences: {
+        Row: {
+          created_at: string
+          enable_distress_signal_alerts: boolean
+          enable_email_notifications: boolean
+          enable_new_opportunity_alerts: boolean
+          enable_price_change_alerts: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enable_distress_signal_alerts?: boolean
+          enable_email_notifications?: boolean
+          enable_new_opportunity_alerts?: boolean
+          enable_price_change_alerts?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enable_distress_signal_alerts?: boolean
+          enable_email_notifications?: boolean
+          enable_new_opportunity_alerts?: boolean
+          enable_price_change_alerts?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      intelligence_hub_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_read: boolean
+          opportunity_id: string | null
+          severity: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_read?: boolean
+          opportunity_id?: string | null
+          severity?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_read?: boolean
+          opportunity_id?: string | null
+          severity?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      intelligence_hub_saved_opportunities: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          opportunity_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      intelligence_hub_scan_history: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          results_count: number
+          scan_config: Json
+          status: string
+          total_mw: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          results_count?: number
+          scan_config: Json
+          status?: string
+          total_mw?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          results_count?: number
+          scan_config?: Json
+          status?: string
+          total_mw?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      intelligence_hub_watchlist: {
+        Row: {
+          created_at: string
+          id: string
+          opportunity_id: string
+          opportunity_name: string
+          opportunity_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          opportunity_name: string
+          opportunity_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          opportunity_name?: string
+          opportunity_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       investment_scores: {
         Row: {
           calculated_at: string
