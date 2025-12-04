@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +7,7 @@ import { navItems } from "./nav-items";
 import { VoltMarket } from "./pages/VoltMarket";
 import { VoltMarketAuthProvider } from "./contexts/VoltMarketAuthContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { PermissionsProvider } from "./contexts/PermissionsContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
@@ -26,31 +26,33 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/wattfund" element={<WattFund />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/hosting" element={<Hosting />} />
-              {navItems.map(({ to, page }) => (
-                <Route key={to} path={to} element={page} />
-              ))}
-              <Route path="/app/*" element={<VoltScout />} />
-              <Route path="/voltmarket/*" element={
-                <VoltMarketAuthProvider>
-                  <VoltMarket />
-                </VoltMarketAuthProvider>
-              } />
-              <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
-              <Route path="/view/:token" element={<ViewDocument />} />
-              <Route path="/share/dashboard/:token" element={<ViewSharedDashboard />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <PermissionsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/wattfund" element={<WattFund />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/hosting" element={<Hosting />} />
+                {navItems.map(({ to, page }) => (
+                  <Route key={to} path={to} element={page} />
+                ))}
+                <Route path="/app/*" element={<VoltScout />} />
+                <Route path="/voltmarket/*" element={
+                  <VoltMarketAuthProvider>
+                    <VoltMarket />
+                  </VoltMarketAuthProvider>
+                } />
+                <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
+                <Route path="/view/:token" element={<ViewDocument />} />
+                <Route path="/share/dashboard/:token" element={<ViewSharedDashboard />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </PermissionsProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
