@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/aeso-dashboards', icon: LayoutDashboard, label: 'Energy Dashboards', permission: 'feature.energy-dashboards' },
     { path: '/app/aeso-market-hub', icon: MapPin, label: 'AESO Market Hub', permission: 'feature.aeso-market-hub' },
     { path: '/app/ercot-market-hub', icon: Zap, label: 'ERCOT Market Hub', permission: 'feature.ercot-market-hub' },
-    { path: '/app/energy-rates', icon: BarChart3, label: 'Energy Rates', permission: 'feature.energy-rates' },
+    
     { path: '/app/intelligence-hub', icon: Brain, label: 'Intelligence Hub', permission: 'feature.intelligence-hub' },
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure', permission: 'feature.power-infrastructure' },
     { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'BTC Mining ROI Lab', permission: 'feature.btc-roi-lab' },
