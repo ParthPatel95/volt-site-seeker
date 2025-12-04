@@ -5,9 +5,9 @@ const corsHeaders = {
 }
 
 // ========== SERVER-SIDE RESPONSE CACHE ==========
-// Cache responses for 90 seconds to reduce API calls and improve response times
+// Cache responses for 5 minutes to reduce API calls and improve response times
 let cachedResponse: { data: EnergyDataResponse; timestamp: number } | null = null;
-const CACHE_TTL_MS = 90 * 1000; // 90 seconds - market data updates every 5-15 min
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes - market data doesn't change drastically
 
 interface EnergyDataResponse {
   success: boolean;

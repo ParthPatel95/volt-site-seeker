@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 interface ExchangeRateData {
@@ -7,8 +6,16 @@ interface ExchangeRateData {
   source: string;
 }
 
+// Hardcoded CAD to USD rate - updated periodically
+// CAD/USD typically ranges 0.72-0.76, using 0.73 as reasonable average
+const FALLBACK_RATE = 0.73;
+
 export function useExchangeRate() {
-  const [exchangeRate, setExchangeRate] = useState<ExchangeRateData | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<ExchangeRateData>({
+    rate: FALLBACK_RATE,
+    lastUpdated: new Date().toISOString(),
+    source: 'default'
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,8 +24,10 @@ export function useExchangeRate() {
     setError(null);
     
     try {
-      // Using exchangerate-api.io free API (no auth required)
-      const response = await fetch('https://api.exchangerate-api.io/v4/latest/CAD');
+      // Try Open Exchange Rates (CORS-friendly, no auth for base rates)
+      const response = await fetch('https://open.er-api.com/v6/latest/CAD', {
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch exchange rate');
@@ -30,21 +39,21 @@ export function useExchangeRate() {
         setExchangeRate({
           rate: data.rates.USD,
           lastUpdated: new Date().toISOString(),
-          source: 'exchangerate-api.io'
+          source: 'open.er-api.com'
         });
-      } else {
-        throw new Error('Invalid exchange rate data');
+        return;
       }
-    } catch (err) {
-      console.error('Exchange rate fetch error:', err);
-      setError('Failed to fetch exchange rate');
       
-      // Fallback to a reasonable default rate
-      setExchangeRate({
-        rate: 0.73, // Approximate CAD to USD rate
+      throw new Error('Invalid exchange rate data');
+    } catch (err) {
+      console.warn('Exchange rate fetch failed, using fallback:', err);
+      setError('Using fallback rate');
+      // Keep existing rate or use fallback
+      setExchangeRate(prev => ({
+        rate: prev?.rate || FALLBACK_RATE,
         lastUpdated: new Date().toISOString(),
-        source: 'fallback estimate'
-      });
+        source: 'fallback'
+      }));
     } finally {
       setLoading(false);
     }
@@ -53,14 +62,13 @@ export function useExchangeRate() {
   useEffect(() => {
     fetchExchangeRate();
     
-    // Refresh exchange rate every 30 minutes
-    const interval = setInterval(fetchExchangeRate, 30 * 60 * 1000);
+    // Refresh exchange rate every hour (rate doesn't change much)
+    const interval = setInterval(fetchExchangeRate, 60 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, []);
 
   const convertToUSD = (cadAmount: number): number => {
-    if (!exchangeRate) return 0;
     return cadAmount * exchangeRate.rate;
   };
 
