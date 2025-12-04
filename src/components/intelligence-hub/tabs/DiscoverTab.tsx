@@ -9,6 +9,7 @@ import { Search, Play, Square, Sparkles } from 'lucide-react';
 import { IntelSourceSelector } from '../components/IntelSourceSelector';
 import { LiveScanProgress } from '../components/LiveScanProgress';
 import { IntelResultCard } from '../components/IntelResultCard';
+import { IntelDetailsModal } from '../components/IntelDetailsModal';
 import { useUnifiedScan } from '../hooks/useUnifiedScan';
 import { useIntelligenceHub } from '../hooks/useIntelligenceHub';
 import { ScanConfig, IntelOpportunity } from '../types/intelligence-hub.types';
@@ -32,6 +33,12 @@ export function DiscoverTab() {
   const [selectedSources, setSelectedSources] = useState(['idle', 'distress', 'satellite', 'sec']);
   const [maxResults, setMaxResults] = useState(50);
   const [selectedOpportunity, setSelectedOpportunity] = useState<IntelOpportunity | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const handleViewDetails = (opportunity: IntelOpportunity) => {
+    setSelectedOpportunity(opportunity);
+    setDetailsOpen(true);
+  };
 
   const handleStartScan = () => {
     const config: ScanConfig = {
@@ -173,11 +180,19 @@ export function DiscoverTab() {
               <IntelResultCard 
                 key={opportunity.id} 
                 opportunity={opportunity}
-                onViewDetails={setSelectedOpportunity}
+                onViewDetails={handleViewDetails}
               />
             ))}
           </div>
         </div>
+      )}
+
+      {/* Details Modal */}
+      <IntelDetailsModal
+        opportunity={selectedOpportunity}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+      />
       )}
 
       {/* Empty State */}
