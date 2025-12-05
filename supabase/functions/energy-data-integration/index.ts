@@ -212,170 +212,6 @@ async function fetchERCOTViaEIA(): Promise<any> {
   }
 }
 
-  try {
-    // Fetch multiple ERCOT datasets in parallel
-    const [lmpRes, loadRes, fuelMixRes] = await Promise.allSettled([
-      fetch(`${baseUrl}/ercot/spp/latest`, { headers }),
-      fetch(`${baseUrl}/ercot/load/latest`, { headers }),
-      fetch(`${baseUrl}/ercot/fuel_mix/latest`, { headers })
-    ]);
-
-    // Log response statuses for debugging
-    console.log('GridStatus API responses:', {
-      lmp: lmpRes.status === 'fulfilled' ? lmpRes.value.status : 'rejected',
-      load: loadRes.status === 'fulfilled' ? loadRes.value.status : 'rejected',
-      fuelMix: fuelMixRes.status === 'fulfilled' ? fuelMixRes.value.status : 'rejected'
-    });
-
-    let pricing: any = null;
-    let loadData: any = null;
-    let generationMix: any = null;
-    let zoneLMPs: any = null;
-
-    // Parse LMP/SPP data
-    if (lmpRes.status === 'fulfilled') {
-      if (!lmpRes.value.ok) {
-        console.warn('⚠️ GridStatus LMP API returned', lmpRes.value.status);
-      } else {
-        try {
-          const lmpData = await lmpRes.value.json();
-          console.log('GridStatus LMP data keys:', Object.keys(lmpData || {}));
-          const items = lmpData?.data || lmpData?.results || (Array.isArray(lmpData) ? lmpData : []);
-          
-          // Find hub average price
-          const hubAvg = items.find((i: any) => 
-            i.location?.includes('HB_HUBAVG') || i.settlement_point?.includes('HB_HUBAVG')
-          );
-          
-          const prices = items
-            .map((i: any) => parseFloat(i.spp || i.lmp || i.price || 0))
-            .filter((p: number) => Number.isFinite(p) && p > -500 && p < 5000);
-          
-          const currentPrice = hubAvg ? parseFloat(hubAvg.spp || hubAvg.lmp || hubAvg.price) : 
-            (prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : null);
-          
-          if (currentPrice !== null && Number.isFinite(currentPrice)) {
-            const avgPrice = prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : currentPrice;
-            
-            pricing = {
-              current_price: Math.round(currentPrice * 100) / 100,
-              average_price: Math.round(avgPrice * 100) / 100,
-              peak_price: Math.round(Math.max(...prices, currentPrice) * 100) / 100,
-              off_peak_price: Math.round(Math.min(...prices, currentPrice) * 100) / 100,
-              market_conditions: currentPrice > 150 ? 'high' : currentPrice > 75 ? 'normal' : 'low',
-              timestamp: new Date().toISOString(),
-              source: 'gridstatus_ercot_spp'
-            };
-            
-            // Extract zone LMPs
-            const zones = ['LZ_HOUSTON', 'LZ_NORTH', 'LZ_SOUTH', 'LZ_WEST', 'HB_HUBAVG'];
-            zoneLMPs = { source: 'gridstatus_ercot' };
-            for (const zone of zones) {
-              const zoneItem = items.find((i: any) => 
-                i.location?.includes(zone) || i.settlement_point?.includes(zone)
-              );
-              if (zoneItem) {
-                zoneLMPs[zone] = parseFloat(zoneItem.spp || zoneItem.lmp || zoneItem.price);
-              }
-            }
-            
-            console.log('✅ GridStatus ERCOT pricing:', currentPrice);
-          } else {
-            console.warn('⚠️ GridStatus LMP: No valid price found, items count:', items.length);
-          }
-        } catch (e) {
-          console.error('GridStatus LMP parse error:', e);
-        }
-      }
-    }
-
-    // Parse Load data
-    if (loadRes.status === 'fulfilled') {
-      if (!loadRes.value.ok) {
-        console.warn('⚠️ GridStatus Load API returned', loadRes.value.status);
-      } else {
-        try {
-          const loadJson = await loadRes.value.json();
-          console.log('GridStatus Load data keys:', Object.keys(loadJson || {}));
-          const loadItems = loadJson?.data || loadJson?.results || (Array.isArray(loadJson) ? loadJson : [loadJson]);
-          const latest = loadItems[loadItems.length - 1] || loadItems[0];
-          
-          const currentLoad = parseFloat(latest?.load || latest?.demand || latest?.total_load || latest?.system_load || 0);
-          if (currentLoad > 20000 && currentLoad < 100000) {
-            loadData = {
-              current_demand_mw: Math.round(currentLoad),
-              peak_forecast_mw: Math.round(currentLoad * 1.15),
-              reserve_margin: 15.0,
-              timestamp: new Date().toISOString(),
-              source: 'gridstatus_ercot_load'
-            };
-            console.log('✅ GridStatus ERCOT load:', currentLoad);
-          } else {
-            console.warn('⚠️ GridStatus Load: Invalid value', currentLoad, 'from', latest);
-          }
-        } catch (e) {
-          console.error('GridStatus load parse error:', e);
-        }
-      }
-    }
-
-    // Parse Fuel Mix data
-    if (fuelMixRes.status === 'fulfilled') {
-      if (!fuelMixRes.value.ok) {
-        console.warn('⚠️ GridStatus Fuel Mix API returned', fuelMixRes.value.status);
-      } else {
-        try {
-          const fuelJson = await fuelMixRes.value.json();
-          console.log('GridStatus Fuel Mix data keys:', Object.keys(fuelJson || {}));
-          const fuelItems = fuelJson?.data || fuelJson?.results || (Array.isArray(fuelJson) ? fuelJson : [fuelJson]);
-          const latest = fuelItems[fuelItems.length - 1] || fuelItems[0];
-          console.log('GridStatus Fuel Mix latest item:', JSON.stringify(latest).slice(0, 200));
-          
-          const gas = parseFloat(latest?.gas || latest?.natural_gas || latest?.Gas || 0);
-          const wind = parseFloat(latest?.wind || latest?.Wind || 0);
-          const solar = parseFloat(latest?.solar || latest?.Solar || 0);
-          const nuclear = parseFloat(latest?.nuclear || latest?.Nuclear || 0);
-          const coal = parseFloat(latest?.coal || latest?.Coal || 0);
-          const hydro = parseFloat(latest?.hydro || latest?.Hydro || 0);
-          const other = parseFloat(latest?.other || latest?.Other || 0);
-          
-          const total = gas + wind + solar + nuclear + coal + hydro + other;
-          
-          if (total > 30000 && total < 100000) {
-            generationMix = {
-              total_generation_mw: Math.round(total),
-              natural_gas_mw: Math.round(gas),
-              wind_mw: Math.round(wind),
-              solar_mw: Math.round(solar),
-              nuclear_mw: Math.round(nuclear),
-              coal_mw: Math.round(coal),
-              hydro_mw: Math.round(hydro),
-              other_mw: Math.round(other),
-              renewable_percentage: total > 0 ? Math.round(((wind + solar + hydro) / total) * 100 * 100) / 100 : 0,
-              timestamp: new Date().toISOString(),
-              source: 'gridstatus_ercot_fuel_mix'
-            };
-            console.log('✅ GridStatus ERCOT generation mix:', total, 'MW');
-          } else {
-            console.warn('⚠️ GridStatus Fuel Mix: Invalid total', total, 'from components:', { gas, wind, solar, nuclear, coal, hydro, other });
-          }
-        } catch (e) {
-          console.error('GridStatus fuel mix parse error:', e);
-        }
-      }
-    }
-
-    if (pricing || loadData || generationMix) {
-      return { pricing, loadData, generationMix, zoneLMPs };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('❌ GridStatus ERCOT fetch error:', error);
-    return null;
-  }
-}
-
 // ========== ERCOT EMIL API ENDPOINTS ==========
 async function fetchERCOTPricingFromEmil(apiKey: string) {
   console.log('📡 Fetching ERCOT Settlement Point Prices from EMIL API…');
@@ -726,19 +562,19 @@ async function fetchERCOTData() {
   try {
     const eiaData = await fetchERCOTViaEIA();
     if (eiaData) {
-      pricing = gridStatusData.pricing || pricing;
-      loadData = gridStatusData.loadData || loadData;
-      generationMix = gridStatusData.generationMix || generationMix;
-      zoneLMPs = gridStatusData.zoneLMPs || zoneLMPs;
-      console.log('✅ GridStatus provided:', { 
+      pricing = eiaData.pricing || pricing;
+      loadData = eiaData.loadData || loadData;
+      generationMix = eiaData.generationMix || generationMix;
+      zoneLMPs = eiaData.zoneLMPs || zoneLMPs;
+      console.log('✅ EIA API provided:', { 
         pricing: !!pricing, load: !!loadData, genMix: !!generationMix 
       });
     }
   } catch (e) {
-    console.error('GridStatus fetch failed:', e);
+    console.error('EIA fetch failed:', e);
   }
 
-  // === PRIORITY 2: ERCOT EMIL API (official, if GridStatus incomplete) ===
+  // === PRIORITY 2: ERCOT EMIL API (official, if EIA incomplete) ===
   const apiKey = (Deno.env.get('ERCOT_API_KEY') || Deno.env.get('ERCOT_API_KEY_SECONDARY') || '').trim();
   
   if (apiKey && (!pricing || !loadData || !generationMix)) {
