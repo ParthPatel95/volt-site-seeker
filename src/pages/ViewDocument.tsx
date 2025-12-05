@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { getCachedUrls, cacheUrls, getCachedUrl, cacheUrl } from '@/utils/signedUrlCache';
 
 export default function ViewDocument() {
   const { token: routeToken } = useParams<{ token: string }>();
@@ -28,8 +29,117 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   
-  // Helper function to fetch signed URL with retry logic and video optimization
+  // Document request type for batch fetching
+  interface DocRequest {
+    storagePath: string;
+    isVideo?: boolean;
+    expiresIn?: number;
+  }
+
+  // Batch fetch signed URLs for multiple documents (Phase 1 optimization)
+  const fetchSignedUrlsBatch = async (documents: DocRequest[]): Promise<Map<string, string>> => {
+    const resultMap = new Map<string, string>();
+    
+    if (documents.length === 0) return resultMap;
+
+    // Phase 2: Check cache first
+    const { cached, uncached } = getCachedUrls(documents);
+    
+    // Add cached URLs to result
+    cached.forEach((url, path) => {
+      resultMap.set(path, url);
+    });
+    
+    console.log(`[ViewDocument] URL Cache: ${cached.size} hits, ${uncached.length} misses`);
+    
+    // If all URLs are cached, return immediately
+    if (uncached.length === 0) {
+      console.log('[ViewDocument] All URLs served from cache!');
+      return resultMap;
+    }
+
+    // Fetch uncached URLs in a single batch request
+    try {
+      const startTime = Date.now();
+      
+      // Find expiresIn for each uncached path from original documents array
+      const pathsWithExpiry = uncached.map(item => {
+        const original = documents.find(d => d.storagePath === item.storagePath);
+        return {
+          storagePath: item.storagePath,
+          isVideo: item.isVideo || false,
+          expiresIn: original?.expiresIn
+        };
+      });
+
+      const { data, error } = await supabase.functions.invoke('get-signed-url', {
+        body: { paths: pathsWithExpiry }
+      });
+
+      if (error) {
+        console.error('[ViewDocument] Batch signed URL error:', error);
+        return fetchSignedUrlsFallback(documents.filter(d => !cached.has(d.storagePath)), resultMap);
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`[ViewDocument] Batch fetch: ${data?.totalSuccess}/${data?.totalRequested} URLs in ${duration}ms`);
+
+      // Process batch results and cache them
+      if (data?.signedUrls) {
+        const urlsToCache: Array<{ storagePath: string; url: string; expiresIn: number; isVideo?: boolean }> = [];
+        
+        for (const result of data.signedUrls) {
+          if (result.signedUrl) {
+            resultMap.set(result.storagePath, result.signedUrl);
+            urlsToCache.push({
+              storagePath: result.storagePath,
+              url: result.signedUrl,
+              expiresIn: result.expiresIn,
+              isVideo: result.isVideo
+            });
+          }
+        }
+        
+        // Cache all successful URLs
+        cacheUrls(urlsToCache);
+      }
+
+      return resultMap;
+    } catch (err) {
+      console.error('[ViewDocument] Batch request exception:', err);
+      return fetchSignedUrlsFallback(documents.filter(d => !cached.has(d.storagePath)), resultMap);
+    }
+  };
+
+  // Fallback to individual requests if batch fails
+  const fetchSignedUrlsFallback = async (
+    documents: DocRequest[],
+    existingResults: Map<string, string>
+  ): Promise<Map<string, string>> => {
+    console.log('[ViewDocument] Falling back to individual URL requests');
+    
+    await Promise.all(
+      documents.map(async (doc) => {
+        const url = await fetchSignedUrlWithRetry(doc.storagePath, doc.expiresIn || 3600, doc.isVideo || false);
+        if (url) {
+          existingResults.set(doc.storagePath, url);
+          cacheUrl(doc.storagePath, url, doc.expiresIn || 3600, doc.isVideo);
+        }
+      })
+    );
+    
+    return existingResults;
+  };
+
+  // Helper function to fetch signed URL with retry logic and video optimization (kept for single doc compatibility)
   const fetchSignedUrlWithRetry = async (storagePath: string, expiresIn: number, isVideo = false, retries = 3): Promise<string | null> => {
+    // Check cache first
+    const cachedUrl = getCachedUrl(storagePath, isVideo);
+    if (cachedUrl) {
+      console.log(`[ViewDocument] Cache hit for: ${storagePath}`);
+      return cachedUrl;
+    }
+
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const { data, error } = await supabase.functions.invoke('get-signed-url', {
@@ -39,11 +149,13 @@ export default function ViewDocument() {
         if (error) {
           console.error(`[ViewDocument] Signed URL error (attempt ${attempt}):`, error);
           if (attempt === retries) return null;
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
           continue;
         }
 
         if (data?.signedUrl) {
+          // Cache the URL
+          cacheUrl(storagePath, data.signedUrl, data.expiresIn || expiresIn, isVideo);
           return data.signedUrl;
         }
       } catch (err) {
@@ -192,24 +304,31 @@ export default function ViewDocument() {
 
         console.log('[ViewDocument] Folder contents loaded, documents count:', folderDocs.length);
 
-        // Generate signed URLs for all documents in the folder in parallel for performance
-        await Promise.all(
-          folderDocs.map(async (doc: any) => {
-            if (!doc.storage_path) return;
-
-            // Detect video files for optimized expiry
+        // Phase 1: Batch fetch all signed URLs in a single request
+        const docsToFetch: DocRequest[] = folderDocs
+          .filter((doc: any) => doc.storage_path)
+          .map((doc: any) => {
             const isVideoFile = doc.file_type?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(doc.file_name);
-            // Videos get 6 hours expiry, other files use folder expiry
-            const videoExpiry = isVideoFile ? 21600 : expirySeconds;
+            return {
+              storagePath: doc.storage_path,
+              isVideo: isVideoFile,
+              expiresIn: isVideoFile ? 21600 : expirySeconds
+            };
+          });
 
-            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, videoExpiry, isVideoFile);
-            if (signedUrl) {
-              doc.file_url = signedUrl;
+        const signedUrlMap = await fetchSignedUrlsBatch(docsToFetch);
+        
+        // Apply signed URLs to documents
+        for (const doc of folderDocs) {
+          if (doc.storage_path) {
+            const url = signedUrlMap.get(doc.storage_path);
+            if (url) {
+              doc.file_url = url;
             } else {
               console.error('[ViewDocument] Failed to get signed URL for:', doc.file_name);
             }
-          })
-        );
+          }
+        }
 
         // Filter out documents that failed to get signed URLs
         const validFolderDocs = folderDocs.filter((doc: any) => doc.file_url);
@@ -240,25 +359,33 @@ export default function ViewDocument() {
 
         console.log('[ViewDocument] Bundle documents count:', bundleDocs.length);
 
-        // Generate signed URLs for all documents in the bundle in parallel
-        await Promise.all(
-          bundleDocs.map(async (bundleDoc: any) => {
+        // Phase 1: Batch fetch all signed URLs in a single request
+        const bundleDocsToFetch: DocRequest[] = bundleDocs
+          .filter((bundleDoc: any) => bundleDoc.document?.storage_path)
+          .map((bundleDoc: any) => {
             const doc = bundleDoc.document;
-            if (!doc || !doc.storage_path) return;
-
-            // Detect video files for optimized expiry
             const isVideoFile = doc.file_type?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(doc.file_name);
-            // Videos get 6 hours expiry, other files use bundle expiry
-            const videoExpiry = isVideoFile ? 21600 : expirySeconds;
+            return {
+              storagePath: doc.storage_path,
+              isVideo: isVideoFile,
+              expiresIn: isVideoFile ? 21600 : expirySeconds
+            };
+          });
 
-            const signedUrl = await fetchSignedUrlWithRetry(doc.storage_path, videoExpiry, isVideoFile);
-            if (signedUrl) {
-              doc.file_url = signedUrl;
+        const bundleUrlMap = await fetchSignedUrlsBatch(bundleDocsToFetch);
+        
+        // Apply signed URLs to bundle documents
+        for (const bundleDoc of bundleDocs) {
+          const doc = bundleDoc.document;
+          if (doc?.storage_path) {
+            const url = bundleUrlMap.get(doc.storage_path);
+            if (url) {
+              doc.file_url = url;
             } else {
               console.error('[ViewDocument] Failed to get signed URL for bundle doc:', doc.file_name);
             }
-          })
-        );
+          }
+        }
 
         return link;
       } else if (link.document_id) {
