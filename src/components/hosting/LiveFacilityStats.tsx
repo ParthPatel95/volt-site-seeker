@@ -22,43 +22,47 @@ export const LiveFacilityStats = () => {
         ? `$${pricing.current_price.toFixed(2)}/MWh` 
         : loading ? 'Loading...' : '$45.00/MWh',
       subtext: 'Live wholesale rate',
-      color: 'watt-bitcoin',
-      animate: true
+      colorClass: 'text-watt-bitcoin',
+      bgClass: 'bg-watt-bitcoin/20',
+      animate: false
     },
     {
       icon: Server,
       label: 'Facility Capacity',
-      value: '135',
+      numericValue: 135,
       suffix: 'MW',
       subtext: 'Total available power',
-      color: 'watt-success',
+      colorClass: 'text-watt-success',
+      bgClass: 'bg-watt-success/20',
       animate: true
     },
     {
       icon: Activity,
       label: 'System Uptime',
-      value: '99.99',
+      numericValue: 99.99,
       suffix: '%',
       subtext: 'Current month',
-      color: 'watt-trust',
+      colorClass: 'text-watt-trust',
+      bgClass: 'bg-watt-trust/20',
       animate: true
     },
     {
       icon: Thermometer,
       label: 'Outside Temp',
-      value: '-5',
-      suffix: '°C',
+      value: '-5°C',
       subtext: 'Natural cooling active',
-      color: 'watt-trust',
+      colorClass: 'text-watt-trust',
+      bgClass: 'bg-watt-trust/20',
       animate: false
     },
     {
       icon: TrendingUp,
       label: 'Capacity Available',
-      value: '45',
+      numericValue: 45,
       suffix: 'MW',
       subtext: 'Open for new clients',
-      color: 'watt-bitcoin',
+      colorClass: 'text-watt-bitcoin',
+      bgClass: 'bg-watt-bitcoin/20',
       animate: true
     },
     {
@@ -70,7 +74,8 @@ export const LiveFacilityStats = () => {
         timeZone: 'America/Edmonton'
       }),
       subtext: 'Alberta, Canada',
-      color: 'watt-navy',
+      colorClass: 'text-watt-navy',
+      bgClass: 'bg-watt-navy/20',
       animate: false
     }
   ];
@@ -99,19 +104,19 @@ export const LiveFacilityStats = () => {
             return (
               <ScrollReveal key={index} delay={index * 0.05}>
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center hover:bg-white/10 transition-all duration-300 group">
-                  <div className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center mb-3 bg-${stat.color}/20 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className={`w-5 h-5 text-${stat.color}`} />
+                  <div className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center mb-3 ${stat.bgClass} group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className={`w-5 h-5 ${stat.colorClass}`} />
                   </div>
                   
                   <div className="text-xs text-white/50 mb-1">{stat.label}</div>
                   
-                  {stat.animate && stat.suffix ? (
-                    <div className={`text-xl md:text-2xl font-bold text-${stat.color}`}>
-                      <AnimatedCounter end={parseFloat(stat.value)} suffix={stat.suffix} />
+                  {stat.animate && stat.numericValue !== undefined ? (
+                    <div className={`text-xl md:text-2xl font-bold ${stat.colorClass}`}>
+                      <AnimatedCounter end={stat.numericValue} suffix={stat.suffix || ''} />
                     </div>
                   ) : (
-                    <div className={`text-xl md:text-2xl font-bold text-${stat.color}`}>
-                      {stat.value}{stat.suffix || ''}
+                    <div className={`text-xl md:text-2xl font-bold ${stat.colorClass}`}>
+                      {stat.value}
                     </div>
                   )}
                   
