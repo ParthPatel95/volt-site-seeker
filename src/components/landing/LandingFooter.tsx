@@ -63,6 +63,11 @@ export const LandingFooter = () => {
                   VoltScout Platform
                 </Link>
               </li>
+              <li>
+                <a href="https://www.gridbazaar.com" target="_blank" rel="noopener noreferrer" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  GridBazaar
+                </a>
+              </li>
             </ul>
           </div>
         </div>
