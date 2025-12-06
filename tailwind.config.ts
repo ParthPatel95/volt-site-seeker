@@ -80,6 +80,7 @@ export default {
 				'watt-navy': 'hsl(var(--watt-navy))',
 				'watt-bitcoin': 'hsl(var(--watt-bitcoin))',
 				'watt-trust': 'hsl(var(--watt-trust))',
+				'watt-coinbase': 'hsl(var(--watt-trust))',
 				'watt-success': 'hsl(var(--watt-success))',
 				'watt-warning': 'hsl(var(--watt-warning))',
 				'watt-light': 'hsl(var(--watt-light))',
