@@ -8,7 +8,11 @@ const steps = [
     icon: Truck,
     title: 'Ship Your Miners',
     description: 'Send your hardware to our secure facility. We handle receiving and inspection.',
-    color: 'watt-trust',
+    colorClass: 'text-watt-trust',
+    bgClass: 'bg-watt-trust',
+    bgLightClass: 'bg-watt-trust/10',
+    bgHoverClass: 'bg-watt-trust/20',
+    borderClass: 'border-watt-trust',
     delay: 0
   },
   {
@@ -16,7 +20,11 @@ const steps = [
     icon: Wrench,
     title: 'Professional Setup',
     description: 'Expert installation, configuration, and optimization of your mining equipment.',
-    color: 'watt-bitcoin',
+    colorClass: 'text-watt-bitcoin',
+    bgClass: 'bg-watt-bitcoin',
+    bgLightClass: 'bg-watt-bitcoin/10',
+    bgHoverClass: 'bg-watt-bitcoin/20',
+    borderClass: 'border-watt-bitcoin',
     delay: 0.1
   },
   {
@@ -24,7 +32,11 @@ const steps = [
     icon: MonitorCheck,
     title: '24/7 Monitoring',
     description: 'Real-time performance tracking with proactive maintenance and support.',
-    color: 'watt-success',
+    colorClass: 'text-watt-success',
+    bgClass: 'bg-watt-success',
+    bgLightClass: 'bg-watt-success/10',
+    bgHoverClass: 'bg-watt-success/20',
+    borderClass: 'border-watt-success',
     delay: 0.2
   },
   {
@@ -32,7 +44,11 @@ const steps = [
     icon: Coins,
     title: 'Collect Earnings',
     description: 'Receive your mining rewards directly to your wallet. Simple and transparent.',
-    color: 'watt-bitcoin',
+    colorClass: 'text-watt-bitcoin',
+    bgClass: 'bg-watt-bitcoin',
+    bgLightClass: 'bg-watt-bitcoin/10',
+    bgHoverClass: 'bg-watt-bitcoin/20',
+    borderClass: 'border-watt-bitcoin',
     delay: 0.3
   }
 ];
@@ -88,18 +104,18 @@ export const HowHostingWorksSection = () => {
                       {/* Arrow Connector */}
                       {index < steps.length - 1 && (
                         <div className={`absolute top-12 -right-2 z-20 transition-all duration-300 ${isPast ? 'opacity-100 translate-x-1' : 'opacity-40'}`}>
-                          <ArrowRight className={`w-6 h-6 text-${step.color}`} />
+                          <ArrowRight className={`w-6 h-6 ${step.colorClass}`} />
                         </div>
                       )}
                       
                       <div className={`bg-white rounded-2xl p-6 text-center transition-all duration-300 border-2 ${
                         isHovered 
-                          ? `border-${step.color} shadow-lg scale-105` 
+                          ? `${step.borderClass} shadow-lg scale-105` 
                           : 'border-transparent shadow-sm'
                       }`}>
                         {/* Number Badge */}
                         <div className={`absolute -top-3 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300 ${
-                          isPast ? `bg-${step.color}` : 'bg-watt-navy/30'
+                          isPast ? step.bgClass : 'bg-watt-navy/30'
                         }`}>
                           {step.number}
                         </div>
@@ -107,10 +123,10 @@ export const HowHostingWorksSection = () => {
                         {/* Icon */}
                         <div className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 ${
                           isHovered 
-                            ? `bg-${step.color}/20 scale-110` 
-                            : `bg-${step.color}/10`
+                            ? `${step.bgHoverClass} scale-110` 
+                            : step.bgLightClass
                         }`}>
-                          <Icon className={`w-8 h-8 text-${step.color} transition-all duration-300 ${isHovered ? 'scale-110' : ''}`} />
+                          <Icon className={`w-8 h-8 ${step.colorClass} transition-all duration-300 ${isHovered ? 'scale-110' : ''}`} />
                         </div>
 
                         <h3 className="text-lg font-bold text-watt-navy mb-2">
@@ -137,13 +153,13 @@ export const HowHostingWorksSection = () => {
                 <div className="relative">
                   {/* Vertical Connector */}
                   {index < steps.length - 1 && (
-                    <div className={`absolute left-8 top-full h-4 w-0.5 bg-${step.color}/30`} />
+                    <div className="absolute left-8 top-full h-4 w-0.5 bg-watt-navy/20" />
                   )}
                   
                   <div className="flex items-start space-x-4 bg-white rounded-xl p-4 shadow-sm border border-border">
-                    <div className={`w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center bg-${step.color}/10 relative`}>
-                      <Icon className={`w-7 h-7 text-${step.color}`} />
-                      <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full bg-${step.color} flex items-center justify-center text-white text-xs font-bold`}>
+                    <div className={`w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center ${step.bgLightClass} relative`}>
+                      <Icon className={`w-7 h-7 ${step.colorClass}`} />
+                      <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full ${step.bgClass} flex items-center justify-center text-white text-xs font-bold`}>
                         {step.number}
                       </div>
                     </div>

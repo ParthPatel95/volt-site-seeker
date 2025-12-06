@@ -30,7 +30,7 @@ const testimonials = [
 const stats = [
   { icon: Server, value: 500, suffix: '+', label: 'Miners Hosted' },
   { icon: Users, value: 50, suffix: '+', label: 'Active Clients' },
-  { icon: Award, value: 99.9, suffix: '%', label: 'Client Satisfaction', decimals: 1 },
+  { icon: Award, value: 99.9, suffix: '%', label: 'Client Satisfaction' },
 ];
 
 export const SocialProofSection = () => {
@@ -87,14 +87,14 @@ export const SocialProofSection = () => {
             {/* Quote Mark */}
             <div className="absolute -top-4 left-8 text-6xl text-watt-bitcoin/20 font-serif">"</div>
             
-            <div className="relative">
+            <div className="relative min-h-[200px]">
               {testimonials.map((testimonial, index) => (
                 <div
                   key={index}
                   className={`transition-all duration-500 ${
                     index === activeTestimonial 
                       ? 'opacity-100 translate-x-0' 
-                      : 'opacity-0 absolute inset-0 translate-x-4'
+                      : 'opacity-0 absolute inset-0 translate-x-4 pointer-events-none'
                   }`}
                 >
                   {/* Stars */}
@@ -134,10 +134,10 @@ export const SocialProofSection = () => {
                 <button
                   key={index}
                   onClick={() => setActiveTestimonial(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  className={`h-2 rounded-full transition-all duration-300 ${
                     index === activeTestimonial 
                       ? 'w-6 bg-watt-bitcoin' 
-                      : 'bg-watt-navy/20 hover:bg-watt-navy/40'
+                      : 'w-2 bg-watt-navy/20 hover:bg-watt-navy/40'
                   }`}
                 />
               ))}
