@@ -107,29 +107,23 @@ export const LottieAnimation: React.FC<LottieAnimationProps> = ({
 
   const shouldAutoplay = autoplay && !playOnHover && !playOnView;
 
-  // Wrap Lottie rendering in try-catch to prevent crashes
-  try {
-    return (
-      <div
-        ref={containerRef}
-        className={className}
-        style={style}
-        onMouseEnter={() => playOnHover && setIsHovered(true)}
-        onMouseLeave={() => playOnHover && setIsHovered(false)}
-      >
-        <Lottie
-          lottieRef={lottieRef}
-          animationData={animationData}
-          loop={loop}
-          autoplay={shouldAutoplay}
-          style={{ width: '100%', height: '100%' }}
-        />
-      </div>
-    );
-  } catch (error) {
-    console.error('LottieAnimation render error:', error);
-    return null;
-  }
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={style}
+      onMouseEnter={() => playOnHover && setIsHovered(true)}
+      onMouseLeave={() => playOnHover && setIsHovered(false)}
+    >
+      <Lottie
+        lottieRef={lottieRef}
+        animationData={animationData}
+        loop={loop}
+        autoplay={shouldAutoplay}
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
+  );
 };
 
 export default LottieAnimation;
