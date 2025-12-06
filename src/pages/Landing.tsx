@@ -5,6 +5,7 @@ import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
 import { VoltScoutIntelligenceHub } from '@/components/landing/VoltScoutIntelligenceHub';
+import { LiveMarketsSection } from '@/components/landing/LiveMarketsSection';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -83,6 +84,13 @@ const Landing: React.FC = () => {
             <Suspense fallback={<SectionLoader />}>
               <InfrastructureHighlights />
             </Suspense>
+          </section>
+          
+          <SectionDivider color="green" />
+          
+          {/* Live Markets Section - Standalone */}
+          <section aria-label="Live Energy Markets" className="relative">
+            <LiveMarketsSection />
           </section>
           
           <SectionDivider color="blue" />

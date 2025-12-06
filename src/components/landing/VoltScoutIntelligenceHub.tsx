@@ -3,11 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Target, MapPin, Satellite, TrendingUp, Bell, Database, ArrowRight, Sparkles } from 'lucide-react';
+import { Target, MapPin, Satellite, TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
 import { ScrollReveal } from './ScrollAnimations';
-import { LiveERCOTData } from './LiveERCOTData';
-import { LiveAESOData } from './LiveAESOData';
-import { VoltScoutHeroStats } from './VoltScoutHeroStats';
 import { VoltScoutHowItWorks } from './VoltScoutHowItWorks';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 const platformFeatures = [{
@@ -95,15 +92,12 @@ export const VoltScoutIntelligenceHub = () => {
           </div>
         </ScrollReveal>
 
-        {/* Tabbed Interface */}
+        {/* Tabbed Interface - Now 2 tabs */}
         <ScrollReveal delay={200}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 bg-white border border-gray-200 p-1 rounded-lg h-auto">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-white border border-gray-200 p-1 rounded-lg h-auto max-w-md mx-auto">
               <TabsTrigger value="features" className="data-[state=active]:bg-watt-trust data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
                 Platform Features
-              </TabsTrigger>
-              <TabsTrigger value="markets" className="data-[state=active]:bg-watt-success data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
-                Live Markets
               </TabsTrigger>
               <TabsTrigger value="howto" className="data-[state=active]:bg-watt-bitcoin data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
                 How It Works
@@ -201,21 +195,6 @@ export const VoltScoutIntelligenceHub = () => {
               </div>
             </TabsContent>
 
-            {/* Live Markets Tab */}
-            <TabsContent value="markets" className="mt-0 animate-fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <LiveERCOTData />
-                <LiveAESOData />
-              </div>
-              <div className="mt-6 p-4 bg-watt-light border border-gray-200 rounded-lg">
-                <p className="text-sm text-watt-navy/70 text-center">
-                  <span className="inline-flex items-center gap-2">
-                    <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
-                    Live data updated every 5 minutes from ERCOT and AESO markets
-                  </span>
-                </p>
-              </div>
-            </TabsContent>
 
             {/* How It Works Tab */}
             <TabsContent value="howto" className="mt-0 animate-fade-in">
