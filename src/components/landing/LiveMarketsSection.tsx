@@ -106,12 +106,10 @@ export const LiveMarketsSection = () => {
         {/* Footer */}
         <ScrollReveal delay={300}>
           <div className="mt-6 p-4 bg-watt-light border border-gray-200 rounded-lg">
-            <p className="text-sm text-watt-navy/70 text-center">
-              <span className="inline-flex items-center gap-2">
-                <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
-                Data refreshes every 5 minutes from ERCOT and AESO official sources
-              </span>
-            </p>
+            <div className="text-sm text-watt-navy/70 text-center flex items-center justify-center gap-2">
+              <span className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></span>
+              <span>Data refreshes every 5 minutes from ERCOT and AESO official sources</span>
+            </div>
           </div>
         </ScrollReveal>
       </div>

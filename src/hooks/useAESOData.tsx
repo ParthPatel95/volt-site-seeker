@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { UNIFIED_ENERGY_QUERY_KEY, fetchUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
 
 interface AESOPricing {
@@ -75,16 +75,19 @@ const synthesizePricing = (aesoData: any): AESOPricing | null => {
 };
 
 export const useAESOData = () => {
-  const { data, isLoading, error, refetch: queryRefetch } = useQuery({
+  const { data, isLoading, isFetching, error, refetch: queryRefetch } = useQuery({
     queryKey: UNIFIED_ENERGY_QUERY_KEY,
     queryFn: fetchUnifiedEnergyData,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // 2 min - aligned with useUnifiedEnergyData
     gcTime: 10 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
-    retry: 2,
+    retry: 3,
+    retryDelay: (attemptIndex: number) => Math.min(3000 * Math.pow(2, attemptIndex), 30000),
+    placeholderData: keepPreviousData, // Preserve previous data during refetch
   });
 
   const aesoData = data?.aeso;
+  const hasData = !!(aesoData?.pricing || aesoData?.loadData || aesoData?.generationMix);
 
   // Wrap refetch to match expected signature
   const refetch = async () => {
@@ -96,7 +99,9 @@ export const useAESOData = () => {
     loadData: aesoData?.loadData as AESOLoadData | null,
     generationMix: aesoData?.generationMix as AESOGenerationMix | null,
     loading: isLoading,
-    connectionStatus: aesoData ? 'connected' : (error ? 'fallback' : 'connected') as 'connected' | 'fallback',
+    isFetching, // Expose for retry-aware UI
+    hasData, // Expose for stale data detection
+    connectionStatus: hasData ? 'connected' : (error ? 'fallback' : 'connected') as 'connected' | 'fallback',
     error: error?.message || null,
     refetch
   };
