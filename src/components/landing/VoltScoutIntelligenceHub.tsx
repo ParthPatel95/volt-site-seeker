@@ -74,7 +74,7 @@ export const VoltScoutIntelligenceHub = () => {
       <div className="max-w-7xl mx-auto">
         
         {/* Hero Banner */}
-        <ScrollReveal delay={100}>
+        <ScrollReveal delay={0.1}>
           <div className="text-center mb-8 md:mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-trust/10 border border-watt-trust/20 mb-4">
               <div className="w-2 h-2 bg-watt-trust rounded-full animate-pulse"></div>
@@ -93,7 +93,7 @@ export const VoltScoutIntelligenceHub = () => {
         </ScrollReveal>
 
         {/* Tabbed Interface - Now 2 tabs */}
-        <ScrollReveal delay={200}>
+        <ScrollReveal delay={0.2}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-white border border-gray-200 p-1 rounded-lg h-auto max-w-md mx-auto">
               <TabsTrigger value="features" className="data-[state=active]:bg-watt-trust data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
@@ -204,7 +204,7 @@ export const VoltScoutIntelligenceHub = () => {
         </ScrollReveal>
 
         {/* Unified CTA */}
-        <ScrollReveal delay={300}>
+        <ScrollReveal delay={0.3}>
           <div className="mt-10 md:mt-12 text-center">
             <Link to="/app">
               <Button size="lg" className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 group px-8 py-6 text-base sm:text-lg">

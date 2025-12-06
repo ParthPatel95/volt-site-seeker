@@ -74,11 +74,11 @@ const AnimatedStat = ({ value, label, delay = 0 }: StatProps) => {
 export const VoltScoutHeroStats = () => {
   return (
     <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 md:gap-12 mt-6 px-4">
-      <AnimatedStat value="50k+" label="Substations Analyzed" delay={100} />
+      <AnimatedStat value="50k+" label="Substations Analyzed" delay={0.1} />
       <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
-      <AnimatedStat value="97%" label="Predictive Accuracy" delay={200} />
+      <AnimatedStat value="97%" label="Predictive Accuracy" delay={0.2} />
       <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
-      <AnimatedStat value="2" label="Live Markets" delay={300} />
+      <AnimatedStat value="2" label="Live Markets" delay={0.3} />
     </div>
   );
 };

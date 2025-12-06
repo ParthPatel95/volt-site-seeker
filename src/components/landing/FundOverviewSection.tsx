@@ -68,7 +68,7 @@ export const FundOverviewSection = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Target Returns Card */}
-          <ScrollReveal delay={100} direction="up">
+          <ScrollReveal delay={0.1} direction="up">
             <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
               <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-4 md:px-6">
                 <div className="flex items-center justify-between">
@@ -97,7 +97,7 @@ export const FundOverviewSection = () => {
           </ScrollReveal>
 
           {/* Current Pipeline Card */}
-          <ScrollReveal delay={200} direction="up">
+          <ScrollReveal delay={0.2} direction="up">
             <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
               <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-4 md:px-6">
                 <div className="flex items-center justify-between">
@@ -124,7 +124,7 @@ export const FundOverviewSection = () => {
           </ScrollReveal>
 
           {/* Exit Strategy Card */}
-          <ScrollReveal delay={300} direction="up">
+          <ScrollReveal delay={0.3} direction="up">
             <Card className="bg-white border-gray-200 overflow-hidden shadow-institutional hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
               <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-4 md:px-6">
                 <div className="flex items-center justify-between">

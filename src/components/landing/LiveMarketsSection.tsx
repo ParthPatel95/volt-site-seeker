@@ -54,7 +54,7 @@ export const LiveMarketsSection = () => {
     <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <ScrollReveal delay={100}>
+        <ScrollReveal delay={0.1}>
           <div className="text-center mb-8 md:mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-success/10 border border-watt-success/20 mb-4">
               <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
@@ -96,7 +96,7 @@ export const LiveMarketsSection = () => {
         </ScrollReveal>
 
         {/* Market Cards */}
-        <ScrollReveal delay={200}>
+        <ScrollReveal delay={0.2}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <LiveERCOTData />
             <LiveAESOData />
@@ -104,7 +104,7 @@ export const LiveMarketsSection = () => {
         </ScrollReveal>
 
         {/* Footer */}
-        <ScrollReveal delay={300}>
+        <ScrollReveal delay={0.3}>
           <div className="mt-6 p-4 bg-watt-light border border-gray-200 rounded-lg">
             <div className="text-sm text-watt-navy/70 text-center flex items-center justify-center gap-2">
               <span className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></span>
