@@ -301,6 +301,71 @@
   animation: label-appear 0.6s ease-out;
 }
 
+/* Typing cursor blink */
+@keyframes cursor-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-cursor-blink {
+  animation: cursor-blink 0.8s ease-in-out infinite;
+}
+
+/* 3D Tilt hover effect */
+.tilt-card {
+  transition: transform 0.2s ease-out;
+  transform-style: preserve-3d;
+}
+
+/* Spiral reveal animation */
+@keyframes spiral-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+.animate-spiral-in {
+  animation: spiral-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Glow pulse for stats */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 15px currentColor, 0 0 25px currentColor;
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Connector line animation */
+@keyframes draw-line {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw-line {
+  stroke-dasharray: 100;
+  animation: draw-line 1s ease-out forwards;
+}
+
 /* Reduced motion fallbacks */
 @media (prefers-reduced-motion: reduce) {
   .animate-server-blink,
@@ -312,7 +377,12 @@
   .animate-ken-burns,
   .animate-hotspot-pulse,
   .animate-scanline,
-  .animate-label-appear {
+  .animate-label-appear,
+  .animate-float-particle,
+  .animate-cursor-blink,
+  .animate-spiral-in,
+  .animate-glow-pulse,
+  .animate-draw-line {
     animation: none;
     opacity: 0.6;
   }
@@ -323,5 +393,9 @@
   
   .hover-glow:hover {
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+  }
+
+  .tilt-card {
+    transform: none !important;
   }
 }
