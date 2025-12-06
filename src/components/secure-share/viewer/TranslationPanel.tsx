@@ -312,11 +312,15 @@ export function TranslationPanel({
         throw new Error('No text available to translate');
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-document`, {
+      // Use hardcoded Supabase URL (streaming requires direct fetch, not supabase.functions.invoke)
+      const SUPABASE_URL = 'https://ktgosplhknmnyagxrgbe.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE';
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/translate-document`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
           text: textToTranslate,
