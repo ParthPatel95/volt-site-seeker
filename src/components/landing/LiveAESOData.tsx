@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Zap, Activity, DollarSign } from 'lucide-react';
+import { TrendingUp, Zap, Activity, DollarSign, AlertCircle } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
+import { LiveMarketSkeleton } from './LiveMarketSkeleton';
 
 export const LiveAESOData = () => {
-  const { pricing, generationMix, loadData, loading } = useAESOData();
+  const { pricing, generationMix, loadData, loading, error } = useAESOData();
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -17,6 +18,30 @@ export const LiveAESOData = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Show skeleton during initial load
+  if (loading && !pricing && !generationMix && !loadData) {
+    return <LiveMarketSkeleton />;
+  }
+
+  // Check if we have any data to display
+  const hasData = pricing || generationMix || loadData;
+
+  // Format value or show placeholder
+  const formatPrice = (value: number | undefined | null) => {
+    if (value === undefined || value === null) return '--';
+    return `$${value.toFixed(2)}`;
+  };
+
+  const formatMW = (value: number | undefined | null) => {
+    if (value === undefined || value === null) return '--';
+    return value.toLocaleString();
+  };
+
+  const formatPercent = (value: number | undefined | null) => {
+    if (value === undefined || value === null) return '--';
+    return `${value.toFixed(1)}%`;
+  };
+
   return (
     <Card className="bg-white backdrop-blur-sm border border-gray-200 hover:border-watt-success/30 transition-all duration-300 group shadow-institutional">
       <CardHeader className="pb-4">
@@ -26,85 +51,88 @@ export const LiveAESOData = () => {
             <CardTitle className="text-watt-navy text-xl">AESO Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
-            <Badge className="bg-watt-success/20 text-watt-success text-xs border-watt-success/30">Live</Badge>
+            {hasData ? (
+              <>
+                <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
+                <Badge className="bg-watt-success/20 text-watt-success text-xs border-watt-success/30">Live</Badge>
+              </>
+            ) : error ? (
+              <>
+                <AlertCircle className="w-4 h-4 text-watt-bitcoin" />
+                <Badge className="bg-watt-bitcoin/20 text-watt-bitcoin text-xs border-watt-bitcoin/30">Unavailable</Badge>
+              </>
+            ) : (
+              <Badge className="bg-gray-200 text-gray-600 text-xs">Loading...</Badge>
+            )}
           </div>
         </div>
-        <p className="text-watt-navy/70 text-sm">Alberta Electricity System Operator</p>
+        <p className="text-watt-navy/70 text-sm">Alberta Electric System Operator</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-2 border-watt-success border-t-transparent rounded-full animate-spin"></div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30 ${isAnimating && pricing?.current_price ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <DollarSign className="w-4 h-4 text-watt-trust flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">Current Price</span>
+            </div>
+            <div className="text-lg font-bold text-watt-trust">
+              {formatPrice(pricing?.current_price)}/MWh
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-              <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30 ${isAnimating ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <DollarSign className="w-4 h-4 text-watt-trust flex-shrink-0" />
-                  <span className="text-xs text-watt-navy/60">Current Price</span>
-                </div>
-                <div className="text-lg font-bold text-watt-trust">
-                  ${pricing?.current_price?.toFixed(2) || '0.00'}/MWh
-                </div>
+          
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && generationMix?.total_generation_mw ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <Zap className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">Total Generation</span>
+            </div>
+            <div className="text-lg font-bold text-watt-bitcoin">
+              {formatMW(generationMix?.total_generation_mw)} MW
+            </div>
+          </div>
+          
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/30 ${isAnimating && generationMix?.renewable_percentage ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-watt-success flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">Renewables</span>
+            </div>
+            <div className="text-lg font-bold text-watt-success">
+              {formatPercent(generationMix?.renewable_percentage)}
+            </div>
+          </div>
+          
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && loadData?.current_demand_mw ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <Activity className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
+              <span className="text-xs text-watt-navy/60">Current Demand</span>
+            </div>
+            <div className="text-lg font-bold text-watt-bitcoin">
+              {formatMW(loadData?.current_demand_mw)} MW
+            </div>
+          </div>
+        </div>
+
+        {generationMix && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-watt-navy">Generation Mix</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-watt-navy/70">Natural Gas</span>
+                <span className="text-sm font-medium text-watt-navy">{formatMW(generationMix.natural_gas_mw)} MW</span>
               </div>
-              
-              <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <Zap className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
-                  <span className="text-xs text-watt-navy/60">Total Generation</span>
-                </div>
-                <div className="text-lg font-bold text-watt-bitcoin">
-                  {generationMix?.total_generation_mw?.toLocaleString() || '0'} MW
-                </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-watt-navy/70">Wind</span>
+                <span className="text-sm font-medium text-watt-success">{formatMW(generationMix.wind_mw)} MW</span>
               </div>
-              
-              <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/30 ${isAnimating ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-watt-success flex-shrink-0" />
-                  <span className="text-xs text-watt-navy/60">Renewables</span>
-                </div>
-                <div className="text-lg font-bold text-watt-success">
-                  {generationMix?.renewable_percentage?.toFixed(1) || '0.0'}%
-                </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-watt-navy/70">Hydro</span>
+                <span className="text-sm font-medium text-watt-trust">{formatMW(generationMix.hydro_mw)} MW</span>
               </div>
-              
-              <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <Activity className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
-                  <span className="text-xs text-watt-navy/60">Current Demand</span>
-                </div>
-                <div className="text-lg font-bold text-watt-bitcoin">
-                  {loadData?.current_demand_mw?.toLocaleString() || '0'} MW
-                </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-watt-navy/70">Solar</span>
+                <span className="text-sm font-medium text-watt-bitcoin">{formatMW(generationMix.solar_mw)} MW</span>
               </div>
             </div>
-
-            {generationMix && (
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-watt-navy">Generation Mix</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-watt-navy/70">Natural Gas</span>
-                    <span className="text-sm font-medium text-watt-navy">{generationMix.natural_gas_mw} MW</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-watt-navy/70">Wind</span>
-                    <span className="text-sm font-medium text-watt-success">{generationMix.wind_mw} MW</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-watt-navy/70">Hydro</span>
-                    <span className="text-sm font-medium text-watt-trust">{generationMix.hydro_mw} MW</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-watt-navy/70">Solar</span>
-                    <span className="text-sm font-medium text-watt-bitcoin">{generationMix.solar_mw} MW</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </CardContent>
     </Card>

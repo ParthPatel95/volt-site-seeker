@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Zap, TrendingUp, Activity, DollarSign } from 'lucide-react';
+import { Zap, TrendingUp, Activity, DollarSign, AlertCircle } from 'lucide-react';
 import { useERCOTData } from '@/hooks/useERCOTData';
+import { LiveMarketSkeleton } from './LiveMarketSkeleton';
 
 export const LiveERCOTData = () => {
-  const { pricing, loadData, loading } = useERCOTData();
+  const { pricing, loadData, loading, error } = useERCOTData();
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -17,6 +18,25 @@ export const LiveERCOTData = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Show skeleton during initial load
+  if (loading && !pricing && !loadData) {
+    return <LiveMarketSkeleton />;
+  }
+
+  // Check if we have any data to display
+  const hasData = pricing || loadData;
+
+  // Format value or show placeholder
+  const formatPrice = (value: number | undefined | null) => {
+    if (value === undefined || value === null) return '--';
+    return `$${value.toFixed(2)}`;
+  };
+
+  const formatMW = (value: number | undefined | null) => {
+    if (value === undefined || value === null) return '--';
+    return value.toLocaleString();
+  };
+
   return (
     <Card className="bg-white backdrop-blur-sm border border-gray-200 hover:border-watt-trust/30 transition-all duration-300 group shadow-institutional">
       <CardHeader className="pb-4">
@@ -26,58 +46,63 @@ export const LiveERCOTData = () => {
             <CardTitle className="text-watt-navy text-xl">ERCOT Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-watt-trust rounded-full animate-pulse"></div>
-            <Badge className="bg-watt-trust/20 text-watt-trust text-xs border-watt-trust/30">Live</Badge>
+            {hasData ? (
+              <>
+                <div className="w-2 h-2 bg-watt-trust rounded-full animate-pulse"></div>
+                <Badge className="bg-watt-trust/20 text-watt-trust text-xs border-watt-trust/30">Live</Badge>
+              </>
+            ) : error ? (
+              <>
+                <AlertCircle className="w-4 h-4 text-watt-bitcoin" />
+                <Badge className="bg-watt-bitcoin/20 text-watt-bitcoin text-xs border-watt-bitcoin/30">Unavailable</Badge>
+              </>
+            ) : (
+              <Badge className="bg-gray-200 text-gray-600 text-xs">Loading...</Badge>
+            )}
           </div>
         </div>
         <p className="text-watt-navy/70 text-sm">Electric Reliability Council of Texas</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-2 border-watt-trust border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <>
         {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30 ${isAnimating ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30 ${isAnimating && pricing?.current_price ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <DollarSign className="w-4 h-4 text-watt-trust flex-shrink-0" />
               <span className="text-xs text-watt-navy/60">Current Price</span>
             </div>
             <div className="text-lg font-bold text-watt-trust">
-              ${pricing?.current_price?.toFixed(2) || '0.00'}/MWh
+              {formatPrice(pricing?.current_price)}/MWh
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && pricing?.average_price ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
               <span className="text-xs text-watt-navy/60">Average Price</span>
             </div>
             <div className="text-lg font-bold text-watt-bitcoin">
-              ${pricing?.average_price?.toFixed(2) || '0.00'}/MWh
+              {formatPrice(pricing?.average_price)}/MWh
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/30 ${isAnimating ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/30 ${isAnimating && loadData?.current_demand_mw ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <Activity className="w-4 h-4 text-watt-success flex-shrink-0" />
               <span className="text-xs text-watt-navy/60">Current Demand</span>
             </div>
             <div className="text-lg font-bold text-watt-success">
-              {loadData?.current_demand_mw?.toLocaleString() || '0'} MW
+              {formatMW(loadData?.current_demand_mw)} MW
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && loadData?.peak_forecast_mw ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <Zap className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
               <span className="text-xs text-watt-navy/60">Peak Forecast</span>
             </div>
             <div className="text-lg font-bold text-watt-bitcoin">
-              {loadData?.peak_forecast_mw?.toLocaleString() || '0'} MW
+              {formatMW(loadData?.peak_forecast_mw)} MW
             </div>
           </div>
         </div>
@@ -101,16 +126,14 @@ export const LiveERCOTData = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-watt-navy/70">Peak Price</span>
-                <span className="text-sm font-medium text-watt-navy">${pricing.peak_price?.toFixed(2)}/MWh</span>
+                <span className="text-sm font-medium text-watt-navy">{formatPrice(pricing.peak_price)}/MWh</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-watt-navy/70">Off-Peak Price</span>
-                <span className="text-sm font-medium text-watt-navy">${pricing.off_peak_price?.toFixed(2)}/MWh</span>
+                <span className="text-sm font-medium text-watt-navy">{formatPrice(pricing.off_peak_price)}/MWh</span>
               </div>
             </div>
           </div>
-        )}
-        </>
         )}
       </CardContent>
     </Card>

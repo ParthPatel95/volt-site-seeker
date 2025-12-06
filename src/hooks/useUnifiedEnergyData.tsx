@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 // Shared query key - all market hooks will use this same key for cache sharing
 export const UNIFIED_ENERGY_QUERY_KEY = ['unified-energy-data'];
 
+const CACHE_KEY = 'wattbyte-energy-data-cache';
+
 export interface UnifiedEnergyData {
   success: boolean;
   ercot?: any;
@@ -17,13 +19,58 @@ export interface UnifiedEnergyData {
   error?: string;
 }
 
+interface CachedData {
+  data: UnifiedEnergyData;
+  timestamp: number;
+}
+
+// Get cached data from localStorage
+const getCachedData = (): UnifiedEnergyData | undefined => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsed: CachedData = JSON.parse(cached);
+      // Cache is valid for 30 minutes
+      if (Date.now() - parsed.timestamp < 30 * 60 * 1000) {
+        return parsed.data;
+      }
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return undefined;
+};
+
+// Save data to localStorage cache
+const setCachedData = (data: UnifiedEnergyData) => {
+  try {
+    const cacheEntry: CachedData = {
+      data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheEntry));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
+
 // Shared query function
 export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
   const { data, error } = await supabase.functions.invoke('energy-data-integration');
   
   if (error) {
     console.error('Unified energy data fetch error:', error);
+    // Return cached data if available on error
+    const cached = getCachedData();
+    if (cached) {
+      return cached;
+    }
     throw error;
+  }
+  
+  // Cache successful response
+  if (data?.success) {
+    setCachedData(data);
   }
   
   return data as UnifiedEnergyData;
@@ -33,12 +80,13 @@ export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
 const sharedQueryConfig = {
   queryKey: UNIFIED_ENERGY_QUERY_KEY,
   queryFn: fetchUnifiedEnergyData,
-  staleTime: 5 * 60 * 1000, // 5 minutes - data is fresh
+  staleTime: 2 * 60 * 1000, // 2 minutes - data is fresh
   gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
-  refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
+  refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   retry: 2,
   retryDelay: (attemptIndex: number) => Math.min(1000 * Math.pow(2, attemptIndex), 30000),
   placeholderData: keepPreviousData, // Show previous data while fetching new data
+  initialData: getCachedData, // Preload from localStorage for instant display
 };
 
 // Main unified hook - call this once at the top level
