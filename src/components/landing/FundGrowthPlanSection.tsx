@@ -196,7 +196,7 @@ export const FundGrowthPlanSection = () => {
         </ScrollReveal>
         
         {/* Timeline Visual */}
-        <ScrollReveal direction="up" delay={100}>
+        <ScrollReveal direction="up" delay={0.1}>
           <div className="mb-6 md:mb-8 bg-white rounded-xl p-6 border border-gray-200 shadow-institutional">
             <div className="flex items-center justify-between max-w-4xl mx-auto">
               <div className="flex flex-col items-center">
@@ -229,7 +229,7 @@ export const FundGrowthPlanSection = () => {
         {/* Individual Fund Details */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           {fundDetails.map((fund, index) => (
-            <ScrollReveal key={index} delay={index * 100} direction="up">
+            <ScrollReveal key={index} delay={index * 0.1} direction="up">
               <Card className="bg-white border-gray-200 shadow-institutional overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
                 <CardHeader className="pb-2 sm:pb-3 p-3 sm:px-4 md:px-6">
                   <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">

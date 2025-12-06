@@ -94,7 +94,7 @@ export const ProblemSolutionSection = () => {
           </div>
 
           {/* Center Bridge */}
-          <ScrollReveal direction="fade" delay={200} className="hidden lg:flex flex-col items-center justify-center">
+          <ScrollReveal direction="fade" delay={0.2} className="hidden lg:flex flex-col items-center justify-center">
             <div className="relative">
               <div className="bg-watt-light rounded-2xl p-8 border border-gray-200 shadow-institutional">
                 <div className="flex flex-col items-center gap-4">
