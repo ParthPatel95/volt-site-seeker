@@ -44,11 +44,14 @@ export function FullScreenDocumentViewer({
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < allDocuments.length - 1;
 
-  // Cleanup on unmount
+  // Cleanup on unmount - set flags BEFORE clearing timeouts
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
+      // Set unmounted flag first to prevent any pending callbacks
       isMountedRef.current = false;
+      
+      // Then clear timeout
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
         transitionTimeoutRef.current = null;
@@ -60,12 +63,22 @@ export function FullScreenDocumentViewer({
   const handleSafeBack = useCallback(() => {
     if (isTransitioning) return;
     
+    // Mark as transitioning and unmounting immediately to prevent any state updates
     setIsTransitioning(true);
+    isMountedRef.current = false;
+    
+    // Clear any existing timeout
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
     
     // Small delay to allow PDF cleanup before navigation
     transitionTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
+      try {
         onBack();
+      } catch (e) {
+        // Ignore errors if parent is already unmounted
+        console.log('[FullScreenViewer] Back navigation completed or parent unmounted');
       }
     }, 150);
   }, [isTransitioning, onBack]);
