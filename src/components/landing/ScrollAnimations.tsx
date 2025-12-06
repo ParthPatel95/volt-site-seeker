@@ -1,5 +1,5 @@
-
 import { useEffect, useRef, ReactNode } from 'react';
+import './landing-animations.css';
 
 interface ScrollRevealProps {
   children: ReactNode;
