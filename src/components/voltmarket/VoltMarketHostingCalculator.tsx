@@ -60,9 +60,9 @@ export const VoltMarketHostingCalculator = () => {
 
     if (!hashrateValue || !powerDrawValue || !investmentValue) return;
 
-    // Mining constants
-    const networkHashrate = 450e18; // ~450 EH/s
-    const blockReward = 6.25; // BTC
+    // Bitcoin Network Constants (Updated: December 2024)
+    const networkHashrate = 750e18; // ~750 EH/s network hashrate
+    const blockReward = 3.125; // Post-halving (April 2024)
     const blocksPerDay = 144; // 10 min average
     
     // Calculate daily BTC earnings
