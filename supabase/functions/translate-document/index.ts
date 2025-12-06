@@ -72,7 +72,9 @@ Deno.serve(async (req) => {
       'de': 'German',
       'pt': 'Portuguese',
       'ru': 'Russian',
-      'ar': 'Arabic'
+      'ar': 'Arabic',
+      'hi': 'Hindi',
+      'gu': 'Gujarati'
     };
 
     const targetLangName = languageNames[targetLanguage] || targetLanguage;
