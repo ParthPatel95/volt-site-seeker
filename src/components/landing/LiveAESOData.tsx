@@ -6,8 +6,11 @@ import { useAESOData } from '@/hooks/useAESOData';
 import { LiveMarketSkeleton } from './LiveMarketSkeleton';
 
 export const LiveAESOData = () => {
-  const { pricing, generationMix, loadData, loading, error } = useAESOData();
+  const { pricing, generationMix, loadData, loading, isFetching, hasData, error } = useAESOData();
   const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Track if we're retrying (fetching but had previous data or had error)
+  const isRetrying = isFetching && !loading;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -23,8 +26,7 @@ export const LiveAESOData = () => {
     return <LiveMarketSkeleton />;
   }
 
-  // Check if we have any data to display
-  const hasData = pricing || generationMix || loadData;
+  // hasData is now provided by the hook
 
   // Format value or show placeholder
   const formatPrice = (value: number | undefined | null) => {
@@ -51,7 +53,12 @@ export const LiveAESOData = () => {
             <CardTitle className="text-watt-navy text-xl">AESO Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            {hasData ? (
+            {isRetrying ? (
+              <>
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <Badge className="bg-yellow-500/20 text-yellow-600 text-xs border-yellow-500/30">Retrying...</Badge>
+              </>
+            ) : hasData ? (
               <>
                 <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
                 <Badge className="bg-watt-success/20 text-watt-success text-xs border-watt-success/30">Live</Badge>
