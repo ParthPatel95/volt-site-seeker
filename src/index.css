@@ -468,6 +468,12 @@
   .animate-count-up {
     animation: countUp 0.8s ease-out forwards;
   }
+
+  /* ScrollReveal animate-in class */
+  .animate-in {
+    opacity: 1 !important;
+    transform: translateY(0) translateX(0) !important;
+  }
 }
 
 /* Enhanced scroll behavior */

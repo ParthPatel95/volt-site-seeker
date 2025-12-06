@@ -112,7 +112,7 @@ export const HostingPackagesSection = () => {
                   {/* Shimmer effect on popular card */}
                   {pkg.popular && (
                     <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-watt-bitcoin/5 to-transparent" />
+                      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-watt-bitcoin/5 to-transparent" />
                     </div>
                   )}
                   
