@@ -17,13 +17,15 @@ export const ScrollReveal = ({
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const delayMs = delay * 1000; // Convert seconds to milliseconds
+    
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setTimeout(() => {
               entry.target.classList.add('animate-in');
-            }, delay);
+            }, delayMs);
           }
         });
       },
@@ -37,7 +39,17 @@ export const ScrollReveal = ({
       observer.observe(elementRef.current);
     }
 
-    return () => observer.disconnect();
+    // Fallback: ensure visibility after max wait time
+    const fallbackTimeout = setTimeout(() => {
+      if (elementRef.current) {
+        elementRef.current.classList.add('animate-in');
+      }
+    }, delayMs + 3000);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackTimeout);
+    };
   }, [delay]);
 
   const getInitialTransform = () => {
@@ -56,7 +68,7 @@ export const ScrollReveal = ({
       ref={elementRef}
       className={`transition-all duration-700 ease-out ${getInitialTransform()} ${className}`}
       style={{
-        transitionDelay: `${delay}ms`
+        transitionDelay: `${delay * 1000}ms`
       }}
     >
       {children}
