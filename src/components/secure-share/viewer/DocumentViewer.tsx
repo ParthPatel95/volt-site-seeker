@@ -104,7 +104,10 @@ export function DocumentViewer({
   // Ref to track current PDF proxy for cleanup (prevents race conditions)
   const pdfProxyRef = useRef<any>(null);
   
-  // Touch gesture state
+  // Refs for cleanup guards and timeout management
+  const isMountedRef = useRef(true);
+  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
   const [touchStartZoom, setTouchStartZoom] = useState<number>(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -147,12 +150,58 @@ export function DocumentViewer({
   // PDFs, images, Office documents, and text files support translation
   const supportsTranslation = isPdf || isImage || isOffice || isText;
 
-  // Cleanup PDF.js resources on unmount
+  // Comprehensive cleanup on unmount - prevents crashes when navigating back
   useEffect(() => {
+    isMountedRef.current = true;
+    
     return () => {
-      if (pdfjs.GlobalWorkerOptions.workerSrc) {
-        console.log('[PDF.js] Cleaning up resources');
+      console.log('[DocumentViewer] Unmounting - starting cleanup');
+      isMountedRef.current = false;
+      
+      // Clear all timeouts first
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current);
+        safetyTimeoutRef.current = null;
       }
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+      
+      // Safe PDF proxy cleanup with null check and try-catch
+      const proxyToDestroy = pdfProxyRef.current;
+      pdfProxyRef.current = null;
+      
+      if (proxyToDestroy) {
+        try {
+          proxyToDestroy.destroy().catch(() => {});
+        } catch (e) {
+          // Ignore cleanup errors - PDF may already be destroyed
+        }
+      }
+      
+      // Delayed canvas cleanup to avoid race conditions with React unmount
+      setTimeout(() => {
+        try {
+          if (containerRef.current) {
+            const canvases = containerRef.current.querySelectorAll('canvas');
+            canvases.forEach(canvas => {
+              try {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                canvas.width = 0;
+                canvas.height = 0;
+              } catch (e) {
+                // Ignore individual canvas errors
+              }
+            });
+          }
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }, 50);
     };
   }, []);
 
@@ -175,13 +224,24 @@ export function DocumentViewer({
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
     
-    // Give pdf.js time to clean up before rendering new document
-    const transitionTimer = setTimeout(() => {
-      console.log('[DocumentViewer] Transition complete, ready to render');
-      setIsDocumentTransitioning(false);
-    }, 300); // 300ms buffer for cleanup
+    // Allow time for cleanup before rendering new document
+    // Longer buffer on mobile for slower cleanup
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const bufferTime = isMobileDevice ? 500 : 300;
     
-    return () => clearTimeout(transitionTimer);
+    transitionTimerRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        console.log('[DocumentViewer] Transition complete, ready to render');
+        setIsDocumentTransitioning(false);
+      }
+    }, bufferTime);
+    
+    return () => {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+    };
   }, [documentUrl]);
 
   // Manual canvas cleanup on page change (helps iOS memory management)
@@ -284,9 +344,15 @@ export function DocumentViewer({
   }, [isPdf, documentUrl]);
   
   // Safety timeout: Uses documentLoaded state to fix race condition (not numPages)
+  // Longer timeout on mobile for slower connections
   useEffect(() => {
     if (isPdf && !useNativePdfViewer && !documentLoaded && initialLoadRef.current) {
-      const timeout = setTimeout(() => {
+      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const timeoutDuration = isMobileDevice ? 20000 : 12000; // 20s mobile, 12s desktop
+      
+      safetyTimeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return; // Don't update state if unmounted
+        
         console.warn('[DocumentViewer] Initial load timeout - falling back to native viewer');
         setPageLoadTimeout(true);
         setUseNativePdfViewer(true);
@@ -295,9 +361,14 @@ export function DocumentViewer({
           title: 'Loading Timeout',
           description: 'Switched to browser PDF viewer for better performance.',
         });
-      }, 12000); // 12 second timeout for initial load only
+      }, timeoutDuration);
       
-      return () => clearTimeout(timeout);
+      return () => {
+        if (safetyTimeoutRef.current) {
+          clearTimeout(safetyTimeoutRef.current);
+          safetyTimeoutRef.current = null;
+        }
+      };
     }
   }, [isPdf, useNativePdfViewer, documentLoaded, toast]);
 

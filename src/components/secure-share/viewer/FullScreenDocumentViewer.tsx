@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, X, FileText, AlertCircle } from 'lucide-react';
@@ -27,6 +27,11 @@ export function FullScreenDocumentViewer({
   const [showSidebar, setShowSidebar] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Refs for cleanup and transition management
+  const isMountedRef = useRef(true);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Safe access to document properties (computed before hooks that depend on them)
   const documentId = document?.id || null;
@@ -38,6 +43,32 @@ export function FullScreenDocumentViewer({
   const currentIndex = documentId ? allDocuments.findIndex(doc => doc.id === documentId) : -1;
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < allDocuments.length - 1;
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // Safe back handler with transition guard to prevent crashes during cleanup
+  const handleSafeBack = useCallback(() => {
+    if (isTransitioning) return;
+    
+    setIsTransitioning(true);
+    
+    // Small delay to allow PDF cleanup before navigation
+    transitionTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        onBack();
+      }
+    }, 150);
+  }, [isTransitioning, onBack]);
 
   const handlePrevious = useCallback(() => {
     if (hasPrevious && currentIndex > 0) {
@@ -101,7 +132,7 @@ export function FullScreenDocumentViewer({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onBack();
+        handleSafeBack();
       } else if (e.key === 'ArrowLeft' && hasPrevious) {
         handlePrevious();
       } else if (e.key === 'ArrowRight' && hasNext) {
@@ -111,7 +142,7 @@ export function FullScreenDocumentViewer({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onBack, hasPrevious, hasNext, handlePrevious, handleNext]);
+  }, [handleSafeBack, hasPrevious, hasNext, handlePrevious, handleNext]);
 
   // CRITICAL: Safety check for invalid document - AFTER all hooks to follow React rules
   if (!document || !documentId) {
@@ -145,11 +176,12 @@ export function FullScreenDocumentViewer({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onBack}
+            onClick={handleSafeBack}
+            disabled={isTransitioning}
             className="shrink-0 touch-manipulation min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">Back</span>}
+            {!isMobile && <span className="ml-2">{isTransitioning ? 'Loading...' : 'Back'}</span>}
           </Button>
 
           {/* Center: Document Name & Position */}
