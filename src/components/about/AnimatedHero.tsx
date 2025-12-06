@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { LottieAnimation } from '@/components/ui/LottieAnimation';
+import '@/components/landing/landing-animations.css';
 
 interface AnimatedHeroProps {
   className?: string;

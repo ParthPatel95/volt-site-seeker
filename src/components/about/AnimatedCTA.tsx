@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LottieAnimation } from '@/components/ui/LottieAnimation';
 import { ArrowRight } from 'lucide-react';
+import '@/components/landing/landing-animations.css';
 
 interface AnimatedCTAProps {
   onContactClick: () => void;
