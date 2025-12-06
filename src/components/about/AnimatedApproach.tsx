@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { LottieAnimation } from '@/components/ui/LottieAnimation';
+import { Search, BarChart3, Handshake, Wrench, TrendingUp } from 'lucide-react';
 
 interface ApproachStep {
   title: string;
   description: string;
   step: string;
-  lottieUrl: string;
+  icon: React.ReactNode;
 }
 
 const approachSteps: ApproachStep[] = [
@@ -14,37 +14,36 @@ const approachSteps: ApproachStep[] = [
     step: '01',
     title: 'Identify',
     description: 'AI-powered site discovery with VoltScout platform',
-    lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_fcfjwiyb.json', // Search animation
+    icon: <Search className="w-8 h-8" />,
   },
   {
     step: '02',
     title: 'Analyze',
     description: 'Deep due diligence on stranded power assets',
-    lottieUrl: 'https://assets9.lottiefiles.com/packages/lf20_qp1q7mct.json', // Analytics animation
+    icon: <BarChart3 className="w-8 h-8" />,
   },
   {
     step: '03',
     title: 'Acquire',
     description: 'Strategic power infrastructure acquisition',
-    lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_5tl1xxnz.json', // Handshake animation
+    icon: <Handshake className="w-8 h-8" />,
   },
   {
     step: '04',
     title: 'Develop',
     description: 'Transform to data center-ready sites',
-    lottieUrl: 'https://assets7.lottiefiles.com/packages/lf20_ysas4vcp.json', // Building animation
+    icon: <Wrench className="w-8 h-8" />,
   },
   {
     step: '05',
     title: 'Optimize',
     description: 'Maximize value through AI/HPC/BTC operations',
-    lottieUrl: 'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json', // Rocket animation
+    icon: <TrendingUp className="w-8 h-8" />,
   },
 ];
 
 export const AnimatedApproach: React.FC = () => {
   const [visibleItems, setVisibleItems] = useState<Set<number>>(new Set());
-  const [activeStep, setActiveStep] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -55,7 +54,6 @@ export const AnimatedApproach: React.FC = () => {
           const index = parseInt(entry.target.getAttribute('data-index') || '0');
           if (entry.isIntersecting) {
             setVisibleItems((prev) => new Set([...prev, index]));
-            setActiveStep((prev) => Math.max(prev, index));
           }
         });
       },
@@ -132,14 +130,9 @@ export const AnimatedApproach: React.FC = () => {
                     {step.step}
                   </div>
 
-                  {/* Lottie icon */}
-                  <div className="w-16 h-16 mb-4 relative z-10">
-                    <LottieAnimation
-                      src={step.lottieUrl}
-                      className="w-full h-full"
-                      loop={true}
-                      playOnView={true}
-                    />
+                  {/* Icon */}
+                  <div className="w-16 h-16 mb-4 relative z-10 bg-watt-trust/10 rounded-lg flex items-center justify-center text-watt-trust">
+                    {step.icon}
                   </div>
 
                   {/* Content */}

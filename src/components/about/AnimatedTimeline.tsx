@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { LottieAnimation } from '@/components/ui/LottieAnimation';
+import { Rocket, TrendingUp, Globe } from 'lucide-react';
 
 interface TimelineItem {
   date: string;
   title: string;
   description: string;
-  lottieUrl: string;
+  icon: React.ReactNode;
   color: 'bitcoin' | 'trust' | 'success';
 }
 
@@ -15,21 +15,21 @@ const timelineData: TimelineItem[] = [
     date: 'Jan 2023',
     title: 'Founded on Opportunity',
     description: 'Identified the massive power-to-data center arbitrage opportunity, combining stranded energy assets with digital infrastructure demand.',
-    lottieUrl: 'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json',
+    icon: <Rocket className="w-6 h-6" />,
     color: 'bitcoin',
   },
   {
     date: '675MW+',
     title: 'Proven Track Record',
     description: 'Our team brought 675MW+ of combined deal experience and 275MW+ of transactions led before founding WattByte.',
-    lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_xlmz9xwm.json',
+    icon: <TrendingUp className="w-6 h-6" />,
     color: 'trust',
   },
   {
     date: '6 Countries',
     title: 'Global Expansion',
     description: 'Rapidly expanded from North America to 6 countries with 1,429MW global pipeline across strategic markets.',
-    lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_bq485nmk.json',
+    icon: <Globe className="w-6 h-6" />,
     color: 'success',
   },
 ];
@@ -68,7 +68,6 @@ export const AnimatedTimeline: React.FC = () => {
       const rect = timelineRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
       
-      // Calculate progress through the timeline section
       const start = rect.top - windowHeight;
       const end = rect.bottom;
       const current = -start;
@@ -77,7 +76,6 @@ export const AnimatedTimeline: React.FC = () => {
       setProgress(newProgress);
     };
 
-    // Observer for individual items
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -115,7 +113,6 @@ export const AnimatedTimeline: React.FC = () => {
           </p>
         </div>
 
-        {/* Timeline container */}
         <div className="relative">
           {/* Vertical progress line - desktop */}
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-gray-200 -translate-x-1/2">
@@ -125,7 +122,6 @@ export const AnimatedTimeline: React.FC = () => {
             />
           </div>
 
-          {/* Timeline items */}
           <div className="space-y-12 md:space-y-24">
             {timelineData.map((item, index) => {
               const colors = colorClasses[item.color];
@@ -141,7 +137,6 @@ export const AnimatedTimeline: React.FC = () => {
                     isEven ? 'md:flex-row' : 'md:flex-row-reverse'
                   }`}
                 >
-                  {/* Content card */}
                   <div
                     className={`flex-1 transition-all duration-700 ${
                       isVisible
@@ -162,23 +157,16 @@ export const AnimatedTimeline: React.FC = () => {
                     </Card>
                   </div>
 
-                  {/* Center node with Lottie */}
                   <div
                     className={`relative z-10 flex-shrink-0 transition-all duration-500 ${
                       isVisible ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
                     }`}
                   >
-                    <div className={`w-20 h-20 ${colors.bgLight} rounded-full flex items-center justify-center border-4 border-white shadow-lg`}>
-                      <LottieAnimation
-                        src={item.lottieUrl}
-                        className="w-12 h-12"
-                        loop={true}
-                        playOnView={true}
-                      />
+                    <div className={`w-20 h-20 ${colors.bgLight} rounded-full flex items-center justify-center border-4 border-white shadow-lg ${colors.text}`}>
+                      {item.icon}
                     </div>
                   </div>
 
-                  {/* Spacer for desktop layout */}
                   <div className="hidden md:block flex-1" />
                 </div>
               );

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LottieAnimation } from '@/components/ui/LottieAnimation';
+import { Brain, Award, Globe, Zap, Layers } from 'lucide-react';
 
 interface Advantage {
   title: string;
   description: string;
   color: 'trust' | 'bitcoin' | 'success';
-  lottieUrl: string;
+  icon: React.ReactNode;
   size?: 'large' | 'normal';
 }
 
@@ -14,32 +14,32 @@ const advantages: Advantage[] = [
     title: 'AI-Powered Intelligence',
     description: 'VoltScout proprietary platform for stranded asset discovery with 97% accuracy',
     color: 'trust',
-    lottieUrl: 'https://assets3.lottiefiles.com/packages/lf20_fcfjwiyb.json',
+    icon: <Brain className="w-8 h-8" />,
     size: 'large',
   },
   {
     title: 'Deep Operator Experience',
     description: '675MW+ track record with proven infrastructure development',
     color: 'bitcoin',
-    lottieUrl: 'https://assets2.lottiefiles.com/packages/lf20_v1yudlrx.json',
+    icon: <Award className="w-6 h-6" />,
   },
   {
     title: 'Global Network',
     description: 'LP relationships across Asia, MENA, and emerging markets',
     color: 'success',
-    lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_bq485nmk.json',
+    icon: <Globe className="w-6 h-6" />,
   },
   {
     title: 'Fast Execution',
     description: 'Established relationships with utilities and regulators',
     color: 'trust',
-    lottieUrl: 'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json',
+    icon: <Zap className="w-6 h-6" />,
   },
   {
     title: 'Dual Revenue Streams',
     description: 'Flexible operations between BTC mining and AI/HPC hosting',
     color: 'bitcoin',
-    lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_kyu0xqpq.json',
+    icon: <Layers className="w-6 h-6" />,
   },
 ];
 
@@ -88,7 +88,6 @@ export const AnimatedAdvantages: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Spiral animation order
   const spiralOrder = [0, 1, 3, 4, 2];
 
   return (
@@ -150,14 +149,9 @@ export const AnimatedAdvantages: React.FC = () => {
                 </div>
 
                 <div className={`relative z-10 p-6 ${isLarge ? 'md:p-8' : ''} flex flex-col h-full`}>
-                  {/* Lottie icon */}
-                  <div className={`${isLarge ? 'w-16 h-16' : 'w-12 h-12'} mb-4`}>
-                    <LottieAnimation
-                      src={advantage.lottieUrl}
-                      className="w-full h-full"
-                      loop={true}
-                      playOnView={true}
-                    />
+                  {/* Icon */}
+                  <div className={`${isLarge ? 'w-16 h-16' : 'w-12 h-12'} mb-4 ${colors.bg} rounded-xl flex items-center justify-center ${colors.text}`}>
+                    {advantage.icon}
                   </div>
 
                   <h3 className={`font-bold text-watt-navy mb-2 ${isLarge ? 'text-xl' : 'text-lg'}`}>

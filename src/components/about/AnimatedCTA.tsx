@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { LottieAnimation } from '@/components/ui/LottieAnimation';
 import { ArrowRight } from 'lucide-react';
-import '@/components/landing/landing-animations.css';
 
 interface AnimatedCTAProps {
   onContactClick: () => void;
@@ -16,7 +14,7 @@ export const AnimatedCTA: React.FC<AnimatedCTAProps> = ({ onContactClick }) => {
       {/* Animated background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div 
-          className="absolute inset-0 animate-pulse"
+          className="absolute inset-0"
           style={{
             backgroundImage: `
               linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
@@ -32,35 +30,14 @@ export const AnimatedCTA: React.FC<AnimatedCTAProps> = ({ onContactClick }) => {
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-2 h-2 bg-watt-bitcoin/30 rounded-full animate-float-particle"
+            className="absolute w-2 h-2 bg-watt-bitcoin/30 rounded-full animate-pulse"
             style={{
               left: `${10 + i * 12}%`,
               top: `${20 + (i % 3) * 25}%`,
               animationDelay: `${i * 0.5}s`,
-              animationDuration: `${8 + i * 2}s`,
             }}
           />
         ))}
-      </div>
-
-      {/* Side Lottie decorations */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20 hidden lg:block">
-        <LottieAnimation
-          src="https://assets6.lottiefiles.com/packages/lf20_xlkxtmul.json"
-          className="w-32 h-32"
-          loop={true}
-          autoplay={true}
-          speed={0.5}
-        />
-      </div>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 hidden lg:block">
-        <LottieAnimation
-          src="https://assets4.lottiefiles.com/packages/lf20_kyu0xqpq.json"
-          className="w-32 h-32"
-          loop={true}
-          autoplay={true}
-          speed={0.5}
-        />
       </div>
 
       <div className="max-w-4xl mx-auto text-center relative z-10">
@@ -87,16 +64,6 @@ export const AnimatedCTA: React.FC<AnimatedCTAProps> = ({ onContactClick }) => {
             <span className="relative z-10 flex items-center gap-2">
               Get in Touch
               <ArrowRight className={`w-5 h-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
-            </span>
-
-            {/* Rocket animation on hover */}
-            <span className={`absolute right-2 transition-all duration-500 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}>
-              <LottieAnimation
-                src="https://assets9.lottiefiles.com/packages/lf20_touohxv0.json"
-                className="w-8 h-8"
-                loop={true}
-                autoplay={true}
-              />
             </span>
           </Button>
         </div>
