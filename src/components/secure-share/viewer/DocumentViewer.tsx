@@ -331,13 +331,15 @@ export function DocumentViewer({
     // CRITICAL: Cleanup function to prevent race conditions
     return () => {
       isCancelled = true;
-      if (pdfProxyRef.current) {
+      const proxyToDestroy = pdfProxyRef.current;
+      pdfProxyRef.current = null; // Clear ref immediately to prevent double-destroy
+      
+      if (proxyToDestroy) {
         console.log('[DocumentViewer] Cleaning up PDF proxy on effect cleanup');
         try {
-          pdfProxyRef.current.destroy();
-          pdfProxyRef.current = null;
+          proxyToDestroy.destroy().catch(() => {});
         } catch (e) {
-          // Ignore cleanup errors
+          // Ignore cleanup errors - PDF may already be destroyed
         }
       }
     };

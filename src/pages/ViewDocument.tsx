@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -887,7 +887,22 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<'gallery' | 'viewer'>('gallery');
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [isBackTransitioning, setIsBackTransitioning] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
+  const backTransitionRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (backTransitionRef.current) {
+        clearTimeout(backTransitionRef.current);
+        backTransitionRef.current = null;
+      }
+    };
+  }, []);
   
   // Search, filter, and pagination state - used by filtered documents
   const [searchQuery, setSearchQuery] = useState('');
@@ -1019,17 +1034,28 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     setViewMode('viewer');
   };
 
-  // Handle back to gallery
-  const handleBackToGallery = () => {
-    setViewMode('gallery');
+  // Handle back to gallery - with transition buffer to allow PDF cleanup
+  const handleBackToGallery = useCallback(() => {
+    // Prevent double-triggering during transition
+    if (isBackTransitioning) return;
     
-    // Restore scroll position after a brief delay for DOM updates
-    setTimeout(() => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = scrollPosition;
-      }
-    }, 50);
-  };
+    setIsBackTransitioning(true);
+    
+    // Small delay to allow DocumentViewer cleanup before unmounting
+    backTransitionRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
+      
+      setViewMode('gallery');
+      setIsBackTransitioning(false);
+      
+      // Restore scroll position after a brief delay for DOM updates
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current && isMountedRef.current) {
+          scrollContainerRef.current.scrollTop = scrollPosition;
+        }
+      });
+    }, 150);
+  }, [isBackTransitioning, scrollPosition]);
 
   // Full-screen document viewer
   if (viewMode === 'viewer' && selectedDocument) {
