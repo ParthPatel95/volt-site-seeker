@@ -19,10 +19,11 @@ const packages = [
   { id: 'industrial', name: 'Industrial (5MW+)', rate: 0.071 },
 ];
 
-// Network constants (approximate)
-const NETWORK_DIFFICULTY = 103.92e12; // ~104 trillion
-const BLOCK_REWARD = 3.125; // Post-halving
-const BLOCKS_PER_DAY = 144;
+// Bitcoin Network Constants (Updated: December 2024)
+// Source: https://hashrateindex.com/
+const NETWORK_HASHRATE = 750e18; // ~750 EH/s network hashrate
+const BLOCK_REWARD = 3.125; // Post-halving (April 2024)
+const BLOCKS_PER_DAY = 144; // Average (10-minute blocks)
 
 export const HostingCalculatorWidget = () => {
   const [minerCount, setMinerCount] = useState(50);
@@ -66,8 +67,10 @@ export const HostingCalculatorWidget = () => {
     // Total power in kW
     const totalPowerKw = (minerCount * asic.power) / 1000;
     
-    // Daily BTC earnings (simplified calculation)
-    const dailyBtc = (totalHashrate * 1e12 / NETWORK_DIFFICULTY) * BLOCK_REWARD * BLOCKS_PER_DAY;
+    // Daily BTC earnings using network hashrate approach
+    // Formula: (your hashrate / network hashrate) * blocks per day * block reward
+    const totalHashrateH = totalHashrate * 1e12; // Convert TH/s to H/s
+    const dailyBtc = (totalHashrateH / NETWORK_HASHRATE) * BLOCKS_PER_DAY * BLOCK_REWARD;
     
     // Daily power cost
     const hoursPerDay = 24;
