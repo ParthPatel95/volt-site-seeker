@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,8 +14,9 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
-import AboutUs from "./pages/AboutUs";
 import Hosting from "./pages/Hosting";
+
+const AboutUs = lazy(() => import('./pages/AboutUs'));
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 import ViewDocument from "./pages/ViewDocument";
@@ -35,7 +37,11 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/wattfund" element={<WattFund />} />
-                <Route path="/about" element={<AboutUs />} />
+                <Route path="/about" element={
+                  <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                    <AboutUs />
+                  </Suspense>
+                } />
                 <Route path="/hosting" element={<Hosting />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
