@@ -19,8 +19,8 @@ const AlbertaFacilityShowcase = lazy(() => import('@/components/landing/AlbertaF
 const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
 const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(module => ({ default: module.AlbertaFacilityHub })));
 
-// Live Markets Section
-const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection').then(module => ({ default: module.LiveMarketsSection })));
+// Live Markets Section - uses default export
+const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">

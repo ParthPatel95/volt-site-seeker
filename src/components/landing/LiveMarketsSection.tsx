@@ -118,3 +118,5 @@ export const LiveMarketsSection = () => {
     </section>
   );
 };
+
+export default LiveMarketsSection;
