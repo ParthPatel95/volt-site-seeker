@@ -1,6 +1,12 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Shield, Zap, Headphones, Snowflake } from 'lucide-react';
 
+const bgColorMap: Record<string, string> = {
+  'text-watt-success': 'bg-watt-success/10',
+  'text-watt-bitcoin': 'bg-watt-bitcoin/10',
+  'text-watt-trust': 'bg-watt-trust/10'
+};
+
 const benefits = [
   {
     icon: Shield,
@@ -50,7 +56,7 @@ export const WhyHostSection = () => {
               <ScrollReveal key={index} delay={index * 0.1}>
                 <div className="bg-white border border-border rounded-xl p-6 hover:shadow-lg transition-all duration-300">
                   <div className="flex items-start space-x-4">
-                    <div className={`p-3 bg-${benefit.color.replace('text-', '')}/10 rounded-lg flex-shrink-0`}>
+                    <div className={`p-3 ${bgColorMap[benefit.color] || 'bg-watt-navy/10'} rounded-lg flex-shrink-0`}>
                       <Icon className={`w-6 h-6 ${benefit.color}`} />
                     </div>
                     <div>
