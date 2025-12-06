@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LottieAnimation } from '@/components/ui/LottieAnimation';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Zap, Cpu, Bitcoin } from 'lucide-react';
 
 interface CoreArea {
   title: string;
   description: string;
   badge: string;
   stats: string[];
-  lottieUrl: string;
+  icon: React.ReactNode;
 }
 
 const coreAreas: CoreArea[] = [
@@ -18,53 +17,23 @@ const coreAreas: CoreArea[] = [
     description: 'Acquiring and developing strategic power assets with focus on stranded and underutilized energy sources',
     badge: 'Core Focus',
     stats: ['1,429MW Pipeline', '135MW Under Development'],
-    lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_xlkxtmul.json', // Power/lightning animation
+    icon: <Zap className="w-10 h-10" />,
   },
   {
     title: 'AI/HPC Hosting',
     description: 'Purpose-built facilities for artificial intelligence and high-performance computing workloads',
     badge: 'Growth Driver',
     stats: ['Purpose-Built Facilities', 'Flexible Infrastructure'],
-    lottieUrl: 'https://assets2.lottiefiles.com/packages/lf20_fcfjwiyb.json', // Server animation
+    icon: <Cpu className="w-10 h-10" />,
   },
   {
     title: 'Bitcoin Mining',
     description: 'Energy-efficient infrastructure optimized for digital asset generation and blockchain operations',
     badge: 'Core Revenue',
     stats: ['Energy-Optimized', 'Dual-Revenue Model'],
-    lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_kyu0xqpq.json', // Bitcoin animation
+    icon: <Bitcoin className="w-10 h-10" />,
   },
 ];
-
-const AnimatedCounter: React.FC<{ end: number; suffix?: string; isVisible: boolean }> = ({ 
-  end, 
-  suffix = '', 
-  isVisible 
-}) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!isVisible) return;
-
-    const duration = 2000;
-    const startTime = Date.now();
-    
-    const animate = () => {
-      const now = Date.now();
-      const progress = Math.min((now - startTime) / duration, 1);
-      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      setCount(Math.floor(easeOutQuart * end));
-      
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    };
-    
-    animate();
-  }, [end, isVisible]);
-
-  return <span>{count.toLocaleString()}{suffix}</span>;
-};
 
 export const AnimatedWhatWeDo: React.FC = () => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
@@ -92,7 +61,7 @@ export const AnimatedWhatWeDo: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setMousePosition({
       x: e.clientX - rect.left,
@@ -129,7 +98,7 @@ export const AnimatedWhatWeDo: React.FC = () => {
               >
                 <Card 
                   className="p-8 bg-white border-gray-200 shadow-institutional hover:shadow-xl transition-all duration-300 relative overflow-hidden group cursor-pointer"
-                  onMouseMove={(e) => handleMouseMove(e, index)}
+                  onMouseMove={handleMouseMove}
                   onMouseLeave={() => setMousePosition(null)}
                   onClick={() => setExpandedIndex(isExpanded ? null : index)}
                 >
@@ -148,14 +117,9 @@ export const AnimatedWhatWeDo: React.FC = () => {
                     {area.badge}
                   </Badge>
 
-                  {/* Lottie animation */}
-                  <div className="w-20 h-20 mb-4 relative z-10">
-                    <LottieAnimation
-                      src={area.lottieUrl}
-                      className="w-full h-full"
-                      loop={true}
-                      playOnView={true}
-                    />
+                  {/* Icon */}
+                  <div className="w-20 h-20 mb-4 relative z-10 bg-watt-trust/10 rounded-xl flex items-center justify-center text-watt-trust">
+                    {area.icon}
                   </div>
 
                   <h3 className="text-xl font-bold text-watt-navy mb-3 relative z-10">
@@ -166,7 +130,7 @@ export const AnimatedWhatWeDo: React.FC = () => {
                     {area.description}
                   </p>
 
-                  {/* Stats with animated counters */}
+                  {/* Stats */}
                   <ul className="space-y-2 relative z-10">
                     {area.stats.map((stat, i) => (
                       <li key={i} className="flex items-center text-sm text-watt-navy/70">
