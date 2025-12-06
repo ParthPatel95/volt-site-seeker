@@ -4,8 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 // Shared query key - all market hooks will use this same key for cache sharing
 export const UNIFIED_ENERGY_QUERY_KEY = ['unified-energy-data'];
 
-const CACHE_KEY = 'wattbyte-energy-data-cache';
-
 export interface UnifiedEnergyData {
   success: boolean;
   ercot?: any;
@@ -19,59 +17,13 @@ export interface UnifiedEnergyData {
   error?: string;
 }
 
-interface CachedData {
-  data: UnifiedEnergyData;
-  timestamp: number;
-}
-
-// Get cached data from localStorage
-const getCachedData = (): UnifiedEnergyData | undefined => {
-  if (typeof window === 'undefined') return undefined; // SSR safety
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const parsed: CachedData = JSON.parse(cached);
-      // Cache is valid for 30 minutes
-      if (Date.now() - parsed.timestamp < 30 * 60 * 1000) {
-        return parsed.data;
-      }
-    }
-  } catch {
-    // Ignore localStorage errors
-  }
-  return undefined;
-};
-
-// Save data to localStorage cache
-const setCachedData = (data: UnifiedEnergyData) => {
-  try {
-    const cacheEntry: CachedData = {
-      data,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheEntry));
-  } catch {
-    // Ignore localStorage errors
-  }
-};
-
-// Shared query function
+// Shared query function - simplified without localStorage
 export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
   const { data, error } = await supabase.functions.invoke('energy-data-integration');
   
   if (error) {
     console.error('Unified energy data fetch error:', error);
-    // Return cached data if available on error
-    const cached = getCachedData();
-    if (cached) {
-      return cached;
-    }
     throw error;
-  }
-  
-  // Cache successful response
-  if (data?.success) {
-    setCachedData(data);
   }
   
   return data as UnifiedEnergyData;
