@@ -351,18 +351,22 @@ export function TranslationPanel({
         let fullTranslation = '';
         let buffer = '';
         let hasReceivedContent = false;
+        let streamTimedOut = false;
         
-        // Add 60-second timeout for streaming translations
+        // Add 60-second timeout for streaming translations - use flag instead of throwing
         const streamTimeout = setTimeout(() => {
+          streamTimedOut = true;
           reader.cancel();
           console.error('[TranslationPanel] Streaming timeout after 60 seconds');
-          if (!hasReceivedContent) {
-            throw new Error('Translation timeout - stream took too long to complete');
-          }
         }, 60000);
 
         try {
           while (true) {
+            // Check timeout flag before reading
+            if (streamTimedOut && !hasReceivedContent) {
+              throw new Error('Translation timeout - please try again');
+            }
+            
             const { done, value } = await reader.read();
             if (done) break;
 
@@ -610,6 +614,8 @@ export function TranslationPanel({
           const { renderPdfPageToImage } = await import('@/utils/pdfToImage');
           
           let pdfDoc = pdfDocument;
+          let shouldDestroyPdf = false;
+          
           if (!pdfDoc && documentUrl) {
             const pdfjsLib = await import('pdfjs-dist');
             const loadingTask = pdfjsLib.getDocument({
@@ -618,25 +624,38 @@ export function TranslationPanel({
               isEvalSupported: false
             });
             pdfDoc = await loadingTask.promise;
+            shouldDestroyPdf = true; // Only destroy if we loaded it ourselves
           }
 
           if (!pdfDoc) {
             throw new Error('Unable to load PDF for OCR');
           }
 
-          // Render to canvas for Tesseract
-          const page = await pdfDoc.getPage(currentPage);
-          const viewport = page.getViewport({ scale: 2.0 });
-          
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          
-          const context = canvas.getContext('2d');
-          if (!context) throw new Error('Failed to get canvas context');
-          
-          await page.render({ canvasContext: context, viewport, canvas }).promise;
-          imageSource = canvas;
+          try {
+            // Render to canvas for Tesseract
+            const page = await pdfDoc.getPage(currentPage);
+            const viewport = page.getViewport({ scale: 2.0 });
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('Failed to get canvas context');
+            
+            await page.render({ canvasContext: context, viewport, canvas }).promise;
+            imageSource = canvas;
+          } finally {
+            // Clean up PDF if we loaded it ourselves
+            if (shouldDestroyPdf && pdfDoc) {
+              try {
+                await pdfDoc.destroy();
+                console.log('[OCR] Cleaned up temporary PDF document');
+              } catch (e) {
+                // Ignore cleanup errors
+              }
+            }
+          }
         } else {
           throw new Error('Document type not supported for browser OCR');
         }
@@ -692,6 +711,8 @@ export function TranslationPanel({
           const { renderPdfPageToImage } = await import('@/utils/pdfToImage');
           
           let pdfDoc = pdfDocument;
+          let shouldDestroyPdf = false;
+          
           if (!pdfDoc && documentUrl) {
             const pdfjsLib = await import('pdfjs-dist');
             const loadingTask = pdfjsLib.getDocument({
@@ -700,14 +721,27 @@ export function TranslationPanel({
               isEvalSupported: false
             });
             pdfDoc = await loadingTask.promise;
+            shouldDestroyPdf = true; // Only destroy if we loaded it ourselves
           }
 
           if (!pdfDoc) {
             throw new Error('Unable to load PDF for OCR');
           }
 
-          setExtractionStatus(`Rendering page ${currentPage} as image...`);
-          imageBase64 = await renderPdfPageToImage(pdfDoc, currentPage, { scale: 2.5 });
+          try {
+            setExtractionStatus(`Rendering page ${currentPage} as image...`);
+            imageBase64 = await renderPdfPageToImage(pdfDoc, currentPage, { scale: 2.5 });
+          } finally {
+            // Clean up PDF if we loaded it ourselves
+            if (shouldDestroyPdf && pdfDoc) {
+              try {
+                await pdfDoc.destroy();
+                console.log('[OCR] Cleaned up temporary PDF document (AI OCR path)');
+              } catch (e) {
+                // Ignore cleanup errors
+              }
+            }
+          }
         } else {
           throw new Error('Document type not supported for OCR');
         }
