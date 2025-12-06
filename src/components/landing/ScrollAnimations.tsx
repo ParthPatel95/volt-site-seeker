@@ -17,7 +17,17 @@ export const ScrollReveal = ({
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
     const delayMs = delay * 1000; // Convert seconds to milliseconds
+    
+    // Immediate visibility fallback - show after delay regardless of intersection
+    const immediateTimeout = setTimeout(() => {
+      if (element) {
+        element.classList.add('animate-in');
+      }
+    }, delayMs + 100);
     
     const observer = new IntersectionObserver(
       (entries) => {
@@ -35,38 +45,18 @@ export const ScrollReveal = ({
       }
     );
 
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
-    }
-
-    // Fallback: ensure visibility after max wait time
-    const fallbackTimeout = setTimeout(() => {
-      if (elementRef.current) {
-        elementRef.current.classList.add('animate-in');
-      }
-    }, delayMs + 3000);
+    observer.observe(element);
 
     return () => {
       observer.disconnect();
-      clearTimeout(fallbackTimeout);
+      clearTimeout(immediateTimeout);
     };
   }, [delay]);
-
-  const getInitialTransform = () => {
-    switch (direction) {
-      case 'up': return 'translate-y-8 opacity-0';
-      case 'down': return '-translate-y-8 opacity-0';
-      case 'left': return 'translate-x-8 opacity-0';
-      case 'right': return '-translate-x-8 opacity-0';
-      case 'fade': return 'opacity-0';
-      default: return 'translate-y-8 opacity-0';
-    }
-  };
 
   return (
     <div
       ref={elementRef}
-      className={`transition-all duration-700 ease-out ${getInitialTransform()} ${className}`}
+      className={`transition-all duration-700 ease-out ${className}`}
       style={{
         transitionDelay: `${delay * 1000}ms`
       }}

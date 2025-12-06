@@ -100,20 +100,20 @@ const WattFund: React.FC = () => {
                 </div>
               </ScrollReveal>
               
-              <ScrollReveal direction="up" delay={100}>
+              <ScrollReveal direction="up" delay={0.1}>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
                   WattFund
                 </h1>
               </ScrollReveal>
               
-              <ScrollReveal direction="up" delay={200}>
+              <ScrollReveal direction="up" delay={0.2}>
                 <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed mb-12">
                   Strategic infrastructure investment funds targeting renewable energy and data center development across North America
                 </p>
               </ScrollReveal>
 
               {/* Animated Key Stats */}
-              <ScrollReveal direction="up" delay={300}>
+              <ScrollReveal direction="up" delay={0.3}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
                   <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
                     <div className="text-3xl md:text-4xl font-bold text-white mb-2">
@@ -137,7 +137,7 @@ const WattFund: React.FC = () => {
               </ScrollReveal>
 
               {/* Scroll Indicator */}
-              <ScrollReveal direction="up" delay={400}>
+              <ScrollReveal direction="up" delay={0.4}>
                 <div className="flex justify-center">
                   <div className="animate-bounce">
                     <ChevronDown className="w-8 h-8 text-white/50" />

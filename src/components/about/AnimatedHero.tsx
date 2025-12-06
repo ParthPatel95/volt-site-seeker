@@ -59,19 +59,19 @@ export const AnimatedHero: React.FC<AnimatedHeroProps> = ({ className = '' }) =>
             </Badge>
           </ScrollReveal>
 
-          <ScrollReveal delay={100}>
+          <ScrollReveal delay={0.1}>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               About <span className="text-watt-bitcoin">WattByte</span>
             </h1>
           </ScrollReveal>
 
-          <ScrollReveal delay={200}>
+          <ScrollReveal delay={0.2}>
             <p className="text-xl md:text-2xl text-white/90 mb-4 font-medium">
               Building Digital Infrastructure at Scale
             </p>
           </ScrollReveal>
 
-          <ScrollReveal delay={300}>
+          <ScrollReveal delay={0.3}>
             <p className="text-lg text-white/70 mb-10 leading-relaxed">
               WattByte transforms stranded power assets into revenue-generating digital infrastructure, 
               powering the future of AI, high-performance computing, and Bitcoin mining operations across the globe.
@@ -79,7 +79,7 @@ export const AnimatedHero: React.FC<AnimatedHeroProps> = ({ className = '' }) =>
           </ScrollReveal>
 
           {/* Company Stats */}
-          <ScrollReveal delay={400}>
+          <ScrollReveal delay={0.4}>
             <div className="flex flex-wrap gap-8 md:gap-12">
               <AnimatedStat value="6" label="Countries" delay={500} />
               <AnimatedStat value="1,429MW" label="Global Pipeline" delay={600} />
