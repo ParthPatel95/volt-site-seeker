@@ -46,6 +46,14 @@ export const LandingNavigation = () => {
         >
           VoltScout
         </Button>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => window.open('https://www.gridbazaar.com', '_blank')}
+          className="border-none hover:bg-watt-bitcoin/90 bg-watt-bitcoin text-white text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target font-semibold"
+        >
+          GridBazaar
+        </Button>
       </div>
     </nav>
   );
