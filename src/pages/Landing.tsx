@@ -5,7 +5,6 @@ import { EnhancedSignUpForm } from '@/components/EnhancedSignUpForm';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
 import { VoltScoutIntelligenceHub } from '@/components/landing/VoltScoutIntelligenceHub';
-import { LiveMarketsSection } from '@/components/landing/LiveMarketsSection';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -19,6 +18,9 @@ const InvestmentThesisSection = lazy(() => import('@/components/landing/Investme
 const AlbertaFacilityShowcase = lazy(() => import('@/components/landing/AlbertaFacilityShowcase').then(module => ({ default: module.AlbertaFacilityShowcase })));
 const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
 const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(module => ({ default: module.AlbertaFacilityHub })));
+
+// Live Markets Section
+const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection').then(module => ({ default: module.LiveMarketsSection })));
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
@@ -90,7 +92,9 @@ const Landing: React.FC = () => {
           
           {/* Live Markets Section - Standalone */}
           <section aria-label="Live Energy Markets" className="relative">
-            <LiveMarketsSection />
+            <Suspense fallback={<SectionLoader />}>
+              <LiveMarketsSection />
+            </Suspense>
           </section>
           
           <SectionDivider color="blue" />

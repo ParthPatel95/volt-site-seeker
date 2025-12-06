@@ -26,6 +26,7 @@ interface CachedData {
 
 // Get cached data from localStorage
 const getCachedData = (): UnifiedEnergyData | undefined => {
+  if (typeof window === 'undefined') return undefined; // SSR safety
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
@@ -86,7 +87,6 @@ const sharedQueryConfig = {
   retry: 2,
   retryDelay: (attemptIndex: number) => Math.min(1000 * Math.pow(2, attemptIndex), 30000),
   placeholderData: keepPreviousData, // Show previous data while fetching new data
-  initialData: getCachedData, // Preload from localStorage for instant display
 };
 
 // Main unified hook - call this once at the top level
