@@ -54,7 +54,7 @@ export const InvestmentProcessSection = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-4 relative">
             {steps.map((step, index) => (
-              <ScrollReveal key={index} delay={index * 100} direction="up">
+              <ScrollReveal key={index} delay={index * 0.1} direction="up">
                 <div className="relative">
                   <Card className="bg-white border-gray-200 shadow-institutional hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                     <CardContent className="p-6 text-center">

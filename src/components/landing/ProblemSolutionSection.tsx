@@ -74,7 +74,7 @@ export const ProblemSolutionSection = () => {
               <ScrollReveal 
                 key={index} 
                 direction="left" 
-                delay={index * 100}
+                delay={index * 0.1}
               >
                 <div className="group">
                   <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-watt-trust/30 hover:shadow-institutional transition-all duration-200">
@@ -138,7 +138,7 @@ export const ProblemSolutionSection = () => {
               <ScrollReveal 
                 key={index} 
                 direction="right" 
-                delay={index * 100}
+                delay={index * 0.1}
               >
                 <div className="group">
                   <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-watt-success/30 hover:shadow-institutional transition-all duration-200">
