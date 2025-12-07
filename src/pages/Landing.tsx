@@ -13,9 +13,6 @@ const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacili
 const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
 const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
 const VoltScoutIntelligenceHub = lazy(() => import('@/components/landing/VoltScoutIntelligenceHub').then(module => ({ default: module.VoltScoutIntelligenceHub })));
-const MarketOpportunitySection = lazy(() => import('@/components/landing/MarketOpportunitySection').then(module => ({ default: module.MarketOpportunitySection })));
-const FundGrowthPlanSection = lazy(() => import('@/components/landing/FundGrowthPlanSection').then(module => ({ default: module.FundGrowthPlanSection })));
-const InvestorCTASection = lazy(() => import('@/components/landing/InvestorCTASection').then(module => ({ default: module.InvestorCTASection })));
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
@@ -100,33 +97,6 @@ const Landing: React.FC = () => {
           <section aria-label="VoltScout Platform" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <VoltScoutIntelligenceHub />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="yellow" />
-
-          {/* Market Opportunity Section */}
-          <section aria-label="Market Opportunity" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <MarketOpportunitySection />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="cyan" />
-
-          {/* Fund Growth Plan Section */}
-          <section aria-label="Fund Growth Plan" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <FundGrowthPlanSection />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="purple" />
-
-          {/* Investor CTA Section */}
-          <section aria-label="Get Started" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <InvestorCTASection />
             </Suspense>
           </section>
         </main>
