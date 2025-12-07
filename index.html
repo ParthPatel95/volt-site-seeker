@@ -206,21 +206,57 @@
       </div>
     </noscript>
 
-    <!-- Global functions - MUST be defined before main script -->
+    <!-- Global functions and MutationObserver - MUST be defined before main script -->
     <script>
-      window.__hideAppLoader = function() {
-        var loader = document.getElementById('app-loader');
-        if (loader) {
-          loader.classList.add('hidden');
-          setTimeout(function() { loader.remove(); }, 300);
+      (function() {
+        var loaderHidden = false;
+        
+        window.__hideAppLoader = function() {
+          if (loaderHidden) return;
+          loaderHidden = true;
+          var loader = document.getElementById('app-loader');
+          if (loader) {
+            loader.classList.add('hidden');
+            setTimeout(function() { 
+              if (loader.parentNode) loader.parentNode.removeChild(loader);
+            }, 300);
+          }
+        };
+        
+        window.__showAppError = function() {
+          loaderHidden = true;
+          var loader = document.getElementById('app-loader');
+          var error = document.getElementById('app-error');
+          if (loader) loader.classList.add('hidden');
+          if (error) error.classList.add('visible');
+        };
+        
+        // Backup: MutationObserver watches for React content rendering
+        var root = document.getElementById('root');
+        if (root) {
+          var observer = new MutationObserver(function(mutations, obs) {
+            // Check if React has rendered anything to #root
+            if (root.childNodes.length > 0) {
+              // Small delay to ensure React has fully rendered
+              setTimeout(function() {
+                window.__hideAppLoader();
+              }, 100);
+              obs.disconnect();
+            }
+          });
+          observer.observe(root, { childList: true, subtree: true });
+          
+          // Safety timeout: if nothing happens in 30s, show error (production only)
+          setTimeout(function() {
+            if (!loaderHidden && !window.__appMounted) {
+              // Only show error in production, keep spinning in dev
+              if (window.location.hostname !== 'localhost') {
+                window.__showAppError();
+              }
+            }
+          }, 30000);
         }
-      };
-      window.__showAppError = function() {
-        var loader = document.getElementById('app-loader');
-        var error = document.getElementById('app-error');
-        if (loader) loader.classList.add('hidden');
-        if (error) error.classList.add('visible');
-      };
+      })();
     </script>
 
     <!-- Render React app -->
