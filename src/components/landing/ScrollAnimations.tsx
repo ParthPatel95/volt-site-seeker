@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode } from 'react';
+import { useEffect, useRef, useState, ReactNode } from 'react';
 import './landing-animations.css';
 
 interface ScrollRevealProps {
@@ -15,27 +15,35 @@ export const ScrollReveal = ({
   className = '' 
 }: ScrollRevealProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Calculate initial transform based on direction
+  const getInitialTransform = () => {
+    switch (direction) {
+      case 'up': return 'translateY(20px)';
+      case 'down': return 'translateY(-20px)';
+      case 'left': return 'translateX(20px)';
+      case 'right': return 'translateX(-20px)';
+      case 'fade': 
+      default: return 'translateY(0)';
+    }
+  };
 
   useEffect(() => {
     const element = elementRef.current;
     if (!element) return;
 
-    const delayMs = delay * 1000; // Convert seconds to milliseconds
-    
-    // Immediate visibility fallback - show after delay regardless of intersection
-    const immediateTimeout = setTimeout(() => {
-      if (element) {
-        element.classList.add('animate-in');
-      }
-    }, delayMs + 100);
-    
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setTimeout(() => {
-              entry.target.classList.add('animate-in');
-            }, delayMs);
+            // Add delay before showing
+            const timeoutId = setTimeout(() => {
+              setIsVisible(true);
+            }, delay * 1000);
+            
+            // Cleanup timeout if element leaves viewport before delay completes
+            return () => clearTimeout(timeoutId);
           }
         });
       },
@@ -47,10 +55,7 @@ export const ScrollReveal = ({
 
     observer.observe(element);
 
-    return () => {
-      observer.disconnect();
-      clearTimeout(immediateTimeout);
-    };
+    return () => observer.disconnect();
   }, [delay]);
 
   return (
@@ -58,7 +63,8 @@ export const ScrollReveal = ({
       ref={elementRef}
       className={`transition-all duration-700 ease-out ${className}`}
       style={{
-        transitionDelay: `${delay * 1000}ms`
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translate(0, 0)' : getInitialTransform(),
       }}
     >
       {children}
