@@ -10,8 +10,8 @@ import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection'
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
 const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(module => ({ default: module.InvestmentThesisSection })));
 const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(module => ({ default: module.AlbertaFacilityHub })));
-const GlobalPresenceSection = lazy(() => import('@/components/landing/GlobalPresenceSection'));
-
+const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
+const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
 const VoltScoutIntelligenceHub = lazy(() => import('@/components/landing/VoltScoutIntelligenceHub').then(module => ({ default: module.VoltScoutIntelligenceHub })));
 const MarketOpportunitySection = lazy(() => import('@/components/landing/MarketOpportunitySection').then(module => ({ default: module.MarketOpportunitySection })));
 const FundGrowthPlanSection = lazy(() => import('@/components/landing/FundGrowthPlanSection').then(module => ({ default: module.FundGrowthPlanSection })));
@@ -78,14 +78,23 @@ const Landing: React.FC = () => {
 
           <SectionDivider color="cyan" />
 
-          {/* Global Presence Section */}
-          <section aria-label="Global Presence" className="relative">
+          {/* Development Pipeline Section */}
+          <section aria-label="Development Pipeline" className="relative">
             <Suspense fallback={<SectionLoader />}>
-              <GlobalPresenceSection />
+              <InfrastructureHighlights />
             </Suspense>
           </section>
 
           <SectionDivider color="purple" />
+
+          {/* Live Energy Markets Section */}
+          <section aria-label="Live Energy Markets" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <LiveMarketsSection />
+            </Suspense>
+          </section>
+
+          <SectionDivider color="yellow" />
 
           {/* VoltScout Intelligence Hub */}
           <section aria-label="VoltScout Platform" className="relative">
