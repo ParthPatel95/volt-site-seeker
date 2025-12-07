@@ -16,8 +16,9 @@ export const ScrollReveal = ({
 }: ScrollRevealProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fallbackRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calculate initial transform based on direction
   const getInitialTransform = () => {
     switch (direction) {
       case 'up': return 'translateY(20px)';
@@ -33,17 +34,26 @@ export const ScrollReveal = ({
     const element = elementRef.current;
     if (!element) return;
 
+    const delayMs = delay * 1000;
+    
+    // CRITICAL: Safety fallback - show content after delay + 500ms even if observer fails
+    // This prevents white screen if IntersectionObserver doesn't fire
+    fallbackRef.current = setTimeout(() => {
+      setIsVisible(true);
+    }, delayMs + 500);
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // Add delay before showing
-            const timeoutId = setTimeout(() => {
+          if (entry.isIntersecting && !isVisible) {
+            // Clear any existing timeout
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+            // Schedule visibility after delay
+            timeoutRef.current = setTimeout(() => {
               setIsVisible(true);
-            }, delay * 1000);
-            
-            // Cleanup timeout if element leaves viewport before delay completes
-            return () => clearTimeout(timeoutId);
+            }, delayMs);
           }
         });
       },
@@ -55,8 +65,16 @@ export const ScrollReveal = ({
 
     observer.observe(element);
 
-    return () => observer.disconnect();
-  }, [delay]);
+    return () => {
+      observer.disconnect();
+      if (fallbackRef.current) {
+        clearTimeout(fallbackRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [delay, isVisible]);
 
   return (
     <div
