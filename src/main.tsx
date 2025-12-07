@@ -12,13 +12,18 @@ declare global {
   }
 }
 
-// Wrapper component that hides loader AFTER React has actually mounted
+// Wrapper component that hides loader AFTER React has actually rendered
 function AppWithLoader() {
   useEffect(() => {
     // Mark app as mounted
     window.__appMounted = true;
-    // Hide loader - this runs after React has rendered to DOM
-    window.__hideAppLoader?.();
+    
+    // Use requestAnimationFrame to ensure DOM has painted before hiding loader
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.__hideAppLoader?.();
+      });
+    });
   }, []);
 
   return <App />;
