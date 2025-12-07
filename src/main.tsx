@@ -1,3 +1,4 @@
+// Force rebuild: 2025-12-07T12:30:00
 console.log('🔥 MAIN.TSX LOADED - JavaScript is running');
 
 import React from 'react';
