@@ -1,24 +1,15 @@
 import React from 'react';
 
-console.log('🔥 LANDING.TSX MODULE LOADED');
+console.log('🔥 PHASE 1: Testing Tailwind CSS classes only');
 
 const Landing: React.FC = () => {
-  console.log('🔥 LANDING COMPONENT RENDERING');
+  console.log('🔥 LANDING COMPONENT RENDERING - Tailwind test');
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#0A1628', 
-      color: 'white', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      flexDirection: 'column',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>WattByte Infrastructure</h1>
-      <p style={{ fontSize: '1.25rem', opacity: 0.8 }}>Testing - If you see this, React + inline styles work!</p>
-      <p style={{ fontSize: '1rem', opacity: 0.6, marginTop: '2rem' }}>The issue is likely CSS/Tailwind loading, not React.</p>
+    <div className="min-h-screen bg-watt-navy text-white flex items-center justify-center flex-col">
+      <h1 className="text-4xl md:text-6xl font-bold mb-4">WattByte Infrastructure</h1>
+      <p className="text-xl text-white/80">Phase 1: Testing Tailwind CSS classes</p>
+      <p className="text-base text-white/60 mt-4">If you see this styled correctly (dark blue bg, white text, centered), Tailwind works!</p>
     </div>
   );
 };
