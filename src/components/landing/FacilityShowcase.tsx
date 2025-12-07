@@ -10,6 +10,8 @@ export const FacilityShowcase = () => {
           src={facilityImage} 
           alt="Alberta Heartland 135 Facility - Strategic Power Infrastructure"
           className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
           style={{
             filter: 'saturate(0.92) brightness(1.02) contrast(1.05)',
           }}
