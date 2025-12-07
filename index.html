@@ -1,5 +1,5 @@
 
-<!-- Force preview rebuild: 2025-12-07T12:35:00 -->
+<!-- Force preview rebuild: 2025-12-07T12:45:00 -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -206,11 +206,15 @@
       </div>
     </noscript>
 
-    <!-- Global functions and MutationObserver - MUST be defined before main script -->
+    <!-- React mount point - MUST be before the loader script -->
+    <div id="root"></div>
+
+    <!-- Bulletproof loader management -->
     <script>
       (function() {
         var loaderHidden = false;
         
+        // Hide loader function
         window.__hideAppLoader = function() {
           if (loaderHidden) return;
           loaderHidden = true;
@@ -218,11 +222,14 @@
           if (loader) {
             loader.classList.add('hidden');
             setTimeout(function() { 
-              if (loader.parentNode) loader.parentNode.removeChild(loader);
+              if (loader && loader.parentNode) {
+                loader.parentNode.removeChild(loader);
+              }
             }, 300);
           }
         };
         
+        // Show error function
         window.__showAppError = function() {
           loaderHidden = true;
           var loader = document.getElementById('app-loader');
@@ -231,36 +238,46 @@
           if (error) error.classList.add('visible');
         };
         
-        // Backup: MutationObserver watches for React content rendering
+        // FALLBACK 1: MutationObserver watches #root for React content
         var root = document.getElementById('root');
         if (root) {
           var observer = new MutationObserver(function(mutations, obs) {
-            // Check if React has rendered anything to #root
             if (root.childNodes.length > 0) {
-              // Small delay to ensure React has fully rendered
               setTimeout(function() {
                 window.__hideAppLoader();
-              }, 100);
+              }, 50);
               obs.disconnect();
             }
           });
           observer.observe(root, { childList: true, subtree: true });
-          
-          // Safety timeout: if nothing happens in 30s, show error (production only)
-          setTimeout(function() {
-            if (!loaderHidden && !window.__appMounted) {
-              // Only show error in production, keep spinning in dev
-              if (window.location.hostname !== 'localhost') {
-                window.__showAppError();
-              }
-            }
-          }, 30000);
         }
+        
+        // FALLBACK 2: Interval check every 200ms (most bulletproof)
+        var checkInterval = setInterval(function() {
+          var root = document.getElementById('root');
+          if (root && root.childNodes.length > 0) {
+            window.__hideAppLoader();
+            clearInterval(checkInterval);
+          }
+        }, 200);
+        
+        // FALLBACK 3: Clear interval after 30s to prevent memory leak
+        setTimeout(function() {
+          clearInterval(checkInterval);
+        }, 30000);
+        
+        // Safety timeout: show error after 30s if nothing loaded (production only)
+        setTimeout(function() {
+          if (!loaderHidden && !window.__appMounted) {
+            if (window.location.hostname !== 'localhost') {
+              window.__showAppError();
+            }
+          }
+        }, 30000);
       })();
     </script>
 
-    <!-- Render React app -->
-    <div id="root"></div>
+    <!-- Load React app -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
