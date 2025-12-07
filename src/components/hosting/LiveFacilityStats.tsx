@@ -74,8 +74,8 @@ export const LiveFacilityStats = () => {
         timeZone: 'America/Edmonton'
       }),
       subtext: 'Alberta, Canada',
-      colorClass: 'text-watt-navy',
-      bgClass: 'bg-watt-navy/20',
+      colorClass: 'text-white',
+      bgClass: 'bg-white/20',
       animate: false
     }
   ];
