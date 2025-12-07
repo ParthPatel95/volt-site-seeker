@@ -209,20 +209,21 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Fallback timeout to show error if app doesn't load -->
+    <!-- Global function to hide loader when app mounts -->
     <script>
-      (function() {
-        var timeout = setTimeout(function() {
-          var root = document.getElementById('root');
-          var loader = document.getElementById('app-loader');
-          var error = document.getElementById('app-error');
-          if (root && (!root.hasChildNodes() || root.innerHTML.trim() === '')) {
-            if (loader) loader.classList.add('hidden');
-            if (error) error.classList.add('visible');
-          }
-        }, 15000);
-        window.__clearAppTimeout = function() { clearTimeout(timeout); };
-      })();
+      window.__hideAppLoader = function() {
+        var loader = document.getElementById('app-loader');
+        if (loader) {
+          loader.classList.add('hidden');
+          setTimeout(function() { loader.remove(); }, 300);
+        }
+      };
+      window.__showAppError = function() {
+        var loader = document.getElementById('app-loader');
+        var error = document.getElementById('app-error');
+        if (loader) loader.classList.add('hidden');
+        if (error) error.classList.add('visible');
+      };
     </script>
   </body>
 </html>
