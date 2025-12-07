@@ -366,6 +366,12 @@
   animation: draw-line 1s ease-out forwards;
 }
 
+/* Ensure content visibility fallback - prevents white screen */
+.scroll-reveal-visible {
+  opacity: 1 !important;
+  transform: translate(0, 0) !important;
+}
+
 /* Reduced motion fallbacks */
 @media (prefers-reduced-motion: reduce) {
   .animate-server-blink,
@@ -385,6 +391,13 @@
   .animate-draw-line {
     animation: none;
     opacity: 0.6;
+  }
+  
+  /* Ensure scroll reveal content is always visible with reduced motion */
+  .transition-all {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
   
   .hover-lift:hover {
