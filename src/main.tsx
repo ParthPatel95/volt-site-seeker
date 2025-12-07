@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Declare the global function types
+// Declare global function types
 declare global {
   interface Window {
     __hideAppLoader?: () => void;
@@ -14,30 +14,14 @@ declare global {
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
-  try {
-    const root = createRoot(rootElement);
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
-    // Hide loader after React mounts
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (typeof window.__hideAppLoader === 'function') {
-          window.__hideAppLoader();
-        }
-      });
-    });
-  } catch (error) {
-    console.error('Failed to render application:', error);
-    if (typeof window.__showAppError === 'function') {
-      window.__showAppError();
-    }
-  }
+  createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+  // Hide loader after React mounts
+  window.__hideAppLoader?.();
 } else {
   console.error('Root element not found');
-  if (typeof window.__showAppError === 'function') {
-    window.__showAppError();
-  }
+  window.__showAppError?.();
 }

@@ -206,10 +206,7 @@
       </div>
     </noscript>
 
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-
-    <!-- Global function to hide loader when app mounts -->
+    <!-- Global functions - MUST be defined before main script -->
     <script>
       window.__hideAppLoader = function() {
         var loader = document.getElementById('app-loader');
@@ -225,5 +222,9 @@
         if (error) error.classList.add('visible');
       };
     </script>
+
+    <!-- Render React app -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
