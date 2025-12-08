@@ -126,7 +126,6 @@ function generateComprehensiveReport(
   const exchangeRate = config.exchangeRate || 0.73;
   const transmissionAdder = parseFloat(config.transmissionAdder) || 11.73; // Updated default to $11.73/MWh
   const totalHoursInPeriod = parseInt(config.timePeriod) * 24;
-  const totalHoursInPeriod = parseInt(config.timePeriod) * 24;
 
   // Sort scenarios by uptime (highest first for comparison)
   const sortedScenarios = [...scenarios].sort((a, b) => b.uptimePercentage - a.uptimePercentage);
