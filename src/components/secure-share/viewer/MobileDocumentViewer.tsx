@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, AlertCircle, Languages, FileText } from 'lucide-react';
+import { Download, Loader2, AlertCircle, Languages, FileText, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VideoPlayer } from './VideoPlayer';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
@@ -18,6 +18,8 @@ interface MobileDocumentViewerProps {
   enableTracking?: boolean;
   viewerName?: string;
   viewerEmail?: string;
+  documentName?: string;
+  fileSizeBytes?: number;
 }
 
 /**
@@ -39,23 +41,38 @@ export function MobileDocumentViewer({
   documentId,
   enableTracking = false,
   viewerName,
-  viewerEmail
+  viewerEmail,
+  documentName = 'Document',
+  fileSizeBytes
 }: MobileDocumentViewerProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [translationOpen, setTranslationOpen] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
+  const [retryCount, setRetryCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const mountTimeRef = useRef(Date.now());
+  const isMountedRef = useRef(true);
 
   console.log('[MobileDocumentViewer] MOUNT', {
     documentUrl: documentUrl?.substring(0, 80),
     documentType,
     accessLevel,
     documentId,
+    documentName,
+    fileSizeBytes,
     timestamp: new Date().toISOString()
   });
+
+  // Track mount state
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      console.log('[MobileDocumentViewer] UNMOUNT');
+    };
+  }, []);
 
   // File type detection
   const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
@@ -115,7 +132,9 @@ export function MobileDocumentViewer({
           return;
         }
         
-        setNumPages(proxy.numPages);
+        if (isMountedRef.current) {
+          setNumPages(proxy.numPages);
+        }
         proxy.destroy(); // Clean up immediately - we only needed the page count
         console.log('[MobileDocumentViewer] PDF metadata loaded:', { numPages: proxy.numPages, elapsed: Date.now() - mountTimeRef.current + 'ms' });
       } catch (error) {
@@ -138,7 +157,9 @@ export function MobileDocumentViewer({
       // For video, audio, text, office - mark as loaded after mount
       const timer = setTimeout(() => {
         console.log('[MobileDocumentViewer] Non-iframe content, auto-completing load');
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -147,16 +168,29 @@ export function MobileDocumentViewer({
   const handleIframeLoad = useCallback(() => {
     const elapsed = Date.now() - mountTimeRef.current;
     console.log('[MobileDocumentViewer] Iframe LOADED successfully', { elapsed: elapsed + 'ms' });
-    setIsLoading(false);
-    setLoadError(null);
+    if (isMountedRef.current) {
+      setIsLoading(false);
+      setLoadError(null);
+      setRetryCount(0);
+    }
   }, []);
 
   const handleIframeError = useCallback(() => {
     const elapsed = Date.now() - mountTimeRef.current;
-    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms' });
-    setIsLoading(false);
-    setLoadError('Failed to load document. Please try downloading instead.');
-  }, []);
+    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms', retryCount });
+    if (isMountedRef.current) {
+      setIsLoading(false);
+      setLoadError('Failed to load document. Please try downloading instead.');
+    }
+  }, [retryCount]);
+
+  const handleRetry = useCallback(() => {
+    console.log('[MobileDocumentViewer] Retrying document load', { retryCount: retryCount + 1 });
+    setIsLoading(true);
+    setLoadError(null);
+    setRetryCount(prev => prev + 1);
+    mountTimeRef.current = Date.now();
+  }, [retryCount]);
 
   const handleDownload = async () => {
     console.log('[MobileDocumentViewer] Download requested', { canDownload });
@@ -215,12 +249,18 @@ export function MobileDocumentViewer({
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Failed to Load Document</h3>
             <p className="text-sm text-muted-foreground mb-4">{loadError}</p>
-            {canDownload && (
-              <Button onClick={handleDownload} className="touch-manipulation">
-                <Download className="w-4 h-4 mr-2" />
-                Download Instead
+            <div className="flex gap-3 justify-center">
+              <Button onClick={handleRetry} variant="outline" className="touch-manipulation">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
               </Button>
-            )}
+              {canDownload && (
+                <Button onClick={handleDownload} className="touch-manipulation">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -302,6 +342,7 @@ export function MobileDocumentViewer({
         {/* PDF - Native iframe viewer */}
         {isPdf && (
           <iframe
+            key={retryCount} // Force remount on retry
             ref={iframeRef}
             src={documentUrl}
             className="w-full h-full border-0"
@@ -320,11 +361,15 @@ export function MobileDocumentViewer({
               className="max-w-full max-h-full object-contain"
               onLoad={() => {
                 console.log('[MobileDocumentViewer] Image loaded');
-                setIsLoading(false);
+                if (isMountedRef.current) {
+                  setIsLoading(false);
+                }
               }}
               onError={() => {
                 console.error('[MobileDocumentViewer] Image failed to load');
-                setLoadError('Failed to load image');
+                if (isMountedRef.current) {
+                  setLoadError('Failed to load image');
+                }
               }}
             />
           </div>
@@ -338,7 +383,9 @@ export function MobileDocumentViewer({
               canDownload={canDownload}
               onError={() => {
                 console.error('[MobileDocumentViewer] Video failed to load');
-                setLoadError('Failed to load video');
+                if (isMountedRef.current) {
+                  setLoadError('Failed to load video');
+                }
               }}
             />
           </div>
@@ -358,11 +405,15 @@ export function MobileDocumentViewer({
                 className="w-full"
                 onCanPlay={() => {
                   console.log('[MobileDocumentViewer] Audio ready to play');
-                  setIsLoading(false);
+                  if (isMountedRef.current) {
+                    setIsLoading(false);
+                  }
                 }}
                 onError={() => {
                   console.error('[MobileDocumentViewer] Audio failed to load');
-                  setLoadError('Failed to load audio');
+                  if (isMountedRef.current) {
+                    setLoadError('Failed to load audio');
+                  }
                 }}
               />
             </div>
@@ -376,11 +427,15 @@ export function MobileDocumentViewer({
               url={documentUrl} 
               onLoad={() => {
                 console.log('[MobileDocumentViewer] Text file loaded');
-                setIsLoading(false);
+                if (isMountedRef.current) {
+                  setIsLoading(false);
+                }
               }}
               onError={() => {
                 console.error('[MobileDocumentViewer] Text file failed to load');
-                setLoadError('Failed to load text file');
+                if (isMountedRef.current) {
+                  setLoadError('Failed to load text file');
+                }
               }}
             />
           </div>
@@ -403,6 +458,7 @@ export function MobileDocumentViewer({
         documentId={documentId}
         documentType={documentType}
         numPages={numPages}
+        fileSizeBytes={fileSizeBytes}
       />
     </div>
   );
@@ -420,8 +476,10 @@ function TextFileViewer({
 }) {
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     const controller = new AbortController();
     
     fetch(url, { signal: controller.signal })
@@ -430,18 +488,23 @@ function TextFileViewer({
         return response.text();
       })
       .then(text => {
-        setContent(text);
-        setLoading(false);
-        onLoad();
+        if (isMountedRef.current) {
+          setContent(text);
+          setLoading(false);
+          onLoad();
+        }
       })
       .catch((err) => {
         if (err.name === 'AbortError') return;
         console.error('[TextFileViewer] Error:', err);
-        setLoading(false);
-        onError();
+        if (isMountedRef.current) {
+          setLoading(false);
+          onError();
+        }
       });
       
     return () => {
+      isMountedRef.current = false;
       controller.abort();
     };
   }, [url, onLoad, onError]);
