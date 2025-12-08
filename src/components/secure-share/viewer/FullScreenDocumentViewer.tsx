@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, X, FileText, AlertCircle } from 'lucide-react';
 import { DocumentViewer } from './DocumentViewer';
 import { MobileDocumentViewer } from './MobileDocumentViewer';
+import { MobileDocumentErrorBoundary } from './MobileDocumentErrorBoundary';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -28,10 +29,13 @@ export function FullScreenDocumentViewer({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [mobileViewerKey, setMobileViewerKey] = useState(0);
+  const [isDocumentTransitioning, setIsDocumentTransitioning] = useState(false);
   
   // Refs for cleanup and transition management
   const isMountedRef = useRef(true);
   const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const documentTransitionRef = useRef<NodeJS.Timeout | null>(null);
   
   // Safe access to document properties (computed before hooks that depend on them)
   const documentId = document?.id || null;
@@ -51,12 +55,44 @@ export function FullScreenDocumentViewer({
       // Set unmounted flag first to prevent any pending callbacks
       isMountedRef.current = false;
       
-      // Then clear timeout
+      // Then clear timeouts
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
         transitionTimeoutRef.current = null;
       }
+      if (documentTransitionRef.current) {
+        clearTimeout(documentTransitionRef.current);
+        documentTransitionRef.current = null;
+      }
     };
+  }, []);
+
+  // Document transition buffer for mobile - prevents race conditions
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    setIsDocumentTransitioning(true);
+    
+    if (documentTransitionRef.current) {
+      clearTimeout(documentTransitionRef.current);
+    }
+    
+    documentTransitionRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        setIsDocumentTransitioning(false);
+      }
+    }, 200);
+    
+    return () => {
+      if (documentTransitionRef.current) {
+        clearTimeout(documentTransitionRef.current);
+      }
+    };
+  }, [documentId, isMobile]);
+
+  // Retry handler for error boundary
+  const handleMobileViewerRetry = useCallback(() => {
+    setMobileViewerKey(prev => prev + 1);
   }, []);
 
   // Safe back handler with transition guard to prevent crashes during cleanup
@@ -241,20 +277,33 @@ export function FullScreenDocumentViewer({
           </div>
         </div>
 
-        {/* Mobile Document Viewer - Uses native iframe for PDFs */}
+        {/* Mobile Document Viewer - Uses native iframe for PDFs with error boundary */}
         <div className="absolute inset-0 pt-14 safe-area-pb">
-          <MobileDocumentViewer
-            documentUrl={fileUrl}
-            documentType={fileType}
-            accessLevel={linkData.access_level}
-            watermarkEnabled={linkData.watermark_enabled}
-            recipientEmail={linkData.recipient_email}
-            linkId={linkData.id}
-            documentId={documentId}
-            enableTracking={true}
-            viewerName={viewerData?.name}
-            viewerEmail={viewerData?.email}
-          />
+          {isDocumentTransitioning ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : (
+            <MobileDocumentErrorBoundary
+              documentName={fileName}
+              onRetry={handleMobileViewerRetry}
+            >
+              <MobileDocumentViewer
+                key={mobileViewerKey}
+                documentUrl={fileUrl}
+                documentType={fileType}
+                accessLevel={linkData.access_level}
+                watermarkEnabled={linkData.watermark_enabled}
+                recipientEmail={linkData.recipient_email}
+                linkId={linkData.id}
+                documentId={documentId}
+                enableTracking={true}
+                viewerName={viewerData?.name}
+                viewerEmail={viewerData?.email}
+                documentName={fileName}
+              />
+            </MobileDocumentErrorBoundary>
+          )}
         </div>
 
         {/* Mobile Sidebar */}
