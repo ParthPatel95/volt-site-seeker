@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { X, Loader2, Copy, Check, Download, Languages, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -37,6 +37,10 @@ const SUPPORTED_LANGUAGES = [
   { code: 'gu', name: 'Gujarati', flag: '🇮🇳' },
 ];
 
+// Supabase config - hardcoded to avoid env variable issues on mobile
+const SUPABASE_URL = 'https://ktgosplhknmnyagxrgbe.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE';
+
 /**
  * MobileTranslationPanel - Optimized for mobile devices
  * 
@@ -63,20 +67,45 @@ export function MobileTranslationPanel({
   // Cache translations in memory
   const translationCache = useRef<Map<string, string>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
 
   const selectedLanguage = SUPPORTED_LANGUAGES.find(l => l.code === targetLanguage);
 
+  // Track mount state
+  useEffect(() => {
+    isMountedRef.current = true;
+    console.log('[MobileTranslationPanel] MOUNT', { documentUrl: documentUrl?.substring(0, 80), documentId, numPages });
+    
+    return () => {
+      isMountedRef.current = false;
+      console.log('[MobileTranslationPanel] UNMOUNT');
+      // Abort any in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [documentUrl, documentId, numPages]);
+
   const handleTranslate = useCallback(async (page: number = currentPage) => {
-    const cacheKey = `${page}-${targetLanguage}`;
+    const cacheKey = `${documentId || documentUrl}-${page}-${targetLanguage}`;
+    
+    console.log('[MobileTranslationPanel] handleTranslate called', {
+      page,
+      targetLanguage,
+      cacheKey,
+      hasCached: translationCache.current.has(cacheKey)
+    });
     
     // Check cache first
     if (translationCache.current.has(cacheKey)) {
+      console.log('[MobileTranslationPanel] Cache HIT');
       setTranslatedText(translationCache.current.get(cacheKey)!);
       return;
     }
 
     // Cancel any in-flight request
     if (abortControllerRef.current) {
+      console.log('[MobileTranslationPanel] Aborting previous request');
       abortControllerRef.current.abort();
     }
     abortControllerRef.current = new AbortController();
@@ -86,12 +115,18 @@ export function MobileTranslationPanel({
     setError(null);
     setProgress(10);
 
-    try {
-      // Use hardcoded Supabase URL for mobile
-      const SUPABASE_URL = 'https://ktgosplhknmnyagxrgbe.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE';
+    const startTime = Date.now();
 
-      setProgress(30);
+    try {
+      console.log('[MobileTranslationPanel] Calling edge function', {
+        url: `${SUPABASE_URL}/functions/v1/translate-document`,
+        documentUrl: documentUrl?.substring(0, 80),
+        targetLanguage,
+        pageNumber: page,
+        documentType
+      });
+
+      setProgress(20);
 
       // Call edge function which handles server-side extraction
       const response = await fetch(`${SUPABASE_URL}/functions/v1/translate-document`, {
@@ -106,25 +141,45 @@ export function MobileTranslationPanel({
           documentId,
           pageNumber: page,
           extractServerSide: true, // Signal to extract text server-side
+          documentType,
           stream: true
         }),
         signal: abortControllerRef.current.signal
       });
 
+      console.log('[MobileTranslationPanel] Response received', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get('Content-Type'),
+        elapsed: Date.now() - startTime + 'ms'
+      });
+
       if (!response.ok) {
+        let errorMessage = 'Translation failed. Please try again.';
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+          console.error('[MobileTranslationPanel] Error response:', errorData);
+        } catch {
+          console.error('[MobileTranslationPanel] Failed to parse error response');
+        }
+        
         if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please try again later.');
+          errorMessage = 'Rate limit exceeded. Please try again later.';
+        } else if (response.status === 402) {
+          errorMessage = 'Translation credits exhausted.';
         }
-        if (response.status === 402) {
-          throw new Error('Translation credits exhausted.');
-        }
-        throw new Error('Translation failed. Please try again.');
+        
+        throw new Error(errorMessage);
       }
 
-      setProgress(50);
+      setProgress(40);
 
       const contentType = response.headers.get('Content-Type') || '';
       const isJsonResponse = contentType.includes('application/json');
+      
+      console.log('[MobileTranslationPanel] Processing response', { isJsonResponse, contentType });
 
       if (response.body && !isJsonResponse) {
         // Handle streaming response
@@ -132,13 +187,22 @@ export function MobileTranslationPanel({
         const decoder = new TextDecoder();
         let fullTranslation = '';
         let buffer = '';
+        let chunkCount = 0;
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log('[MobileTranslationPanel] Stream complete', { chunkCount, fullLength: fullTranslation.length });
+            break;
+          }
 
           buffer += decoder.decode(value, { stream: true });
-          setProgress(Math.min(90, progress + 5));
+          chunkCount++;
+          
+          // Update progress based on chunks received
+          if (isMountedRef.current) {
+            setProgress(prev => Math.min(90, prev + 2));
+          }
 
           // Process complete lines
           let newlineIndex: number;
@@ -150,16 +214,23 @@ export function MobileTranslationPanel({
 
             if (line.startsWith('data: ')) {
               const data = line.slice(6).trim();
-              if (data === '[DONE]') continue;
+              if (data === '[DONE]') {
+                console.log('[MobileTranslationPanel] Received [DONE] signal');
+                continue;
+              }
 
               try {
                 const parsed = JSON.parse(data);
                 if (parsed.delta) {
                   fullTranslation += parsed.delta;
-                  setTranslatedText(fullTranslation);
+                  if (isMountedRef.current) {
+                    setTranslatedText(fullTranslation);
+                  }
                 } else if (parsed.translatedText) {
                   fullTranslation = parsed.translatedText;
-                  setTranslatedText(fullTranslation);
+                  if (isMountedRef.current) {
+                    setTranslatedText(fullTranslation);
+                  }
                 }
               } catch {
                 // Skip malformed JSON
@@ -169,38 +240,60 @@ export function MobileTranslationPanel({
         }
 
         if (fullTranslation) {
+          console.log('[MobileTranslationPanel] Caching translation', { cacheKey, length: fullTranslation.length });
           translationCache.current.set(cacheKey, fullTranslation);
         }
       } else {
         // Non-streaming response
         const data = await response.json();
+        console.log('[MobileTranslationPanel] Non-streaming response:', { 
+          hasTranslatedText: !!data.translatedText,
+          cached: data.cached,
+          error: data.error
+        });
+        
         if (data.error) {
           throw new Error(data.error);
         }
-        setTranslatedText(data.translatedText);
+        
+        if (isMountedRef.current) {
+          setTranslatedText(data.translatedText);
+        }
         translationCache.current.set(cacheKey, data.translatedText);
       }
 
-      setProgress(100);
+      if (isMountedRef.current) {
+        setProgress(100);
+      }
+      
+      console.log('[MobileTranslationPanel] Translation complete', { elapsed: Date.now() - startTime + 'ms' });
+      
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        console.log('[MobileTranslation] Request aborted');
+        console.log('[MobileTranslationPanel] Request aborted');
         return;
       }
-      console.error('[MobileTranslation] Error:', err);
-      setError(err.message || 'Translation failed');
-      toast({
-        title: 'Translation Failed',
-        description: err.message || 'Please try again',
-        variant: 'destructive'
-      });
+      
+      console.error('[MobileTranslationPanel] Translation error:', err);
+      
+      if (isMountedRef.current) {
+        setError(err.message || 'Translation failed');
+        toast({
+          title: 'Translation Failed',
+          description: err.message || 'Please try again',
+          variant: 'destructive'
+        });
+      }
     } finally {
-      setIsTranslating(false);
+      if (isMountedRef.current) {
+        setIsTranslating(false);
+      }
     }
-  }, [currentPage, targetLanguage, documentUrl, documentId, toast, progress]);
+  }, [currentPage, targetLanguage, documentUrl, documentId, documentType, toast]);
 
   const handleCopy = async () => {
     if (!translatedText) return;
+    console.log('[MobileTranslationPanel] Copying to clipboard');
     try {
       await navigator.clipboard.writeText(translatedText);
       setCopied(true);
@@ -217,6 +310,7 @@ export function MobileTranslationPanel({
 
   const handleDownload = () => {
     if (!translatedText) return;
+    console.log('[MobileTranslationPanel] Downloading translation');
     const blob = new Blob([translatedText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -231,6 +325,7 @@ export function MobileTranslationPanel({
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > numPages) return;
+    console.log('[MobileTranslationPanel] Page change', { from: currentPage, to: page });
     setCurrentPage(page);
     setTranslatedText('');
     // Auto-translate on page change if translation was already started

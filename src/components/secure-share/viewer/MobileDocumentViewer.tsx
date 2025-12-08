@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, ZoomIn, ZoomOut, Loader2, AlertCircle, Languages, FileText } from 'lucide-react';
+import { Download, Loader2, AlertCircle, Languages, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { VideoPlayer } from './VideoPlayer';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
 import { MobileTranslationPanel } from './MobileTranslationPanel';
@@ -48,6 +47,15 @@ export function MobileDocumentViewer({
   const [translationOpen, setTranslationOpen] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const mountTimeRef = useRef(Date.now());
+
+  console.log('[MobileDocumentViewer] MOUNT', {
+    documentUrl: documentUrl?.substring(0, 80),
+    documentType,
+    accessLevel,
+    documentId,
+    timestamp: new Date().toISOString()
+  });
 
   // File type detection
   const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
@@ -59,6 +67,10 @@ export function MobileDocumentViewer({
   const isOfficeSheet = documentType?.includes('sheet') || /\.xlsx?$/i.test(documentUrl || '');
   const isOfficePresentation = documentType?.includes('presentation') || /\.pptx?$/i.test(documentUrl || '');
   const isOffice = isOfficeDoc || isOfficeSheet || isOfficePresentation;
+
+  console.log('[MobileDocumentViewer] File type detection:', {
+    isPdf, isImage, isVideo, isAudio, isText, isOffice
+  });
 
   // Translation support (PDFs, images, Office docs, text files)
   const supportsTranslation = isPdf || isImage || isOffice || isText;
@@ -73,51 +85,82 @@ export function MobileDocumentViewer({
     viewerEmail
   });
 
-  // Pre-fetch PDF page count for display
+  // Pre-fetch PDF page count for display (lightweight metadata only)
   useEffect(() => {
-    if (isPdf && documentUrl) {
-      const loadPdfMetadata = async () => {
-        try {
-          const pdfjsLib = await import('pdfjs-dist');
-          
-          // Configure worker
-          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
-          }
-          
-          const loadingTask = pdfjsLib.getDocument({
-            url: documentUrl,
-            withCredentials: false,
-            isEvalSupported: false,
-          });
-          
-          const proxy = await loadingTask.promise;
-          setNumPages(proxy.numPages);
-          proxy.destroy(); // Clean up immediately - we only needed the page count
-          console.log('[MobileDocumentViewer] PDF metadata loaded', { numPages: proxy.numPages });
-        } catch (error) {
-          console.error('[MobileDocumentViewer] Failed to load PDF metadata:', error);
-          // Don't fail - we can still display the PDF, just without page count
+    if (!isPdf || !documentUrl) return;
+    
+    let isCancelled = false;
+    
+    const loadPdfMetadata = async () => {
+      console.log('[MobileDocumentViewer] Loading PDF metadata...');
+      try {
+        const pdfjsLib = await import('pdfjs-dist');
+        
+        // Configure worker
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
         }
-      };
-      
-      loadPdfMetadata();
-    }
+        
+        const loadingTask = pdfjsLib.getDocument({
+          url: documentUrl,
+          withCredentials: false,
+          isEvalSupported: false,
+        });
+        
+        const proxy = await loadingTask.promise;
+        
+        if (isCancelled) {
+          console.log('[MobileDocumentViewer] Metadata load cancelled, destroying proxy');
+          proxy.destroy();
+          return;
+        }
+        
+        setNumPages(proxy.numPages);
+        proxy.destroy(); // Clean up immediately - we only needed the page count
+        console.log('[MobileDocumentViewer] PDF metadata loaded:', { numPages: proxy.numPages, elapsed: Date.now() - mountTimeRef.current + 'ms' });
+      } catch (error) {
+        if (isCancelled) return;
+        console.error('[MobileDocumentViewer] Failed to load PDF metadata:', error);
+        // Don't fail - we can still display the PDF, just without page count
+      }
+    };
+    
+    loadPdfMetadata();
+    
+    return () => {
+      isCancelled = true;
+    };
   }, [isPdf, documentUrl]);
 
+  // Auto-complete loading for non-iframe content
+  useEffect(() => {
+    if (!isPdf && !isImage) {
+      // For video, audio, text, office - mark as loaded after mount
+      const timer = setTimeout(() => {
+        console.log('[MobileDocumentViewer] Non-iframe content, auto-completing load');
+        setIsLoading(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isPdf, isImage]);
+
   const handleIframeLoad = useCallback(() => {
+    const elapsed = Date.now() - mountTimeRef.current;
+    console.log('[MobileDocumentViewer] Iframe LOADED successfully', { elapsed: elapsed + 'ms' });
     setIsLoading(false);
     setLoadError(null);
-    console.log('[MobileDocumentViewer] Content loaded successfully');
   }, []);
 
   const handleIframeError = useCallback(() => {
+    const elapsed = Date.now() - mountTimeRef.current;
+    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms' });
     setIsLoading(false);
     setLoadError('Failed to load document. Please try downloading instead.');
-    console.error('[MobileDocumentViewer] Content failed to load');
   }, []);
 
   const handleDownload = async () => {
+    console.log('[MobileDocumentViewer] Download requested', { canDownload });
+    
     if (!canDownload) {
       toast({
         title: 'Download Restricted',
@@ -137,6 +180,7 @@ export function MobileDocumentViewer({
       link.click();
       document.body.removeChild(link);
 
+      console.log('[MobileDocumentViewer] Download initiated');
       toast({
         title: 'Download Started',
         description: 'Your document is being downloaded'
@@ -151,61 +195,19 @@ export function MobileDocumentViewer({
     }
   };
 
-  // Render loading state
-  if (isLoading && !loadError) {
-    return (
-      <div className="flex flex-col h-full w-full">
-        {/* Simple toolbar */}
-        <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b gap-2">
-          {supportsTranslation && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTranslationOpen(true)}
-              className="h-10 px-3 touch-manipulation"
-              disabled
-            >
-              <Languages className="w-4 h-4 mr-2" />
-              Translate
-            </Button>
-          )}
-          <div className="flex-1" />
-          {canDownload && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownload}
-              className="h-10 px-3 touch-manipulation"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-        
-        {/* Loading spinner */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
-            <p className="text-sm text-muted-foreground">Loading document...</p>
-          </div>
-        </div>
-        
-        {/* Hidden iframe to trigger load */}
-        {isPdf && (
-          <iframe
-            ref={iframeRef}
-            src={documentUrl}
-            className="hidden"
-            onLoad={handleIframeLoad}
-            onError={handleIframeError}
-          />
-        )}
-      </div>
-    );
-  }
+  const handleOpenTranslation = useCallback(() => {
+    console.log('[MobileDocumentViewer] Opening translation panel', { documentId, numPages });
+    setTranslationOpen(true);
+  }, [documentId, numPages]);
+
+  const handleCloseTranslation = useCallback(() => {
+    console.log('[MobileDocumentViewer] Closing translation panel');
+    setTranslationOpen(false);
+  }, []);
 
   // Render error state
   if (loadError) {
+    console.log('[MobileDocumentViewer] Rendering error state:', loadError);
     return (
       <div className="flex flex-col h-full w-full">
         <div className="flex-1 flex items-center justify-center p-6">
@@ -227,15 +229,16 @@ export function MobileDocumentViewer({
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* Simplified Mobile Toolbar - Bottom positioned for easy thumb access */}
+      {/* Simplified Mobile Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b gap-2">
         {/* Left: Translation button */}
         {supportsTranslation && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setTranslationOpen(true)}
+            onClick={handleOpenTranslation}
             className="h-10 px-3 touch-manipulation"
+            disabled={isLoading}
           >
             <Languages className="w-4 h-4 mr-2" />
             Translate
@@ -267,6 +270,16 @@ export function MobileDocumentViewer({
 
       {/* Document Content - Full height for native scrolling */}
       <div className="flex-1 overflow-hidden relative">
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
+            <div className="text-center">
+              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
+              <p className="text-sm text-muted-foreground">Loading document...</p>
+            </div>
+          </div>
+        )}
+
         {/* Watermark overlay */}
         {watermarkEnabled && (
           <div 
@@ -305,8 +318,14 @@ export function MobileDocumentViewer({
               src={documentUrl}
               alt="Document"
               className="max-w-full max-h-full object-contain"
-              onLoad={() => setIsLoading(false)}
-              onError={() => setLoadError('Failed to load image')}
+              onLoad={() => {
+                console.log('[MobileDocumentViewer] Image loaded');
+                setIsLoading(false);
+              }}
+              onError={() => {
+                console.error('[MobileDocumentViewer] Image failed to load');
+                setLoadError('Failed to load image');
+              }}
             />
           </div>
         )}
@@ -317,7 +336,10 @@ export function MobileDocumentViewer({
             <VideoPlayer
               src={documentUrl}
               canDownload={canDownload}
-              onError={() => setLoadError('Failed to load video')}
+              onError={() => {
+                console.error('[MobileDocumentViewer] Video failed to load');
+                setLoadError('Failed to load video');
+              }}
             />
           </div>
         )}
@@ -334,9 +356,14 @@ export function MobileDocumentViewer({
                 src={documentUrl}
                 controls
                 className="w-full"
-                onLoadStart={() => setIsLoading(true)}
-                onCanPlay={() => setIsLoading(false)}
-                onError={() => setLoadError('Failed to load audio')}
+                onCanPlay={() => {
+                  console.log('[MobileDocumentViewer] Audio ready to play');
+                  setIsLoading(false);
+                }}
+                onError={() => {
+                  console.error('[MobileDocumentViewer] Audio failed to load');
+                  setLoadError('Failed to load audio');
+                }}
               />
             </div>
           </div>
@@ -347,8 +374,14 @@ export function MobileDocumentViewer({
           <div className="w-full h-full overflow-auto p-4">
             <TextFileViewer 
               url={documentUrl} 
-              onLoad={() => setIsLoading(false)}
-              onError={() => setLoadError('Failed to load text file')}
+              onLoad={() => {
+                console.log('[MobileDocumentViewer] Text file loaded');
+                setIsLoading(false);
+              }}
+              onError={() => {
+                console.error('[MobileDocumentViewer] Text file failed to load');
+                setLoadError('Failed to load text file');
+              }}
             />
           </div>
         )}
@@ -365,7 +398,7 @@ export function MobileDocumentViewer({
       {/* Mobile Translation Panel (Bottom Sheet) */}
       <MobileTranslationPanel
         isOpen={translationOpen}
-        onClose={() => setTranslationOpen(false)}
+        onClose={handleCloseTranslation}
         documentUrl={documentUrl}
         documentId={documentId}
         documentType={documentType}
@@ -375,7 +408,7 @@ export function MobileDocumentViewer({
   );
 }
 
-// Simple text file viewer component
+// Simple text file viewer component with cleanup
 function TextFileViewer({ 
   url, 
   onLoad, 
@@ -389,7 +422,9 @@ function TextFileViewer({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(url)
+    const controller = new AbortController();
+    
+    fetch(url, { signal: controller.signal })
       .then(response => {
         if (!response.ok) throw new Error('Failed to load');
         return response.text();
@@ -399,10 +434,16 @@ function TextFileViewer({
         setLoading(false);
         onLoad();
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        console.error('[TextFileViewer] Error:', err);
         setLoading(false);
         onError();
       });
+      
+    return () => {
+      controller.abort();
+    };
   }, [url, onLoad, onError]);
 
   if (loading) {
