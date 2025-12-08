@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ export default function SharedAESOReport() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMountedRef = useRef(true);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -50,44 +51,95 @@ export default function SharedAESOReport() {
   const [translating, setTranslating] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<any>(null);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     checkAccess();
   }, [token]);
 
   const checkAccess = async () => {
     if (!token) {
-      setError('Invalid link');
-      setLoading(false);
+      console.log('[SharedAESOReport] No token provided');
+      if (isMountedRef.current) {
+        setError('Invalid link');
+        setLoading(false);
+      }
       return;
     }
+
+    console.log('[SharedAESOReport] Checking access for token:', token.substring(0, 8) + '...');
 
     try {
       const { data, error: apiError } = await supabase.functions.invoke('validate-aeso-share', {
         body: { token }
       });
 
-      if (apiError) throw apiError;
+      console.log('[SharedAESOReport] API response:', { data, apiError });
 
-      if (data?.requiresViewerInfo || data?.requiresPassword) {
-        setRequiresViewerInfo(data.requiresViewerInfo);
-        setRequiresPassword(data.requiresPassword);
+      if (!isMountedRef.current) {
+        console.log('[SharedAESOReport] Component unmounted, skipping state update');
+        return;
+      }
+
+      // Handle API error
+      if (apiError) {
+        console.error('[SharedAESOReport] API error:', apiError);
+        setError(apiError.message || 'Failed to load report');
+        setLoading(false);
+        return;
+      }
+
+      // Handle null/undefined data
+      if (!data) {
+        console.error('[SharedAESOReport] No data returned from API');
+        setError('Failed to load report - no response');
+        setLoading(false);
+        return;
+      }
+
+      // Check for viewer info requirement FIRST (before checking valid:false)
+      if (data.requiresViewerInfo) {
+        console.log('[SharedAESOReport] Viewer info required, showing form');
+        setRequiresViewerInfo(true);
+        setRequiresPassword(!!data.requiresPassword);
         setReportTitle(data.title || 'AESO Analysis Report');
         setLoading(false);
         return;
       }
 
-      if (!data?.valid) {
-        setError(data?.error || 'Invalid or expired link');
+      // Check for password requirement
+      if (data.requiresPassword && !data.valid) {
+        console.log('[SharedAESOReport] Password required, showing form');
+        setRequiresPassword(true);
+        setReportTitle(data.title || 'AESO Analysis Report');
         setLoading(false);
         return;
       }
 
+      // Check for invalid/error response
+      if (!data.valid) {
+        console.log('[SharedAESOReport] Invalid response:', data.error);
+        setError(data.error || 'Invalid or expired link');
+        setLoading(false);
+        return;
+      }
+
+      // Success - we have the report
+      console.log('[SharedAESOReport] Access granted, loading report');
       setReport(data.report);
       setLoading(false);
     } catch (err: any) {
-      console.error('Error checking access:', err);
-      setError(err.message || 'Failed to load report');
-      setLoading(false);
+      console.error('[SharedAESOReport] Exception:', err);
+      if (isMountedRef.current) {
+        setError(err.message || 'Failed to load report');
+        setLoading(false);
+      }
     }
   };
 
@@ -113,6 +165,8 @@ export default function SharedAESOReport() {
     }
 
     setSubmitting(true);
+    console.log('[SharedAESOReport] Submitting viewer info:', { viewerName, viewerEmail, hasPassword: !!password });
+
     try {
       const { data, error: apiError } = await supabase.functions.invoke('validate-aeso-share', {
         body: {
@@ -122,6 +176,10 @@ export default function SharedAESOReport() {
           password: requiresPassword ? password : undefined
         }
       });
+
+      console.log('[SharedAESOReport] Submit response:', { data, apiError });
+
+      if (!isMountedRef.current) return;
 
       if (apiError) throw apiError;
 
@@ -138,18 +196,23 @@ export default function SharedAESOReport() {
         throw new Error(data?.error || 'Access denied');
       }
 
+      console.log('[SharedAESOReport] Access granted after form submit');
       setReport(data.report);
       setRequiresViewerInfo(false);
       setRequiresPassword(false);
     } catch (err: any) {
-      console.error('Error submitting access:', err);
-      toast({
-        title: "Access Failed",
-        description: err.message || "Failed to access report.",
-        variant: "destructive"
-      });
+      console.error('[SharedAESOReport] Submit error:', err);
+      if (isMountedRef.current) {
+        toast({
+          title: "Access Failed",
+          description: err.message || "Failed to access report.",
+          variant: "destructive"
+        });
+      }
     } finally {
-      setSubmitting(false);
+      if (isMountedRef.current) {
+        setSubmitting(false);
+      }
     }
   };
 

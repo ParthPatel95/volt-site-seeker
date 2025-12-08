@@ -131,13 +131,15 @@ serve(async (req) => {
 
     // Check if viewer info provided (required for first access)
     if (!body.viewerName || !body.viewerEmail) {
-      return new Response(JSON.stringify({
+      console.log('[Validate AESO Share] Viewer info required, returning form prompt');
+      const response = {
         valid: false,
         requiresViewerInfo: true,
         title: report.title,
-        requiresPassword: !!report.password_hash,
-        error: 'Viewer information required'
-      }), {
+        requiresPassword: !!report.password_hash
+      };
+      console.log('[Validate AESO Share] Response:', JSON.stringify(response));
+      return new Response(JSON.stringify(response), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
