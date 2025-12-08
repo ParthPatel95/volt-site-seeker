@@ -1,0 +1,421 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Lock, User, Mail, FileText, AlertCircle, Globe, Download } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+const LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'zh-CN', name: 'Chinese (Simplified)', flag: '🇨🇳' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)', flag: '🇹🇼' },
+  { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
+  { code: 'gu', name: 'Gujarati', flag: '🇮🇳' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+  { code: 'ko', name: 'Korean', flag: '🇰🇷' },
+  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'fr', name: 'French', flag: '🇫🇷' },
+  { code: 'de', name: 'German', flag: '🇩🇪' },
+  { code: 'pt', name: 'Portuguese', flag: '🇧🇷' },
+  { code: 'ru', name: 'Russian', flag: '🇷🇺' },
+  { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+];
+
+export default function SharedAESOReport() {
+  const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Auth states
+  const [requiresViewerInfo, setRequiresViewerInfo] = useState(false);
+  const [requiresPassword, setRequiresPassword] = useState(false);
+  const [reportTitle, setReportTitle] = useState('');
+
+  // Form states
+  const [viewerName, setViewerName] = useState('');
+  const [viewerEmail, setViewerEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Report states
+  const [report, setReport] = useState<any>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [translating, setTranslating] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState<any>(null);
+
+  useEffect(() => {
+    checkAccess();
+  }, [token]);
+
+  const checkAccess = async () => {
+    if (!token) {
+      setError('Invalid link');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error: apiError } = await supabase.functions.invoke('validate-aeso-share', {
+        body: { token }
+      });
+
+      if (apiError) throw apiError;
+
+      if (data?.requiresViewerInfo || data?.requiresPassword) {
+        setRequiresViewerInfo(data.requiresViewerInfo);
+        setRequiresPassword(data.requiresPassword);
+        setReportTitle(data.title || 'AESO Analysis Report');
+        setLoading(false);
+        return;
+      }
+
+      if (!data?.valid) {
+        setError(data?.error || 'Invalid or expired link');
+        setLoading(false);
+        return;
+      }
+
+      setReport(data.report);
+      setLoading(false);
+    } catch (err: any) {
+      console.error('Error checking access:', err);
+      setError(err.message || 'Failed to load report');
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitAccess = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!viewerName.trim() || !viewerEmail.trim()) {
+      toast({
+        title: "Required Fields",
+        description: "Please enter your name and email.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (requiresPassword && !password) {
+      toast({
+        title: "Password Required",
+        description: "Please enter the password.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data, error: apiError } = await supabase.functions.invoke('validate-aeso-share', {
+        body: {
+          token,
+          viewerName: viewerName.trim(),
+          viewerEmail: viewerEmail.trim(),
+          password: requiresPassword ? password : undefined
+        }
+      });
+
+      if (apiError) throw apiError;
+
+      if (!data?.valid) {
+        if (data?.requiresPassword && data?.error === 'Incorrect password') {
+          toast({
+            title: "Incorrect Password",
+            description: "Please check the password and try again.",
+            variant: "destructive"
+          });
+          setSubmitting(false);
+          return;
+        }
+        throw new Error(data?.error || 'Access denied');
+      }
+
+      setReport(data.report);
+      setRequiresViewerInfo(false);
+      setRequiresPassword(false);
+    } catch (err: any) {
+      console.error('Error submitting access:', err);
+      toast({
+        title: "Access Failed",
+        description: err.message || "Failed to access report.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleTranslate = async (langCode: string) => {
+    if (langCode === 'en') {
+      setTranslatedContent(null);
+      setSelectedLanguage('en');
+      return;
+    }
+
+    if (!report) return;
+
+    setTranslating(true);
+    setSelectedLanguage(langCode);
+
+    try {
+      // Extract text sections from report for translation
+      const sections = [
+        { key: 'title', text: report.title },
+        { key: 'summary', text: `Analysis period: ${report.reportConfig?.timePeriod} days. Uptime target: ${report.reportConfig?.uptimePercentage}%. Transmission adder: $${report.reportConfig?.transmissionAdder}/MWh.` }
+      ];
+
+      const { data, error } = await supabase.functions.invoke('translate-aeso-report', {
+        body: {
+          reportId: report.id,
+          targetLanguage: langCode,
+          content: {
+            title: report.title,
+            sections
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        setTranslatedContent(data.translation);
+        toast({
+          title: "Translation Complete",
+          description: `Report translated to ${data.translation.languageName}`,
+        });
+      }
+    } catch (err: any) {
+      console.error('Translation error:', err);
+      toast({
+        title: "Translation Failed",
+        description: "Could not translate the report.",
+        variant: "destructive"
+      });
+      setSelectedLanguage('en');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (report?.reportHtml) {
+      const htmlContent = report.reportHtml;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const newWindow = window.open(url, '_blank');
+      if (newWindow) {
+        newWindow.onload = () => {
+          setTimeout(() => newWindow.print(), 500);
+        };
+      }
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading report...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate('/')} className="w-full">
+              Return to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Viewer info / password form
+  if (requiresViewerInfo || requiresPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <FileText className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle>{reportTitle}</CardTitle>
+            <CardDescription>
+              Please provide your information to access this report
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmitAccess} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Full Name
+                </Label>
+                <Input
+                  id="name"
+                  value={viewerName}
+                  onChange={(e) => setViewerName(e.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={viewerEmail}
+                  onChange={(e) => setViewerEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              {requiresPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                    required
+                  />
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  'Access Report'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Report viewer
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#F7931A] to-[#0A1628] flex items-center justify-center text-white font-bold">
+              W
+            </div>
+            <div>
+              <h1 className="font-semibold text-sm">
+                {translatedContent?.title || report?.title}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                WattByte Energy Intelligence
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Language Selector */}
+            <Select value={selectedLanguage} onValueChange={handleTranslate}>
+              <SelectTrigger className="w-[160px]">
+                <Globe className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code}>
+                    <span className="flex items-center gap-2">
+                      <span>{lang.flag}</span>
+                      <span>{lang.name}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Download Button */}
+            {report?.reportHtml && (
+              <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Translation Loading */}
+      {translating && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">Translating report...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Report Content */}
+      <div className="container mx-auto px-4 py-6">
+        {report?.reportHtml ? (
+          <div 
+            className="bg-card rounded-lg shadow-lg overflow-hidden"
+            dangerouslySetInnerHTML={{ __html: report.reportHtml }}
+          />
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-lg font-semibold mb-2">
+                {translatedContent?.title || report?.title}
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Report type: {report?.reportType === 'comprehensive' ? 'Comprehensive (7 Scenarios)' : 'Single Scenario'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Analysis period: {report?.reportConfig?.timePeriod} days
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}

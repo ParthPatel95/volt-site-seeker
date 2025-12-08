@@ -1010,6 +1010,38 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_report_translations: {
+        Row: {
+          created_at: string | null
+          id: string
+          report_id: string | null
+          target_language: string
+          translated_content: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          report_id?: string | null
+          target_language: string
+          translated_content: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          report_id?: string | null
+          target_language?: string
+          translated_content?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aeso_report_translations_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "shared_aeso_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aeso_retraining_history: {
         Row: {
           created_at: string
@@ -4700,6 +4732,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shared_aeso_report_views: {
+        Row: {
+          id: string
+          report_id: string | null
+          viewed_at: string | null
+          viewer_email: string
+          viewer_ip: string | null
+          viewer_name: string
+          viewer_user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          report_id?: string | null
+          viewed_at?: string | null
+          viewer_email: string
+          viewer_ip?: string | null
+          viewer_name: string
+          viewer_user_agent?: string | null
+        }
+        Update: {
+          id?: string
+          report_id?: string | null
+          viewed_at?: string | null
+          viewer_email?: string
+          viewer_ip?: string | null
+          viewer_name?: string
+          viewer_user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_aeso_report_views_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "shared_aeso_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_aeso_reports: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_views: number | null
+          expires_at: string | null
+          id: string
+          max_views: number | null
+          password_hash: string | null
+          report_config: Json
+          report_data: Json
+          report_html: string | null
+          report_type: string | null
+          share_token: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_views?: number | null
+          expires_at?: string | null
+          id?: string
+          max_views?: number | null
+          password_hash?: string | null
+          report_config: Json
+          report_data: Json
+          report_html?: string | null
+          report_type?: string | null
+          share_token: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_views?: number | null
+          expires_at?: string | null
+          id?: string
+          max_views?: number | null
+          password_hash?: string | null
+          report_config?: Json
+          report_data?: Json
+          report_html?: string | null
+          report_type?: string | null
+          share_token?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       site_access_requests: {
         Row: {

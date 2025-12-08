@@ -17,6 +17,7 @@ import WattFund from "./pages/WattFund";
 import Hosting from "./pages/Hosting";
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
+const SharedAESOReport = lazy(() => import('./pages/SharedAESOReport'));
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 import ViewDocument from "./pages/ViewDocument";
@@ -55,6 +56,11 @@ const App = () => (
                 <Route path="/comprehensive-test" element={<ComprehensiveTest />} />
                 <Route path="/view/:token" element={<ViewDocument />} />
                 <Route path="/share/dashboard/:token" element={<ViewSharedDashboard />} />
+                <Route path="/shared/aeso-report/:token" element={
+                  <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                    <SharedAESOReport />
+                  </Suspense>
+                } />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
