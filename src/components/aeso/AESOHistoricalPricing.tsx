@@ -2924,7 +2924,39 @@ export function AESOHistoricalPricing() {
            <WeatherAnalysis />
          </TabsContent>
 
-       </Tabs>
+        </Tabs>
+
+        {/* Share Report Dialog */}
+        <ShareReportDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          reportData={shareReportType === 'comprehensive' 
+            ? (() => {
+                const uptimeLevels = [100, 97, 96, 95, 90, 85, 80];
+                return uptimeLevels.map(uptime => ({
+                  uptimePercentage: uptime,
+                  analysis: calculateUptimeForScenario(uptime) || {
+                    totalShutdowns: 0,
+                    totalHours: 0,
+                    totalSavings: 0,
+                    totalAllInSavings: 0,
+                    originalAverage: 0,
+                    newAveragePrice: 0,
+                    events: []
+                  }
+                }));
+              })()
+            : currentAnalysis
+          }
+          reportConfig={{
+            uptimePercentage,
+            timePeriod,
+            transmissionAdder,
+            exchangeRate: liveExchangeRate || 0.73,
+            exportType: shareReportType
+          }}
+          reportType={shareReportType}
+        />
     </div>
   );
 }
