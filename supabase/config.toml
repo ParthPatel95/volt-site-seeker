@@ -4,11 +4,6 @@ project_id = "ktgosplhknmnyagxrgbe"
 
 [functions.aeso-analysis-export]
 verify_jwt = false
-enabled = true
-port = 54321
-schemas = ["public", "graphql_public"]
-extra_search_path = ["public", "extensions"]
-max_rows = 1000
 
 [functions.aeso-weather-integration]
 verify_jwt = false
