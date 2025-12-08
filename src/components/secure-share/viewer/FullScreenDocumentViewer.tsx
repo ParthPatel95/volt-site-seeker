@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, X, FileText, AlertCircle } from 'lucide-react';
 import { DocumentViewer } from './DocumentViewer';
+import { MobileDocumentViewer } from './MobileDocumentViewer';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -173,6 +173,138 @@ export function FullScreenDocumentViewer({
     );
   }
 
+  // MOBILE: Use dedicated mobile viewer with native PDF rendering
+  // This completely avoids react-pdf canvas memory issues on iOS
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300">
+        {/* Simplified Mobile Header */}
+        <div className="absolute top-0 left-0 right-0 z-20 border-b bg-card/95 backdrop-blur-xl shadow-sm h-14 safe-area-pt safe-area-pl safe-area-pr">
+          <div className="container mx-auto px-3 h-full flex items-center justify-between gap-2">
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSafeBack}
+              disabled={isTransitioning}
+              className="shrink-0 touch-manipulation min-h-[44px]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+
+            {/* Document Name & Position */}
+            <div className="flex-1 min-w-0 text-center">
+              <h2 className="text-xs font-semibold truncate" title={fileName}>
+                {fileName}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {currentIndex + 1} of {allDocuments.length}
+              </p>
+            </div>
+
+            {/* Navigation & Actions */}
+            <div className="flex items-center gap-1 shrink-0">
+              {allDocuments.length > 1 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePrevious}
+                    disabled={!hasPrevious}
+                    className="touch-manipulation min-h-[44px] min-w-[44px]"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNext}
+                    disabled={!hasNext}
+                    className="touch-manipulation min-h-[44px] min-w-[44px]"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+
+              {allDocuments.length > 1 && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowSidebar(true)}
+                  className="touch-manipulation min-h-[44px] min-w-[44px]"
+                >
+                  <FileText className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Document Viewer - Uses native iframe for PDFs */}
+        <div className="absolute inset-0 pt-14 safe-area-pb">
+          <MobileDocumentViewer
+            documentUrl={fileUrl}
+            documentType={fileType}
+            accessLevel={linkData.access_level}
+            watermarkEnabled={linkData.watermark_enabled}
+            recipientEmail={linkData.recipient_email}
+            linkId={linkData.id}
+            documentId={documentId}
+            enableTracking={true}
+            viewerName={viewerData?.name}
+            viewerEmail={viewerData?.email}
+          />
+        </div>
+
+        {/* Mobile Sidebar */}
+        {showSidebar && (
+          <div className="absolute inset-0 top-14 bg-card border-l shadow-xl animate-in slide-in-from-right duration-300 z-30">
+            <div className="flex items-center justify-between p-4 border-b safe-area-pr">
+              <h3 className="font-semibold text-sm">Documents</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSidebar(false)}
+                className="touch-manipulation min-h-[44px] min-w-[44px]"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="overflow-y-auto h-[calc(100%-60px)] safe-area-pb safe-area-pr">
+              {allDocuments.map((doc, index) => {
+                const isActive = doc.id === documentId;
+                return (
+                  <button
+                    key={doc.id}
+                    onClick={() => {
+                      onDocumentChange(doc);
+                      setShowSidebar(false);
+                    }}
+                    className={cn(
+                      "w-full text-left p-4 border-b transition-colors touch-manipulation min-h-[60px]",
+                      isActive 
+                        ? "bg-primary/10 border-l-4 border-l-primary" 
+                        : "hover:bg-muted"
+                    )}
+                  >
+                    <p className="text-sm font-medium truncate mb-1">
+                      {doc.file_name || 'Unknown'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Document {index + 1}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // DESKTOP: Full-featured viewer with react-pdf (supports translation, zoom, etc.)
   return (
     <div 
       className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300"
@@ -194,15 +326,12 @@ export function FullScreenDocumentViewer({
             className="shrink-0 touch-manipulation min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">{isTransitioning ? 'Loading...' : 'Back'}</span>}
+            <span className="ml-2">{isTransitioning ? 'Loading...' : 'Back'}</span>
           </Button>
 
           {/* Center: Document Name & Position */}
           <div className="flex-1 min-w-0 text-center">
-            <h2 className={cn(
-              "font-semibold truncate",
-              isMobile ? "text-xs" : "text-sm"
-            )} title={fileName}>
+            <h2 className="text-sm font-semibold truncate" title={fileName}>
               {fileName}
             </h2>
             <p className="text-xs text-muted-foreground">
@@ -253,13 +382,13 @@ export function FullScreenDocumentViewer({
             {allDocuments.length > 1 && (
               <Button
                 variant="outline"
-                size={isMobile ? "icon" : "sm"}
+                size="sm"
                 onClick={() => setShowSidebar(true)}
                 title="All documents"
                 className="touch-manipulation min-h-[44px]"
               >
                 <FileText className="w-4 h-4" />
-                {!isMobile && <span className="ml-2">All ({allDocuments.length})</span>}
+                <span className="ml-2">All ({allDocuments.length})</span>
               </Button>
             )}
           </div>
@@ -282,12 +411,9 @@ export function FullScreenDocumentViewer({
         />
       </div>
 
-      {/* Optional Sidebar for Quick Document Switching - Responsive width */}
+      {/* Optional Sidebar for Quick Document Switching */}
       {showSidebar && (
-        <div className={cn(
-          "absolute right-0 top-16 bottom-0 bg-card border-l shadow-xl animate-in slide-in-from-right duration-300 z-30",
-          isMobile ? "w-full sm:w-80" : "w-80"
-        )}>
+        <div className="absolute right-0 top-16 bottom-0 w-80 bg-card border-l shadow-xl animate-in slide-in-from-right duration-300 z-30">
           <div className="flex items-center justify-between p-4 border-b safe-area-pt safe-area-pr">
             <h3 className="font-semibold text-sm">Documents</h3>
             <Button
@@ -328,7 +454,6 @@ export function FullScreenDocumentViewer({
           </div>
         </div>
       )}
-
     </div>
   );
 }
