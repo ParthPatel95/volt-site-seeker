@@ -5,6 +5,15 @@ project_id = "ktgosplhknmnyagxrgbe"
 [functions.aeso-analysis-export]
 verify_jwt = false
 
+[functions.aeso-share-report]
+verify_jwt = false
+
+[functions.validate-aeso-share]
+verify_jwt = false
+
+[functions.translate-aeso-report]
+verify_jwt = false
+
 [functions.aeso-weather-integration]
 verify_jwt = false
 
@@ -113,16 +122,10 @@ verify_jwt = false
 [functions.aeso-data-quality-analyzer]
 verify_jwt = false
 
-[functions.aeso-complete-pipeline]
-verify_jwt = false
-
 [functions.aeso-ml-predictor]
 verify_jwt = false
 
 [functions.aeso-cv-validator]
-verify_jwt = false
-
-[functions.aeso-ensemble-predictor]
 verify_jwt = false
 
 [functions.aeso-advanced-feature-engineer]
@@ -170,7 +173,6 @@ verify_jwt = true
 [functions.dashboard-insights]
 verify_jwt = true
 
-# Translation and OCR endpoints - public access for shared link viewers
 [functions.translate-document]
 verify_jwt = false
 
@@ -183,7 +185,6 @@ verify_jwt = false
 [functions.secure-share-meta-proxy]
 verify_jwt = false
 
-# Authentication required endpoints
 [functions.api-key-management]
 verify_jwt = true
 
@@ -196,15 +197,14 @@ verify_jwt = true
 [functions.enhanced-verified-scanner]
 verify_jwt = true
 
-# Special endpoints - review these for your use case
 [functions.verify-email]
-verify_jwt = false  # Must be public for email verification to work
+verify_jwt = false
 
 [functions.voltmarket-chat]
-verify_jwt = true  # Requires authentication for user-specific chats
+verify_jwt = true
 
 [functions.meta-proxy]
-verify_jwt = true  # Requires authentication for proxy access
+verify_jwt = true
 
 [functions.user-management]
-verify_jwt = true  # Requires authentication - restricted to admin@voltscout.com
+verify_jwt = true

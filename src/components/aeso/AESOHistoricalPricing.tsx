@@ -35,7 +35,9 @@ import {
   Target,
   Download,
   FileText,
-  Loader2
+  Loader2,
+  Link,
+  Share2
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +49,7 @@ import { LoadScheduleOptimizer } from './LoadScheduleOptimizer';
 import { CostBenefitCalculator } from './CostBenefitCalculator';
 import { WeatherAnalysis } from '@/components/weather/WeatherAnalysis';
 import { AdvancedAnalytics } from '@/components/historical/AdvancedAnalytics';
+import { ShareReportDialog } from './ShareReportDialog';
 
 
 export function AESOHistoricalPricing() {
@@ -81,6 +84,8 @@ export function AESOHistoricalPricing() {
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingComprehensive, setExportingComprehensive] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareReportType, setShareReportType] = useState<'single' | 'comprehensive'>('single');
 
   useEffect(() => {
     fetchDailyData();
@@ -2599,11 +2604,19 @@ export function AESOHistoricalPricing() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={exportToPDF}>
                             <FileText className="h-4 w-4 mr-2" />
-                            Export Current Analysis
+                            Export Current Analysis (PDF)
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={exportComprehensivePDF}>
                             <BarChart3 className="h-4 w-4 mr-2" />
-                            Export Comprehensive Report (7 Scenarios)
+                            Export Comprehensive Report (PDF)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setShareReportType('single'); setShowShareDialog(true); }}>
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Create Shareable Link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setShareReportType('comprehensive'); setShowShareDialog(true); }}>
+                            <Link className="h-4 w-4 mr-2" />
+                            Share Comprehensive Report
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
