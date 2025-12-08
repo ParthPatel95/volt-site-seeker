@@ -1,6 +1,9 @@
 project_id = "ktgosplhknmnyagxrgbe"
 
 [api]
+
+[functions.aeso-analysis-export]
+verify_jwt = false
 enabled = true
 port = 54321
 schemas = ["public", "graphql_public"]

@@ -32,8 +32,14 @@ import {
   PieChart,
   Activity,
   Clock,
-  Target
+  Target,
+  Download,
+  FileText,
+  Loader2
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useAESOHistoricalPricing } from '@/hooks/useAESOHistoricalPricing';
 import { PriceAlertsPanel } from './PriceAlertsPanel';
 import { PredictiveAnalytics } from './PredictiveAnalytics';
@@ -66,11 +72,14 @@ export function AESOHistoricalPricing() {
     fetchCustomPeriodData
   } = useAESOHistoricalPricing();
 
+  const { toast } = useToast();
+  
   const [uptimePercentage, setUptimePercentage] = useState('95');
   const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365' | '730' | '1095' | '1460'>('30');
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   useEffect(() => {
     fetchDailyData();
@@ -129,23 +138,19 @@ export function AESOHistoricalPricing() {
       const uptime = parseFloat(uptimePercentage);
       if (isNaN(uptime) || uptime >= 100) {
         console.warn('[QA] Invalid uptime percentage:', uptimePercentage);
-        import('@/hooks/use-toast').then(({ toast }) => {
-          toast({
-            title: "Invalid Uptime Target",
-            description: "Uptime must be less than 100% to calculate energy savings from shutdown periods.",
-            variant: "destructive"
-          });
+        toast({
+          title: "Invalid Uptime Target",
+          description: "Uptime must be less than 100% to calculate energy savings from shutdown periods.",
+          variant: "destructive"
         });
         return;
       }
       if (uptime < 50) {
         console.warn('[QA] Uptime too low:', uptimePercentage);
-        import('@/hooks/use-toast').then(({ toast }) => {
-          toast({
-            title: "Invalid Uptime Target",
-            description: "Uptime must be at least 50% for realistic operational analysis.",
-            variant: "destructive"
-          });
+        toast({
+          title: "Invalid Uptime Target",
+          description: "Uptime must be at least 50% for realistic operational analysis.",
+          variant: "destructive"
         });
         return;
       }
@@ -166,26 +171,83 @@ export function AESOHistoricalPricing() {
       console.log('[QA] Uptime optimization result:', result);
       
       if (result === null) {
-        import('@/hooks/use-toast').then(({ toast }) => {
-          toast({
-            title: "Calculation not possible",
-            description: "No optimization available at this uptime level. Try a lower uptime percentage or wait for data to load.",
-            variant: "destructive"
-          });
+        toast({
+          title: "Calculation not possible",
+          description: "No optimization available at this uptime level. Try a lower uptime percentage or wait for data to load.",
+          variant: "destructive"
         });
       }
       
       setCustomAnalysisResult(result);
     } catch (error) {
       console.error('[QA] Error in uptime analysis:', error);
-      import('@/hooks/use-toast').then(({ toast }) => {
-        toast({
-          title: "Calculation Error",
-          description: "An error occurred during analysis. Please try again.",
-          variant: "destructive"
-        });
+      toast({
+        title: "Calculation Error",
+        description: "An error occurred during analysis. Please try again.",
+        variant: "destructive"
       });
       setCustomAnalysisResult(null);
+    }
+  };
+
+  // Export analysis to PDF
+  const exportToPDF = async () => {
+    if (!currentAnalysis) {
+      toast({
+        title: "No Analysis Available",
+        description: "Please run an uptime optimization analysis first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setExportingPDF(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aeso-analysis-export', {
+        body: {
+          analysisData: currentAnalysis,
+          config: {
+            uptimePercentage,
+            timePeriod,
+            transmissionAdder,
+            exchangeRate: liveExchangeRate || 0.73
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.htmlContent) {
+        // Decode base64 HTML content
+        const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
+        
+        // Create a blob and open in new tab for printing
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const newWindow = window.open(url, '_blank');
+        
+        if (newWindow) {
+          newWindow.onload = () => {
+            setTimeout(() => {
+              newWindow.print();
+            }, 500);
+          };
+        }
+
+        toast({
+          title: "Report Generated",
+          description: "Print dialog opened. Save as PDF or print directly.",
+        });
+      }
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate the PDF report. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setExportingPDF(false);
     }
   };
 
@@ -2340,6 +2402,33 @@ export function AESOHistoricalPricing() {
                 {/* Analysis Results */}
                 {currentAnalysis && (
                   <div className="space-y-4">
+                    {/* Export Button */}
+                    <div className="flex justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" disabled={exportingPDF}>
+                            {exportingPDF ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="h-4 w-4 mr-2" />
+                                Export Analysis
+                              </>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={exportToPDF}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Export to PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    
                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-muted/50 rounded-lg">
                        <div className="text-center">
                          <div className="text-2xl font-bold text-red-600">{currentAnalysis.totalShutdowns}</div>
