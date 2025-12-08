@@ -188,10 +188,10 @@ export function FullScreenDocumentViewer({
   // This completely avoids react-pdf canvas memory issues on iOS
   if (isMobile) {
   return (
-    <div className={cn(
-      "fixed inset-0 z-50 bg-background",
-      isInitialMount && "animate-in fade-in slide-in-from-bottom-4 duration-300"
-    )}>
+      <div className={cn(
+        "fixed inset-0 z-50 bg-background",
+        isInitialMount && !isMobile && "animate-in fade-in slide-in-from-bottom-4 duration-300"
+      )}>
         {/* Simplified Mobile Header */}
         <div className="absolute top-0 left-0 right-0 z-20 border-b bg-card/95 backdrop-blur-xl shadow-sm h-14 safe-area-pt safe-area-pl safe-area-pr">
           <div className="container mx-auto px-3 h-full flex items-center justify-between gap-2">
@@ -280,7 +280,7 @@ export function FullScreenDocumentViewer({
 
         {/* Mobile Sidebar */}
         {showSidebar && (
-          <div className="absolute inset-0 top-14 bg-card border-l shadow-xl animate-in slide-in-from-right duration-300 z-30">
+          <div className="absolute inset-0 top-14 bg-card border-l shadow-xl z-30">
             <div className="flex items-center justify-between p-4 border-b safe-area-pr">
               <h3 className="font-semibold text-sm">Documents</h3>
               <Button
@@ -303,10 +303,11 @@ export function FullScreenDocumentViewer({
                       setShowSidebar(false);
                     }}
                     className={cn(
-                      "w-full text-left p-4 border-b transition-colors touch-manipulation min-h-[60px]",
+                      "w-full text-left p-4 border-b touch-manipulation min-h-[60px]",
+                      "active:bg-muted",
                       isActive 
                         ? "bg-primary/10 border-l-4 border-l-primary" 
-                        : "hover:bg-muted"
+                        : ""
                     )}
                   >
                     <p className="text-sm font-medium truncate mb-1">

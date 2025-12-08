@@ -485,7 +485,7 @@ export function FolderGalleryView({
                 return (
                   <Card
                     key={doc.id}
-                    className="group cursor-pointer overflow-hidden border-2 hover:border-primary/40 transition-all duration-300 hover:shadow-xl"
+                    className="group cursor-pointer overflow-hidden border-2 md:hover:border-primary/40 md:hover:shadow-xl active:border-primary/40 active:shadow-lg"
                     onClick={() => onDocumentSelect(doc)}
                   >
                     <div className="relative aspect-[3/4] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden">
@@ -499,14 +499,14 @@ export function FolderGalleryView({
                       ) : isPdf && !isMobileDevice && doc.file_url ? (
                         <iframe
                           src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
-                          className="absolute inset-0 w-full h-full pointer-events-none scale-110"
+                          className="absolute inset-0 w-full h-full pointer-events-none"
                           title={doc.file_name}
                         />
                       ) : (
                         <IconComponent className="w-16 h-16 text-muted-foreground/40" />
                       )}
                       
-                      <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="absolute inset-0 bg-background/80 opacity-0 md:group-hover:opacity-100 flex items-center justify-center">
                         <Button variant="secondary" size="sm" className="shadow-lg">
                           <Eye className="w-4 h-4 mr-2" />
                           View
@@ -538,7 +538,7 @@ export function FolderGalleryView({
                     <button
                       key={doc.id}
                       onClick={() => onDocumentSelect(doc)}
-                      className="w-full text-left group p-4 transition-all hover:bg-muted/40 flex items-center gap-4"
+                      className="w-full text-left group p-4 md:hover:bg-muted/40 active:bg-muted/40 flex items-center gap-4"
                     >
                       <div className="w-16 h-16 rounded overflow-hidden bg-muted/60 flex-shrink-0 flex items-center justify-center">
                         {isImage && doc.file_url ? (

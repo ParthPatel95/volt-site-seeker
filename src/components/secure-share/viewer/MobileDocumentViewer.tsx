@@ -403,17 +403,15 @@ export function MobileDocumentViewer({
 
       {/* Document Content - Full height for native scrolling */}
       <div className="flex-1 overflow-hidden relative">
-      {/* Loading overlay - opaque with smooth fade transition */}
-      <div 
-        className={`absolute inset-0 flex items-center justify-center bg-background z-20 transition-opacity duration-200 ${
-          isLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
-          <p className="text-sm text-muted-foreground">Loading document...</p>
+      {/* Loading overlay - opaque, instant show/hide (no transitions for mobile performance) */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background z-20">
+          <div className="text-center">
+            <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
+            <p className="text-sm text-muted-foreground">Loading document...</p>
+          </div>
         </div>
-      </div>
+      )}
 
         {/* Watermark overlay */}
         {watermarkEnabled && (
