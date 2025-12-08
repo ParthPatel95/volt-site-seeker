@@ -80,6 +80,7 @@ export function AESOHistoricalPricing() {
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [exportingComprehensive, setExportingComprehensive] = useState(false);
 
   useEffect(() => {
     fetchDailyData();
@@ -136,11 +137,11 @@ export function AESOHistoricalPricing() {
     try {
       // Validate uptime percentage before calculation
       const uptime = parseFloat(uptimePercentage);
-      if (isNaN(uptime) || uptime >= 100) {
+      if (isNaN(uptime) || uptime > 100) {
         console.warn('[QA] Invalid uptime percentage:', uptimePercentage);
         toast({
           title: "Invalid Uptime Target",
-          description: "Uptime must be less than 100% to calculate energy savings from shutdown periods.",
+          description: "Uptime must be between 50% and 100%.",
           variant: "destructive"
         });
         return;
@@ -248,6 +249,178 @@ export function AESOHistoricalPricing() {
       });
     } finally {
       setExportingPDF(false);
+    }
+  };
+
+  // Calculate analysis for a specific uptime percentage (for multi-scenario export)
+  const calculateUptimeForScenario = (targetUptimePercent: number) => {
+    const daysInPeriod = parseInt(timePeriod);
+    
+    // Use appropriate data source
+    let sourceData;
+    if (daysInPeriod === 30) {
+      sourceData = monthlyData;
+    } else if (customPeriodData) {
+      sourceData = customPeriodData;
+    } else if (daysInPeriod > 180) {
+      sourceData = yearlyData;
+    } else {
+      sourceData = monthlyData;
+    }
+    
+    if (!sourceData || !sourceData.rawHourlyData) {
+      return null;
+    }
+    
+    // Filter to exact time period
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setDate(now.getDate() - daysInPeriod);
+    
+    const filteredHourlyData = sourceData.rawHourlyData.filter(hour => {
+      const hourDate = new Date(hour.datetime || hour.date);
+      return hourDate >= startDate && hourDate <= now;
+    });
+    
+    const hourlyData = filteredHourlyData.length > 0 ? filteredHourlyData : sourceData.rawHourlyData;
+    
+    // Handle 100% uptime as baseline (no shutdowns)
+    if (targetUptimePercent === 100) {
+      const originalTotalCost = hourlyData.reduce((sum, hour) => sum + hour.price, 0);
+      const originalAvgPrice = originalTotalCost / hourlyData.length;
+      const transmissionAdderValue = parseFloat(transmissionAdder);
+      
+      return {
+        totalShutdowns: 0,
+        totalHours: 0,
+        downtimePercentage: 0,
+        totalSavings: 0,
+        totalAllInSavings: 0,
+        newAveragePrice: originalAvgPrice,
+        originalAverage: originalAvgPrice,
+        events: []
+      };
+    }
+    
+    // Calculate uptime/downtime parameters
+    const targetUptime = targetUptimePercent / 100;
+    const totalHours = hourlyData.length;
+    const allowedDowntimeHours = Math.floor(totalHours * (1 - targetUptime));
+    
+    // Sort all hours by price (highest first)
+    const sortedHours = [...hourlyData].sort((a, b) => b.price - a.price);
+    const hoursToShutdown = sortedHours.slice(0, allowedDowntimeHours);
+    const hoursToKeepRunning = sortedHours.slice(allowedDowntimeHours);
+    
+    // Calculate metrics
+    const originalTotalCost = hourlyData.reduce((sum, hour) => sum + hour.price, 0);
+    const originalAvgPrice = originalTotalCost / totalHours;
+    const optimizedTotalCost = hoursToKeepRunning.reduce((sum, hour) => sum + hour.price, 0);
+    const optimizedAvgPrice = hoursToKeepRunning.length > 0 ? optimizedTotalCost / hoursToKeepRunning.length : originalAvgPrice;
+    const totalSavings = hoursToShutdown.reduce((sum, hour) => sum + hour.price, 0);
+    const transmissionAdderValue = parseFloat(transmissionAdder);
+    const totalAllInSavings = hoursToShutdown.reduce((sum, hour) => sum + hour.price + transmissionAdderValue, 0);
+    
+    // Format events
+    const events = hoursToShutdown.map((hour) => ({
+      date: hour.date,
+      time: `${hour.hour.toString().padStart(2, '0')}:00`,
+      price: hour.price,
+      allInPrice: hour.price + transmissionAdderValue,
+      duration: 1,
+      savings: hour.price,
+      allInSavings: hour.price + transmissionAdderValue
+    }));
+    
+    return {
+      totalShutdowns: allowedDowntimeHours,
+      totalHours: allowedDowntimeHours,
+      downtimePercentage: ((allowedDowntimeHours / totalHours) * 100),
+      totalSavings,
+      totalAllInSavings,
+      newAveragePrice: optimizedAvgPrice,
+      originalAverage: originalAvgPrice,
+      events
+    };
+  };
+
+  // Export comprehensive multi-scenario PDF
+  const exportComprehensivePDF = async () => {
+    if (!monthlyData && !customPeriodData) {
+      toast({
+        title: "No Data Available",
+        description: "Please wait for data to load before exporting.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setExportingComprehensive(true);
+    try {
+      // Calculate all uptime scenarios
+      const uptimeLevels = [100, 97, 96, 95, 90, 85, 80];
+      const scenarios = uptimeLevels.map(uptime => {
+        const analysis = calculateUptimeForScenario(uptime);
+        return {
+          uptimePercentage: uptime,
+          analysis: analysis || {
+            totalShutdowns: 0,
+            totalHours: 0,
+            totalSavings: 0,
+            totalAllInSavings: 0,
+            originalAverage: 0,
+            newAveragePrice: 0,
+            events: []
+          }
+        };
+      }).filter(s => s.analysis !== null);
+
+      console.log('[Export] Generating comprehensive report with', scenarios.length, 'scenarios');
+
+      const { data, error } = await supabase.functions.invoke('aeso-analysis-export', {
+        body: {
+          analysisData: scenarios[0]?.analysis || {},
+          config: {
+            uptimePercentage,
+            timePeriod,
+            transmissionAdder,
+            exchangeRate: liveExchangeRate || 0.73,
+            exportType: 'comprehensive',
+            scenarios
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.htmlContent) {
+        const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const newWindow = window.open(url, '_blank');
+        
+        if (newWindow) {
+          newWindow.onload = () => {
+            setTimeout(() => {
+              newWindow.print();
+            }, 500);
+          };
+        }
+
+        toast({
+          title: "Comprehensive Report Generated",
+          description: "Print dialog opened with all 7 uptime scenarios.",
+        });
+      }
+    } catch (error) {
+      console.error('Error exporting comprehensive PDF:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate the comprehensive report. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setExportingComprehensive(false);
     }
   };
 
@@ -2368,17 +2541,20 @@ export function AESOHistoricalPricing() {
                             setUptimePercentage(e.target.value);
                             return;
                           }
-                          if (value > 99.9) value = 99.9;
+                          if (value > 100) value = 100;
                           if (value < 50) value = 50;
                           setUptimePercentage(value.toString());
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         min="50"
-                        max="99.9"
+                        max="100"
                         step="0.1"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage || '95')).toFixed(1)}% of hours to maintain {uptimePercentage}% uptime
+                        {parseFloat(uptimePercentage) === 100 
+                          ? "100% uptime = baseline (no shutdowns)"
+                          : `Automatically shuts down during most expensive ${(100 - parseFloat(uptimePercentage || '95')).toFixed(1)}% of hours to maintain ${uptimePercentage}% uptime`
+                        }
                       </p>
                     </div>
                     
@@ -2388,7 +2564,7 @@ export function AESOHistoricalPricing() {
                         loadingPeakAnalysis || 
                         loadingCustomPeriod || 
                         (!monthlyData && !customPeriodData) ||
-                        parseFloat(uptimePercentage) >= 100 ||
+                        parseFloat(uptimePercentage) > 100 ||
                         parseFloat(uptimePercentage) < 50 ||
                         isNaN(parseFloat(uptimePercentage))
                       }
@@ -2406,8 +2582,8 @@ export function AESOHistoricalPricing() {
                     <div className="flex justify-end">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" disabled={exportingPDF}>
-                            {exportingPDF ? (
+                          <Button variant="outline" size="sm" disabled={exportingPDF || exportingComprehensive}>
+                            {exportingPDF || exportingComprehensive ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                 Generating...
@@ -2423,7 +2599,11 @@ export function AESOHistoricalPricing() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={exportToPDF}>
                             <FileText className="h-4 w-4 mr-2" />
-                            Export to PDF
+                            Export Current Analysis
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={exportComprehensivePDF}>
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            Export Comprehensive Report (7 Scenarios)
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
