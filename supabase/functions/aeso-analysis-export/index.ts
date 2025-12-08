@@ -146,6 +146,8 @@ function generateComprehensiveReport(
         <td style="padding: 12px 8px; border-bottom: 1px solid #e2e8f0; text-align: right;">${formatCAD(analysis.originalAverage || 0)}/MWh</td>
         <td style="padding: 12px 8px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;">${formatCAD(analysis.newAveragePrice || 0)}/MWh</td>
         <td style="padding: 12px 8px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #0052FF;">${formatUSD(analysis.newAveragePrice || 0)}/MWh</td>
+        <td style="padding: 12px 8px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;">${formatCAD(allInOptimized)}/MWh</td>
+        <td style="padding: 12px 8px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #0052FF; font-weight: 600;">$${(allInOptimized * exchangeRate).toFixed(2)}/MWh</td>
         <td style="padding: 12px 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">${analysis.totalHours || 0}h</td>
         <td style="padding: 12px 8px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;">${savingsPercent}%</td>
       </tr>
@@ -505,6 +507,8 @@ function generateComprehensiveReport(
             <th style="text-align: right;">Original Avg (CAD)</th>
             <th style="text-align: right;">Optimized Avg (CAD)</th>
             <th style="text-align: right;">Optimized Avg (USD)</th>
+            <th style="text-align: right;">All-In (CAD)</th>
+            <th style="text-align: right;">All-In (USD)</th>
             <th style="text-align: center;">Shutdown Hours</th>
             <th style="text-align: right;">Savings %</th>
           </tr>
