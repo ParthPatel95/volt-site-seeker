@@ -124,7 +124,8 @@ function generateComprehensiveReport(
   formatUSD: (v: number) => string
 ): string {
   const exchangeRate = config.exchangeRate || 0.73;
-  const transmissionAdder = parseFloat(config.transmissionAdder) || 11.63;
+  const transmissionAdder = parseFloat(config.transmissionAdder) || 11.73; // Updated default to $11.73/MWh
+  const totalHoursInPeriod = parseInt(config.timePeriod) * 24;
   const totalHoursInPeriod = parseInt(config.timePeriod) * 24;
 
   // Sort scenarios by uptime (highest first for comparison)
@@ -473,6 +474,30 @@ function generateComprehensiveReport(
     
     <div class="executive-summary">
       <div class="summary-title">📊 Executive Summary - All Scenarios Comparison</div>
+      
+      <!-- Cost Components Section - Prominent Adder Display -->
+      <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="text-align: center; flex: 1; min-width: 150px;">
+            <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">Energy Price</div>
+            <div style="font-size: 18px; font-weight: 700; color: #0A1628;">Variable</div>
+            <div style="font-size: 10px; color: #64748b;">Based on AESO Pool Price</div>
+          </div>
+          <div style="font-size: 24px; color: #f59e0b; font-weight: bold;">+</div>
+          <div style="text-align: center; flex: 1; min-width: 150px; background: #fff; border-radius: 6px; padding: 12px; border: 2px dashed #f59e0b;">
+            <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">Transmission Adder</div>
+            <div style="font-size: 22px; font-weight: 800; color: #dc2626;">$${transmissionAdder.toFixed(2)}/MWh CAD</div>
+            <div style="font-size: 12px; color: #0052FF; font-weight: 600;">$${(transmissionAdder * exchangeRate).toFixed(2)}/MWh USD</div>
+          </div>
+          <div style="font-size: 24px; color: #f59e0b; font-weight: bold;">=</div>
+          <div style="text-align: center; flex: 1; min-width: 150px;">
+            <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">All-In Rate</div>
+            <div style="font-size: 18px; font-weight: 700; color: #16a34a;">Energy + $${transmissionAdder.toFixed(2)}</div>
+            <div style="font-size: 10px; color: #64748b;">Total delivered cost</div>
+          </div>
+        </div>
+      </div>
+      
       <table>
         <thead>
           <tr>
@@ -490,7 +515,7 @@ function generateComprehensiveReport(
         </tbody>
       </table>
       <p style="margin-top: 12px; font-size: 11px; color: #64748b;">
-        <strong>Note:</strong> Transmission adder of $${config.transmissionAdder}/MWh applied to all-in calculations. Exchange rate: 1 CAD = ${exchangeRate.toFixed(4)} USD.
+        <strong>Note:</strong> All-In calculations include transmission adder of <strong style="color: #dc2626;">$${transmissionAdder.toFixed(2)}/MWh CAD</strong>. Exchange rate: 1 CAD = ${exchangeRate.toFixed(4)} USD.
       </p>
     </div>
     
@@ -953,6 +978,30 @@ function generateSingleScenarioReport(
       <div class="summary-title">
         📊 Executive Summary
       </div>
+      
+      <!-- Cost Components Section - Prominent Adder Display -->
+      <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 12px; text-align: center;">
+          <div>
+            <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">Energy Price</div>
+            <div style="font-size: 18px; font-weight: 700; color: #0A1628;">${formatCAD(analysisData.newAveragePrice || 0)}/MWh</div>
+            <div style="font-size: 10px; color: #64748b;">Optimized Pool Price</div>
+          </div>
+          <div style="font-size: 24px; color: #f59e0b; font-weight: bold;">+</div>
+          <div style="background: #fff; border-radius: 6px; padding: 12px; border: 2px dashed #f59e0b;">
+            <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">Transmission Adder</div>
+            <div style="font-size: 22px; font-weight: 800; color: #dc2626;">$${parseFloat(config.transmissionAdder).toFixed(2)}/MWh CAD</div>
+            <div style="font-size: 12px; color: #0052FF; font-weight: 600;">$${(parseFloat(config.transmissionAdder) * exchangeRate).toFixed(2)}/MWh USD</div>
+          </div>
+          <div style="font-size: 24px; color: #f59e0b; font-weight: bold;">=</div>
+          <div>
+            <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">All-In Rate</div>
+            <div style="font-size: 18px; font-weight: 700; color: #16a34a;">${formatCAD((analysisData.newAveragePrice || 0) + parseFloat(config.transmissionAdder))}/MWh</div>
+            <div style="font-size: 10px; color: #64748b;">Total delivered cost</div>
+          </div>
+        </div>
+      </div>
+      
       <div class="summary-grid">
         <div class="summary-item">
           <div class="summary-label">Target Uptime</div>
