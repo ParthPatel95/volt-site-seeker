@@ -29,13 +29,12 @@ export function FullScreenDocumentViewer({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [mobileViewerKey, setMobileViewerKey] = useState(0);
-  const [isDocumentTransitioning, setIsDocumentTransitioning] = useState(false);
+  const [mobileRetryCount, setMobileRetryCount] = useState(0);
+  const [isInitialMount, setIsInitialMount] = useState(true);
   
   // Refs for cleanup and transition management
   const isMountedRef = useRef(true);
   const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const documentTransitionRef = useRef<NodeJS.Timeout | null>(null);
   
   // Safe access to document properties (computed before hooks that depend on them)
   const documentId = document?.id || null;
@@ -48,51 +47,27 @@ export function FullScreenDocumentViewer({
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < allDocuments.length - 1;
 
-  // Cleanup on unmount - set flags BEFORE clearing timeouts
+  // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
-      // Set unmounted flag first to prevent any pending callbacks
       isMountedRef.current = false;
-      
-      // Then clear timeouts
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
         transitionTimeoutRef.current = null;
       }
-      if (documentTransitionRef.current) {
-        clearTimeout(documentTransitionRef.current);
-        documentTransitionRef.current = null;
-      }
     };
   }, []);
-
-  // Document transition buffer for mobile - prevents race conditions
+  
+  // Clear initial mount flag after first render (for animation control)
   useEffect(() => {
-    if (!isMobile) return;
-    
-    setIsDocumentTransitioning(true);
-    
-    if (documentTransitionRef.current) {
-      clearTimeout(documentTransitionRef.current);
-    }
-    
-    documentTransitionRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        setIsDocumentTransitioning(false);
-      }
-    }, 200);
-    
-    return () => {
-      if (documentTransitionRef.current) {
-        clearTimeout(documentTransitionRef.current);
-      }
-    };
-  }, [documentId, isMobile]);
+    const timer = setTimeout(() => setIsInitialMount(false), 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Retry handler for error boundary
   const handleMobileViewerRetry = useCallback(() => {
-    setMobileViewerKey(prev => prev + 1);
+    setMobileRetryCount(prev => prev + 1);
   }, []);
 
   // Safe back handler with transition guard to prevent crashes during cleanup
@@ -212,8 +187,11 @@ export function FullScreenDocumentViewer({
   // MOBILE: Use dedicated mobile viewer with native PDF rendering
   // This completely avoids react-pdf canvas memory issues on iOS
   if (isMobile) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300">
+  return (
+    <div className={cn(
+      "fixed inset-0 z-50 bg-background",
+      isInitialMount && "animate-in fade-in slide-in-from-bottom-4 duration-300"
+    )}>
         {/* Simplified Mobile Header */}
         <div className="absolute top-0 left-0 right-0 z-20 border-b bg-card/95 backdrop-blur-xl shadow-sm h-14 safe-area-pt safe-area-pl safe-area-pr">
           <div className="container mx-auto px-3 h-full flex items-center justify-between gap-2">
@@ -277,33 +255,27 @@ export function FullScreenDocumentViewer({
           </div>
         </div>
 
-        {/* Mobile Document Viewer - Uses native iframe for PDFs with error boundary */}
+        {/* Mobile Document Viewer with Error Boundary */}
         <div className="absolute inset-0 pt-14 safe-area-pb">
-          {isDocumentTransitioning ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            </div>
-          ) : (
-            <MobileDocumentErrorBoundary
+          <MobileDocumentErrorBoundary
+            documentName={fileName}
+            onRetry={handleMobileViewerRetry}
+          >
+            <MobileDocumentViewer
+              documentUrl={fileUrl}
+              documentType={fileType}
+              accessLevel={linkData.access_level}
+              watermarkEnabled={linkData.watermark_enabled}
+              recipientEmail={linkData.recipient_email}
+              linkId={linkData.id}
+              documentId={documentId}
+              enableTracking={true}
+              viewerName={viewerData?.name}
+              viewerEmail={viewerData?.email}
               documentName={fileName}
-              onRetry={handleMobileViewerRetry}
-            >
-              <MobileDocumentViewer
-                key={mobileViewerKey}
-                documentUrl={fileUrl}
-                documentType={fileType}
-                accessLevel={linkData.access_level}
-                watermarkEnabled={linkData.watermark_enabled}
-                recipientEmail={linkData.recipient_email}
-                linkId={linkData.id}
-                documentId={documentId}
-                enableTracking={true}
-                viewerName={viewerData?.name}
-                viewerEmail={viewerData?.email}
-                documentName={fileName}
-              />
-            </MobileDocumentErrorBoundary>
-          )}
+              retryKey={mobileRetryCount}
+            />
+          </MobileDocumentErrorBoundary>
         </div>
 
         {/* Mobile Sidebar */}

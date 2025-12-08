@@ -20,6 +20,7 @@ interface MobileDocumentViewerProps {
   viewerEmail?: string;
   documentName?: string;
   fileSizeBytes?: number;
+  retryKey?: number;
 }
 
 /**
@@ -43,14 +44,15 @@ export function MobileDocumentViewer({
   viewerName,
   viewerEmail,
   documentName = 'Document',
-  fileSizeBytes
+  fileSizeBytes,
+  retryKey = 0
 }: MobileDocumentViewerProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [translationOpen, setTranslationOpen] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
-  const [retryCount, setRetryCount] = useState(0);
+  const [internalRetryCount, setInternalRetryCount] = useState(0);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   const [useGoogleViewer, setUseGoogleViewer] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -202,28 +204,28 @@ export function MobileDocumentViewer({
     if (isMountedRef.current) {
       setIsLoading(false);
       setLoadError(null);
-      setRetryCount(0);
+      setInternalRetryCount(0);
     }
   }, []);
 
   const handleIframeError = useCallback(() => {
     const elapsed = Date.now() - mountTimeRef.current;
-    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms', retryCount });
+    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms', internalRetryCount });
     if (isMountedRef.current) {
       setIsLoading(false);
       setLoadError('Failed to load document. Please try downloading instead.');
     }
-  }, [retryCount]);
+  }, [internalRetryCount]);
 
   const handleRetry = useCallback(() => {
-    console.log('[MobileDocumentViewer] Retrying document load', { retryCount: retryCount + 1 });
+    console.log('[MobileDocumentViewer] Retrying document load', { retryCount: internalRetryCount + 1 });
     setIsLoading(true);
     setLoadError(null);
     setLoadTimedOut(false);
     setUseGoogleViewer(false);
-    setRetryCount(prev => prev + 1);
+    setInternalRetryCount(prev => prev + 1);
     mountTimeRef.current = Date.now();
-  }, [retryCount]);
+  }, [internalRetryCount]);
 
   const handleTryGoogleViewer = useCallback(() => {
     console.log('[MobileDocumentViewer] Switching to Google Docs Viewer');
@@ -401,15 +403,17 @@ export function MobileDocumentViewer({
 
       {/* Document Content - Full height for native scrolling */}
       <div className="flex-1 overflow-hidden relative">
-        {/* Loading overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
-            <div className="text-center">
-              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
-              <p className="text-sm text-muted-foreground">Loading document...</p>
-            </div>
-          </div>
-        )}
+      {/* Loading overlay - opaque with smooth fade transition */}
+      <div 
+        className={`absolute inset-0 flex items-center justify-center bg-background z-20 transition-opacity duration-200 ${
+          isLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
+          <p className="text-sm text-muted-foreground">Loading document...</p>
+        </div>
+      </div>
 
         {/* Watermark overlay */}
         {watermarkEnabled && (
@@ -432,8 +436,8 @@ export function MobileDocumentViewer({
 
         {/* PDF - Native iframe viewer with Google Docs fallback for iOS */}
         {isPdf && !useGoogleViewer && (
-          <iframe
-            key={`native-${retryCount}`}
+              <iframe
+                key={`native-${internalRetryCount}-${retryKey}`}
             ref={iframeRef}
             src={documentUrl}
             className="w-full h-full border-0"
@@ -446,7 +450,7 @@ export function MobileDocumentViewer({
         {/* Google Docs Viewer fallback for iOS */}
         {isPdf && useGoogleViewer && (
           <iframe
-            key={`google-${retryCount}`}
+            key={`google-${internalRetryCount}-${retryKey}`}
             src={`https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=true`}
             className="w-full h-full border-0"
             title="PDF Document (Google Viewer)"
