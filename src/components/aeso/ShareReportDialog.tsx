@@ -50,6 +50,40 @@ export function ShareReportDialog({
   const handleCreateLink = async () => {
     setLoading(true);
     try {
+      // Step 1: Generate the HTML report first (if not already provided)
+      let generatedHtml = reportHtml;
+      
+      if (!generatedHtml) {
+        console.log('[ShareReportDialog] No reportHtml provided, generating from edge function...');
+        
+        // Call the export function to generate HTML
+        const { data: exportData, error: exportError } = await supabase.functions.invoke('aeso-analysis-export', {
+          body: {
+            analysisData: reportData,
+            config: {
+              ...reportConfig,
+              exportType: reportType
+            }
+          }
+        });
+
+        if (exportError) {
+          console.error('[ShareReportDialog] Export error:', exportError);
+          throw new Error('Failed to generate report HTML');
+        }
+
+        if (exportData?.htmlContent) {
+          // Decode the base64 HTML content
+          generatedHtml = decodeURIComponent(escape(atob(exportData.htmlContent)));
+          console.log('[ShareReportDialog] Generated HTML content, length:', generatedHtml.length);
+        }
+      }
+
+      if (!generatedHtml) {
+        throw new Error('Could not generate report HTML');
+      }
+
+      // Step 2: Create the shareable link with the HTML
       const { data, error } = await supabase.functions.invoke('aeso-share-report', {
         body: {
           reportData,
@@ -57,7 +91,7 @@ export function ShareReportDialog({
             ...reportConfig,
             exportType: reportType
           },
-          reportHtml,
+          reportHtml: generatedHtml,
           title,
           password: usePassword ? password : undefined,
           expiresAt: useExpiration && expirationDate ? expirationDate.toISOString() : undefined,

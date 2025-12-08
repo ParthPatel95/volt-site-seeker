@@ -268,16 +268,58 @@ export default function SharedAESOReport() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (report?.reportHtml) {
-      const htmlContent = report.reportHtml;
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const newWindow = window.open(url, '_blank');
-      if (newWindow) {
-        newWindow.onload = () => {
-          setTimeout(() => newWindow.print(), 500);
+      try {
+        const htmlContent = report.reportHtml;
+        
+        // Create a hidden container for the HTML
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '1100px';
+        container.innerHTML = htmlContent;
+        document.body.appendChild(container);
+        
+        // Dynamic import html2pdf
+        const html2pdf = (await import('html2pdf.js')).default;
+        
+        // Generate PDF with optimal settings
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `${report.title || 'AESO_Report'}_${new Date().toISOString().split('T')[0]}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            letterRendering: true,
+            logging: false
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'landscape' 
+          },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
+        
+        await html2pdf().set(opt).from(container).save();
+        
+        // Clean up
+        document.body.removeChild(container);
+
+        toast({
+          title: "PDF Downloaded",
+          description: "Report has been downloaded.",
+        });
+      } catch (error) {
+        console.error('PDF download error:', error);
+        toast({
+          title: "Download Failed",
+          description: "Could not generate PDF.",
+          variant: "destructive"
+        });
       }
     }
   };
