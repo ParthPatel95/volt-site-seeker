@@ -51,9 +51,15 @@ export function MobileDocumentViewer({
   const [translationOpen, setTranslationOpen] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
   const [retryCount, setRetryCount] = useState(0);
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const [useGoogleViewer, setUseGoogleViewer] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const mountTimeRef = useRef(Date.now());
   const isMountedRef = useRef(true);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Detect iOS for Google Docs fallback
+  const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   console.log('[MobileDocumentViewer] MOUNT', {
     documentUrl: documentUrl?.substring(0, 80),
@@ -62,19 +68,11 @@ export function MobileDocumentViewer({
     documentId,
     documentName,
     fileSizeBytes,
+    isIOS,
     timestamp: new Date().toISOString()
   });
 
-  // Track mount state
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-      console.log('[MobileDocumentViewer] UNMOUNT');
-    };
-  }, []);
-
-  // File type detection
+  // File type detection - MUST be before useEffects that depend on isPdf
   const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
   const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl || '');
   const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl || '');
@@ -88,6 +86,39 @@ export function MobileDocumentViewer({
   console.log('[MobileDocumentViewer] File type detection:', {
     isPdf, isImage, isVideo, isAudio, isText, isOffice
   });
+
+  // Track mount state and cleanup timeouts
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
+      console.log('[MobileDocumentViewer] UNMOUNT');
+    };
+  }, []);
+
+  // PDF load timeout - 15 seconds then offer fallback options
+  useEffect(() => {
+    if (!isPdf || !isLoading || loadTimedOut) return;
+    
+    loadTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current && isLoading) {
+        console.warn('[MobileDocumentViewer] PDF load TIMEOUT after 15s');
+        setLoadTimedOut(true);
+        setIsLoading(false);
+      }
+    }, 15000);
+    
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
+    };
+  }, [isPdf, isLoading, loadTimedOut, documentUrl]);
 
   // Translation support (PDFs, images, Office docs, text files)
   const supportsTranslation = isPdf || isImage || isOffice || isText;
@@ -188,9 +219,24 @@ export function MobileDocumentViewer({
     console.log('[MobileDocumentViewer] Retrying document load', { retryCount: retryCount + 1 });
     setIsLoading(true);
     setLoadError(null);
+    setLoadTimedOut(false);
+    setUseGoogleViewer(false);
     setRetryCount(prev => prev + 1);
     mountTimeRef.current = Date.now();
   }, [retryCount]);
+
+  const handleTryGoogleViewer = useCallback(() => {
+    console.log('[MobileDocumentViewer] Switching to Google Docs Viewer');
+    setUseGoogleViewer(true);
+    setLoadTimedOut(false);
+    setIsLoading(true);
+    mountTimeRef.current = Date.now();
+  }, []);
+
+  const handleOpenInNewTab = useCallback(() => {
+    console.log('[MobileDocumentViewer] Opening document in new tab');
+    window.open(documentUrl, '_blank');
+  }, [documentUrl]);
 
   const handleDownload = async () => {
     console.log('[MobileDocumentViewer] Download requested', { canDownload });
@@ -239,6 +285,45 @@ export function MobileDocumentViewer({
     setTranslationOpen(false);
   }, []);
 
+  // Render timeout state with fallback options
+  if (loadTimedOut && isPdf) {
+    console.log('[MobileDocumentViewer] Rendering timeout state');
+    return (
+      <div className="flex flex-col h-full w-full">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center max-w-sm">
+            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Taking Too Long</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              The document is taking longer than expected to load. Try one of these options:
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button onClick={handleRetry} variant="outline" className="touch-manipulation w-full">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry Loading
+              </Button>
+              {isIOS && (
+                <Button onClick={handleTryGoogleViewer} variant="outline" className="touch-manipulation w-full">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Try Google Viewer
+                </Button>
+              )}
+              <Button onClick={handleOpenInNewTab} variant="outline" className="touch-manipulation w-full">
+                Open in New Tab
+              </Button>
+              {canDownload && (
+                <Button onClick={handleDownload} className="touch-manipulation w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Instead
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Render error state
   if (loadError) {
     console.log('[MobileDocumentViewer] Rendering error state:', loadError);
@@ -249,13 +334,19 @@ export function MobileDocumentViewer({
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Failed to Load Document</h3>
             <p className="text-sm text-muted-foreground mb-4">{loadError}</p>
-            <div className="flex gap-3 justify-center">
-              <Button onClick={handleRetry} variant="outline" className="touch-manipulation">
+            <div className="flex flex-col gap-3">
+              <Button onClick={handleRetry} variant="outline" className="touch-manipulation w-full">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Retry
               </Button>
+              {isPdf && isIOS && (
+                <Button onClick={handleTryGoogleViewer} variant="outline" className="touch-manipulation w-full">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Try Google Viewer
+                </Button>
+              )}
               {canDownload && (
-                <Button onClick={handleDownload} className="touch-manipulation">
+                <Button onClick={handleDownload} className="touch-manipulation w-full">
                   <Download className="w-4 h-4 mr-2" />
                   Download
                 </Button>
@@ -339,16 +430,33 @@ export function MobileDocumentViewer({
           </div>
         )}
 
-        {/* PDF - Native iframe viewer */}
-        {isPdf && (
+        {/* PDF - Native iframe viewer with Google Docs fallback for iOS */}
+        {isPdf && !useGoogleViewer && (
           <iframe
-            key={retryCount} // Force remount on retry
+            key={`native-${retryCount}`}
             ref={iframeRef}
             src={documentUrl}
             className="w-full h-full border-0"
             title="PDF Document"
             onLoad={handleIframeLoad}
             onError={handleIframeError}
+          />
+        )}
+        
+        {/* Google Docs Viewer fallback for iOS */}
+        {isPdf && useGoogleViewer && (
+          <iframe
+            key={`google-${retryCount}`}
+            src={`https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=true`}
+            className="w-full h-full border-0"
+            title="PDF Document (Google Viewer)"
+            onLoad={handleIframeLoad}
+            onError={() => {
+              console.error('[MobileDocumentViewer] Google Viewer also failed');
+              if (isMountedRef.current) {
+                setLoadError('Both native and Google viewers failed. Please download the document.');
+              }
+            }}
           />
         )}
 
