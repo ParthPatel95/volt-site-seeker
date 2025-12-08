@@ -1,22 +1,41 @@
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
+const TABLET_BREAKPOINT = 1024
+
+// Detect if device has touch capability
+function getIsTouchDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
 
 export function useIsMobile() {
   // Initialize with actual value to prevent flash of incorrect state on mobile
   const [isMobile, setIsMobile] = React.useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return window.innerWidth < MOBILE_BREAKPOINT;
+    const isNarrowScreen = window.innerWidth < MOBILE_BREAKPOINT;
+    const isTouchDevice = getIsTouchDevice();
+    const isTablet = window.innerWidth < TABLET_BREAKPOINT && isTouchDevice;
+    // Consider mobile if: narrow screen OR touch tablet
+    return isNarrowScreen || isTablet;
   });
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    const isTouchDevice = getIsTouchDevice();
+    
+    const checkMobile = () => {
+      const isNarrowScreen = window.innerWidth < MOBILE_BREAKPOINT;
+      const isTablet = window.innerWidth < TABLET_BREAKPOINT && isTouchDevice;
+      return isNarrowScreen || isTablet;
+    };
+    
+    const mql = window.matchMedia(`(max-width: ${TABLET_BREAKPOINT - 1}px)`)
     const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+      setIsMobile(checkMobile())
     }
     mql.addEventListener("change", onChange)
     // Sync on mount in case SSR value differs
-    const currentIsMobile = window.innerWidth < MOBILE_BREAKPOINT;
+    const currentIsMobile = checkMobile();
     if (currentIsMobile !== isMobile) {
       setIsMobile(currentIsMobile);
     }
@@ -24,4 +43,13 @@ export function useIsMobile() {
   }, [])
 
   return isMobile
+}
+
+// Export separate hook for touch detection (useful for disabling hover effects)
+export function useIsTouchDevice() {
+  const [isTouchDevice, setIsTouchDevice] = React.useState<boolean>(() => {
+    return getIsTouchDevice();
+  });
+
+  return isTouchDevice;
 }
