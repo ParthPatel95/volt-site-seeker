@@ -54,14 +54,22 @@ export function MobileDocumentViewer({
   const [numPages, setNumPages] = useState<number>(0);
   const [internalRetryCount, setInternalRetryCount] = useState(0);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
-  const [useGoogleViewer, setUseGoogleViewer] = useState(false);
+  // Default to Google Viewer on mobile devices (native iframe often shows "Open" button instead of PDF)
+  const [useGoogleViewer, setUseGoogleViewer] = useState(() => {
+    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+    const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    // Use Google Viewer by default on mobile devices
+    return isAndroid || isIOS;
+  });
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const mountTimeRef = useRef(Date.now());
   const isMountedRef = useRef(true);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Detect iOS for Google Docs fallback
+  // Detect iOS and Android for Google Docs viewer (native iframe often doesn't work on mobile)
   const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  const isMobileDevice = isIOS || isAndroid;
 
   console.log('[MobileDocumentViewer] MOUNT', {
     documentUrl: documentUrl?.substring(0, 80),
@@ -222,10 +230,18 @@ export function MobileDocumentViewer({
     setIsLoading(true);
     setLoadError(null);
     setLoadTimedOut(false);
-    setUseGoogleViewer(false);
+    // On retry, keep current viewer type
     setInternalRetryCount(prev => prev + 1);
     mountTimeRef.current = Date.now();
   }, [internalRetryCount]);
+
+  const handleTryNativeViewer = useCallback(() => {
+    console.log('[MobileDocumentViewer] Switching to Native iframe viewer');
+    setUseGoogleViewer(false);
+    setLoadTimedOut(false);
+    setIsLoading(true);
+    mountTimeRef.current = Date.now();
+  }, []);
 
   const handleTryGoogleViewer = useCallback(() => {
     console.log('[MobileDocumentViewer] Switching to Google Docs Viewer');
@@ -304,7 +320,13 @@ export function MobileDocumentViewer({
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Retry Loading
               </Button>
-              {isIOS && (
+              {useGoogleViewer && (
+                <Button onClick={handleTryNativeViewer} variant="outline" className="touch-manipulation w-full">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Try Native Viewer
+                </Button>
+              )}
+              {!useGoogleViewer && (
                 <Button onClick={handleTryGoogleViewer} variant="outline" className="touch-manipulation w-full">
                   <FileText className="w-4 h-4 mr-2" />
                   Try Google Viewer
@@ -341,7 +363,13 @@ export function MobileDocumentViewer({
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Retry
               </Button>
-              {isPdf && isIOS && (
+              {isPdf && useGoogleViewer && (
+                <Button onClick={handleTryNativeViewer} variant="outline" className="touch-manipulation w-full">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Try Native Viewer
+                </Button>
+              )}
+              {isPdf && !useGoogleViewer && (
                 <Button onClick={handleTryGoogleViewer} variant="outline" className="touch-manipulation w-full">
                   <FileText className="w-4 h-4 mr-2" />
                   Try Google Viewer
