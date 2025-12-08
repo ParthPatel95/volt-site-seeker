@@ -196,7 +196,7 @@ export function AESOHistoricalPricing() {
     }
   };
 
-  // Export analysis to PDF - Direct download
+  // Export analysis to PDF - Direct download using html2pdf
   const exportToPDF = async () => {
     if (!currentAnalysis) {
       toast({
@@ -227,35 +227,45 @@ export function AESOHistoricalPricing() {
         // Decode base64 HTML content
         const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
         
-        // Create iframe for printing to PDF
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = 'none';
-        document.body.appendChild(iframe);
+        // Create a hidden container for the HTML
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '1100px'; // A4 landscape-ish width
+        container.innerHTML = htmlContent;
+        document.body.appendChild(container);
         
-        const iframeDoc = iframe.contentWindow?.document;
-        if (iframeDoc) {
-          iframeDoc.open();
-          iframeDoc.write(htmlContent);
-          iframeDoc.close();
-          
-          // Wait for content to render then trigger print (save as PDF)
-          setTimeout(() => {
-            iframe.contentWindow?.print();
-            // Remove iframe after print dialog closes
-            setTimeout(() => {
-              document.body.removeChild(iframe);
-            }, 1000);
-          }, 500);
-        }
+        // Dynamic import html2pdf
+        const html2pdf = (await import('html2pdf.js')).default;
+        
+        // Generate PDF with optimal settings
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `AESO_Analysis_${uptimePercentage}pct_${new Date().toISOString().split('T')[0]}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            letterRendering: true,
+            logging: false
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'landscape' 
+          },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        await html2pdf().set(opt).from(container).save();
+        
+        // Clean up
+        document.body.removeChild(container);
 
         toast({
-          title: "PDF Export Ready",
-          description: "Save as PDF in the print dialog.",
+          title: "PDF Downloaded",
+          description: "Your analysis report has been downloaded.",
         });
       }
     } catch (error) {
@@ -362,7 +372,7 @@ export function AESOHistoricalPricing() {
     };
   };
 
-  // Export comprehensive multi-scenario PDF - Direct download
+  // Export comprehensive multi-scenario PDF - Direct download using html2pdf
   const exportComprehensivePDF = async () => {
     if (!monthlyData && !customPeriodData) {
       toast({
@@ -414,35 +424,45 @@ export function AESOHistoricalPricing() {
       if (data?.htmlContent) {
         const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
         
-        // Create iframe for printing to PDF
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = 'none';
-        document.body.appendChild(iframe);
+        // Create a hidden container for the HTML
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '1100px';
+        container.innerHTML = htmlContent;
+        document.body.appendChild(container);
         
-        const iframeDoc = iframe.contentWindow?.document;
-        if (iframeDoc) {
-          iframeDoc.open();
-          iframeDoc.write(htmlContent);
-          iframeDoc.close();
-          
-          // Wait for content to render then trigger print (save as PDF)
-          setTimeout(() => {
-            iframe.contentWindow?.print();
-            // Remove iframe after print dialog closes
-            setTimeout(() => {
-              document.body.removeChild(iframe);
-            }, 1000);
-          }, 500);
-        }
+        // Dynamic import html2pdf
+        const html2pdf = (await import('html2pdf.js')).default;
+        
+        // Generate PDF with optimal settings
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `AESO_Comprehensive_Analysis_${new Date().toISOString().split('T')[0]}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            letterRendering: true,
+            logging: false
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'landscape' 
+          },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        await html2pdf().set(opt).from(container).save();
+        
+        // Clean up
+        document.body.removeChild(container);
 
         toast({
-          title: "Comprehensive Report Ready",
-          description: "Save as PDF in the print dialog.",
+          title: "Comprehensive Report Downloaded",
+          description: "Your multi-scenario analysis report has been downloaded.",
         });
       }
     } catch (error) {
