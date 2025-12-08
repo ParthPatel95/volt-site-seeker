@@ -125,23 +125,66 @@ export function AESOHistoricalPricing() {
 
   const handleUptimeAnalysis = () => {
     try {
-    console.log('[QA] ========================================');
-    console.log('[QA] Manual "Calculate Uptime Optimized" button clicked');
-    console.log('[QA] Current time period:', timePeriod, 'days');
-    console.log('[QA] Current uptime target:', uptimePercentage, '%');
-    console.log('[QA] customPeriodData available:', !!customPeriodData);
-    console.log('[QA] customPeriodData.rawHourlyData:', customPeriodData?.rawHourlyData?.length || 0);
-    console.log('[QA] monthlyData available:', !!monthlyData);
-    console.log('[QA] monthlyData.rawHourlyData:', monthlyData?.rawHourlyData?.length || 0);
-    console.log('[QA] yearlyData available:', !!yearlyData);
-    console.log('[QA] yearlyData.rawHourlyData:', yearlyData?.rawHourlyData?.length || 0);
-    console.log('[QA] ========================================');
+      // Validate uptime percentage before calculation
+      const uptime = parseFloat(uptimePercentage);
+      if (isNaN(uptime) || uptime >= 100) {
+        console.warn('[QA] Invalid uptime percentage:', uptimePercentage);
+        import('@/hooks/use-toast').then(({ toast }) => {
+          toast({
+            title: "Invalid Uptime Target",
+            description: "Uptime must be less than 100% to calculate energy savings from shutdown periods.",
+            variant: "destructive"
+          });
+        });
+        return;
+      }
+      if (uptime < 50) {
+        console.warn('[QA] Uptime too low:', uptimePercentage);
+        import('@/hooks/use-toast').then(({ toast }) => {
+          toast({
+            title: "Invalid Uptime Target",
+            description: "Uptime must be at least 50% for realistic operational analysis.",
+            variant: "destructive"
+          });
+        });
+        return;
+      }
+
+      console.log('[QA] ========================================');
+      console.log('[QA] Manual "Calculate Uptime Optimized" button clicked');
+      console.log('[QA] Current time period:', timePeriod, 'days');
+      console.log('[QA] Current uptime target:', uptimePercentage, '%');
+      console.log('[QA] customPeriodData available:', !!customPeriodData);
+      console.log('[QA] customPeriodData.rawHourlyData:', customPeriodData?.rawHourlyData?.length || 0);
+      console.log('[QA] monthlyData available:', !!monthlyData);
+      console.log('[QA] monthlyData.rawHourlyData:', monthlyData?.rawHourlyData?.length || 0);
+      console.log('[QA] yearlyData available:', !!yearlyData);
+      console.log('[QA] yearlyData.rawHourlyData:', yearlyData?.rawHourlyData?.length || 0);
+      console.log('[QA] ========================================');
       
       const result = calculateUptimeOptimization();
       console.log('[QA] Uptime optimization result:', result);
+      
+      if (result === null) {
+        import('@/hooks/use-toast').then(({ toast }) => {
+          toast({
+            title: "Calculation not possible",
+            description: "No optimization available at this uptime level. Try a lower uptime percentage or wait for data to load.",
+            variant: "destructive"
+          });
+        });
+      }
+      
       setCustomAnalysisResult(result);
     } catch (error) {
       console.error('[QA] Error in uptime analysis:', error);
+      import('@/hooks/use-toast').then(({ toast }) => {
+        toast({
+          title: "Calculation Error",
+          description: "An error occurred during analysis. Please try again.",
+          variant: "destructive"
+        });
+      });
       setCustomAnalysisResult(null);
     }
   };
@@ -2257,20 +2300,36 @@ export function AESOHistoricalPricing() {
                       <input
                         type="number"
                         value={uptimePercentage}
-                        onChange={(e) => setUptimePercentage(e.target.value)}
+                        onChange={(e) => {
+                          let value = parseFloat(e.target.value);
+                          if (isNaN(value)) {
+                            setUptimePercentage(e.target.value);
+                            return;
+                          }
+                          if (value > 99.9) value = 99.9;
+                          if (value < 50) value = 50;
+                          setUptimePercentage(value.toString());
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         min="50"
                         max="99.9"
                         step="0.1"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage)).toFixed(1)}% of hours to maintain {uptimePercentage}% uptime
+                        Automatically shuts down during most expensive {(100 - parseFloat(uptimePercentage || '95')).toFixed(1)}% of hours to maintain {uptimePercentage}% uptime
                       </p>
                     </div>
                     
                     <Button 
                       onClick={handleUptimeAnalysis}
-                      disabled={loadingPeakAnalysis || loadingCustomPeriod || (!monthlyData && !customPeriodData)}
+                      disabled={
+                        loadingPeakAnalysis || 
+                        loadingCustomPeriod || 
+                        (!monthlyData && !customPeriodData) ||
+                        parseFloat(uptimePercentage) >= 100 ||
+                        parseFloat(uptimePercentage) < 50 ||
+                        isNaN(parseFloat(uptimePercentage))
+                      }
                       className="w-full"
                     >
                       {loadingCustomPeriod ? 'Loading data...' : loadingPeakAnalysis ? 'Analyzing...' : 'Calculate Uptime Optimized'}
