@@ -196,7 +196,7 @@ export function AESOHistoricalPricing() {
     }
   };
 
-  // Export analysis to PDF
+  // Export analysis to PDF - Direct download
   const exportToPDF = async () => {
     if (!currentAnalysis) {
       toast({
@@ -227,22 +227,35 @@ export function AESOHistoricalPricing() {
         // Decode base64 HTML content
         const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
         
-        // Create a blob and open in new tab for printing
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
+        // Create iframe for printing to PDF
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
         
-        if (newWindow) {
-          newWindow.onload = () => {
+        const iframeDoc = iframe.contentWindow?.document;
+        if (iframeDoc) {
+          iframeDoc.open();
+          iframeDoc.write(htmlContent);
+          iframeDoc.close();
+          
+          // Wait for content to render then trigger print (save as PDF)
+          setTimeout(() => {
+            iframe.contentWindow?.print();
+            // Remove iframe after print dialog closes
             setTimeout(() => {
-              newWindow.print();
-            }, 500);
-          };
+              document.body.removeChild(iframe);
+            }, 1000);
+          }, 500);
         }
 
         toast({
-          title: "Report Generated",
-          description: "Print dialog opened. Save as PDF or print directly.",
+          title: "PDF Export Ready",
+          description: "Save as PDF in the print dialog.",
         });
       }
     } catch (error) {
@@ -349,7 +362,7 @@ export function AESOHistoricalPricing() {
     };
   };
 
-  // Export comprehensive multi-scenario PDF
+  // Export comprehensive multi-scenario PDF - Direct download
   const exportComprehensivePDF = async () => {
     if (!monthlyData && !customPeriodData) {
       toast({
@@ -400,21 +413,36 @@ export function AESOHistoricalPricing() {
 
       if (data?.htmlContent) {
         const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
         
-        if (newWindow) {
-          newWindow.onload = () => {
+        // Create iframe for printing to PDF
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+        
+        const iframeDoc = iframe.contentWindow?.document;
+        if (iframeDoc) {
+          iframeDoc.open();
+          iframeDoc.write(htmlContent);
+          iframeDoc.close();
+          
+          // Wait for content to render then trigger print (save as PDF)
+          setTimeout(() => {
+            iframe.contentWindow?.print();
+            // Remove iframe after print dialog closes
             setTimeout(() => {
-              newWindow.print();
-            }, 500);
-          };
+              document.body.removeChild(iframe);
+            }, 1000);
+          }, 500);
         }
 
         toast({
-          title: "Comprehensive Report Generated",
-          description: "Print dialog opened with all 7 uptime scenarios.",
+          title: "Comprehensive Report Ready",
+          description: "Save as PDF in the print dialog.",
         });
       }
     } catch (error) {
