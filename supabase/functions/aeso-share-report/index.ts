@@ -100,8 +100,8 @@ serve(async (req) => {
 
     console.log('[AESO Share Report] Created share link:', shareToken);
 
-    // Generate shareable URL
-    const shareUrl = `${req.headers.get('origin') || 'https://wattbyte.com'}/shared/aeso-report/${shareToken}`;
+    // Generate shareable URL - always use production domain for external sharing
+    const shareUrl = `https://wattbyte.com/shared/aeso-report/${shareToken}`;
 
     return new Response(JSON.stringify({
       success: true,
