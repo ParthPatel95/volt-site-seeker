@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { X, Loader2, Copy, Check, Download, Languages, Globe } from 'lucide-react';
+import { X, Loader2, Copy, Check, Download, Languages, Globe, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import {
@@ -13,6 +13,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 
+// Constants for translation limits
+const TRANSLATION_TIMEOUT_MS = 90000; // 90 seconds timeout
+const LARGE_FILE_WARNING_MB = 10; // Show warning for files > 10MB
+
 interface MobileTranslationPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,6 +24,7 @@ interface MobileTranslationPanelProps {
   documentId?: string;
   documentType?: string;
   numPages?: number;
+  fileSizeBytes?: number;
 }
 
 const SUPPORTED_LANGUAGES = [
@@ -53,7 +58,8 @@ export function MobileTranslationPanel({
   documentUrl,
   documentId,
   documentType,
-  numPages = 1
+  numPages = 1,
+  fileSizeBytes
 }: MobileTranslationPanelProps) {
   const [targetLanguage, setTargetLanguage] = useState<string>('zh-CN');
   const [translatedText, setTranslatedText] = useState<string>('');
@@ -62,19 +68,31 @@ export function MobileTranslationPanel({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isTimedOut, setIsTimedOut] = useState(false);
   const { toast } = useToast();
   
   // Cache translations in memory
   const translationCache = useRef<Map<string, string>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
 
   const selectedLanguage = SUPPORTED_LANGUAGES.find(l => l.code === targetLanguage);
+  
+  // Calculate file size in MB for display
+  const fileSizeMB = fileSizeBytes ? fileSizeBytes / (1024 * 1024) : 0;
+  const isLargeFile = fileSizeMB > LARGE_FILE_WARNING_MB;
 
   // Track mount state
   useEffect(() => {
     isMountedRef.current = true;
-    console.log('[MobileTranslationPanel] MOUNT', { documentUrl: documentUrl?.substring(0, 80), documentId, numPages });
+    console.log('[MobileTranslationPanel] MOUNT', { 
+      documentUrl: documentUrl?.substring(0, 80), 
+      documentId, 
+      numPages,
+      fileSizeMB: fileSizeMB.toFixed(2),
+      isLargeFile
+    });
     
     return () => {
       isMountedRef.current = false;
@@ -83,8 +101,12 @@ export function MobileTranslationPanel({
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      // Clear any pending timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, [documentUrl, documentId, numPages]);
+  }, [documentUrl, documentId, numPages, fileSizeMB, isLargeFile]);
 
   const handleTranslate = useCallback(async (page: number = currentPage) => {
     const cacheKey = `${documentId || documentUrl}-${page}-${targetLanguage}`;
@@ -93,7 +115,8 @@ export function MobileTranslationPanel({
       page,
       targetLanguage,
       cacheKey,
-      hasCached: translationCache.current.has(cacheKey)
+      hasCached: translationCache.current.has(cacheKey),
+      fileSizeMB: fileSizeMB.toFixed(2)
     });
     
     // Check cache first
@@ -108,14 +131,39 @@ export function MobileTranslationPanel({
       console.log('[MobileTranslationPanel] Aborting previous request');
       abortControllerRef.current.abort();
     }
+    
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
     abortControllerRef.current = new AbortController();
 
     setIsTranslating(true);
     setTranslatedText('');
     setError(null);
     setProgress(10);
+    setIsTimedOut(false);
 
     const startTime = Date.now();
+    
+    // Set timeout for translation
+    timeoutRef.current = setTimeout(() => {
+      console.log('[MobileTranslationPanel] Translation timeout reached after', TRANSLATION_TIMEOUT_MS / 1000, 'seconds');
+      setIsTimedOut(true);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (isMountedRef.current) {
+        setIsTranslating(false);
+        setError(`Translation timed out after ${TRANSLATION_TIMEOUT_MS / 1000} seconds. The document may be too large or complex.`);
+        toast({
+          title: "Translation Timeout",
+          description: "The translation took too long. Try a specific page instead.",
+          variant: "destructive"
+        });
+      }
+    }, TRANSLATION_TIMEOUT_MS);
 
     try {
       console.log('[MobileTranslationPanel] Calling edge function', {
@@ -146,6 +194,11 @@ export function MobileTranslationPanel({
         }),
         signal: abortControllerRef.current.signal
       });
+
+      // Clear timeout on successful response
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
       console.log('[MobileTranslationPanel] Response received', {
         status: response.status,
@@ -199,7 +252,7 @@ export function MobileTranslationPanel({
           buffer += decoder.decode(value, { stream: true });
           chunkCount++;
           
-          // Update progress based on chunks received
+          // Update progress based on chunks received (use functional update)
           if (isMountedRef.current) {
             setProgress(prev => Math.min(90, prev + 2));
           }
@@ -269,14 +322,21 @@ export function MobileTranslationPanel({
       console.log('[MobileTranslationPanel] Translation complete', { elapsed: Date.now() - startTime + 'ms' });
       
     } catch (err: any) {
+      // Clear timeout on error
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
       if (err.name === 'AbortError') {
         console.log('[MobileTranslationPanel] Request aborted');
-        return;
+        if (!isTimedOut) {
+          return; // Only return silently if not a timeout abort
+        }
       }
       
       console.error('[MobileTranslationPanel] Translation error:', err);
       
-      if (isMountedRef.current) {
+      if (isMountedRef.current && !isTimedOut) {
         setError(err.message || 'Translation failed');
         toast({
           title: 'Translation Failed',
@@ -285,11 +345,15 @@ export function MobileTranslationPanel({
         });
       }
     } finally {
+      // Clear timeout on completion
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       if (isMountedRef.current) {
         setIsTranslating(false);
       }
     }
-  }, [currentPage, targetLanguage, documentUrl, documentId, documentType, toast]);
+  }, [currentPage, targetLanguage, documentUrl, documentId, documentType, toast, fileSizeMB, isTimedOut]);
 
   const handleCopy = async () => {
     if (!translatedText) return;
@@ -355,6 +419,19 @@ export function MobileTranslationPanel({
         </DrawerHeader>
 
         <div className="p-4 space-y-4">
+          {/* Large File Warning */}
+          {isLargeFile && !isTranslating && !translatedText && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
+              <Clock className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs">
+                <p className="font-medium text-amber-600">Large File Warning</p>
+                <p className="text-muted-foreground">
+                  This document is {fileSizeMB.toFixed(1)}MB. Translation may take longer or timeout.
+                </p>
+              </div>
+            </div>
+          )}
+          
           {/* Language Selection */}
           <div className="flex items-center gap-3">
             <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -421,13 +498,26 @@ export function MobileTranslationPanel({
 
           {/* Progress Bar */}
           {isTranslating && (
-            <Progress value={progress} className="h-2" />
+            <div className="space-y-1">
+              <Progress value={progress} className="h-2" />
+              <p className="text-xs text-muted-foreground text-center">
+                {progress < 40 ? 'Extracting text...' : progress < 90 ? 'Translating...' : 'Finishing...'}
+              </p>
+            </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="text-destructive">{error}</p>
+                {isTimedOut && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Try translating a specific page instead of the whole document.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
