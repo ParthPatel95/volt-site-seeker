@@ -558,7 +558,7 @@ function generateComprehensiveReport(
         <span><strong>WattByte</strong> Energy Intelligence Platform</span>
       </div>
       <div class="confidential">
-        CONFIDENTIAL - For authorized use only
+        https://www.wattbyte.com
       </div>
     </footer>
   </div>
@@ -1117,7 +1117,7 @@ function generateSingleScenarioReport(
         <span><strong>WattByte</strong> Energy Intelligence Platform</span>
       </div>
       <div class="confidential">
-        CONFIDENTIAL - For authorized use only
+        https://www.wattbyte.com
       </div>
     </footer>
   </div>
