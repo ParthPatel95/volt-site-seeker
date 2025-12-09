@@ -182,11 +182,14 @@ function generateComprehensiveReport(
     const scenarioTotalShutdowns = analysis.totalShutdowns ?? 0;
     const actualDowntimePercent = totalHoursInPeriod > 0 ? ((scenarioTotalHours / totalHoursInPeriod) * 100).toFixed(1) : '0.0';
     
-    // Generate ALL events (no limit) with pagination via page breaks
+    // Sort events by price (highest first) and limit to top 100 for PDF performance
     const allEvents = (analysis.events || []).sort((a, b) => b.price - a.price);
+    const MAX_EVENTS_PER_SCENARIO = 100;
+    const displayEvents = allEvents.slice(0, MAX_EVENTS_PER_SCENARIO);
+    const remainingEventsCount = allEvents.length - displayEvents.length;
 
-    // Create event rows - show ALL hours
-    const eventRows = allEvents.map((event, index) => {
+    // Create event rows - show top events only
+    const eventRows = displayEvents.map((event, index) => {
       const hourDisplay = event.time || `${String(event.hour ?? 0).padStart(2, '0')}:00`;
       return `
         <tr style="${index % 2 === 0 ? 'background-color: #f8fafc;' : ''}">
@@ -246,7 +249,10 @@ function generateComprehensiveReport(
         ${allEvents.length > 0 ? `
         <div style="margin-bottom: 16px;">
           <h3 style="font-size: 14px; font-weight: 700; color: #0A1628; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;">
-            Complete Shutdown Hours (${allEvents.length} total hours)
+            ${remainingEventsCount > 0 
+              ? `Top ${displayEvents.length} Highest-Priced Shutdown Hours (${allEvents.length} total)`
+              : `All Shutdown Hours (${allEvents.length} total)`
+            }
           </h3>
           <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
             <thead>
@@ -265,6 +271,11 @@ function generateComprehensiveReport(
               ${eventRows}
             </tbody>
           </table>
+          ${remainingEventsCount > 0 ? `
+          <p style="text-align: center; font-size: 11px; color: #64748b; margin-top: 12px; padding: 8px; background: #f8fafc; border-radius: 4px;">
+            + ${remainingEventsCount} additional shutdown hours not shown (sorted by price, highest to lowest)
+          </p>
+          ` : ''}
         </div>
         ` : ''}
       </div>
