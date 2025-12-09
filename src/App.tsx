@@ -17,7 +17,7 @@ import WattFund from "./pages/WattFund";
 import Hosting from "./pages/Hosting";
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
-const SharedAESOReport = lazy(() => import('./pages/SharedAESOReport'));
+import SharedAESOReport from './pages/SharedAESOReport';
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
 import ViewDocument from "./pages/ViewDocument";
@@ -71,9 +71,7 @@ const App = () => (
                       </div>
                     </div>
                   }>
-                    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-                      <SharedAESOReport />
-                    </Suspense>
+                    <SharedAESOReport />
                   </ErrorBoundary>
                 } />
               </Routes>
