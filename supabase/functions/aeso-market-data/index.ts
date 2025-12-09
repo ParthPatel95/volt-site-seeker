@@ -2,6 +2,8 @@
 // and returns normalized objects for Interchange, Operating Reserve and Energy Storage.
 // CORS enabled for browser calls.
 
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -69,7 +71,7 @@ async function fetchCSDSummary() {
   throw new Error('CSD summary fetch failed for v2 and v1');
 }
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: { ...corsHeaders } });
