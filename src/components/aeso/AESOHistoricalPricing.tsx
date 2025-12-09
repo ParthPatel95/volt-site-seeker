@@ -229,19 +229,25 @@ export function AESOHistoricalPricing() {
         // Decode base64 HTML content
         const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
         
-        // Create a visible container for rendering (html2pdf needs visible elements)
+        // Create container for rendering - use visibility:hidden instead of opacity:0
+        // visibility:hidden keeps element in render tree for html2canvas capture
         container = document.createElement('div');
-        container.style.position = 'fixed';
-        container.style.left = '0';
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
         container.style.top = '0';
         container.style.width = '1100px';
+        container.style.height = 'auto';
+        container.style.minHeight = '100vh';
+        container.style.overflow = 'visible';
         container.style.background = 'white';
-        container.style.zIndex = '-9999';
-        container.style.opacity = '0';
+        container.style.visibility = 'hidden';
+        container.style.pointerEvents = 'none';
         container.innerHTML = htmlContent;
         document.body.appendChild(container);
         
-        // Wait for content to render
+        // Force layout calculation and wait for render
+        container.getBoundingClientRect();
+        await new Promise(resolve => requestAnimationFrame(resolve));
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // Dynamic import html2pdf
@@ -258,7 +264,11 @@ export function AESOHistoricalPricing() {
             logging: false,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            windowWidth: 1100
+            windowWidth: 1100,
+            width: 1100,
+            scrollX: 0,
+            scrollY: 0,
+            foreignObjectRendering: false
           },
           jsPDF: { 
             unit: 'mm', 
