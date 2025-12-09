@@ -26,12 +26,16 @@ const LANGUAGES = [
 ];
 
 export default function SharedAESOReport() {
+  // Debug: Log on every render
+  console.log('[SharedAESOReport] Component rendering at', new Date().toISOString());
+  
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMountedRef = useRef(true);
 
   const [loading, setLoading] = useState(true);
+  const [componentError, setComponentError] = useState<Error | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,10 +55,12 @@ export default function SharedAESOReport() {
   const [translating, setTranslating] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<any>(null);
 
-  // Cleanup on unmount
+  // Debug: Log on mount
   useEffect(() => {
+    console.log('[SharedAESOReport] Component mounted with token:', token?.substring(0, 8) + '...');
     isMountedRef.current = true;
     return () => {
+      console.log('[SharedAESOReport] Component unmounting');
       isMountedRef.current = false;
     };
   }, []);
@@ -371,8 +377,32 @@ export default function SharedAESOReport() {
     }
   };
 
+  // Component-level error state
+  if (componentError) {
+    console.error('[SharedAESOReport] Component error:', componentError);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+            <CardTitle>Error Loading Report</CardTitle>
+            <CardDescription>{componentError.message}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Loading state
   if (loading) {
+    console.log('[SharedAESOReport] Rendering loading state');
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center">
         <div className="text-center space-y-4">
