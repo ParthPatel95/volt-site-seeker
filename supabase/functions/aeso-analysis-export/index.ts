@@ -48,14 +48,29 @@ serve(async (req) => {
 
   try {
     const { analysisData, config } = await req.json() as { 
-      analysisData: AnalysisData; 
+      analysisData: AnalysisData | ScenarioData[]; 
       config: ExportConfig 
     };
 
-    console.log('Generating PDF export for AESO analysis');
-    console.log('Config:', config);
+    console.log('=== AESO Analysis Export ===');
     console.log('Export type:', config.exportType || 'single');
-    console.log('Scenarios count:', config.scenarios?.length || 0);
+    console.log('Config scenarios count:', config.scenarios?.length || 0);
+    console.log('AnalysisData is array:', Array.isArray(analysisData));
+    if (Array.isArray(analysisData)) {
+      console.log('AnalysisData array length:', analysisData.length);
+      console.log('First item has uptimePercentage:', analysisData[0]?.uptimePercentage !== undefined);
+    }
+
+    // Fallback detection: if analysisData is actually an array of scenarios, use it
+    let scenarios = config.scenarios;
+    if (!scenarios || scenarios.length === 0) {
+      if (Array.isArray(analysisData) && analysisData.length > 0 && analysisData[0]?.uptimePercentage !== undefined) {
+        console.log('Detected scenarios array in analysisData, using that instead');
+        scenarios = analysisData as ScenarioData[];
+      }
+    }
+    
+    console.log('Final scenarios count:', scenarios?.length || 0);
 
     const generatedDate = new Date().toLocaleString('en-US', {
       timeZone: 'America/Edmonton',
@@ -85,13 +100,18 @@ serve(async (req) => {
 
     let htmlContent: string;
 
-    if (config.exportType === 'comprehensive' && config.scenarios && config.scenarios.length > 0) {
+    if (config.exportType === 'comprehensive' && scenarios && scenarios.length > 0) {
       // Generate comprehensive multi-scenario report
-      htmlContent = generateComprehensiveReport(config.scenarios, config, timePeriodLabel, generatedDate, formatCAD, formatUSD);
+      console.log('Generating COMPREHENSIVE report with', scenarios.length, 'scenarios');
+      htmlContent = generateComprehensiveReport(scenarios, config, timePeriodLabel, generatedDate, formatCAD, formatUSD);
     } else {
-      // Generate single scenario report (original behavior, but enhanced)
-      htmlContent = generateSingleScenarioReport(analysisData, config, timePeriodLabel, generatedDate, formatCAD, formatUSD);
+      // Generate single scenario report (original behavior)
+      const singleData = Array.isArray(analysisData) ? (analysisData[0]?.analysis || {}) : analysisData;
+      console.log('Generating SINGLE scenario report');
+      htmlContent = generateSingleScenarioReport(singleData as AnalysisData, config, timePeriodLabel, generatedDate, formatCAD, formatUSD);
     }
+    
+    console.log('Generated HTML length:', htmlContent.length);
 
     // Base64 encode the HTML content
     const base64Content = btoa(unescape(encodeURIComponent(htmlContent)));
