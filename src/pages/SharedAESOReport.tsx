@@ -283,14 +283,20 @@ export default function SharedAESOReport() {
     try {
       const htmlContent = report.reportHtml;
       
-      // Create a hidden container for the HTML
+      // Create a visible container for rendering (html2pdf needs visible elements)
       container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
+      container.style.position = 'fixed';
+      container.style.left = '0';
       container.style.top = '0';
       container.style.width = '1100px';
+      container.style.background = 'white';
+      container.style.zIndex = '-9999';
+      container.style.opacity = '0';
       container.innerHTML = htmlContent;
       document.body.appendChild(container);
+      
+      // Wait for content to render
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Dynamic import html2pdf with error handling
       let html2pdf;
@@ -305,28 +311,31 @@ export default function SharedAESOReport() {
         window.open(url, '_blank');
         toast({
           title: "Opening Report",
-          description: "Use your browser's Print to save as PDF.",
+          description: "Use your browser's Print > Save as PDF option.",
         });
         return;
       }
       
-      // Generate PDF with optimal settings
+      // Generate PDF with settings optimized for CSS rendering
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: 10,
         filename: `${report.title || 'AESO_Report'}_${new Date().toISOString().split('T')[0]}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { 
-          scale: 2, 
+          scale: 2,
           useCORS: true,
-          letterRendering: true,
-          logging: false
+          logging: false,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          windowWidth: 1100
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
-          orientation: 'landscape' 
+          orientation: 'landscape',
+          compress: true
         },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: 'avoid-all' }
       };
       
       await html2pdf().set(opt).from(container).save();
@@ -337,11 +346,23 @@ export default function SharedAESOReport() {
       });
     } catch (error) {
       console.error('[SharedAESOReport] PDF download error:', error);
-      toast({
-        title: "Download Failed",
-        description: "Could not generate PDF. Try opening in a new tab.",
-        variant: "destructive"
-      });
+      
+      // Ultimate fallback - open in new tab
+      if (report?.reportHtml) {
+        const blob = new Blob([report.reportHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        toast({
+          title: "Opening in Browser",
+          description: "Use Print > Save as PDF to download.",
+        });
+      } else {
+        toast({
+          title: "Download Failed",
+          description: "Could not generate PDF.",
+          variant: "destructive"
+        });
+      }
     } finally {
       // Always clean up
       if (container && document.body.contains(container)) {

@@ -208,6 +208,8 @@ export function AESOHistoricalPricing() {
     }
 
     setExportingPDF(true);
+    let container: HTMLDivElement | null = null;
+    
     try {
       const { data, error } = await supabase.functions.invoke('aeso-analysis-export', {
         body: {
@@ -227,41 +229,47 @@ export function AESOHistoricalPricing() {
         // Decode base64 HTML content
         const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
         
-        // Create a hidden container for the HTML
-        const container = document.createElement('div');
-        container.style.position = 'absolute';
-        container.style.left = '-9999px';
+        // Create a visible container for rendering (html2pdf needs visible elements)
+        container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '0';
         container.style.top = '0';
-        container.style.width = '1100px'; // A4 landscape-ish width
+        container.style.width = '1100px';
+        container.style.background = 'white';
+        container.style.zIndex = '-9999';
+        container.style.opacity = '0';
         container.innerHTML = htmlContent;
         document.body.appendChild(container);
+        
+        // Wait for content to render
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Dynamic import html2pdf
         const html2pdf = (await import('html2pdf.js')).default;
         
-        // Generate PDF with optimal settings
+        // Generate PDF with settings optimized for CSS rendering
         const opt = {
-          margin: [10, 10, 10, 10],
+          margin: 10,
           filename: `AESO_Analysis_${uptimePercentage}pct_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
+          image: { type: 'jpeg', quality: 0.95 },
           html2canvas: { 
             scale: 2, 
             useCORS: true,
-            letterRendering: true,
-            logging: false
+            logging: false,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            windowWidth: 1100
           },
           jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
-            orientation: 'landscape' 
+            orientation: 'landscape',
+            compress: true
           },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          pagebreak: { mode: 'avoid-all' }
         };
         
         await html2pdf().set(opt).from(container).save();
-        
-        // Clean up
-        document.body.removeChild(container);
 
         toast({
           title: "PDF Downloaded",
@@ -276,6 +284,10 @@ export function AESOHistoricalPricing() {
         variant: "destructive"
       });
     } finally {
+      // Always clean up
+      if (container && document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
       setExportingPDF(false);
     }
   };
@@ -424,46 +436,60 @@ export function AESOHistoricalPricing() {
       if (data?.htmlContent) {
         const htmlContent = decodeURIComponent(escape(atob(data.htmlContent)));
         
-        // Create a hidden container for the HTML
-        const container = document.createElement('div');
-        container.style.position = 'absolute';
-        container.style.left = '-9999px';
+        // Create a visible container for rendering (html2pdf needs visible elements)
+        let container: HTMLDivElement | null = null;
+        container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '0';
         container.style.top = '0';
         container.style.width = '1100px';
+        container.style.background = 'white';
+        container.style.zIndex = '-9999';
+        container.style.opacity = '0';
         container.innerHTML = htmlContent;
         document.body.appendChild(container);
         
-        // Dynamic import html2pdf
-        const html2pdf = (await import('html2pdf.js')).default;
+        // Wait for content to render
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Generate PDF with optimal settings
-        const opt = {
-          margin: [10, 10, 10, 10],
-          filename: `AESO_Comprehensive_Analysis_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { 
-            scale: 2, 
-            useCORS: true,
-            letterRendering: true,
-            logging: false
-          },
-          jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'landscape' 
-          },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-        
-        await html2pdf().set(opt).from(container).save();
-        
-        // Clean up
-        document.body.removeChild(container);
+        try {
+          // Dynamic import html2pdf
+          const html2pdf = (await import('html2pdf.js')).default;
+          
+          // Generate PDF with settings optimized for CSS rendering
+          const opt = {
+            margin: 10,
+            filename: `AESO_Comprehensive_Analysis_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { 
+              scale: 2, 
+              useCORS: true,
+              logging: false,
+              allowTaint: true,
+              backgroundColor: '#ffffff',
+              windowWidth: 1100
+            },
+            jsPDF: { 
+              unit: 'mm', 
+              format: 'a4', 
+              orientation: 'landscape',
+              compress: true
+            },
+            pagebreak: { mode: 'avoid-all' }
+          };
+          
+          await html2pdf().set(opt).from(container).save();
 
-        toast({
-          title: "Comprehensive Report Downloaded",
-          description: "Your multi-scenario analysis report has been downloaded.",
-        });
+          toast({
+            title: "Comprehensive Report Downloaded",
+            description: "Your multi-scenario analysis report has been downloaded.",
+          });
+        } finally {
+          // Always clean up
+          if (container && document.body.contains(container)) {
+            document.body.removeChild(container);
+          }
+        }
       }
     } catch (error) {
       console.error('Error exporting comprehensive PDF:', error);
