@@ -187,34 +187,34 @@ function generateComprehensiveReport(
           <p style="margin: 4px 0 0 0; opacity: 0.8; font-size: 13px;">Strategic shutdown during ${downtimePercent}% highest-priced hours</p>
         </div>
         
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
-          <div style="background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+          <div style="flex: 1 1 22%; min-width: 140px; background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
             <div style="font-size: 24px; font-weight: 700; color: #dc2626;">${analysis.totalShutdowns || 0}</div>
             <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Shutdown Events</div>
           </div>
-          <div style="background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+          <div style="flex: 1 1 22%; min-width: 140px; background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
             <div style="font-size: 24px; font-weight: 700; color: #F7931A;">${analysis.totalHours || 0}h</div>
             <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Total Downtime</div>
           </div>
-          <div style="background: #dcfce7; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #86efac;">
+          <div style="flex: 1 1 22%; min-width: 140px; background: #dcfce7; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #86efac;">
             <div style="font-size: 20px; font-weight: 700; color: #16a34a;">${formatCAD(analysis.totalSavings || 0)}</div>
             <div style="font-size: 12px; color: #15803d;">${formatUSD(analysis.totalSavings || 0)}</div>
             <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Energy Savings</div>
           </div>
-          <div style="background: #dcfce7; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #86efac;">
+          <div style="flex: 1 1 22%; min-width: 140px; background: #dcfce7; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #86efac;">
             <div style="font-size: 20px; font-weight: 700; color: #16a34a;">${formatCAD(analysis.totalAllInSavings || 0)}</div>
             <div style="font-size: 12px; color: #15803d;">${formatUSD(analysis.totalAllInSavings || 0)}</div>
             <div style="font-size: 11px; color: #64748b; margin-top: 4px;">All-In Savings</div>
           </div>
         </div>
         
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;">
-          <div style="padding: 20px; border-radius: 8px; text-align: center; background: #f1f5f9; border: 2px solid #cbd5e1;">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+          <div style="flex: 1 1 45%; min-width: 200px; padding: 20px; border-radius: 8px; text-align: center; background: #f1f5f9; border: 2px solid #cbd5e1;">
             <div style="font-size: 22px; font-weight: 700; color: #64748b;">${formatCAD((analysis.originalAverage || 0) + parseFloat(config.transmissionAdder))}/MWh</div>
             <div style="font-size: 14px; color: #94a3b8; margin-top: 4px;">${formatUSD((analysis.originalAverage || 0) + parseFloat(config.transmissionAdder))}/MWh</div>
             <div style="font-size: 12px; color: #64748b; margin-top: 8px;">Original All-In Price (100% Uptime)</div>
           </div>
-          <div style="padding: 20px; border-radius: 8px; text-align: center; background: #dcfce7; border: 2px solid #86efac;">
+          <div style="flex: 1 1 45%; min-width: 200px; padding: 20px; border-radius: 8px; text-align: center; background: #dcfce7; border: 2px solid #86efac;">
             <div style="font-size: 22px; font-weight: 700; color: #16a34a;">${formatCAD((analysis.newAveragePrice || 0) + parseFloat(config.transmissionAdder))}/MWh</div>
             <div style="font-size: 14px; color: #15803d; margin-top: 4px;">${formatUSD((analysis.newAveragePrice || 0) + parseFloat(config.transmissionAdder))}/MWh</div>
             <div style="font-size: 12px; color: #64748b; margin-top: 8px;">Optimized All-In Price (${scenario.uptimePercentage}% Uptime)</div>
@@ -729,8 +729,8 @@ function generateSingleScenarioReport(
     }
     
     .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      flex-wrap: wrap;
       gap: 16px;
     }
     
@@ -766,8 +766,8 @@ function generateSingleScenarioReport(
     }
     
     .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      display: flex;
+      flex-wrap: wrap;
       gap: 12px;
       margin-bottom: 24px;
     }
@@ -806,8 +806,8 @@ function generateSingleScenarioReport(
     }
     
     .comparison-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      flex-wrap: wrap;
       gap: 16px;
       margin-bottom: 16px;
     }
@@ -850,8 +850,8 @@ function generateSingleScenarioReport(
       color: white;
       padding: 20px;
       border-radius: 8px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      flex-wrap: wrap;
       gap: 16px;
     }
     
@@ -982,22 +982,21 @@ function generateSingleScenarioReport(
         📊 Executive Summary
       </div>
       
-      <!-- Cost Components Section - Prominent Adder Display -->
       <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-        <div style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 12px; text-align: center;">
-          <div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; text-align: center;">
+          <div style="flex: 1 1 120px; min-width: 100px;">
             <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">Energy Price</div>
             <div style="font-size: 18px; font-weight: 700; color: #0A1628;">${formatCAD(analysisData.newAveragePrice || 0)}/MWh</div>
             <div style="font-size: 10px; color: #64748b;">Optimized Pool Price</div>
           </div>
           <div style="font-size: 24px; color: #f59e0b; font-weight: bold;">+</div>
-          <div style="background: #fff; border-radius: 6px; padding: 12px; border: 2px dashed #f59e0b;">
+          <div style="flex: 1 1 150px; min-width: 130px; background: #fff; border-radius: 6px; padding: 12px; border: 2px dashed #f59e0b;">
             <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">Transmission Adder</div>
             <div style="font-size: 22px; font-weight: 800; color: #dc2626;">$${parseFloat(config.transmissionAdder).toFixed(2)}/MWh CAD</div>
             <div style="font-size: 12px; color: #0052FF; font-weight: 600;">$${(parseFloat(config.transmissionAdder) * exchangeRate).toFixed(2)}/MWh USD</div>
           </div>
           <div style="font-size: 24px; color: #f59e0b; font-weight: bold;">=</div>
-          <div>
+          <div style="flex: 1 1 120px; min-width: 100px;">
             <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600;">All-In Rate</div>
             <div style="font-size: 18px; font-weight: 700; color: #16a34a;">${formatCAD((analysisData.newAveragePrice || 0) + parseFloat(config.transmissionAdder))}/MWh</div>
             <div style="font-size: 10px; color: #64748b;">Total delivered cost</div>
