@@ -158,11 +158,13 @@ function generateComprehensiveReport(
   const scenarioSections = sortedScenarios.map((scenario, scenarioIndex) => {
     const analysis = scenario.analysis;
     const downtimePercent = (100 - scenario.uptimePercentage).toFixed(1);
-    const actualDowntimePercent = ((analysis.totalHours / totalHoursInPeriod) * 100).toFixed(1);
+    const scenarioTotalHours = analysis.totalHours ?? 0;
+    const scenarioTotalShutdowns = analysis.totalShutdowns ?? 0;
+    const actualDowntimePercent = totalHoursInPeriod > 0 ? ((scenarioTotalHours / totalHoursInPeriod) * 100).toFixed(1) : '0.0';
     
     // Generate ALL events (no limit) with pagination via page breaks
     const allEvents = (analysis.events || []).sort((a, b) => b.price - a.price);
-    
+
     // Create event rows - show ALL hours
     const eventRows = allEvents.map((event, index) => {
       const hourDisplay = event.time || `${String(event.hour ?? 0).padStart(2, '0')}:00`;
@@ -189,11 +191,11 @@ function generateComprehensiveReport(
         
         <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
           <div style="flex: 1 1 22%; min-width: 140px; background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
-            <div style="font-size: 24px; font-weight: 700; color: #dc2626;">${analysis.totalShutdowns || 0}</div>
+            <div style="font-size: 24px; font-weight: 700; color: #dc2626;">${scenarioTotalShutdowns}</div>
             <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Shutdown Events</div>
           </div>
           <div style="flex: 1 1 22%; min-width: 140px; background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
-            <div style="font-size: 24px; font-weight: 700; color: #F7931A;">${analysis.totalHours || 0}h</div>
+            <div style="font-size: 24px; font-weight: 700; color: #F7931A;">${scenarioTotalHours}h</div>
             <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Total Downtime</div>
           </div>
           <div style="flex: 1 1 22%; min-width: 140px; background: #dcfce7; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #86efac;">
@@ -577,7 +579,9 @@ function generateSingleScenarioReport(
 ): string {
   const downtimePercentage = (100 - parseFloat(config.uptimePercentage)).toFixed(1);
   const totalHoursInPeriod = parseInt(config.timePeriod) * 24;
-  const actualDowntimePercent = ((analysisData.totalHours / totalHoursInPeriod) * 100).toFixed(1);
+  const totalHours = analysisData.totalHours ?? 0;
+  const totalShutdowns = analysisData.totalShutdowns ?? 0;
+  const actualDowntimePercent = totalHoursInPeriod > 0 ? ((totalHours / totalHoursInPeriod) * 100).toFixed(1) : '0.0';
   const exchangeRate = config.exchangeRate || 0.73;
 
   // Generate ALL events (no limit)
@@ -1030,11 +1034,11 @@ function generateSingleScenarioReport(
     
     <div class="metrics-grid">
       <div class="metric-card">
-        <div class="metric-value" style="color: #dc2626;">${analysisData.totalShutdowns}</div>
+        <div class="metric-value" style="color: #dc2626;">${totalShutdowns}</div>
         <div class="metric-label">Shutdown Events</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value" style="color: #F7931A;">${analysisData.totalHours}</div>
+        <div class="metric-value" style="color: #F7931A;">${totalHours}</div>
         <div class="metric-label">Total Hours</div>
       </div>
       <div class="metric-card">
