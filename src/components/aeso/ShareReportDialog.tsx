@@ -55,14 +55,28 @@ export function ShareReportDialog({
       
       if (!generatedHtml) {
         console.log('[ShareReportDialog] No reportHtml provided, generating from edge function...');
+        console.log('[ShareReportDialog] Report type:', reportType);
+        console.log('[ShareReportDialog] Report data:', JSON.stringify(reportData).substring(0, 500));
+        
+        // For comprehensive reports, reportData is an array of scenarios
+        // For single reports, reportData is a single analysis object
+        const isComprehensive = reportType === 'comprehensive';
+        const scenariosArray = isComprehensive && Array.isArray(reportData) ? reportData : undefined;
+        const singleAnalysisData = isComprehensive 
+          ? (Array.isArray(reportData) && reportData.length > 0 ? reportData[0]?.analysis : {})
+          : reportData;
+        
+        console.log('[ShareReportDialog] Is comprehensive:', isComprehensive);
+        console.log('[ShareReportDialog] Scenarios count:', scenariosArray?.length || 0);
         
         // Call the export function to generate HTML
         const { data: exportData, error: exportError } = await supabase.functions.invoke('aeso-analysis-export', {
           body: {
-            analysisData: reportData,
+            analysisData: singleAnalysisData,
             config: {
               ...reportConfig,
-              exportType: reportType
+              exportType: reportType,
+              scenarios: scenariosArray
             }
           }
         });
