@@ -81,6 +81,7 @@ export function AESOHistoricalPricing() {
   
   const [uptimePercentage, setUptimePercentage] = useState('95');
   const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365' | '730' | '1095' | '1460'>('30');
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<'daily' | 'monthly' | 'yearly' | 'historical'>('monthly');
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
@@ -1290,1204 +1291,354 @@ export function AESOHistoricalPricing() {
         </div>
       </div>
 
-      <Tabs defaultValue="daily" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 gap-1 h-auto p-1">
-          <TabsTrigger value="daily" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Clock className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">Last 24 Hours</span>
-          </TabsTrigger>
-          <TabsTrigger value="monthly" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Calendar className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">Last 30 Days</span>
-          </TabsTrigger>
-          <TabsTrigger value="yearly" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Calendar className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">Last 12 Months</span>
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <BarChart3 className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">Uptime Analytics</span>
-          </TabsTrigger>
-          <TabsTrigger value="12cp" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Target className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">12CP & Reserves</span>
-          </TabsTrigger>
-          <TabsTrigger value="historical" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Activity className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">Historical</span>
-          </TabsTrigger>
-          <TabsTrigger value="weather" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <CloudRain className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">Weather Analysis</span>
-          </TabsTrigger>
-          <TabsTrigger value="shared" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Share2 className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">Shared Reports</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Daily Data Tab - Last 24 Hours */}
-        <TabsContent value="daily" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  24-Hour Statistics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Average Price</span>
-                    <span className="font-semibold">
-                      {dailyData?.statistics?.average !== undefined ? formatCurrency(dailyData.statistics.average) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Peak Price</span>
-                    <span className="font-semibold text-red-600">
-                      {dailyData?.statistics?.peak !== undefined ? formatCurrency(dailyData.statistics.peak) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Low Price</span>
-                    <span className="font-semibold text-green-600">
-                      {dailyData?.statistics?.low !== undefined ? formatCurrency(dailyData.statistics.low) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Volatility</span>
-                    <span className="font-semibold">
-                      {dailyData?.statistics?.volatility ? `${dailyData.statistics.volatility.toFixed(1)}%` : '—'}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-blue-600" />
-                  Optimized Pricing by Uptime (24h)
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Strategic shutdown during peak prices - showing actual avg cost in CAD & USD
-                </p>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  if (!dailyData?.rawHourlyData) return <div className="text-sm text-muted-foreground">Loading data...</div>;
-                  
-                  const uptimeLevels = [85, 90, 95, 97];
-                  const transmissionCost = parseFloat(transmissionAdder) || 11.63;
-                  const hourlyPrices = dailyData.rawHourlyData.map((h: any) => h.price);
-                  
-                  const quickAnalysis = uptimeLevels.map(uptime => {
-                    const totalHours = hourlyPrices.length;
-                    const operatingHours = Math.floor(totalHours * (uptime / 100));
-                    const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
-                    const operatingPrices = sortedPrices.slice(0, operatingHours);
-                    const avgEnergyPrice = operatingPrices.reduce((sum: number, p: number) => sum + p, 0) / operatingHours;
-                    const allInPrice = avgEnergyPrice + transmissionCost;
-                    
-                    return {
-                      uptime,
-                      priceInCentsCAD: (allInPrice / 10).toFixed(2),
-                      priceInCentsUSD: (convertCADtoUSD(allInPrice) / 10).toFixed(2),
-                      avgEnergyCAD: avgEnergyPrice.toFixed(2),
-                      avgEnergyUSD: convertCADtoUSD(avgEnergyPrice).toFixed(2)
-                    };
-                  });
-                  
-                  return (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {quickAnalysis.map((item) => (
-                        <div key={item.uptime} className="bg-muted/30 rounded-lg p-3 border border-border">
-                          <div className="text-xs text-muted-foreground mb-1">{item.uptime}% Uptime</div>
-                          <div className="space-y-1">
-                            <div>
-                              <div className="text-lg font-bold text-blue-600">
-                                {item.priceInCentsCAD}¢
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                CAD per kWh
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-lg font-bold text-green-600">
-                                {item.priceInCentsUSD}¢
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                USD per kWh
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mt-2 pt-2 border-t border-border/50">
-                            <div className="text-xs text-muted-foreground mb-1">Energy only:</div>
-                            <div className="text-xs font-medium flex flex-wrap gap-x-1 items-center">
-                              <span className="text-orange-600 whitespace-nowrap">CA${item.avgEnergyCAD}</span>
-                              <span className="text-muted-foreground">/</span>
-                              <span className="text-green-600 whitespace-nowrap">US${item.avgEnergyUSD}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
+      <Tabs defaultValue="overview" className="space-y-4">
+        {/* Time Period Selector + Feature Tabs */}
+        <div className="flex flex-col gap-4">
+          {/* Time Period Dropdown */}
+          <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Time Period:</span>
+            </div>
+            <Select
+              value={selectedTimePeriod}
+              onValueChange={(value: 'daily' | 'monthly' | 'yearly' | 'historical') => setSelectedTimePeriod(value)}
+            >
+              <SelectTrigger className="w-[180px] bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-lg z-50">
+                <SelectItem value="daily">Last 24 Hours</SelectItem>
+                <SelectItem value="monthly">Last 30 Days</SelectItem>
+                <SelectItem value="yearly">Last 12 Months</SelectItem>
+                <SelectItem value="historical">8-Year Historical</SelectItem>
+              </SelectContent>
+            </Select>
+            <Badge variant="outline" className="ml-auto hidden sm:flex">
+              {selectedTimePeriod === 'daily' && '24 hours'}
+              {selectedTimePeriod === 'monthly' && '30 days'}
+              {selectedTimePeriod === 'yearly' && '12 months'}
+              {selectedTimePeriod === 'historical' && '8 years'}
+            </Badge>
           </div>
 
+          {/* 5 Primary Feature Tabs */}
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 h-auto p-1.5 bg-muted/50">
+            <TabsTrigger 
+              value="overview" 
+              className="flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <Activity className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics" 
+              className="flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <BarChart3 className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">Uptime Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="12cp" 
+              className="flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <Target className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">12CP & Reserves</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="weather" 
+              className="flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <CloudRain className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">Weather</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="shared" 
+              className="flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all col-span-2 sm:col-span-1"
+            >
+              <Share2 className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">Shared Reports</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Consolidated Overview Tab - Shows data based on selectedTimePeriod */}
+        <TabsContent value="overview" className="space-y-4">
+          {/* Period-specific data header */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-600" />
+                {selectedTimePeriod === 'daily' && '24-Hour Market Overview'}
+                {selectedTimePeriod === 'monthly' && '30-Day Market Overview'}
+                {selectedTimePeriod === 'yearly' && '12-Month Market Overview'}
+                {selectedTimePeriod === 'historical' && '8-Year Historical Analysis'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {selectedTimePeriod === 'daily' && 'Real-time hourly pricing from AESO'}
+                {selectedTimePeriod === 'monthly' && 'Last 30 days of market data'}
+                {selectedTimePeriod === 'yearly' && 'Annual pricing trends and patterns'}
+                {selectedTimePeriod === 'historical' && 'Long-term historical market analysis'}
+              </p>
+            </div>
+            <Button 
+              onClick={() => {
+                if (selectedTimePeriod === 'daily') fetchDailyData();
+                else if (selectedTimePeriod === 'monthly') fetchMonthlyData();
+                else if (selectedTimePeriod === 'yearly') fetchYearlyData();
+                else if (selectedTimePeriod === 'historical') fetchRealHistoricalData();
+              }}
+              disabled={loadingDaily || loadingMonthly || loadingYearly || loadingHistoricalTenYear}
+              variant="outline"
+              size="sm"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          {/* Statistics Cards - Dynamic based on period */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {(() => {
+              const data = selectedTimePeriod === 'daily' ? dailyData 
+                        : selectedTimePeriod === 'monthly' ? monthlyData 
+                        : selectedTimePeriod === 'yearly' ? yearlyData 
+                        : historicalTenYearData;
+              const loading = selectedTimePeriod === 'daily' ? loadingDaily 
+                           : selectedTimePeriod === 'monthly' ? loadingMonthly 
+                           : selectedTimePeriod === 'yearly' ? loadingYearly 
+                           : loadingHistoricalTenYear;
+
+              if (loading) {
+                return Array(4).fill(0).map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-4">
+                      <div className="h-4 bg-muted rounded w-24 mb-2"></div>
+                      <div className="h-8 bg-muted rounded w-20"></div>
+                    </CardContent>
+                  </Card>
+                ));
+              }
+
+              const stats = data?.statistics;
+              return (
+                <>
+                  <Card className="border-l-4 border-l-blue-500">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Average Price</p>
+                          <p className="text-2xl font-bold text-blue-600">
+                            {stats?.average ? formatCurrency(stats.average) : '—'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">per MWh</p>
+                        </div>
+                        <DollarSign className="w-8 h-8 text-blue-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-l-4 border-l-red-500">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Peak Price</p>
+                          <p className="text-2xl font-bold text-red-600">
+                            {stats?.peak ? formatCurrency(stats.peak) : '—'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">highest recorded</p>
+                        </div>
+                        <TrendingUp className="w-8 h-8 text-red-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-l-4 border-l-green-500">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Low Price</p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {stats?.low !== undefined ? formatCurrency(stats.low) : '—'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">lowest recorded</p>
+                        </div>
+                        <TrendingDown className="w-8 h-8 text-green-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-l-4 border-l-orange-500">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Volatility</p>
+                          <p className="text-2xl font-bold text-orange-600">
+                            {stats?.volatility ? `${stats.volatility.toFixed(1)}%` : '—'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">price variation</p>
+                        </div>
+                        <Activity className="w-8 h-8 text-orange-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Uptime Optimization Quick Preview */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-600" />
-                Hourly Pricing Data (Last 24 Hours)
+                <Target className="w-4 h-4 text-blue-600" />
+                Optimized Pricing by Uptime
               </CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                Strategic shutdown during peak prices - showing actual avg cost in CAD & USD
+              </p>
             </CardHeader>
             <CardContent>
-              {loadingDaily ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : dailyData?.rawHourlyData && dailyData.rawHourlyData.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">Hour Ending</th>
-                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (¢/kWh CAD)</th>
-                        <th className="text-right py-3 px-4 font-semibold text-sm">Price (¢/kWh USD)</th>
-                        <th className="text-center py-3 px-4 font-semibold text-sm">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dailyData.rawHourlyData.map((hourData: any, index: number) => {
-                        const priceCAD = hourData.price;
-                        const priceUSD = convertCADtoUSD(priceCAD);
-                        
-                        // Convert from $/MWh to ¢/kWh (divide by 10)
-                        const priceCentsCAD = priceCAD / 10;
-                        const priceCentsUSD = priceUSD / 10;
-                        
-                        const isHigh = priceCAD > (dailyData?.statistics?.average || 0) * 1.2;
-                        const isLow = priceCAD < (dailyData?.statistics?.average || 0) * 0.8;
-                        
-                        // Data is already in Mountain Time from the edge function
-                        // Format: "2025-10-19 14:00" (YYYY-MM-DD HH:MM)
-                        const datetime = hourData.datetime || '';
-                        const [datePart, timePart] = datetime.split(' ');
-                        const [year, month, day] = datePart.split('-');
-                        const [hour24, minute] = timePart.split(':');
-                        
-                        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                        const hour12 = parseInt(hour24) % 12 || 12;
-                        const ampm = parseInt(hour24) >= 12 ? 'PM' : 'AM';
-                        const formattedTime = `${monthNames[parseInt(month) - 1]} ${parseInt(day)}, ${hour12}:${minute} ${ampm}`;
-                        
-                        return (
-                          <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                            <td className="py-3 px-4 font-medium">{formattedTime}</td>
-                            <td className="text-right py-3 px-4 font-mono font-semibold">
-                              {priceCentsCAD.toFixed(2)}c/kWh
-                            </td>
-                            <td className="text-right py-3 px-4 font-mono text-green-600">
-                              {priceCentsUSD.toFixed(2)}c/kWh
-                            </td>
-                            <td className="text-center py-3 px-4">
-                              {isHigh ? (
-                                <Badge variant="destructive" className="text-xs">High</Badge>
-                              ) : isLow ? (
-                                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">Low</Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-xs">Normal</Badge>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-64 text-muted-foreground">
-                  <div className="text-center">
-                    <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No hourly data available</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Monthly Data Tab */}
-        <TabsContent value="monthly" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  30-Day Statistics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Average Price</span>
-                    <span className="font-semibold">
-                      {monthlyData?.statistics?.average !== undefined ? formatCurrency(monthlyData.statistics.average) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Peak Price</span>
-                    <span className="font-semibold text-red-600">
-                      {monthlyData?.statistics?.peak !== undefined ? formatCurrency(monthlyData.statistics.peak) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Low Price</span>
-                    <span className="font-semibold text-green-600">
-                      {monthlyData?.statistics?.low !== undefined ? formatCurrency(monthlyData.statistics.low) : '—'}/MWh
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Volatility</span>
-                    <span className="font-semibold">
-                      {monthlyData?.statistics?.volatility ? `${monthlyData.statistics.volatility.toFixed(1)}%` : '—'}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-blue-600" />
-                  Optimized Pricing by Uptime
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Strategic shutdown during peak prices - showing actual avg cost in CAD & USD
-                </p>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  if (!monthlyData?.rawHourlyData) return <div className="text-sm text-muted-foreground">Loading data...</div>;
+              {(() => {
+                const data = selectedTimePeriod === 'daily' ? dailyData 
+                          : selectedTimePeriod === 'monthly' ? monthlyData 
+                          : selectedTimePeriod === 'yearly' ? yearlyData 
+                          : monthlyData;
+                
+                if (!data?.rawHourlyData) return <div className="text-sm text-muted-foreground">Loading data...</div>;
+                
+                const uptimeLevels = [85, 90, 95, 97];
+                const transmissionCost = parseFloat(transmissionAdder) || 11.63;
+                const hourlyPrices = data.rawHourlyData.map((h: any) => h.price);
+                
+                const quickAnalysis = uptimeLevels.map(uptime => {
+                  const totalHours = hourlyPrices.length;
+                  const operatingHours = Math.floor(totalHours * (uptime / 100));
+                  const sortedPrices = [...hourlyPrices].sort((a: number, b: number) => a - b);
+                  const operatingPrices = sortedPrices.slice(0, operatingHours);
+                  const avgEnergyPrice = operatingPrices.reduce((sum: number, p: number) => sum + p, 0) / operatingHours;
+                  const allInPrice = avgEnergyPrice + transmissionCost;
                   
-                  const uptimeLevels = [85, 90, 95, 97];
-                  const transmissionCost = parseFloat(transmissionAdder) || 11.63;
-                  const hourlyPrices = monthlyData.rawHourlyData.map(h => h.price);
-                  
-                  const quickAnalysis = uptimeLevels.map(uptime => {
-                    const totalHours = hourlyPrices.length;
-                    const operatingHours = Math.floor(totalHours * (uptime / 100));
-                    const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
-                    const operatingPrices = sortedPrices.slice(0, operatingHours);
-                    const avgEnergyPrice = operatingPrices.reduce((sum, p) => sum + p, 0) / operatingHours;
-                    const allInPrice = avgEnergyPrice + transmissionCost;
-                    
-                    return {
-                      uptime,
-                      priceInCentsCAD: (allInPrice / 10).toFixed(2),
-                      priceInCentsUSD: (convertCADtoUSD(allInPrice) / 10).toFixed(2),
-                      avgEnergyCAD: avgEnergyPrice.toFixed(2),
-                      avgEnergyUSD: convertCADtoUSD(avgEnergyPrice).toFixed(2)
-                    };
-                  });
-                  
-                  return (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {quickAnalysis.map((item) => (
-                        <div key={item.uptime} className="bg-muted/30 rounded-lg p-3 border border-border">
-                          <div className="text-xs text-muted-foreground mb-1">{item.uptime}% Uptime</div>
-                          <div className="space-y-1">
-                            <div>
-                              <div className="text-lg font-bold text-blue-600">
-                                {item.priceInCentsCAD}¢
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                CAD per kWh
-                              </div>
+                  return {
+                    uptime,
+                    priceInCentsCAD: (allInPrice / 10).toFixed(2),
+                    priceInCentsUSD: (convertCADtoUSD(allInPrice) / 10).toFixed(2),
+                    avgEnergyCAD: avgEnergyPrice.toFixed(2),
+                    avgEnergyUSD: convertCADtoUSD(avgEnergyPrice).toFixed(2)
+                  };
+                });
+                
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {quickAnalysis.map((item) => (
+                      <div key={item.uptime} className="bg-muted/30 rounded-lg p-3 border border-border">
+                        <div className="text-xs text-muted-foreground mb-1">{item.uptime}% Uptime</div>
+                        <div className="space-y-1">
+                          <div>
+                            <div className="text-lg font-bold text-blue-600">
+                              {item.priceInCentsCAD}¢
                             </div>
-                            <div>
-                              <div className="text-lg font-bold text-green-600">
-                                {item.priceInCentsUSD}¢
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                USD per kWh
-                              </div>
+                            <div className="text-xs text-muted-foreground">
+                              CAD per kWh
                             </div>
                           </div>
-                          <div className="mt-2 pt-2 border-t border-border/50">
-                            <div className="text-xs text-muted-foreground mb-1">Energy only:</div>
-                            <div className="text-xs font-medium flex flex-wrap gap-x-1 items-center">
-                              <span className="text-orange-600 whitespace-nowrap">CA${item.avgEnergyCAD}</span>
-                              <span className="text-muted-foreground">/</span>
-                              <span className="text-green-600 whitespace-nowrap">US${item.avgEnergyUSD}</span>
+                          <div>
+                            <div className="text-lg font-bold text-green-600">
+                              {item.priceInCentsUSD}¢
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              USD per kWh
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          </div>
+                        <div className="mt-2 pt-2 border-t border-border/50">
+                          <div className="text-xs text-muted-foreground mb-1">Energy only:</div>
+                          <div className="text-xs font-medium flex flex-wrap gap-x-1 items-center">
+                            <span className="text-orange-600 whitespace-nowrap">CA${item.avgEnergyCAD}</span>
+                            <span className="text-muted-foreground">/</span>
+                            <span className="text-green-600 whitespace-nowrap">US${item.avgEnergyUSD}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
 
-
+          {/* Price Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-blue-600" />
-                30-Day Price Trend
+                Price Trend
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                {loadingMonthly ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : (
-                  <ResponsiveContainer>
-                    <AreaChart data={monthlyData?.chartData || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Area 
-                        type="monotone" 
-                        dataKey="price" 
-                        stroke="#2563eb" 
-                        fill="#2563eb20" 
-                        name="Price"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                {(() => {
+                  const data = selectedTimePeriod === 'daily' ? dailyData 
+                            : selectedTimePeriod === 'monthly' ? monthlyData 
+                            : selectedTimePeriod === 'yearly' ? yearlyData 
+                            : historicalTenYearData;
+                  const loading = selectedTimePeriod === 'daily' ? loadingDaily 
+                               : selectedTimePeriod === 'monthly' ? loadingMonthly 
+                               : selectedTimePeriod === 'yearly' ? loadingYearly 
+                               : loadingHistoricalTenYear;
 
-          {/* Strike Price Analysis Section - 30 Day */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-orange-600" />
-                    Strike Price Analysis by Uptime Level
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Energy costs and strike prices for different operational uptime percentages over the last 30 days
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                if (!monthlyData?.chartData || !monthlyData?.statistics) return (
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    <div className="text-center">
-                      <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p>Loading real AESO market data...</p>
-                    </div>
-                  </div>
-                );
-                
-                // Use REAL AESO data with strategic shutdown calculation
-                const uptimeLevels = [85, 90, 95, 97];
-                const transmissionCost = parseFloat(transmissionAdder) || 11.63;
-                
-                // Get all hourly prices from the raw data
-                const hourlyPrices = monthlyData.rawHourlyData?.map(h => h.price) || [];
-                
-                const uptimeAnalysis = uptimeLevels.map(uptime => {
-                  const totalMonthlyHours = hourlyPrices.length || 720;
-                  const monthlyOperatingHours = Math.floor(totalMonthlyHours * (uptime / 100));
-                  const monthlyShutdownHours = totalMonthlyHours - monthlyOperatingHours;
-                  
-                  // Sort prices and remove the most expensive hours (strategic shutdown)
-                  const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
-                  const operatingHourPrices = sortedPrices.slice(0, monthlyOperatingHours);
-                  
-                  // Calculate actual average energy price during operating hours
-                  const avgEnergyPrice = operatingHourPrices.reduce((sum, price) => sum + price, 0) / monthlyOperatingHours;
-                  
-                  // Strike price is the threshold above which we shut down
-                  const strikePrice = sortedPrices[monthlyOperatingHours - 1] || avgEnergyPrice;
-                  const allInStrikePrice = strikePrice + transmissionCost;
-                  
-                  // Monthly cost calculation
-                  const monthlyMWh = monthlyOperatingHours;
-                  const monthlyCostCAD = (avgEnergyPrice + transmissionCost) * monthlyMWh;
-                  
-                  return {
-                    uptime,
-                    strikePrice: strikePrice.toFixed(2),
-                    allInStrikePrice: allInStrikePrice.toFixed(2),
-                    avgEnergyPrice: avgEnergyPrice.toFixed(2),
-                    monthlyOperatingHours: monthlyOperatingHours.toFixed(0),
-                    monthlyShutdownHours: monthlyShutdownHours.toFixed(0),
-                    monthlyCostCAD: monthlyCostCAD.toFixed(0)
-                  };
-                });
-                
-                return (
-                  <div className="space-y-6">
-                    {/* Strike Price Table */}
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-lg flex items-center gap-2">
-                        <Calculator className="w-5 h-5 text-orange-600" />
-                        Strike Prices & Monthly Costs (1 MW load)
-                      </h4>
-                      
-                      <div className="overflow-x-auto rounded-lg border">
-                        <table className="w-full">
-                            <thead className="bg-muted/50">
-                              <tr>
-                                <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Uptime</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Strike Price<br/>(Threshold)</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Avg Energy<br/>Price</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">All-In<br/>(¢/kWh)</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Operating<br/>Hours</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Shutdown<br/>Hours</th>
-                                <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Monthly<br/>Cost</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {uptimeAnalysis.map((analysis, index) => (
-                                <tr key={analysis.uptime} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                                  <td className="py-3 px-3 sm:px-4">
-                                    <Badge variant={analysis.uptime >= 95 ? 'default' : 'secondary'} className="font-medium text-xs">
-                                      {analysis.uptime}%
-                                    </Badge>
-                                  </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-orange-600">
-                                    CA${analysis.strikePrice}/MWh
-                                  </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-green-600">
-                                    CA${analysis.avgEnergyPrice}/MWh
-                                  </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-blue-600">
-                                    {((parseFloat(analysis.avgEnergyPrice) + parseFloat(transmissionAdder)) / 10).toFixed(2)}¢
-                                  </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm">
-                                    {analysis.monthlyOperatingHours}h
-                                  </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-amber-600 font-medium">
-                                    {analysis.monthlyShutdownHours}h
-                                  </td>
-                                  <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-green-600 font-semibold">
-                                    CA${Number(analysis.monthlyCostCAD).toLocaleString()}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        
-                      <p className="text-xs text-muted-foreground">
-                        *Prices calculated by removing the most expensive hours during shutdowns. Strike Price = threshold above which to shut down. Avg Energy Price = actual cost during operating hours.
-                      </p>
-                    </div>
-                  </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  if (loading) {
+                    return (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      </div>
+                    );
+                  }
 
-        {/* Yearly Data Tab - Completely Redesigned */}
-        <TabsContent value="yearly" className="space-y-6">
-          {/* Real Data Information Banner */}
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <div>
-                <h3 className="font-semibold text-blue-900 dark:text-blue-100">Real AESO Market Data</h3>
-                <p className="text-sm text-blue-700 dark:text-blue-200">
-                  All pricing data is sourced directly from AESO's official API in real-time. 
-                  Average price: CA${yearlyData?.statistics?.average?.toFixed(2) || '--'}/MWh based on actual 12-month historical data.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Market Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-l-4 border-l-blue-500">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">12-Month Average</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {yearlyData?.statistics?.average ? `CA$${yearlyData.statistics.average.toFixed(2)}` : '--'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">per MWh</p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-red-500">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Peak Price</p>
-                    <p className="text-2xl font-bold text-red-600">
-                      {yearlyData?.statistics?.peak ? `CA$${yearlyData.statistics.peak.toFixed(2)}` : '--'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">highest recorded</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-red-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-green-500">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Low Price</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {yearlyData?.statistics?.low !== undefined ? `CA$${yearlyData.statistics.low.toFixed(2)}` : '--'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">lowest recorded</p>
-                  </div>
-                  <TrendingDown className="w-8 h-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-purple-500">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Market Volatility</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {yearlyData?.statistics?.volatility ? `${yearlyData.statistics.volatility.toFixed(1)}%` : '--'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">price variation</p>
-                  </div>
-                  <Activity className="w-8 h-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Strike Price Analysis Section - Improved Layout */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-orange-600" />
-                    Strike Price Analysis by Uptime Level
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Energy costs and strike prices for different operational uptime percentages over the last 12 months
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                if (!yearlyData?.chartData || !yearlyData?.statistics) return (
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    <div className="text-center">
-                      <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p>Loading real AESO market data...</p>
-                    </div>
-                  </div>
-                );
-                
-                // Use REAL AESO data with strategic shutdown calculation
-                const uptimeLevels = [85, 90, 95, 97];
-                const transmissionCost = parseFloat(transmissionAdder) || 11.63;
-                
-                // Get all hourly prices from the raw data (12 months worth)
-                const hourlyPrices = yearlyData.rawHourlyData?.map(h => h.price) || [];
-                
-                const uptimeAnalysis = uptimeLevels.map(uptime => {
-                  const totalMonthlyHours = hourlyPrices.length || 8760;
-                  const monthlyOperatingHours = Math.floor(totalMonthlyHours * (uptime / 100));
-                  const monthlyShutdownHours = totalMonthlyHours - monthlyOperatingHours;
-                  
-                  // Sort prices and remove the most expensive hours (strategic shutdown)
-                  const sortedPrices = [...hourlyPrices].sort((a, b) => a - b);
-                  const operatingHourPrices = sortedPrices.slice(0, monthlyOperatingHours);
-                  
-                  // Calculate actual average energy price during operating hours
-                  const avgEnergyPrice = operatingHourPrices.reduce((sum, price) => sum + price, 0) / monthlyOperatingHours;
-                  
-                  // Strike price is the threshold above which we shut down
-                  const strikePrice = sortedPrices[monthlyOperatingHours - 1] || avgEnergyPrice;
-                  const allInStrikePrice = strikePrice + transmissionCost;
-                  
-                  // Monthly cost calculation (normalized to 30 days)
-                  const normalizedHours = 720; // 30 days * 24 hours
-                  const normalizedOperatingHours = normalizedHours * (uptime / 100);
-                  const monthlyMWh = normalizedOperatingHours;
-                  const monthlyCostCAD = (avgEnergyPrice + transmissionCost) * monthlyMWh;
-                  
-                  return {
-                    uptime,
-                    strikePrice: strikePrice.toFixed(2),
-                    allInStrikePrice: allInStrikePrice.toFixed(2),
-                    avgEnergyPrice: avgEnergyPrice.toFixed(2),
-                    monthlyOperatingHours: normalizedOperatingHours.toFixed(0),
-                    monthlyShutdownHours: (normalizedHours - normalizedOperatingHours).toFixed(0),
-                    monthlyCostCAD: monthlyCostCAD.toFixed(0)
-                  };
-                });
-                
-                return (
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-lg flex items-center gap-2">
-                      <Calculator className="w-5 h-5 text-orange-600" />
-                      Strike Prices & Monthly Costs (1 MW load)
-                    </h4>
-                    
-                    <div className="overflow-x-auto rounded-lg border">
-                      <table className="w-full">
-                        <thead className="bg-muted/50">
-                          <tr>
-                            <th className="text-left py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm whitespace-nowrap">Uptime</th>
-                            <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm whitespace-nowrap">Strike Price<br/>(Threshold)</th>
-                            <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm whitespace-nowrap">Avg Energy<br/>Price</th>
-                            <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm whitespace-nowrap">All-In<br/>(¢/kWh)</th>
-                            <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm whitespace-nowrap">Operating<br/>Hours</th>
-                            <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm whitespace-nowrap">Shutdown<br/>Hours</th>
-                            <th className="text-right py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm whitespace-nowrap">Monthly<br/>Cost</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {uptimeAnalysis.map((analysis, index) => (
-                            <tr key={analysis.uptime} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                              <td className="py-3 px-3 sm:px-4">
-                                <Badge variant={analysis.uptime >= 95 ? 'default' : 'secondary'} className="font-medium text-xs">
-                                  {analysis.uptime}%
-                                </Badge>
-                              </td>
-                              <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
-                                CA${analysis.strikePrice}/MWh
-                              </td>
-                              <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-green-600 whitespace-nowrap">
-                                CA${analysis.avgEnergyPrice}/MWh
-                              </td>
-                              <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm font-semibold text-blue-600 whitespace-nowrap">
-                                {((parseFloat(analysis.avgEnergyPrice) + parseFloat(transmissionAdder)) / 10).toFixed(2)}¢
-                              </td>
-                              <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm whitespace-nowrap">
-                                {analysis.monthlyOperatingHours}h
-                              </td>
-                              <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-amber-600 font-medium whitespace-nowrap">
-                                {analysis.monthlyShutdownHours}h
-                              </td>
-                              <td className="text-right py-3 px-3 sm:px-4 font-mono text-xs sm:text-sm text-green-600 font-semibold whitespace-nowrap">
-                                CA${Number(analysis.monthlyCostCAD).toLocaleString()}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    
-                    <p className="text-xs text-muted-foreground">
-                      *Prices calculated by removing the most expensive hours during shutdowns. Strike Price = threshold above which to shut down. Avg Energy Price = actual cost during operating hours.
-                    </p>
-                  </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
-
-          {/* 12-Month Price Trend - Completely Redesigned */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-blue-600" />
-                12-Month Price Trend Analysis
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Monthly average and peak prices with 95% uptime strike price reference
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {loadingYearly ? (
-                  <div className="flex items-center justify-center h-80">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Loading real AESO market data...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Main Chart */}
-                    <div className="w-full">
-                      <div className="flex items-center gap-4">
-                        <div className="hidden sm:block writing-mode-vertical text-sm font-medium text-muted-foreground whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                          Price (CA$/MWh)
-                        </div>
-                        
-                        <div className="flex-1 rounded-lg border bg-gradient-to-br from-gray-50/50 to-blue-50/50 dark:from-gray-950/20 dark:to-blue-950/20 p-4 sm:p-6">
-                          <div className="w-full h-[350px] sm:h-[400px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={yearlyData?.chartData || []} margin={{ top: 10, right: 10, left: 10, bottom: 50 }}>
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                <XAxis 
-                                  dataKey="month" 
-                                  tick={{ fontSize: 11 }}
-                                  angle={-45}
-                                  textAnchor="end"
-                                  height={80}
-                                />
-                                <YAxis 
-                                  tick={{ fontSize: 11 }}
-                                  tickFormatter={(value) => `$${Math.round(value)}`}
-                                  width={50}
-                                />
-                                <Tooltip 
-                                  content={({ active, payload, label }) => {
-                                    if (!active || !payload || !payload.length) return null;
-                                    return (
-                                      <div className="bg-background border border-border rounded-lg shadow-lg p-3">
-                                        <p className="font-semibold text-sm mb-1">{label}</p>
-                                        {payload.map((entry, index) => (
-                                          <p key={index} style={{ color: entry.color }} className="text-xs">
-                                            {entry.name}: CA${Number(entry.value).toFixed(2)}/MWh
-                                          </p>
-                                        ))}
-                                      </div>
-                                    );
-                                  }}
-                                />
-                                <Legend 
-                                  wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }}
-                                  iconType="line"
-                                />
-                                
-                                {/* Average Price Line */}
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="average" 
-                                  stroke="hsl(221, 83%, 53%)" 
-                                  name="Average Price"
-                                  strokeWidth={2.5}
-                                  dot={{ fill: 'hsl(221, 83%, 53%)', r: 3, strokeWidth: 2, stroke: '#ffffff' }}
-                                  activeDot={{ r: 5 }}
-                                />
-                                
-                                {/* Peak Price Line */}
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="peak" 
-                                  stroke="hsl(0, 72%, 51%)" 
-                                  name="Peak Price"
-                                  strokeWidth={2}
-                                  strokeDasharray="6 3"
-                                  dot={{ fill: 'hsl(0, 72%, 51%)', r: 2, strokeWidth: 2, stroke: '#ffffff' }}
-                                  activeDot={{ r: 4 }}
-                                />
-                                
-                                {/* 95% Uptime Strike Price - Using Real Calculated Data */}
-                                <Line 
-                                  type="monotone" 
-                                  dataKey={(entry) => {
-                                    // Get the month name from the entry
-                                    const monthName = entry.month;
-                                    // Map month name to season
-                                    let season = 'spring';
-                                    if (monthName?.includes('Jan') || monthName?.includes('Feb') || monthName?.includes('Dec')) {
-                                      season = 'winter';
-                                    } else if (monthName?.includes('Mar') || monthName?.includes('Apr') || monthName?.includes('May')) {
-                                      season = 'spring';
-                                    } else if (monthName?.includes('Jun') || monthName?.includes('Jul') || monthName?.includes('Aug')) {
-                                      season = 'summer';
-                                    } else if (monthName?.includes('Sep') || monthName?.includes('Oct') || monthName?.includes('Nov')) {
-                                      season = 'fall';
-                                    }
-                                    // Return the uptime95Price for this season, or fallback
-                                    return yearlyData?.seasonalPatterns?.[season]?.uptime95Price || entry.average || 60;
-                                  }}
-                                  stroke="hsl(38, 92%, 50%)" 
-                                  name="95% Uptime Price"
-                                  strokeWidth={2}
-                                  strokeDasharray="8 4"
-                                  dot={false}
-                                  activeDot={false}
-                                />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
+                  const chartData = data?.chartData || [];
+                  if (chartData.length === 0) {
+                    return (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <div className="text-center">
+                          <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p>No data available</p>
                         </div>
                       </div>
-                      
-                      <div className="text-center text-sm font-medium text-muted-foreground mt-2">
-                        Month
-                      </div>
-                    </div>
+                    );
+                  }
 
-                    {/* Seasonal Analysis */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {yearlyData?.seasonalPatterns && Object.entries(yearlyData.seasonalPatterns).map(([season, data]) => (
-                        <Card key={season} className="text-center">
-                          <CardContent className="p-4">
-                            <h4 className="font-semibold capitalize text-sm text-muted-foreground">{season}</h4>
-                            <div className="mt-2">
-                              <p className="text-2xl font-bold text-blue-600">
-                                CA${data.average?.toFixed(2) || '--'}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">Full Avg: CA${data.average?.toFixed(2) || '--'}/MWh</p>
-                              <p className="text-xs text-muted-foreground">Peak: CA${data.peak?.toFixed(2) || '--'}/MWh</p>
-                              <div className="mt-2 pt-2 border-t border-border">
-                                <p className="text-lg font-bold text-green-600">
-                                  CA${data.uptime95Price?.toFixed(2) || '--'}
-                                </p>
-                                <p className="text-xs font-medium text-green-600">95% Uptime Price</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Historical 8-Year Comparison Analysis */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">8-Year Real AESO Historical Data Analysis</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Real historical price data from AESO API ({uptimePercentage}% uptime analysis)
-                  </p>
-                </div>
-                <Button 
-                  onClick={fetchRealHistoricalData} 
-                  disabled={loadingHistoricalTenYear}
-                  variant="outline"
-                  size="sm"
-                >
-                  {loadingHistoricalTenYear ? "Fetching..." : "Refresh Data"}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                // Show prompt to load data if not loaded yet
-                if (!historicalTenYearData && !loadingHistoricalTenYear) {
                   return (
-                    <div className="p-8 text-center">
-                      <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                        <BarChart3 className="w-8 h-8 text-primary" />
-                      </div>
-                      <h4 className="text-lg font-semibold mb-2">Real 8-Year AESO Historical Data</h4>
-                      <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                        Click "Refresh Data" to fetch 8 years of real historical electricity pricing data directly from the AESO API.
-                      </p>
-                      <Button onClick={fetchRealHistoricalData} variant="default">
-                        Load Historical Data
-                      </Button>
-                    </div>
+                    <ResponsiveContainer>
+                      <AreaChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey={selectedTimePeriod === 'yearly' ? 'month' : 'date'} 
+                          tick={{ fontSize: 11 }}
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 11 }}
+                          tickFormatter={(value) => `$${Math.round(value)}`}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Area 
+                          type="monotone" 
+                          dataKey={selectedTimePeriod === 'yearly' ? 'average' : 'price'} 
+                          stroke="#2563eb" 
+                          fill="#2563eb20" 
+                          name="Price"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   );
-                }
-                
-                // Show loading state
-                if (loadingHistoricalTenYear) {
-                  return (
-                    <div className="p-8">
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                          <span className="text-blue-800 font-medium">Fetching real AESO historical data...</span>
-                        </div>
-                        <p className="text-blue-600 text-sm mt-1">
-                          Retrieving 8 years of real market data from AESO API. This may take 30-60 seconds...
-                        </p>
-                      </div>
-                    </div>
-                  );
-                }
-                
-                // Show error or no data state
-                if (!historicalTenYearData?.historicalYears || historicalTenYearData.historicalYears.length === 0) {
-                  return (
-                    <div className="p-8 text-center">
-                      <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
-                      <h4 className="text-lg font-semibold mb-2">No Historical Data Available</h4>
-                      <p className="text-muted-foreground mb-4">
-                        Unable to retrieve historical data from AESO API. Please try again.
-                      </p>
-                      <Button onClick={fetchRealHistoricalData} variant="outline">
-                        Retry
-                      </Button>
-                    </div>
-                  );
-                }
-                
-                // Process real data from API
-                const historicalYears = historicalTenYearData.historicalYears
-                  .filter((y: any) => y.average !== null) // Only include years with data
-                  .map((y: any) => ({
-                    year: y.year,
-                    average: y.average,
-                    peak: y.peak,
-                    low: y.low,
-                    volatility: y.volatility,
-                    dataPoints: y.dataPoints,
-                    isReal: y.isReal
-                  }));
-                
-                if (historicalYears.length === 0) {
-                  return (
-                    <div className="p-8 text-center">
-                      <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
-                      <p className="text-muted-foreground">No valid data points in historical dataset</p>
-                    </div>
-                  );
-                }
-                
-                // Calculate trend metrics from REAL DATA
-                const currentYear = new Date().getFullYear();
-                const currentYearData = historicalYears.find((y: any) => y.year === currentYear);
-                const tenYearAgoData = historicalYears[0];
-                const currentAverage = currentYearData?.average || historicalYears[historicalYears.length - 1].average;
-                const priceIncrease = ((currentAverage - tenYearAgoData.average) / tenYearAgoData.average) * 100;
-                const averageVolatility = historicalYears.reduce((sum: number, year: any) => sum + (year.volatility || 0), 0) / historicalYears.length;
-                const tenYearAverage = historicalYears.reduce((sum: number, year: any) => sum + year.average, 0) / historicalYears.length;
-                const currentVsAverage = ((currentAverage - tenYearAverage) / tenYearAverage) * 100;
-                
-                return (
-                  <div className="space-y-6">
-                    
-                    {/* Data Source Badge */}
-                    <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium text-green-800">
-                        Real AESO API Data • {historicalTenYearData.realDataYears} of {historicalTenYearData.totalYears} years with data
-                      </span>
-                      <span className="text-xs text-green-600 ml-auto">
-                        Last updated: {new Date(historicalTenYearData.lastUpdated).toLocaleTimeString()}
-                      </span>
-                    </div>
-                    
-                    {/* Historical Metrics Display */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold text-green-600">
-                            {historicalYears.length}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Years with Data</p>
-                          <p className="text-xs text-green-600 mt-1">
-                            {historicalYears.reduce((sum: number, y: any) => sum + y.dataPoints, 0).toLocaleString()} data points
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold text-blue-600">
-                            {priceIncrease.toFixed(1)}%
-                          </div>
-                          <p className="text-xs text-muted-foreground">Price Growth</p>
-                          <p className="text-xs text-blue-600 mt-1">
-                            {tenYearAgoData.year} to {currentYear}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold text-orange-600">
-                            {averageVolatility.toFixed(0)}%
-                          </div>
-                          <p className="text-xs text-muted-foreground">Avg Volatility</p>
-                          <p className="text-xs text-orange-600 mt-1">
-                            8-year average
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold text-purple-600">
-                            CA${currentAverage.toFixed(2)}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Current Year Avg</p>
-                          <p className="text-xs text-purple-600 mt-1">
-                            {currentVsAverage > 0 ? '+' : ''}{currentVsAverage.toFixed(1)}% vs 10yr avg
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    
-                    {/* Historical Trend Charts */}
-                    <div className="space-y-6">
-                      {/* 8-Year Average Price Trend */}
-                      <div>
-                        <h4 className="font-semibold mb-3 text-sm">8-Year Average Price Trend</h4>
-                        <div className="h-72">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={historicalYears}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="year" />
-                              <YAxis 
-                                label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }}
-                                tickFormatter={(value) => `${Math.round(value)}`}
-                              />
-                              <Tooltip 
-                                formatter={(value, name) => [
-                                  `CA$${Number(value).toFixed(2)}`,
-                                  name === 'average' ? 'Average Price' : name
-                                ]}
-                              />
-                              <Area 
-                                type="monotone" 
-                                dataKey="average" 
-                                stroke="#2563eb" 
-                                fill="#2563eb20"
-                                strokeWidth={2}
-                                name="Average Price"
-                              />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                      
-                      {/* Price Range Analysis */}
-                      <div>
-                        <h4 className="font-semibold mb-3 text-sm">Price Range & Volatility Analysis</h4>
-                        <div className="h-64">
-                          <ResponsiveContainer>
-                            <LineChart data={historicalYears}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="year" />
-                              <YAxis label={{ value: 'Price (CA$/MWh)', angle: -90, position: 'insideLeft' }} />
-                              <Tooltip 
-                                formatter={(value, name) => [
-                                  `CA$${Number(value).toFixed(2)}`,
-                                  name === 'peak' ? 'Peak Price' : name === 'low' ? 'Low Price' : 'Average Price'
-                                ]}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="peak" 
-                                stroke="#dc2626" 
-                                strokeWidth={2}
-                                name="Peak Price"
-                                strokeDasharray="3 3"
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="average" 
-                                stroke="#2563eb" 
-                                strokeWidth={3}
-                                name="Average Price"
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="low" 
-                                stroke="#16a34a" 
-                                strokeWidth={2}
-                                name="Low Price"
-                                strokeDasharray="3 3"
-                              />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Market Insights */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Market Intelligence & Insights</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6">
-                          <div>
-                            <h5 className="font-semibold mb-3 text-base">Comprehensive Price Trend Analysis</h5>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="space-y-4">
-                                <div>
-                                  <h6 className="font-medium mb-2 text-sm">Long-Term Growth Metrics</h6>
-                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                    <li>• 8-year CAGR: <span className="font-semibold text-foreground">{(Math.pow(currentAverage / tenYearAgoData.average, 1/8) - 1 * 100).toFixed(2)}%</span></li>
-                                    <li>• Total price increase: <span className="font-semibold text-foreground">{priceIncrease.toFixed(1)}%</span> over period</li>
-                                    <li>• Current vs 8-year avg: <span className={`font-semibold ${currentVsAverage > 0 ? 'text-red-600' : 'text-green-600'}`}>{Math.abs(currentVsAverage).toFixed(1)}% {currentVsAverage > 0 ? 'above' : 'below'}</span></li>
-                                    <li>• Average yearly variance: <span className="font-semibold text-foreground">{(priceIncrease / 8).toFixed(2)}%</span></li>
-                                  </ul>
-                                </div>
-                                
-                                <div>
-                                  <h6 className="font-medium mb-2 text-sm">Volatility Analysis</h6>
-                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                    <li>• Current volatility: <span className="font-semibold text-foreground">{averageVolatility.toFixed(1)}%</span></li>
-                                    <li>• Peak volatility: <span className="font-semibold text-red-600">{Math.max(...historicalYears.map((y: any) => y.volatility || 0)).toFixed(0)}%</span> in {historicalYears.reduce((max: any, year: any) => (year.volatility || 0) > (max.volatility || 0) ? year : max).year}</li>
-                                    <li>• Most stable period: <span className="font-semibold text-green-600">{historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).year}</span> ({historicalYears.reduce((min: any, year: any) => (year.volatility || Infinity) < (min.volatility || Infinity) ? year : min).volatility?.toFixed(0)}% volatility)</li>
-                                    <li>• Market stability trend: <span className="font-semibold text-foreground">{averageVolatility > 50 ? 'High variability' : 'Moderate stability'}</span></li>
-                                  </ul>
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-4">
-                                <div>
-                                  <h6 className="font-medium mb-2 text-sm">Price Range Insights</h6>
-                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                    <li>• Highest annual average: <span className="font-semibold text-foreground">{formatCurrency(Math.max(...historicalYears.map((y: any) => y.average)))}</span></li>
-                                    <li>• Lowest annual average: <span className="font-semibold text-foreground">{formatCurrency(Math.min(...historicalYears.map((y: any) => y.average)))}</span></li>
-                                    <li>• Peak-to-trough spread: <span className="font-semibold text-foreground">{formatCurrency(Math.max(...historicalYears.map((y: any) => y.average)) - Math.min(...historicalYears.map((y: any) => y.average)))}</span></li>
-                                    <li>• Price ceiling threshold: <span className="font-semibold text-foreground">{formatCurrency(Math.max(...historicalYears.map((y: any) => y.peak)))}</span></li>
-                                  </ul>
-                                </div>
-                                
-                                <div>
-                                  <h6 className="font-medium mb-2 text-sm">Data Quality & Coverage</h6>
-                                  <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                    <li>• Total data points: <span className="font-semibold text-foreground">{historicalYears.reduce((sum: number, y: any) => sum + y.dataPoints, 0).toLocaleString()}</span> hourly records</li>
-                                    <li>• Years analyzed: <span className="font-semibold text-foreground">{historicalYears.length}</span> complete periods</li>
-                                    <li>• Data source: <span className="font-semibold text-foreground">AESO Real-Time API</span></li>
-                                    <li>• Update frequency: <span className="font-semibold text-foreground">Hourly automated sync</span></li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="mt-4 pt-4 border-t border-border">
-                              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                                <Activity className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <p>
-                                  <span className="font-medium text-foreground">Market Context:</span> {
-                                    currentVsAverage > 20 
-                                      ? 'Current prices significantly elevated above historical norms, indicating strong demand or constrained supply conditions.' 
-                                      : currentVsAverage > 0 
-                                      ? 'Prices moderately above historical average, suggesting balanced market conditions with slight upward pressure.' 
-                                      : 'Current prices below historical average, potentially indicating favorable market conditions or increased supply.'
-                                  }
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                );
-              })()}
+                })()}
+              </div>
             </CardContent>
           </Card>
+
+          {/* Historical-specific content */}
+          {selectedTimePeriod === 'historical' && (
+            <AdvancedAnalytics />
+          )}
         </TabsContent>
 
         {/* Analytics Tab */}
@@ -3013,10 +2164,6 @@ export function AESOHistoricalPricing() {
            <TwelveCPAnalyticsTab />
          </TabsContent>
 
-         {/* Historical Analytics Tab */}
-         <TabsContent value="historical" className="space-y-4">
-           <AdvancedAnalytics />
-         </TabsContent>
 
          {/* Weather Analysis Tab */}
          <TabsContent value="weather" className="space-y-4">
