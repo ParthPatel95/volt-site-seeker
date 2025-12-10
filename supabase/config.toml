@@ -214,3 +214,6 @@ verify_jwt = true
 
 [functions.aeso-reserves-backfill]
 verify_jwt = false
+
+[functions.aeso-grid-alerts]
+verify_jwt = false

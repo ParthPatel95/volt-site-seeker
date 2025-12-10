@@ -435,6 +435,48 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_grid_alerts: {
+        Row: {
+          alert_type: string | null
+          created_at: string | null
+          description: string | null
+          guid: string | null
+          id: string
+          link: string | null
+          published_at: string
+          source: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          alert_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          guid?: string | null
+          id?: string
+          link?: string | null
+          published_at: string
+          source?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          alert_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          guid?: string | null
+          id?: string
+          link?: string | null
+          published_at?: string
+          source?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       aeso_hyperparameter_trials: {
         Row: {
           created_at: string
