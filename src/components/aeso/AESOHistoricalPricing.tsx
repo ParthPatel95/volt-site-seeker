@@ -51,6 +51,7 @@ import { WeatherAnalysis } from '@/components/weather/WeatherAnalysis';
 import { AdvancedAnalytics } from '@/components/historical/AdvancedAnalytics';
 import { ShareReportDialog } from './ShareReportDialog';
 import { SharedAESOReportsTab } from './SharedAESOReportsTab';
+import { TwelveCPAnalyticsTab } from './TwelveCPAnalyticsTab';
 
 
 export function AESOHistoricalPricing() {
@@ -1290,7 +1291,7 @@ export function AESOHistoricalPricing() {
       </div>
 
       <Tabs defaultValue="daily" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 gap-1 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 gap-1 h-auto p-1">
           <TabsTrigger value="daily" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Clock className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm whitespace-nowrap">Last 24 Hours</span>
@@ -1306,6 +1307,10 @@ export function AESOHistoricalPricing() {
           <TabsTrigger value="analytics" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BarChart3 className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm whitespace-nowrap">Uptime Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="12cp" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Target className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">12CP & Reserves</span>
           </TabsTrigger>
           <TabsTrigger value="historical" className="flex items-center gap-1.5 px-2 sm:px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Activity className="w-4 h-4 flex-shrink-0" />
@@ -3001,6 +3006,11 @@ export function AESOHistoricalPricing() {
                </div>
              </CardContent>
            </Card>
+         </TabsContent>
+
+         {/* 12CP & Reserves Tab */}
+         <TabsContent value="12cp" className="space-y-4">
+           <TwelveCPAnalyticsTab />
          </TabsContent>
 
          {/* Historical Analytics Tab */}
