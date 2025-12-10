@@ -243,7 +243,7 @@ const ProgressBar: React.FC<{ label: string; percentage: number; color: string }
 // Growth Timeline Component
 const GrowthTimeline: React.FC = () => {
   const milestones = [
-    { year: 'Jan 2024', title: 'Company Founded', description: 'WattByte established', color: 'trust' },
+    { year: '2023', title: 'Company Founded', description: 'WattByte established', color: 'trust' },
     { year: 'Sept 2024', title: 'First Exit', description: 'Developed & sold 36MW datacenter', color: 'bitcoin' },
     { year: '2025', title: 'Alberta Development', description: '135MW facility under development', color: 'success' },
     { year: '2026', title: 'Scale Phase', description: 'Multi-GW development pipeline', color: 'trust' },
