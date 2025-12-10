@@ -16,14 +16,14 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
-  TrendingUp,
-  TrendingDown,
-  Minus
+  Bell
 } from 'lucide-react';
 import { useAESORealtimeReserves } from '@/hooks/useAESORealtimeReserves';
 import { use12CPSavingsAnalytics } from '@/hooks/use12CPSavingsAnalytics';
+import { useAESOGridAlerts } from '@/hooks/useAESOGridAlerts';
 import { TwelveCPSavingsSimulator } from './TwelveCPSavingsSimulator';
 import { PeakHourRiskAnalysis } from './PeakHourRiskAnalysis';
+import { GridAlertStatusCard } from './GridAlertStatusCard';
 import { format } from 'date-fns';
 
 export function TwelveCPAnalyticsTab() {
@@ -44,11 +44,26 @@ export function TwelveCPAnalyticsTab() {
     fetch12CPSavingsData
   } = use12CPSavingsAnalytics();
 
+  const {
+    alerts,
+    currentStatus,
+    loading: loadingAlerts,
+    lastFetched: alertsLastFetched,
+    fetchGridAlerts,
+    calculateRiskLevel
+  } = useAESOGridAlerts();
+
   useEffect(() => {
     fetchRealtimeReserves();
     fetch12CPSavingsData();
+    fetchGridAlerts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Calculate risk level based on reserve data
+  const riskLevel = realtimeReserves 
+    ? calculateRiskLevel(realtimeReserves.total_mw, realtimeReserves.required_mw)
+    : calculateRiskLevel(0, 0);
 
   const formatNumber = (value: number, decimals: number = 0) => {
     return new Intl.NumberFormat('en-CA', { maximumFractionDigits: decimals }).format(value);
@@ -58,7 +73,7 @@ export function TwelveCPAnalyticsTab() {
     <div className="space-y-6">
       {/* Section Navigation */}
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
           <TabsTrigger value="savings" className="min-h-[44px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Calculator className="w-4 h-4" />
             <span className="hidden sm:inline">Savings Simulator</span>
@@ -68,6 +83,14 @@ export function TwelveCPAnalyticsTab() {
             <Target className="w-4 h-4" />
             <span className="hidden sm:inline">Peak Hour Risk</span>
             <span className="sm:hidden">Risk</span>
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="min-h-[44px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative">
+            <Bell className="w-4 h-4" />
+            <span className="hidden sm:inline">Grid Alerts</span>
+            <span className="sm:hidden">Alerts</span>
+            {currentStatus?.hasActiveAlert && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            )}
           </TabsTrigger>
           <TabsTrigger value="reserves" className="min-h-[44px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Activity className="w-4 h-4" />
@@ -90,6 +113,72 @@ export function TwelveCPAnalyticsTab() {
             </div>
           ) : (
             <PeakHourRiskAnalysis savingsData={savingsData} />
+          )}
+        </TabsContent>
+
+        {/* Grid Alerts Tab */}
+        <TabsContent value="alerts" className="mt-6">
+          {loadingAlerts && alerts.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="ml-3 text-muted-foreground">Loading grid alerts...</span>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <GridAlertStatusCard
+                alerts={alerts}
+                currentStatus={currentStatus}
+                reserves={realtimeReserves}
+                riskLevel={riskLevel}
+                loading={loadingAlerts}
+                onRefresh={() => {
+                  fetchGridAlerts();
+                  fetchRealtimeReserves();
+                }}
+                lastFetched={alertsLastFetched}
+              />
+
+              {/* Alert Explanation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    Understanding AESO Grid Alerts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                        <span className="font-medium text-red-900">Grid Alert</span>
+                      </div>
+                      <p className="text-sm text-red-700">
+                        Issued when system reserves are tight. High probability of 12CP peak during active alerts.
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className="w-4 h-4 text-orange-600" />
+                        <span className="font-medium text-orange-900">EEA Event</span>
+                      </div>
+                      <p className="text-sm text-orange-700">
+                        Energy Emergency Alert - critical shortage. Almost always coincides with system peak.
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium text-blue-900">Maintenance</span>
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        Scheduled outages that reduce available capacity. Monitor reserves closely.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </TabsContent>
 
