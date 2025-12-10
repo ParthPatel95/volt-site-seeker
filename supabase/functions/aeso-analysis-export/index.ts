@@ -135,6 +135,125 @@ serve(async (req) => {
   }
 });
 
+// Generate Alberta Site Energy Analysis section for comprehensive reports
+function generateSiteAnalysisSection(
+  scenarios: ScenarioData[],
+  transmissionAdder: number,
+  exchangeRate: number
+): string {
+  // Calculate key metrics from scenario data
+  const baselineScenario = scenarios.find(s => s.uptimePercentage === 100);
+  const optimalScenario = scenarios.find(s => s.uptimePercentage === 95) || scenarios[Math.floor(scenarios.length / 2)];
+  
+  const baselineAllIn = baselineScenario 
+    ? (baselineScenario.analysis.originalAverage || 0) + transmissionAdder 
+    : transmissionAdder + 50;
+  const optimizedAllIn = optimalScenario 
+    ? (optimalScenario.analysis.newAveragePrice || 0) + transmissionAdder 
+    : transmissionAdder + 35;
+  const savingsPercent = baselineAllIn > 0 ? ((baselineAllIn - optimizedAllIn) / baselineAllIn * 100).toFixed(1) : '0';
+  
+  // Best scenario for max savings highlight
+  const bestScenario = [...scenarios].sort((a, b) => 
+    (b.analysis.totalAllInSavings || 0) - (a.analysis.totalAllInSavings || 0)
+  )[0];
+  const maxSavings = bestScenario?.analysis.totalAllInSavings || 0;
+
+  return `
+    <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #86efac; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+      <!-- Site Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+            <span style="font-size: 28px;">🏭</span>
+            <h2 style="font-size: 22px; font-weight: 800; color: #0A1628; margin: 0;">Alberta Heartland 135</h2>
+            <span style="background: #F7931A; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;">UNDER DEVELOPMENT</span>
+          </div>
+          <p style="color: #64748b; font-size: 13px; margin: 0;">Strategic Bitcoin/AI Mining Infrastructure | Alberta, Canada</p>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 32px; font-weight: 800; color: #16a34a;">135<span style="font-size: 16px; color: #64748b; font-weight: 500;">MW</span></div>
+          <div style="font-size: 11px; color: #64748b;">Total Power Capacity</div>
+        </div>
+      </div>
+      
+      <!-- Strategic Advantages Grid -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+        <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #16a34a;">
+          <div style="font-size: 20px; margin-bottom: 6px;">💰</div>
+          <div style="font-size: 13px; font-weight: 700; color: #0A1628; margin-bottom: 4px;">Competitive Pricing</div>
+          <div style="font-size: 11px; color: #64748b;">Deregulated wholesale market with some of North America's lowest power rates and real-time optimization potential.</div>
+        </div>
+        <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #0052FF;">
+          <div style="font-size: 20px; margin-bottom: 6px;">❄️</div>
+          <div style="font-size: 13px; font-weight: 700; color: #0A1628; margin-bottom: 4px;">Cold Climate</div>
+          <div style="font-size: 11px; color: #64748b;">Natural cooling reduces PUE and operational costs year-round, eliminating expensive cooling infrastructure.</div>
+        </div>
+        <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #F7931A;">
+          <div style="font-size: 20px; margin-bottom: 6px;">⚡</div>
+          <div style="font-size: 13px; font-weight: 700; color: #0A1628; margin-bottom: 4px;">Direct Grid Access</div>
+          <div style="font-size: 11px; color: #64748b;">Premium AESO grid connectivity with stable, reliable power delivery and minimal transmission losses.</div>
+        </div>
+        <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #8b5cf6;">
+          <div style="font-size: 20px; margin-bottom: 6px;">🏛️</div>
+          <div style="font-size: 13px; font-weight: 700; color: #0A1628; margin-bottom: 4px;">Stable Jurisdiction</div>
+          <div style="font-size: 11px; color: #64748b;">Canadian rule of law with investor-friendly regulatory environment and strong property rights.</div>
+        </div>
+      </div>
+      
+      <!-- Investment Opportunity Analysis -->
+      <div style="background: white; border-radius: 8px; padding: 20px; border: 1px solid #e2e8f0;">
+        <h3 style="font-size: 15px; font-weight: 700; color: #0A1628; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+          <span style="color: #16a34a;">📈</span> Investment Opportunity Analysis
+        </h3>
+        <p style="font-size: 12px; color: #475569; line-height: 1.7; margin: 0 0 16px 0;">
+          Alberta's deregulated wholesale energy market creates exceptional value for flexible, high-density computing operations. 
+          The AESO (Alberta Electric System Operator) pool price mechanism enables <strong>real-time optimization</strong> through 
+          strategic operational scheduling—shutting down during peak price hours while maintaining high availability. This analysis 
+          demonstrates how intelligent uptime management can <strong>significantly reduce operational costs</strong> while 
+          preserving 95%+ availability for Bitcoin mining and AI workloads.
+        </p>
+        
+        <!-- Key Metrics Row -->
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between;">
+          <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: #f8fafc; border-radius: 6px;">
+            <div style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Baseline All-In</div>
+            <div style="font-size: 18px; font-weight: 700; color: #64748b;">$${baselineAllIn.toFixed(2)}</div>
+            <div style="font-size: 10px; color: #94a3b8;">CAD/MWh</div>
+          </div>
+          <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: #dcfce7; border-radius: 6px; border: 2px solid #86efac;">
+            <div style="font-size: 10px; color: #15803d; text-transform: uppercase; margin-bottom: 4px;">Optimized (95%)</div>
+            <div style="font-size: 18px; font-weight: 700; color: #16a34a;">$${optimizedAllIn.toFixed(2)}</div>
+            <div style="font-size: 10px; color: #15803d;">CAD/MWh</div>
+          </div>
+          <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: #fef3c7; border-radius: 6px;">
+            <div style="font-size: 10px; color: #92400e; text-transform: uppercase; margin-bottom: 4px;">Cost Reduction</div>
+            <div style="font-size: 18px; font-weight: 700; color: #F7931A;">${savingsPercent}%</div>
+            <div style="font-size: 10px; color: #92400e;">All-In Savings</div>
+          </div>
+          <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: #f0f9ff; border-radius: 6px;">
+            <div style="font-size: 10px; color: #0369a1; text-transform: uppercase; margin-bottom: 4px;">USD Equivalent</div>
+            <div style="font-size: 18px; font-weight: 700; color: #0052FF;">$${(optimizedAllIn * exchangeRate).toFixed(2)}</div>
+            <div style="font-size: 10px; color: #0369a1;">USD/MWh (95%)</div>
+          </div>
+        </div>
+        
+        <!-- Upside Summary -->
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+          <div style="font-size: 12px; font-weight: 600; color: #0A1628; margin-bottom: 8px;">✅ Key Upside Factors:</div>
+          <ul style="font-size: 11px; color: #475569; line-height: 1.8; margin: 0; padding-left: 20px;">
+            <li><strong>Predictable optimization:</strong> Historical AESO data enables consistent cost reduction through smart scheduling</li>
+            <li><strong>Growing renewable mix:</strong> Increased wind/solar generation creates more price volatility = more optimization opportunity</li>
+            <li><strong>Cold climate bonus:</strong> Reduces both energy consumption AND extends equipment lifespan</li>
+            <li><strong>26-acre facility:</strong> Warehouse-style data center with air-cooled infrastructure and expansion potential</li>
+            <li><strong>Trans-continental fiber:</strong> Low-latency connectivity for mining pool communication and AI training data transfer</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function generateComprehensiveReport(
   scenarios: ScenarioData[], 
   config: ExportConfig, 
@@ -146,6 +265,9 @@ function generateComprehensiveReport(
   const exchangeRate = config.exchangeRate || 0.73;
   const transmissionAdder = parseFloat(config.transmissionAdder) || 11.73; // Updated default to $11.73/MWh
   const totalHoursInPeriod = parseInt(config.timePeriod) * 24;
+  
+  // Generate site analysis section
+  const siteAnalysisHTML = generateSiteAnalysisSection(scenarios, transmissionAdder, exchangeRate);
 
   // Sort scenarios by uptime (highest first for comparison)
   const sortedScenarios = [...scenarios].sort((a, b) => b.uptimePercentage - a.uptimePercentage);
@@ -505,6 +627,8 @@ function generateComprehensiveReport(
     
     <h1>Multi-Scenario Uptime Optimization Analysis</h1>
     <p class="subtitle">Comprehensive comparison of ${sortedScenarios.length} uptime scenarios for ${timePeriodLabel} (${totalHoursInPeriod.toLocaleString()} hours)</p>
+    
+    ${siteAnalysisHTML}
     
     <div class="executive-summary">
       <div class="summary-title">📊 Executive Summary - All Scenarios Comparison</div>
