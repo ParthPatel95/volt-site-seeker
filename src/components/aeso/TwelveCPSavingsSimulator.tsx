@@ -49,6 +49,7 @@ export function TwelveCPSavingsSimulator() {
 
   useEffect(() => {
     fetch12CPSavingsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -80,6 +81,21 @@ export function TwelveCPSavingsSimulator() {
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <span className="ml-3 text-muted-foreground">Loading savings analysis...</span>
       </div>
+    );
+  }
+
+  if (!savingsData && !loading) {
+    return (
+      <Card className="border-yellow-200">
+        <CardContent className="py-8 text-center">
+          <AlertTriangle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
+          <p className="text-muted-foreground">No pricing data available for savings analysis.</p>
+          <Button onClick={fetch12CPSavingsData} variant="outline" className="mt-4">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
