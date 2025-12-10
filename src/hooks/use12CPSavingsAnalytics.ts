@@ -285,11 +285,16 @@ export function use12CPSavingsAnalytics() {
     const withEnergyCost = withoutEnergyCost - totalEnergySavings;
     const withTransmissionCost = withoutTransmissionCost - transmissionSavings;
 
+    const totalBaseCost = withoutEnergyCost + withoutTransmissionCost;
+    const savingsPercentage = totalBaseCost > 0 
+      ? Math.round(((totalEnergySavings + transmissionSavings) / totalBaseCost) * 100 * 100) / 100
+      : 0;
+
     return {
       withoutStrategy: {
         energyCost: Math.round(withoutEnergyCost),
         transmissionCost: Math.round(withoutTransmissionCost),
-        totalCost: Math.round(withoutEnergyCost + withoutTransmissionCost)
+        totalCost: Math.round(totalBaseCost)
       },
       withStrategy: {
         energyCost: Math.round(withEnergyCost),
@@ -299,7 +304,7 @@ export function use12CPSavingsAnalytics() {
       },
       savings: {
         amount: Math.round(totalEnergySavings + transmissionSavings),
-        percentage: Math.round(((totalEnergySavings + transmissionSavings) / (withoutEnergyCost + withoutTransmissionCost)) * 100 * 100) / 100,
+        percentage: savingsPercentage,
         transmissionSavings: Math.round(transmissionSavings),
         energySavings: Math.round(totalEnergySavings)
       }

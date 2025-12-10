@@ -47,6 +47,7 @@ export function TwelveCPAnalyticsTab() {
   useEffect(() => {
     fetchRealtimeReserves();
     fetch12CPSavingsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatNumber = (value: number, decimals: number = 0) => {
