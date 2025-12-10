@@ -211,3 +211,6 @@ verify_jwt = true
 
 [functions.user-management]
 verify_jwt = true
+
+[functions.aeso-reserves-backfill]
+verify_jwt = false
