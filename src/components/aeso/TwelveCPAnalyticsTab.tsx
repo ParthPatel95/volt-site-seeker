@@ -308,174 +308,230 @@ export function TwelveCPAnalyticsTab() {
               Grid reliability reserves and pricing analytics
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Select value={reservesDays} onValueChange={setReservesDays}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">7 days</SelectItem>
-                <SelectItem value="30">30 days</SelectItem>
-                <SelectItem value="90">90 days</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button 
-              onClick={handleRefreshReserves} 
-              disabled={loadingReserves}
-              variant="outline"
-              size="sm"
-            >
-              {loadingReserves ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            </Button>
-          </div>
         </div>
 
-        {/* Reserves Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Total Reserve</p>
-                  <p className="text-2xl font-bold">
-                    {loadingReserves ? '—' : `${formatNumber(reservesData?.avgTotalReserve || 0)} MW`}
+        {/* Check if reserves data is available */}
+        {!loadingReserves && (!reservesData || reservesData.avgTotalReserve === 0) ? (
+          /* Empty State - No Reserves Data */
+          <Card className="border-dashed border-2 border-muted">
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center justify-center text-center space-y-4">
+                <div className="p-4 rounded-full bg-muted/50">
+                  <Activity className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-lg font-semibold">Historical Reserves Data Coming Soon</h4>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    We're actively collecting operating reserves data from the AESO grid. 
+                    Historical analytics will be available once sufficient data is gathered.
                   </p>
                 </div>
-                <Zap className="w-8 h-8 text-green-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Spinning Reserve</p>
-                  <p className="text-2xl font-bold">
-                    {loadingReserves ? '—' : `${formatNumber(reservesData?.avgSpinningReserve || 0)} MW`}
-                  </p>
+                <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                  <Badge variant="outline" className="gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Data collection in progress
+                  </Badge>
+                  <a 
+                    href="/app/aeso-market" 
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    View real-time reserves in Market Hub →
+                  </a>
                 </div>
-                <Activity className="w-8 h-8 text-blue-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Reserve Price</p>
-                  <p className="text-2xl font-bold">
-                    {loadingReserves ? '—' : `$${(reservesData?.avgReservePrice || 0).toFixed(2)}`}
-                  </p>
-                </div>
-                <DollarSign className="w-8 h-8 text-yellow-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Reserve Trend</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-2xl font-bold capitalize">
-                      {loadingReserves ? '—' : reservesData?.reserveMarginTrend || 'stable'}
-                    </p>
-                    {reservesData && getTrendIcon(reservesData.reserveMarginTrend)}
+                <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-2xl">
+                  <div className="p-3 rounded-lg bg-muted/30 text-center">
+                    <p className="text-xs text-muted-foreground">Spinning Reserve</p>
+                    <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/30 text-center">
+                    <p className="text-xs text-muted-foreground">Supplemental</p>
+                    <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/30 text-center">
+                    <p className="text-xs text-muted-foreground">Reserve Price</p>
+                    <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/30 text-center">
+                    <p className="text-xs text-muted-foreground">Trend Analysis</p>
+                    <p className="text-sm font-medium text-muted-foreground">Pending</p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
+        ) : (
+          /* Reserves Data Available */
+          <>
+            {/* Reserves Controls */}
+            <div className="flex items-center gap-2 justify-end">
+              <Select value={reservesDays} onValueChange={setReservesDays}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">7 days</SelectItem>
+                  <SelectItem value="30">30 days</SelectItem>
+                  <SelectItem value="90">90 days</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                onClick={handleRefreshReserves} 
+                disabled={loadingReserves}
+                variant="outline"
+                size="sm"
+              >
+                {loadingReserves ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              </Button>
+            </div>
 
-        {/* Min/Max Reserve Events */}
-        {reservesData && (reservesData.minReserveEvent || reservesData.maxReserveEvent) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {reservesData.minReserveEvent && (
-              <Card className="border-red-200 bg-red-50/50 dark:bg-red-950/20">
+            {/* Reserves Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
                 <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-red-800 dark:text-red-200">Minimum Reserve Event</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {formatNumber(reservesData.minReserveEvent.reserve)} MW
+                      <p className="text-sm text-muted-foreground">Avg Total Reserve</p>
+                      <p className="text-2xl font-bold">
+                        {loadingReserves ? '—' : `${formatNumber(reservesData?.avgTotalReserve || 0)} MW`}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(reservesData.minReserveEvent.timestamp), 'MMM dd, yyyy HH:mm')}
+                    </div>
+                    <Zap className="w-8 h-8 text-green-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Spinning Reserve</p>
+                      <p className="text-2xl font-bold">
+                        {loadingReserves ? '—' : `${formatNumber(reservesData?.avgSpinningReserve || 0)} MW`}
                       </p>
+                    </div>
+                    <Activity className="w-8 h-8 text-blue-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Reserve Price</p>
+                      <p className="text-2xl font-bold">
+                        {loadingReserves ? '—' : `$${(reservesData?.avgReservePrice || 0).toFixed(2)}`}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-yellow-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Reserve Trend</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-2xl font-bold capitalize">
+                          {loadingReserves ? '—' : reservesData?.reserveMarginTrend || 'stable'}
+                        </p>
+                        {reservesData && getTrendIcon(reservesData.reserveMarginTrend)}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Min/Max Reserve Events */}
+            {reservesData && (reservesData.minReserveEvent || reservesData.maxReserveEvent) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {reservesData.minReserveEvent && (
+                  <Card className="border-red-200 bg-red-50/50 dark:bg-red-950/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-red-800 dark:text-red-200">Minimum Reserve Event</p>
+                          <p className="text-2xl font-bold text-red-600">
+                            {formatNumber(reservesData.minReserveEvent.reserve)} MW
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(reservesData.minReserveEvent.timestamp), 'MMM dd, yyyy HH:mm')}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                {reservesData.maxReserveEvent && (
+                  <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-3">
+                        <Zap className="w-5 h-5 text-green-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-green-800 dark:text-green-200">Maximum Reserve Event</p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {formatNumber(reservesData.maxReserveEvent.reserve)} MW
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(reservesData.maxReserveEvent.timestamp), 'MMM dd, yyyy HH:mm')}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
-            {reservesData.maxReserveEvent && (
-              <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-green-800 dark:text-green-200">Maximum Reserve Event</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {formatNumber(reservesData.maxReserveEvent.reserve)} MW
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(reservesData.maxReserveEvent.timestamp), 'MMM dd, yyyy HH:mm')}
-                      </p>
-                    </div>
+
+            {/* Reserves Historical Chart */}
+            {reservesChartData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Operating Reserves Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={reservesChartData}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis dataKey="date" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip 
+                          formatter={(value: number, name: string) => [
+                            `${formatNumber(value)} MW`,
+                            name === 'spinning' ? 'Spinning' : name === 'supplemental' ? 'Supplemental' : 'Total'
+                          ]}
+                        />
+                        <Legend />
+                        <Area 
+                          type="monotone" 
+                          dataKey="spinning" 
+                          stackId="1"
+                          stroke="hsl(var(--primary))" 
+                          fill="hsl(var(--primary))" 
+                          fillOpacity={0.6}
+                          name="Spinning"
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="supplemental" 
+                          stackId="1"
+                          stroke="hsl(217, 91%, 60%)" 
+                          fill="hsl(217, 91%, 60%)" 
+                          fillOpacity={0.4}
+                          name="Supplemental"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
             )}
-          </div>
-        )}
-
-        {/* Reserves Historical Chart */}
-        {reservesChartData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Operating Reserves Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={reservesChartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis dataKey="date" fontSize={12} />
-                    <YAxis fontSize={12} />
-                    <Tooltip 
-                      formatter={(value: number, name: string) => [
-                        `${formatNumber(value)} MW`,
-                        name === 'spinning' ? 'Spinning' : name === 'supplemental' ? 'Supplemental' : 'Total'
-                      ]}
-                    />
-                    <Legend />
-                    <Area 
-                      type="monotone" 
-                      dataKey="spinning" 
-                      stackId="1"
-                      stroke="hsl(var(--primary))" 
-                      fill="hsl(var(--primary))" 
-                      fillOpacity={0.6}
-                      name="Spinning"
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="supplemental" 
-                      stackId="1"
-                      stroke="hsl(217, 91%, 60%)" 
-                      fill="hsl(217, 91%, 60%)" 
-                      fillOpacity={0.4}
-                      name="Supplemental"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          </>
         )}
       </div>
 
