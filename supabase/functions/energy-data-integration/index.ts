@@ -32,6 +32,8 @@ interface EnergyDataResponse {
     pricing?: any;
     loadData?: any;
     generationMix?: any;
+    operatingReserve?: any;
+    intertieFlows?: any;
   };
   miso?: {
     pricing?: any;
@@ -924,8 +926,9 @@ async function fetchAESOData() {
   let pricing: any | undefined;
   let loadData: any | undefined;
   let generationMix: any | undefined;
+  let operatingReserve: any | undefined;
+  let intertieFlows: any | undefined;
   let systemMarginalPrice: number | undefined;
-  // Note: intertieFlows, operatingReserve, and generationOutages are not available from AESO APIM
 
   // Pricing: prefer Pool Price; also extract SMP separately for spread calculation
   try {
@@ -1096,8 +1099,73 @@ async function fetchAESOData() {
     } else {
       try { console.log('AESO CSD root keys:', Object.keys(root)); } catch {}
     }
+
+    // Extract operating reserves from CSD response
+    // Per AESO CSD API: dispatched_contigency_reserve_total (note: typo in API), ffr_armed_dispatch, contingency_reserve_required
+    const dispatchedCR = parseFloat(String(
+      root?.dispatched_contigency_reserve_total ?? // API typo
+      root?.dispatched_contingency_reserve_total ?? // Correct spelling
+      root?.dispatched_contingency_reserve_gen ?? 
+      0
+    )) || 0;
+    const ffrArmed = parseFloat(String(root?.ffr_armed_dispatch ?? 0)) || 0;
+    const contingencyRequired = parseFloat(String(root?.contingency_reserve_required ?? 0)) || 0;
+    const dispatchedOther = parseFloat(String(root?.dispatched_contingency_reserve_other ?? 0)) || 0;
+    
+    // Total dispatched reserve = generation + other + FFR
+    const totalReserve = dispatchedCR + dispatchedOther + ffrArmed;
+    
+    console.log('AESO Operating Reserve calculation:', {
+      dispatchedCR,
+      dispatchedOther,
+      ffrArmed,
+      contingencyRequired,
+      totalReserve
+    });
+    
+    if (totalReserve > 0 || contingencyRequired > 0) {
+      operatingReserve = {
+        total_mw: Math.round(totalReserve > 0 ? totalReserve : contingencyRequired),
+        spinning_mw: Math.round(dispatchedCR + dispatchedOther), // Contingency reserve
+        supplemental_mw: Math.round(ffrArmed), // Fast Frequency Response
+        required_mw: Math.round(contingencyRequired),
+        price: null, // Not available in CSD summary
+        timestamp: String(root?.effective_datetime_utc || root?.last_updated_datetime_utc || new Date().toISOString()),
+        source: 'aeso_api_csd_v2'
+      };
+      console.log('✅ AESO Operating Reserves extracted:', operatingReserve);
+    }
+
+    // Extract intertie flows from CSD response
+    const interchangeList = Array.isArray(root?.interchange_list)
+      ? root.interchange_list
+      : Array.isArray(root?.interchangeList)
+        ? root.interchangeList
+        : [];
+
+    if (Array.isArray(interchangeList) && interchangeList.length) {
+      let bcFlow = 0, skFlow = 0, mtFlow = 0, totalFlow = 0;
+      for (const item of interchangeList) {
+        const path = String(item?.path || '').toUpperCase();
+        const flow = parseFloat(String(item?.actual_flow ?? 0)) || 0;
+        totalFlow += flow;
+        if (path.includes('BC')) bcFlow = flow;
+        else if (path.includes('SK')) skFlow = flow;
+        else if (path.includes('MATL') || path.includes('MONTANA') || path.includes('MT')) mtFlow = flow;
+      }
+      
+      intertieFlows = {
+        bc_flow: Math.round(bcFlow),
+        sask_flow: Math.round(skFlow),
+        montana_flow: Math.round(mtFlow),
+        total_flow: Math.round(totalFlow),
+        timestamp: String(root?.effective_datetime_utc || new Date().toISOString()),
+        source: 'aeso_api_csd_v2'
+      };
+      console.log('✅ AESO Intertie Flows extracted:', intertieFlows);
+    }
   } catch (e) {
-    console.error('AESO CSD v2 mix parse error:', e);
+    console.error('AESO CSD v2 parse error:', e);
   }
 
   // Calculate capacity margin from available data
@@ -1138,13 +1206,17 @@ async function fetchAESOData() {
     smp: systemMarginalPrice,
     loadSource: loadData?.source,
     mixSource: generationMix?.source,
-    capacityMargin: loadData?.capacity_margin
+    capacityMargin: loadData?.capacity_margin,
+    hasOperatingReserve: !!operatingReserve,
+    hasIntertieFlows: !!intertieFlows
   });
 
   return { 
     pricing, 
     loadData, 
-    generationMix
+    generationMix,
+    operatingReserve,
+    intertieFlows
   };
 }
 
