@@ -154,6 +154,16 @@ serve(async (req) => {
     const orData = aesoData.operatingReserve || {};
     const outageData = aesoData.generationOutages || {};
     
+    // Enhanced logging for operating reserves
+    console.log('📊 Operating Reserve extraction:', {
+      raw: orData,
+      total_mw: orData?.total_mw,
+      spinning_mw: orData?.spinning_mw,
+      supplemental_mw: orData?.supplemental_mw,
+      required_mw: orData?.required_mw,
+      price: orData?.price
+    });
+    
     console.log('Generation mix data:', generationData);
     
     // Extract forecast values from AESO Actual Forecast API
@@ -231,11 +241,11 @@ serve(async (req) => {
       intertie_montana_flow: intertieData.montana_flow || 0,
       total_interchange_flow: intertieData.total_flow || 0,
       interchange_net: intertieData.total_flow || 0, // Keep for backward compatibility
-      // Operating Reserve
-      operating_reserve_price: orData.price || null,
-      spinning_reserve_mw: orData.spinning_mw || null,
-      supplemental_reserve_mw: orData.supplemental_mw || null,
-      operating_reserve: orData.total_mw || 0, // Keep for backward compatibility
+      // Operating Reserve - Enhanced mapping from energy-data-integration
+      operating_reserve_price: orData?.price ?? null,
+      spinning_reserve_mw: orData?.spinning_mw ?? orData?.total_mw ?? null,
+      supplemental_reserve_mw: orData?.supplemental_mw ?? null,
+      operating_reserve: orData?.total_mw ?? (orData?.spinning_mw || 0) + (orData?.supplemental_mw || 0),
       // Generation Outages & Capacity
       generation_outages_mw: outageData.outages_mw || 0,
       available_capacity_mw: outageData.available_mw || null,

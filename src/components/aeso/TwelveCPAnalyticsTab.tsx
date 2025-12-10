@@ -40,9 +40,13 @@ import {
   Calculator,
   Activity,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Radio,
+  Shield,
+  CheckCircle2
 } from 'lucide-react';
 import { useAESO12CPAnalytics } from '@/hooks/useAESO12CPAnalytics';
+import { useAESORealtimeReserves } from '@/hooks/useAESORealtimeReserves';
 import { format } from 'date-fns';
 
 export function TwelveCPAnalyticsTab() {
@@ -56,6 +60,15 @@ export function TwelveCPAnalyticsTab() {
     calculateTransmissionChargeImpact
   } = useAESO12CPAnalytics();
 
+  const {
+    reserves: realtimeReserves,
+    loading: loadingRealtime,
+    error: realtimeError,
+    lastFetched,
+    fetchRealtimeReserves,
+    getMarginStatus
+  } = useAESORealtimeReserves();
+
   const [months12CP, setMonths12CP] = useState('24');
   const [reservesDays, setReservesDays] = useState('30');
   const [demandMW, setDemandMW] = useState('50');
@@ -64,6 +77,7 @@ export function TwelveCPAnalyticsTab() {
   useEffect(() => {
     fetch12CPData(parseInt(months12CP));
     fetchOperatingReservesData(parseInt(reservesDays));
+    fetchRealtimeReserves();
   }, []);
 
   const handleRefresh12CP = () => {
@@ -309,6 +323,99 @@ export function TwelveCPAnalyticsTab() {
             </p>
           </div>
         </div>
+
+        {/* Real-Time Reserves Card - Always shown */}
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200 dark:border-green-800">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Radio className="w-4 h-4 text-green-600 animate-pulse" />
+                Real-Time Operating Reserves
+                <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 border-green-300">
+                  Live
+                </Badge>
+              </CardTitle>
+              <Button
+                onClick={fetchRealtimeReserves}
+                disabled={loadingRealtime}
+                variant="ghost"
+                size="sm"
+                className="h-8"
+              >
+                {loadingRealtime ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingRealtime ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-6 h-6 animate-spin text-green-600" />
+                <span className="ml-2 text-sm text-muted-foreground">Fetching live reserves...</span>
+              </div>
+            ) : realtimeReserves ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="p-3 rounded-lg bg-white/60 dark:bg-white/5 border border-green-200/50">
+                    <p className="text-xs text-muted-foreground">Total Reserve</p>
+                    <p className="text-xl font-bold text-green-700 dark:text-green-400">
+                      {formatNumber(realtimeReserves.total_mw)} MW
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white/60 dark:bg-white/5 border border-green-200/50">
+                    <p className="text-xs text-muted-foreground">Spinning (Contingency)</p>
+                    <p className="text-xl font-bold">
+                      {formatNumber(realtimeReserves.spinning_mw)} MW
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white/60 dark:bg-white/5 border border-green-200/50">
+                    <p className="text-xs text-muted-foreground">Required Reserve</p>
+                    <p className="text-xl font-bold">
+                      {formatNumber(realtimeReserves.required_mw)} MW
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white/60 dark:bg-white/5 border border-green-200/50">
+                    <p className="text-xs text-muted-foreground">Reserve Margin</p>
+                    <div className="flex items-center gap-2">
+                      <p className={`text-xl font-bold ${getMarginStatus(realtimeReserves.margin_percent).color}`}>
+                        {realtimeReserves.margin_percent > 0 ? '+' : ''}{realtimeReserves.margin_percent}%
+                      </p>
+                      {realtimeReserves.margin_percent >= 5 ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <AlertTriangle className="w-5 h-5 text-orange-500" />
+                      )}
+                    </div>
+                    <p className={`text-xs ${getMarginStatus(realtimeReserves.margin_percent).color}`}>
+                      {getMarginStatus(realtimeReserves.margin_percent).status}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-green-200/50">
+                  <span>Source: {realtimeReserves.source || 'AESO CSD API'}</span>
+                  <span>
+                    Last updated: {lastFetched ? format(lastFetched, 'HH:mm:ss') : '—'} MST
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <Shield className="w-8 h-8 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {realtimeError || 'Real-time reserve data temporarily unavailable'}
+                </p>
+                <Button
+                  onClick={fetchRealtimeReserves}
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Check if reserves data is available */}
         {!loadingReserves && (!reservesData || reservesData.avgTotalReserve === 0) ? (
