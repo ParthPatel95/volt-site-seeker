@@ -178,39 +178,72 @@ async function handleSingleRequest(body: any): Promise<Response> {
 
   console.log(`[get-signed-url] Creating signed URL: ${filePath}, isVideo: ${isVideo}, expiry: ${expirySeconds}s`);
 
-  // Create signed URL with service role permissions
-  const { data, error } = await supabaseAdmin.storage
-    .from(bucketName)
-    .createSignedUrl(filePath, expirySeconds);
+  // Retry logic for transient failures
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { data, error } = await supabaseAdmin.storage
+        .from(bucketName)
+        .createSignedUrl(filePath, expirySeconds);
 
-  if (error) {
-    console.error("Signed URL error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+      if (error) {
+        // Check if it's an HTML response error (transient)
+        if (error.message?.includes('Unexpected token') || error.message?.includes('<html>')) {
+          console.warn(`[get-signed-url] Attempt ${attempt}/${maxRetries} - Storage service returned HTML, retrying...`);
+          lastError = error;
+          if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, 500 * attempt)); // Exponential backoff
+            continue;
+          }
+        }
+        console.error("Signed URL error:", error);
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
       }
-    );
+
+      // Success - return the signed URL
+      return new Response(
+        JSON.stringify({ 
+          signedUrl: data.signedUrl,
+          expiresIn: expirySeconds,
+          isVideo: isVideo || false
+        }),
+        {
+          status: 200,
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
+            "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition, Accept-Ranges, Content-Range",
+            "Cache-Control": "public, max-age=300"
+          },
+        }
+      );
+    } catch (err: any) {
+      console.error(`[get-signed-url] Attempt ${attempt}/${maxRetries} exception:`, err.message);
+      lastError = err;
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 500 * attempt));
+      }
+    }
   }
 
-  // Return signed URL with enhanced CORS and caching headers
+  // All retries failed
+  console.error("[get-signed-url] All retries exhausted:", lastError?.message);
   return new Response(
-    JSON.stringify({ 
-      signedUrl: data.signedUrl,
-      expiresIn: expirySeconds,
-      isVideo: isVideo || false
-    }),
+    JSON.stringify({ error: lastError?.message || "Failed to generate signed URL after retries" }),
     {
-      status: 200,
-      headers: { 
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
-        "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition, Accept-Ranges, Content-Range",
-        "Cache-Control": "public, max-age=300"
-      },
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     }
   );
+
 }
