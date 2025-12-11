@@ -28,8 +28,29 @@ interface AdvancedAnalyticsProps {
   marketType?: 'aeso' | 'ercot';
 }
 
+const CREDIT_SETTINGS_STORAGE_KEY = 'aeso-credit-settings';
+
+// Load credit settings from localStorage
+function loadCreditSettings() {
+  try {
+    const stored = localStorage.getItem(CREDIT_SETTINGS_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Validate structure
+      if (typeof parsed.enabled === 'boolean' && 
+          typeof parsed.twelveCPAvoidanceRate === 'number' &&
+          typeof parsed.operatingReserveParticipation === 'number') {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load credit settings from localStorage:', e);
+  }
+  return defaultCreditSettings;
+}
+
 export function AdvancedAnalytics({ marketType = 'aeso' }: AdvancedAnalyticsProps = {}) {
-  const [filters, setFilters] = useState<AnalyticsFilters>({
+  const [filters, setFilters] = useState<AnalyticsFilters>(() => ({
     startDate: getDefaultStartDate(),
     endDate: getDefaultEndDate(),
     uptimePercentage: 100,
@@ -39,14 +60,25 @@ export function AdvancedAnalytics({ marketType = 'aeso' }: AdvancedAnalyticsProp
     showGeneration: false,
     onPeakStart: 8,
     onPeakEnd: 22,
-    creditSettings: defaultCreditSettings,
-  });
+    creditSettings: loadCreditSettings(),
+  }));
 
   const [rawData, setRawData] = useState<HourlyDataPoint[]>([]);
   const [filteredData, setFilteredData] = useState<HourlyDataPoint[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Persist credit settings to localStorage when they change
+  useEffect(() => {
+    if (filters.creditSettings) {
+      try {
+        localStorage.setItem(CREDIT_SETTINGS_STORAGE_KEY, JSON.stringify(filters.creditSettings));
+      } catch (e) {
+        console.warn('Failed to save credit settings to localStorage:', e);
+      }
+    }
+  }, [filters.creditSettings]);
 
   function getDefaultStartDate(): string {
     const date = new Date();

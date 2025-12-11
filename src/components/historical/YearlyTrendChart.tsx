@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp } from 'lucide-react';
@@ -19,14 +19,24 @@ export function YearlyTrendChart({ data, unit, originalData, showComparison }: P
     return `$${value.toFixed(2)}`;
   };
 
-  const chartData = data.map((d, index) => {
+  // Create year-based lookup map for safer matching
+  const originalYearMap = useMemo(() => {
+    if (!originalData) return new Map<number, YearlyAggregation>();
+    return new Map(originalData.map(d => [d.year, d]));
+  }, [originalData]);
+
+  const chartData = data.map((d) => {
     const baseData: any = {
       year: d.year.toString(),
       price: unit === 'kwh' ? d.avgPrice * 0.1 : d.avgPrice,
     };
     
-    if (showComparison && originalData && originalData[index]) {
-      baseData.originalPrice = unit === 'kwh' ? originalData[index].avgPrice * 0.1 : originalData[index].avgPrice;
+    // Use year-based lookup for safer matching
+    if (showComparison) {
+      const original = originalYearMap.get(d.year);
+      if (original) {
+        baseData.originalPrice = unit === 'kwh' ? original.avgPrice * 0.1 : original.avgPrice;
+      }
     }
     
     return baseData;

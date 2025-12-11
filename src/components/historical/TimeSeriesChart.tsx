@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Activity, ZoomOut } from 'lucide-react';
@@ -46,10 +46,21 @@ export function TimeSeriesChart({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  // Create lookup maps for timestamp-based matching (safer than index-based)
+  const originalHourlyMap = useMemo(() => {
+    if (!originalHourlyData) return new Map<string, HourlyDataPoint>();
+    return new Map(originalHourlyData.map(d => [d.ts, d]));
+  }, [originalHourlyData]);
+
+  const originalDailyMap = useMemo(() => {
+    if (!originalDailyData) return new Map<string, DailyAggregation>();
+    return new Map(originalDailyData.map(d => [d.date, d]));
+  }, [originalDailyData]);
+
   let chartData: any[] = [];
 
   if (granularity === 'hourly' && hourlyData) {
-    chartData = hourlyData.map((d, index) => {
+    chartData = hourlyData.map((d) => {
       const baseData: any = {
         timestamp: d.ts,
         price: unit === 'kwh' ? d.price * 0.1 : d.price,
@@ -57,14 +68,18 @@ export function TimeSeriesChart({
         ail: d.ail,
       };
       
-      if (showComparison && originalHourlyData && originalHourlyData[index]) {
-        baseData.originalPrice = unit === 'kwh' ? originalHourlyData[index].price * 0.1 : originalHourlyData[index].price;
+      // Use timestamp-based lookup for safer matching
+      if (showComparison) {
+        const original = originalHourlyMap.get(d.ts);
+        if (original) {
+          baseData.originalPrice = unit === 'kwh' ? original.price * 0.1 : original.price;
+        }
       }
       
       return baseData;
     });
   } else if (granularity === 'daily' && dailyData) {
-    chartData = dailyData.map((d, index) => {
+    chartData = dailyData.map((d) => {
       const baseData: any = {
         timestamp: d.date,
         price: unit === 'kwh' ? d.avgPrice * 0.1 : d.avgPrice,
@@ -72,8 +87,12 @@ export function TimeSeriesChart({
         ail: d.avgAIL,
       };
       
-      if (showComparison && originalDailyData && originalDailyData[index]) {
-        baseData.originalPrice = unit === 'kwh' ? originalDailyData[index].avgPrice * 0.1 : originalDailyData[index].avgPrice;
+      // Use date-based lookup for safer matching
+      if (showComparison) {
+        const original = originalDailyMap.get(d.date);
+        if (original) {
+          baseData.originalPrice = unit === 'kwh' ? original.avgPrice * 0.1 : original.avgPrice;
+        }
       }
       
       return baseData;
