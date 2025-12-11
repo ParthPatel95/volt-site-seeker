@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, Printer, AlertTriangle } from 'lucide-react';
@@ -21,6 +21,8 @@ import { CorrelationScatter } from './CorrelationScatter';
 import { RollingStatsChart } from './RollingStatsChart';
 import { OnOffPeakComparison } from './OnOffPeakComparison';
 import { exportToCSV, printReport } from '@/utils/exportUtils';
+import { useEnergyCredits, defaultCreditSettings } from '@/hooks/useEnergyCredits';
+import { CreditSummaryCard } from '@/components/aeso/CreditSummaryCard';
 
 interface AdvancedAnalyticsProps {
   marketType?: 'aeso' | 'ercot';
@@ -37,6 +39,7 @@ export function AdvancedAnalytics({ marketType = 'aeso' }: AdvancedAnalyticsProp
     showGeneration: false,
     onPeakStart: 8,
     onPeakEnd: 22,
+    creditSettings: defaultCreditSettings,
   });
 
   const [rawData, setRawData] = useState<HourlyDataPoint[]>([]);
@@ -114,15 +117,25 @@ export function AdvancedAnalytics({ marketType = 'aeso' }: AdvancedAnalyticsProp
     }
   }, [filters.uptimePercentage]);
 
+  // Apply credit adjustments
+  const creditSettings = filters.creditSettings || defaultCreditSettings;
+  const { adjustedData, creditSummary } = useEnergyCredits(filteredData, creditSettings);
+  
+  // Use credit-adjusted data for aggregations when credits are enabled
+  const dataForCharts = creditSettings.enabled ? adjustedData : filteredData;
+
   // Prepare aggregated data
-  const yearlyData = filteredData.length > 0 ? aggregateByYear(filteredData) : [];
-  const heatmapData = filteredData.length > 0 ? aggregateForHeatmap(filteredData) : [];
-  const dailyData = filteredData.length > 0 ? aggregateByDay(filteredData) : [];
-  const durationCurve = filteredData.length > 0 ? generateDurationCurve(filteredData) : [];
+  const yearlyData = dataForCharts.length > 0 ? aggregateByYear(dataForCharts) : [];
+  const heatmapData = dataForCharts.length > 0 ? aggregateForHeatmap(dataForCharts) : [];
+  const dailyData = dataForCharts.length > 0 ? aggregateByDay(dataForCharts) : [];
+  const durationCurve = dataForCharts.length > 0 ? generateDurationCurve(dataForCharts) : [];
   const rollingStats = dailyData.length >= 30 ? calculateRollingStats(dailyData, 30) : [];
-  const onOffPeakStats = filteredData.length > 0
-    ? calculateOnOffPeakStats(filteredData, filters.onPeakStart, filters.onPeakEnd)
+  const onOffPeakStats = dataForCharts.length > 0
+    ? calculateOnOffPeakStats(dataForCharts, filters.onPeakStart, filters.onPeakEnd)
     : null;
+  
+  // Also prepare original data for comparison charts
+  const originalDailyData = filteredData.length > 0 ? aggregateByDay(filteredData) : [];
 
   // Debug logging
   console.log('📊 Advanced Analytics Data:', {
@@ -246,9 +259,19 @@ export function AdvancedAnalytics({ marketType = 'aeso' }: AdvancedAnalyticsProp
             </AlertDescription>
           </Alert>
 
+          {/* Credit Summary Card */}
+          {creditSettings.enabled && (
+            <CreditSummaryCard summary={creditSummary} unit={filters.unit} />
+          )}
+
           {/* Yearly Trend */}
           <div id="chart-yearly-trend">
-            <YearlyTrendChart data={yearlyData} unit={filters.unit} />
+            <YearlyTrendChart 
+              data={yearlyData} 
+              unit={filters.unit}
+              originalData={creditSettings.enabled ? aggregateByYear(filteredData) : undefined}
+              showComparison={creditSettings.enabled}
+            />
           </div>
 
           {/* Monthly Heatmap */}
@@ -259,12 +282,15 @@ export function AdvancedAnalytics({ marketType = 'aeso' }: AdvancedAnalyticsProp
           {/* Time Series */}
           <div id="chart-time-series">
             <TimeSeriesChart
-              hourlyData={filters.granularity === 'hourly' ? filteredData : undefined}
+              hourlyData={filters.granularity === 'hourly' ? dataForCharts : undefined}
               dailyData={filters.granularity === 'daily' ? dailyData : undefined}
+              originalHourlyData={creditSettings.enabled && filters.granularity === 'hourly' ? filteredData : undefined}
+              originalDailyData={creditSettings.enabled && filters.granularity === 'daily' ? originalDailyData : undefined}
               granularity={filters.granularity === 'hourly' ? 'hourly' : 'daily'}
               unit={filters.unit}
               showAIL={filters.showAIL}
               showGeneration={filters.showGeneration}
+              showComparison={creditSettings.enabled}
             />
           </div>
 

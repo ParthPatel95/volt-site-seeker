@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Activity, ZoomIn, ZoomOut } from 'lucide-react';
+import { Activity, ZoomOut } from 'lucide-react';
 import { HourlyDataPoint } from '@/services/historicalDataService';
 import { DailyAggregation } from '@/utils/aggregations';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,26 @@ import { Button } from '@/components/ui/button';
 interface Props {
   hourlyData?: HourlyDataPoint[];
   dailyData?: DailyAggregation[];
+  originalHourlyData?: HourlyDataPoint[];
+  originalDailyData?: DailyAggregation[];
   granularity: 'hourly' | 'daily';
   unit: 'mwh' | 'kwh';
   showAIL: boolean;
   showGeneration: boolean;
+  showComparison?: boolean;
 }
 
-export function TimeSeriesChart({ hourlyData, dailyData, granularity, unit, showAIL, showGeneration }: Props) {
+export function TimeSeriesChart({ 
+  hourlyData, 
+  dailyData, 
+  originalHourlyData,
+  originalDailyData,
+  granularity, 
+  unit, 
+  showAIL, 
+  showGeneration,
+  showComparison 
+}: Props) {
   const [zoomRange, setZoomRange] = useState<{ start: number; end: number } | null>(null);
 
   const formatPrice = (value: number) => {
@@ -36,19 +49,35 @@ export function TimeSeriesChart({ hourlyData, dailyData, granularity, unit, show
   let chartData: any[] = [];
 
   if (granularity === 'hourly' && hourlyData) {
-    chartData = hourlyData.map(d => ({
-      timestamp: d.ts,
-      price: unit === 'kwh' ? d.price * 0.1 : d.price,
-      generation: d.generation,
-      ail: d.ail,
-    }));
+    chartData = hourlyData.map((d, index) => {
+      const baseData: any = {
+        timestamp: d.ts,
+        price: unit === 'kwh' ? d.price * 0.1 : d.price,
+        generation: d.generation,
+        ail: d.ail,
+      };
+      
+      if (showComparison && originalHourlyData && originalHourlyData[index]) {
+        baseData.originalPrice = unit === 'kwh' ? originalHourlyData[index].price * 0.1 : originalHourlyData[index].price;
+      }
+      
+      return baseData;
+    });
   } else if (granularity === 'daily' && dailyData) {
-    chartData = dailyData.map(d => ({
-      timestamp: d.date,
-      price: unit === 'kwh' ? d.avgPrice * 0.1 : d.avgPrice,
-      generation: d.avgGeneration,
-      ail: d.avgAIL,
-    }));
+    chartData = dailyData.map((d, index) => {
+      const baseData: any = {
+        timestamp: d.date,
+        price: unit === 'kwh' ? d.avgPrice * 0.1 : d.avgPrice,
+        generation: d.avgGeneration,
+        ail: d.avgAIL,
+      };
+      
+      if (showComparison && originalDailyData && originalDailyData[index]) {
+        baseData.originalPrice = unit === 'kwh' ? originalDailyData[index].avgPrice * 0.1 : originalDailyData[index].avgPrice;
+      }
+      
+      return baseData;
+    });
   }
 
   // Apply zoom if set
@@ -67,6 +96,11 @@ export function TimeSeriesChart({ hourlyData, dailyData, granularity, unit, show
           <CardTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-green-600" />
             Price Time Series ({granularity === 'hourly' ? 'Hourly' : 'Daily'})
+            {showComparison && (
+              <span className="ml-2 text-xs font-normal text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded">
+                With Credits
+              </span>
+            )}
           </CardTitle>
           {zoomRange && (
             <Button variant="outline" size="sm" onClick={handleResetZoom}>
@@ -110,7 +144,8 @@ export function TimeSeriesChart({ hourlyData, dailyData, granularity, unit, show
               )}
               <Tooltip
                 formatter={(value: any, name: string) => {
-                  if (name === 'price') return [formatPrice(value), 'Price'];
+                  if (name === 'price') return [formatPrice(value), showComparison ? 'With Credits' : 'Price'];
+                  if (name === 'originalPrice') return [formatPrice(value), 'Original Price'];
                   if (name === 'generation') return [`${Math.round(value)} MW`, 'Generation'];
                   if (name === 'ail') return [`${Math.round(value)} MW`, 'AIL'];
                   return [value, name];
@@ -123,14 +158,26 @@ export function TimeSeriesChart({ hourlyData, dailyData, granularity, unit, show
                 }}
               />
               <Legend />
+              {showComparison && (
+                <Line
+                  yAxisId="price"
+                  type="monotone"
+                  dataKey="originalPrice"
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeWidth={1.5}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  name="Original Price"
+                />
+              )}
               <Line
                 yAxisId="price"
                 type="monotone"
                 dataKey="price"
-                stroke="hsl(var(--primary))"
+                stroke={showComparison ? "hsl(142, 76%, 36%)" : "hsl(var(--primary))"}
                 strokeWidth={2}
                 dot={false}
-                name="Price"
+                name={showComparison ? "With Credits" : "Price"}
               />
               {showAIL && (
                 <Line
