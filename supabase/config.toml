@@ -217,3 +217,6 @@ verify_jwt = false
 
 [functions.aeso-grid-alerts]
 verify_jwt = false
+
+[functions.secure-share-analytics]
+verify_jwt = false

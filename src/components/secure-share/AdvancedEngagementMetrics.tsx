@@ -1,129 +1,37 @@
+import { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { TrendingUp, TrendingDown, Users, Clock } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
+import { useSecureShareAnalytics } from '@/contexts/SecureShareAnalyticsContext';
+import { ChartSkeleton, KPICardSkeleton } from './analytics/AnalyticsSkeleton';
 
-interface AdvancedEngagementMetricsProps {
-  dateRange?: DateRange;
-}
+export const AdvancedEngagementMetrics = memo(function AdvancedEngagementMetrics() {
+  const { analytics, isLoading } = useSecureShareAnalytics();
 
-export function AdvancedEngagementMetrics({ dateRange }: AdvancedEngagementMetricsProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: ['advanced-engagement-metrics', dateRange],
-    queryFn: async () => {
-      let query = supabase
-        .from('viewer_activity')
-        .select(`
-          *,
-          document:secure_documents(file_name, id)
-        `);
-
-      if (dateRange?.from) {
-        query = query.gte('opened_at', dateRange.from.toISOString());
-      }
-      if (dateRange?.to) {
-        query = query.lte('opened_at', dateRange.to.toISOString());
-      }
-
-      const { data: activity, error } = await query;
-      if (error) throw error;
-
-      // Calculate completion rates
-      const completionRates = activity?.map(a => {
-        const pagesViewed = Array.isArray(a.pages_viewed) ? a.pages_viewed.length : 0;
-        // Assume average document has 10 pages (we don't store total pages)
-        const estimatedTotalPages = 10;
-        return (pagesViewed / estimatedTotalPages) * 100;
-      }) || [];
-
-      const avgCompletionRate = completionRates.length 
-        ? completionRates.reduce((sum, rate) => sum + rate, 0) / completionRates.length 
-        : 0;
-
-      // Drop-off analysis by page
-      const pageDropoffs: Record<number, number> = {};
-      activity?.forEach(a => {
-        if (Array.isArray(a.pages_viewed)) {
-          const lastPage = a.pages_viewed.length;
-          pageDropoffs[lastPage] = (pageDropoffs[lastPage] || 0) + 1;
-        }
-      });
-
-      const dropoffData = Object.entries(pageDropoffs)
-        .map(([page, count]) => ({
-          page: `Page ${page}`,
-          dropoffs: count
-        }))
-        .sort((a, b) => parseInt(a.page.split(' ')[1]) - parseInt(b.page.split(' ')[1]))
-        .slice(0, 10);
-
-      // Re-engagement rate (viewers who came back)
-      const viewerCounts: Record<string, number> = {};
-      activity?.forEach(a => {
-        if (a.viewer_email) {
-          viewerCounts[a.viewer_email] = (viewerCounts[a.viewer_email] || 0) + 1;
-        }
-      });
-
-      const repeatViewers = Object.values(viewerCounts).filter(count => count > 1).length;
-      const totalViewers = Object.keys(viewerCounts).length;
-      const reEngagementRate = totalViewers > 0 ? (repeatViewers / totalViewers) * 100 : 0;
-
-      // Time of day analysis
-      const timeOfDayViews: Record<number, number> = {};
-      activity?.forEach(a => {
-        const hour = new Date(a.opened_at).getHours();
-        timeOfDayViews[hour] = (timeOfDayViews[hour] || 0) + 1;
-      });
-
-      const timeData = Array.from({ length: 24 }, (_, hour) => ({
-        hour: hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`,
-        views: timeOfDayViews[hour] || 0
-      }));
-
-      // Average time per page
-      const pageTimes: number[] = [];
-      activity?.forEach(a => {
-        if (Array.isArray(a.pages_viewed)) {
-          a.pages_viewed.forEach((p: any) => {
-            if (p.time_spent) {
-              pageTimes.push(p.time_spent);
-            }
-          });
-        }
-      });
-
-      const avgTimePerPage = pageTimes.length 
-        ? pageTimes.reduce((sum, time) => sum + time, 0) / pageTimes.length 
-        : 0;
-
-      return {
-        avgCompletionRate,
-        dropoffData,
-        reEngagementRate,
-        repeatViewers,
-        totalViewers,
-        timeData,
-        avgTimePerPage
-      };
-    }
-  });
+  const maxViews = useMemo(() => {
+    return Math.max(...(analytics?.timeOfDayData?.map(d => d.views) || [1]));
+  }, [analytics?.timeOfDayData]);
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="h-64 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <KPICardSkeleton />
+          <KPICardSkeleton />
+          <KPICardSkeleton />
+          <KPICardSkeleton />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+      </div>
     );
   }
 
-  const maxViews = Math.max(...(data?.timeData.map(d => d.views) || [1]));
+  const mostCommonDropoff = analytics?.dropoffData?.[0]?.page || 'N/A';
 
   return (
     <div className="space-y-4">
@@ -134,8 +42,8 @@ export function AdvancedEngagementMetrics({ dateRange }: AdvancedEngagementMetri
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.avgCompletionRate.toFixed(1)}%</div>
-            <Progress value={data?.avgCompletionRate} className="mt-2" />
+            <div className="text-2xl font-bold">{analytics?.avgCompletionRate || 0}%</div>
+            <Progress value={analytics?.avgCompletionRate || 0} className="mt-2" />
           </CardContent>
         </Card>
 
@@ -145,9 +53,9 @@ export function AdvancedEngagementMetrics({ dateRange }: AdvancedEngagementMetri
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.reEngagementRate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold">{analytics?.reEngagementRate || 0}%</div>
             <p className="text-xs text-muted-foreground mt-2">
-              {data?.repeatViewers} of {data?.totalViewers} viewers returned
+              {analytics?.repeatViewers || 0} of {analytics?.uniqueViewers || 0} viewers returned
             </p>
           </CardContent>
         </Card>
@@ -158,9 +66,12 @@ export function AdvancedEngagementMetrics({ dateRange }: AdvancedEngagementMetri
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(data?.avgTimePerPage || 0)}s</div>
-            <Badge variant={data?.avgTimePerPage && data.avgTimePerPage > 30 ? "success" : "warning"} className="mt-2">
-              {data?.avgTimePerPage && data.avgTimePerPage > 30 ? "Good engagement" : "Quick scans"}
+            <div className="text-2xl font-bold">{analytics?.avgTimePerPage || 0}s</div>
+            <Badge 
+              variant={(analytics?.avgTimePerPage || 0) > 30 ? "default" : "secondary"} 
+              className="mt-2"
+            >
+              {(analytics?.avgTimePerPage || 0) > 30 ? "Good engagement" : "Quick scans"}
             </Badge>
           </CardContent>
         </Card>
@@ -171,9 +82,7 @@ export function AdvancedEngagementMetrics({ dateRange }: AdvancedEngagementMetri
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {data?.dropoffData[0]?.page || 'N/A'}
-            </div>
+            <div className="text-2xl font-bold">{mostCommonDropoff}</div>
             <p className="text-xs text-muted-foreground mt-2">
               Most common exit point
             </p>
@@ -187,28 +96,41 @@ export function AdvancedEngagementMetrics({ dateRange }: AdvancedEngagementMetri
             <CardTitle>Activity by Time of Day</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data?.timeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="hour" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  interval={2}
-                />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="views" radius={[4, 4, 0, 0]}>
-                  {data?.timeData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`}
-                      fill={entry.views > maxViews * 0.7 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.5)"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {analytics?.timeOfDayData && analytics.timeOfDayData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.timeOfDayData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="hour" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={2}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }} 
+                  />
+                  <Bar dataKey="views" radius={[4, 4, 0, 0]}>
+                    {analytics.timeOfDayData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`}
+                        fill={entry.views > maxViews * 0.7 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.5)"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
+                No time data available
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -217,18 +139,30 @@ export function AdvancedEngagementMetrics({ dateRange }: AdvancedEngagementMetri
             <CardTitle>Page Drop-off Analysis</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data?.dropoffData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="page" type="category" width={80} />
-                <Tooltip />
-                <Bar dataKey="dropoffs" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {analytics?.dropoffData && analytics.dropoffData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.dropoffData} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                  <YAxis dataKey="page" type="category" width={80} tick={{ fontSize: 11 }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }} 
+                  />
+                  <Bar dataKey="dropoffs" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
+                No drop-off data available
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
   );
-}
+});
