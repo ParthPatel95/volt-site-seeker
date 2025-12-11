@@ -15,37 +15,45 @@ interface GridAlert {
   guid: string;
 }
 
-// Parse XML RSS feed to extract items
+// Parse XML RSS feed to extract items - handles both CDATA and plain text formats
 function parseRSSFeed(xmlText: string): GridAlert[] {
   const alerts: GridAlert[] = [];
   
   // Extract all <item> elements
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
   let itemMatch;
   
   while ((itemMatch = itemRegex.exec(xmlText)) !== null) {
     const itemContent = itemMatch[1];
     
-    // Extract fields from each item
-    const titleMatch = itemContent.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/) || 
-                       itemContent.match(/<title>([\s\S]*?)<\/title>/);
-    const descMatch = itemContent.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) ||
-                      itemContent.match(/<description>([\s\S]*?)<\/description>/);
-    const linkMatch = itemContent.match(/<link>([\s\S]*?)<\/link>/);
-    const pubDateMatch = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
-    const guidMatch = itemContent.match(/<guid[^>]*>([\s\S]*?)<\/guid>/);
+    // Extract fields - try CDATA first, then plain text (handles both formats)
+    const titleMatch = itemContent.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i);
+    const descMatch = itemContent.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
+    const linkMatch = itemContent.match(/<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i);
+    const pubDateMatch = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+    const guidMatch = itemContent.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
     
     if (titleMatch && pubDateMatch) {
+      // Clean up extracted text (remove extra whitespace, decode HTML entities)
+      const cleanText = (text: string) => text
+        .trim()
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      
       alerts.push({
-        title: titleMatch[1].trim(),
-        description: descMatch ? descMatch[1].trim() : '',
-        link: linkMatch ? linkMatch[1].trim() : '',
+        title: cleanText(titleMatch[1]),
+        description: descMatch ? cleanText(descMatch[1]) : '',
+        link: linkMatch ? cleanText(linkMatch[1]) : '',
         pubDate: pubDateMatch[1].trim(),
-        guid: guidMatch ? guidMatch[1].trim() : `alert-${Date.now()}-${Math.random()}`
+        guid: guidMatch ? cleanText(guidMatch[1]) : `alert-${Date.now()}-${Math.random()}`
       });
     }
   }
   
+  console.log('Parsed alerts from RSS:', alerts.map(a => ({ title: a.title.substring(0, 50), pubDate: a.pubDate })));
   return alerts;
 }
 
@@ -106,11 +114,40 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Store/update alerts in database
+    // Store/update alerts in database, correlating "ended" alerts with originals
     const upsertedAlerts = [];
-    for (const alert of alerts) {
+    
+    // Sort alerts by published date (oldest first) to process in order
+    const sortedAlerts = [...alerts].sort((a, b) => 
+      new Date(a.pubDate).getTime() - new Date(b.pubDate).getTime()
+    );
+    
+    for (const alert of sortedAlerts) {
       const alertType = determineAlertType(alert.title, alert.description);
       const status = determineAlertStatus(alert.title, alert.description);
+      const publishedAt = new Date(alert.pubDate);
+      
+      // If this is an "ended" alert, mark any previous active alerts as ended
+      if (status === 'ended') {
+        // Find alerts from the same day that are still marked active and update them
+        const dayStart = new Date(publishedAt);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(publishedAt);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        const { error: updateError } = await supabase
+          .from('aeso_grid_alerts')
+          .update({ status: 'ended', updated_at: new Date().toISOString() })
+          .eq('status', 'active')
+          .gte('published_at', dayStart.toISOString())
+          .lte('published_at', publishedAt.toISOString());
+        
+        if (updateError) {
+          console.error('Error updating related alerts to ended:', updateError);
+        } else {
+          console.log('Marked previous active alerts as ended for date:', publishedAt.toISOString());
+        }
+      }
       
       const { data, error } = await supabase
         .from('aeso_grid_alerts')
@@ -118,7 +155,7 @@ serve(async (req) => {
           title: alert.title,
           description: alert.description,
           link: alert.link,
-          published_at: new Date(alert.pubDate).toISOString(),
+          published_at: publishedAt.toISOString(),
           guid: alert.guid,
           alert_type: alertType,
           status: status,
