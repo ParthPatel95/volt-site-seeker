@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { CreditSettingsPanel } from '@/components/aeso/CreditSettingsPanel';
+import { CreditSettings, defaultCreditSettings } from '@/hooks/useEnergyCredits';
 
 export interface AnalyticsFilters {
   startDate: string;
@@ -17,6 +19,7 @@ export interface AnalyticsFilters {
   showGeneration: boolean;
   onPeakStart: number;
   onPeakEnd: number;
+  creditSettings: CreditSettings;
 }
 
 interface Props {
@@ -169,6 +172,12 @@ export function AdvancedAnalyticsControls({ filters, onFiltersChange, onApply, l
               Note: Generation and AIL overlays show limited data for extended date ranges due to AESO API constraints.
             </div>
           </div>
+
+          {/* Credit Settings */}
+          <CreditSettingsPanel
+            settings={filters.creditSettings || defaultCreditSettings}
+            onSettingsChange={(creditSettings) => onFiltersChange({ ...filters, creditSettings })}
+          />
 
           {/* Apply Button */}
           <Button
