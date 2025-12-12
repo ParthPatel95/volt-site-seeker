@@ -1564,31 +1564,39 @@ export function AESOHistoricalPricing() {
                 const transmissionCost = parseFloat(transmissionAdder) || 11.63;
                 const hourlyPrices = data.rawHourlyData.map((h: any) => h.price);
                 
+                // Calculate credit amount when enabled
+                const creditAmount = creditSettings.enabled 
+                  ? (creditSummary.twelveCPCredit + creditSummary.orCredit) 
+                  : 0;
+                
                 const quickAnalysis = uptimeLevels.map(uptime => {
                   const totalHours = hourlyPrices.length;
                   const operatingHours = Math.floor(totalHours * (uptime / 100));
                   const sortedPrices = [...hourlyPrices].sort((a: number, b: number) => a - b);
                   const operatingPrices = sortedPrices.slice(0, operatingHours);
                   const avgEnergyPrice = operatingPrices.reduce((sum: number, p: number) => sum + p, 0) / operatingHours;
-                  const allInPrice = avgEnergyPrice + transmissionCost;
+                  const allInPriceBase = avgEnergyPrice + transmissionCost;
+                  const allInPriceWithCredits = Math.max(0, allInPriceBase - creditAmount);
                   
                   return {
                     uptime,
-                    priceInCentsCAD: (allInPrice / 10).toFixed(2),
-                    priceInCentsUSD: (convertCADtoUSD(allInPrice) / 10).toFixed(2),
+                    priceInCentsCAD: (allInPriceWithCredits / 10).toFixed(2),
+                    priceInCentsUSD: (convertCADtoUSD(allInPriceWithCredits) / 10).toFixed(2),
                     avgEnergyCAD: avgEnergyPrice.toFixed(2),
-                    avgEnergyUSD: convertCADtoUSD(avgEnergyPrice).toFixed(2)
+                    avgEnergyUSD: convertCADtoUSD(avgEnergyPrice).toFixed(2),
+                    creditAmountCAD: creditAmount.toFixed(2),
+                    creditAmountUSD: convertCADtoUSD(creditAmount).toFixed(2)
                   };
                 });
                 
                 return (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {quickAnalysis.map((item) => (
-                      <div key={item.uptime} className="bg-muted/30 rounded-lg p-3 border border-border">
+                      <div key={item.uptime} className={`bg-muted/30 rounded-lg p-3 border ${creditSettings.enabled ? 'border-green-300 dark:border-green-700' : 'border-border'}`}>
                         <div className="text-xs text-muted-foreground mb-1">{item.uptime}% Uptime</div>
                         <div className="space-y-1">
                           <div>
-                            <div className="text-lg font-bold text-blue-600">
+                            <div className={`text-lg font-bold ${creditSettings.enabled ? 'text-green-600' : 'text-blue-600'}`}>
                               {item.priceInCentsCAD}¢
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -1596,7 +1604,7 @@ export function AESOHistoricalPricing() {
                             </div>
                           </div>
                           <div>
-                            <div className="text-lg font-bold text-green-600">
+                            <div className={`text-lg font-bold ${creditSettings.enabled ? 'text-emerald-600' : 'text-green-600'}`}>
                               {item.priceInCentsUSD}¢
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -1611,6 +1619,11 @@ export function AESOHistoricalPricing() {
                             <span className="text-muted-foreground">/</span>
                             <span className="text-green-600 whitespace-nowrap">US${item.avgEnergyUSD}</span>
                           </div>
+                          {creditSettings.enabled && creditAmount > 0 && (
+                            <div className="text-xs font-medium text-green-600 mt-1">
+                              Credit: -CA${item.creditAmountCAD} / -US${item.creditAmountUSD}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
