@@ -12,16 +12,16 @@ interface Props {
 export function CreditSummaryCard({ summary, unit }: Props) {
   const formatPrice = (value: number) => {
     if (unit === 'kwh') {
-      return `${(value * 0.1).toFixed(2)}¢/kWh`;
+      return `${(value * 0.1).toFixed(2)}¢ CAD/kWh`;
     }
-    return `$${value.toFixed(2)}/MWh`;
+    return `$${value.toFixed(2)} CAD/MWh`;
   };
 
   const formatCredit = (value: number) => {
     if (unit === 'kwh') {
-      return `-${(value * 0.1).toFixed(2)}¢`;
+      return `-${(value * 0.1).toFixed(2)}¢ CAD`;
     }
-    return `-$${value.toFixed(2)}`;
+    return `-$${value.toFixed(2)} CAD`;
   };
 
   return (
