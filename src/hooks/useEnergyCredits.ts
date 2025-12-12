@@ -54,14 +54,14 @@ export function useEnergyCredits(
     }
 
     // Calculate 12CP credit
-    // Monthly transmission savings = (Transmission Adder / 12) × Avoidance Rate
-    const monthly12CPCredit = (TRANSMISSION_ADDER / 12) * (creditSettings.twelveCPAvoidanceRate / 100);
+    // Transmission savings = Transmission Adder × Avoidance Rate
+    const twelveCPCredit = TRANSMISSION_ADDER * (creditSettings.twelveCPAvoidanceRate / 100);
     
     // Calculate Operating Reserve credit
     const orCredit = AVG_OPERATING_RESERVE_PRICE * (creditSettings.operatingReserveParticipation / 100);
     
     // Total credit per MWh
-    const totalCredit = monthly12CPCredit + orCredit;
+    const totalCredit = twelveCPCredit + orCredit;
     
     // Apply credits to each data point
     const adjustedData = data.map(point => ({
@@ -84,7 +84,7 @@ export function useEnergyCredits(
       adjustedData,
       creditSummary: {
         baseAvgPrice,
-        twelveCPCredit: monthly12CPCredit,
+        twelveCPCredit,
         orCredit,
         effectivePrice: adjustedAvgPrice,
         savingsPercentage,
