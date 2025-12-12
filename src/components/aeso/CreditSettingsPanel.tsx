@@ -108,7 +108,7 @@ export function CreditSettingsPanel({ settings, onSettingsChange }: Props) {
               </div>
               {settings.enabled && settings.twelveCPAvoidanceRate > 0 && (
                 <p className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-md">
-                  💰 Estimated credit: ${((11.73 / 12) * (settings.twelveCPAvoidanceRate / 100)).toFixed(2)}/MWh monthly transmission savings
+                  💰 Estimated credit: ${(11.73 * (settings.twelveCPAvoidanceRate / 100)).toFixed(2)}/MWh transmission savings
                 </p>
               )}
             </div>
