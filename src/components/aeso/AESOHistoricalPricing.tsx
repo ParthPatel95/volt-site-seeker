@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,8 @@ import {
   AreaChart,
   Area,
   BarChart,
-  Bar
+  Bar,
+  ComposedChart
 } from 'recharts';
 import { 
   TrendingUp, 
@@ -37,7 +38,8 @@ import {
   FileText,
   Loader2,
   Link,
-  Share2
+  Share2,
+  Coins
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,7 +54,11 @@ import { AdvancedAnalytics } from '@/components/historical/AdvancedAnalytics';
 import { ShareReportDialog } from './ShareReportDialog';
 import { SharedAESOReportsTab } from './SharedAESOReportsTab';
 import { TwelveCPAnalyticsTab } from './TwelveCPAnalyticsTab';
+import { useEnergyCredits, CreditSettings, defaultCreditSettings } from '@/hooks/useEnergyCredits';
+import { CreditSettingsPanel } from './CreditSettingsPanel';
+import { CreditSummaryCard } from './CreditSummaryCard';
 
+const OVERVIEW_CREDIT_SETTINGS_KEY = 'aeso-overview-credit-settings';
 
 export function AESOHistoricalPricing() {
   const { convertCADtoUSD, formatCurrency: formatCurrencyUSD, exchangeRate: liveExchangeRate } = useCurrencyConversion();
@@ -89,6 +95,33 @@ export function AESOHistoricalPricing() {
   const [exportingComprehensive, setExportingComprehensive] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareReportType, setShareReportType] = useState<'single' | 'comprehensive'>('single');
+
+  // Credit settings state with localStorage persistence
+  const [creditSettings, setCreditSettings] = useState<CreditSettings>(() => {
+    try {
+      const saved = localStorage.getItem(OVERVIEW_CREDIT_SETTINGS_KEY);
+      return saved ? JSON.parse(saved) : defaultCreditSettings;
+    } catch {
+      return defaultCreditSettings;
+    }
+  });
+
+  // Save credit settings to localStorage when changed
+  useEffect(() => {
+    localStorage.setItem(OVERVIEW_CREDIT_SETTINGS_KEY, JSON.stringify(creditSettings));
+  }, [creditSettings]);
+
+  // Get current raw hourly data based on selected time period
+  const currentRawData = useMemo(() => {
+    const data = selectedTimePeriod === 'daily' ? dailyData 
+              : selectedTimePeriod === 'monthly' ? monthlyData 
+              : selectedTimePeriod === 'yearly' ? yearlyData 
+              : historicalTenYearData;
+    return data?.rawHourlyData || [];
+  }, [selectedTimePeriod, dailyData, monthlyData, yearlyData, historicalTenYearData]);
+
+  // Apply energy credits to current data
+  const { adjustedData, creditSummary } = useEnergyCredits(currentRawData, creditSettings);
 
   useEffect(() => {
     fetchDailyData();
@@ -1397,6 +1430,17 @@ export function AESOHistoricalPricing() {
             </Button>
           </div>
 
+          {/* Credit Settings Panel */}
+          <CreditSettingsPanel 
+            settings={creditSettings}
+            onSettingsChange={setCreditSettings}
+          />
+
+          {/* Credit Summary Card - Show when credits enabled */}
+          {creditSettings.enabled && currentRawData.length > 0 && (
+            <CreditSummaryCard summary={creditSummary} unit="mwh" />
+          )}
+
           {/* Statistics Cards - Dynamic based on period */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {(() => {
@@ -1423,17 +1467,26 @@ export function AESOHistoricalPricing() {
               const stats = data?.statistics;
               return (
                 <>
-                  <Card className="border-l-4 border-l-blue-500">
+                  <Card className={`border-l-4 ${creditSettings.enabled ? 'border-l-emerald-500' : 'border-l-blue-500'}`}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Average Price</p>
-                          <p className="text-2xl font-bold text-blue-600">
-                            {stats?.average ? formatCurrency(stats.average) : '—'}
+                          <p className="text-sm font-medium text-muted-foreground">
+                            {creditSettings.enabled ? 'Effective Avg Price' : 'Average Price'}
                           </p>
+                          <p className={`text-2xl font-bold ${creditSettings.enabled ? 'text-emerald-600' : 'text-blue-600'}`}>
+                            {creditSettings.enabled && creditSummary.effectivePrice > 0
+                              ? formatCurrency(creditSummary.effectivePrice)
+                              : stats?.average ? formatCurrency(stats.average) : '—'}
+                          </p>
+                          {creditSettings.enabled && creditSummary.savingsPercentage > 0 && (
+                            <p className="text-xs text-emerald-600 font-medium">
+                              {creditSummary.savingsPercentage.toFixed(1)}% savings
+                            </p>
+                          )}
                           <p className="text-xs text-muted-foreground">per MWh</p>
                         </div>
-                        <DollarSign className="w-8 h-8 text-blue-500" />
+                        <Coins className={`w-8 h-8 ${creditSettings.enabled ? 'text-emerald-500' : 'text-blue-500'}`} />
                       </div>
                     </CardContent>
                   </Card>
@@ -1573,6 +1626,11 @@ export function AESOHistoricalPricing() {
               <CardTitle className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-blue-600" />
                 Price Trend
+                {creditSettings.enabled && (
+                  <Badge variant="outline" className="ml-2 bg-emerald-50 text-emerald-700 border-emerald-200">
+                    Credit-Adjusted View
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1595,8 +1653,8 @@ export function AESOHistoricalPricing() {
                     );
                   }
 
-                  const chartData = data?.chartData || [];
-                  if (chartData.length === 0) {
+                  const originalChartData = data?.chartData || [];
+                  if (originalChartData.length === 0) {
                     return (
                       <div className="flex items-center justify-center h-full text-muted-foreground">
                         <div className="text-center">
@@ -1604,6 +1662,69 @@ export function AESOHistoricalPricing() {
                           <p>No data available</p>
                         </div>
                       </div>
+                    );
+                  }
+
+                  // Build chart data with credit-adjusted prices
+                  const chartData = creditSettings.enabled ? originalChartData.map((point: any, index: number) => {
+                    const creditAmount = creditSummary.twelveCPCredit + creditSummary.orCredit;
+                    const originalPrice = point.price ?? point.average ?? 0;
+                    return {
+                      ...point,
+                      originalPrice,
+                      adjustedPrice: Math.max(0, originalPrice - creditAmount),
+                    };
+                  }) : originalChartData;
+
+                  const priceKey = selectedTimePeriod === 'yearly' ? 'average' : 'price';
+
+                  if (creditSettings.enabled) {
+                    return (
+                      <ResponsiveContainer>
+                        <ComposedChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey={selectedTimePeriod === 'yearly' ? 'month' : 'date'} 
+                            tick={{ fontSize: 11 }}
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 11 }}
+                            tickFormatter={(value) => `$${Math.round(value)}`}
+                          />
+                          <Tooltip 
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload?.length) return null;
+                              return (
+                                <div className="bg-background border rounded-lg shadow-lg p-3">
+                                  <p className="font-medium mb-2">{label}</p>
+                                  {payload.map((entry: any, index: number) => (
+                                    <p key={index} className="text-sm" style={{ color: entry.color }}>
+                                      {entry.name}: ${entry.value?.toFixed(2)}/MWh
+                                    </p>
+                                  ))}
+                                </div>
+                              );
+                            }}
+                          />
+                          <Legend />
+                          <Area 
+                            type="monotone" 
+                            dataKey="originalPrice" 
+                            stroke="#94a3b8" 
+                            fill="#94a3b820" 
+                            name="Pool Price"
+                            strokeDasharray="5 5"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="adjustedPrice" 
+                            stroke="#10b981" 
+                            strokeWidth={2}
+                            dot={false}
+                            name="Credit-Adjusted"
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
                     );
                   }
 
@@ -1622,7 +1743,7 @@ export function AESOHistoricalPricing() {
                         <Tooltip content={<CustomTooltip />} />
                         <Area 
                           type="monotone" 
-                          dataKey={selectedTimePeriod === 'yearly' ? 'average' : 'price'} 
+                          dataKey={priceKey} 
                           stroke="#2563eb" 
                           fill="#2563eb20" 
                           name="Price"
