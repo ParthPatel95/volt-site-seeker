@@ -59,12 +59,44 @@ export function LinkDetailsDialog({
         .from('viewer_activity')
         .select('*')
         .eq('link_id', link.id)
-        .order('created_at', { ascending: false });
+        .order('opened_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
     },
     enabled: open && !!link?.id,
+  });
+
+  // Fetch folder documents if folder link
+  const { data: folderDocuments } = useQuery({
+    queryKey: ['folder-documents', link?.folder_id],
+    queryFn: async () => {
+      if (!link?.folder_id) return [];
+      const { data, error } = await supabase
+        .from('secure_documents')
+        .select('id, file_name, file_type, file_size')
+        .eq('folder_id', link.folder_id)
+        .order('file_name');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open && !!link?.folder_id,
+  });
+
+  // Fetch bundle documents if bundle link
+  const { data: bundleDocuments } = useQuery({
+    queryKey: ['bundle-documents', link?.bundle_id],
+    queryFn: async () => {
+      if (!link?.bundle_id) return [];
+      const { data, error } = await supabase
+        .from('bundle_documents')
+        .select('document_id, display_order, secure_documents(id, file_name, file_type, file_size)')
+        .eq('bundle_id', link.bundle_id)
+        .order('display_order');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open && !!link?.bundle_id,
   });
 
   const handleCopyLink = () => {
@@ -88,8 +120,42 @@ export function LinkDetailsDialog({
     ? Math.round(viewerActivity.reduce((sum: number, v: any) => sum + (v.engagement_score || 0), 0) / viewerActivity.length)
     : 0;
   const avgTimeSpent = viewerActivity?.length
-    ? Math.round(viewerActivity.reduce((sum: number, v: any) => sum + (v.time_spent || 0), 0) / viewerActivity.length / 60)
+    ? Math.round(viewerActivity.reduce((sum: number, v: any) => sum + (v.total_time_seconds || 0), 0) / viewerActivity.length / 60)
     : 0;
+
+  // Calculate contents for display
+  const getContentsInfo = () => {
+    if (link.folder_id && folderDocuments) {
+      return { count: folderDocuments.length, items: folderDocuments };
+    }
+    if (link.bundle_id && bundleDocuments) {
+      const items = bundleDocuments.map((bd: any) => bd.secure_documents).filter(Boolean);
+      return { count: items.length, items };
+    }
+    if (link.document_id && link.secure_documents) {
+      return { count: 1, items: [link.secure_documents] };
+    }
+    return { count: 0, items: [] };
+  };
+  const contentsInfo = getContentsInfo();
+
+  const formatFileSize = (bytes: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType?.startsWith('image/')) return '🖼️';
+    if (fileType?.startsWith('video/')) return '🎬';
+    if (fileType?.startsWith('audio/')) return '🎵';
+    if (fileType?.includes('pdf')) return '📄';
+    if (fileType?.includes('word') || fileType?.includes('document')) return '📝';
+    if (fileType?.includes('sheet') || fileType?.includes('excel')) return '📊';
+    if (fileType?.includes('presentation') || fileType?.includes('powerpoint')) return '📽️';
+    return '📎';
+  };
 
   // Device breakdown
   const devices = viewerActivity?.reduce((acc: any, v: any) => {
@@ -243,6 +309,41 @@ export function LinkDetailsDialog({
                 </Card>
               )}
 
+              {/* Contents Section */}
+              {contentsInfo.count > 0 && (
+                <Card className="p-4">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    {link.folder_id ? <Folder className="w-4 h-4 text-amber-500" /> : 
+                     link.bundle_id ? <Package className="w-4 h-4 text-purple-500" /> :
+                     <FileText className="w-4 h-4 text-blue-500" />}
+                    Contents
+                    <Badge variant="secondary" className="h-5 px-1.5">
+                      {contentsInfo.count} {contentsInfo.count === 1 ? 'file' : 'files'}
+                    </Badge>
+                  </h4>
+                  <ScrollArea className="max-h-48">
+                    <div className="space-y-2">
+                      {contentsInfo.items.map((item: any, index: number) => (
+                        <div 
+                          key={item?.id || index} 
+                          className="flex items-center justify-between gap-3 p-2 rounded-lg bg-muted/50"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-base shrink-0">{getFileIcon(item?.file_type)}</span>
+                            <span className="text-sm truncate">{item?.file_name || 'Unknown file'}</span>
+                          </div>
+                          {item?.file_size && (
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {formatFileSize(item.file_size)}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </Card>
+              )}
+
               {/* Recent Viewers */}
               {viewerActivity && viewerActivity.length > 0 && (
                 <Card className="p-4">
@@ -268,7 +369,7 @@ export function LinkDetailsDialog({
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(activity.opened_at), { addSuffix: true })}
                           </p>
                           {activity.engagement_score && (
                             <Badge variant="outline" className="text-xs">{activity.engagement_score}% engaged</Badge>
@@ -346,10 +447,10 @@ export function LinkDetailsDialog({
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-medium">
-                            {activity.time_spent ? `${Math.round(activity.time_spent / 60)}m` : '-'}
+                            {activity.total_time_seconds ? `${Math.round(activity.total_time_seconds / 60)}m` : '-'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(activity.created_at), 'MMM d, h:mm a')}
+                            {format(new Date(activity.opened_at), 'MMM d, h:mm a')}
                           </p>
                           {activity.engagement_score && (
                             <Badge variant="secondary" className="mt-1">{activity.engagement_score}%</Badge>

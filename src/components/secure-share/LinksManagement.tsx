@@ -74,7 +74,9 @@ export function LinksManagement() {
           *,
           secure_documents (
             file_name,
-            category
+            category,
+            file_type,
+            file_size
           ),
           document_bundles (
             name
@@ -90,6 +92,64 @@ export function LinksManagement() {
     },
   });
 
+  // Fetch folder file counts
+  const { data: folderCounts } = useQuery({
+    queryKey: ['folder-file-counts'],
+    queryFn: async () => {
+      const folderIds = links?.filter((l: any) => l.folder_id).map((l: any) => l.folder_id) || [];
+      if (folderIds.length === 0) return {};
+      
+      const { data, error } = await supabase
+        .from('secure_documents')
+        .select('folder_id, file_name, file_type, file_size')
+        .in('folder_id', folderIds);
+      
+      if (error) throw error;
+      
+      // Group by folder_id
+      const counts: Record<string, { count: number; files: any[] }> = {};
+      data?.forEach((doc: any) => {
+        if (!counts[doc.folder_id]) {
+          counts[doc.folder_id] = { count: 0, files: [] };
+        }
+        counts[doc.folder_id].count++;
+        counts[doc.folder_id].files.push(doc);
+      });
+      return counts;
+    },
+    enabled: !!links && links.some((l: any) => l.folder_id),
+  });
+
+  // Fetch bundle file counts
+  const { data: bundleCounts } = useQuery({
+    queryKey: ['bundle-file-counts'],
+    queryFn: async () => {
+      const bundleIds = links?.filter((l: any) => l.bundle_id).map((l: any) => l.bundle_id) || [];
+      if (bundleIds.length === 0) return {};
+      
+      const { data, error } = await supabase
+        .from('bundle_documents')
+        .select('bundle_id, secure_documents(file_name, file_type, file_size)')
+        .in('bundle_id', bundleIds);
+      
+      if (error) throw error;
+      
+      // Group by bundle_id
+      const counts: Record<string, { count: number; files: any[] }> = {};
+      data?.forEach((bd: any) => {
+        if (!counts[bd.bundle_id]) {
+          counts[bd.bundle_id] = { count: 0, files: [] };
+        }
+        counts[bd.bundle_id].count++;
+        if (bd.secure_documents) {
+          counts[bd.bundle_id].files.push(bd.secure_documents);
+        }
+      });
+      return counts;
+    },
+    enabled: !!links && links.some((l: any) => l.bundle_id),
+  });
+
   // Fetch viewer activity for analytics preview
   const { data: viewerActivity } = useQuery({
     queryKey: ['all-viewer-activity'],
@@ -97,7 +157,7 @@ export function LinksManagement() {
       const { data, error } = await supabase
         .from('viewer_activity')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('opened_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -285,6 +345,27 @@ export function LinksManagement() {
     return { totalViews, uniqueViewers, avgEngagement, recentActivity: activity.slice(0, 3) };
   };
 
+  const getLinkFileInfo = (link: any) => {
+    if (link.folder_id && folderCounts?.[link.folder_id]) {
+      const info = folderCounts[link.folder_id];
+      return { 
+        count: info.count, 
+        preview: info.files.slice(0, 3).map((f: any) => f.file_name).join(', ')
+      };
+    }
+    if (link.bundle_id && bundleCounts?.[link.bundle_id]) {
+      const info = bundleCounts[link.bundle_id];
+      return { 
+        count: info.count, 
+        preview: info.files.slice(0, 3).map((f: any) => f.file_name).join(', ')
+      };
+    }
+    if (link.document_id && link.secure_documents) {
+      return { count: 1, preview: link.secure_documents.file_name };
+    }
+    return { count: 0, preview: '' };
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -408,6 +489,15 @@ export function LinksManagement() {
                           <Badge variant="outline" className={`gap-1 text-xs ${linkType.color}`}>
                             {linkType.label}
                           </Badge>
+                          {(() => {
+                            const fileInfo = getLinkFileInfo(link);
+                            return fileInfo.count > 0 && (link.folder_id || link.bundle_id) ? (
+                              <Badge variant="secondary" className="gap-1 text-xs">
+                                <FileText className="w-3 h-3" />
+                                {fileInfo.count} {fileInfo.count === 1 ? 'file' : 'files'}
+                              </Badge>
+                            ) : null;
+                          })()}
                         </div>
                         {(link.recipient_email || link.recipient_name) && (
                           <p className="text-sm text-muted-foreground flex items-center gap-1.5">
@@ -420,11 +510,26 @@ export function LinksManagement() {
                             </span>
                           </p>
                         )}
-                        {link.link_name && link.secure_documents?.file_name && (
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                            {link.secure_documents.file_name}
-                          </p>
-                        )}
+                        {/* File preview for folders/bundles */}
+                        {(() => {
+                          const fileInfo = getLinkFileInfo(link);
+                          if ((link.folder_id || link.bundle_id) && fileInfo.preview) {
+                            return (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-sm">
+                                {fileInfo.preview}{fileInfo.count > 3 ? `, +${fileInfo.count - 3} more` : ''}
+                              </p>
+                            );
+                          }
+                          // Single document name when link has custom name
+                          if (link.link_name && link.secure_documents?.file_name) {
+                            return (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                {link.secure_documents.file_name}
+                              </p>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
                   </div>
