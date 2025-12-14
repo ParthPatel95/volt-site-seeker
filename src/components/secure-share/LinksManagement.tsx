@@ -22,31 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Link as LinkIcon,
-  Copy,
-  Trash2,
-  Eye,
-  Download,
-  Clock,
-  Mail,
-  Shield,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Edit,
-  Search,
-  Filter,
-  FileText,
-  Folder,
-  Package,
-  User,
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { Link as LinkIcon, Search, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, isPast, formatDistanceToNow } from 'date-fns';
+import { isPast } from 'date-fns';
 import { EditLinkDialog } from './EditLinkDialog';
 import { LinkDetailsDialog } from './LinkDetailsDialog';
 import { LinkStatsOverview } from './links/LinkStatsOverview';
@@ -65,7 +43,7 @@ export function LinksManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [expandedLinks, setExpandedLinks] = useState<Set<string>>(new Set());
+  
 
   const { data: links, isLoading, refetch } = useQuery({
     queryKey: ['secure-links'],
@@ -265,77 +243,6 @@ export function LinksManagement() {
     }
   };
 
-  const toggleExpanded = (linkId: string) => {
-    const newExpanded = new Set(expandedLinks);
-    if (newExpanded.has(linkId)) {
-      newExpanded.delete(linkId);
-    } else {
-      newExpanded.add(linkId);
-    }
-    setExpandedLinks(newExpanded);
-  };
-
-  const getLinkType = (link: any) => {
-    if (link.folder_id) return { icon: Folder, label: 'Folder', color: 'text-amber-500', bg: 'bg-amber-500/10' };
-    if (link.bundle_id) return { icon: Package, label: 'Bundle', color: 'text-purple-500', bg: 'bg-purple-500/10' };
-    return { icon: FileText, label: 'Document', color: 'text-blue-500', bg: 'bg-blue-500/10' };
-  };
-
-  const getLinkName = (link: any) => {
-    if (link.link_name) return link.link_name;
-    if (link.secure_folders?.name) return link.secure_folders.name;
-    if (link.document_bundles?.name) return link.document_bundles.name;
-    if (link.secure_documents?.file_name) return link.secure_documents.file_name;
-    return 'Untitled Link';
-  };
-
-  const getStatusBadge = (link: any) => {
-    if (link.status === 'revoked') {
-      return (
-        <Badge variant="destructive" className="gap-1">
-          <XCircle className="w-3 h-3" />
-          Revoked
-        </Badge>
-      );
-    }
-
-    if (link.expires_at && isPast(new Date(link.expires_at))) {
-      return (
-        <Badge variant="secondary" className="gap-1">
-          <Clock className="w-3 h-3" />
-          Expired
-        </Badge>
-      );
-    }
-
-    if (link.max_views && link.current_views >= link.max_views) {
-      return (
-        <Badge variant="secondary" className="gap-1">
-          <Eye className="w-3 h-3" />
-          Max Views
-        </Badge>
-      );
-    }
-
-    return (
-      <Badge variant="default" className="gap-1 bg-green-500">
-        <CheckCircle2 className="w-3 h-3" />
-        Active
-      </Badge>
-    );
-  };
-
-  const getAccessIcon = (accessLevel: string) => {
-    switch (accessLevel) {
-      case 'download':
-        return <Download className="w-3 h-3" />;
-      case 'view_only':
-      case 'no_download':
-        return <Eye className="w-3 h-3" />;
-      default:
-        return <Eye className="w-3 h-3" />;
-    }
-  };
 
   const getLinkAnalytics = (linkId: string) => {
     const activity = viewerActivity?.filter((v: any) => v.link_id === linkId) || [];
@@ -457,277 +364,31 @@ export function LinksManagement() {
       </p>
 
       {/* Links Grid */}
-      <div className="grid gap-4 sm:gap-6">
+      <div className="grid gap-4">
         {filteredLinks.map((link: any) => {
-          const linkType = getLinkType(link);
-          const LinkTypeIcon = linkType.icon;
           const analytics = getLinkAnalytics(link.id);
-          const isExpanded = expandedLinks.has(link.id);
+          const fileInfo = getLinkFileInfo(link);
 
           return (
-            <Card 
-              key={link.id} 
-              className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:border-watt-primary/20 transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-watt-primary/0 to-watt-secondary/0 group-hover:from-watt-primary/5 group-hover:to-watt-secondary/5 transition-all duration-300" />
-              
-              <div className="relative p-5 sm:p-6">
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className={`p-2.5 rounded-lg ${linkType.bg} shrink-0`}>
-                        <LinkTypeIcon className={`w-5 h-5 ${linkType.color}`} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 
-                            className="font-semibold text-base sm:text-lg truncate cursor-pointer hover:text-watt-primary transition-colors"
-                            onClick={() => {
-                              setLinkToView(link);
-                              setDetailsDialogOpen(true);
-                            }}
-                          >
-                            {getLinkName(link)}
-                          </h3>
-                          {getStatusBadge(link)}
-                          <Badge variant="outline" className={`gap-1 text-xs ${linkType.color}`}>
-                            {linkType.label}
-                          </Badge>
-                          {(() => {
-                            const fileInfo = getLinkFileInfo(link);
-                            return fileInfo.count > 0 && (link.folder_id || link.bundle_id) ? (
-                              <Badge variant="secondary" className="gap-1 text-xs">
-                                <FileText className="w-3 h-3" />
-                                {fileInfo.count} {fileInfo.count === 1 ? 'file' : 'files'}
-                              </Badge>
-                            ) : null;
-                          })()}
-                        </div>
-                        {(link.recipient_email || link.recipient_name) && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                            <Mail className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">
-                              {link.recipient_name && link.recipient_email 
-                                ? `${link.recipient_name} (${link.recipient_email})`
-                                : link.recipient_name || link.recipient_email
-                              }
-                            </span>
-                          </p>
-                        )}
-                        {/* File preview for folders/bundles */}
-                        {(() => {
-                          const fileInfo = getLinkFileInfo(link);
-                          if ((link.folder_id || link.bundle_id) && fileInfo.preview) {
-                            return (
-                              <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-sm">
-                                {fileInfo.preview}{fileInfo.count > 3 ? `, +${fileInfo.count - 3} more` : ''}
-                              </p>
-                            );
-                          }
-                          // Single document name when link has custom name
-                          if (link.link_name && link.secure_documents?.file_name) {
-                            return (
-                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                                {link.secure_documents.file_name}
-                              </p>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Security Features */}
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
-                      {getAccessIcon(link.access_level)}
-                      <span className="capitalize">{link.access_level?.replace('_', ' ')}</span>
-                    </Badge>
-                    
-                    {link.password_hash && (
-                      <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
-                        <Shield className="w-3 h-3" />
-                        Password
-                      </Badge>
-                    )}
-
-                    {link.require_otp && (
-                      <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
-                        <AlertCircle className="w-3 h-3" />
-                        OTP
-                      </Badge>
-                    )}
-
-                    {link.watermark_enabled && (
-                      <Badge variant="outline" className="gap-1.5 text-xs bg-card/50">
-                        <Shield className="w-3 h-3" />
-                        Watermark
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-border/50">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-md bg-watt-primary/10">
-                        <Eye className="w-3.5 h-3.5 text-watt-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Views</p>
-                        <p className="font-semibold text-sm">
-                          {link.current_views || 0}
-                          {link.max_views ? `/${link.max_views}` : ''}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-md bg-green-500/10">
-                        <User className="w-3.5 h-3.5 text-green-500" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Unique</p>
-                        <p className="font-semibold text-sm">{analytics.uniqueViewers}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-md bg-muted">
-                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Created</p>
-                        <p className="font-semibold text-xs">{format(new Date(link.created_at), 'MMM d')}</p>
-                      </div>
-                    </div>
-
-                    {link.expires_at ? (
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-md bg-amber-500/10">
-                          <Clock className="w-3.5 h-3.5 text-amber-500" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Expires</p>
-                          <p className="font-semibold text-xs">{format(new Date(link.expires_at), 'MMM d')}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-md bg-purple-500/10">
-                          <BarChart3 className="w-3.5 h-3.5 text-purple-500" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Engagement</p>
-                          <p className="font-semibold text-sm">{analytics.avgEngagement}%</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Expandable Analytics Preview */}
-                  {analytics.recentActivity.length > 0 && (
-                    <div className="pt-2">
-                      <button
-                        onClick={() => toggleExpanded(link.id)}
-                        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        Recent Activity ({analytics.totalViews} views)
-                      </button>
-                      
-                      {isExpanded && (
-                        <div className="mt-3 space-y-2">
-                          {analytics.recentActivity.map((activity: any) => (
-                            <div key={activity.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                  <User className="w-3 h-3 text-primary" />
-                                </div>
-                                <span className="text-sm truncate">
-                                  {activity.viewer_name || activity.viewer_email || 'Anonymous'}
-                                </span>
-                              </div>
-                              <span className="text-xs text-muted-foreground shrink-0">
-                                {formatDistanceToNow(new Date(activity.opened_at), { addSuffix: true })}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCopyLink(link.link_token)}
-                      disabled={link.status === 'revoked'}
-                      className="gap-1.5 hover:bg-watt-primary/5 hover:border-watt-primary/30 hover:text-watt-primary transition-colors disabled:opacity-50"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      Copy
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setLinkToView(link);
-                        setDetailsDialogOpen(true);
-                      }}
-                      className="gap-1.5 hover:bg-blue-500/5 hover:border-blue-500/30 hover:text-blue-600 transition-colors"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5" />
-                      Analytics
-                    </Button>
-                    
-                    {link.status === 'active' && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setLinkToEdit(link);
-                            setEditDialogOpen(true);
-                          }}
-                          className="gap-1.5 hover:bg-watt-secondary/5 hover:border-watt-secondary/30 hover:text-watt-secondary transition-colors"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                          Edit
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRevokeLink(link.id)}
-                          className="gap-1.5 hover:bg-orange-500/5 hover:border-orange-500/30 hover:text-orange-600 transition-colors"
-                        >
-                          <XCircle className="w-3.5 h-3.5" />
-                          Revoke
-                        </Button>
-                      </>
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setLinkToDelete(link.id);
-                        setDeleteDialogOpen(true);
-                      }}
-                      className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <EnhancedLinkCard
+              key={link.id}
+              link={link}
+              analytics={analytics}
+              fileInfo={fileInfo}
+              onEdit={() => {
+                setLinkToEdit(link);
+                setEditDialogOpen(true);
+              }}
+              onRevoke={() => handleRevokeLink(link.id)}
+              onDelete={() => {
+                setLinkToDelete(link.id);
+                setDeleteDialogOpen(true);
+              }}
+              onViewDetails={() => {
+                setLinkToView(link);
+                setDetailsDialogOpen(true);
+              }}
+            />
           );
         })}
       </div>

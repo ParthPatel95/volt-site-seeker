@@ -128,11 +128,14 @@ export function useDocumentActivityTracking({
     if (navigator.sendBeacon) {
       const payload = JSON.stringify({
         activityId,
-        data
+        totalTimeSeconds: data.total_time_seconds,
+        engagementScore: data.engagement_score,
+        pagesViewed: data.pages_viewed,
+        lastActivity: data.last_activity_at
       });
       
-      // Send to a beacon endpoint (we'll use the edge function)
-      const beaconUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-activity-beacon`;
+      // Send to beacon endpoint - hardcoded URL as env vars don't work in Lovable
+      const beaconUrl = 'https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/track-activity-beacon';
       const blob = new Blob([payload], { type: 'application/json' });
       navigator.sendBeacon(beaconUrl, blob);
     } else {
