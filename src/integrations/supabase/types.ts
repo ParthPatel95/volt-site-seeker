@@ -5708,6 +5708,7 @@ export type Database = {
       viewer_activity: {
         Row: {
           browser: string | null
+          closed_at: string | null
           device_type: string | null
           document_id: string
           engagement_score: number | null
@@ -5726,6 +5727,7 @@ export type Database = {
         }
         Insert: {
           browser?: string | null
+          closed_at?: string | null
           device_type?: string | null
           document_id: string
           engagement_score?: number | null
@@ -5744,6 +5746,7 @@ export type Database = {
         }
         Update: {
           browser?: string | null
+          closed_at?: string | null
           device_type?: string | null
           document_id?: string
           engagement_score?: number | null
