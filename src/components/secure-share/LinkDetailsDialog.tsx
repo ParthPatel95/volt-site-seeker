@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -190,7 +191,7 @@ export function LinkDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-y-auto">
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0">
@@ -201,6 +202,9 @@ export function LinkDetailsDialog({
                 <DialogTitle className="text-xl truncate">
                   {link.link_name || link.document_bundles?.name || link.secure_documents?.file_name || link.secure_folders?.name || 'Untitled Link'}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  View analytics and settings for this shared link
+                </DialogDescription>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={statusInfo.variant} className="gap-1">
                     <statusInfo.icon className="w-3 h-3" />
@@ -233,8 +237,8 @@ export function LinkDetailsDialog({
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 mt-4">
-            <TabsContent value="overview" className="mt-0 space-y-6">
+          <ScrollArea className="flex-1 mt-4 min-h-0">
+            <TabsContent value="overview" className="mt-0 space-y-6 pb-6">
               {/* Analytics Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="p-4">
@@ -390,7 +394,7 @@ export function LinkDetailsDialog({
               )}
             </TabsContent>
 
-            <TabsContent value="activity" className="mt-0">
+            <TabsContent value="activity" className="mt-0 pb-6">
               {loadingActivity ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
@@ -468,7 +472,7 @@ export function LinkDetailsDialog({
               )}
             </TabsContent>
 
-            <TabsContent value="settings" className="mt-0 space-y-4">
+            <TabsContent value="settings" className="mt-0 space-y-4 pb-6">
               <Card className="p-4">
                 <h4 className="font-semibold mb-3">Link Information</h4>
                 <div className="space-y-3">
