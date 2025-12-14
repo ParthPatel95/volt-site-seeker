@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, AlertCircle, Languages, FileText, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
+import { Download, Loader2, AlertCircle, Languages, FileText, RefreshCw, ZoomIn, ZoomOut, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VideoPlayer } from './VideoPlayer';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
@@ -23,15 +23,16 @@ interface MobileDocumentViewerProps {
   retryKey?: number;
 }
 
+type ViewerMode = 'loading' | 'blob' | 'google' | 'download-prompt' | 'error';
+
 /**
- * MobileDocumentViewer - Optimized for mobile devices
+ * MobileDocumentViewer - Simplified blob-based PDF viewer for mobile
  * 
- * Key differences from desktop DocumentViewer:
- * 1. Uses native PDF iframe as PRIMARY viewer (not react-pdf)
- * 2. No canvas memory issues (iOS Safari 384MB limit)
- * 3. No race conditions from complex state management
- * 4. Translation uses server-side text extraction (not client-side react-pdf)
- * 5. Pinch-to-zoom support for images with pan when zoomed
+ * Architecture:
+ * 1. Fetch PDF as blob -> create object URL -> use native viewer
+ * 2. Fallback to Google Docs Viewer on blob failure
+ * 3. Fallback to download prompt if both fail
+ * 4. Simple state machine with single viewerMode variable
  */
 export function MobileDocumentViewer({
   documentUrl,
@@ -49,14 +50,16 @@ export function MobileDocumentViewer({
   retryKey = 0
 }: MobileDocumentViewerProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [translationOpen, setTranslationOpen] = useState(false);
-  const [numPages, setNumPages] = useState<number>(0);
-  const [internalRetryCount, setInternalRetryCount] = useState(0);
-  const [loadTimedOut, setLoadTimedOut] = useState(false);
   
-  // Pinch-to-zoom state for images
+  // === SIMPLIFIED STATE ===
+  const [viewerMode, setViewerMode] = useState<ViewerMode>('loading');
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [translationOpen, setTranslationOpen] = useState(false);
+  
+  // Image zoom state
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
@@ -66,33 +69,13 @@ export function MobileDocumentViewer({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [panStartPosition, setPanStartPosition] = useState({ x: 0, y: 0 });
   
-  // Default to native iframe first - only switch to Google Viewer on failure
-  // This reduces loading time and prevents Google Viewer timeouts
-  const [useGoogleViewer, setUseGoogleViewer] = useState(false);
-  const [nativeViewerFailed, setNativeViewerFailed] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const mountTimeRef = useRef(Date.now());
+  // Refs
   const isMountedRef = useRef(true);
-  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  // Detect iOS and Android for Google Docs viewer (native iframe often doesn't work on mobile)
-  const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-  const isMobileDevice = isIOS || isAndroid;
-
-  console.log('[MobileDocumentViewer] MOUNT', {
-    documentUrl: documentUrl?.substring(0, 80),
-    documentType,
-    accessLevel,
-    documentId,
-    documentName,
-    fileSizeBytes,
-    isIOS,
-    timestamp: new Date().toISOString()
-  });
-
-  // File type detection - MUST be before useEffects that depend on isPdf
+  // File type detection
   const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
   const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl || '');
   const isVideo = documentType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(documentUrl || '');
@@ -103,44 +86,6 @@ export function MobileDocumentViewer({
   const isOfficePresentation = documentType?.includes('presentation') || /\.pptx?$/i.test(documentUrl || '');
   const isOffice = isOfficeDoc || isOfficeSheet || isOfficePresentation;
 
-  console.log('[MobileDocumentViewer] File type detection:', {
-    isPdf, isImage, isVideo, isAudio, isText, isOffice
-  });
-
-  // Track mount state and cleanup timeouts
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-        loadTimeoutRef.current = null;
-      }
-      console.log('[MobileDocumentViewer] UNMOUNT');
-    };
-  }, []);
-
-  // PDF load timeout - 15 seconds then offer fallback options
-  useEffect(() => {
-    if (!isPdf || !isLoading || loadTimedOut) return;
-    
-    loadTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current && isLoading) {
-        console.warn('[MobileDocumentViewer] PDF load TIMEOUT after 15s');
-        setLoadTimedOut(true);
-        setIsLoading(false);
-      }
-    }, 15000);
-    
-    return () => {
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-        loadTimeoutRef.current = null;
-      }
-    };
-  }, [isPdf, isLoading, loadTimedOut, documentUrl]);
-
-  // Translation support (PDFs, images, Office docs, text files)
   const supportsTranslation = isPdf || isImage || isOffice || isText;
   const canDownload = accessLevel === 'download';
 
@@ -153,18 +98,120 @@ export function MobileDocumentViewer({
     viewerEmail
   });
 
-  // Pre-fetch PDF page count for display (lightweight metadata only)
+  // === CLEANUP ON UNMOUNT ===
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    return () => {
+      isMountedRef.current = false;
+      
+      // Cleanup blob URL
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+      
+      // Abort any pending fetches
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      console.log('[MobileDocumentViewer] UNMOUNT - cleaned up');
+    };
+  }, []);
+
+  // === PDF BLOB LOADING ===
+  useEffect(() => {
+    if (!isPdf || !documentUrl) return;
+    
+    // Cleanup previous blob URL
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+      setBlobUrl(null);
+    }
+    
+    // Abort previous fetch
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
+    const loadPdfAsBlob = async () => {
+      console.log('[MobileDocumentViewer] Starting PDF blob fetch...');
+      setViewerMode('loading');
+      setLoadProgress(10);
+      setErrorMessage(null);
+      
+      try {
+        // Fetch PDF as blob
+        const response = await fetch(documentUrl, { 
+          signal: controller.signal,
+          credentials: 'omit' // Avoid CORS issues with credentials
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        if (!isMountedRef.current) return;
+        setLoadProgress(50);
+        
+        const blob = await response.blob();
+        
+        if (!isMountedRef.current) return;
+        setLoadProgress(80);
+        
+        // Create object URL
+        const objectUrl = URL.createObjectURL(blob);
+        blobUrlRef.current = objectUrl;
+        
+        if (!isMountedRef.current) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        
+        setBlobUrl(objectUrl);
+        setViewerMode('blob');
+        setLoadProgress(100);
+        console.log('[MobileDocumentViewer] PDF blob loaded successfully');
+        
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          console.log('[MobileDocumentViewer] PDF fetch aborted');
+          return;
+        }
+        
+        console.error('[MobileDocumentViewer] Blob fetch failed:', error.message);
+        
+        if (!isMountedRef.current) return;
+        
+        // Fallback to Google Docs Viewer
+        console.log('[MobileDocumentViewer] Falling back to Google Docs Viewer');
+        setViewerMode('google');
+        setLoadProgress(0);
+      }
+    };
+    
+    loadPdfAsBlob();
+    
+    return () => {
+      controller.abort();
+    };
+  }, [isPdf, documentUrl, retryKey]);
+
+  // === PDF METADATA (page count) ===
   useEffect(() => {
     if (!isPdf || !documentUrl) return;
     
     let isCancelled = false;
     
     const loadPdfMetadata = async () => {
-      console.log('[MobileDocumentViewer] Loading PDF metadata...');
       try {
         const pdfjsLib = await import('pdfjs-dist');
         
-        // Configure worker
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
           pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
         }
@@ -178,7 +225,6 @@ export function MobileDocumentViewer({
         const proxy = await loadingTask.promise;
         
         if (isCancelled) {
-          console.log('[MobileDocumentViewer] Metadata load cancelled, destroying proxy');
           proxy.destroy();
           return;
         }
@@ -186,12 +232,10 @@ export function MobileDocumentViewer({
         if (isMountedRef.current) {
           setNumPages(proxy.numPages);
         }
-        proxy.destroy(); // Clean up immediately - we only needed the page count
-        console.log('[MobileDocumentViewer] PDF metadata loaded:', { numPages: proxy.numPages, elapsed: Date.now() - mountTimeRef.current + 'ms' });
+        proxy.destroy();
       } catch (error) {
-        if (isCancelled) return;
-        console.error('[MobileDocumentViewer] Failed to load PDF metadata:', error);
-        // Don't fail - we can still display the PDF, just without page count
+        // Non-critical - we can still display PDF without page count
+        console.warn('[MobileDocumentViewer] Failed to load PDF metadata:', error);
       }
     };
     
@@ -202,82 +246,56 @@ export function MobileDocumentViewer({
     };
   }, [isPdf, documentUrl]);
 
-  // Auto-complete loading for non-iframe content
+  // === AUTO-COMPLETE LOADING FOR NON-PDF CONTENT ===
   useEffect(() => {
     if (!isPdf && !isImage) {
-      // For video, audio, text, office - mark as loaded after mount
       const timer = setTimeout(() => {
-        console.log('[MobileDocumentViewer] Non-iframe content, auto-completing load');
         if (isMountedRef.current) {
-          setIsLoading(false);
+          setViewerMode('blob'); // Use 'blob' as generic "loaded" state
         }
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [isPdf, isImage]);
 
-  const handleIframeLoad = useCallback(() => {
-    const elapsed = Date.now() - mountTimeRef.current;
-    console.log('[MobileDocumentViewer] Iframe LOADED successfully', { elapsed: elapsed + 'ms' });
-    if (isMountedRef.current) {
-      setIsLoading(false);
-      setLoadError(null);
-      setInternalRetryCount(0);
-    }
-  }, []);
-
-  const handleIframeError = useCallback(() => {
-    const elapsed = Date.now() - mountTimeRef.current;
-    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms', internalRetryCount, useGoogleViewer });
-    if (isMountedRef.current) {
-      // If native viewer failed, try Google Viewer as fallback
-      if (!useGoogleViewer && !nativeViewerFailed) {
-        console.log('[MobileDocumentViewer] Native viewer failed, trying Google Viewer');
-        setNativeViewerFailed(true);
-        setUseGoogleViewer(true);
-        setIsLoading(true);
-        mountTimeRef.current = Date.now();
-        return;
-      }
-      setIsLoading(false);
-      setLoadError('Failed to load document. Please try downloading instead.');
-    }
-  }, [internalRetryCount, useGoogleViewer, nativeViewerFailed]);
-
+  // === HANDLERS ===
   const handleRetry = useCallback(() => {
-    console.log('[MobileDocumentViewer] Retrying document load', { retryCount: internalRetryCount + 1 });
-    setIsLoading(true);
-    setLoadError(null);
-    setLoadTimedOut(false);
-    // On retry, keep current viewer type
-    setInternalRetryCount(prev => prev + 1);
-    mountTimeRef.current = Date.now();
-  }, [internalRetryCount]);
-
-  const handleTryNativeViewer = useCallback(() => {
-    console.log('[MobileDocumentViewer] Switching to Native iframe viewer');
-    setUseGoogleViewer(false);
-    setLoadTimedOut(false);
-    setIsLoading(true);
-    mountTimeRef.current = Date.now();
+    console.log('[MobileDocumentViewer] Retrying...');
+    setViewerMode('loading');
+    setLoadProgress(0);
+    setErrorMessage(null);
+    
+    // Force re-fetch by triggering the useEffect
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+      setBlobUrl(null);
+    }
+    
+    // Increment retryKey to trigger refetch
+    window.dispatchEvent(new CustomEvent('mobile-pdf-retry'));
   }, []);
 
-  const handleTryGoogleViewer = useCallback(() => {
-    console.log('[MobileDocumentViewer] Switching to Google Docs Viewer');
-    setUseGoogleViewer(true);
-    setLoadTimedOut(false);
-    setIsLoading(true);
-    mountTimeRef.current = Date.now();
+  const handleGoogleViewerError = useCallback(() => {
+    console.error('[MobileDocumentViewer] Google Viewer also failed');
+    if (isMountedRef.current) {
+      setViewerMode('download-prompt');
+      setErrorMessage('Unable to display this PDF on your device.');
+    }
+  }, []);
+
+  const handleGoogleViewerLoad = useCallback(() => {
+    console.log('[MobileDocumentViewer] Google Viewer loaded');
+    if (isMountedRef.current) {
+      setLoadProgress(100);
+    }
   }, []);
 
   const handleOpenInNewTab = useCallback(() => {
-    console.log('[MobileDocumentViewer] Opening document in new tab');
     window.open(documentUrl, '_blank');
   }, [documentUrl]);
 
   const handleDownload = async () => {
-    console.log('[MobileDocumentViewer] Download requested', { canDownload });
-    
     if (!canDownload) {
       toast({
         title: 'Download Restricted',
@@ -288,7 +306,6 @@ export function MobileDocumentViewer({
     }
 
     try {
-      // Mobile-friendly download using direct link
       const link = document.createElement('a');
       link.href = documentUrl;
       link.download = documentUrl.split('/').pop()?.split('?')[0] || 'document';
@@ -297,7 +314,6 @@ export function MobileDocumentViewer({
       link.click();
       document.body.removeChild(link);
 
-      console.log('[MobileDocumentViewer] Download initiated');
       toast({
         title: 'Download Started',
         description: 'Your document is being downloaded'
@@ -312,19 +328,20 @@ export function MobileDocumentViewer({
     }
   };
 
-  const handleOpenTranslation = useCallback(() => {
-    console.log('[MobileDocumentViewer] Opening translation panel', { documentId, numPages });
-    setTranslationOpen(true);
-  }, [documentId, numPages]);
-
-  const handleCloseTranslation = useCallback(() => {
-    console.log('[MobileDocumentViewer] Closing translation panel');
-    setTranslationOpen(false);
+  const handleImageLoad = useCallback(() => {
+    if (isMountedRef.current) {
+      setViewerMode('blob');
+    }
   }, []);
 
-  // ========== PINCH-TO-ZOOM HANDLERS FOR IMAGES ==========
-  
-  // Calculate distance between two touch points
+  const handleImageError = useCallback(() => {
+    if (isMountedRef.current) {
+      setViewerMode('error');
+      setErrorMessage('Failed to load image');
+    }
+  }, []);
+
+  // === PINCH-TO-ZOOM HANDLERS ===
   const getTouchDistance = useCallback((touches: React.TouchList) => {
     if (touches.length < 2) return null;
     const touch1 = touches[0];
@@ -332,17 +349,14 @@ export function MobileDocumentViewer({
     return Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
   }, []);
 
-  // Handle pinch start
   const handleImageTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2) {
-      // Pinch gesture starting
       e.preventDefault();
       const distance = getTouchDistance(e.touches);
       setTouchStartDistance(distance);
       setTouchStartZoom(imageZoom);
       setIsPanning(false);
     } else if (e.touches.length === 1 && imageZoom > 1) {
-      // Single touch for panning when zoomed
       setIsPanning(true);
       setPanStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
       setPanStartPosition({ ...imagePosition });
@@ -351,50 +365,38 @@ export function MobileDocumentViewer({
     // Double-tap detection
     const now = Date.now();
     if (e.touches.length === 1 && now - lastTapTime < 300) {
-      // Double tap detected
       if (imageZoom > 1) {
-        // Reset zoom
         setImageZoom(1);
         setImagePosition({ x: 0, y: 0 });
       } else {
-        // Zoom in to 2x
         setImageZoom(2);
       }
     }
     setLastTapTime(now);
   }, [getTouchDistance, imageZoom, imagePosition, lastTapTime]);
 
-  // Handle pinch move
   const handleImageTouchMove = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2 && touchStartDistance) {
-      // Pinch gesture - zoom
       e.preventDefault();
       const currentDistance = getTouchDistance(e.touches);
       if (currentDistance) {
         const scale = currentDistance / touchStartDistance;
         const newZoom = Math.max(1, Math.min(4, touchStartZoom * scale));
         setImageZoom(newZoom);
-        
-        // Reset position when zooming back to 1x
         if (newZoom <= 1) {
           setImagePosition({ x: 0, y: 0 });
         }
       }
     } else if (e.touches.length === 1 && isPanning && imageZoom > 1) {
-      // Pan gesture when zoomed
       const deltaX = e.touches[0].clientX - panStart.x;
       const deltaY = e.touches[0].clientY - panStart.y;
-      
-      // Limit pan based on zoom level
       const maxPan = (imageZoom - 1) * 150;
       const newX = Math.max(-maxPan, Math.min(maxPan, panStartPosition.x + deltaX));
       const newY = Math.max(-maxPan, Math.min(maxPan, panStartPosition.y + deltaY));
-      
       setImagePosition({ x: newX, y: newY });
     }
   }, [touchStartDistance, touchStartZoom, getTouchDistance, isPanning, imageZoom, panStart, panStartPosition]);
 
-  // Handle touch end
   const handleImageTouchEnd = useCallback(() => {
     setTouchStartDistance(null);
     setIsPanning(false);
@@ -406,7 +408,6 @@ export function MobileDocumentViewer({
     setImagePosition({ x: 0, y: 0 });
   }, [documentUrl]);
 
-  // Manual zoom buttons
   const handleZoomIn = useCallback(() => {
     setImageZoom(prev => Math.min(4, prev + 0.5));
   }, []);
@@ -424,42 +425,30 @@ export function MobileDocumentViewer({
     setImagePosition({ x: 0, y: 0 });
   }, []);
 
-  // Render timeout state with fallback options
-  if (loadTimedOut && isPdf) {
-    console.log('[MobileDocumentViewer] Rendering timeout state');
+  // === RENDER: DOWNLOAD PROMPT (fallback) ===
+  if (viewerMode === 'download-prompt') {
     return (
-      <div className="flex flex-col h-full w-full">
+      <div className="flex flex-col h-full w-full secure-share-viewer">
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center max-w-sm">
             <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Taking Too Long</h3>
+            <h3 className="text-lg font-semibold mb-2">PDF Viewer Issue</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              The document is taking longer than expected to load. Try one of these options:
+              {errorMessage || 'This PDF cannot be displayed inline on your device.'}
             </p>
-            <div className="flex flex-col gap-3">
-              <Button onClick={handleRetry} variant="outline" className="touch-manipulation w-full">
+            <div className="flex flex-col gap-3 w-full">
+              <Button onClick={handleRetry} variant="outline" className="touch-manipulation w-full h-12">
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Retry Loading
+                Try Again
               </Button>
-              {useGoogleViewer && (
-                <Button onClick={handleTryNativeViewer} variant="outline" className="touch-manipulation w-full">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Try Native Viewer
-                </Button>
-              )}
-              {!useGoogleViewer && (
-                <Button onClick={handleTryGoogleViewer} variant="outline" className="touch-manipulation w-full">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Try Google Viewer
-                </Button>
-              )}
-              <Button onClick={handleOpenInNewTab} variant="outline" className="touch-manipulation w-full">
-                Open in New Tab
+              <Button onClick={handleOpenInNewTab} variant="outline" className="touch-manipulation w-full h-12">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open in Browser
               </Button>
               {canDownload && (
-                <Button onClick={handleDownload} className="touch-manipulation w-full">
+                <Button onClick={handleDownload} className="touch-manipulation w-full h-12">
                   <Download className="w-4 h-4 mr-2" />
-                  Download Instead
+                  Download PDF
                 </Button>
               )}
             </div>
@@ -469,35 +458,22 @@ export function MobileDocumentViewer({
     );
   }
 
-  // Render error state
-  if (loadError) {
-    console.log('[MobileDocumentViewer] Rendering error state:', loadError);
+  // === RENDER: ERROR STATE ===
+  if (viewerMode === 'error') {
     return (
-      <div className="flex flex-col h-full w-full">
+      <div className="flex flex-col h-full w-full secure-share-viewer">
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Failed to Load Document</h3>
-            <p className="text-sm text-muted-foreground mb-4">{loadError}</p>
+            <p className="text-sm text-muted-foreground mb-4">{errorMessage || 'An error occurred'}</p>
             <div className="flex flex-col gap-3">
-              <Button onClick={handleRetry} variant="outline" className="touch-manipulation w-full">
+              <Button onClick={handleRetry} variant="outline" className="touch-manipulation w-full h-12">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Retry
               </Button>
-              {isPdf && useGoogleViewer && (
-                <Button onClick={handleTryNativeViewer} variant="outline" className="touch-manipulation w-full">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Try Native Viewer
-                </Button>
-              )}
-              {isPdf && !useGoogleViewer && (
-                <Button onClick={handleTryGoogleViewer} variant="outline" className="touch-manipulation w-full">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Try Google Viewer
-                </Button>
-              )}
               {canDownload && (
-                <Button onClick={handleDownload} className="touch-manipulation w-full">
+                <Button onClick={handleDownload} className="touch-manipulation w-full h-12">
                   <Download className="w-4 h-4 mr-2" />
                   Download
                 </Button>
@@ -509,18 +485,19 @@ export function MobileDocumentViewer({
     );
   }
 
+  // === MAIN RENDER ===
   return (
-    <div className="flex flex-col h-full w-full">
-      {/* Simplified Mobile Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b gap-2">
+    <div className="flex flex-col h-full w-full secure-share-viewer">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b gap-2 flex-shrink-0">
         {/* Left: Translation button */}
         {supportsTranslation && (
           <Button
             variant="outline"
             size="sm"
-            onClick={handleOpenTranslation}
+            onClick={() => setTranslationOpen(true)}
             className="h-10 px-3 touch-manipulation"
-            disabled={isLoading}
+            disabled={viewerMode === 'loading'}
           >
             <Languages className="w-4 h-4 mr-2" />
             Translate
@@ -588,25 +565,37 @@ export function MobileDocumentViewer({
         )}
       </div>
 
-      {/* Document Content - Full height for native scrolling */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden relative" style={{ WebkitOverflowScrolling: 'touch' }}>
-      {/* Loading overlay - opaque, instant show/hide (no transitions for mobile performance) */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background z-20">
-          <div className="text-center">
-            <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
-            <p className="text-sm text-muted-foreground">Loading document...</p>
+      {/* Document Content */}
+      <div 
+        className="flex-1 overflow-hidden relative"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain'
+        }}
+      >
+        {/* Loading overlay with progress */}
+        {viewerMode === 'loading' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background z-20">
+            <div className="text-center">
+              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
+              <p className="text-sm text-muted-foreground mb-2">Loading PDF...</p>
+              {loadProgress > 0 && (
+                <div className="w-48 h-2 bg-muted rounded-full overflow-hidden mx-auto">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${loadProgress}%` }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* Watermark overlay */}
         {watermarkEnabled && (
           <div 
             className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center"
-            style={{
-              transform: 'rotate(-35deg)',
-            }}
+            style={{ transform: 'rotate(-35deg)' }}
           >
             <span 
               className="text-2xl font-bold opacity-5 whitespace-nowrap select-none"
@@ -619,33 +608,31 @@ export function MobileDocumentViewer({
           </div>
         )}
 
-        {/* PDF - Native iframe viewer with Google Docs fallback for iOS */}
-        {isPdf && !useGoogleViewer && (
-              <iframe
-                key={`native-${internalRetryCount}-${retryKey}`}
-            ref={iframeRef}
-            src={documentUrl}
+        {/* PDF - Blob URL viewer (primary) */}
+        {isPdf && viewerMode === 'blob' && blobUrl && (
+          <object
+            data={blobUrl}
+            type="application/pdf"
             className="w-full h-full border-0"
-            title="PDF Document"
-            onLoad={handleIframeLoad}
-            onError={handleIframeError}
-          />
+            style={{ minHeight: 'calc(100vh - 120px)' }}
+          >
+            <embed 
+              src={blobUrl} 
+              type="application/pdf"
+              className="w-full h-full"
+            />
+          </object>
         )}
         
-        {/* Google Docs Viewer fallback for iOS */}
-        {isPdf && useGoogleViewer && (
+        {/* PDF - Google Docs Viewer (fallback) */}
+        {isPdf && viewerMode === 'google' && (
           <iframe
-            key={`google-${internalRetryCount}-${retryKey}`}
             src={`https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=true`}
             className="w-full h-full border-0"
+            style={{ minHeight: 'calc(100vh - 120px)' }}
             title="PDF Document (Google Viewer)"
-            onLoad={handleIframeLoad}
-            onError={() => {
-              console.error('[MobileDocumentViewer] Google Viewer also failed');
-              if (isMountedRef.current) {
-                setLoadError('Both native and Google viewers failed. Please download the document.');
-              }
-            }}
+            onLoad={handleGoogleViewerLoad}
+            onError={handleGoogleViewerError}
           />
         )}
 
@@ -669,21 +656,10 @@ export function MobileDocumentViewer({
                 transformOrigin: 'center center',
                 transition: isPanning ? 'none' : 'transform 0.1s ease-out'
               }}
-              onLoad={() => {
-                console.log('[MobileDocumentViewer] Image loaded');
-                if (isMountedRef.current) {
-                  setIsLoading(false);
-                }
-              }}
-              onError={() => {
-                console.error('[MobileDocumentViewer] Image failed to load');
-                if (isMountedRef.current) {
-                  setLoadError('Failed to load image');
-                }
-              }}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
             
-            {/* Zoom indicator overlay */}
             {imageZoom > 1 && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium z-20 pointer-events-none">
                 {Math.round(imageZoom * 100)}%
@@ -699,9 +675,9 @@ export function MobileDocumentViewer({
               src={documentUrl}
               canDownload={canDownload}
               onError={() => {
-                console.error('[MobileDocumentViewer] Video failed to load');
                 if (isMountedRef.current) {
-                  setLoadError('Failed to load video');
+                  setViewerMode('error');
+                  setErrorMessage('Failed to load video');
                 }
               }}
             />
@@ -721,15 +697,14 @@ export function MobileDocumentViewer({
                 controls
                 className="w-full"
                 onCanPlay={() => {
-                  console.log('[MobileDocumentViewer] Audio ready to play');
                   if (isMountedRef.current) {
-                    setIsLoading(false);
+                    setViewerMode('blob');
                   }
                 }}
                 onError={() => {
-                  console.error('[MobileDocumentViewer] Audio failed to load');
                   if (isMountedRef.current) {
-                    setLoadError('Failed to load audio');
+                    setViewerMode('error');
+                    setErrorMessage('Failed to load audio');
                   }
                 }}
               />
@@ -743,15 +718,14 @@ export function MobileDocumentViewer({
             <TextFileViewer 
               url={documentUrl} 
               onLoad={() => {
-                console.log('[MobileDocumentViewer] Text file loaded');
                 if (isMountedRef.current) {
-                  setIsLoading(false);
+                  setViewerMode('blob');
                 }
               }}
               onError={() => {
-                console.error('[MobileDocumentViewer] Text file failed to load');
                 if (isMountedRef.current) {
-                  setLoadError('Failed to load text file');
+                  setViewerMode('error');
+                  setErrorMessage('Failed to load text file');
                 }
               }}
             />
@@ -770,7 +744,7 @@ export function MobileDocumentViewer({
       {/* Mobile Translation Panel (Bottom Sheet) */}
       <MobileTranslationPanel
         isOpen={translationOpen}
-        onClose={handleCloseTranslation}
+        onClose={() => setTranslationOpen(false)}
         documentUrl={documentUrl}
         documentId={documentId}
         documentType={documentType}
@@ -781,7 +755,7 @@ export function MobileDocumentViewer({
   );
 }
 
-// Simple text file viewer component with cleanup
+// Simple text file viewer component
 function TextFileViewer({ 
   url, 
   onLoad, 
