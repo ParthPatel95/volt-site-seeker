@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, Users, Clock, TrendingUp, Link as LinkIcon, Activity } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useRealTimeViewerTracking } from '@/hooks/useRealTimeViewerTracking';
+import { useViewerTracking } from '@/contexts/ViewerTrackingContext';
 import { subDays } from 'date-fns';
 
 interface StatsCardProps {
@@ -44,7 +44,7 @@ function StatsCard({ title, value, subtitle, icon: Icon, trend, color, bgColor }
 }
 
 export function LinkStatsOverview() {
-  const { totalActiveViewers } = useRealTimeViewerTracking();
+  const { totalActiveViewers } = useViewerTracking();
 
   const { data: stats } = useQuery({
     queryKey: ['link-stats-overview'],

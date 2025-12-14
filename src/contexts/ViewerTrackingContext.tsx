@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -12,7 +12,23 @@ interface ActiveViewer {
   last_activity_at: string;
 }
 
-export function useRealTimeViewerTracking(linkIds?: string[]) {
+interface ViewerTrackingContextType {
+  activeViewers: ActiveViewer[];
+  totalActiveViewers: number;
+  hasActiveViewers: (linkId: string) => boolean;
+  getActiveViewerCount: (linkId: string) => number;
+  recentActivity: any[];
+}
+
+const ViewerTrackingContext = createContext<ViewerTrackingContextType>({
+  activeViewers: [],
+  totalActiveViewers: 0,
+  hasActiveViewers: () => false,
+  getActiveViewerCount: () => 0,
+  recentActivity: [],
+});
+
+export function ViewerTrackingProvider({ children }: { children: ReactNode }) {
   const [activeViewers, setActiveViewers] = useState<ActiveViewer[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
@@ -21,7 +37,7 @@ export function useRealTimeViewerTracking(linkIds?: string[]) {
 
     const setupRealtime = () => {
       channel = supabase
-        .channel('viewer-activity-changes')
+        .channel('global-viewer-activity')
         .on(
           'postgres_changes',
           {
@@ -32,14 +48,10 @@ export function useRealTimeViewerTracking(linkIds?: string[]) {
           (payload) => {
             if (payload.eventType === 'INSERT') {
               const newViewer = payload.new as ActiveViewer;
-              // Filter by linkIds if provided
-              if (!linkIds || linkIds.includes(newViewer.link_id)) {
-                setActiveViewers(prev => [...prev, newViewer]);
-                setRecentActivity(prev => [payload.new, ...prev].slice(0, 20));
-              }
+              setActiveViewers(prev => [...prev, newViewer]);
+              setRecentActivity(prev => [payload.new, ...prev].slice(0, 20));
             } else if (payload.eventType === 'UPDATE') {
               const updated = payload.new as ActiveViewer;
-              // Check if viewer is still active (activity within last 2 minutes)
               const lastActivity = new Date(updated.last_activity_at || updated.opened_at);
               const isActive = (Date.now() - lastActivity.getTime()) < 120000;
               
@@ -48,13 +60,12 @@ export function useRealTimeViewerTracking(linkIds?: string[]) {
                   const exists = prev.find(v => v.id === updated.id);
                   if (exists) {
                     return prev.map(v => v.id === updated.id ? updated : v);
-                  } else if (!linkIds || linkIds.includes(updated.link_id)) {
+                  } else {
                     return [...prev, updated];
                   }
                 } else {
                   return prev.filter(v => v.id !== updated.id);
                 }
-                return prev;
               });
             }
           }
@@ -80,23 +91,25 @@ export function useRealTimeViewerTracking(linkIds?: string[]) {
       }
       clearInterval(cleanupInterval);
     };
-  }, [linkIds?.join(',')]);
+  }, []);
 
-  // Get active viewer count for a specific link
-  const getActiveViewerCount = (linkId: string) => {
-    return activeViewers.filter(v => v.link_id === linkId).length;
-  };
+  const hasActiveViewers = (linkId: string) => 
+    activeViewers.some(v => v.link_id === linkId);
+  
+  const getActiveViewerCount = (linkId: string) =>
+    activeViewers.filter(v => v.link_id === linkId).length;
 
-  // Check if a specific link has active viewers
-  const hasActiveViewers = (linkId: string) => {
-    return activeViewers.some(v => v.link_id === linkId);
-  };
-
-  return {
-    activeViewers,
-    recentActivity,
-    getActiveViewerCount,
-    hasActiveViewers,
-    totalActiveViewers: activeViewers.length
-  };
+  return (
+    <ViewerTrackingContext.Provider value={{
+      activeViewers,
+      totalActiveViewers: activeViewers.length,
+      hasActiveViewers,
+      getActiveViewerCount,
+      recentActivity
+    }}>
+      {children}
+    </ViewerTrackingContext.Provider>
+  );
 }
+
+export const useViewerTracking = () => useContext(ViewerTrackingContext);
