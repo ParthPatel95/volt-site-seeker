@@ -84,6 +84,7 @@ export function CreateLinkDialog({
         bundle_id: bundleId || null,
         folder_id: folderId || null,
         link_token: linkToken,
+        link_name: linkName || null,
         created_by: user.id,
         recipient_email: recipientEmail || null,
         recipient_name: recipientName || null,

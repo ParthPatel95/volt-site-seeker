@@ -4687,6 +4687,7 @@ export type Database = {
           folder_id: string | null
           id: string
           last_accessed_at: string | null
+          link_name: string | null
           link_token: string
           max_views: number | null
           nda_required: boolean | null
@@ -4713,6 +4714,7 @@ export type Database = {
           folder_id?: string | null
           id?: string
           last_accessed_at?: string | null
+          link_name?: string | null
           link_token: string
           max_views?: number | null
           nda_required?: boolean | null
@@ -4739,6 +4741,7 @@ export type Database = {
           folder_id?: string | null
           id?: string
           last_accessed_at?: string | null
+          link_name?: string | null
           link_token?: string
           max_views?: number | null
           nda_required?: boolean | null
