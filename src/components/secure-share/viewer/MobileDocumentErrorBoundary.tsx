@@ -73,16 +73,7 @@ export class MobileDocumentErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
-    // Auto-retry once on document change
-    if (this.state.hasError && this.retryCount < this.maxAutoRetries) {
-      this.retryCount++;
-      console.log('[MobileDocumentErrorBoundary] Auto-retry attempt', this.retryCount);
-      setTimeout(() => {
-        this.setState({ hasError: false, error: undefined });
-      }, 500);
-    }
-  }
+  // Removed componentDidUpdate auto-retry - was causing infinite refresh loops on scroll
 
   handleRetry = () => {
     console.log('[MobileDocumentErrorBoundary] Manual retry...');
