@@ -430,7 +430,7 @@ export function MobileDocumentViewer({
       </div>
 
       {/* Document Content - Full height for native scrolling */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden relative" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Loading overlay - opaque, instant show/hide (no transitions for mobile performance) */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background z-20">

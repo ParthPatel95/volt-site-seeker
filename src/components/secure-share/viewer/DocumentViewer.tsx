@@ -1021,11 +1021,11 @@ export function DocumentViewer({
         </div>
 
         {/* Document Display */}
-        <ScrollArea className="flex-1 overscroll-contain w-full" ref={scrollAreaRef}>
+        <ScrollArea className="flex-1 overscroll-contain w-full h-full" ref={scrollAreaRef}>
           <div
             ref={containerRef} 
-            className="relative bg-muted/20 flex justify-center items-center p-2 sm:p-4 min-h-[600px] w-full"
-            style={{ overflow: zoom > 1 ? 'auto' : 'hidden' }}
+            className="relative bg-muted/20 flex justify-center p-2 sm:p-4 min-h-[600px] w-full"
+            style={{ overflow: 'auto', WebkitOverflowScrolling: 'touch' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -1065,7 +1065,7 @@ export function DocumentViewer({
               useNativePdfViewer ? (
                 // iOS Native PDF viewer with navigation info
                 <div 
-                  className="w-full h-full flex items-center justify-center max-w-full overflow-auto relative"
+                  className="w-full h-full flex flex-col max-w-full relative"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
                   {/* iOS Navigation Info Bar */}
