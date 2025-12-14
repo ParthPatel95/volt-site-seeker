@@ -68,16 +68,76 @@ export function LinkDetailsDialog({
     enabled: open && !!link?.id,
   });
 
-  // Fetch folder documents if folder link
-  const { data: folderDocuments } = useQuery({
-    queryKey: ['folder-documents', link?.folder_id],
+  // Fetch all descendant folders if folder link
+  const { data: subfolders } = useQuery({
+    queryKey: ['folder-subfolders', link?.folder_id],
     queryFn: async () => {
       if (!link?.folder_id) return [];
+      
+      const { data: allFolders, error } = await supabase
+        .from('secure_folders')
+        .select('id, name, parent_folder_id')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      
+      // BFS to find all descendant folder IDs
+      const descendantIds = new Set<string>();
+      const queue = [link.folder_id];
+      
+      while (queue.length > 0) {
+        const currentId = queue.shift()!;
+        descendantIds.add(currentId);
+        
+        for (const folder of (allFolders || [])) {
+          if (folder.parent_folder_id === currentId && !descendantIds.has(folder.id)) {
+            queue.push(folder.id);
+          }
+        }
+      }
+      
+      // Return subfolders (exclude the root folder itself)
+      return (allFolders || []).filter(f => 
+        descendantIds.has(f.id) && f.id !== link.folder_id
+      );
+    },
+    enabled: open && !!link?.folder_id,
+  });
+
+  // Fetch ALL documents from folder and its descendants
+  const { data: folderDocuments } = useQuery({
+    queryKey: ['folder-all-documents', link?.folder_id],
+    queryFn: async () => {
+      if (!link?.folder_id) return [];
+      
+      // First get all descendant folder IDs
+      const { data: allFolders } = await supabase
+        .from('secure_folders')
+        .select('id, parent_folder_id')
+        .eq('is_active', true);
+      
+      const descendantIds = new Set<string>();
+      const queue = [link.folder_id];
+      
+      while (queue.length > 0) {
+        const currentId = queue.shift()!;
+        descendantIds.add(currentId);
+        
+        for (const folder of (allFolders || [])) {
+          if (folder.parent_folder_id === currentId && !descendantIds.has(folder.id)) {
+            queue.push(folder.id);
+          }
+        }
+      }
+      
+      // Fetch ALL documents in ALL descendant folders
       const { data, error } = await supabase
         .from('secure_documents')
-        .select('id, file_name, file_type, file_size')
-        .eq('folder_id', link.folder_id)
+        .select('id, file_name, file_type, file_size, folder_id')
+        .in('folder_id', Array.from(descendantIds))
+        .eq('is_active', true)
         .order('file_name');
+        
       if (error) throw error;
       return data || [];
     },
@@ -126,17 +186,25 @@ export function LinkDetailsDialog({
 
   // Calculate contents for display
   const getContentsInfo = () => {
-    if (link.folder_id && folderDocuments) {
-      return { count: folderDocuments.length, items: folderDocuments };
+    if (link.folder_id) {
+      const folderCount = subfolders?.length || 0;
+      const fileCount = folderDocuments?.length || 0;
+      return { 
+        folderCount, 
+        fileCount,
+        totalCount: folderCount + fileCount,
+        folders: subfolders || [],
+        files: folderDocuments || []
+      };
     }
     if (link.bundle_id && bundleDocuments) {
       const items = bundleDocuments.map((bd: any) => bd.secure_documents).filter(Boolean);
-      return { count: items.length, items };
+      return { folderCount: 0, fileCount: items.length, totalCount: items.length, folders: [], files: items };
     }
     if (link.document_id && link.secure_documents) {
-      return { count: 1, items: [link.secure_documents] };
+      return { folderCount: 0, fileCount: 1, totalCount: 1, folders: [], files: [link.secure_documents] };
     }
-    return { count: 0, items: [] };
+    return { folderCount: 0, fileCount: 0, totalCount: 0, folders: [], files: [] };
   };
   const contentsInfo = getContentsInfo();
 
@@ -314,7 +382,7 @@ export function LinkDetailsDialog({
               )}
 
               {/* Contents Section */}
-              {contentsInfo.count > 0 && (
+              {contentsInfo.totalCount > 0 && (
                 <Card className="p-4">
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     {link.folder_id ? <Folder className="w-4 h-4 text-amber-500" /> : 
@@ -322,29 +390,39 @@ export function LinkDetailsDialog({
                      <FileText className="w-4 h-4 text-blue-500" />}
                     Contents
                     <Badge variant="secondary" className="h-5 px-1.5">
-                      {contentsInfo.count} {contentsInfo.count === 1 ? 'file' : 'files'}
+                      {contentsInfo.folderCount > 0 && `${contentsInfo.folderCount} folders, `}
+                      {contentsInfo.fileCount} {contentsInfo.fileCount === 1 ? 'file' : 'files'}
                     </Badge>
                   </h4>
-                  <ScrollArea className="max-h-48">
-                    <div className="space-y-2">
-                      {contentsInfo.items.map((item: any, index: number) => (
-                        <div 
-                          key={item?.id || index} 
-                          className="flex items-center justify-between gap-3 p-2 rounded-lg bg-muted/50"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-base shrink-0">{getFileIcon(item?.file_type)}</span>
-                            <span className="text-sm truncate">{item?.file_name || 'Unknown file'}</span>
-                          </div>
-                          {item?.file_size && (
-                            <span className="text-xs text-muted-foreground shrink-0">
-                              {formatFileSize(item.file_size)}
-                            </span>
-                          )}
+                  <div className="max-h-48 overflow-y-auto space-y-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {/* Subfolders first */}
+                    {contentsInfo.folders.map((folder: any) => (
+                      <div 
+                        key={folder.id} 
+                        className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10"
+                      >
+                        <Folder className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span className="text-sm truncate">{folder.name}</span>
+                      </div>
+                    ))}
+                    {/* Then files */}
+                    {contentsInfo.files.map((item: any, index: number) => (
+                      <div 
+                        key={item?.id || index} 
+                        className="flex items-center justify-between gap-3 p-2 rounded-lg bg-muted/50"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-base shrink-0">{getFileIcon(item?.file_type)}</span>
+                          <span className="text-sm truncate">{item?.file_name || 'Unknown file'}</span>
                         </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
+                        {item?.file_size && (
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {formatFileSize(item.file_size)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </Card>
               )}
 
