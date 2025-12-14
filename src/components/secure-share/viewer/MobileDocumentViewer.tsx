@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, AlertCircle, Languages, FileText, RefreshCw } from 'lucide-react';
+import { Download, Loader2, AlertCircle, Languages, FileText, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VideoPlayer } from './VideoPlayer';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
@@ -31,6 +31,7 @@ interface MobileDocumentViewerProps {
  * 2. No canvas memory issues (iOS Safari 384MB limit)
  * 3. No race conditions from complex state management
  * 4. Translation uses server-side text extraction (not client-side react-pdf)
+ * 5. Pinch-to-zoom support for images with pan when zoomed
  */
 export function MobileDocumentViewer({
   documentUrl,
@@ -54,6 +55,17 @@ export function MobileDocumentViewer({
   const [numPages, setNumPages] = useState<number>(0);
   const [internalRetryCount, setInternalRetryCount] = useState(0);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
+  
+  // Pinch-to-zoom state for images
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
+  const [touchStartZoom, setTouchStartZoom] = useState(1);
+  const [lastTapTime, setLastTapTime] = useState(0);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [panStartPosition, setPanStartPosition] = useState({ x: 0, y: 0 });
+  
   // Default to Google Viewer on mobile devices (native iframe often shows "Open" button instead of PDF)
   const [useGoogleViewer, setUseGoogleViewer] = useState(() => {
     const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
@@ -65,6 +77,7 @@ export function MobileDocumentViewer({
   const mountTimeRef = useRef(Date.now());
   const isMountedRef = useRef(true);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Detect iOS and Android for Google Docs viewer (native iframe often doesn't work on mobile)
   const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -303,6 +316,108 @@ export function MobileDocumentViewer({
     setTranslationOpen(false);
   }, []);
 
+  // ========== PINCH-TO-ZOOM HANDLERS FOR IMAGES ==========
+  
+  // Calculate distance between two touch points
+  const getTouchDistance = useCallback((touches: React.TouchList) => {
+    if (touches.length < 2) return null;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+  }, []);
+
+  // Handle pinch start
+  const handleImageTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Pinch gesture starting
+      e.preventDefault();
+      const distance = getTouchDistance(e.touches);
+      setTouchStartDistance(distance);
+      setTouchStartZoom(imageZoom);
+      setIsPanning(false);
+    } else if (e.touches.length === 1 && imageZoom > 1) {
+      // Single touch for panning when zoomed
+      setIsPanning(true);
+      setPanStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+      setPanStartPosition({ ...imagePosition });
+    }
+    
+    // Double-tap detection
+    const now = Date.now();
+    if (e.touches.length === 1 && now - lastTapTime < 300) {
+      // Double tap detected
+      if (imageZoom > 1) {
+        // Reset zoom
+        setImageZoom(1);
+        setImagePosition({ x: 0, y: 0 });
+      } else {
+        // Zoom in to 2x
+        setImageZoom(2);
+      }
+    }
+    setLastTapTime(now);
+  }, [getTouchDistance, imageZoom, imagePosition, lastTapTime]);
+
+  // Handle pinch move
+  const handleImageTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchStartDistance) {
+      // Pinch gesture - zoom
+      e.preventDefault();
+      const currentDistance = getTouchDistance(e.touches);
+      if (currentDistance) {
+        const scale = currentDistance / touchStartDistance;
+        const newZoom = Math.max(1, Math.min(4, touchStartZoom * scale));
+        setImageZoom(newZoom);
+        
+        // Reset position when zooming back to 1x
+        if (newZoom <= 1) {
+          setImagePosition({ x: 0, y: 0 });
+        }
+      }
+    } else if (e.touches.length === 1 && isPanning && imageZoom > 1) {
+      // Pan gesture when zoomed
+      const deltaX = e.touches[0].clientX - panStart.x;
+      const deltaY = e.touches[0].clientY - panStart.y;
+      
+      // Limit pan based on zoom level
+      const maxPan = (imageZoom - 1) * 150;
+      const newX = Math.max(-maxPan, Math.min(maxPan, panStartPosition.x + deltaX));
+      const newY = Math.max(-maxPan, Math.min(maxPan, panStartPosition.y + deltaY));
+      
+      setImagePosition({ x: newX, y: newY });
+    }
+  }, [touchStartDistance, touchStartZoom, getTouchDistance, isPanning, imageZoom, panStart, panStartPosition]);
+
+  // Handle touch end
+  const handleImageTouchEnd = useCallback(() => {
+    setTouchStartDistance(null);
+    setIsPanning(false);
+  }, []);
+
+  // Reset zoom when document changes
+  useEffect(() => {
+    setImageZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  }, [documentUrl]);
+
+  // Manual zoom buttons
+  const handleZoomIn = useCallback(() => {
+    setImageZoom(prev => Math.min(4, prev + 0.5));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    const newZoom = Math.max(1, imageZoom - 0.5);
+    setImageZoom(newZoom);
+    if (newZoom <= 1) {
+      setImagePosition({ x: 0, y: 0 });
+    }
+  }, [imageZoom]);
+
+  const handleResetZoom = useCallback(() => {
+    setImageZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  }, []);
+
   // Render timeout state with fallback options
   if (loadTimedOut && isPdf) {
     console.log('[MobileDocumentViewer] Rendering timeout state');
@@ -414,7 +529,45 @@ export function MobileDocumentViewer({
             </span>
           </div>
         )}
-        {!isPdf && <div className="flex-1" />}
+        
+        {/* Center: Zoom controls for Images */}
+        {isImage && (
+          <div className="flex-1 flex items-center justify-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleZoomOut}
+              disabled={imageZoom <= 1}
+              className="h-9 w-9 touch-manipulation"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[50px] text-center">
+              {Math.round(imageZoom * 100)}%
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleZoomIn}
+              disabled={imageZoom >= 4}
+              className="h-9 w-9 touch-manipulation"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </Button>
+            {imageZoom > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetZoom}
+                className="h-9 px-2 text-xs touch-manipulation"
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+        )}
+        
+        {!isPdf && !isImage && <div className="flex-1" />}
         
         {/* Right: Download */}
         {canDownload && (
@@ -490,13 +643,26 @@ export function MobileDocumentViewer({
           />
         )}
 
-        {/* Images */}
+        {/* Images with Pinch-to-Zoom */}
         {isImage && (
-          <div className="w-full h-full overflow-auto flex items-center justify-center p-4">
+          <div 
+            ref={imageContainerRef}
+            className="w-full h-full overflow-hidden flex items-center justify-center touch-manipulation"
+            onTouchStart={handleImageTouchStart}
+            onTouchMove={handleImageTouchMove}
+            onTouchEnd={handleImageTouchEnd}
+            style={{ touchAction: imageZoom > 1 ? 'none' : 'pan-y' }}
+          >
             <img
               src={documentUrl}
               alt="Document"
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-full object-contain select-none"
+              draggable={false}
+              style={{ 
+                transform: `scale(${imageZoom}) translate(${imagePosition.x / imageZoom}px, ${imagePosition.y / imageZoom}px)`,
+                transformOrigin: 'center center',
+                transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+              }}
               onLoad={() => {
                 console.log('[MobileDocumentViewer] Image loaded');
                 if (isMountedRef.current) {
@@ -510,6 +676,13 @@ export function MobileDocumentViewer({
                 }
               }}
             />
+            
+            {/* Zoom indicator overlay */}
+            {imageZoom > 1 && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium z-20 pointer-events-none">
+                {Math.round(imageZoom * 100)}%
+              </div>
+            )}
           </div>
         )}
 
