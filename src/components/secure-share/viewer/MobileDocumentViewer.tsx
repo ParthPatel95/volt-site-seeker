@@ -130,14 +130,14 @@ export function MobileDocumentViewer({
     
     console.log('[MobileDocumentViewer] Starting PDF load with iframe...');
     
-    // Set a timeout - if iframe doesn't load in 8 seconds, try Google Docs
+    // Set a timeout - if iframe doesn't load in 5 seconds, try Google Docs
     iframeTimeoutRef.current = setTimeout(() => {
       if (isMountedRef.current && viewerMode === 'loading' && !iframeLoaded) {
-        console.log('[MobileDocumentViewer] Iframe timeout, trying Google Docs Viewer');
+        console.log('[MobileDocumentViewer] Iframe timeout (5s), trying Google Docs Viewer');
         setViewerMode('google');
         setLoadProgress(50);
       }
-    }, 8000);
+    }, 5000);
     
     return () => {
       if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
@@ -594,6 +594,13 @@ export function MobileDocumentViewer({
             style={{ minHeight: 'calc(100vh - 120px)' }}
             title="PDF Document"
             onLoad={handleIframeLoad}
+            onError={() => {
+              console.log('[MobileDocumentViewer] Iframe error event, switching to Google Docs');
+              if (isMountedRef.current) {
+                setViewerMode('google');
+                setLoadProgress(50);
+              }
+            }}
           />
         )}
         
