@@ -66,13 +66,10 @@ export function MobileDocumentViewer({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [panStartPosition, setPanStartPosition] = useState({ x: 0, y: 0 });
   
-  // Default to Google Viewer on mobile devices (native iframe often shows "Open" button instead of PDF)
-  const [useGoogleViewer, setUseGoogleViewer] = useState(() => {
-    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-    const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    // Use Google Viewer by default on mobile devices
-    return isAndroid || isIOS;
-  });
+  // Default to native iframe first - only switch to Google Viewer on failure
+  // This reduces loading time and prevents Google Viewer timeouts
+  const [useGoogleViewer, setUseGoogleViewer] = useState(false);
+  const [nativeViewerFailed, setNativeViewerFailed] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const mountTimeRef = useRef(Date.now());
   const isMountedRef = useRef(true);
@@ -231,12 +228,21 @@ export function MobileDocumentViewer({
 
   const handleIframeError = useCallback(() => {
     const elapsed = Date.now() - mountTimeRef.current;
-    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms', internalRetryCount });
+    console.error('[MobileDocumentViewer] Iframe FAILED to load', { elapsed: elapsed + 'ms', internalRetryCount, useGoogleViewer });
     if (isMountedRef.current) {
+      // If native viewer failed, try Google Viewer as fallback
+      if (!useGoogleViewer && !nativeViewerFailed) {
+        console.log('[MobileDocumentViewer] Native viewer failed, trying Google Viewer');
+        setNativeViewerFailed(true);
+        setUseGoogleViewer(true);
+        setIsLoading(true);
+        mountTimeRef.current = Date.now();
+        return;
+      }
       setIsLoading(false);
       setLoadError('Failed to load document. Please try downloading instead.');
     }
-  }, [internalRetryCount]);
+  }, [internalRetryCount, useGoogleViewer, nativeViewerFailed]);
 
   const handleRetry = useCallback(() => {
     console.log('[MobileDocumentViewer] Retrying document load', { retryCount: internalRetryCount + 1 });

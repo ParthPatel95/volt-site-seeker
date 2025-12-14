@@ -498,6 +498,19 @@
 
   body {
     -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  /* Secure Share document viewer - prevent pull-to-refresh */
+  .secure-share-viewer {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pinch-zoom;
+  }
+
+  /* Prevent iOS rubber-banding in document viewers */
+  .secure-share-viewer iframe,
+  .secure-share-viewer .pdf-container {
+    overscroll-behavior: contain;
     scrollbar-width: none;    /* Firefox */
   }
 

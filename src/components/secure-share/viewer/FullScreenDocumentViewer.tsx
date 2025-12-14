@@ -256,7 +256,14 @@ export function FullScreenDocumentViewer({
         </div>
 
         {/* Mobile Document Viewer with Error Boundary */}
-        <div className="absolute inset-0 pt-14 safe-area-pb overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div 
+          className="absolute inset-0 pt-14 safe-area-pb overflow-y-auto secure-share-viewer" 
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y pinch-zoom'
+          }}
+        >
           <MobileDocumentErrorBoundary
             documentName={fileName}
             onRetry={handleMobileViewerRetry}
@@ -332,11 +339,9 @@ export function FullScreenDocumentViewer({
       className="fixed inset-0 z-50 bg-background animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
       {/* Header Bar - Fixed 64px height with safe area support */}
+      {/* NOTE: Touch handlers removed from header to prevent scroll conflicts */}
       <div 
         className="absolute top-0 left-0 right-0 z-20 border-b bg-card/95 backdrop-blur-xl shadow-sm h-16 safe-area-pt safe-area-pl safe-area-pr"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
       >
         <div className="container mx-auto px-4 h-full flex items-center justify-between gap-2">
           {/* Left: Back Button */}
@@ -418,7 +423,14 @@ export function FullScreenDocumentViewer({
       </div>
 
       {/* Document Viewer with safe area support */}
-      <div className="absolute inset-0 pt-16 safe-area-pb overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div 
+        className="absolute inset-0 pt-16 safe-area-pb overflow-y-auto secure-share-viewer" 
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          touchAction: 'pan-y pinch-zoom'
+        }}
+      >
         <DocumentViewer
           documentUrl={fileUrl}
           documentType={fileType}
