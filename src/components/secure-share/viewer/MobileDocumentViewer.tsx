@@ -23,15 +23,16 @@ interface MobileDocumentViewerProps {
   retryKey?: number;
 }
 
-type ViewerMode = 'loading' | 'blob' | 'google' | 'download-prompt' | 'error';
+// Simplified viewer modes for PDF
+type ViewerMode = 'loading' | 'iframe' | 'google' | 'download-prompt' | 'error' | 'ready';
 
 /**
- * MobileDocumentViewer - Simplified blob-based PDF viewer for mobile
+ * MobileDocumentViewer - Simplified iframe-based PDF viewer for mobile
  * 
  * Architecture:
- * 1. Fetch PDF as blob -> create object URL -> use native viewer
- * 2. Fallback to Google Docs Viewer on blob failure
- * 3. Fallback to download prompt if both fail
+ * 1. Use iframe with direct signed URL (most reliable on mobile)
+ * 2. Timeout fallback to Google Docs Viewer after 8 seconds
+ * 3. Timeout fallback to download prompt after another 10 seconds
  * 4. Simple state machine with single viewerMode variable
  */
 export function MobileDocumentViewer({
@@ -53,11 +54,11 @@ export function MobileDocumentViewer({
   
   // === SIMPLIFIED STATE ===
   const [viewerMode, setViewerMode] = useState<ViewerMode>('loading');
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [translationOpen, setTranslationOpen] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
   
   // Image zoom state
   const [imageZoom, setImageZoom] = useState(1);
@@ -71,9 +72,9 @@ export function MobileDocumentViewer({
   
   // Refs
   const isMountedRef = useRef(true);
-  const blobUrlRef = useRef<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const googleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // File type detection
   const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
@@ -105,102 +106,62 @@ export function MobileDocumentViewer({
     return () => {
       isMountedRef.current = false;
       
-      // Cleanup blob URL
-      if (blobUrlRef.current) {
-        URL.revokeObjectURL(blobUrlRef.current);
-        blobUrlRef.current = null;
-      }
-      
-      // Abort any pending fetches
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      // Clear timeouts
+      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+      if (googleTimeoutRef.current) clearTimeout(googleTimeoutRef.current);
       
       console.log('[MobileDocumentViewer] UNMOUNT - cleaned up');
     };
   }, []);
 
-  // === PDF BLOB LOADING ===
+  // === PDF LOADING with timeout-based fallback ===
   useEffect(() => {
     if (!isPdf || !documentUrl) return;
     
-    // Cleanup previous blob URL
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-      setBlobUrl(null);
-    }
+    // Reset state for new document
+    setViewerMode('loading');
+    setLoadProgress(20);
+    setIframeLoaded(false);
+    setErrorMessage(null);
     
-    // Abort previous fetch
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+    // Clear previous timeouts
+    if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+    if (googleTimeoutRef.current) clearTimeout(googleTimeoutRef.current);
     
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
+    console.log('[MobileDocumentViewer] Starting PDF load with iframe...');
     
-    const loadPdfAsBlob = async () => {
-      console.log('[MobileDocumentViewer] Starting PDF blob fetch...');
-      setViewerMode('loading');
-      setLoadProgress(10);
-      setErrorMessage(null);
-      
-      try {
-        // Fetch PDF as blob
-        const response = await fetch(documentUrl, { 
-          signal: controller.signal,
-          credentials: 'omit' // Avoid CORS issues with credentials
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        if (!isMountedRef.current) return;
-        setLoadProgress(50);
-        
-        const blob = await response.blob();
-        
-        if (!isMountedRef.current) return;
-        setLoadProgress(80);
-        
-        // Create object URL
-        const objectUrl = URL.createObjectURL(blob);
-        blobUrlRef.current = objectUrl;
-        
-        if (!isMountedRef.current) {
-          URL.revokeObjectURL(objectUrl);
-          return;
-        }
-        
-        setBlobUrl(objectUrl);
-        setViewerMode('blob');
-        setLoadProgress(100);
-        console.log('[MobileDocumentViewer] PDF blob loaded successfully');
-        
-      } catch (error: any) {
-        if (error.name === 'AbortError') {
-          console.log('[MobileDocumentViewer] PDF fetch aborted');
-          return;
-        }
-        
-        console.error('[MobileDocumentViewer] Blob fetch failed:', error.message);
-        
-        if (!isMountedRef.current) return;
-        
-        // Fallback to Google Docs Viewer
-        console.log('[MobileDocumentViewer] Falling back to Google Docs Viewer');
+    // Set a timeout - if iframe doesn't load in 8 seconds, try Google Docs
+    iframeTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current && viewerMode === 'loading' && !iframeLoaded) {
+        console.log('[MobileDocumentViewer] Iframe timeout, trying Google Docs Viewer');
         setViewerMode('google');
-        setLoadProgress(0);
+        setLoadProgress(50);
       }
-    };
-    
-    loadPdfAsBlob();
+    }, 8000);
     
     return () => {
-      controller.abort();
+      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
     };
   }, [isPdf, documentUrl, retryKey]);
+
+  // === Google Docs Viewer timeout ===
+  useEffect(() => {
+    if (viewerMode !== 'google') return;
+    
+    console.log('[MobileDocumentViewer] Google Docs Viewer active, setting timeout...');
+    
+    googleTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current && viewerMode === 'google') {
+        console.log('[MobileDocumentViewer] Google Docs timeout, showing download prompt');
+        setViewerMode('download-prompt');
+        setErrorMessage('Unable to display this PDF on your device.');
+      }
+    }, 10000);
+    
+    return () => {
+      if (googleTimeoutRef.current) clearTimeout(googleTimeoutRef.current);
+    };
+  }, [viewerMode]);
 
   // === PDF METADATA (page count) ===
   useEffect(() => {
@@ -251,7 +212,7 @@ export function MobileDocumentViewer({
     if (!isPdf && !isImage) {
       const timer = setTimeout(() => {
         if (isMountedRef.current) {
-          setViewerMode('blob'); // Use 'blob' as generic "loaded" state
+          setViewerMode('ready');
         }
       }, 100);
       return () => clearTimeout(timer);
@@ -259,20 +220,28 @@ export function MobileDocumentViewer({
   }, [isPdf, isImage]);
 
   // === HANDLERS ===
+  const handleIframeLoad = useCallback(() => {
+    console.log('[MobileDocumentViewer] Iframe loaded successfully');
+    if (isMountedRef.current) {
+      setIframeLoaded(true);
+      setViewerMode('iframe');
+      setLoadProgress(100);
+      // Clear the timeout since iframe loaded
+      if (iframeTimeoutRef.current) {
+        clearTimeout(iframeTimeoutRef.current);
+        iframeTimeoutRef.current = null;
+      }
+    }
+  }, []);
+
   const handleRetry = useCallback(() => {
     console.log('[MobileDocumentViewer] Retrying...');
     setViewerMode('loading');
     setLoadProgress(0);
     setErrorMessage(null);
+    setIframeLoaded(false);
     
-    // Force re-fetch by triggering the useEffect
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-      setBlobUrl(null);
-    }
-    
-    // Increment retryKey to trigger refetch
+    // Force re-render by dispatching event
     window.dispatchEvent(new CustomEvent('mobile-pdf-retry'));
   }, []);
 
@@ -281,6 +250,10 @@ export function MobileDocumentViewer({
     if (isMountedRef.current) {
       setViewerMode('download-prompt');
       setErrorMessage('Unable to display this PDF on your device.');
+      if (googleTimeoutRef.current) {
+        clearTimeout(googleTimeoutRef.current);
+        googleTimeoutRef.current = null;
+      }
     }
   }, []);
 
@@ -288,6 +261,10 @@ export function MobileDocumentViewer({
     console.log('[MobileDocumentViewer] Google Viewer loaded');
     if (isMountedRef.current) {
       setLoadProgress(100);
+      if (googleTimeoutRef.current) {
+        clearTimeout(googleTimeoutRef.current);
+        googleTimeoutRef.current = null;
+      }
     }
   }, []);
 
@@ -330,7 +307,7 @@ export function MobileDocumentViewer({
 
   const handleImageLoad = useCallback(() => {
     if (isMountedRef.current) {
-      setViewerMode('blob');
+      setViewerMode('ready');
     }
   }, []);
 
@@ -574,7 +551,7 @@ export function MobileDocumentViewer({
         }}
       >
         {/* Loading overlay with progress */}
-        {viewerMode === 'loading' && (
+        {viewerMode === 'loading' && isPdf && (
           <div className="absolute inset-0 flex items-center justify-center bg-background z-20">
             <div className="text-center">
               <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
@@ -608,25 +585,22 @@ export function MobileDocumentViewer({
           </div>
         )}
 
-        {/* PDF - Blob URL viewer (primary) */}
-        {isPdf && viewerMode === 'blob' && blobUrl && (
-          <object
-            data={blobUrl}
-            type="application/pdf"
+        {/* PDF - Primary iframe with direct signed URL (shows during loading and iframe mode) */}
+        {isPdf && (viewerMode === 'loading' || viewerMode === 'iframe') && (
+          <iframe
+            key={`pdf-iframe-${retryKey}`}
+            src={documentUrl}
             className="w-full h-full border-0"
             style={{ minHeight: 'calc(100vh - 120px)' }}
-          >
-            <embed 
-              src={blobUrl} 
-              type="application/pdf"
-              className="w-full h-full"
-            />
-          </object>
+            title="PDF Document"
+            onLoad={handleIframeLoad}
+          />
         )}
         
         {/* PDF - Google Docs Viewer (fallback) */}
         {isPdf && viewerMode === 'google' && (
           <iframe
+            key={`google-iframe-${retryKey}`}
             src={`https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=true`}
             className="w-full h-full border-0"
             style={{ minHeight: 'calc(100vh - 120px)' }}
@@ -698,7 +672,7 @@ export function MobileDocumentViewer({
                 className="w-full"
                 onCanPlay={() => {
                   if (isMountedRef.current) {
-                    setViewerMode('blob');
+                    setViewerMode('ready');
                   }
                 }}
                 onError={() => {
@@ -719,7 +693,7 @@ export function MobileDocumentViewer({
               url={documentUrl} 
               onLoad={() => {
                 if (isMountedRef.current) {
-                  setViewerMode('blob');
+                  setViewerMode('ready');
                 }
               }}
               onError={() => {
