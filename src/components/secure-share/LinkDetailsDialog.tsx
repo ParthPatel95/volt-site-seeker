@@ -440,10 +440,10 @@ export function LinkDetailsDialog({
                                   {activity.browser}
                                 </Badge>
                               )}
-                              {activity.pages_viewed && (
+                              {activity.pages_viewed && Array.isArray(activity.pages_viewed) && activity.pages_viewed.length > 0 && (
                                 <Badge variant="outline" className="gap-1 text-xs">
                                   <FileText className="w-3 h-3" />
-                                  {activity.pages_viewed} pages
+                                  {activity.pages_viewed.length} pages
                                 </Badge>
                               )}
                             </div>
