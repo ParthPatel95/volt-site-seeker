@@ -17,7 +17,16 @@ async function extractTextFromPdfWithVision(documentUrl: string, pageNumber: num
     }
     
     const pdfArrayBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfArrayBuffer)));
+    
+    // Chunked base64 encoding to avoid call stack overflow on large PDFs
+    const uint8Array = new Uint8Array(pdfArrayBuffer);
+    const chunkSize = 32768; // 32KB chunks
+    let binaryString = '';
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
+    }
+    const pdfBase64 = btoa(binaryString);
     
     console.log('[translate-document] PDF fetched, size:', pdfArrayBuffer.byteLength, 'bytes');
     

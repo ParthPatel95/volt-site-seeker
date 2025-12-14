@@ -568,12 +568,7 @@ export function MobileDocumentViewer({
           </div>
         )}
 
-        {/* Page rendering indicator */}
-        {isRendering && viewerMode === 'ready' && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm z-20">
-            Loading page {currentPage}...
-          </div>
-        )}
+        {/* Page rendering indicator removed - was causing glitchy UX */}
 
         {/* Watermark overlay */}
         {watermarkEnabled && (
