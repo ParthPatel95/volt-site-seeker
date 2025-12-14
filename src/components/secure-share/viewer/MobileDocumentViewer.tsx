@@ -55,6 +55,8 @@ export function MobileDocumentViewer({
   const [currentPage, setCurrentPage] = useState(1);
   const [translationOpen, setTranslationOpen] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [canvasReady, setCanvasReady] = useState(false);
   
   // Image zoom state
   const [imageZoom, setImageZoom] = useState(1);
@@ -172,56 +174,69 @@ export function MobileDocumentViewer({
     };
   }, [isPdf, documentUrl, retryKey]);
 
-  // Render current page to canvas
+  // Render current page to canvas using double-buffering to prevent flashing
   useEffect(() => {
-    if (!pdfDocRef.current || !canvasRef.current || currentPage < 1) return;
+    if (!numPages || currentPage < 1) return;
+    
+    const pdfDoc = pdfDocRef.current;
+    if (!pdfDoc) return;
     
     let isCancelled = false;
     
     const renderPage = async () => {
       try {
-        setIsRendering(true);
+        // Only show loading state on initial load, not page transitions
+        if (!initialLoadComplete) {
+          setIsRendering(true);
+        }
         
-        const page = await pdfDocRef.current.getPage(currentPage);
+        const page = await pdfDoc.getPage(currentPage);
         
         if (isCancelled) return;
-        
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        
-        const context = canvas.getContext('2d');
-        if (!context) return;
         
         // Calculate scale to fit container width
         const containerWidth = containerRef.current?.clientWidth || window.innerWidth;
         const baseViewport = page.getViewport({ scale: 1 });
-        const scale = (containerWidth - 32) / baseViewport.width; // 16px padding on each side
-        const viewport = page.getViewport({ scale: Math.min(scale, 2) }); // Cap scale at 2x for performance
+        const scale = (containerWidth - 32) / baseViewport.width;
+        const viewport = page.getViewport({ scale: Math.min(scale, 2) });
         
-        // Set canvas dimensions
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        // Double-buffering: render to offscreen canvas first
+        const offscreen = document.createElement('canvas');
+        offscreen.width = viewport.width;
+        offscreen.height = viewport.height;
+        const offscreenContext = offscreen.getContext('2d');
         
-        // Clear canvas
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        if (!offscreenContext) return;
         
-        // Render page
+        // Render page to offscreen canvas
         await page.render({
-          canvasContext: context,
+          canvasContext: offscreenContext,
           viewport: viewport
         }).promise;
         
-        if (isMountedRef.current && !isCancelled) {
+        if (isCancelled) return;
+        
+        // Only update visible canvas after render is complete
+        const canvas = canvasRef.current;
+        if (canvas && isMountedRef.current) {
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const context = canvas.getContext('2d');
+          if (context) {
+            // Draw completed render to visible canvas - no flash
+            context.drawImage(offscreen, 0, 0);
+          }
+          
           setViewerMode('ready');
           setIsRendering(false);
-          trackPageChange(currentPage);
+          setInitialLoadComplete(true);
+          setCanvasReady(true);
         }
         
       } catch (error: any) {
         console.error('[MobileDocumentViewer] Page render error:', error);
         if (isMountedRef.current && !isCancelled) {
           setIsRendering(false);
-          // Don't set error for render failures - just leave previous content
         }
       }
     };
@@ -231,7 +246,14 @@ export function MobileDocumentViewer({
     return () => {
       isCancelled = true;
     };
-  }, [pdfDocRef.current, currentPage, trackPageChange]);
+  }, [numPages, currentPage, retryKey]);
+
+  // Separate effect for page tracking to avoid render coupling
+  useEffect(() => {
+    if (viewerMode === 'ready' && currentPage > 0 && initialLoadComplete) {
+      trackPageChange(currentPage);
+    }
+  }, [currentPage, viewerMode, initialLoadComplete, trackPageChange]);
 
   // Page navigation
   const goToPreviousPage = useCallback(() => {
@@ -402,10 +424,12 @@ export function MobileDocumentViewer({
     setIsPanning(false);
   }, []);
 
-  // Reset zoom when document changes
+  // Reset state when document changes
   useEffect(() => {
     setImageZoom(1);
     setImagePosition({ x: 0, y: 0 });
+    setInitialLoadComplete(false);
+    setCanvasReady(false);
   }, [documentUrl]);
 
   const handleZoomIn = useCallback(() => {
@@ -558,8 +582,8 @@ export function MobileDocumentViewer({
           overscrollBehavior: 'contain'
         }}
       >
-        {/* Loading overlay */}
-        {viewerMode === 'loading' && isPdf && (
+        {/* Loading overlay - only on initial load, not page transitions */}
+        {viewerMode === 'loading' && isPdf && !initialLoadComplete && (
           <div className="absolute inset-0 flex items-center justify-center bg-background z-20">
             <div className="text-center">
               <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
@@ -567,8 +591,6 @@ export function MobileDocumentViewer({
             </div>
           </div>
         )}
-
-        {/* Page rendering indicator removed - was causing glitchy UX */}
 
         {/* Watermark overlay */}
         {watermarkEnabled && (
@@ -597,7 +619,11 @@ export function MobileDocumentViewer({
             <canvas 
               ref={canvasRef}
               className="max-w-full shadow-lg bg-white"
-              style={{ touchAction: 'pan-y' }}
+              style={{ 
+                touchAction: 'pan-y',
+                opacity: canvasReady ? 1 : 0,
+                transition: 'opacity 150ms ease-in'
+              }}
             />
           </div>
         )}
