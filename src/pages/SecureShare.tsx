@@ -11,7 +11,7 @@ import { LinksManagement } from '@/components/secure-share/LinksManagement';
 import { BundlesTab } from '@/components/secure-share/BundlesTab';
 import { AnalyticsTab } from '@/components/secure-share/AnalyticsTab';
 import { SettingsTab } from '@/components/secure-share/SettingsTab';
-import { useRealTimeViewerTracking } from '@/hooks/useRealTimeViewerTracking';
+import { ViewerTrackingProvider, useViewerTracking } from '@/contexts/ViewerTrackingContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -24,10 +24,10 @@ const navItems = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-export default function SecureShare() {
+function SecureShareContent() {
   const [activeTab, setActiveTab] = useState('documents');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { totalActiveViewers } = useRealTimeViewerTracking();
+  const { totalActiveViewers } = useViewerTracking();
 
   // Quick stats
   const { data: quickStats } = useQuery({
@@ -229,5 +229,13 @@ export default function SecureShare() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function SecureShare() {
+  return (
+    <ViewerTrackingProvider>
+      <SecureShareContent />
+    </ViewerTrackingProvider>
   );
 }

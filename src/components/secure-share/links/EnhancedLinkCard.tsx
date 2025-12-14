@@ -19,7 +19,7 @@ import { formatDistanceToNow, isPast } from 'date-fns';
 import { LinkHeatIndicator } from './LinkHeatIndicator';
 import { LinkEngagementSparkline } from './LinkEngagementSparkline';
 import { ViewerTimeline } from './ViewerTimeline';
-import { useRealTimeViewerTracking } from '@/hooks/useRealTimeViewerTracking';
+import { useViewerTracking } from '@/contexts/ViewerTrackingContext';
 import { subDays } from 'date-fns';
 
 interface EnhancedLinkCardProps {
@@ -51,7 +51,7 @@ export function EnhancedLinkCard({
 }: EnhancedLinkCardProps) {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
-  const { hasActiveViewers } = useRealTimeViewerTracking([link.id]);
+  const { hasActiveViewers } = useViewerTracking();
 
   const handleCopyLink = () => {
     const baseUrl = 'https://wattbyte.com';
