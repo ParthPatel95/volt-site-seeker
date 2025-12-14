@@ -1,3 +1,4 @@
+// Bitcoin Education Page
 import React, { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingBackground } from '@/components/landing/LandingBackground';
