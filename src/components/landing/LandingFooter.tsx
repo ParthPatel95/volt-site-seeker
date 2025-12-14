@@ -59,6 +59,11 @@ export const LandingFooter = () => {
             <h3 className="text-sm font-semibold text-watt-navy mb-3">Resources</h3>
             <ul className="space-y-2">
               <li>
+                <Link to="/bitcoin" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Learn Bitcoin
+                </Link>
+              </li>
+              <li>
                 <Link to="/app" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   VoltScout Platform
                 </Link>

@@ -25,6 +25,14 @@ export const LandingNavigation = () => {
         <Button 
           variant="ghost" 
           size="sm"
+          onClick={() => navigate('/bitcoin')}
+          className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden md:flex"
+        >
+          Learn Bitcoin
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
           onClick={() => navigate('/hosting')}
           className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden sm:flex"
         >
@@ -39,7 +47,7 @@ export const LandingNavigation = () => {
           WattFund
         </Button>
         <Button 
-          variant="outline" 
+          variant="outline"
           size="sm"
           onClick={() => navigate('/app')}
           className="border-none hover:bg-watt-bitcoin/90 bg-watt-bitcoin text-white text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target font-semibold"
