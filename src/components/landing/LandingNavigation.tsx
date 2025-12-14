@@ -39,14 +39,6 @@ export const LandingNavigation = () => {
           Hosting
         </Button>
         <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate('/wattfund')}
-          className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden sm:flex"
-        >
-          WattFund
-        </Button>
-        <Button 
           variant="outline"
           size="sm"
           onClick={() => navigate('/app')}

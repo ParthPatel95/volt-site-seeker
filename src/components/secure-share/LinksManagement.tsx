@@ -49,6 +49,8 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
 import { EditLinkDialog } from './EditLinkDialog';
 import { LinkDetailsDialog } from './LinkDetailsDialog';
+import { LinkStatsOverview } from './links/LinkStatsOverview';
+import { EnhancedLinkCard } from './links/EnhancedLinkCard';
 
 export function LinksManagement() {
   const { toast } = useToast();
@@ -409,7 +411,10 @@ export function LinksManagement() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
+      {/* Stats Overview */}
+      <LinkStatsOverview />
+
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -645,7 +650,7 @@ export function LinksManagement() {
                                 </span>
                               </div>
                               <span className="text-xs text-muted-foreground shrink-0">
-                                {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                                {formatDistanceToNow(new Date(activity.opened_at), { addSuffix: true })}
                               </span>
                             </div>
                           ))}
