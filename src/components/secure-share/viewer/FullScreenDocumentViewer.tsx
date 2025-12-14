@@ -256,7 +256,7 @@ export function FullScreenDocumentViewer({
         </div>
 
         {/* Mobile Document Viewer with Error Boundary */}
-        <div className="absolute inset-0 pt-14 safe-area-pb">
+        <div className="absolute inset-0 pt-14 safe-area-pb overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
           <MobileDocumentErrorBoundary
             documentName={fileName}
             onRetry={handleMobileViewerRetry}
@@ -418,7 +418,7 @@ export function FullScreenDocumentViewer({
       </div>
 
       {/* Document Viewer with safe area support */}
-      <div className="absolute inset-0 pt-16 safe-area-pb">
+      <div className="absolute inset-0 pt-16 safe-area-pb overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         <DocumentViewer
           documentUrl={fileUrl}
           documentType={fileType}
