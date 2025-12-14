@@ -14,12 +14,26 @@ interface State {
 }
 
 export class MobileDocumentErrorBoundary extends Component<Props, State> {
+  private retryCount = 0;
+  private maxAutoRetries = 2;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Filter out transient scroll/resize errors
+    const isTransientError = 
+      error.message?.includes('ResizeObserver') ||
+      error.message?.includes('scroll') ||
+      error.message?.includes('touch');
+    
+    if (isTransientError) {
+      console.warn('[MobileDocumentErrorBoundary] Ignoring transient error:', error.message);
+      return { hasError: false };
+    }
+    
     console.error('[MobileDocumentErrorBoundary] Caught error:', error.message);
     return { hasError: true, error };
   }
@@ -32,8 +46,20 @@ export class MobileDocumentErrorBoundary extends Component<Props, State> {
     });
   }
 
+  componentDidUpdate(prevProps: Props) {
+    // Auto-retry once on document change
+    if (this.state.hasError && this.retryCount < this.maxAutoRetries) {
+      this.retryCount++;
+      console.log('[MobileDocumentErrorBoundary] Auto-retry attempt', this.retryCount);
+      setTimeout(() => {
+        this.setState({ hasError: false, error: undefined });
+      }, 500);
+    }
+  }
+
   handleRetry = () => {
-    console.log('[MobileDocumentErrorBoundary] Retrying...');
+    console.log('[MobileDocumentErrorBoundary] Manual retry...');
+    this.retryCount = 0; // Reset retry count on manual retry
     this.setState({ hasError: false, error: undefined });
     this.props.onRetry?.();
   };
