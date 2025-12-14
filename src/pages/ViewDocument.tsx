@@ -29,7 +29,6 @@ export default function ViewDocument() {
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Document request type for batch fetching
   interface DocRequest {
@@ -214,12 +213,11 @@ export default function ViewDocument() {
   // Fetch link data - no authentication required (security via token)
   const { data: linkData, isLoading, error, refetch } = useQuery({
     queryKey: ['secure-link', token],
-    enabled: !!token && isOnline,
+    enabled: !!token,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     staleTime: 30000,
     gcTime: 60000,
-    networkMode: 'offlineFirst',
     queryFn: async () => {
       console.log('[ViewDocument] Starting query for token:', token);
       if (!token) throw new Error('No token provided');
@@ -467,19 +465,7 @@ export default function ViewDocument() {
     }
   }, [isLoading]);
 
-  // Network status detection
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  // Removed aggressive network detection - was causing scroll refresh issues
 
   // Clear stored auth return URL once document loads successfully
   useEffect(() => {
@@ -568,27 +554,7 @@ export default function ViewDocument() {
     );
   }
 
-  // Show offline message
-  if (!isOnline) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-destructive/10">
-              <Lock className="w-8 h-8 text-destructive" />
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold mb-2">No Internet Connection</h1>
-          <p className="text-muted-foreground mb-6">
-            Please check your network connection and try again.
-          </p>
-          <Button onClick={() => window.location.reload()} className="w-full">
-            Retry
-          </Button>
-        </Card>
-      </div>
-    );
-  }
+  // Removed offline check - was causing issues on mobile
 
   if (authLoading || isLoading) {
     return (

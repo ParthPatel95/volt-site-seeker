@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, AlertCircle, Languages, FileText, RefreshCw, ZoomIn, ZoomOut, ExternalLink } from 'lucide-react';
+import { Download, Loader2, AlertCircle, Languages, FileText, RefreshCw, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VideoPlayer } from './VideoPlayer';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
@@ -23,17 +23,13 @@ interface MobileDocumentViewerProps {
   retryKey?: number;
 }
 
-// Simplified viewer modes for PDF
-type ViewerMode = 'loading' | 'iframe' | 'google' | 'download-prompt' | 'error' | 'ready';
+type ViewerMode = 'loading' | 'ready' | 'error';
 
 /**
- * MobileDocumentViewer - Simplified iframe-based PDF viewer for mobile
+ * MobileDocumentViewer - Canvas-based PDF.js renderer for mobile
  * 
- * Architecture:
- * 1. Use iframe with direct signed URL (most reliable on mobile)
- * 2. Timeout fallback to Google Docs Viewer after 8 seconds
- * 3. Timeout fallback to download prompt after another 10 seconds
- * 4. Simple state machine with single viewerMode variable
+ * Uses PDF.js to render pages onto canvas elements, which works reliably on iOS Safari
+ * unlike iframes which have compatibility issues.
  */
 export function MobileDocumentViewer({
   documentUrl,
@@ -52,13 +48,13 @@ export function MobileDocumentViewer({
 }: MobileDocumentViewerProps) {
   const { toast } = useToast();
   
-  // === SIMPLIFIED STATE ===
+  // Core state
   const [viewerMode, setViewerMode] = useState<ViewerMode>('loading');
-  const [loadProgress, setLoadProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [translationOpen, setTranslationOpen] = useState(false);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [isRendering, setIsRendering] = useState(false);
   
   // Image zoom state
   const [imageZoom, setImageZoom] = useState(1);
@@ -72,9 +68,10 @@ export function MobileDocumentViewer({
   
   // Refs
   const isMountedRef = useRef(true);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pdfDocRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const googleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // File type detection
   const isPdf = documentType === 'application/pdf' || documentUrl?.endsWith('.pdf');
@@ -99,83 +96,44 @@ export function MobileDocumentViewer({
     viewerEmail
   });
 
-  // === CLEANUP ON UNMOUNT ===
+  // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;
     
     return () => {
       isMountedRef.current = false;
-      
-      // Clear timeouts
-      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
-      if (googleTimeoutRef.current) clearTimeout(googleTimeoutRef.current);
-      
-      console.log('[MobileDocumentViewer] UNMOUNT - cleaned up');
+      if (pdfDocRef.current) {
+        pdfDocRef.current.destroy();
+        pdfDocRef.current = null;
+      }
     };
   }, []);
 
-  // === PDF LOADING with timeout-based fallback ===
-  useEffect(() => {
-    if (!isPdf || !documentUrl) return;
-    
-    // Reset state for new document
-    setViewerMode('loading');
-    setLoadProgress(20);
-    setIframeLoaded(false);
-    setErrorMessage(null);
-    
-    // Clear previous timeouts
-    if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
-    if (googleTimeoutRef.current) clearTimeout(googleTimeoutRef.current);
-    
-    console.log('[MobileDocumentViewer] Starting PDF load with iframe...');
-    
-    // Set a timeout - if iframe doesn't load in 5 seconds, try Google Docs
-    iframeTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current && viewerMode === 'loading' && !iframeLoaded) {
-        console.log('[MobileDocumentViewer] Iframe timeout (5s), trying Google Docs Viewer');
-        setViewerMode('google');
-        setLoadProgress(50);
-      }
-    }, 5000);
-    
-    return () => {
-      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
-    };
-  }, [isPdf, documentUrl, retryKey]);
-
-  // === Google Docs Viewer timeout ===
-  useEffect(() => {
-    if (viewerMode !== 'google') return;
-    
-    console.log('[MobileDocumentViewer] Google Docs Viewer active, setting timeout...');
-    
-    googleTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current && viewerMode === 'google') {
-        console.log('[MobileDocumentViewer] Google Docs timeout, showing download prompt');
-        setViewerMode('download-prompt');
-        setErrorMessage('Unable to display this PDF on your device.');
-      }
-    }, 10000);
-    
-    return () => {
-      if (googleTimeoutRef.current) clearTimeout(googleTimeoutRef.current);
-    };
-  }, [viewerMode]);
-
-  // === PDF METADATA (page count) ===
+  // Load PDF and render page using canvas
   useEffect(() => {
     if (!isPdf || !documentUrl) return;
     
     let isCancelled = false;
     
-    const loadPdfMetadata = async () => {
+    const loadPdf = async () => {
       try {
+        setViewerMode('loading');
+        setErrorMessage(null);
+        
+        // Cleanup previous PDF
+        if (pdfDocRef.current) {
+          pdfDocRef.current.destroy();
+          pdfDocRef.current = null;
+        }
+        
         const pdfjsLib = await import('pdfjs-dist');
         
+        // Set worker
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
           pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
         }
+        
+        console.log('[MobileDocumentViewer] Loading PDF...');
         
         const loadingTask = pdfjsLib.getDocument({
           url: documentUrl,
@@ -183,31 +141,141 @@ export function MobileDocumentViewer({
           isEvalSupported: false,
         });
         
-        const proxy = await loadingTask.promise;
+        const pdfDoc = await loadingTask.promise;
         
         if (isCancelled) {
-          proxy.destroy();
+          pdfDoc.destroy();
           return;
         }
         
+        pdfDocRef.current = pdfDoc;
+        
         if (isMountedRef.current) {
-          setNumPages(proxy.numPages);
+          setNumPages(pdfDoc.numPages);
+          setCurrentPage(1);
+          console.log('[MobileDocumentViewer] PDF loaded, pages:', pdfDoc.numPages);
         }
-        proxy.destroy();
-      } catch (error) {
-        // Non-critical - we can still display PDF without page count
-        console.warn('[MobileDocumentViewer] Failed to load PDF metadata:', error);
+        
+      } catch (error: any) {
+        console.error('[MobileDocumentViewer] PDF load error:', error);
+        if (isMountedRef.current && !isCancelled) {
+          setViewerMode('error');
+          setErrorMessage(error.message || 'Failed to load PDF');
+        }
       }
     };
     
-    loadPdfMetadata();
+    loadPdf();
     
     return () => {
       isCancelled = true;
     };
-  }, [isPdf, documentUrl]);
+  }, [isPdf, documentUrl, retryKey]);
 
-  // === AUTO-COMPLETE LOADING FOR NON-PDF CONTENT ===
+  // Render current page to canvas
+  useEffect(() => {
+    if (!pdfDocRef.current || !canvasRef.current || currentPage < 1) return;
+    
+    let isCancelled = false;
+    
+    const renderPage = async () => {
+      try {
+        setIsRendering(true);
+        
+        const page = await pdfDocRef.current.getPage(currentPage);
+        
+        if (isCancelled) return;
+        
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const context = canvas.getContext('2d');
+        if (!context) return;
+        
+        // Calculate scale to fit container width
+        const containerWidth = containerRef.current?.clientWidth || window.innerWidth;
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = (containerWidth - 32) / baseViewport.width; // 16px padding on each side
+        const viewport = page.getViewport({ scale: Math.min(scale, 2) }); // Cap scale at 2x for performance
+        
+        // Set canvas dimensions
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        // Clear canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Render page
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+        
+        if (isMountedRef.current && !isCancelled) {
+          setViewerMode('ready');
+          setIsRendering(false);
+          trackPageChange(currentPage);
+        }
+        
+      } catch (error: any) {
+        console.error('[MobileDocumentViewer] Page render error:', error);
+        if (isMountedRef.current && !isCancelled) {
+          setIsRendering(false);
+          // Don't set error for render failures - just leave previous content
+        }
+      }
+    };
+    
+    renderPage();
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [pdfDocRef.current, currentPage, trackPageChange]);
+
+  // Page navigation
+  const goToPreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  }, [currentPage]);
+
+  const goToNextPage = useCallback(() => {
+    if (currentPage < numPages) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [currentPage, numPages]);
+
+  // Touch swipe for page navigation
+  const touchStartX = useRef<number | null>(null);
+  
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartX.current = e.touches[0].clientX;
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+    const threshold = 80; // Minimum swipe distance
+    
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0 && currentPage < numPages) {
+        // Swipe left - next page
+        goToNextPage();
+      } else if (diff < 0 && currentPage > 1) {
+        // Swipe right - previous page
+        goToPreviousPage();
+      }
+    }
+    
+    touchStartX.current = null;
+  }, [currentPage, numPages, goToNextPage, goToPreviousPage]);
+
+  // Auto-complete loading for non-PDF content
   useEffect(() => {
     if (!isPdf && !isImage) {
       const timer = setTimeout(() => {
@@ -219,58 +287,13 @@ export function MobileDocumentViewer({
     }
   }, [isPdf, isImage]);
 
-  // === HANDLERS ===
-  const handleIframeLoad = useCallback(() => {
-    console.log('[MobileDocumentViewer] Iframe loaded successfully');
-    if (isMountedRef.current) {
-      setIframeLoaded(true);
-      setViewerMode('iframe');
-      setLoadProgress(100);
-      // Clear the timeout since iframe loaded
-      if (iframeTimeoutRef.current) {
-        clearTimeout(iframeTimeoutRef.current);
-        iframeTimeoutRef.current = null;
-      }
-    }
-  }, []);
-
+  // Handlers
   const handleRetry = useCallback(() => {
-    console.log('[MobileDocumentViewer] Retrying...');
     setViewerMode('loading');
-    setLoadProgress(0);
     setErrorMessage(null);
-    setIframeLoaded(false);
-    
-    // Force re-render by dispatching event
+    setCurrentPage(1);
     window.dispatchEvent(new CustomEvent('mobile-pdf-retry'));
   }, []);
-
-  const handleGoogleViewerError = useCallback(() => {
-    console.error('[MobileDocumentViewer] Google Viewer also failed');
-    if (isMountedRef.current) {
-      setViewerMode('download-prompt');
-      setErrorMessage('Unable to display this PDF on your device.');
-      if (googleTimeoutRef.current) {
-        clearTimeout(googleTimeoutRef.current);
-        googleTimeoutRef.current = null;
-      }
-    }
-  }, []);
-
-  const handleGoogleViewerLoad = useCallback(() => {
-    console.log('[MobileDocumentViewer] Google Viewer loaded');
-    if (isMountedRef.current) {
-      setLoadProgress(100);
-      if (googleTimeoutRef.current) {
-        clearTimeout(googleTimeoutRef.current);
-        googleTimeoutRef.current = null;
-      }
-    }
-  }, []);
-
-  const handleOpenInNewTab = useCallback(() => {
-    window.open(documentUrl, '_blank');
-  }, [documentUrl]);
 
   const handleDownload = async () => {
     if (!canDownload) {
@@ -318,7 +341,7 @@ export function MobileDocumentViewer({
     }
   }, []);
 
-  // === PINCH-TO-ZOOM HANDLERS ===
+  // Pinch-to-zoom handlers for images
   const getTouchDistance = useCallback((touches: React.TouchList) => {
     if (touches.length < 2) return null;
     const touch1 = touches[0];
@@ -402,40 +425,7 @@ export function MobileDocumentViewer({
     setImagePosition({ x: 0, y: 0 });
   }, []);
 
-  // === RENDER: DOWNLOAD PROMPT (fallback) ===
-  if (viewerMode === 'download-prompt') {
-    return (
-      <div className="flex flex-col h-full w-full secure-share-viewer">
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center max-w-sm">
-            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">PDF Viewer Issue</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {errorMessage || 'This PDF cannot be displayed inline on your device.'}
-            </p>
-            <div className="flex flex-col gap-3 w-full">
-              <Button onClick={handleRetry} variant="outline" className="touch-manipulation w-full h-12">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
-              </Button>
-              <Button onClick={handleOpenInNewTab} variant="outline" className="touch-manipulation w-full h-12">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open in Browser
-              </Button>
-              {canDownload && (
-                <Button onClick={handleDownload} className="touch-manipulation w-full h-12">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // === RENDER: ERROR STATE ===
+  // Error state
   if (viewerMode === 'error') {
     return (
       <div className="flex flex-col h-full w-full secure-share-viewer">
@@ -462,7 +452,6 @@ export function MobileDocumentViewer({
     );
   }
 
-  // === MAIN RENDER ===
   return (
     <div className="flex flex-col h-full w-full secure-share-viewer">
       {/* Toolbar */}
@@ -481,12 +470,30 @@ export function MobileDocumentViewer({
           </Button>
         )}
         
-        {/* Center: Page info for PDFs */}
+        {/* Center: Page navigation for PDFs */}
         {isPdf && numPages > 0 && (
-          <div className="flex-1 text-center">
-            <span className="text-sm text-muted-foreground">
-              {numPages} page{numPages !== 1 ? 's' : ''} • Scroll to navigate
+          <div className="flex-1 flex items-center justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToPreviousPage}
+              disabled={currentPage <= 1 || isRendering}
+              className="h-9 w-9 touch-manipulation"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <span className="text-sm font-medium min-w-[80px] text-center">
+              {currentPage} / {numPages}
             </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToNextPage}
+              disabled={currentPage >= numPages || isRendering}
+              className="h-9 w-9 touch-manipulation"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
           </div>
         )}
         
@@ -544,27 +551,27 @@ export function MobileDocumentViewer({
 
       {/* Document Content */}
       <div 
-        className="flex-1 overflow-hidden relative"
+        ref={containerRef}
+        className="flex-1 overflow-auto relative"
         style={{ 
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain'
         }}
       >
-        {/* Loading overlay with progress */}
+        {/* Loading overlay */}
         {viewerMode === 'loading' && isPdf && (
           <div className="absolute inset-0 flex items-center justify-center bg-background z-20">
             <div className="text-center">
               <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-primary" />
-              <p className="text-sm text-muted-foreground mb-2">Loading PDF...</p>
-              {loadProgress > 0 && (
-                <div className="w-48 h-2 bg-muted rounded-full overflow-hidden mx-auto">
-                  <div 
-                    className="h-full bg-primary transition-all duration-300"
-                    style={{ width: `${loadProgress}%` }}
-                  />
-                </div>
-              )}
+              <p className="text-sm text-muted-foreground">Loading PDF...</p>
             </div>
+          </div>
+        )}
+
+        {/* Page rendering indicator */}
+        {isRendering && viewerMode === 'ready' && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm z-20">
+            Loading page {currentPage}...
           </div>
         )}
 
@@ -585,36 +592,19 @@ export function MobileDocumentViewer({
           </div>
         )}
 
-        {/* PDF - Primary iframe with direct signed URL (shows during loading and iframe mode) */}
-        {isPdf && (viewerMode === 'loading' || viewerMode === 'iframe') && (
-          <iframe
-            key={`pdf-iframe-${retryKey}`}
-            src={documentUrl}
-            className="w-full h-full border-0"
-            style={{ minHeight: 'calc(100vh - 120px)' }}
-            title="PDF Document"
-            onLoad={handleIframeLoad}
-            onError={() => {
-              console.log('[MobileDocumentViewer] Iframe error event, switching to Google Docs');
-              if (isMountedRef.current) {
-                setViewerMode('google');
-                setLoadProgress(50);
-              }
-            }}
-          />
-        )}
-        
-        {/* PDF - Google Docs Viewer (fallback) */}
-        {isPdf && viewerMode === 'google' && (
-          <iframe
-            key={`google-iframe-${retryKey}`}
-            src={`https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=true`}
-            className="w-full h-full border-0"
-            style={{ minHeight: 'calc(100vh - 120px)' }}
-            title="PDF Document (Google Viewer)"
-            onLoad={handleGoogleViewerLoad}
-            onError={handleGoogleViewerError}
-          />
+        {/* PDF Canvas Renderer */}
+        {isPdf && (
+          <div 
+            className="w-full min-h-full flex items-start justify-center p-4"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <canvas 
+              ref={canvasRef}
+              className="max-w-full shadow-lg bg-white"
+              style={{ touchAction: 'pan-y' }}
+            />
+          </div>
         )}
 
         {/* Images with Pinch-to-Zoom */}
