@@ -223,7 +223,7 @@ export function LinkDetailsDialog({
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="overview" className="flex-1 overflow-hidden flex flex-col">
+        <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="activity">
@@ -237,7 +237,7 @@ export function LinkDetailsDialog({
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 mt-4 min-h-0">
+          <div className="flex-1 mt-4 min-h-0 max-h-[calc(85vh-180px)] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
             <TabsContent value="overview" className="mt-0 space-y-6 pb-6">
               {/* Analytics Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -544,7 +544,7 @@ export function LinkDetailsDialog({
                 </div>
               </Card>
             </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>
