@@ -28,6 +28,8 @@ export default function ViewDocument() {
   const [ndaSigned, setNdaSigned] = useState(false);
   const [viewStartTime] = useState(Date.now());
   const [viewerData, setViewerData] = useState<{ name: string; email: string } | null>(null);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Document request type for batch fetching
   interface DocRequest {
@@ -210,9 +212,14 @@ export default function ViewDocument() {
   });
   
   // Fetch link data - no authentication required (security via token)
-  const { data: linkData, isLoading, error } = useQuery({
+  const { data: linkData, isLoading, error, refetch } = useQuery({
     queryKey: ['secure-link', token],
-    enabled: !!token, // Security via token, no platform auth required
+    enabled: !!token && isOnline,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 30000,
+    gcTime: 60000,
+    networkMode: 'offlineFirst',
     queryFn: async () => {
       console.log('[ViewDocument] Starting query for token:', token);
       if (!token) throw new Error('No token provided');
@@ -433,7 +440,6 @@ export default function ViewDocument() {
         throw queryError;
       }
     },
-    retry: false
   });
 
   // Handle query errors
@@ -447,6 +453,33 @@ export default function ViewDocument() {
       });
     }
   }, [error, toast]);
+
+  // Loading timeout - show retry button after 15 seconds
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      const timeout = setTimeout(() => {
+        setLoadingTimedOut(true);
+      }, 15000);
+      return () => clearTimeout(timeout);
+    } else {
+      setLoadingTimedOut(false);
+    }
+  }, [isLoading]);
+
+  // Network status detection
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Clear stored auth return URL once document loads successfully
   useEffect(() => {
@@ -535,6 +568,28 @@ export default function ViewDocument() {
     );
   }
 
+  // Show offline message
+  if (!isOnline) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 rounded-full bg-destructive/10">
+              <Lock className="w-8 h-8 text-destructive" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold mb-2">No Internet Connection</h1>
+          <p className="text-muted-foreground mb-6">
+            Please check your network connection and try again.
+          </p>
+          <Button onClick={() => window.location.reload()} className="w-full">
+            Retry
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -542,6 +597,17 @@ export default function ViewDocument() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{authLoading ? 'Checking authentication...' : 'Loading document...'}</p>
           {isIOS && <p className="text-xs text-muted-foreground mt-2">iOS device detected</p>}
+          {loadingTimedOut && (
+            <div className="mt-4">
+              <p className="text-sm text-amber-600 mb-3">Loading is taking longer than expected</p>
+              <Button onClick={() => refetch()} variant="outline" className="mr-2">
+                Retry
+              </Button>
+              <Button onClick={() => window.location.reload()} variant="default">
+                Reload Page
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );

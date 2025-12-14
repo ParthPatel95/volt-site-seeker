@@ -38,12 +38,39 @@ export class MobileDocumentErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
+  // Check if error is a transient network error that should auto-retry
+  isTransientNetworkError(error: Error): boolean {
+    const transientPatterns = [
+      'network error',
+      'failed to fetch',
+      'load failed',
+      'timeout',
+      'net::err',
+      'networkerror',
+      'connection refused'
+    ];
+    const errorMsg = error.message?.toLowerCase() || '';
+    return transientPatterns.some(pattern => errorMsg.includes(pattern));
+  }
+
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('[MobileDocumentErrorBoundary] Error details:', {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack
     });
+    
+    // Auto-retry for transient network errors
+    if (this.isTransientNetworkError(error) && this.retryCount < this.maxAutoRetries) {
+      console.log('[MobileDocumentErrorBoundary] Auto-retrying transient network error...');
+      this.retryCount++;
+      setTimeout(() => {
+        if (this.state.hasError) {
+          this.setState({ hasError: false, error: undefined });
+          this.props.onRetry?.();
+        }
+      }, 1000 * this.retryCount); // Exponential backoff
+    }
   }
 
   componentDidUpdate(prevProps: Props) {

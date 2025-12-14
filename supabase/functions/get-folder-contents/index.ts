@@ -15,6 +15,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Request timeout wrapper
+  const withTimeout = <T>(promise: Promise<T>, ms: number, message: string): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) => 
+        setTimeout(() => reject(new Error(message)), ms)
+      )
+    ]);
+  };
+
   try {
     const { token } = await req.json();
 
@@ -33,11 +43,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const { data: link, error: linkError } = await supabaseAdmin
-      .from("secure_links")
-      .select("id, folder_id, status, expires_at, created_by")
-      .eq("link_token", token)
-      .single();
+    const { data: link, error: linkError } = await withTimeout(
+      supabaseAdmin
+        .from("secure_links")
+        .select("id, folder_id, status, expires_at, created_by")
+        .eq("link_token", token)
+        .single(),
+      15000,
+      "Link lookup timed out"
+    );
 
     if (linkError || !link) {
       console.error("get-folder-contents: link error", linkError);
@@ -74,11 +88,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { data: allFolders, error: foldersError } = await supabaseAdmin
-      .from("secure_folders")
-      .select("*")
-      .eq("created_by", link.created_by)
-      .eq("is_active", true);
+    const { data: allFolders, error: foldersError } = await withTimeout(
+      supabaseAdmin
+        .from("secure_folders")
+        .select("*")
+        .eq("created_by", link.created_by)
+        .eq("is_active", true),
+      15000,
+      "Folders lookup timed out"
+    );
 
     if (foldersError || !allFolders) {
       console.error("get-folder-contents: folders error", foldersError);
@@ -126,11 +144,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       descendantIds.has(f.id),
     );
 
-    const { data: documents, error: docsError } = await supabaseAdmin
-      .from("secure_documents")
-      .select("*")
-      .in("folder_id", Array.from(descendantIds))
-      .eq("is_active", true);
+    const { data: documents, error: docsError } = await withTimeout(
+      supabaseAdmin
+        .from("secure_documents")
+        .select("*")
+        .in("folder_id", Array.from(descendantIds))
+        .eq("is_active", true),
+      15000,
+      "Documents lookup timed out"
+    );
 
     if (docsError) {
       console.error("get-folder-contents: documents error", docsError);
