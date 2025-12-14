@@ -36,6 +36,7 @@ export function EditLinkDialog({
   const { toast } = useToast();
 
   // Form state
+  const [linkName, setLinkName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [accessLevel, setAccessLevel] = useState<'view_only' | 'download' | 'no_download'>('view_only');
@@ -49,6 +50,7 @@ export function EditLinkDialog({
   // Initialize form with link data
   useEffect(() => {
     if (link) {
+      setLinkName(link.link_name || '');
       setRecipientEmail(link.recipient_email || '');
       setRecipientName(link.recipient_name || '');
       setAccessLevel(link.access_level || 'view_only');
@@ -73,6 +75,7 @@ export function EditLinkDialog({
       }
 
       const updateData: any = {
+        link_name: linkName || null,
         recipient_email: recipientEmail || null,
         recipient_name: recipientName || null,
         access_level: accessLevel,
@@ -117,6 +120,18 @@ export function EditLinkDialog({
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
+          <div>
+            <Label>Link Name</Label>
+            <Input
+              value={linkName}
+              onChange={(e) => setLinkName(e.target.value)}
+              placeholder="e.g., Texas Site - Investor Deck"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Give this link a descriptive name for your records
+            </p>
+          </div>
+
           <div>
             <Label>Recipient Email (Optional)</Label>
             <Input
