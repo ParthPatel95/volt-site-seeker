@@ -7,9 +7,9 @@ export const LandingFooter = () => {
     <footer className="relative z-10 bg-white border-t border-watt-navy/10">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
           {/* Company Info */}
-          <div className="col-span-1 md:col-span-2">
+          <div className="lg:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <EnhancedLogo className="w-7 h-7 object-contain" />
               <span className="text-xl font-bold text-watt-navy flex items-center">
@@ -32,7 +32,7 @@ export const LandingFooter = () => {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Company */}
           <div>
             <h3 className="text-sm font-semibold text-watt-navy mb-3">Company</h3>
             <ul className="space-y-2">
@@ -54,9 +54,9 @@ export const LandingFooter = () => {
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Learn */}
           <div>
-            <h3 className="text-sm font-semibold text-watt-navy mb-3">Resources</h3>
+            <h3 className="text-sm font-semibold text-watt-navy mb-3">Learn</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/bitcoin" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
@@ -78,6 +78,13 @@ export const LandingFooter = () => {
                   Hydro Datacenters 101
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h3 className="text-sm font-semibold text-watt-navy mb-3">Resources</h3>
+            <ul className="space-y-2">
               <li>
                 <Link to="/app" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   VoltScout Platform
