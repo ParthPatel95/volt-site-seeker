@@ -1,8 +1,6 @@
 import React from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { Bitcoin, TrendingUp, Clock, Coins, Zap, ArrowRight, ChevronDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Bitcoin, TrendingUp, Clock, Coins, Zap, ChevronDown } from 'lucide-react';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 // Floating particle component - reduced count for performance
@@ -147,30 +145,6 @@ const BitcoinHeroSection: React.FC = () => {
                 </p>
               </ScrollReveal>
               
-              <ScrollReveal direction="up" delay={0.3}>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button 
-                    asChild
-                    size="lg"
-                    className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white font-semibold px-8 py-6 text-lg group"
-                  >
-                    <Link to="/hosting">
-                      Explore Bitcoin Mining
-                      <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </Button>
-                  <Button 
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white font-medium px-8 py-6 text-lg"
-                  >
-                    <Link to="/#pipeline">
-                      View Our Infrastructure
-                    </Link>
-                  </Button>
-                </div>
-              </ScrollReveal>
             </div>
             
             {/* Right Content - Visual Element */}
